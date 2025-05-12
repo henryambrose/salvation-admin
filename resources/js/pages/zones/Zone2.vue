@@ -6,7 +6,7 @@ import HeadingSmall from '@/components/HeadingSmall.vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { TextareaInput } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
@@ -86,18 +86,17 @@ const breadcrumbs = [
                     </div>
                     <div class="mb-3">
                         <label class="block text-sm font-medium mb-1">Description</label>
-                        <Textarea
+
+                        <TextareaInput
+                        name="description"
+                        id="description"
                         v-model="form.description"
-                        class="w-full border rounded px-3 py-2"
-                        rows="3"
-                        ></Textarea>
+                        placeholder="Enter description..."
+                        :error="form.errors.description"
+                        />
                         <div v-if="form.errors.description" class="text-red-500 text-sm mt-1">{{ form.errors.description }}</div>
                     </div>
                     <div class="flex justify-end space-x-2">
-                        <!-- <button type="button" @click="showModal = false" class="px-4 py-2 border rounded">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" :disabled="form.processing">
-                        {{ form.processing ? 'Creating...' : 'Create' }}
-                        </button> -->
                         <Button variant="destructive" type="button" @click="showModal = false">
                             Cancel
                         </Button>
