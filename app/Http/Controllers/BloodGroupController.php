@@ -1,0 +1,96 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\StoreBloodGroupRequest;
+use App\Http\Requests\UpdateBloodGroupRequest;
+use App\Models\BloodGroup;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Inertia\Response;
+
+
+class BloodGroupController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request) :Response
+    {
+
+        $query = BloodGroup::query();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('blood_group/BloodGroup', [
+            'fetchUrl' => route('blood-group.index'),
+            'bloodGroups' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    // public function store(StoreBloodGroupRequest $request)
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|unique:blood_groups,name',
+        ]);
+
+        BloodGroup::create($validated);
+
+        return redirect()->route('blood-group.index')->with('success', 'Blood Group created successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(BloodGroup $bloodGroup)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(BloodGroup $bloodGroup)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateBloodGroupRequest $request, BloodGroup $bloodGroup)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(BloodGroup $bloodGroup)
+    {
+        //
+    }
+}
