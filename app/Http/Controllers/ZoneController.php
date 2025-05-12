@@ -76,11 +76,23 @@ class ZoneController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreZoneRequest $request)
-    {
-        //
-    }
+    // public function store(StoreZoneRequest $request)
+    // {
+    //     //
+    // }
 
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|unique:zones,name',
+            'description' => 'nullable|string',
+        ]);
+
+        Zone::create($validated);
+
+        // return to_route('zone.index')->with('success', 'Zone created successfully.');
+        return redirect()->route('zone.index')->with('success', 'Zone created successfully.');
+    }
     /**
      * Display the specified resource.
      */

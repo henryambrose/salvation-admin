@@ -9,4 +9,9 @@ class Zone extends Model
 {
     /** @use HasFactory<\Database\Factories\ZoneFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'description',
+    ];
 }
