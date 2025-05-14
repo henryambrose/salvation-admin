@@ -15,37 +15,36 @@ class ZoneSeeder extends Seeder
     public function run(): void
     {
         $now = Carbon::now()->toDateTimeString();
-        /**
-         * ['name' => 'Matthew'],
-            ['name' => 'Mark'],
-            ['name' => 'Luke'],
-            ['name' => 'John'],
-         */
-        Zone::insert([
+        $zones = [
             [
-                'name' => 'Matthew',
-                'description' => 'Description for Matthew',
-                'created_at' => $now,
-                'updated_at' => $now,
+            'id' => 1,
+            'name' => 'Matthew',
+            'description' => 'Description for Matthew',
+            'created_at' => $now,
+            'updated_at' => $now,
             ],
             [
-                'name' => 'Mark',
-                'description' => 'Description for Mark',
-                'created_at' => $now,
-                'updated_at' => $now,
+            'id' => 2,
+            'name' => 'Mark',
+            'description' => 'Description for Mark',
+            'created_at' => $now,
+            'updated_at' => $now,
             ],
             [
-                'name' => 'Luke',
-                'description' => 'Description for Luke',
-                'created_at' => $now,
-                'updated_at' => $now,
+            'id' => 3,
+            'name' => 'Luke',
+            'description' => 'Description for Luke',
+            'created_at' => $now,
+            'updated_at' => $now,
             ],
             [
-                'name' => 'John',
-                'description' => 'Description for John',
-                'created_at' => $now,
-                'updated_at' => $now,
+            'id' => 4,
+            'name' => 'John',
+            'description' => 'Description for John',
+            'created_at' => $now,
+            'updated_at' => $now,
             ],
-        ]);
+        ];
+        Zone::insert($zones);
     }
 }

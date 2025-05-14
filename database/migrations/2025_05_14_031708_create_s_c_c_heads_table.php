@@ -11,9 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('blood_groups', function (Blueprint $table) {
+        Schema::create('s_c_c_heads', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
+            $table->foreignId('member_id')->constrained('members');
+            $table->foreignId('community_id')->constrained('communities');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -24,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('blood_groups');
+        Schema::dropIfExists('s_c_c_heads');
     }
 };

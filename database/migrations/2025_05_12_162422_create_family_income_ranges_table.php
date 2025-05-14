@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->unsignedBigInteger('starting_range');
             $table->unsignedBigInteger('ending_range');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
