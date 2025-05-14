@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('community_clusters', function (Blueprint $table) {
+        Schema::create('community_funds', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->foreignId('community_id')->constrained('communities');
+            $table->string('year');
+            $table->decimal('amount', 12, 2);
+            $table->foreignId('member_id')->constrained('members');
+
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['name', 'community_id'], 'unique_community_cluster_name');
-            $table->index(['name', 'community_id'], 'index_community_cluster_name');
         });
     }
 
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('community_clusters');
+        Schema::dropIfExists('community_funds');
     }
 };
