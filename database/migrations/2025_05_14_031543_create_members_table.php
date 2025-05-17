@@ -22,7 +22,7 @@ return new class extends Migration
             $table->enum('status', ['Resident', 'Non-Resident', 'Dead', 'Redevelopment Unsettled']);
             $table->string('relationship')->nullable();
             $table->string('last_name')->nullable();
-            $table->string('first_name')->nullable();
+            $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->date('date_of_birth')->nullable();
             $table->string('permanent_add1')->nullable();
