@@ -94,3 +94,33 @@ export interface Member {
     updated_at: string; // ISO 8601 date string
     deleted_at?: string | null; // ISO 8601 date string for soft deletes
 }
+
+export interface CommunityCluster {
+    id: number;
+    name: string;
+    community_id: number;
+}
+
+export type CommunityClusters = CommunityCluster[];
+
+export interface Community {
+    id: number;
+    name: string,
+    community_clusters: CommunityCluster
+}
+
+export type Communities = Community[];
+
+
+export interface CellsAndAssociation {
+    id: number;
+    name: string;
+}
+
+export type CellsAndAssociations = CellsAndAssociation[];
+
+export interface FamilyIncomeRange {
+    id: number; name: string;
+}
+
+export type FamilyIncomeRanges = FamilyIncomeRange[];

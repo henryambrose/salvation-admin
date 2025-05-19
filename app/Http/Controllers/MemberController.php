@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
+use App\Models\CellsAndAssociation;
+use App\Models\Community;
+use App\Models\FamilyIncomeRange;
 use App\Models\Member;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,11 +42,37 @@ class MemberController extends Controller
     }
 
     /**
+     * Show the form for creating a new resource.
+     */
+    public function create(Request $request): Response
+    {
+        return Inertia::render('member/Member', [
+            'communities' => Community::with('communityClusters')->get(),
+            'cellsAndAssociations' => CellsAndAssociation::all(),
+            'familyIncomeRanges' => FamilyIncomeRange::all(),
+        ]);
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreMemberRequest $request)
+    {
+        $validated = $request->validated();
+
+        Member::create($validated);
+
+        Log::debug($validated);
+        Log::debug($request->all());
+        return redirect()->route('member.index')->with('success', 'Member created successfully.');
+    }
+
+    /**
      * Display the specified resource.
      */
     public function show(Member $member): Response
     {
-        return Inertia::render('member/Details', [
+        return Inertia::render('member/Member', [
             'member' => $member
         ]);
     }
@@ -52,7 +82,12 @@ class MemberController extends Controller
      */
     public function edit(Member $member)
     {
-        //
+        return Inertia::render('member/Member', [
+            'member' => $member,
+            'communities' => Community::with('communityClusters')->get(),
+            'cellsAndAssociations' => CellsAndAssociation::all(),
+            'familyIncomeRanges' => FamilyIncomeRange::all(),
+        ]);
     }
 
     /**
@@ -60,7 +95,13 @@ class MemberController extends Controller
      */
     public function update(UpdateMemberRequest $request, Member $member)
     {
-        //
+        $validated = $request->validated();
+
+        $member->update($validated);
+
+        Log::debug($validated);
+        Log::debug($request->all());
+        return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
 
     /**

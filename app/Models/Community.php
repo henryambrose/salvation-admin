@@ -9,4 +9,9 @@ class Community extends Model
 {
     /** @use HasFactory<\Database\Factories\CommunityFactory> */
     use HasFactory;
+
+    public function communityClusters()
+    {
+        return $this->hasMany(CommunityCluster::class);
+    }
 }

@@ -7,6 +7,10 @@ const props = defineProps({
   columns: Array,
   filters: Object,
   fetchUrl: String,
+  hasActions: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const search = ref(props.filters.search || '');
@@ -75,6 +79,7 @@ function changeSort(field) {
               {{ direction === 'asc' ? '▲' : '▼' }}
             </span>
           </th>
+          <th v-if="hasActions" class="p-2 border text-right">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -86,6 +91,10 @@ function changeSort(field) {
           >
             {{ item[col.key] }}
           </td>
+          <td v-if="hasActions" class="p-2 border text-right">
+            <!-- Action slot -->
+            <slot name="actions" :row="item" />
+            </td>
         </tr>
       </tbody>
     </table>

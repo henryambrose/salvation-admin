@@ -10,12 +10,12 @@ import { TextareaInput } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { type BreadcrumbItem, type SharedData, type User } from '@/types';
+import { Member, type BreadcrumbItem, type SharedData, type User } from '@/types';
 import { ref, computed, onMounted } from 'vue';
 import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3'
 import { reactive, watch } from 'vue'
-import { Plus } from 'lucide-vue-next';
+import { Pencil, Plus, Trash } from 'lucide-vue-next';
 
 
 const props = defineProps({
@@ -33,6 +33,17 @@ const columns = [
 const breadcrumbs = [
   { title: 'Members', href: '/member/index' },
 ];
+
+function editMember(member : Member) {
+  // open edit modal logic
+  router.get(route('member.edit', member.id));
+}
+
+function deleteMember(id : Member['id']) {
+  if (confirm('Delete this member?')) {
+    router.delete(route('member.destroy', id));
+  }
+}
 </script>
 
 <template>
@@ -42,7 +53,7 @@ const breadcrumbs = [
             <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold">Members</h2>
             <div class="btn-group flex space-x-2">
-                <Button as="a" href="/member/profile-details/create" class="btn btn-secondary">
+                <Button as="a" href="/member/create" class="btn btn-secondary">
                     <component :is="Plus" />
                     <span>Add Member</span>
                 </Button>
@@ -55,7 +66,20 @@ const breadcrumbs = [
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-        />
+            :has-actions="true"
+        >
+            <template #actions="{ row }">
+                <Button class="btn btn-secondary mr-2" @click="editMember(row)">
+                    <component :is="Pencil" />
+                    <span>Edit</span>
+                </Button>
+                <Button class="btn btn-secondary mr-2" @click="deleteMember(row.id)">
+                    <component :is="Trash" />
+                    <span>Delete</span>
+                </Button>
+            </template>
+        </DataTable>
+
 
     </AppLayout>
 </template>

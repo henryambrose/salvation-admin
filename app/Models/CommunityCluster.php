@@ -9,4 +9,10 @@ class CommunityCluster extends Model
 {
     /** @use HasFactory<\Database\Factories\CommunityClusterFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'community_id',
+    ];
+
 }
