@@ -102,6 +102,7 @@ export interface CommunityCluster {
 }
 
 export type CommunityClusters = CommunityCluster[];
+export type Members = Member[];
 
 export interface Community {
     id: number;
@@ -124,3 +125,9 @@ export interface FamilyIncomeRange {
 }
 
 export type FamilyIncomeRanges = FamilyIncomeRange[];
+
+export interface SCCHead {
+    id: number;
+    member_id: number;
+    community_id: number;
+}

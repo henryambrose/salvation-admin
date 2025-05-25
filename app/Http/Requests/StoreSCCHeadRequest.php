@@ -11,7 +11,8 @@ class StoreSCCHeadRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        // return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,8 @@ class StoreSCCHeadRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'member_id' => 'required|integer|exists:members,id',
+            'community_id' => 'required|integer|exists:communities,id',
         ];
     }
 }

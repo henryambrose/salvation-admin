@@ -31,6 +31,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+const statusList = [
+    'Resident','Non-Resident','Dead','Redevelopment Unsettled'
+];
+// const statusMap = Object.fromEntries(statusList.map(status => [status, status]));
+const statusArray = statusList.map(status => ({ id: status, name: status }));
+
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 const member = page.props.member as Member;
@@ -151,7 +157,15 @@ const fetchCommunityCluster = async () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="status">Status</Label>
-                        <Input id="status" class="mt-1 block w-full" v-model="form.status" autocomplete="status" placeholder="Status" />
+                        <!-- <Input id="status" class="mt-1 block w-full" v-model="form.status" autocomplete="status" placeholder="Status" /> -->
+
+                        <SelectInput
+                            id="status"
+                            v-model="form.status"
+                            :options="statusArray"
+                            class="mt-1 block w-full"
+                            placeholder="Select Status"
+                        />
                         <InputError class="mt-2" :message="form.errors.status" />
                     </div>
                     <div class="grid gap-2">
@@ -307,7 +321,14 @@ const fetchCommunityCluster = async () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="cells_and_association_id">Cells and Association ID</Label>
-                        <Input id="cells_and_association_id" class="mt-1 block w-full" v-model="form.cells_and_association_id" autocomplete="cells_and_association_id" placeholder="Cells and Association ID" />
+                        <!-- <Input id="cells_and_association_id" class="mt-1 block w-full" v-model="form.cells_and_association_id" autocomplete="cells_and_association_id" placeholder="Cells and Association ID" /> -->
+                        <SelectInput
+                            id="cells_and_association_id"
+                            v-model="form.cells_and_association_id"
+                            :options="cellsAndAssociations"
+                            class="mt-1 block w-full"
+                            placeholder="Select Cells & Association"
+                        />
                         <InputError class="mt-2" :message="form.errors.cells_and_association_id" />
                     </div>
                     <div class="grid gap-2">
@@ -337,7 +358,14 @@ const fetchCommunityCluster = async () => {
                     </div>
                     <div class="grid gap-2">
                         <Label for="family_income_range">Family Income Range</Label>
-                        <Input id="family_income_range" class="mt-1 block w-full" v-model="form.family_income_range" autocomplete="family_income_range" placeholder="Family income range" />
+                        <!-- <Input id="family_income_range" class="mt-1 block w-full" v-model="form.family_income_range" autocomplete="family_income_range" placeholder="Family income range" /> -->
+                        <SelectInput
+                            id="family_income_range"
+                            v-model="form.family_income_range"
+                            :options="familyIncomeRanges"
+                            class="mt-1 block w-full"
+                            placeholder="Select Family Income Range"
+                        />
                         <InputError class="mt-2" :message="form.errors.family_income_range" />
                     </div>
                     <div class="grid gap-2">

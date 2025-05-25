@@ -4,24 +4,52 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreSCCHeadRequest;
 use App\Http\Requests\UpdateSCCHeadRequest;
+use App\Models\Community;
+use App\Models\Member;
 use App\Models\SCCHead;
+use Inertia\Inertia;
+use Inertia\Response;
+use Illuminate\Http\Request;
+
+
 
 class SCCHeadController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request) :Response
     {
-        //
+        $query = SCCHead::query();
+
+        if ($search = $request->input('search')) {
+            $query->where('first_name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('s_c_c_head/Index', [
+            'fetchUrl' => route('scc-head.index'),
+            's_c_c_heads' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+        ]);
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
+    public function create(Request $request): Response
     {
-        //
+        return Inertia::render('s_c_c_head/SCCHead', [
+            'communities' => Community::all(),
+            'members' => Member::all(),
+        ]);
     }
 
     /**

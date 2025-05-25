@@ -31,8 +31,8 @@ const showModal = ref(false);
 
 const form = useForm({
   name: '',
-  starting_range: '',
-  ending_range: '',
+//   starting_range: '',
+//   ending_range: '',
 
 });
 
@@ -79,7 +79,7 @@ const breadcrumbs = [
                     <h3 class="text-xl font-semibold mb-4">Create Family Income Range</h3>
                     <form @submit.prevent="submit">
                     <div class="mb-3">
-                        <label class="block text-sm font-medium mb-1">Name</label>
+                        <label class="block text-sm font-medium mb-1">Range</label>
                         <Input
                         v-model="form.name"
                         type="text"
@@ -87,7 +87,7 @@ const breadcrumbs = [
                         />
                         <div v-if="form.errors.name" class="text-red-500 text-sm mt-1">{{ form.errors.name }}</div>
                     </div>
-                    <div class="mb-3">
+                    <!-- <div class="mb-3">
                         <label class="block text-sm font-medium mb-1">Starting Range</label>
                         <Input
                         v-model="form.starting_range"
@@ -104,7 +104,7 @@ const breadcrumbs = [
 
                         />
                         <div v-if="form.errors.ending_range" class="text-red-500 text-sm mt-1">{{ form.errors.ending_range }}</div>
-                    </div>
+                    </div> -->
 
                     <div class="flex justify-end space-x-2">
                         <Button variant="destructive" type="button" @click="showModal = false">

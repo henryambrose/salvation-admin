@@ -14,8 +14,8 @@ return new class extends Migration
         Schema::create('family_income_ranges', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
-            $table->unsignedBigInteger('starting_range');
-            $table->unsignedBigInteger('ending_range');
+            // $table->unsignedBigInteger('starting_range');
+            // $table->unsignedBigInteger('ending_range');
             $table->timestamps();
             $table->softDeletes();
         });

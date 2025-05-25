@@ -24,8 +24,8 @@ class StoreFamilyIncomeRangeRequest extends FormRequest
     {
         return [
             'name' => 'required|string|unique:family_income_ranges,name',
-            'starting_range' => 'required|string',
-            'ending_range' => 'required|string',
+            // 'starting_range' => 'required|string',
+            // 'ending_range' => 'required|string',
         ];
     }
 }
