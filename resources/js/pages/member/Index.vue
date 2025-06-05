@@ -24,9 +24,27 @@ const props = defineProps({
   fetchUrl: String,
 });
 
+const enhancedMembers = computed(() => {
+  return {
+    ...props.members,
+    data: props.members.data.map(item => ({
+      ...item,
+      community_name: item.community?.name || '',
+      community_cluster_name: item.community_cluster?.name || '',
+      added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+      last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',
+    })),
+  };
+});
+
 const columns = [
 { key: 'id', label: 'Id', sortable: true },
 { key: 'first_name', label: 'First Name', sortable: true },
+{ key: 'last_name', label: 'Last Name', sortable: true },
+{ key: 'community_name', label: 'Community Name', sortable: true },
+{ key: 'community_cluster_name', label: 'Community Cluster Name', sortable: true },
+{ key: 'added_on', label: 'Added On', sortable: true },
+{ key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
 
 
@@ -62,7 +80,7 @@ function deleteMember(id : Member['id']) {
         </div>
 
         <DataTable
-            :data="members"
+            :data="enhancedMembers"
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"

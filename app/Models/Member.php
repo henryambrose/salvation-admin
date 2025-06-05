@@ -62,4 +62,17 @@ class Member extends Model
         'deaths_reg_no',
         'death_parish',
     ];
+
+    public function community()
+    {
+        return $this->belongsTo(Community::class);
+    }
+    public function communityCluster()
+    {
+        return $this->belongsTo(CommunityCluster::class);
+    }
+    public function cellsAndAssociation()
+    {
+        return $this->belongsTo(CellsAndAssociation::class);
+    }
 }

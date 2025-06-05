@@ -12,8 +12,8 @@ class FamilyIncomeRange extends Model
 
     protected $fillable = [
         'name',
-        'starting_range',
-        'ending_range',
+        // 'starting_range',
+        // 'ending_range',
     ];
 
     public $timestamps = false;

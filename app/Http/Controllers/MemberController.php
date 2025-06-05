@@ -21,7 +21,10 @@ class MemberController extends Controller
     public function index(Request $request) :Response
     {
         $query = Member::query();
-
+        $query->with([
+            'community',
+            'communityCluster',
+        ]);
         if ($search = $request->input('search')) {
             $query->where('first_name', 'like', "%$search%");
         }
@@ -82,11 +85,14 @@ class MemberController extends Controller
      */
     public function edit(Member $member)
     {
+        $familyIncomeRanges = FamilyIncomeRange::all()->map(function ($item) {
+            return ['id' => $item->name, 'name' => $item->name];
+        })->toArray();
         return Inertia::render('member/Member', [
             'member' => $member,
             'communities' => Community::with('communityClusters')->get(),
             'cellsAndAssociations' => CellsAndAssociation::all(),
-            'familyIncomeRanges' => FamilyIncomeRange::all(),
+            'familyIncomeRanges' => $familyIncomeRanges,
         ]);
     }
 
