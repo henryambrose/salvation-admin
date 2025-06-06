@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Member, type SharedData, type User, Communities, SCCHead, type BreadcrumbItem } from '@/types';
 import { List } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 
 interface Props {
@@ -26,11 +26,25 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
+
+
 const props = defineProps<Props>();
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 const member = page.props.member as Member;
+
+
+const enhancedMembers = computed(() => {
+  return {
+    data: page.props.members.map(item => ({
+      id: item.id,
+      name: item.first_name + ' ' + item.middle_name + ' ' + item.last_name,
+    })),
+  };
+});
+
+console.log('Enhanced Members:', enhancedMembers.value);
 
 const form = useForm({
     id: props.scc_head?.id ? props.scc_head.id : '',
@@ -56,9 +70,9 @@ const submit = () => {
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Members</h2>
                 <div class="btn-group flex space-x-2">
-                    <Button as="a" href="/member/index" class="btn btn-secondary">
+                    <Button as="a" href="/scc-head/index" class="btn btn-secondary">
                         <component :is="List" />
-                        <span>Member List</span>
+                        <span>SCC Head List</span>
                     </Button>
                 </div>
             </div>
@@ -68,18 +82,18 @@ const submit = () => {
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="grid gap-2">
-                        <Label for="member_id">Member ID</Label>
+                        <Label for="member_id">Member</Label>
                         <SelectInput
                             id="member_id"
                             v-model="form.member_id"
-                            :options="page.props.members"
+                            :options="enhancedMembers.data"
                             class="mt-1 block w-full"
                             placeholder="Select Community"
                         />
                         <InputError class="mt-2" :message="form.errors.member_id" />
                     </div>
                     <div class="grid gap-2">
-                        <Label for="community_id">Community ID</Label>
+                        <Label for="community_id">Community</Label>
                         <SelectInput
                             id="community_id"
                             v-model="form.community_id"
