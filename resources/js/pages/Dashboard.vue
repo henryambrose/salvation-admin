@@ -17,6 +17,10 @@ const props = defineProps({
         type: Array,
         default: () => [],
     },
+    ageWiseData: {
+        type: Object,
+        default: () => [],
+    },
 
 });
 
@@ -64,6 +68,33 @@ const breadcrumbs: BreadcrumbItem[] = [
                         </div>
                     </CardContent>
                 </Card>
+                <Card class="rounded-xl uppercase border text-white shadow-md border-2 bg-purple-500 border-purple-800">
+                    <CardHeader class="p-2 text-center font-bold">
+                        <CardTitle class="text-xl">Age Wise</CardTitle>
+                    </CardHeader>
+                    <CardContent class="p-2 font-bold text-center border-t-2 border-purple-800">
+                        <div class="w-full max-w-md overflow-hidden">
+                            <!-- Table Header -->
+                            <div class="grid grid-cols-4 bg-gray-100 font-semibold text-left text-gray-800 p-2">
+                                <div>Status</div>
+                                <div>Count</div>
+                                <div>Male</div>
+                                <div>Female</div>
+                            </div>
+
+                            <!-- Table Rows -->
+                            <div class="divide-y divide-gray-200">
+                                <div class="grid grid-cols-4 text-left p-2" v-for="(row, index) in ageWiseData" :key="index">
+                                    <div>{{ index }}</div>
+                                    <div>{{ row['Male']+row['Female'] }}</div>
+                                    <div>{{ row['Male'] }}</div>
+                                    <div>{{ row['Female'] }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
             </div>
 
             <div class="grid auto-rows-min gap-4 md:grid-cols-3">

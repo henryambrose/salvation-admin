@@ -26,20 +26,54 @@ class DashboardController extends Controller
             })
             ->toArray();
 
-        $ageWiseDataResult = DB::select("select t1.age, count(t1.age) as total
-                                    from (
-                                            select
-                                                id, first_name, CASE
-                                                    WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
-                                                    ELSE '--'
-                                                END as age
-                                            from members
-                                        ) as t1
-                                    GROUP by
-                                        t1.age");
+        $ageSql = "SELECT
+                    t1.gender,
+                    COUNT(*) AS total,
+                    ag.name AS age_group
+                FROM (
+                    SELECT
+                        id,
+                        gender,
+                        CASE
+                            WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
+                            ELSE NULL
+                        END AS age
+                    FROM members
+                ) AS t1
+                JOIN age_groups ag
+                ON t1.age IS NOT NULL AND t1.age BETWEEN ag.min_age AND ag.max_age
+                GROUP BY t1.gender, ag.name
+                ORDER BY ag.min_age, t1.gender;
+        ";
+        $ageWiseDataResult = DB::select($ageSql);
+        // $ageWiseData = collect($ageWiseDataResult)->mapWithKeys(function ($item) { return [$item->age => $item->total];   });
 
+        /**
+         * columns for above data set
+         * AgeGroup Count Male Female
+         * male	109	Young 0-15
+            female	106	Young 0-15
+            other	98	Young 0-15
+            male	57	Youth 16-25
+            female	80	Youth 16-25
+            other	58	Youth 16-25
+            male	205	Adult 26-59
+            female	195	Adult 26-59
+            other	193	Adult 26-59
+         */
+        $ageWiseData = [];
+        foreach ($ageWiseDataResult as $row) {
+            $ageGroup = $row->age_group;
+            $gender = ucfirst($row->gender);
+            $total = $row->total;
 
-        $ageWiseData = collect($ageWiseDataResult)->mapWithKeys(function ($item) { return [$item->age => $item->total];   });
+            if (!isset($ageWiseData[$ageGroup])) {
+                $ageWiseData[$ageGroup] = ['Male' => 0, 'Female' => 0, 'Other' => 0];
+            }
+
+            $ageWiseData[$ageGroup][$gender] = $total;
+        }
+
         $statCards = [
             [
                 'title' => 'Communities',
@@ -70,20 +104,14 @@ class DashboardController extends Controller
                 'icon' => 'i-heroicons-chart-bar',
                 'bgClass' => 'bg-indigo-500',
                 'borderClass' => 'border-indigo-800',
-            ],
-            [
-                'title' => 'Age Wise',
-                'data' => $ageWiseData,
-                'icon' => 'i-heroicons-chart-pie',
-                'bgClass' => 'bg-purple-500',
-                'borderClass' => 'border-purple-800',
-            ],
+            ]
         ];
 
         return Inertia::render('Dashboard', [
             'title' => 'Dashboard',
             'statCards' => $statCards,
             'tableCards' => $tableCards,
+            'ageWiseData' => $ageWiseData,
         ]);
     }
 }
