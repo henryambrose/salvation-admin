@@ -9,11 +9,11 @@ import { BookOpen, Folder, LayoutGrid, Droplet, MapPin, CurrencyIcon, IndianRupe
 import AppLogo from './AppLogo.vue';
 
 const mainNavItems: NavItem[] = [
-    // {
-    //     title: 'Dashboard',
-    //     href: '/dashboard',
-    //     icon: LayoutGrid,
-    // },
+    {
+        title: 'Dashboard',
+        href: '/dashboard',
+        icon: LayoutGrid,
+    },
 
     {
         title: 'Member',

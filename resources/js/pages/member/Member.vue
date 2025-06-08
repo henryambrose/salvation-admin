@@ -34,8 +34,11 @@ const breadcrumbs: BreadcrumbItem[] = [
 const statusList = [
     'Resident','Non-Resident','Dead','Redevelopment Unsettled'
 ];
+const genderList = ['male', 'female', 'other'];
+
 // const statusMap = Object.fromEntries(statusList.map(status => [status, status]));
 const statusArray = statusList.map(status => ({ id: status, name: status }));
+const genderArray = genderList.map(gender => ({ id: gender, name: gender.charAt(0).toUpperCase() + gender.slice(1) }));
 
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
@@ -46,6 +49,7 @@ const form = useForm({
     first_name: member?.first_name ? member.first_name : '',
     middle_name: member?.middle_name ? member.middle_name : '',
     last_name: member?.last_name ? member.last_name : '',
+    gender: member?.gender ? member.gender : '',
     blood_group: member?.blood_group ? member.blood_group : '',
     status: member?.status ? member.status : '',
     relationship: member?.relationship ? member.relationship : '',
@@ -149,7 +153,18 @@ const fetchCommunityCluster = async () => {
                         <Input id="last_name" class="mt-1 block w-full" v-model="form.last_name" autocomplete="last_name" placeholder="Last name" />
                         <InputError class="mt-2" :message="form.errors.last_name" />
                     </div>
+                    <div class="grid gap-2">
+                        <Label for="status">Gender</Label>
 
+                        <SelectInput
+                            id="status"
+                            v-model="form.gender"
+                            :options="genderArray"
+                            class="mt-1 block w-full"
+                            placeholder="Select Status"
+                        />
+                        <InputError class="mt-2" :message="form.errors.gender" />
+                    </div>
                     <div class="grid gap-2">
                         <Label for="blood_group">Blood Group</Label>
                         <Input id="blood_group" class="mt-1 block w-full" v-model="form.blood_group" autocomplete="blood_group" placeholder="Blood group" />
@@ -313,11 +328,6 @@ const fetchCommunityCluster = async () => {
                         <Label for="current_country">Current Country</Label>
                         <Input id="current_country" class="mt-1 block w-full" v-model="form.current_country" autocomplete="current_country" placeholder="Current Country" />
                         <InputError class="mt-2" :message="form.errors.current_country" />
-                    </div>
-                    <div class="grid gap-2">
-                        <Label for="blood_group">Blood Group</Label>
-                        <Input id="blood_group" class="mt-1 block w-full" v-model="form.blood_group" autocomplete="blood_group" placeholder="Blood group" />
-                        <InputError class="mt-2" :message="form.errors.blood_group" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="cells_and_association_id">Cells and Association ID</Label>
