@@ -22,6 +22,7 @@ class Member extends Model
         'last_name',
         'first_name',
         'middle_name',
+        'gender',
         'date_of_birth',
         'permanent_add1',
         'permanent_add2',

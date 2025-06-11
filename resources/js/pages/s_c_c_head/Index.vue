@@ -17,11 +17,12 @@ const props = defineProps({
 
 const columns = [
 { key: 'id', label: 'Id', sortable: true },
-{ key: 'member_name', label: 'Member Name', sortable: true },
+{ key: 'member_first_name', label: 'Member Name', sortable: true },
 { key: 'community_name', label: 'Community Name', sortable: true },
 
 ];
 
+console.log('SCC Heads:', props.s_c_c_heads.data);
 
 const breadcrumbs = [
   { title: 'SCC Heads', href: '/scc-head/index' },
