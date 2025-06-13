@@ -44,19 +44,21 @@ const breadcrumbs: BreadcrumbItem[] = [
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
             <div class="grid gap-4 grid-cols-1">
                 <Collapsible class="w-full bg-green-600 rounded-lg shadow-md">
-                        <CollapsibleTrigger class="text-black p-2 rounded ">Birthdays</CollapsibleTrigger>
+                        <CollapsibleTrigger class="text-black p-2 rounded w-full bg-green-600 rounded-lg shadow-md">
+                            &#127881; &#127874; Birthdays &#129395; &#127873; &#127880;
+                        </CollapsibleTrigger>
                         <CollapsibleContent class="p-4 bg-gray-100">
                             <table class="table-auto w-full border-collapse border border-gray-300">
                                 <thead>
                                     <tr class="bg-gray-200">
-                                        <th class="border border-gray-300 px-4 py-2">COMMUNITY</th>
-                                        <th class="border border-gray-300 px-4 py-2">First Name</th>
-                                        <th class="border border-gray-300 px-4 py-2">Middle Name</th>
-                                        <th class="border border-gray-300 px-4 py-2">Last Name</th>
-                                        <th class="border border-gray-300 px-4 py-2">Date of Birth</th>
-                                        <th class="border border-gray-300 px-4 py-2">Age</th>
-                                        <th class="border border-gray-300 px-4 py-2">Contact No</th>
-                                        <th class="border border-gray-300 px-4 py-2">Email</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">COMMUNITY</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">First Name</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Middle Name</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Last Name</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Date of Birth</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Age</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Contact No</th>
+                                        <th class="border border-gray-300 px-4 py-2 uppercase">Email</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -99,9 +101,10 @@ const breadcrumbs: BreadcrumbItem[] = [
                             </div>
 
                             <!-- Table Rows -->
-                            <div class="divide-y divide-gray-200">
+                            <!-- Scrollable Table Rows -->
+                            <div class="max-h-48 overflow-y-auto divide-y divide-gray-200">
                                 <div class="grid grid-cols-2 text-left p-2" v-for="(row, index) in tableCard.data" :key="index">
-                                    <div>{{ index }}</div>
+                                    <div>{{ index ? index : 'Other'  }}</div>
                                     <div>{{ row }}</div>
                                 </div>
                             </div>
@@ -122,8 +125,8 @@ const breadcrumbs: BreadcrumbItem[] = [
                                 <div>Female</div>
                             </div>
 
-                            <!-- Table Rows -->
-                            <div class="divide-y divide-gray-200">
+                            <!-- Scrollable Table Rows -->
+                            <div class="max-h-48 overflow-y-auto divide-y divide-gray-200">
                                 <div class="grid grid-cols-4 text-left p-2" v-for="(row, index) in ageWiseData" :key="index">
                                     <div>{{ index }}</div>
                                     <div>{{ row['Male']+row['Female'] }}</div>

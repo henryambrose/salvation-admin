@@ -81,6 +81,65 @@ class DashboardController extends Controller
         ->orderByRaw("MONTH(date_of_birth), DAY(date_of_birth)")
         ->get(['name', 'date_of_birth']);
 
+        /** community wise members with community name and member count */
+        $communityWiseMembers = Community::withCount('members')
+            ->get()
+            ->mapWithKeys(function ($community) {
+                return [$community->name => $community->members_count];
+            });
+        // \Log::debug('Community Wise Members:', $communityWiseMembers->toArray());
+
+        // COMMUNITY WISE FAMILY
+        $communityWiseFamilies = Community::withCount(['members as family_count' => function ($query) {
+            $query->select(DB::raw('COUNT(DISTINCT family_no)'));
+        }])->get()
+            ->mapWithKeys(function ($community) {
+                return [$community->name => $community->family_count];
+            });
+
+        // \Log::debug('Community Wise Families:', $communityWiseFamilies->toArray());
+
+        // STATUS WISE
+        $statusWiseMembers = Member::select(['status', DB::raw("count('status') AS total")])
+            ->groupBy('status')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [ucfirst($item->status) => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Status Wise Members:', $statusWiseMembers);
+
+        // designation wise members
+        $designationWiseMembers = Member::select(['designation', DB::raw("count('designation') AS total")])
+            ->groupBy('designation')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->designation => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Designation Wise Members:', $designationWiseMembers);
+
+        // latest_qualifications wise members
+        $latestQualificationsWiseMembers = Member::select(['latest_qualifications', DB::raw("count('latest_qualifications') AS total")])
+            ->groupBy('latest_qualifications')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->latest_qualifications => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Latest Qualifications Wise Members:', $latestQualificationsWiseMembers);
+
+        // relationship wise members
+        $relationshipWiseMembers = Member::select(['relationship', DB::raw("count('relationship') AS total")])
+            ->groupBy('relationship')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->relationship => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Relationship Wise Members:', $relationshipWiseMembers);
+
+
         $statCards = [
             [
                 'title' => 'Communities',
@@ -111,7 +170,49 @@ class DashboardController extends Controller
                 'icon' => 'i-heroicons-chart-bar',
                 'bgClass' => 'bg-indigo-500',
                 'borderClass' => 'border-indigo-800',
-            ]
+            ],
+            [
+                'title' => 'Community Wise Members',
+                'data' => $communityWiseMembers,
+                'icon' => 'i-heroicons-users',
+                'bgClass' => 'bg-purple-500',
+                'borderClass' => 'border-purple-800',
+            ],
+            [
+                'title' => 'Community Wise Families',
+                'data' => $communityWiseFamilies,
+                'icon' => 'i-heroicons-home',
+                'bgClass' => 'bg-sky-500',
+                'borderClass' => 'border-sky-800',
+            ],
+            [
+                'title' => 'Status Wise Members',
+                'data' => $statusWiseMembers,
+                'icon' => 'i-heroicons-chart-pie',
+                'bgClass' => 'bg-green-500',
+                'borderClass' => 'border-green-800',
+            ],
+            [
+                'title' => 'Designation Wise Members',
+                'data' => $designationWiseMembers,
+                'icon' => 'i-heroicons-briefcase',
+                'bgClass' => 'bg-yellow-500',
+                'borderClass' => 'border-yellow-800',
+            ],
+            [
+                'title' => 'Latest Qualifications Wise Members',
+                'data' => $latestQualificationsWiseMembers,
+                'icon' => 'i-heroicons-graduation-cap',
+                'bgClass' => 'bg-blue-500',
+                'borderClass' => 'border-blue-800',
+            ],
+            [
+                'title' => 'Relationship Wise Members',
+                'data' => $relationshipWiseMembers,
+                'icon' => 'i-heroicons-users',
+                'bgClass' => 'bg-red-500',
+                'borderClass' => 'border-red-800',
+            ],
         ];
 
         return Inertia::render('Dashboard', [

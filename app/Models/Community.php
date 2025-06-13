@@ -14,4 +14,9 @@ class Community extends Model
     {
         return $this->hasMany(CommunityCluster::class);
     }
+
+    public function members()
+    {
+        return $this->hasMany(Member::class);
+    }
 }
