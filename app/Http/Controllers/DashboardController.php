@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Community;
 use App\Models\Member;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,21 +47,6 @@ class DashboardController extends Controller
                 ORDER BY ag.min_age, t1.gender;
         ";
         $ageWiseDataResult = DB::select($ageSql);
-        // $ageWiseData = collect($ageWiseDataResult)->mapWithKeys(function ($item) { return [$item->age => $item->total];   });
-
-        /**
-         * columns for above data set
-         * AgeGroup Count Male Female
-         * male	109	Young 0-15
-            female	106	Young 0-15
-            other	98	Young 0-15
-            male	57	Youth 16-25
-            female	80	Youth 16-25
-            other	58	Youth 16-25
-            male	205	Adult 26-59
-            female	195	Adult 26-59
-            other	193	Adult 26-59
-         */
         $ageWiseData = [];
         foreach ($ageWiseDataResult as $row) {
             $ageGroup = $row->age_group;
@@ -73,6 +59,86 @@ class DashboardController extends Controller
 
             $ageWiseData[$ageGroup][$gender] = $total;
         }
+
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $dayAfterTomorrow = Carbon::today()->addDays(2);
+
+        $birthdays = Member::select(['id', 'first_name', 'middle_name', 'last_name', 'date_of_birth', DB::raw("CASE
+                            WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
+                            ELSE NULL
+                        END AS age"), 'contact_no', 'email'])->where(function ($query) use ($today, $tomorrow, $dayAfterTomorrow) {
+            $query->whereMonth('date_of_birth', $today->month)
+                ->whereDay('date_of_birth', $today->day);
+        })->orWhere(function ($query) use ($tomorrow) {
+            $query->whereMonth('date_of_birth', $tomorrow->month)
+                ->whereDay('date_of_birth', $tomorrow->day);
+        })->orWhere(function ($query) use ($dayAfterTomorrow) {
+            $query->whereMonth('date_of_birth', $dayAfterTomorrow->month)
+                ->whereDay('date_of_birth', $dayAfterTomorrow->day);
+        })
+        ->with('community')->addSelect(['community_id'])
+        ->orderByRaw("MONTH(date_of_birth), DAY(date_of_birth)")
+        ->get(['name', 'date_of_birth']);
+
+        /** community wise members with community name and member count */
+        $communityWiseMembers = Community::withCount('members')
+            ->get()
+            ->mapWithKeys(function ($community) {
+                return [$community->name => $community->members_count];
+            });
+        // \Log::debug('Community Wise Members:', $communityWiseMembers->toArray());
+
+        // COMMUNITY WISE FAMILY
+        $communityWiseFamilies = Community::withCount(['members as family_count' => function ($query) {
+            $query->select(DB::raw('COUNT(DISTINCT family_no)'));
+        }])->get()
+            ->mapWithKeys(function ($community) {
+                return [$community->name => $community->family_count];
+            });
+
+        // \Log::debug('Community Wise Families:', $communityWiseFamilies->toArray());
+
+        // STATUS WISE
+        $statusWiseMembers = Member::select(['status', DB::raw("count('status') AS total")])
+            ->groupBy('status')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [ucfirst($item->status) => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Status Wise Members:', $statusWiseMembers);
+
+        // designation wise members
+        $designationWiseMembers = Member::select(['designation', DB::raw("count('designation') AS total")])
+            ->groupBy('designation')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->designation => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Designation Wise Members:', $designationWiseMembers);
+
+        // latest_qualifications wise members
+        $latestQualificationsWiseMembers = Member::select(['latest_qualifications', DB::raw("count('latest_qualifications') AS total")])
+            ->groupBy('latest_qualifications')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->latest_qualifications => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Latest Qualifications Wise Members:', $latestQualificationsWiseMembers);
+
+        // relationship wise members
+        $relationshipWiseMembers = Member::select(['relationship', DB::raw("count('relationship') AS total")])
+            ->groupBy('relationship')
+            ->get()
+            ->mapWithKeys(function ($item) {
+                return [$item->relationship => $item->total];
+            })
+            ->toArray();
+        // \Log::debug('Relationship Wise Members:', $relationshipWiseMembers);
+
 
         $statCards = [
             [
@@ -104,7 +170,49 @@ class DashboardController extends Controller
                 'icon' => 'i-heroicons-chart-bar',
                 'bgClass' => 'bg-indigo-500',
                 'borderClass' => 'border-indigo-800',
-            ]
+            ],
+            [
+                'title' => 'Community Wise Members',
+                'data' => $communityWiseMembers,
+                'icon' => 'i-heroicons-users',
+                'bgClass' => 'bg-purple-500',
+                'borderClass' => 'border-purple-800',
+            ],
+            [
+                'title' => 'Community Wise Families',
+                'data' => $communityWiseFamilies,
+                'icon' => 'i-heroicons-home',
+                'bgClass' => 'bg-sky-500',
+                'borderClass' => 'border-sky-800',
+            ],
+            [
+                'title' => 'Status Wise Members',
+                'data' => $statusWiseMembers,
+                'icon' => 'i-heroicons-chart-pie',
+                'bgClass' => 'bg-green-500',
+                'borderClass' => 'border-green-800',
+            ],
+            [
+                'title' => 'Designation Wise Members',
+                'data' => $designationWiseMembers,
+                'icon' => 'i-heroicons-briefcase',
+                'bgClass' => 'bg-yellow-500',
+                'borderClass' => 'border-yellow-800',
+            ],
+            [
+                'title' => 'Latest Qualifications Wise Members',
+                'data' => $latestQualificationsWiseMembers,
+                'icon' => 'i-heroicons-graduation-cap',
+                'bgClass' => 'bg-blue-500',
+                'borderClass' => 'border-blue-800',
+            ],
+            [
+                'title' => 'Relationship Wise Members',
+                'data' => $relationshipWiseMembers,
+                'icon' => 'i-heroicons-users',
+                'bgClass' => 'bg-red-500',
+                'borderClass' => 'border-red-800',
+            ],
         ];
 
         return Inertia::render('Dashboard', [
@@ -112,6 +220,7 @@ class DashboardController extends Controller
             'statCards' => $statCards,
             'tableCards' => $tableCards,
             'ageWiseData' => $ageWiseData,
+            'birthdays' => $birthdays,
         ]);
     }
 }
