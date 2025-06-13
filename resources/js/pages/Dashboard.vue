@@ -7,6 +7,7 @@ import Card from '@/components/ui/card/Card.vue';
 import CardHeader from '@/components/ui/card/CardHeader.vue';
 import CardTitle from '@/components/ui/card/CardTitle.vue';
 import CardContent from '@/components/ui/card/CardContent.vue';
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '@/components/ui/collapsible';
 
 const props = defineProps({
     statCards: {
@@ -19,6 +20,10 @@ const props = defineProps({
     },
     ageWiseData: {
         type: Object,
+        default: () => [],
+    },
+    birthdays: {
+        type: Array,
         default: () => [],
     },
 
@@ -37,6 +42,41 @@ const breadcrumbs: BreadcrumbItem[] = [
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
+            <div class="grid gap-4 grid-cols-1">
+                <Collapsible class="w-full bg-green-600 rounded-lg shadow-md">
+                        <CollapsibleTrigger class="text-black p-2 rounded ">Birthdays</CollapsibleTrigger>
+                        <CollapsibleContent class="p-4 bg-gray-100">
+                            <table class="table-auto w-full border-collapse border border-gray-300">
+                                <thead>
+                                    <tr class="bg-gray-200">
+                                        <th class="border border-gray-300 px-4 py-2">COMMUNITY</th>
+                                        <th class="border border-gray-300 px-4 py-2">First Name</th>
+                                        <th class="border border-gray-300 px-4 py-2">Middle Name</th>
+                                        <th class="border border-gray-300 px-4 py-2">Last Name</th>
+                                        <th class="border border-gray-300 px-4 py-2">Date of Birth</th>
+                                        <th class="border border-gray-300 px-4 py-2">Age</th>
+                                        <th class="border border-gray-300 px-4 py-2">Contact No</th>
+                                        <th class="border border-gray-300 px-4 py-2">Email</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="birthday in birthdays" :key="birthday.id">
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday?.community?.name ? birthday?.community?.name: '' }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.first_name }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.middle_name || 'N/A' }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.last_name }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.date_of_birth }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.age }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.contact_no }}</td>
+                                        <td class="border border-gray-300 px-4 py-2">{{ birthday.email }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </CollapsibleContent>
+
+                    </Collapsible>
+
+            </div>
             <div class="grid gap-4 md:grid-cols-4">
                 <Card v-for="statCard in statCards" class="rounded-xl uppercase border text-white shadow-md border-2" :class="[statCard.bgClass, statCard.borderClass]" :key="statCard.title">
                     <CardHeader class="p-2 text-center font-bold">

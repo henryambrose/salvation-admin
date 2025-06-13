@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Community;
 use App\Models\Member;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -46,21 +47,6 @@ class DashboardController extends Controller
                 ORDER BY ag.min_age, t1.gender;
         ";
         $ageWiseDataResult = DB::select($ageSql);
-        // $ageWiseData = collect($ageWiseDataResult)->mapWithKeys(function ($item) { return [$item->age => $item->total];   });
-
-        /**
-         * columns for above data set
-         * AgeGroup Count Male Female
-         * male	109	Young 0-15
-            female	106	Young 0-15
-            other	98	Young 0-15
-            male	57	Youth 16-25
-            female	80	Youth 16-25
-            other	58	Youth 16-25
-            male	205	Adult 26-59
-            female	195	Adult 26-59
-            other	193	Adult 26-59
-         */
         $ageWiseData = [];
         foreach ($ageWiseDataResult as $row) {
             $ageGroup = $row->age_group;
@@ -73,6 +59,27 @@ class DashboardController extends Controller
 
             $ageWiseData[$ageGroup][$gender] = $total;
         }
+
+        $today = Carbon::today();
+        $tomorrow = Carbon::tomorrow();
+        $dayAfterTomorrow = Carbon::today()->addDays(2);
+
+        $birthdays = Member::select(['id', 'first_name', 'middle_name', 'last_name', 'date_of_birth', DB::raw("CASE
+                            WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
+                            ELSE NULL
+                        END AS age"), 'contact_no', 'email'])->where(function ($query) use ($today, $tomorrow, $dayAfterTomorrow) {
+            $query->whereMonth('date_of_birth', $today->month)
+                ->whereDay('date_of_birth', $today->day);
+        })->orWhere(function ($query) use ($tomorrow) {
+            $query->whereMonth('date_of_birth', $tomorrow->month)
+                ->whereDay('date_of_birth', $tomorrow->day);
+        })->orWhere(function ($query) use ($dayAfterTomorrow) {
+            $query->whereMonth('date_of_birth', $dayAfterTomorrow->month)
+                ->whereDay('date_of_birth', $dayAfterTomorrow->day);
+        })
+        ->with('community')->addSelect(['community_id'])
+        ->orderByRaw("MONTH(date_of_birth), DAY(date_of_birth)")
+        ->get(['name', 'date_of_birth']);
 
         $statCards = [
             [
@@ -112,6 +119,7 @@ class DashboardController extends Controller
             'statCards' => $statCards,
             'tableCards' => $tableCards,
             'ageWiseData' => $ageWiseData,
+            'birthdays' => $birthdays,
         ]);
     }
 }
