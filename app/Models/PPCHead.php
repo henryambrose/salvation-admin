@@ -9,4 +9,9 @@ class PPCHead extends Model
 {
     /** @use HasFactory<\Database\Factories\PPCHeadFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'member_id',
+        'community_id',
+    ];
 }

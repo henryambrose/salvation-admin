@@ -131,3 +131,10 @@ export interface SCCHead {
     member_id: number;
     community_id: number;
 }
+
+export interface PPCHead {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
