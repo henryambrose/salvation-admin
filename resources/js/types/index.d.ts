@@ -138,3 +138,15 @@ export interface PPCHead {
     created_at: string;
     updated_at: string;
 }
+
+export interface CommunityFund {
+    id: number;
+    member_id: number;
+    member: Member;
+    amount: number;
+    description?: string | null;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+}
+
+export type CommunityFunds = CommunityFund[];

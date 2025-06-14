@@ -28,6 +28,12 @@ const mainNavItems: NavItem[] = [
     },
 
     {
+        title: 'Community Fund',
+        href: '/community-fund',
+        icon: CurrencyIcon,
+    },
+
+    {
         title: 'Zone',
         href: '/zone',
         icon: MapPin,

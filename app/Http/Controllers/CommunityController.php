@@ -14,15 +14,24 @@ class CommunityController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        $communities = Community::query()
-            ->orderBy('created_at', 'desc')
-            ->paginate(10)
-            ->withQueryString();
+        $query = Community::query();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
 
         return Inertia::render('community/Index', [
-            'communities' => $communities,
+            'communities' => $query->paginate($perPage)->appends($request->query()),
             'filters' => request()->only('search', 'sort', 'direction', 'perPage'),
             'fetchUrl' => route('community.index'),
         ]);
