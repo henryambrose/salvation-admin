@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type SharedData, type BreadcrumbItem } from '@/types';
+import FormHeader from '@/components/FormHeader.vue';
+import FormBody from '@/components/FormBody.vue';
 
 interface Props {
     community?: {
@@ -48,11 +50,18 @@ const submit = () => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head :title="props.community ? 'Edit Community' : 'Create Community'" />
-        <div class="p-4 bg-white shadow rounded">
-            <h2 class="text-2xl font-bold mb-4">
-                {{ props.community ? 'Edit Community' : 'Create Community' }}
-            </h2>
-
+        <FormHeader>
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-bold">{{ props.community ? 'Edit Community' : 'Create Community' }}</h2>
+                <div class="btn-group flex space-x-2">
+                    <Button as="a" href="/community/index" class="btn btn-secondary">
+                        <component :is="List" />
+                        <span>Community List</span>
+                    </Button>
+                </div>
+            </div>
+        </FormHeader>
+        <FormBody>
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid gap-2">
                     <Label for="name">Community Name</Label>
@@ -67,7 +76,7 @@ const submit = () => {
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <Button :disabled="form.processing">Save</Button>
+                    <Button class="btn btn-secondary" :disabled="form.processing">Save</Button>
 
                     <Transition
                         enter-active-class="transition ease-in-out"
@@ -79,6 +88,6 @@ const submit = () => {
                     </Transition>
                 </div>
             </form>
-        </div>
+        </FormBody>
     </AppLayout>
 </template>

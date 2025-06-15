@@ -15,6 +15,7 @@ import { ref, computed, onMounted } from 'vue';
 import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3'
 import { reactive, watch } from 'vue'
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   zones: Object,
@@ -50,15 +51,15 @@ const breadcrumbs = [
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Zone" />
-        <div class="p-4 bg-white shadow rounded">
+        <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
             <h2 class="text-2xl font-bold">Zones</h2>
-            <Button @click="showModal = true">
+            <Button @click="showModal = true" class="btn btn-secondary mr-2">
                 ➕ Add Zone
             </Button>
 
         </div>
-        </div>
+        </DatatableHeader>
 
         <DataTable
             :data="zones"

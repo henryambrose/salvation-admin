@@ -7,6 +7,7 @@ import { Community } from '@/types';
 import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   communities: Object,
@@ -40,7 +41,7 @@ function deleteCommunity(id: Community['id']) {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Communities" />
-        <div class="p-4 bg-white shadow rounded">
+        <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Communities</h2>
                 <div class="btn-group flex space-x-2">
@@ -50,7 +51,7 @@ function deleteCommunity(id: Community['id']) {
                     </Button>
                 </div>
             </div>
-        </div>
+        </DatatableHeader>
 
         <DataTable
             :data="communities"

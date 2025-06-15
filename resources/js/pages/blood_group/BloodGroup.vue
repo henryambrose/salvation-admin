@@ -15,6 +15,7 @@ import { ref, computed, onMounted } from 'vue';
 import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3'
 import { reactive, watch } from 'vue'
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   bloodGroups: Object,
@@ -49,15 +50,15 @@ const breadcrumbs = [
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Blood Group" />
-        <div class="p-4 bg-white shadow rounded">
+        <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
-            <h2 class="text-2xl font-bold">Blood Group</h2>
-            <Button @click="showModal = true">
-                ➕ Add Blood Group
-            </Button>
+                <h2 class="text-2xl font-bold">Blood Group</h2>
+                <Button @click="showModal = true" class="btn btn-secondary mr-2">
+                    ➕ Add Blood Group
+                </Button>
 
-        </div>
-        </div>
+            </div>
+        </DatatableHeader>
 
         <DataTable
             :data="bloodGroups"

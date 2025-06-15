@@ -13,6 +13,8 @@ import { Community, Member, CellsAndAssociations, type BreadcrumbItem, type Shar
 import { List } from 'lucide-vue-next';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { ref } from 'vue';
+import FormHeader from '@/components/FormHeader.vue';
+import FormBody from '@/components/FormBody.vue';
 
 
 interface Props {
@@ -123,7 +125,7 @@ const fetchCommunityCluster = async () => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Members" />
-        <div class="p-4 bg-white shadow rounded">
+        <FormHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Members</h2>
                 <div class="btn-group flex space-x-2">
@@ -133,8 +135,8 @@ const fetchCommunityCluster = async () => {
                     </Button>
                 </div>
             </div>
-        </div>
-        <div class="p-4 bg-white shadow rounded">
+        </FormHeader>
+        <FormBody>
 
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -452,8 +454,8 @@ const fetchCommunityCluster = async () => {
                         <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
                     </Transition>
                 </div>
-                </form>
-        </div>
+            </form>
+        </FormBody>
 
     </AppLayout>
 </template>

@@ -15,6 +15,8 @@ withDefaults(defineProps<Props>(), {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Flash />
-        <slot />
+        <div class="p-4 shadow rounded">
+            <slot />
+        </div>
     </AppLayout>
 </template>
