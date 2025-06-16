@@ -22,6 +22,18 @@ const mainNavItems: NavItem[] = [
     },
 
     {
+        title: 'Community',
+        href: '/community',
+        icon: CurrencyIcon,
+    },
+
+    {
+        title: 'Community Fund',
+        href: '/community-fund',
+        icon: CurrencyIcon,
+    },
+
+    {
         title: 'Zone',
         href: '/zone',
         icon: MapPin,
@@ -42,6 +54,12 @@ const mainNavItems: NavItem[] = [
     {
         title: 'SCC Head',
         href: '/scc-head',
+        icon: UserCheck,
+    },
+
+    {
+        title: 'PPC Head',
+        href: '/ppc-head',
         icon: UserCheck,
     },
 

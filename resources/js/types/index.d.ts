@@ -131,3 +131,22 @@ export interface SCCHead {
     member_id: number;
     community_id: number;
 }
+
+export interface PPCHead {
+    id: number;
+    name: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CommunityFund {
+    id: number;
+    member_id: number;
+    member: Member;
+    amount: number;
+    description?: string | null;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+}
+
+export type CommunityFunds = CommunityFund[];

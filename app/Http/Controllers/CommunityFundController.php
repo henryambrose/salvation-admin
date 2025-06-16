@@ -5,15 +5,38 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCommunityFundRequest;
 use App\Http\Requests\UpdateCommunityFundRequest;
 use App\Models\CommunityFund;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class CommunityFundController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        //
+        $query = CommunityFund::query();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $query->with(['member', 'member.community']);
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('community_fund/Index', [
+            'communityFunds' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => request()->only('search', 'sort', 'direction', 'perPage'),
+            'fetchUrl' => route('community.index'),
+        ]);
     }
 
     /**
@@ -21,7 +44,10 @@ class CommunityFundController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('community_fund/CommunityFund', [
+            'communities' => \App\Models\Community::all(),
+            'members' => \App\Models\Member::all(),
+        ]);
     }
 
     /**
@@ -29,7 +55,9 @@ class CommunityFundController extends Controller
      */
     public function store(StoreCommunityFundRequest $request)
     {
-        //
+        CommunityFund::create($request->validated());
+
+        return redirect()->route('community-fund.index')->with('success', 'Community Fund created successfully.');
     }
 
     /**
@@ -37,7 +65,11 @@ class CommunityFundController extends Controller
      */
     public function show(CommunityFund $communityFund)
     {
-        //
+        return Inertia::render('community_fund/CommunityFund', [
+            'communityFund' => $communityFund,
+            'communities' => \App\Models\Community::all(),
+            'members' => \App\Models\Member::all(),
+        ]);
     }
 
     /**
@@ -45,7 +77,11 @@ class CommunityFundController extends Controller
      */
     public function edit(CommunityFund $communityFund)
     {
-        //
+        return Inertia::render('community_fund/CommunityFund', [
+            'communityFund' => $communityFund,
+            'communities' => \App\Models\Community::all(),
+            'members' => \App\Models\Member::all(),
+        ]);
     }
 
     /**
@@ -53,7 +89,9 @@ class CommunityFundController extends Controller
      */
     public function update(UpdateCommunityFundRequest $request, CommunityFund $communityFund)
     {
-        //
+        $communityFund->update($request->validated());
+
+        return redirect()->route('community-fund.index')->with('success', 'Community Fund updated successfully.');
     }
 
     /**
@@ -61,6 +99,8 @@ class CommunityFundController extends Controller
      */
     public function destroy(CommunityFund $communityFund)
     {
-        //
+        $communityFund->delete();
+
+        return redirect()->route('community-fund.index')->with('success', 'Community Fund deleted successfully.');
     }
 }

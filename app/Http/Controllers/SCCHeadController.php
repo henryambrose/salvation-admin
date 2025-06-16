@@ -44,8 +44,6 @@ class SCCHeadController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
-        \Log::debug($query->toSql());
-        \Log::debug($query->getBindings());
 
         return Inertia::render('s_c_c_head/Index', [
             'fetchUrl' => route('scc-head.index'),
