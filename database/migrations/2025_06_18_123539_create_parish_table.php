@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('parishes', function (Blueprint $table) {
             $table->id();
             $table->string('deanery');
-            $table->string('name')->unique();
+            $table->string('name');
             $table->string('code')->nullable();
             $table->longText('address')->nullable();
             $table->timestamps();

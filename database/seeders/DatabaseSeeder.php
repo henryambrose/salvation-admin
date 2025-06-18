@@ -15,9 +15,32 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // User::factory()->create([
+        //     'name' => 'Test User',
+        //     'email' => 'test@example.com',
+        // ]);
+         $this->call([
+            AgeGroupSeeder::class,
+            BloodGroupSeeder::class,
+            CellsAndAssociationMemberSeeder::class,
+            CellsAndAssociationSeeder::class,
+            CommunityClusterHeadSeeder::class,
+            CommunityClusterSeeder::class,
+            CommunityFundSeeder::class,
+            ZoneSeeder::class,
+            CommunitySeeder::class,
+            FamilyIncomeRangeSeeder::class,
+            MemberSeeder::class,
+            PPCHeadSeeder::class,
+            RelationshipSeeder::class,
+            SCCHeadSeeder::class,
+            CountrySeeder::class,
+            StateSeeder::class,
+            TownSeeder::class,
+            ParishSeeder::class,
+            DesignationSeeder::class,
+
+
+         ]);
     }
 }
