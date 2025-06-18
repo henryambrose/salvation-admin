@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\BloodGroup;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,6 +17,6 @@ class BloodGroupSeeder extends Seeder
             return ['name' => $group];
         }, ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+']);
 
-        \App\Models\BloodGroup::insert($bloodGroups);
+        BloodGroup::insert($bloodGroups);
     }
 }

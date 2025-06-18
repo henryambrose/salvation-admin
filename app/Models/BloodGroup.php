@@ -7,12 +7,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class BloodGroup extends Model
 {
-    /** @use HasFactory<\Database\Factories\BloodGroupFactory> */
     use HasFactory;
 
-    protected $fillable = [
-        'name',
+    protected $fillable = ['name'];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
-    public $timestamps = false;
+    public function getCreatedAtAttribute($value)
+    {
+        return \Carbon\Carbon::parse($value)->diffForHumans();
+    }
+
+    public function getUpdatedAtAttribute($value)
+    {
+        return \Carbon\Carbon::parse($value)->diffForHumans();
+    }
+
+    public function members()
+    {
+        return $this->hasMany(Member::class);
+    }
 }

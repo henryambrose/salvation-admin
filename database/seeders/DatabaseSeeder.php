@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             ZoneSeeder::class,
             CommunitySeeder::class,
             FamilyIncomeRangeSeeder::class,
-            MemberSeeder::class,
+            //MemberSeeder::class,
             PPCHeadSeeder::class,
             RelationshipSeeder::class,
             SCCHeadSeeder::class,
@@ -39,7 +39,8 @@ class DatabaseSeeder extends Seeder
             TownSeeder::class,
             ParishSeeder::class,
             DesignationSeeder::class,
-
+            GenderSeeder::class,
+            StatusSeeder::class,
 
          ]);
     }
