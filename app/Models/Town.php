@@ -9,7 +9,7 @@ class Town extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'state_id'];
+    protected $fillable = ['name', 'pincode', 'state_id'];
 
     protected $casts = [
         'created_at' => 'datetime',

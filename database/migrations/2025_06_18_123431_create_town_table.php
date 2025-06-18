@@ -15,7 +15,6 @@ return new class extends Migration
             $table->id();
             $table->foreignId('state_id')->nullable()->constrained('states');
             $table->string('name');
-            $table->string('abbr');
             $table->string('pincode')->unique()->nullable();
             $table->timestamps();
             $table->softDeletes();
