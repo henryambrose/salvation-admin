@@ -11,11 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('family_income_ranges', function (Blueprint $table) {
+        Schema::create('parishes', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique();
-            $table->unsignedBigInteger('starting_range');
-            $table->unsignedBigInteger('ending_range');
+            $table->string('deanery');
+            $table->string('name');
+            $table->string('code')->nullable();
+            $table->longText('address')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -26,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('family_income_ranges');
+        Schema::dropIfExists('parishes');
     }
 };

@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class BloodGroup extends Model
+class State extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'abbr', 'country_id'];
 
     protected $casts = [
         'created_at' => 'datetime',
@@ -26,8 +26,13 @@ class BloodGroup extends Model
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
 
-    public function members()
+    public function country()
     {
-        return $this->hasMany(Member::class);
-    }
+        return $this->belongsTo(Country::class);
+    } 
+    public function towns()
+    {
+        return $this->hasMany(Town::class);
+    }  
+  
 }

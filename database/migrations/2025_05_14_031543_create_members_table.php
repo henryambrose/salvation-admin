@@ -19,12 +19,9 @@ return new class extends Migration
             $table->string('old_sal_id')->nullable();
             $table->string('aadhar')->nullable();
             $table->string('family_no')->nullable();
-            $table->enum('status', ['Resident', 'Non-Resident', 'Dead', 'Redevelopment Unsettled']);
-            $table->string('relationship')->nullable();
             $table->string('last_name')->nullable();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
-            $table->enum('gender', ['male', 'female', 'other']);
             $table->date('date_of_birth')->nullable();
             $table->string('permanent_add1')->nullable();
             $table->string('permanent_add2')->nullable();
