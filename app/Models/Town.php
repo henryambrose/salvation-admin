@@ -5,16 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class BloodGroup extends Model
+class Town extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'pincode', 'state_id'];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-    ];
+    ];      
 
     public function getCreatedAtAttribute($value)
     {
@@ -26,8 +26,8 @@ class BloodGroup extends Model
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
 
-    public function members()
+    public function state()
     {
-        return $this->hasMany(Member::class);
-    }
+        return $this->belongsTo(State::class);
+    }   
 }

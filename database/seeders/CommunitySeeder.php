@@ -16,34 +16,6 @@ class CommunitySeeder extends Seeder
     {
         $now = Carbon::now()->toDateTimeString();
 
-        /**
-         * Communities
-            Name	commNo	zoneId
-            St. Augustine	1	1
-            St. Anthony	2	1
-            St. Faustina	3	1
-            St. Theresa of the Child Jesus	4	3
-            St. Peter	5	2
-            St. Christopher	6	3
-            St. Andrew	7	2
-            St. Francis Xavier	8	2
-            St. Blaise	9	2
-            St. Lawrence	10	2
-            St. Vincent de Paul	11	4
-            St. Maria Goretti	12	4
-            St. Anne	13	2
-            St. Martin	14	1
-            St. Jude	15	4
-            St. Gonsalo Garcia	16	2
-            St. Thomas	17	3
-            St. Paul	18	1
-            St. Sebastian	19	4
-            St. John the Baptist	20	3
-            St. Domnic Savio	21	1
-            St. Michael	22	4
-            Holy Family	23	3
-
-         */
         $communities = [
             ['name' => 'St. Augustine', 'id' => 1, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
             ['name' => 'St. Anthony', 'id' => 2, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
