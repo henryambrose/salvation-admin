@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\Gender;
 use App\Models\Member;
+use App\Models\Relationship;
+use App\Models\Status;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -20,21 +23,24 @@ class DashboardController extends Controller
         $memberCount = Member::count();
         $familyCount = Member::distinct('family_no')->count('family_no');
 
-        $genderData = Member::select(['gender', DB::raw("count('gender') AS total")])->groupBy('gender')
+        $genders = Gender::all()->pluck('name', 'id')->map(function ($gender) {
+            return ucfirst($gender);
+        })->toArray();
+        $genderData = Member::select(['gender_id', DB::raw("count('gender_id') AS total")])->groupBy('gender_id')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [ucfirst($item->gender) => $item->total];
+            ->mapWithKeys(function ($item) use ($genders) {
+                return [$genders[$item->gender_id] => $item->total];
             })
             ->toArray();
 
         $ageSql = "SELECT
-                    t1.gender,
+                    t1.gender_id,
                     COUNT(*) AS total,
                     ag.name AS age_group
                 FROM (
                     SELECT
                         id,
-                        gender,
+                        gender_id,
                         CASE
                             WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
                             ELSE NULL
@@ -43,14 +49,14 @@ class DashboardController extends Controller
                 ) AS t1
                 JOIN age_groups ag
                 ON t1.age IS NOT NULL AND t1.age BETWEEN ag.min_age AND ag.max_age
-                GROUP BY t1.gender, ag.name
-                ORDER BY ag.min_age, t1.gender;
+                GROUP BY t1.gender_id, ag.name
+                ORDER BY ag.min_age, t1.gender_id;
         ";
         $ageWiseDataResult = DB::select($ageSql);
         $ageWiseData = [];
         foreach ($ageWiseDataResult as $row) {
             $ageGroup = $row->age_group;
-            $gender = ucfirst($row->gender);
+            $gender = $genders[$row->gender_id];
             $total = $row->total;
 
             if (!isset($ageWiseData[$ageGroup])) {
@@ -100,11 +106,14 @@ class DashboardController extends Controller
         // \Log::debug('Community Wise Families:', $communityWiseFamilies->toArray());
 
         // STATUS WISE
-        $statusWiseMembers = Member::select(['status', DB::raw("count('status') AS total")])
-            ->groupBy('status')
+        $statuses = Status::all()->pluck('name', 'id')->map(function ($status) {
+            return ucfirst($status);
+        })->toArray();
+        $statusWiseMembers = Member::select(['status_id', DB::raw("count('status_id') AS total")])
+            ->groupBy('status_id')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [ucfirst($item->status) => $item->total];
+            ->mapWithKeys(function ($item) use ($statuses) {
+                return [$statuses[$item->status_id] => $item->total];
             })
             ->toArray();
         // \Log::debug('Status Wise Members:', $statusWiseMembers);
@@ -130,11 +139,14 @@ class DashboardController extends Controller
         // \Log::debug('Latest Qualifications Wise Members:', $latestQualificationsWiseMembers);
 
         // relationship wise members
-        $relationshipWiseMembers = Member::select(['relationship', DB::raw("count('relationship') AS total")])
-            ->groupBy('relationship')
+        $relationships = Relationship::all()->pluck('name', 'id')->map(function ($relationship) {
+            return ucfirst($relationship);
+        })->toArray();
+        $relationshipWiseMembers = Member::select(['relationship_id', DB::raw("count('relationship_id') AS total")])
+            ->groupBy('relationship_id')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [$item->relationship => $item->total];
+            ->mapWithKeys(function ($item) use ($relationships) {
+                return [$relationships[$item->relationship_id] => $item->total];
             })
             ->toArray();
         // \Log::debug('Relationship Wise Members:', $relationshipWiseMembers);
