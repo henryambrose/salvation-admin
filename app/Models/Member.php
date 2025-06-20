@@ -48,7 +48,7 @@ class Member extends Model
         'college_name',
         'latest_qualifications',
         'company_name',
-        'designation',
+        'designation_id',
         'family_income_range_id',
         'baptism_date',
         'baptism_reg_no',
