@@ -29,17 +29,19 @@ class DatabaseSeeder extends Seeder
             CommunityClusterHeadSeeder::class,
             CommunityClusterSeeder::class,
             FamilyIncomeRangeSeeder::class,
-            //MemberSeeder::class,
-            PPCHeadSeeder::class,
-            RelationshipSeeder::class,
-            SCCHeadSeeder::class,
-            CountrySeeder::class,
-            StateSeeder::class,
-            TownSeeder::class,
             ParishSeeder::class,
             DesignationSeeder::class,
             GenderSeeder::class,
             StatusSeeder::class,
+            RelationshipSeeder::class,
+            PPCHeadSeeder::class,
+            SCCHeadSeeder::class,
+            CountrySeeder::class,
+            StateSeeder::class,
+            TownSeeder::class,
+            MemberSeeder::class,
+
+
 
          ]);
     }

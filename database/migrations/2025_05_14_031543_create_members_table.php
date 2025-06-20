@@ -41,13 +41,12 @@ return new class extends Migration
             $table->string('current_country')->nullable();
             $table->string('contact_no')->nullable();
             $table->string('email')->nullable();
-            $table->string('blood_group')->nullable();
+            $table->foreignId('blood_group_id')->nullable()->constrained('blood_groups');
             $table->foreignId('cells_and_association_id')->nullable()->constrained('cells_and_associations');
             $table->string('school_name')->nullable();
             $table->string('college_name')->nullable();
             $table->string('latest_qualifications')->nullable();
             $table->string('company_name')->nullable();
-            $table->string('designation')->nullable();
             $table->string('family_income_range')->nullable();
             $table->date('baptism_date')->nullable();
             $table->string('baptism_reg_no')->nullable();

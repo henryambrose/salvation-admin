@@ -117,4 +117,11 @@ class MemberController extends Controller
     {
         //
     }
+
+    public function showFamilyTree($id)
+{
+    $member = Member::with(['relationships.relatedMember', 'relatedMembers'])->findOrFail($id);
+
+    return view('members.family_tree', compact('member'));
+}
 }

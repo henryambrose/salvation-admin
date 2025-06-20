@@ -13,10 +13,10 @@ class TownSeeder extends Seeder
      */
     public function run(): void
     {
-        $towns = [
-            ['name' => 'Dadar', 'pincode' => '400028'], 
-            ['name' => 'Prabhadevi', 'pincode' => '400025'], 
-            ['name' => 'Lower Parel', 'pincode' => '400013']
+        $towns =[
+            ['name' => 'Dadar', 'state_id' => 21, 'pincode' => '400028'],
+            ['name' => 'Prabhadevi', 'state_id' => '21', 'pincode' => '400025'],
+            ['name' => 'Lower Parel', 'state_id' => '21', 'pincode' => '400013']
         ];
 
         Town::insert($towns);

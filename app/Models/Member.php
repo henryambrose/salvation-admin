@@ -17,12 +17,12 @@ class Member extends Model
         'old_sal_id',
         'aadhar',
         'family_no',
-        'status',
-        'relationship',
+        'status_id',
+        'relationship_id',
         'last_name',
         'first_name',
         'middle_name',
-        'gender',
+        'gender_id',
         'date_of_birth',
         'permanent_add1',
         'permanent_add2',
@@ -42,14 +42,14 @@ class Member extends Model
         'current_country',
         'contact_no',
         'email',
-        'blood_group',
+        'blood_group_id',
         'cells_and_association_id',
         'school_name',
         'college_name',
         'latest_qualifications',
         'company_name',
         'designation',
-        'family_income_range',
+        'family_income_range_id',
         'baptism_date',
         'baptism_reg_no',
         'baptism_parish',
@@ -75,5 +75,27 @@ class Member extends Model
     public function cellsAndAssociation()
     {
         return $this->belongsTo(CellsAndAssociation::class);
+    }
+    public function relationships()
+    {
+        return $this->hasMany(FamilyLink::class);
+    }
+    public function statuses()
+    {
+        return $this->hasMany(Status::class);
+    }
+    public function genders()
+    {
+        return $this->hasMany(Gender::class);
+    }
+    public function bloodgroups()
+    {
+        return $this->belongsTo(BloodGroup::class);
+    }
+
+    public function relatedMembers()
+    {
+        return $this->belongsToMany(Member::class, 'family_links', 'member_id', 'related_member_id')
+                    ->withPivot('relationship_id');
     }
 }
