@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\CountryController;
+use App\Http\Controllers\StateController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
-    Route::redirect('country', '/country/index');
+    Route::redirect('state', '/state/index');
 
-    Route::get('country/index', [CountryController::class, 'index'])->name('country.index');
-    Route::resource('country', CountryController::class)->except(['index']);
+    Route::get('state/index', [StateController::class, 'index'])->name('state.index');
+    Route::resource('state', StateController::class)->except(['index']);
 
 });

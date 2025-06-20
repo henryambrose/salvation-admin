@@ -5,6 +5,7 @@ import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   countries: Object,
@@ -36,7 +37,7 @@ function deleteCountry(countryId: number) {
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Countries" />
-    <div class="p-4 bg-white shadow rounded">
+    <DatatableHeader>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Countries</h2>
         <Button as="a" href="/country/create" class="btn btn-secondary">
@@ -44,7 +45,7 @@ function deleteCountry(countryId: number) {
           <span>Add Country</span>
         </Button>
       </div>
-    </div>
+    </DatatableHeader>
 
     <DataTable
       :data="countries"

@@ -138,7 +138,7 @@
   --secondary: hsl(0 0% 92.1%);
   --secondary-foreground: hsl(0 0% 9%);
   --muted: hsl(0 0% 96.1%);
-  --muted-foreground: hsl(0 0% 45.1%);
+  --muted-foreground: hsl(0 0% 98%);
   --accent: hsl(0 0% 96.1%);
   --accent-foreground: hsl(0 0% 9%);
   --destructive: hsl(0 84.2% 60.2%);
@@ -156,7 +156,7 @@
   --sidebar-foreground: hsl(240 5.3% 26.1%);
   --sidebar-primary: hsl(0 0% 10%);
   --sidebar-primary-foreground: hsl(0 0% 98%);
-  --sidebar-accent: hsl(0 0% 94%);
+  --sidebar-accent: hsl(144.6, 50%, 56.1%);
   --sidebar-accent-foreground: hsl(0 0% 30%);
   --sidebar-border: hsl(0 0% 91%);
   --sidebar-ring: hsl(217.2 91.2% 59.8%);
@@ -226,11 +226,15 @@
 }
 @layer components {
     .datatable2 {
-        background-image: linear-gradient( 174.2deg,  rgba(255,244,228,1) 7.1%, rgba(240,246,238,1) 67.4% );
+        background-image: radial-gradient( circle farthest-corner at -24.7% -47.3%,  rgba(6,130,165,1) 0%, rgba(34,48,86,1) 66.8%, rgba(15,23,42,1) 100.2% );
+        color: hsl(0 0% 98%);
     }
 
     .main-bg {
-        background-image: radial-gradient( circle farthest-corner at -24.7% -47.3%,  rgba(6,130,165,1) 0%, rgba(34,48,86,1) 66.8%, rgba(15,23,42,1) 100.2% );
+        /* background-image: linear-gradient( 174.2deg,  rgba(255,244,228,1) 7.1%, rgba(240,246,238,1) 67.4% ); */
+        color: hsl(0 0% 3.9%);
+        /* background: #2A7B9B; */
+        background-image: radial-gradient(circle,rgba(42, 123, 155, 1) 0%, rgba(87, 199, 133, 1) 100%, rgba(237, 221, 83, 1) 51%);
     }
 
     /* .btn {
@@ -239,12 +243,13 @@
 
     .btn-secondary {
         /* @apply btn text-white; */
-        background-image: radial-gradient(
+        /* background-image: radial-gradient(
           circle farthest-corner at -24.7% -47.3%,
           rgba(6,130,165,1) 0%,
           rgba(34,48,86,1) 66.8%,
           rgba(15,23,42,1) 100.2%
-        );
+        ); */
+        background-color: #57C785 !important;
     }
 
     .btn-primary:hover {
