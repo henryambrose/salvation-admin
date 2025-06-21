@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('s_c_c_heads', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('member_id')->constrained('members');
+            $table->foreignId('member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->foreignId('community_id')->constrained('communities');
             $table->timestamps();
             $table->softDeletes();

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Relationship;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -55,6 +56,6 @@ class RelationshipSeeder extends Seeder
             ['name' => 'Guest'],
             ];
 
-        \App\Models\Relationship::insert($relationships);
+        Relationship::insert($relationships);
     }
 }

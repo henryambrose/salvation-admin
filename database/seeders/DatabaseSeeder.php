@@ -34,14 +34,12 @@ class DatabaseSeeder extends Seeder
             GenderSeeder::class,
             StatusSeeder::class,
             RelationshipSeeder::class,
-            PPCHeadSeeder::class,
-            SCCHeadSeeder::class,
             CountrySeeder::class,
             StateSeeder::class,
             TownSeeder::class,
             MemberSeeder::class,
-
-
+            PPCHeadSeeder::class,
+            SCCHeadSeeder::class,
 
          ]);
     }
