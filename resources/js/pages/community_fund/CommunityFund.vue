@@ -10,6 +10,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Member, type SharedData, type User, type BreadcrumbItem } from '@/types';
 import { List } from 'lucide-vue-next';
 import { computed } from 'vue';
+import FormHeader from '@/components/FormHeader.vue';
+import FormBody from '@/components/FormBody.vue';
 
 interface Props {
     communityFund?: {
@@ -66,7 +68,7 @@ const submit = () => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head :title="props.communityFund ? 'Edit Community Fund' : 'Create Community Fund'" />
-        <div class="p-4 bg-white shadow rounded">
+        <FormHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">
                     {{ props.communityFund ? 'Edit Community Fund' : 'Create Community Fund' }}
@@ -78,8 +80,8 @@ const submit = () => {
                     </Button>
                 </div>
             </div>
-        </div>
-        <div class="p-4 bg-white shadow rounded">
+        </FormHeader>
+        <FormBody>
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="grid gap-2">
@@ -132,6 +134,6 @@ const submit = () => {
                     </Transition>
                 </div>
             </form>
-        </div>
+        </FormBody>
     </AppLayout>
 </template>

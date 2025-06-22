@@ -150,3 +150,37 @@ export interface CommunityFund {
 }
 
 export type CommunityFunds = CommunityFund[];
+
+export interface Country {
+    id: number;
+    name: string;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+    deleted_at?: string | null; // ISO 8601 date string for soft deletes
+}
+
+export type Countries = Country[];
+
+export interface State {
+    id: number;
+    name: string;
+    abbr?: string | null;
+    country_id?: number | null;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+    deleted_at?: string | null; // ISO 8601 date string for soft deletes
+}
+
+export type States = State[];
+
+export interface Town {
+    id: number;
+    state_id?: number | null;
+    name: string;
+    pincode?: string | null;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+    deleted_at?: string | null; // ISO 8601 date string for soft deletes
+}
+
+export type Towns = Town[];

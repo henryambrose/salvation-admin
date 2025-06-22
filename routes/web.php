@@ -20,4 +20,7 @@ require __DIR__.'/blood_group.php';
 require __DIR__.'/family_income_range.php';
 require __DIR__.'/s_c_c_head.php';
 require __DIR__.'/p_p_c_head.php';
+require __DIR__.'/country.php';
+require __DIR__.'/state.php';
+require __DIR__.'/town.php';
 require __DIR__.'/auth.php';

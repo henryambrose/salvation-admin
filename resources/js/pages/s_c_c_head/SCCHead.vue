@@ -10,6 +10,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Member, type SharedData, type User, Communities, SCCHead, type BreadcrumbItem } from '@/types';
 import { List } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import FormHeader from '@/components/FormHeader.vue';
+import FormBody from '@/components/FormBody.vue';
 
 
 interface Props {
@@ -66,7 +68,7 @@ const submit = () => {
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Members" />
-        <div class="p-4 bg-white shadow rounded">
+        <FormHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Members</h2>
                 <div class="btn-group flex space-x-2">
@@ -76,8 +78,8 @@ const submit = () => {
                     </Button>
                 </div>
             </div>
-        </div>
-        <div class="p-4 bg-white shadow rounded">
+        </FormHeader>
+        <FormBody>
 
             <form @submit.prevent="submit" class="space-y-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -107,7 +109,7 @@ const submit = () => {
                 </div>
 
                 <div class="flex items-center gap-4">
-                    <Button :disabled="form.processing">Save</Button>
+                    <Button class="btn btn-secondary" :disabled="form.processing">Save</Button>
 
                     <Transition
                         enter-active-class="transition ease-in-out"
@@ -119,7 +121,7 @@ const submit = () => {
                     </Transition>
                 </div>
                 </form>
-        </div>
+        </FormBody>
 
     </AppLayout>
 </template>

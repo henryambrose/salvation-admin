@@ -1,0 +1,71 @@
+<script setup lang="ts">
+import { Head, usePage } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import DataTable from '@/components/DataTable2.vue';
+import { router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import DatatableHeader from '@/components/DatatableHeader.vue';
+
+const props = defineProps({
+  states: Object,
+  filters: Object,
+  fetchUrl: String,
+});
+
+const columns = [
+  { key: 'id', label: 'Id', sortable: true },
+  { key: 'name', label: 'State Name', sortable: true },
+  { key: 'abbr', label: 'Abbreviation', sortable: true },
+  { key: 'country_name', label: 'Country Name', sortable: true },
+  { key: 'created_at', label: 'Created Date', sortable: true },
+];
+
+const breadcrumbs = [
+  { title: 'States', href: '/state/index' },
+];
+
+function editState(stateId: number) {
+  router.get(route('state.edit', stateId));
+}
+
+function deleteState(stateId: number) {
+  if (confirm('Delete this State?')) {
+    router.delete(route('state.destroy', stateId));
+  }
+}
+</script>
+
+<template>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <Head title="States" />
+    <DatatableHeader>
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">States</h2>
+        <Button as="a" href="/state/create" class="btn btn-secondary">
+          <component :is="Plus" />
+          <span>Add State</span>
+        </Button>
+      </div>
+    </DatatableHeader>
+
+    <DataTable
+      :data="states"
+      :columns="columns"
+      :filters="filters"
+      :fetch-url="fetchUrl"
+      :has-actions="true"
+    >
+      <template #actions="{ row }">
+        <Button class="btn btn-secondary mr-2" @click="editState(row.id)">
+          <component :is="Pencil" />
+          <span>Edit</span>
+        </Button>
+        <Button class="btn btn-secondary mr-2" @click="deleteState(row.id)">
+          <component :is="Trash" />
+          <span>Delete</span>
+        </Button>
+      </template>
+    </DataTable>
+  </AppLayout>
+</template>

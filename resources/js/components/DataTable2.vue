@@ -48,7 +48,7 @@ function changeSort(field) {
 </script>
 
 <template>
-  <div class="p-4 bg-white shadow rounded">
+  <div class="p-4 bg-white shadow rounded mt-4 datatable2">
     <div class="flex items-center gap-2 mb-2">
       <input
         v-model="search"

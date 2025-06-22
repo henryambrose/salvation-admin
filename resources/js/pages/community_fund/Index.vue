@@ -9,6 +9,7 @@ import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 import { CommunityFunds } from '@/types';
 import { PropType } from 'vue';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   communityFunds: {
@@ -56,7 +57,7 @@ console.log('Enhanced Community Funds:', props.communityFunds?.data);
 <template>
     <AppLayout :breadcrumbs="breadcrumbs">
         <Head title="Community Funds" />
-        <div class="p-4 bg-white shadow rounded">
+        <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Community Funds</h2>
                 <div class="btn-group flex space-x-2">
@@ -66,7 +67,7 @@ console.log('Enhanced Community Funds:', props.communityFunds?.data);
                     </Button>
                 </div>
             </div>
-        </div>
+        </DatatableHeader>
 
         <DataTable
             :data="communityFunds"
