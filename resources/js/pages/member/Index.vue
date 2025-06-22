@@ -17,7 +17,9 @@ import { router } from '@inertiajs/vue3'
 import { reactive, watch } from 'vue'
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 import DatatableHeader from '@/components/DatatableHeader.vue';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 
+const { can } = permissionHelpers();
 
 const props = defineProps({
   members: Object,
@@ -71,7 +73,7 @@ function deleteMember(id : Member['id']) {
         <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Members</h2>
-                <div class="btn-group flex space-x-2">
+                <div v-if="canCreateAll" class="btn-group flex space-x-2">
                     <Button as="a" href="/member/create" class="btn btn-secondary">
                         <component :is="Plus" />
                         <span>Add Member</span>
@@ -85,14 +87,14 @@ function deleteMember(id : Member['id']) {
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-            :has-actions="true"
+            :has-actions="canDeleteAll || canEditAll"
         >
             <template #actions="{ row }">
-                <Button class="btn btn-secondary mr-2" @click="editMember(row)">
+                <Button v-if="canEditAll" class="btn btn-secondary mr-2" @click="editMember(row)">
                     <component :is="Pencil" />
                     <span>Edit</span>
                 </Button>
-                <Button class="btn btn-secondary mr-2" @click="deleteMember(row.id)">
+                <Button v-if="canDeleteAll" class="btn btn-secondary mr-2" @click="deleteMember(row.id)">
                     <component :is="Trash" />
                     <span>Delete</span>
                 </Button>

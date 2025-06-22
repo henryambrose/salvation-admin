@@ -12,20 +12,6 @@ interface Props {
 const props = defineProps<Props>();
 const className = computed(() => props.class);
 
-
-const page = usePage<SharedData>();
-const user = page.props.auth.user as User;
-
-const permissions = computed(() => page.props.auth?.permissions);
-
-// Helper function to check permission
-const can = (permission) => {
-  return permissions.value.includes(permission);
-};
-
-console.log('User:', user);
-console.log('Permissions:', permissions.value);
-console.log('Can view dashboard:', can('create all'));
 </script>
 
 <template>
