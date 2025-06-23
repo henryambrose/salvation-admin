@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Community;
+use App\Models\Designation;
 use App\Models\Gender;
 use App\Models\Member;
 use App\Models\Relationship;
@@ -29,7 +30,7 @@ class DashboardController extends Controller
         $genderData = Member::select(['gender_id', DB::raw("count('gender_id') AS total")])->groupBy('gender_id')
             ->get()
             ->mapWithKeys(function ($item) use ($genders) {
-                return [$genders[$item->gender_id] => $item->total];
+                return [$genders[$item->gender_id]??'Unknown' => $item->total];
             })
             ->toArray();
 
@@ -56,7 +57,7 @@ class DashboardController extends Controller
         $ageWiseData = [];
         foreach ($ageWiseDataResult as $row) {
             $ageGroup = $row->age_group;
-            $gender = $genders[$row->gender_id];
+            $gender = $genders[$row->gender_id] ?? 'Unknown';
             $total = $row->total;
 
             if (!isset($ageWiseData[$ageGroup])) {
@@ -113,17 +114,20 @@ class DashboardController extends Controller
             ->groupBy('status_id')
             ->get()
             ->mapWithKeys(function ($item) use ($statuses) {
-                return [$statuses[$item->status_id] => $item->total];
+                return [$statuses[$item->status_id]??'Unknown' => $item->total];
             })
             ->toArray();
         // \Log::debug('Status Wise Members:', $statusWiseMembers);
 
         // designation wise members
-        $designationWiseMembers = Member::select(['designation', DB::raw("count('designation') AS total")])
-            ->groupBy('designation')
+        $designations = Designation::all()->pluck('name', 'id')->map(function ($status) {
+            return ucfirst($status);
+        })->toArray();
+        $designationWiseMembers = Member::select(['designation_id', DB::raw("count('designation_id') AS total")])
+            ->groupBy('designation_id')
             ->get()
-            ->mapWithKeys(function ($item) {
-                return [$item->designation => $item->total];
+            ->mapWithKeys(function ($item) use ($designations) {
+                return [$designations[$item->designation_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
         // \Log::debug('Designation Wise Members:', $designationWiseMembers);
@@ -146,7 +150,7 @@ class DashboardController extends Controller
             ->groupBy('relationship_id')
             ->get()
             ->mapWithKeys(function ($item) use ($relationships) {
-                return [$relationships[$item->relationship_id] => $item->total];
+                return [$relationships[$item->relationship_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
         // \Log::debug('Relationship Wise Members:', $relationshipWiseMembers);
