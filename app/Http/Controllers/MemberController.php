@@ -20,6 +20,7 @@ class MemberController extends Controller
      */
     public function index(Request $request) :Response
     {
+        $this->authorize('viewAny', Member::class);
         $query = Member::query();
         $query->with([
             'community',
@@ -41,6 +42,10 @@ class MemberController extends Controller
             'fetchUrl' => route('member.index'),
             'members' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'canEdit' => $request->user()->can('update', Member::class),
+            'canView' => $request->user()->can('view', Member::class),
+            'canCreate' => $request->user()->can('create', Member::class),
+            'canDelete' => $request->user()->can('delete', Member::class),
         ]);
     }
 
