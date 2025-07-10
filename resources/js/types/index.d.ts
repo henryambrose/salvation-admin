@@ -16,6 +16,7 @@ export interface NavItem {
     href: string;
     icon?: LucideIcon;
     isActive?: boolean;
+    show: boolean; // Optional property to control visibility based on permissions
 }
 
 export interface SharedData extends PageProps {
