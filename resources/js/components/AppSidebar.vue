@@ -14,6 +14,11 @@ const mainNavItems: NavItem[] = [
         href: '/dashboard',
         icon: LayoutGrid,
     },
+    {   
+        title: 'Users',
+        href: '/users/index',
+        icon: UserCircle,
+    },
 
     {
         title: 'Member',
@@ -75,13 +80,11 @@ const mainNavItems: NavItem[] = [
         icon: MapPin,
     },
 
-    {
+    {     
         title: 'Town',
         href: '/town',
         icon: Home,
     },
-
-
 
 ];
 
