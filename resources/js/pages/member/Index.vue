@@ -29,6 +29,10 @@ const props = defineProps({
   canCreateMember: Boolean,
   canEditMember: Boolean,
   canDeleteMember: Boolean,
+  pagination: {
+    type: Object,
+    default: () => ({ currentPage: 1, lastPage: 1 }),
+  },
 });
 
 const enhancedMembers = computed(() => {
@@ -87,6 +91,10 @@ function deleteMember(id : Member['id']) {
                         <span>Add Member</span>
                     </Button>
                 </div>
+            </div>
+            <!-- Pagination Info -->
+            <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
+                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
             </div>
         </DatatableHeader>
 

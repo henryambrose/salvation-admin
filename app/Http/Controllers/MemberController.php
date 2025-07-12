@@ -55,6 +55,11 @@ class MemberController extends Controller
             'canCreateMember' => $request->user()->can('create-Member'),
             'canEditMember' => $request->user()->can('edit-Member'),
             'canDeleteMember' => $request->user()->can('delete-Member'),
+            // Add pagination meta
+            'pagination' => [
+                'currentPage' => $query->paginate($perPage)->currentPage(),
+                'lastPage' => $query->paginate($perPage)->lastPage(),
+            ],
         ]);
     }
 
