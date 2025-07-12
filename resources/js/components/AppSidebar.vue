@@ -5,9 +5,10 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Droplet, MapPin, CurrencyIcon, IndianRupee, UserCircle, UserCheck, Home } from 'lucide-vue-next';
+import { BookOpen, Folder, LayoutGrid, Droplet, MapPin, CurrencyIcon, IndianRupee, UserCircle, UserCheck, Home, LogOut } from 'lucide-vue-next';
 import AppLogo from './AppLogo.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { router } from '@inertiajs/vue3';
 
 const { can } = permissionHelpers();
 
@@ -121,6 +122,16 @@ const footerNavItems: NavItem[] = [
 
 const filteredFooterNavItems = footerNavItems.filter(item => item.show);
 
+// Add logout handler
+
+function handleLogout() {
+    router.post(route('logout'), {}, {
+        onSuccess: () => {
+            router.visit(route('login'));
+        }
+    });
+}
+
 </script>
 
 <template>
@@ -140,12 +151,27 @@ const filteredFooterNavItems = footerNavItems.filter(item => item.show);
         <SidebarContent>
             <!-- <NavMain :items="mainNavItems" /> -->
             <NavMain :items="filteredMainNavItems" />
-
         </SidebarContent>
 
         <SidebarFooter>
             <!-- <NavFooter :items="footerNavItems" /> -->
             <NavFooter :items="filteredFooterNavItems" />
+            <SidebarMenu>
+                <SidebarMenuItem>
+                    <SidebarMenuButton size="md" as-child>
+                        <Link
+                            :href="route('logout')"
+                            method="post"
+                            as="button"
+                            @click.prevent="handleLogout"
+                            class="flex items-center w-full"
+                        >
+                            <LogOut class="mr-2 h-4 w-4" />
+                            Log out
+                        </Link>
+                    </SidebarMenuButton>
+                </SidebarMenuItem>
+            </SidebarMenu>
             <NavUser />
         </SidebarFooter>
     </Sidebar>
