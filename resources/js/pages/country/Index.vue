@@ -40,10 +40,15 @@ function deleteCountry(countryId: number) {
     <DatatableHeader>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Countries</h2>
-        <Button as="a" href="/country/create" class="btn btn-secondary">
-          <component :is="Plus" />
-          <span>Add Country</span>
-        </Button>
+        <div class="flex gap-2">
+          <Button as="a" href="/country/create" class="btn btn-secondary">
+            <component :is="Plus" />
+            <span>Add Country</span>
+          </Button>
+          <Button as="a" href="/country/deleted" class="btn btn-secondary">
+            <span>Deleted Countries</span>
+          </Button>
+        </div>
       </div>
     </DatatableHeader>
 

@@ -47,7 +47,7 @@ function deleteState(stateId: number) {
             <component :is="Plus" />
             <span>Add State</span>
           </Button>
-          <Button as="a" href="/state/deleted" class="btn btn-outline-secondary">
+          <Button as="a" href="/state/deleted" class="btn btn-secondary">
             <span>Deleted States</span>
           </Button>
         </div>

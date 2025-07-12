@@ -91,4 +91,47 @@ class CountryController extends Controller
 
         return redirect()->route('country.index')->with('success', 'Country deleted successfully.');
     }
+
+    /**
+     * Display a listing of the deleted countries.
+     */
+    public function deleted(Request $request): Response
+    {
+        $query = Country::onlyTrashed();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('country/Deleted', [
+            'countries' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only('search', 'perPage'),
+            'fetchUrl' => route('country.deleted'),
+        ]);
+    }
+
+    /**
+     * Restore a deleted country.
+     */
+    public function restore($id)
+    {
+        $country = Country::onlyTrashed()->findOrFail($id);
+        $country->restore();
+
+        return redirect()->route('country.deleted')->with('success', 'Country restored successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id): Response
+    {
+        $country = \App\Models\Country::withTrashed()->findOrFail($id);
+
+        return Inertia::render('country/Show', [
+            'country' => $country,
+        ]);
+    }
 }

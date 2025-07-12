@@ -42,10 +42,15 @@ function deleteTown(townId: number) {
     <DatatableHeader>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">Towns</h2>
-        <Button as="a" href="/town/create" class="btn btn-secondary">
-          <component :is="Plus" />
-          <span>Add Town</span>
-        </Button>
+        <div class="flex gap-2">
+          <Button as="a" href="/town/create" class="btn btn-secondary">
+            <component :is="Plus" />
+            <span>Add Town</span>
+          </Button>
+          <Button as="a" href="/town/deleted" class="btn btn-secondary">
+            <span>Deleted Towns</span>
+          </Button>
+        </div>
       </div>
     </DatatableHeader>
 
