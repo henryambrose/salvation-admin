@@ -42,10 +42,15 @@ function deleteState(stateId: number) {
     <DatatableHeader>
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">States</h2>
-        <Button as="a" href="/state/create" class="btn btn-secondary">
-          <component :is="Plus" />
-          <span>Add State</span>
-        </Button>
+        <div class="flex gap-2">
+          <Button as="a" href="/state/create" class="btn btn-secondary">
+            <component :is="Plus" />
+            <span>Add State</span>
+          </Button>
+          <Button as="a" href="/state/deleted" class="btn btn-outline-secondary">
+            <span>Deleted States</span>
+          </Button>
+        </div>
       </div>
     </DatatableHeader>
 
