@@ -27,7 +27,16 @@ class MemberController extends Controller
             'communityCluster',
         ]);
         if ($search = $request->input('search')) {
-            $query->where('first_name', 'like', "%$search%");
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereHas('community', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%");
+                  })
+                  ->orWhereHas('communityCluster', function ($q3) use ($search) {
+                      $q3->where('name', 'like', "%$search%");
+                  });
+            });
         }
 
         if ($sort = $request->input('sort')) {
@@ -130,3 +139,4 @@ class MemberController extends Controller
     return view('members.family_tree', compact('member'));
 }
 }
+

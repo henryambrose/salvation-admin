@@ -107,14 +107,14 @@ function deleteMember(id : Member['id']) {
                     <component :is="Pencil" />
                     <span>Edit</span>
                 </Button>
-                <Button
+                <!-- <Button
                     v-if="props.canDeleteMember"
                     class="btn btn-secondary mr-2"
                     @click="deleteMember(row.id)"
                 >
                     <component :is="Trash" />
                     <span>Delete</span>
-                </Button>
+                </Button> -->
             </template>
         </DataTable>
         <div v-else class="text-center text-gray-500 py-10">
