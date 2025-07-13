@@ -51,10 +51,10 @@ class MemberController extends Controller
             'fetchUrl' => route('member.index'),
             'members' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
-            'canViewAnyMember' => $request->user()->can('view-Member'),
-            'canCreateMember' => $request->user()->can('create-Member'),
-            'canEditMember' => $request->user()->can('edit-Member'),
-            'canDeleteMember' => $request->user()->can('delete-Member'),
+            'canViewAnyMember' => true,
+            'canCreateMember' => true,
+            'canEditMember' => true,
+            'canDeleteMember' => true,
             // Add pagination meta
             'pagination' => [
                 'currentPage' => $query->paginate($perPage)->currentPage(),

@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
         // ]);
          $this->call([
             UserSeeder::class,
+            ModuleSeeder::class,
             // CreateRoleNPermissionSeeder::class,
             AgeGroupSeeder::class,
             BloodGroupSeeder::class,

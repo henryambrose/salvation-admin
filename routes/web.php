@@ -12,9 +12,12 @@ Route::get('/', function () {
 
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::middleware(['auth', 'can:update-role-permissions'])->group(function () {
-    Route::get('/roles-permissions', [RolePermissionController::class, 'index'])->name('roles.permissions.index');
-    Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])->name('roles.permissions.update');
+
+Route::middleware(['auth', 'role:superadmin'])->group(function () {
+    Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
+        ->name('roles.permissions.index');
+    Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
+        ->name('roles.permissions.update');
 });
 
 require __DIR__.'/settings.php';
