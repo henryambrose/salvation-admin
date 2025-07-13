@@ -25,6 +25,14 @@ const props = defineProps({
   members: Object,
   filters: Object,
   fetchUrl: String,
+  canViewAnyMember: Boolean,
+  canCreateMember: Boolean,
+  canEditMember: Boolean,
+  canDeleteMember: Boolean,
+  pagination: {
+    type: Object,
+    default: () => ({ currentPage: 1, lastPage: 1 }),
+  },
 });
 
 const enhancedMembers = computed(() => {
@@ -50,13 +58,11 @@ const columns = [
 { key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
 
-
 const breadcrumbs = [
   { title: 'Members', href: '/member/index' },
 ];
 
 function editMember(member : Member) {
-  // open edit modal logic
   router.get(route('member.edit', member.id));
 }
 
@@ -65,6 +71,7 @@ function deleteMember(id : Member['id']) {
     router.delete(route('member.destroy', id));
   }
 }
+
 </script>
 
 <template>
@@ -73,34 +80,53 @@ function deleteMember(id : Member['id']) {
         <DatatableHeader>
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl font-bold">Members</h2>
-                <div v-if="canCreateAll" class="btn-group flex space-x-2">
-                    <Button as="a" href="/member/create" class="btn btn-secondary">
+                <div class="btn-group flex space-x-2">
+                    <Button
+                        v-if="props.canCreateMember"
+                        as="a"
+                        href="/member/create"
+                        class="btn btn-secondary"
+                    >
                         <component :is="Plus" />
                         <span>Add Member</span>
                     </Button>
                 </div>
             </div>
+            <!-- Pagination Info -->
+            <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
+                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
+            </div>
         </DatatableHeader>
 
         <DataTable
+            v-if="props.canViewAnyMember"
             :data="enhancedMembers"
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-            :has-actions="canDeleteAll || canEditAll"
+            :has-actions="props.canEditMember || props.canDeleteMember"
         >
             <template #actions="{ row }">
-                <Button v-if="canEditAll" class="btn btn-secondary mr-2" @click="editMember(row)">
+                <Button
+                    v-if="props.canEditMember"
+                    class="btn btn-secondary mr-2"
+                    @click="editMember(row)"
+                >
                     <component :is="Pencil" />
                     <span>Edit</span>
                 </Button>
-                <Button v-if="canDeleteAll" class="btn btn-secondary mr-2" @click="deleteMember(row.id)">
+                <!-- <Button
+                    v-if="props.canDeleteMember"
+                    class="btn btn-secondary mr-2"
+                    @click="deleteMember(row.id)"
+                >
                     <component :is="Trash" />
                     <span>Delete</span>
-                </Button>
+                </Button> -->
             </template>
         </DataTable>
-
-
+        <div v-else class="text-center text-gray-500 py-10">
+            You do not have permission to view members.
+        </div>
     </AppLayout>
 </template>

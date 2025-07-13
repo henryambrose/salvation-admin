@@ -24,3 +24,10 @@ defineProps<Props>();
 <path d="M0 0 C0.66 0.33 1.32 0.66 2 1 C-0.82553984 5.23830976 -3.12180888 4.97715348 -8 6 C-8 5.34 -8 4.68 -8 4 C-6.71349294 3.30289269 -5.42059335 2.61757124 -4.125 1.9375 C-3.40570313 1.55464844 -2.68640625 1.17179687 -1.9453125 0.77734375 C-1.30335937 0.52082031 -0.66140625 0.26429687 0 0 Z " fill="#3A6CB2" transform="translate(52,67)"/>
 </svg>
 </template>
+
+<style>
+/* Global dropdown option text color */
+select option, .dropdown-menu option, .dropdown-menu__option {
+    color: #333333 !important;
+}
+</style>

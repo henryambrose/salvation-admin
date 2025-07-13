@@ -13,7 +13,7 @@ class MemberPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        return $user->can('view-Member');
     }
 
     /**
@@ -21,7 +21,7 @@ class MemberPolicy
      */
     public function view(User $user, Member $member): bool
     {
-        return false;
+        return $user->can('view-Member');
     }
 
     /**
@@ -29,7 +29,7 @@ class MemberPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        return $user->can('create-Member');
     }
 
     /**
@@ -37,7 +37,7 @@ class MemberPolicy
      */
     public function update(User $user, Member $member): bool
     {
-        return false;
+        return $user->can('edit-Member');
     }
 
     /**
@@ -45,7 +45,7 @@ class MemberPolicy
      */
     public function delete(User $user, Member $member): bool
     {
-        return false;
+        return $user->can('delete-Member');
     }
 
     /**
@@ -53,7 +53,7 @@ class MemberPolicy
      */
     public function restore(User $user, Member $member): bool
     {
-        return false;
+        return false; // Restoration logic can be added if needed
     }
 
     /**

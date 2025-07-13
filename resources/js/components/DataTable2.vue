@@ -99,7 +99,7 @@ function changeSort(field) {
       </tbody>
     </table>
 
-    <div class="mt-3 flex gap-2">
+    <div class="mt-3 flex gap-2 items-center">
       <button
         v-if="data.prev_page_url"
         @click="fetch(data.current_page - 1)"
@@ -114,6 +114,14 @@ function changeSort(field) {
       >
         Next
       </button>
+      <!-- Page count beside Next button, right aligned -->
+      <span
+        v-if="data.current_page && data.last_page"
+        class="text-sm ml-auto"
+        style="margin-left:auto; display:block;"
+      >
+        Page {{ data.current_page }} of {{ data.last_page }}
+      </span>
     </div>
   </div>
 </template>

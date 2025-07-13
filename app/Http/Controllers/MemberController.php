@@ -20,13 +20,23 @@ class MemberController extends Controller
      */
     public function index(Request $request) :Response
     {
+        // $this->authorize('viewAny', Member::class);
         $query = Member::query();
         $query->with([
             'community',
             'communityCluster',
         ]);
         if ($search = $request->input('search')) {
-            $query->where('first_name', 'like', "%$search%");
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereHas('community', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%");
+                  })
+                  ->orWhereHas('communityCluster', function ($q3) use ($search) {
+                      $q3->where('name', 'like', "%$search%");
+                  });
+            });
         }
 
         if ($sort = $request->input('sort')) {
@@ -41,6 +51,15 @@ class MemberController extends Controller
             'fetchUrl' => route('member.index'),
             'members' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'canViewAnyMember' => $request->user()->can('view-Member'),
+            'canCreateMember' => $request->user()->can('create-Member'),
+            'canEditMember' => $request->user()->can('edit-Member'),
+            'canDeleteMember' => $request->user()->can('delete-Member'),
+            // Add pagination meta
+            'pagination' => [
+                'currentPage' => $query->paginate($perPage)->currentPage(),
+                'lastPage' => $query->paginate($perPage)->lastPage(),
+            ],
         ]);
     }
 
@@ -125,3 +144,4 @@ class MemberController extends Controller
     return view('members.family_tree', compact('member'));
 }
 }
+

@@ -103,4 +103,35 @@ class TownController extends Controller
 
         return redirect()->route('town.index')->with('success', 'Town deleted successfully.');
     }
+
+    /**
+     * Display a listing of the deleted towns.
+     */
+    public function deleted(Request $request): Response
+    {
+        $query = Town::onlyTrashed();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('town/Deleted', [
+            'towns' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only('search', 'perPage'),
+            'fetchUrl' => route('town.deleted'),
+        ]);
+    }
+
+    /**
+     * Restore a deleted town.
+     */
+    public function restore($id)
+    {
+        $town = Town::onlyTrashed()->findOrFail($id);
+        $town->restore();
+
+        return redirect()->route('town.deleted')->with('success', 'Town restored successfully.');
+    }
 }

@@ -7,6 +7,7 @@ use App\Models\Country;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class StateController extends Controller
 {
@@ -102,5 +103,48 @@ class StateController extends Controller
         $state->delete();
 
         return redirect()->route('state.index')->with('success', 'State deleted successfully.');
+    }
+
+    /**
+     * Display a listing of the deleted states.
+     */
+    public function deleted(Request $request): Response
+    {
+        $query = State::onlyTrashed();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('state/Deleted', [
+            'states' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only('search', 'perPage'),
+            'fetchUrl' => route('state.deleted'),
+        ]);
+    }
+
+    /**
+     * Restore a deleted state.
+     */
+    public function restore($id)
+    {
+        $state = State::onlyTrashed()->findOrFail($id);
+        $state->restore();
+
+        return redirect()->route('state.deleted')->with('success', 'State restored successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show($id): Response
+    {
+        $state = \App\Models\State::withTrashed()->findOrFail($id);
+
+        return Inertia::render('state/Show', [
+            'state' => $state,
+        ]);
     }
 }

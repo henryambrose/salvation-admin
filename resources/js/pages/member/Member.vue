@@ -120,6 +120,10 @@ const fetchCommunityCluster = async () => {
 
 
 }
+
+function cancel() {
+    window.location.href = '/member/index';
+}
 </script>
 
 <template>
@@ -444,6 +448,7 @@ const fetchCommunityCluster = async () => {
 
                 <div class="flex items-center gap-4">
                     <Button :disabled="form.processing">Save</Button>
+                    <Button type="button" class="btn btn-secondary" @click="cancel">Cancel</Button>
 
                     <Transition
                         enter-active-class="transition ease-in-out"

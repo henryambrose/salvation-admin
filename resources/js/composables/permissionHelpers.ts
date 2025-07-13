@@ -8,7 +8,13 @@ export function permissionHelpers() {
     if (!page.props.auth || !page.props.auth.permissions) {
       return false
     }
-    return page.props.auth?.permissions?.includes(permission)
+
+    const roles = page.props.auth?.roles || [];
+    if (roles.includes('superadmin')) {
+        return true;
+    }
+
+    return page.props.auth?.permissions?.includes(permission)// || role.permission.includes(permission)
   }
 
   return {
