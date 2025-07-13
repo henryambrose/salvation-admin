@@ -35,12 +35,6 @@ const props = defineProps({
   },
 });
 
-console.log('props.canViewAnyMember', props.canViewAnyMember);
-console.log('props.canCreateMember', props.canCreateMember);
-console.log('props.canEditMember', props.canEditMember);
-console.log('props.canDeleteMember', props.canDeleteMember);
-
-
 const enhancedMembers = computed(() => {
   return {
     ...props.members,

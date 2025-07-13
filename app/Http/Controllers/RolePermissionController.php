@@ -57,10 +57,15 @@ class RolePermissionController extends Controller
         $permissionsToSync = [];
         $modules = Module::with('actions')->get(); // Or fetch from DB/config
         foreach ($modules as $module) {
+            $modulePermission = false;
             foreach ($module->actions as $action) {
                 if (isset($permissions[$module->id][$action->id]) && $permissions[$module->id][$action->id]) {
                     $permissionsToSync[] = $action->slug;
+                    $modulePermission = true;
                 }
+            }
+            if ($modulePermission) {
+                $permissionsToSync[] = $module->slug; // Add module permission if any action is selected
             }
         }
         $role->syncPermissions($permissionsToSync);
