@@ -13,7 +13,11 @@ class MemberPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view-Member');
+        \Log::debug(['Checking if user can view any members', ['user_id' => $user->id]]);
+        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+            return true;
+        }
+        return $user->can('read-member');
     }
 
     /**
@@ -21,7 +25,11 @@ class MemberPolicy
      */
     public function view(User $user, Member $member): bool
     {
-        return $user->can('view-Member');
+        \Log::debug(['Checking if user can view any members', ['user_id' => $user->id]]);
+        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+            return true;
+        }
+        return $user->can('read-member');
     }
 
     /**
@@ -29,7 +37,10 @@ class MemberPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create-Member');
+        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+            return true;
+        }
+        return $user->can('create-member');
     }
 
     /**
@@ -37,7 +48,7 @@ class MemberPolicy
      */
     public function update(User $user, Member $member): bool
     {
-        return $user->can('edit-Member');
+        return $user->can('update-member');
     }
 
     /**
@@ -45,7 +56,7 @@ class MemberPolicy
      */
     public function delete(User $user, Member $member): bool
     {
-        return $user->can('delete-Member');
+        return $user->can('delete-member');
     }
 
     /**
