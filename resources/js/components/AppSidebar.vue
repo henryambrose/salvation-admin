@@ -25,7 +25,7 @@ const modules = computed(() => {
     return page.props.modules.map((module: any) => ({
         // ...module,
         title: module.name,
-        href: module.slug,
+        href: '/'+module.slug,
         icon: resolveIcon(module.icon),
         show: can(module.slug),
         // actions: module.actions.map((action: any) => ({
