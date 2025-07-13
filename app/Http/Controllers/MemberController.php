@@ -138,10 +138,35 @@ class MemberController extends Controller
     }
 
     public function showFamilyTree($id)
-{
-    $member = Member::with(['relationships.relatedMember', 'relatedMembers'])->findOrFail($id);
+    {
+        $member = Member::with(['relationships.relatedMember', 'relatedMembers'])->findOrFail($id);
 
-    return view('members.family_tree', compact('member'));
-}
+        return view('members.family_tree', compact('member'));
+    }
+
+    public function searchOptions(Request $request)
+    {
+        $search = $request->input('search', '');
+
+        $members = Member::query()
+            ->select('id', 'first_name', 'last_name')
+            ->when($search, function ($query, $search) {
+                $query->where('first_name', 'like', "%$search%")
+                      ->orWhere('last_name', 'like', "%$search%");
+            })
+
+            ->orderBy('first_name', 'asc')
+            ->limit(10)
+            ->get();
+
+        $members = $members->map(function ($member) {
+            return [
+                'id' => $member->id,
+                'name' => $member->first_name . ' ' . $member->last_name,
+            ];
+        });
+
+        return response()->json($members);
+    }
 }
 

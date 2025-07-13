@@ -12,7 +12,7 @@ import { List } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import FormHeader from '@/components/FormHeader.vue';
 import FormBody from '@/components/FormBody.vue';
-
+import { SearchDropdown } from '@/components/ui/searchDropdown';
 
 interface Props {
     scc_head?: SCCHead;
@@ -85,23 +85,35 @@ const submit = () => {
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="grid gap-2">
                         <Label for="member_id">Member</Label>
-                        <SelectInput
+                        <!-- <SelectInput
                             id="member_id"
                             v-model="form.member_id"
                             :options="enhancedMembers.data"
                             class="mt-1 block w-full"
                             placeholder="Select Community"
+                        /> -->
+                        <SearchDropdown
+                        id="member_id"
+                        v-model="form.member_id"
+                        :options="enhancedMembers.data"
+
                         />
                         <InputError class="mt-2" :message="form.errors.member_id" />
                     </div>
                     <div class="grid gap-2">
                         <Label for="community_id">Community</Label>
-                        <SelectInput
+                        <!-- <SelectInput
                             id="community_id"
                             v-model="form.community_id"
                             :options="page.props.communities"
                             class="mt-1 block w-full"
                             placeholder="Select Community"
+                        /> -->
+                        <SearchDropdown
+                        id="community_id"
+                        v-model="form.community_id"
+                        :options="page.props.communities"
+
                         />
                         <InputError class="mt-2" :message="form.errors.community_id" />
                     </div>
