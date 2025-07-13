@@ -4,12 +4,12 @@ import { Head, router } from '@inertiajs/vue3';
 
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
     roles: Array,
     modules: Array,
     permissions: Object,
+    modulesIdWise: Object,
 });
 
 const actions = ['create', 'read', 'update', 'delete', 'list'];
@@ -22,8 +22,14 @@ watch(selectedRoleId, (newRoleId) => {
     permissionState.value = { ...props.permissions[newRoleId] };
 });
 
-function togglePermission(module: string, action: string) {
-    permissionState.value[module][action] = permissionState.value[module][action] ? 0 : 1;
+function togglePermission(moduleId: number, actionId: number) {
+    // Defensive: Ensure module and action exist
+    if (
+        permissionState.value[moduleId] &&
+        typeof permissionState.value[moduleId][actionId] !== 'undefined'
+    ) {
+        permissionState.value[moduleId][actionId] = permissionState.value[moduleId][actionId] ? 0 : 1;
+    }
 }
 
 function savePermissions() {
@@ -36,7 +42,6 @@ function savePermissions() {
 
 <template>
     <AppLayout>
-
         <Head title="Role Permissions" />
         <div class="max-w-3xl mx-auto py-8">
             <h2 class="text-2xl font-bold mb-6">Role Permissions</h2>
@@ -51,16 +56,18 @@ function savePermissions() {
                     <thead>
                         <tr>
                             <th class="border px-4 py-2">Module</th>
-                            <th v-for="action in actions" :key="action" class="border px-4 py-2 capitalize">{{ action }}
-                            </th>
+                            <th v-for="action in actions" :key="action" class="border px-4 py-2 capitalize">{{ action }}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr v-for="module in props.modules" :key="module">
-                            <td class="border px-4 py-2 font-semibold">{{ module }}</td>
-                            <td v-for="action in actions" :key="action" class="border px-4 py-2 text-center">
-                                <input type="checkbox" :checked="permissionState[module]?.[action] === 1"
-                                    @change="togglePermission(module, action)" />
+                        <tr v-for="module in props.modules" :key="module.id">
+                            <td class="border px-4 py-2 font-semibold">{{ module.name }}</td>
+                            <td v-for="action in module.actions" :key="action.id" class="border px-4 py-2 text-center">
+                                <input
+                                    type="checkbox"
+                                    :checked="permissionState[module.id][action.id] === 1"
+                                    @change="togglePermission(module.id, action.id)"
+                                />
                             </td>
                         </tr>
                     </tbody>
@@ -71,6 +78,4 @@ function savePermissions() {
             </div>
         </div>
     </AppLayout>
-
-
 </template>
