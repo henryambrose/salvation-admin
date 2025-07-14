@@ -69,7 +69,29 @@ const breadcrumbs = [
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-        />
+            has-actions
+        >
+            <template #actions="{ row }">
+                <Button
+                    size="sm"
+                    class="mr-2"
+                    @click="$inertia.visit(`/family-income-range/${row.id}/edit`)"
+                >
+                    Edit
+                </Button>
+                <Button
+                    size="sm"
+                    variant="destructive"
+                    @click="() => {
+                        if (confirm('Are you sure you want to delete this item?')) {
+                            $inertia.delete(`/family-income-range/${row.id}`);
+                        }
+                    }"
+                >
+                    Delete
+                </Button>
+            </template>
+        </DataTable>
 
         <!-- Modal -->
         <transition name="fade">

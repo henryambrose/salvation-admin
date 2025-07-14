@@ -72,15 +72,24 @@ class FamilyIncomeRangeController extends Controller
      */
     public function edit(FamilyIncomeRange $familyIncomeRange)
     {
-        //
+        return Inertia::render('family_income_range/FamilyIncomeRangeEdit', [
+            'familyIncomeRange' => $familyIncomeRange,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateFamilyIncomeRangeRequest $request, FamilyIncomeRange $familyIncomeRange)
+    public function update(Request $request, FamilyIncomeRange $familyIncomeRange)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|unique:family_income_ranges,name,' . $familyIncomeRange->id,
+            // Add other fields as needed
+        ]);
+
+        $familyIncomeRange->update($validated);
+
+        return redirect()->route('family-income-range.index')->with('success', 'Family Income Range updated successfully.');
     }
 
     /**
@@ -88,6 +97,8 @@ class FamilyIncomeRangeController extends Controller
      */
     public function destroy(FamilyIncomeRange $familyIncomeRange)
     {
-        //
+        $familyIncomeRange->delete();
+
+        return redirect()->route('family-income-range.index')->with('success', 'Family Income Range deleted successfully.');
     }
 }

@@ -122,7 +122,8 @@ export interface CellsAndAssociation {
 export type CellsAndAssociations = CellsAndAssociation[];
 
 export interface FamilyIncomeRange {
-    id: string; name: string;
+    id: number; // changed from string to number
+    name: string;
 }
 
 export type FamilyIncomeRanges = FamilyIncomeRange[];
