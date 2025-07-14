@@ -16,9 +16,10 @@ class CommunityFund extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'year',
+        'fund_date',
         'amount',
         'member_id',
+        'description',
     ];
 
     // cast created_at and updated_at to Carbon instances

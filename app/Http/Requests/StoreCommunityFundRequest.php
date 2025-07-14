@@ -23,9 +23,10 @@ class StoreCommunityFundRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'year' => ['required', 'integer', 'digits:4'],
+            'fund_date' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'min:0'],
             'member_id' => ['required', 'integer', 'exists:members,id'],
+            'description' => ['nullable', 'string'],
         ];
     }
 }
