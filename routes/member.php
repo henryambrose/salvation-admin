@@ -23,4 +23,10 @@ Route::middleware('auth')->group(function () {
     //     // Route::resource('community-details', CommunityDetailsController::class)->only(['create', 'store', 'edit', 'update']);
     // });
 
+    // memberDropdown
+    Route::get('member/search-options', [MemberController::class, 'searchOptions'])
+        ->name('member.search-options');
+
 });
+
+// Route::get('member/search-options', [MemberController::class, 'searchOptions']);

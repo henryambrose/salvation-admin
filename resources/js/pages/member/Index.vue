@@ -35,12 +35,6 @@ const props = defineProps({
   },
 });
 
-console.log('props.canViewAnyMember', props.canViewAnyMember);
-console.log('props.canCreateMember', props.canCreateMember);
-console.log('props.canEditMember', props.canEditMember);
-console.log('props.canDeleteMember', props.canDeleteMember);
-
-
 const enhancedMembers = computed(() => {
   return {
     ...props.members,
@@ -78,6 +72,11 @@ function deleteMember(id : Member['id']) {
   }
 }
 
+const canCreateMember = can('create-member');
+const canReadAnyMember = can('read-member');
+const canUpdateAnyMember = can('update-member');
+const canDeleteAnyMember = can('delete-member');
+
 </script>
 
 <template>
@@ -88,7 +87,7 @@ function deleteMember(id : Member['id']) {
                 <h2 class="text-2xl font-bold">Members</h2>
                 <div class="btn-group flex space-x-2">
                     <Button
-                        v-if="props.canCreateMember"
+                        v-if="canCreateMember"
                         as="a"
                         href="/member/create"
                         class="btn btn-secondary"
@@ -105,30 +104,30 @@ function deleteMember(id : Member['id']) {
         </DatatableHeader>
 
         <DataTable
-            v-if="props.canViewAnyMember"
+            v-if="canReadAnyMember"
             :data="enhancedMembers"
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-            :has-actions="props.canEditMember || props.canDeleteMember"
+            :has-actions="canUpdateAnyMember || canDeleteAnyMember"
         >
             <template #actions="{ row }">
                 <Button
-                    v-if="props.canEditMember"
+                    v-if="canUpdateAnyMember"
                     class="btn btn-secondary mr-2"
                     @click="editMember(row)"
                 >
                     <component :is="Pencil" />
                     <span>Edit</span>
                 </Button>
-                <!-- <Button
-                    v-if="props.canDeleteMember"
+                <Button
+                    v-if="canDeleteAnyMember"
                     class="btn btn-secondary mr-2"
                     @click="deleteMember(row.id)"
                 >
                     <component :is="Trash" />
                     <span>Delete</span>
-                </Button> -->
+                </Button>
             </template>
         </DataTable>
         <div v-else class="text-center text-gray-500 py-10">

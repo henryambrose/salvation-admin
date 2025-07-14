@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Module;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,6 +49,26 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [],
                 'roles' => $request->user() ? $request->user()->getRoleNames() : [],
             ],
+            'modules' => Module::where('is_active', true)
+                ->orderBy('sort_order')
+                ->get()
+                ->map(function ($module) {
+                    return [
+                        'id' => $module->id,
+                        'name' => $module->name,
+                        'icon' => $module->icon,
+                        'slug' => $module->slug,
+                        'route' => $module->route,
+                        'actions' => $module->actions->map(function ($action) {
+                            return [
+                                'id' => $action->id,
+                                'name' => $action->name,
+                                'slug' => $action->slug,
+                                'icon' => $action->icon,
+                            ];
+                        }),
+                    ];
+                }),
             'ziggy' => [
                 ...(new Ziggy)->toArray(),
                 'location' => $request->url(),
