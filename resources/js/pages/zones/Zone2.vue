@@ -46,6 +46,29 @@ function submit() {
 const breadcrumbs = [
   { title: 'Zone', href: '/zone' },
 ];
+
+const handleEdit = (zone) => {
+  router.get(route('zone.edit', { zone: zone.id }));
+};
+
+const handleDelete = (zone) => {
+  if (confirm('Are you sure you want to delete this zone?')) {
+    router.delete(route('zone.destroy', { zone: zone.id }), {
+      preserveScroll: true,
+    });
+  }
+};
+
+const page = usePage();
+const roles = page.props.auth?.roles || [];
+const isSuperAdmin = roles.includes('superadmin');
+
+function can(permission: string) {
+  if (typeof window !== 'undefined' && window?.app?.config?.globalProperties?.$can) {
+    return window.app.config.globalProperties.$can(permission);
+  }
+  return isSuperAdmin;
+}
 </script>
 
 <template>
@@ -57,7 +80,6 @@ const breadcrumbs = [
             <Button @click="showModal = true" class="btn btn-secondary mr-2">
                 ➕ Add Zone
             </Button>
-
         </div>
         </DatatableHeader>
 
@@ -66,7 +88,19 @@ const breadcrumbs = [
             :columns="columns"
             :filters="filters"
             :fetch-url="fetchUrl"
-        />
+            has-actions
+            @edit="handleEdit"
+            @delete="handleDelete"
+        >
+          <template #actions="{ row }">
+            <Button class="btn btn-secondary mr-2" @click="handleEdit(row)">
+              Edit
+            </Button>
+            <Button class="btn btn-secondary mr-2" @click="handleDelete(row)">
+              Delete
+            </Button>
+          </template>
+        </DataTable>
 
         <!-- Modal -->
         <transition name="fade">

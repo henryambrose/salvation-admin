@@ -49,6 +49,18 @@ const enhancedFunds = {
     member_name: fund.member?.first_name + ' ' + (fund.member?.last_name || ''),
   })),
 };
+
+const page = usePage();
+const roles = page.props.auth?.roles || [];
+const isSuperAdmin = roles.includes('superadmin');
+
+// Helper to check permission (uses $can if available, else fallback)
+function can(permission: string) {
+  if (typeof window !== 'undefined' && window?.app?.config?.globalProperties?.$can) {
+    return window.app.config.globalProperties.$can(permission);
+  }
+  return isSuperAdmin;
+}
 </script>
 
 <template>
@@ -73,14 +85,18 @@ const enhancedFunds = {
       :has-actions="true"
     >
       <template #actions="{ row }">
-        <Button class="btn btn-secondary mr-2" @click="editCommunityFund(row)">
-          <component :is="Pencil" />
-          <span>Edit</span>
-        </Button>
-        <Button class="btn btn-secondary mr-2" @click="deleteCommunityFund(row.id)">
-          <component :is="Trash" />
-          <span>Delete</span>
-        </Button>
+        <template v-if="isSuperAdmin || can('community-fund.edit')">
+          <Button class="btn btn-secondary mr-2" @click="editCommunityFund(row)">
+            <component :is="Pencil" />
+            <span>Edit</span>
+          </Button>
+        </template>
+        <template v-if="isSuperAdmin || can('community-fund.delete')">
+          <Button class="btn btn-secondary mr-2" @click="deleteCommunityFund(row.id)">
+            <component :is="Trash" />
+            <span>Delete</span>
+          </Button>
+        </template>
       </template>
     </DataTable>
   </AppLayout>

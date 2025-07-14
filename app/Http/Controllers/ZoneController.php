@@ -106,15 +106,24 @@ class ZoneController extends Controller
      */
     public function edit(Zone $zone)
     {
-        //
+        return Inertia::render('zones/ZoneEdit', [
+            'zone' => $zone,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateZoneRequest $request, Zone $zone)
+    public function update(Request $request, Zone $zone)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|unique:zones,name,' . $zone->id,
+            'description' => 'nullable|string',
+        ]);
+
+        $zone->update($validated);
+
+        return redirect()->route('zone.index')->with('success', 'Zone updated successfully.');
     }
 
     /**
@@ -122,6 +131,8 @@ class ZoneController extends Controller
      */
     public function destroy(Zone $zone)
     {
-        //
+        $zone->delete();
+
+        return redirect()->route('zone.index')->with('success', 'Zone deleted successfully.');
     }
 }

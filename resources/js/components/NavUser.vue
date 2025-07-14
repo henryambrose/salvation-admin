@@ -46,3 +46,5 @@ console.log('Can view dashboard:', can('create all'));
         </SidebarMenuItem>
     </SidebarMenu>
 </template>
+
+<!-- No changes needed for permission on edit/delete buttons here -->

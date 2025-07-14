@@ -62,18 +62,20 @@
                 {{ item[column.key] }}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <button
-                  @click="editItem(item)"
-                  class="text-primary hover:text-primary-dark mr-3"
-                >
-                  Edit
-                </button>
-                <button
-                  @click="deleteItem(item)"
-                  class="text-red-600 hover:text-red-800"
-                >
-                  Delete
-                </button>
+                <slot name="actions" :row="item">
+                  <button
+                    @click="editItem(item)"
+                    class="text-primary hover:text-primary-dark mr-3"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    @click="deleteItem(item)"
+                    class="text-red-600 hover:text-red-800"
+                  >
+                    Delete
+                  </button>
+                </slot>
               </td>
             </tr>
             <tr v-if="filteredData.length === 0">
