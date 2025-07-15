@@ -122,7 +122,8 @@ export interface CellsAndAssociation {
 export type CellsAndAssociations = CellsAndAssociation[];
 
 export interface FamilyIncomeRange {
-    id: string; name: string;
+    id: number; // changed from string to number
+    name: string;
 }
 
 export type FamilyIncomeRanges = FamilyIncomeRange[];
@@ -145,6 +146,7 @@ export interface CommunityFund {
     member_id: number;
     member: Member;
     amount: number;
+    fund_date: string; // ISO 8601 date string
     description?: string | null;
     created_at: string; // ISO 8601 date string
     updated_at: string; // ISO 8601 date string

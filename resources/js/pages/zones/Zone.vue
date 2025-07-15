@@ -77,23 +77,26 @@ const fetchZones = async () => {
   }
 };
 
-// Define columns
+// Define columns, including an 'actions' column for buttons
 const columns = [
-  { key: 'id', label: 'ID' },
+  { key: 'id', label: 'Id' },
   { key: 'name', label: 'Name' },
-  { key: 'description', label: 'Description' },
-
+  // Add description column only if your backend returns it
+  // { key: 'description', label: 'Description' },
+  // No need to add an 'actions' column; DataTable renders Edit/Delete by default
 ];
 
 // Handle edit and delete actions
-const handleEdit = (user) => {
-  // Implement edit functionality
-  console.log('Edit user:', user);
+const handleEdit = (zone) => {
+  router.get(route('zone.edit', { zone: zone.id }));
 };
 
-const handleDelete = (user) => {
-  // Implement delete functionality
-  console.log('Delete user:', user);
+const handleDelete = (zone) => {
+  if (confirm('Are you sure you want to delete this zone?')) {
+    router.delete(route('zone.destroy', { zone: zone.id }), {
+      preserveScroll: true,
+    });
+  }
 };
 
 // Fetch data when component mounts
@@ -108,9 +111,20 @@ onMounted(() => {
         <Head title="Zones Management" />
 
         <DataTable
-            :data="zones.data"
+            :data="props.zones.data"
             :columns="columns"
+            has-actions
             @edit="handleEdit"
-            @delete="handleDelete"/>
+            @delete="handleDelete"
+        >
+          <template #actions="{ row }">
+            <button @click="handleEdit(row)" class="text-primary hover:text-primary-dark mr-3">
+              Edit
+            </button>
+            <button @click="handleDelete(row)" class="text-red-600 hover:text-red-800">
+              Delete
+            </button>
+          </template>
+        </DataTable>
     </AppLayout>
 </template>

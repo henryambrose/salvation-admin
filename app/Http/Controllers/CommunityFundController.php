@@ -35,7 +35,7 @@ class CommunityFundController extends Controller
         return Inertia::render('community_fund/Index', [
             'communityFunds' => $query->paginate($perPage)->appends($request->query()),
             'filters' => request()->only('search', 'sort', 'direction', 'perPage'),
-            'fetchUrl' => route('community.index'),
+            'fetchUrl' => route('community-fund.index'),
         ]);
     }
 
@@ -77,8 +77,15 @@ class CommunityFundController extends Controller
      */
     public function edit(CommunityFund $communityFund)
     {
+        // Ensure all fields are present for the form (avoid undefined/null)
         return Inertia::render('community_fund/CommunityFund', [
-            'communityFund' => $communityFund,
+            'communityFund' => [
+                'id' => $communityFund->id,
+                'member_id' => $communityFund->member_id,
+                'amount' => $communityFund->amount,
+                'fund_date' => $communityFund->fund_date,
+                'description' => $communityFund->description,
+            ],
             'communities' => \App\Models\Community::all(),
             'members' => \App\Models\Member::all(),
         ]);

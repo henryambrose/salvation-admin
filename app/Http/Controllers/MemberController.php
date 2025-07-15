@@ -71,7 +71,9 @@ class MemberController extends Controller
         return Inertia::render('member/Member', [
             'communities' => Community::with('communityClusters')->get(),
             'cellsAndAssociations' => CellsAndAssociation::all(),
-            'familyIncomeRanges' => FamilyIncomeRange::all(),
+            'familyIncomeRanges' => FamilyIncomeRange::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            }),
         ]);
     }
 
@@ -105,7 +107,7 @@ class MemberController extends Controller
     public function edit(Member $member)
     {
         $familyIncomeRanges = FamilyIncomeRange::all()->map(function ($item) {
-            return ['id' => $item->name, 'name' => $item->name];
+            return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
         return Inertia::render('member/Member', [
             'member' => $member,

@@ -19,6 +19,9 @@ class FamilyIncomeRangeSeeder extends Seeder
             ['name' => '70001-100000', 'starting_range' => 70001, 'ending_range' => 100000],
             ['name' => '>100000', 'starting_range' => 100001, 'ending_range' => PHP_INT_MAX],
         ];
-        \App\Models\FamilyIncomeRange::insert($incomeRanges);
+        // Only insert name field, as only name is fillable
+        \App\Models\FamilyIncomeRange::insert(array_map(function($item) {
+            return ['name' => $item['name']];
+        }, $incomeRanges));
     }
 }

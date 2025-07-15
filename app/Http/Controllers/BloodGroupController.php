@@ -75,15 +75,23 @@ class BloodGroupController extends Controller
      */
     public function edit(BloodGroup $bloodGroup)
     {
-        //
+        return Inertia::render('blood_group/BloodGroupEdit', [
+            'bloodGroup' => $bloodGroup,
+        ]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBloodGroupRequest $request, BloodGroup $bloodGroup)
+    public function update(Request $request, BloodGroup $bloodGroup)
     {
-        //
+        $validated = $request->validate([
+            'name' => 'required|string|unique:blood_groups,name,' . $bloodGroup->id,
+        ]);
+
+        $bloodGroup->update($validated);
+
+        return redirect()->route('blood-group.index')->with('success', 'Blood Group updated successfully.');
     }
 
     /**
@@ -91,6 +99,8 @@ class BloodGroupController extends Controller
      */
     public function destroy(BloodGroup $bloodGroup)
     {
-        //
+        $bloodGroup->delete();
+
+        return redirect()->route('blood-group.index')->with('success', 'Blood Group deleted successfully.');
     }
 }
