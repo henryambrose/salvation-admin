@@ -91,10 +91,10 @@ class MemberController extends Controller
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
             'states' => State::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
+                return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
             'towns' => Town::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id, 'country_id' => $item->country_id];
             })->toArray(),
             'designations' => Designation::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];

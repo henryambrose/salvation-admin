@@ -213,6 +213,7 @@ export type Countries = Country[];
 export interface State {
     id: number;
     name: string;
+    country_id: number; // Foreign key to Country
 }
 
 export type States = State[];
@@ -220,6 +221,7 @@ export type States = State[];
 export interface Town {
     id: number;
     name: string;
+    state_id: number; // Foreign key to State
 }
 
 export type Towns = Town[];

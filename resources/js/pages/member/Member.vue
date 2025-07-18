@@ -9,7 +9,7 @@ import { SelectInput } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MemberLayout from '@/layouts/member/Layout.vue';
-import { Community, Member, CellsAndAssociations, type BreadcrumbItem, type SharedData, type User, Communities, FamilyIncomeRanges, BloodGroups, Relationships, Countries, States, Towns, Designations } from '@/types';
+import { Community, Member, CellsAndAssociations, type BreadcrumbItem, type SharedData, type User, Communities, FamilyIncomeRanges, BloodGroups, Relationships, Countries, States, Towns, Designations, State } from '@/types';
 import { List } from 'lucide-vue-next';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
 import { ref, watch } from 'vue';
@@ -120,15 +120,55 @@ const communityClusters = ref([])
 
 const fetchCommunityCluster = async () => {
   if (!form.community_id) return
-
-  console.log('page.props.communities', page.props.communities);
   communityClusters.value = page.props.communities.find((community: Community) => community.id === form.community_id)?.community_clusters || [];
-
-
 }
 
 watch(() => form.community_id, () => {
     fetchCommunityCluster();
+});
+
+const filteredTownPermanent = ref([])
+
+const fetchfilteredTownPermanent = async () => {
+  if (!form.permanent_country) return
+  filteredTownPermanent.value = props.towns.filter(town => town.state_id === form.permanent_state);
+}
+
+watch(() => form.permanent_state, () => {
+    fetchfilteredTownPermanent();
+});
+
+const filteredStatesPermanent = ref([])
+
+const fetchfilteredStatesPermanent = async () => {
+  if (!form.permanent_country) return
+  filteredStatesPermanent.value = props.states.filter(state => state.country_id === form.permanent_country);
+}
+
+watch(() => form.permanent_country, () => {
+    fetchfilteredStatesPermanent();
+});
+
+const filteredTownCurrent = ref([]);
+
+const fetchfilteredTownCurrent = async () => {
+    if (!form.current_country) return;
+    filteredTownCurrent.value = props.towns.filter(town => town.state_id === form.current_state);
+};
+
+watch(() => form.current_state, () => {
+    fetchfilteredTownCurrent();
+});
+
+const filteredStatesCurrent = ref([]);
+
+const fetchfilteredStatesCurrent = async () => {
+    if (!form.current_country) return;
+    filteredStatesCurrent.value = props.states.filter(state => state.country_id === form.current_country);
+};
+
+watch(() => form.current_country, () => {
+    fetchfilteredStatesCurrent();
 });
 
 function cancel() {
@@ -274,7 +314,7 @@ function cancel() {
                             <SearchDropdown
                                 id="permanent_town"
                                 v-model="form.permanent_town"
-                                :options="props.towns"
+                                :options="filteredTownPermanent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Permanent Town"
                             />
@@ -295,7 +335,8 @@ function cancel() {
                             <SearchDropdown
                                 id="permanent_state"
                                 v-model="form.permanent_state"
-                                :options="props.states"
+                                :options2="props.states"
+                                :options="filteredStatesPermanent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Permanent State"
                             />
@@ -338,7 +379,7 @@ function cancel() {
                             <SearchDropdown
                                 id="current_town"
                                 v-model="form.current_town"
-                                :options="props.towns"
+                                :options="filteredTownCurrent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Current Town"
                             />
@@ -359,7 +400,7 @@ function cancel() {
                             <SearchDropdown
                                 id="current_state"
                                 v-model="form.current_state"
-                                :options="props.states"
+                                :options="filteredStatesCurrent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Current State"
                             />
