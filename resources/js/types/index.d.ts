@@ -187,3 +187,48 @@ export interface Town {
 }
 
 export type Towns = Town[];
+
+export interface BloodGroup {
+    id: string; // Assuming id is a string, adjust if necessary
+    name: string;
+}
+
+export type BloodGroups = BloodGroup[];
+
+export interface Relationship {
+    id: string; // Assuming id is a string, adjust if necessary
+    name: string;
+}
+
+export type Relationships = Relationship[];
+
+// countres
+export interface Country {
+    id: number;
+    name: string;
+}
+
+export type Countries = Country[];
+
+export interface State {
+    id: number;
+    name: string;
+}
+
+export type States = State[];
+
+export interface Town {
+    id: number;
+    name: string;
+}
+
+export type Towns = Town[];
+
+export interface Designation {
+    id: number;
+    name: string;
+    created_at: string; // ISO 8601 date string
+    updated_at: string; // ISO 8601 date string
+}
+
+export type Designations = Designation[];

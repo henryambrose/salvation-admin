@@ -9,19 +9,25 @@ import { SelectInput } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import MemberLayout from '@/layouts/member/Layout.vue';
-import { Community, Member, CellsAndAssociations, type BreadcrumbItem, type SharedData, type User, Communities, FamilyIncomeRanges } from '@/types';
+import { Community, Member, CellsAndAssociations, type BreadcrumbItem, type SharedData, type User, Communities, FamilyIncomeRanges, BloodGroups, Relationships, Countries, States, Towns, Designations } from '@/types';
 import { List } from 'lucide-vue-next';
 import { DropdownMenu } from '@/components/ui/dropdown-menu';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import FormHeader from '@/components/FormHeader.vue';
 import FormBody from '@/components/FormBody.vue';
-
+import { SearchDropdown } from '@/components/ui/searchDropdown';
 
 interface Props {
     member?: Member;
     communities: Communities;
     cellsAndAssociations: CellsAndAssociations;
     familyIncomeRanges: FamilyIncomeRanges;
+    bloodGroups: BloodGroups;
+    relationships: Relationships;
+    countries: Countries;
+    states: States;
+    towns: Towns;
+    designations: Designations;
 }
 
 const props = defineProps<Props>();
@@ -121,6 +127,10 @@ const fetchCommunityCluster = async () => {
 
 }
 
+watch(() => form.community_id, () => {
+    fetchCommunityCluster();
+});
+
 function cancel() {
     window.location.href = '/member/index';
 }
@@ -179,12 +189,12 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="relationship">Relationship</Label>
-                            <Input id="relationship" class="mt-1 block w-full" v-model="form.relationship" autocomplete="relationship" placeholder="Relationship" />
+                            <SearchDropdown id="relationship" v-model="form.relationship" :options="props.relationships" class="mt-1 block w-full" placeholder="Select Relationship" />
                             <InputError class="mt-2" :message="form.errors.relationship" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="blood_group">Blood Group</Label>
-                            <Input id="blood_group" class="mt-1 block w-full" v-model="form.blood_group" autocomplete="blood_group" placeholder="Blood group" />
+                            <SelectInput id="blood_group" v-model="form.blood_group" :options="bloodGroups" class="mt-1 block w-full" placeholder="Select Blood Group" />
                             <InputError class="mt-2" :message="form.errors.blood_group" />
                         </div>
                         <div class="grid gap-2">
@@ -216,7 +226,7 @@ function cancel() {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="community_id">Community</Label>
-                            <SelectInput
+                            <SearchDropdown
                                 id="community_id"
                                 v-model="form.community_id"
                                 :options="page.props.communities"
@@ -228,7 +238,7 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="community_cluster_id">Community Cluster</Label>
-                            <SelectInput
+                            <SearchDropdown
                                 id="community_cluster_id"
                                 v-model="form.community_cluster_id"
                                 :options="communityClusters"
@@ -261,7 +271,13 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="permanent_town">Town</Label>
-                            <Input id="permanent_town" class="mt-1 block w-full" v-model="form.permanent_town" autocomplete="permanent_town" placeholder="Permanent Town" />
+                            <SearchDropdown
+                                id="permanent_town"
+                                v-model="form.permanent_town"
+                                :options="props.towns"
+                                class="mt-1 block w-full"
+                                placeholder="Select Permanent Town"
+                            />
                             <InputError class="mt-2" :message="form.errors.permanent_town" />
                         </div>
                         <div class="grid gap-2">
@@ -276,12 +292,24 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="permanent_state">State</Label>
-                            <Input id="permanent_state" class="mt-1 block w-full" v-model="form.permanent_state" autocomplete="permanent_state" placeholder="Permanent State" />
+                            <SearchDropdown
+                                id="permanent_state"
+                                v-model="form.permanent_state"
+                                :options="props.states"
+                                class="mt-1 block w-full"
+                                placeholder="Select Permanent State"
+                            />
                             <InputError class="mt-2" :message="form.errors.permanent_state" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="permanent_country">Country</Label>
-                            <Input id="permanent_country" class="mt-1 block w-full" v-model="form.permanent_country" autocomplete="permanent_country" placeholder="Permanent Country" />
+                            <SearchDropdown
+                                id="permanent_country"
+                                v-model="form.permanent_country"
+                                :options="props.countries"
+                                class="mt-1 block w-full"
+                                placeholder="Select Permanent Country"
+                            />
                             <InputError class="mt-2" :message="form.errors.permanent_country" />
                         </div>
                     </div>
@@ -307,7 +335,13 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="current_town">Town</Label>
-                            <Input id="current_town" class="mt-1 block w-full" v-model="form.current_town" autocomplete="current_town" placeholder="Current Town" />
+                            <SearchDropdown
+                                id="current_town"
+                                v-model="form.current_town"
+                                :options="props.towns"
+                                class="mt-1 block w-full"
+                                placeholder="Select Current Town"
+                            />
                             <InputError class="mt-2" :message="form.errors.current_town" />
                         </div>
                         <div class="grid gap-2">
@@ -322,12 +356,24 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="current_state">State</Label>
-                            <Input id="current_state" class="mt-1 block w-full" v-model="form.current_state" autocomplete="current_state" placeholder="Current State" />
+                            <SearchDropdown
+                                id="current_state"
+                                v-model="form.current_state"
+                                :options="props.states"
+                                class="mt-1 block w-full"
+                                placeholder="Select Current State"
+                            />
                             <InputError class="mt-2" :message="form.errors.current_state" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="current_country">Country</Label>
-                            <Input id="current_country" class="mt-1 block w-full" v-model="form.current_country" autocomplete="current_country" placeholder="Current Country" />
+                            <SearchDropdown
+                                id="current_country"
+                                v-model="form.current_country"
+                                :options="props.countries"
+                                class="mt-1 block w-full"
+                                placeholder="Select Current Country"
+                            />
                             <InputError class="mt-2" :message="form.errors.current_country" />
                         </div>
                     </div>
@@ -359,7 +405,14 @@ function cancel() {
                         </div>
                         <div class="grid gap-2">
                             <Label for="designation">Designation</Label>
-                            <Input id="designation" class="mt-1 block w-full" v-model="form.designation" autocomplete="designation" placeholder="Designation" />
+                            <!-- <Input id="designation" class="mt-1 block w-full" v-model="form.designation" autocomplete="designation" placeholder="Designation" /> -->
+                            <SearchDropdown
+                                id="designation"
+                                v-model="form.designation"
+                                :options="props.designations"
+                                class="mt-1 block w-full"
+                                placeholder="Select Designation"
+                            />
                             <InputError class="mt-2" :message="form.errors.designation" />
                         </div>
                         <div class="grid gap-2">
@@ -382,7 +435,7 @@ function cancel() {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="cells_and_association_id">Cells and Association</Label>
-                            <SelectInput
+                            <SearchDropdown
                                 id="cells_and_association_id"
                                 v-model="form.cells_and_association_id"
                                 :options="cellsAndAssociations"
