@@ -4,10 +4,17 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
+use App\Models\BloodGroup;
 use App\Models\CellsAndAssociation;
 use App\Models\Community;
+use App\Models\Country;
+use App\Models\Designation;
 use App\Models\FamilyIncomeRange;
 use App\Models\Member;
+use App\Models\Relationship;
+use App\Models\State;
+use App\Models\Town;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -74,6 +81,24 @@ class MemberController extends Controller
             'familyIncomeRanges' => FamilyIncomeRange::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             }),
+            'bloodGroups' => BloodGroup::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'relationships' => Relationship::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'countries' => Country::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'states' => State::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
+            })->toArray(),
+            'towns' => Town::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id, 'country_id' => $item->country_id];
+            })->toArray(),
+            'designations' => Designation::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
         ]);
     }
 
