@@ -29,6 +29,9 @@ interface Props {
     states: States;
     towns: Towns;
     designations: Designations;
+    genders: any[];
+    statuses: any[];
+    parishes: any[];
 }
 
 const props = defineProps<Props>();
@@ -58,10 +61,11 @@ const form = useForm({
     first_name: member?.first_name ? member.first_name : '',
     middle_name: member?.middle_name ? member.middle_name : '',
     last_name: member?.last_name ? member.last_name : '',
-    gender: member?.gender ? member.gender : '',
-    blood_group: member?.blood_group ? member.blood_group : '',
-    status: member?.status ? member.status : '',
-    relationship: member?.relationship ? member.relationship : '',
+    gender_id: member?.gender_id ? member.gender_id : '',
+    blood_group_id: member?.blood_group_id ? member.blood_group_id : '',
+    status_id: member?.status_id ? member.status_id : '',
+    relationship_id: member?.relationship_id ? member.relationship_id : '',
+    parish_id: member?.parish_id ? member.parish_id : '',
     date_of_birth: member?.date_of_birth ? member.date_of_birth : '',
     contact_no: member?.contact_no ? member.contact_no : '',
     email: member?.email ? member.email : '',
@@ -74,26 +78,26 @@ const form = useForm({
     permanent_add1: member?.permanent_add1 ? member.permanent_add1 : '',
     permanent_add2: member?.permanent_add2 ? member.permanent_add2 : '',
     permanent_add3: member?.permanent_add3 ? member.permanent_add3 : '',
-    permanent_town: member?.permanent_town ? member.permanent_town : '',
+    permanent_town_id: member?.permanent_town_id ? member.permanent_town_id : '',
     permanent_city: member?.permanent_city ? member.permanent_city : '',
     permanent_pincode: member?.permanent_pincode ? member.permanent_pincode : '',
-    permanent_state: member?.permanent_state ? member.permanent_state : '',
-    permanent_country: member?.permanent_country ? member.permanent_country : '',
+    permanent_state_id: member?.permanent_state_id ? member.permanent_state_id : '',
+    permanent_country_id: member?.permanent_country_id ? member.permanent_country_id : '',
     current_add1: member?.current_add1 ? member.current_add1 : '',
     current_add2: member?.current_add2 ? member.current_add2 : '',
     current_add3: member?.current_add3 ? member.current_add3 : '',
-    current_town: member?.current_town ? member.current_town : '',
+    current_town_id: member?.current_town_id ? member.current_town_id : '',
     current_city: member?.current_city ? member.current_city : '',
     current_pincode: member?.current_pincode ? member.current_pincode : '',
-    current_state: member?.current_state ? member.current_state : '',
-    current_country: member?.current_country ? member.current_country : '',
+    current_state_id: member?.current_state_id ? member.current_state_id : '',
+    current_country_id: member?.current_country_id ? member.current_country_id : '',
     cells_and_association_id: member?.cells_and_association_id ? member.cells_and_association_id : '',
     school_name: member?.school_name ? member.school_name : '',
     college_name: member?.college_name ? member.college_name : '',
     latest_qualifications: member?.latest_qualifications ? member.latest_qualifications : '',
     company_name: member?.company_name ? member.company_name : '',
-    designation: member?.designation ? member.designation : '',
-    family_income_range: member?.family_income_range ? member.family_income_range : '',
+    designation_id: member?.designation_id ? member.designation_id : '',
+    family_income_range_id: member?.family_income_range_id ? member.family_income_range_id : '',
     baptism_date: member?.baptism_date ? member.baptism_date : '',
     baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
     baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
@@ -131,44 +135,44 @@ watch(() => form.community_id, () => {
 const filteredTownPermanent = ref([])
 
 const fetchfilteredTownPermanent = async () => {
-  if (!form.permanent_country) return
-  filteredTownPermanent.value = props.towns.filter(town => town.state_id === form.permanent_state);
+  if (!form.permanent_country_id) return
+  filteredTownPermanent.value = props.towns.filter(town => town.state_id === form.permanent_state_id);
 }
 
-watch(() => form.permanent_state, () => {
+watch(() => form.permanent_state_id, () => {
     fetchfilteredTownPermanent();
 });
 
 const filteredStatesPermanent = ref([])
 
 const fetchfilteredStatesPermanent = async () => {
-  if (!form.permanent_country) return
-  filteredStatesPermanent.value = props.states.filter(state => state.country_id === form.permanent_country);
+  if (!form.permanent_country_id) return
+  filteredStatesPermanent.value = props.states.filter(state => state.country_id === form.permanent_country_id);
 }
 
-watch(() => form.permanent_country, () => {
+watch(() => form.permanent_country_id, () => {
     fetchfilteredStatesPermanent();
 });
 
 const filteredTownCurrent = ref([]);
 
 const fetchfilteredTownCurrent = async () => {
-    if (!form.current_country) return;
-    filteredTownCurrent.value = props.towns.filter(town => town.state_id === form.current_state);
+    if (!form.current_country_id) return;
+    filteredTownCurrent.value = props.towns.filter(town => town.state_id === form.current_state_id);
 };
 
-watch(() => form.current_state, () => {
+watch(() => form.current_state_id, () => {
     fetchfilteredTownCurrent();
 });
 
 const filteredStatesCurrent = ref([]);
 
 const fetchfilteredStatesCurrent = async () => {
-    if (!form.current_country) return;
-    filteredStatesCurrent.value = props.states.filter(state => state.country_id === form.current_country);
+    if (!form.current_country_id) return;
+    filteredStatesCurrent.value = props.states.filter(state => state.country_id === form.current_country_id);
 };
 
-watch(() => form.current_country, () => {
+watch(() => form.current_country_id, () => {
     fetchfilteredStatesCurrent();
 });
 
@@ -216,9 +220,9 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.last_name" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="gender">Gender</Label>
-                            <SelectInput id="gender" v-model="form.gender" :options="genderArray" class="mt-1 block w-full" placeholder="Select Gender" />
-                            <InputError class="mt-2" :message="form.errors.gender" />
+                            <Label for="gender_id">Gender</Label>
+                            <SelectInput id="gender_id" v-model="form.gender_id" :options="props.genders" class="mt-1 block w-full" placeholder="Select Gender" />
+                            <InputError class="mt-2" :message="form.errors.gender_id" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="date_of_birth">Date of Birth</Label>
@@ -226,19 +230,19 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.date_of_birth" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="status">Status</Label>
-                            <SelectInput id="status" v-model="form.status" :options="statusArray" class="mt-1 block w-full" placeholder="Select Status" />
-                            <InputError class="mt-2" :message="form.errors.status" />
+                            <Label for="status_id">Status</Label>
+                            <SelectInput id="status_id" v-model="form.status_id" :options="props.statuses" class="mt-1 block w-full" placeholder="Select Status" />
+                            <InputError class="mt-2" :message="form.errors.status_id" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="relationship">Relationship</Label>
-                            <SearchDropdown id="relationship" v-model="form.relationship" :options="props.relationships" class="mt-1 block w-full" placeholder="Select Relationship" />
-                            <InputError class="mt-2" :message="form.errors.relationship" />
+                            <Label for="relationship_id">Relationship</Label>
+                            <SearchDropdown id="relationship_id" v-model="form.relationship_id" :options="props.relationships" class="mt-1 block w-full" placeholder="Select Relationship" />
+                            <InputError class="mt-2" :message="form.errors.relationship_id" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="blood_group">Blood Group</Label>
-                            <SelectInput id="blood_group" v-model="form.blood_group" :options="bloodGroups" class="mt-1 block w-full" placeholder="Select Blood Group" />
-                            <InputError class="mt-2" :message="form.errors.blood_group" />
+                            <Label for="blood_group_id">Blood Group</Label>
+                            <SelectInput id="blood_group_id" v-model="form.blood_group_id" :options="bloodGroups" class="mt-1 block w-full" placeholder="Select Blood Group" />
+                            <InputError class="mt-2" :message="form.errors.blood_group_id" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="contact_no">Contact No</Label>
@@ -313,15 +317,15 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.permanent_add3" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="permanent_town">Town</Label>
+                            <Label for="permanent_town_id">Town</Label>
                             <SearchDropdown
-                                id="permanent_town"
-                                v-model="form.permanent_town"
+                                id="permanent_town_id"
+                                v-model="form.permanent_town_id"
                                 :options="filteredTownPermanent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Permanent Town"
                             />
-                            <InputError class="mt-2" :message="form.errors.permanent_town" />
+                            <InputError class="mt-2" :message="form.errors.permanent_town_id" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="permanent_city">City</Label>
@@ -334,27 +338,26 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.permanent_pincode" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="permanent_state">State</Label>
+                            <Label for="permanent_state_id">State</Label>
                             <SearchDropdown
-                                id="permanent_state"
-                                v-model="form.permanent_state"
-                                :options2="props.states"
+                                id="permanent_state_id"
+                                v-model="form.permanent_state_id"
                                 :options="filteredStatesPermanent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Permanent State"
                             />
-                            <InputError class="mt-2" :message="form.errors.permanent_state" />
+                            <InputError class="mt-2" :message="form.errors.permanent_state_id" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="permanent_country">Country</Label>
+                            <Label for="permanent_country_id">Country</Label>
                             <SearchDropdown
-                                id="permanent_country"
-                                v-model="form.permanent_country"
+                                id="permanent_country_id"
+                                v-model="form.permanent_country_id"
                                 :options="props.countries"
                                 class="mt-1 block w-full"
                                 placeholder="Select Permanent Country"
                             />
-                            <InputError class="mt-2" :message="form.errors.permanent_country" />
+                            <InputError class="mt-2" :message="form.errors.permanent_country_id" />
                         </div>
                     </div>
                 </div>
@@ -378,15 +381,15 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.current_add3" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="current_town">Town</Label>
+                            <Label for="current_town_id">Town</Label>
                             <SearchDropdown
-                                id="current_town"
-                                v-model="form.current_town"
+                                id="current_town_id"
+                                v-model="form.current_town_id"
                                 :options="filteredTownCurrent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Current Town"
                             />
-                            <InputError class="mt-2" :message="form.errors.current_town" />
+                            <InputError class="mt-2" :message="form.errors.current_town_id" />
                         </div>
                         <div class="grid gap-2">
                             <Label for="current_city">City</Label>
@@ -399,26 +402,26 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.current_pincode" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="current_state">State</Label>
+                            <Label for="current_state_id">State</Label>
                             <SearchDropdown
-                                id="current_state"
-                                v-model="form.current_state"
+                                id="current_state_id"
+                                v-model="form.current_state_id"
                                 :options="filteredStatesCurrent"
                                 class="mt-1 block w-full"
                                 placeholder="Select Current State"
                             />
-                            <InputError class="mt-2" :message="form.errors.current_state" />
+                            <InputError class="mt-2" :message="form.errors.current_state_id" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="current_country">Country</Label>
+                            <Label for="current_country_id">Country</Label>
                             <SearchDropdown
-                                id="current_country"
-                                v-model="form.current_country"
+                                id="current_country_id"
+                                v-model="form.current_country_id"
                                 :options="props.countries"
                                 class="mt-1 block w-full"
                                 placeholder="Select Current Country"
                             />
-                            <InputError class="mt-2" :message="form.errors.current_country" />
+                            <InputError class="mt-2" :message="form.errors.current_country_id" />
                         </div>
                     </div>
                 </div>
@@ -448,27 +451,26 @@ const selectedDesignations = ref([]) // For v-model
                             <InputError class="mt-2" :message="form.errors.company_name" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="designation">Designation</Label>
-                            <!-- <Input id="designation" class="mt-1 block w-full" v-model="form.designation" autocomplete="designation" placeholder="Designation" /> -->
+                            <Label for="designation_id">Designation</Label>
                             <SearchDropdown
-                                id="designation"
-                                v-model="form.designation"
+                                id="designation_id"
+                                v-model="form.designation_id"
                                 :options="props.designations"
                                 class="mt-1 block w-full"
                                 placeholder="Select Designation"
                             />
-                            <InputError class="mt-2" :message="form.errors.designation" />
+                            <InputError class="mt-2" :message="form.errors.designation_id" />
                         </div>
                         <div class="grid gap-2">
-                            <Label for="family_income_range">Family Income Range</Label>
+                            <Label for="family_income_range_id">Family Income Range</Label>
                             <SelectInput
-                                id="family_income_range"
-                                v-model="form.family_income_range"
+                                id="family_income_range_id"
+                                v-model="form.family_income_range_id"
                                 :options="familyIncomeRanges"
                                 class="mt-1 block w-full"
                                 placeholder="Select Family Income Range"
                             />
-                            <InputError class="mt-2" :message="form.errors.family_income_range" />
+                            <InputError class="mt-2" :message="form.errors.family_income_range_id" />
                         </div>
                     </div>
                 </div>
@@ -479,19 +481,18 @@ const selectedDesignations = ref([]) // For v-model
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="cells_and_association_id">Cells and Association</Label>
-                            <!-- <SearchDropdown
+                            <SearchDropdown
                                 id="cells_and_association_id"
                                 v-model="form.cells_and_association_id"
                                 :options="cellsAndAssociations"
                                 class="mt-1 block w-full"
                                 placeholder="Select Cells & Association"
-                            /> -->
-                            <!-- const selectedDesignations = ref([]) // For v-model -->
-                            <MultiSearchDropdown
+                            />
+                            <!-- <MultiSearchDropdown
                             v-model="selectedDesignations"
                             :options="cellsAndAssociations"
                             placeholder="Select Designations"
-                            />
+                            /> -->
                             <InputError class="mt-2" :message="form.errors.cells_and_association_id" />
                         </div>
                     </div>
