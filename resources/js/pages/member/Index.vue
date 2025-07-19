@@ -18,10 +18,14 @@ import { reactive, watch } from 'vue'
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { SearchDropdown } from '@/components/ui/searchDropdown';
+import { Communities } from '@/types';
+
 
 const { can } = permissionHelpers();
 
 const props = defineProps({
+  communities: Object,
   members: Object,
   filters: Object,
   fetchUrl: String,
@@ -77,6 +81,18 @@ const canReadAnyMember = can('read-member');
 const canUpdateAnyMember = can('update-member');
 const canDeleteAnyMember = can('delete-member');
 
+const communityId = ref(null);
+const filters = reactive({
+  column: '',
+  value: '',
+});
+
+const searchColumnsOptions = computed(() => {
+  return columns.map(col => ({
+    id: col.key,
+    name: col.label,
+  }));
+});
 </script>
 
 <template>
@@ -97,12 +113,52 @@ const canDeleteAnyMember = can('delete-member');
                     </Button>
                 </div>
             </div>
-            <!-- Pagination Info -->
-            <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
-                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
-            </div>
-        </DatatableHeader>
+            <div class="mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Community Search Dropdown -->
+                    <div>
+                        <Label for="community" class="block text-sm font-medium text-gray-700">Community</Label>
+                        <SearchDropdown
+                            id="community_id"
+                            v-model="communityId"
+                            :options="props.communities"
+                            class="mt-1 block w-full"
+                            placeholder="Select Community"
+                        />
+                    </div>
 
+                    <!-- Search by Column Name -->
+                    <div>
+                        <Label for="column" class="block text-sm font-medium text-gray-700">Search By Column</Label>
+                        <SearchDropdown
+                            id="search_by_column_key"
+                            v-model="filters.column"
+                            :options="searchColumnsOptions"
+                            class="mt-1 block w-full"
+                            placeholder="Search By Column"
+                        />
+
+                    </div>
+
+                    <!-- Search by Column Value -->
+                    <div>
+                        <Label for="value" class="block text-sm font-medium text-gray-700">Search Value</Label>
+                        <Input
+                            id="search_by_column_value"
+                            v-model="filters.value"
+                            class="mt-1 block w-full"
+                            placeholder="Enter value"
+
+                        />
+                    </div>
+                </div>
+            </div>
+            <!-- Pagination Info -->
+            <!-- <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
+                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
+            </div> -->
+
+        </DatatableHeader>
         <DataTable
             v-if="canReadAnyMember"
             :data="enhancedMembers"

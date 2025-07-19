@@ -58,6 +58,7 @@ class MemberController extends Controller
         $perPage = $request->input('perPage', 10);
 
         return Inertia::render('member/Index', [
+            'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
             'members' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
