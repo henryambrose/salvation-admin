@@ -16,6 +16,7 @@ import { ref, watch } from 'vue';
 import FormHeader from '@/components/FormHeader.vue';
 import FormBody from '@/components/FormBody.vue';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
+import { MultiSearchDropdown } from '@/components/ui/multiSearchDropdown';
 
 interface Props {
     member?: Member;
@@ -174,6 +175,8 @@ watch(() => form.current_country, () => {
 function cancel() {
     window.location.href = '/member/index';
 }
+
+const selectedDesignations = ref([]) // For v-model
 </script>
 
 <template>
@@ -476,12 +479,18 @@ function cancel() {
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div class="grid gap-2">
                             <Label for="cells_and_association_id">Cells and Association</Label>
-                            <SearchDropdown
+                            <!-- <SearchDropdown
                                 id="cells_and_association_id"
                                 v-model="form.cells_and_association_id"
                                 :options="cellsAndAssociations"
                                 class="mt-1 block w-full"
                                 placeholder="Select Cells & Association"
+                            /> -->
+                            <!-- const selectedDesignations = ref([]) // For v-model -->
+                            <MultiSearchDropdown
+                            v-model="selectedDesignations"
+                            :options="cellsAndAssociations"
+                            placeholder="Select Designations"
                             />
                             <InputError class="mt-2" :message="form.errors.cells_and_association_id" />
                         </div>
