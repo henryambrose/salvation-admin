@@ -77,40 +77,40 @@ function can(permission) {
         <option :value="50">50</option>
       </select>
     </div>
-
-    <table class="w-full border text-left">
-      <thead>
-        <tr>
-          <th
-            v-for="col in columns"
-            :key="col.key"
-            @click="col.sortable ? changeSort(col.key) : null"
-            class="p-2 border cursor-pointer"
-          >
-            {{ col.label }}
-            <span v-if="col.sortable && sort === col.key">
-              {{ direction === 'asc' ? '▲' : '▼' }}
-            </span>
-          </th>
-          <th v-if="hasActions" class="p-2 border text-right">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="item in data.data" :key="item.id">
-          <td
-            v-for="col in columns"
-            :key="col.key"
-            class="p-2 border"
-          >
-            {{ item[col.key] }}
-          </td>
-          <td v-if="hasActions" class="p-2 border text-right">
-            <slot name="actions" :row="item" />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
+    <div class="overflow-x-auto" style="max-width: 100vw;">
+        <table class="overflow-x-auto border text-left">
+        <thead>
+            <tr>
+            <th
+                v-for="col in columns"
+                :key="col.key"
+                @click="col.sortable ? changeSort(col.key) : null"
+                class="p-2 border cursor-pointer"
+            >
+                {{ col.label }}
+                <span v-if="col.sortable && sort === col.key">
+                {{ direction === 'asc' ? '▲' : '▼' }}
+                </span>
+            </th>
+            <th v-if="hasActions" class="p-2 border text-right">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr v-for="item in data.data" :key="item.id">
+            <td
+                v-for="col in columns"
+                :key="col.key"
+                class="p-2 border"
+            >
+                {{ item[col.key] }}
+            </td>
+            <td v-if="hasActions" class="p-2 border text-right">
+                <slot name="actions" :row="item" />
+            </td>
+            </tr>
+        </tbody>
+        </table>
+    </div>
     <div class="mt-3 flex gap-2 items-center">
       <button
         v-if="data.prev_page_url"
