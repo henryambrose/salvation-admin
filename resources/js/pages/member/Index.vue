@@ -233,34 +233,7 @@ function changeSort(field: string) {
                 Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
             </div> -->
     </DatatableHeader>
-    <div class="overflow-x-auto" style="max-width: 100vw">
-      <!-- <DataTable
-                v-if="canReadAnyMember"
-                :data="enhancedMembers"
-                :columns="columns"
-                :filters="filters"
-                :fetch-url="fetchUrl"
-                :has-actions="canUpdateAnyMember || canDeleteAnyMember"
-            >
-                <template #actions="{ row }">
-                    <Button
-                        v-if="canUpdateAnyMember"
-                        class="btn btn-secondary mr-2"
-                        @click="editMember(row)"
-                    >
-                        <component :is="Pencil" />
-                        <span>Edit</span>
-                    </Button>
-                    <Button
-                        v-if="canDeleteAnyMember"
-                        class="btn btn-secondary mr-2"
-                        @click="deleteMember(row.id)"
-                    >
-                        <component :is="Trash" />
-                        <span>Delete</span>
-                    </Button>
-                </template>
-            </DataTable> -->
+    <div class="overflow-x-auto">
       <div v-if="canReadAnyMember">
         <div class="datatable2 mt-4 rounded bg-white p-4 shadow">
           <div class="mb-2 flex items-center gap-2">
@@ -273,33 +246,36 @@ function changeSort(field: string) {
               <option :value="50">50</option>
             </select>
           </div>
-          <div class="overflow-x-auto" style="max-width: 100vw">
+          <div class="overflow-x-auto">
             <table class="overflow-x-auto border text-left">
               <thead>
                 <tr>
+                  <th v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">Actions</th>
+
                   <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border p-2">
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
-                  <th v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in enhancedMembers.data" :key="item.id">
+                  <td v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">
+                    <div class="flex flex-wrap gap-3">
+                      <Button v-if="canUpdateAnyMember" @click="editMember(item)">
+                        <component :is="Pencil" />
+                        <span>Edit</span>
+                      </Button>
+                      <Button v-if="canDeleteAnyMember" variant="destructive" @click="deleteMember(item.id)">
+                        <component :is="Trash" />
+                        <span>Delete</span>
+                      </Button>
+                    </div>
+                  </td>
                   <td v-for="col in columns" :key="col.key" class="border p-2">
                     {{ item[col.key] }}
-                  </td>
-                  <td v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">
-                    <Button v-if="canUpdateAnyMember" class="btn btn-secondary mr-2" @click="editMember(item)">
-                      <component :is="Pencil" />
-                      <span>Edit</span>
-                    </Button>
-                    <Button v-if="canDeleteAnyMember" class="btn btn-secondary mr-2" @click="deleteMember(item.id)">
-                      <component :is="Trash" />
-                      <span>Delete</span>
-                    </Button>
                   </td>
                 </tr>
               </tbody>
