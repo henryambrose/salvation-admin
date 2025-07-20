@@ -4,19 +4,19 @@ import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 interface Props {
-    breadcrumbs?: BreadcrumbItemType[];
+  breadcrumbs?: BreadcrumbItemType[];
 }
 
 withDefaults(defineProps<Props>(), {
-    breadcrumbs: () => [],
+  breadcrumbs: () => [],
 });
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Flash />
-        <div class="p-4 shadow rounded">
-            <slot />
-        </div>
-    </AppLayout>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <Flash />
+    <div class="rounded p-4 shadow">
+      <slot />
+    </div>
+  </AppLayout>
 </template>

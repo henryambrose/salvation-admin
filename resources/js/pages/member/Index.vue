@@ -1,31 +1,23 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
-import DeleteUser from '@/components/DeleteUser.vue';
-import HeadingSmall from '@/components/HeadingSmall.vue';
-import InputError from '@/components/InputError.vue';
+import DataTable from '@/components/DataTable2.vue';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { TextareaInput } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
-import { Member, type BreadcrumbItem, type SharedData, type User } from '@/types';
-import { ref, computed, onMounted } from 'vue';
-import DataTable from '@/components/DataTable2.vue';
-import { router } from '@inertiajs/vue3'
-import { reactive, watch } from 'vue'
-import { Pencil, Plus, Trash } from 'lucide-vue-next';
-import DatatableHeader from '@/components/DatatableHeader.vue';
-import { permissionHelpers } from '@/composables/permissionHelpers';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
-import { Communities } from '@/types';
-
+import { permissionHelpers } from '@/composables/permissionHelpers';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Member } from '@/types';
+import { router } from '@inertiajs/vue3';
+import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { computed, reactive, ref } from 'vue';
 
 const { can } = permissionHelpers();
 
 const props = defineProps({
-  communities: Object,
+  communities: Array<{ id: string | number; name: string }>,
   members: Object,
   filters: Object,
   fetchUrl: String,
@@ -42,7 +34,7 @@ const props = defineProps({
 const enhancedMembers = computed(() => {
   return {
     ...props.members,
-    data: props.members.data.map(item => ({
+    data: props.members?.data.map((item: any) => ({
       ...item,
     //   community_id: item.community?.name || '',
     //   community_cluster_id: item.communityCluster?.name || '',
@@ -116,15 +108,13 @@ const columns = [
 { key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
 
-const breadcrumbs = [
-  { title: 'Members', href: '/member/index' },
-];
+const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
 
-function editMember(member : Member) {
+function editMember(member: Member) {
   router.get(route('member.edit', member.id));
 }
 
-function deleteMember(id : Member['id']) {
+function deleteMember(id: Member['id']) {
   if (confirm('Delete this member?')) {
     router.delete(route('member.destroy', id));
   }
