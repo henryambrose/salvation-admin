@@ -9,7 +9,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Member } from '@/types';
 import { router } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -139,6 +139,7 @@ const perPage = ref(props.filters?.perPage || 10);
 const communityId = ref(props.filters?.communityId || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
+const isArchived = ref(props.filters?.isArchived || false);
 
 // Avoid infinite loop: use immediate: false and deep: false for watch
 // watch(
@@ -151,7 +152,7 @@ const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 
 // Watch inputs
 watch(
-  [search, sort, direction, perPage, communityId, filterColumnKey, filterColumnValue],
+  [search, sort, direction, perPage, communityId, filterColumnKey, filterColumnValue, isArchived],
   () => {
     fetch();
   },
@@ -170,6 +171,7 @@ function fetch(page = 1) {
         communityId: communityId.value,
         filterColumnKey: filterColumnKey.value,
         filterColumnValue: filterColumnValue.value,
+        isArchived: isArchived.value,
         page,
       },
       {
@@ -189,6 +191,10 @@ function changeSort(field: string) {
   }
   fetch();
 }
+
+function toggleisArchived() {
+  isArchived.value = !isArchived.value;
+}
 </script>
 
 <template>
@@ -202,7 +208,7 @@ function changeSort(field: string) {
           <span>Add Member</span>
         </Button>
       </div>
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <!-- <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div class="col-span-1 row-span-1">
           <SearchDropdown
             id="community_id"
@@ -226,7 +232,7 @@ function changeSort(field: string) {
         <div class="col-span-1 row-span-1">
           <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full" placeholder="Enter value" @focus-out="fetch()" />
         </div>
-      </div>
+      </div> -->
 
       <!-- Pagination Info -->
       <!-- <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
@@ -245,6 +251,29 @@ function changeSort(field: string) {
               <option :value="25">25</option>
               <option :value="50">50</option>
             </select>
+            <SearchDropdown
+              id="community_id"
+              v-model="communityId"
+              :options="props.communities || []"
+              class="mt-1 block w-full"
+              placeholder="Select Community"
+              @focus-out="fetch"
+            />
+            <SearchDropdown
+              id="search_by_column_key"
+              v-model="filterColumnKey"
+              :options="searchColumnsOptions"
+              class="mt-1 block w-full"
+              placeholder="Search By Column"
+              @focus-out="fetch()"
+            />
+            <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full" placeholder="Enter value" @focus-out="fetch()" />
+            <div class="flex items-center gap-2">
+              <Button @click="toggleisArchived" :class="isArchived ? 'bg-red-800 text-white' : 'bg-gray-200 text-gray-700'">
+                <component :is="ArchiveIcon" />
+                <span>Archived</span>
+              </Button>
+            </div>
           </div>
           <div class="overflow-x-auto">
             <table class="overflow-x-auto border text-left">
@@ -264,11 +293,11 @@ function changeSort(field: string) {
                 <tr v-for="item in enhancedMembers.data" :key="item.id">
                   <td v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">
                     <div class="flex flex-wrap gap-3">
-                      <Button v-if="canUpdateAnyMember" @click="editMember(item)">
+                      <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)">
                         <component :is="Pencil" />
                         <span>Edit</span>
                       </Button>
-                      <Button v-if="canDeleteAnyMember" variant="destructive" @click="deleteMember(item.id)">
+                      <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)">
                         <component :is="Trash" />
                         <span>Delete</span>
                       </Button>

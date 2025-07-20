@@ -47,6 +47,12 @@ class MemberController extends Controller
 
 
         $query = Member::query();
+        // isArchived
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         $query->with([
             'community',
             'communityCluster',
@@ -118,7 +124,7 @@ class MemberController extends Controller
             'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
             'members' => $data,
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
             'canViewAnyMember' => true,
             'canCreateMember' => true,
             'canEditMember' => true,
