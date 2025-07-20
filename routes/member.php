@@ -8,6 +8,7 @@ Route::middleware('auth')->group(function () {
     Route::redirect('member', '/member/index');
 
     Route::get('member/index', [MemberController::class, 'index'])->name('member.index');
+    // Route::get('member/index-old', [MemberController::class, 'index_old'])->name('member.index-old');
     Route::resource('member', MemberController::class)->except(['index']);
     // Route::prefix('member')->group(function () {
     //     Route::resource('profile-details', ProfileDetailsController::class)->only(['create', 'store', 'edit', 'update'])->names([

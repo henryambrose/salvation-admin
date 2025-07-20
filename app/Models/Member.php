@@ -74,21 +74,38 @@ class Member extends Model
     {
         return $this->belongsTo(CellsAndAssociation::class);
     }
+
+    // relationship
+    public function relationship()
+    {
+        return $this->belongsTo(Relationship::class);
+    }
+
     public function relationships()
     {
         return $this->hasMany(FamilyLink::class);
     }
-    public function statuses()
+    public function status()
     {
-        return $this->hasMany(Status::class);
+        return $this->belongsTo(Status::class);
     }
-    public function genders()
+    public function gender()
     {
-        return $this->hasMany(Gender::class);
+        return $this->belongsTo(Gender::class);
     }
-    public function bloodgroups()
+    public function bloodGroup()
     {
         return $this->belongsTo(BloodGroup::class);
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class);
+    }
+
+    public function familyIncomeRange()
+    {
+        return $this->belongsTo(FamilyIncomeRange::class);
     }
 
     public function relatedMembers()

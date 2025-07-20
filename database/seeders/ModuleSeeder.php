@@ -29,12 +29,12 @@ class ModuleSeeder extends Seeder
                 'icon' => 'CurrencyIcon',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
-            [
-                'name' => 'Community Fund',
-                'slug' => 'community-fund',
-                'icon' => 'CurrencyIcon',
-                'actions' => ['create', 'read', 'update', 'delete', 'list'],
-            ],
+            // [
+            //     'name' => 'Community Fund',
+            //     'slug' => 'community-fund',
+            //     'icon' => 'CurrencyIcon',
+            //     'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            // ],
             [
                 'name' => 'Zone',
                 'slug' => 'zone',

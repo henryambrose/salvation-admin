@@ -30,11 +30,34 @@ class MemberController extends Controller
      */
     public function index(Request $request) :Response
     {
+        // \Log::debug($request->all());
         // $this->authorize('viewAny', Member::class);
+
+        $dropdownColumns = [
+            'community_id' => ['relation' => 'community', 'column' => 'name'],
+            'community_cluster_id' => ['relation' => 'communityCluster', 'column' => 'name'],
+            'blood_group_id' => ['relation' => 'bloodGroup', 'column' => 'name'],
+            'cells_and_association_id' => ['relation' => 'cellsAndAssociation', 'column' => 'name'],
+            'family_income_range_id' => ['relation' => 'familyIncomeRange', 'column' => 'name'],
+            'designation_id' => ['relation' => 'designation', 'column' => 'name'],
+            'gender_id' => ['relation' => 'gender', 'column' => 'name'],
+            'status_id' => ['relation' => 'status', 'column' => 'name'],
+        ];
+
+
+
         $query = Member::query();
         $query->with([
             'community',
             'communityCluster',
+            'cellsAndAssociation',
+            'relationship',
+            // 'relationships.relatedMember',
+            'bloodGroup',
+            'designation',
+            'familyIncomeRange',
+            'status',
+            'gender',
         ]);
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -49,6 +72,27 @@ class MemberController extends Controller
             });
         }
 
+        if ($communityId = $request->input('communityId')) {
+            $query->where('community_id', $communityId);
+        }
+
+        // Filter by custom column
+        if ($filterColumnKey = $request->input('filterColumnKey')) {
+            $filterColumnValue = $request->input('filterColumnValue');
+            if ($filterColumnKey && $filterColumnValue) {
+                if (in_array($filterColumnKey, array_keys($dropdownColumns))) {
+                    // $query->where($filterColumnKey, $filterColumnValue);
+                    $relation = $dropdownColumns[$filterColumnKey]['relation'];
+                    $filterColumnKeyName = $dropdownColumns[$filterColumnKey]['column'];
+                    $query->whereHas($relation, function ($q) use ($filterColumnKeyName, $filterColumnValue) {
+                        $q->where($filterColumnKeyName, 'like', "%$filterColumnValue%");
+                    });
+                }
+            } else if ($filterColumnValue) {
+                $query->where($filterColumnKey, 'like', "%$filterColumnValue%");
+            }
+        }
+
         if ($sort = $request->input('sort')) {
             $query->orderBy($sort, $request->input('direction', 'asc'));
         } else {
@@ -57,10 +101,23 @@ class MemberController extends Controller
 
         $perPage = $request->input('perPage', 10);
 
+        $data = $query->paginate($perPage)->appends($request->query());
+        $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
+            foreach ($dropdownColumns as $key => $relation) {
+                if (isset($item->{$relation['relation']})) {
+                    $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
+                } else {
+                    $item->$key = '';
+                }
+            }
+            return $item;
+        });
+
+        // \Log::debug($data->toArray());
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
-            'members' => $query->paginate($perPage)->appends($request->query()),
+            'members' => $data,
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
             'canViewAnyMember' => true,
             'canCreateMember' => true,
@@ -124,8 +181,8 @@ class MemberController extends Controller
 
         Member::create($validated);
 
-        Log::debug($validated);
-        Log::debug($request->all());
+        // Log::debug($validated);
+        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member created successfully.');
     }
 
@@ -191,8 +248,8 @@ class MemberController extends Controller
 
         $member->update($validated);
 
-        Log::debug($validated);
-        Log::debug($request->all());
+        // Log::debug($validated);
+        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
 
