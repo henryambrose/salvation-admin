@@ -12,7 +12,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Member } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
