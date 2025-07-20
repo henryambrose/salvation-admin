@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
+import DataTable from '@/components/DataTable2.vue';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { PPCHead } from '@/types';
-import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   ppcHeads: Object,
@@ -16,15 +16,12 @@ const props = defineProps({
 });
 
 const columns = [
-{ key: 'id', label: 'Id', sortable: true },
-{ key: 'member_first_name', label: 'Member Name', sortable: true },
-{ key: 'community_name', label: 'Community Name', sortable: true },
-
+  { key: 'id', label: 'Id', sortable: true },
+  { key: 'member_first_name', label: 'Member Name', sortable: true },
+  { key: 'community_name', label: 'Community Name', sortable: true },
 ];
 
-const breadcrumbs = [
-  { title: 'PPC Heads', href: '/ppc-head/index' },
-];
+const breadcrumbs = [{ title: 'PPC Heads', href: '/ppc-head/index' }];
 
 function editPPCHead(ppcHead: PPCHead) {
   router.get(route('ppc-head.edit', ppcHead.id));
@@ -38,37 +35,33 @@ function deletePPCHead(id: PPCHead['id']) {
 </script>
 
 <template>
-    <AppLayout :breadcrumbs="breadcrumbs">
-        <Head title="PPC Heads" />
-        <DatatableHeader>
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold">PPC Heads</h2>
-                <div class="btn-group flex space-x-2">
-                    <Button as="a" href="/ppc-head/create" class="btn btn-secondary">
-                        <component :is="Plus" />
-                        <span>Add PPC Head</span>
-                    </Button>
-                </div>
-            </div>
-        </DatatableHeader>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <Head title="PPC Heads" />
+    <DatatableHeader>
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold">PPC Heads</h2>
+        <div class="btn-group flex space-x-2">
+          <Button as="a" href="/ppc-head/create">
+            <component :is="Plus" />
+            <span>Add PPC Head</span>
+          </Button>
+        </div>
+      </div>
+    </DatatableHeader>
 
-        <DataTable
-                :data="ppcHeads"
-            :columns="columns"
-            :filters="filters"
-            :fetch-url="fetchUrl"
-            :has-actions="true"
-        >
-            <template #actions="{ row }">
-                    <Button class="btn btn-secondary mr-2" @click="editPPCHead(row)">
-                    <component :is="Pencil" />
-                    <span>Edit</span>
-                </Button>
-                    <Button class="btn btn-secondary mr-2" @click="deletePPCHead(row.id)">
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                </Button>
-            </template>
-        </DataTable>
-    </AppLayout>
+    <DataTable :data="ppcHeads" :columns="columns" :filters="filters" :fetch-url="fetchUrl" :has-actions="true">
+      <template #actions="{ row }">
+        <div class="flex flex-wrap gap-3">
+          <Button @click="editPPCHead(row)">
+            <component :is="Pencil" />
+            <span>Edit</span>
+          </Button>
+          <Button @click="deletePPCHead(row.id)" variant="destructive">
+            <component :is="Trash" />
+            <span>Delete</span>
+          </Button>
+        </div>
+      </template>
+    </DataTable>
+  </AppLayout>
 </template>
