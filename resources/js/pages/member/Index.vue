@@ -18,10 +18,14 @@ import { reactive, watch } from 'vue'
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { SearchDropdown } from '@/components/ui/searchDropdown';
+import { Communities } from '@/types';
+
 
 const { can } = permissionHelpers();
 
 const props = defineProps({
+  communities: Object,
   members: Object,
   filters: Object,
   fetchUrl: String,
@@ -54,6 +58,53 @@ const columns = [
 { key: 'last_name', label: 'Last Name', sortable: true },
 { key: 'community_name', label: 'Community Name', sortable: true },
 { key: 'community_cluster_name', label: 'Community Cluster Name', sortable: true },
+{ key: 'community_id', label: 'Community ID', sortable: true },
+{ key: 'community_cluster_id', label: 'Community Cluster ID', sortable: true },
+{ key: 'new_olsc_id', label: 'New OLSC ID', sortable: true },
+{ key: 'old_sal_id', label: 'Old SAL ID', sortable: true },
+{ key: 'aadhar', label: 'Aadhar', sortable: true },
+{ key: 'family_no', label: 'Family No', sortable: true },
+{ key: 'status_id', label: 'Status ID', sortable: true },
+{ key: 'relationship_id', label: 'Relationship ID', sortable: true },
+{ key: 'gender_id', label: 'Gender ID', sortable: true },
+{ key: 'date_of_birth', label: 'Date of Birth', sortable: true },
+{ key: 'permanent_add1', label: 'Permanent Address Line 1', sortable: true },
+{ key: 'permanent_add2', label: 'Permanent Address Line 2', sortable: true },
+{ key: 'permanent_add3', label: 'Permanent Address Line 3', sortable: true },
+{ key: 'permanent_town_id', label: 'Permanent Town ID', sortable: true },
+{ key: 'permanent_pincode', label: 'Permanent Pincode', sortable: true },
+{ key: 'permanent_state_id', label: 'Permanent State ID', sortable: true },
+{ key: 'permanent_country_id', label: 'Permanent Country ID', sortable: true },
+{ key: 'current_add1', label: 'Current Address Line 1', sortable: true },
+{ key: 'current_add2', label: 'Current Address Line 2', sortable: true },
+{ key: 'current_add3', label: 'Current Address Line 3', sortable: true },
+{ key: 'current_town_id', label: 'Current Town ID', sortable: true },
+{ key: 'current_pincode', label: 'Current Pincode', sortable: true },
+{ key: 'current_state_id', label: 'Current State ID', sortable: true },
+{ key: 'current_country_id', label: 'Current Country ID', sortable: true },
+{ key: 'contact_no', label: 'Contact No', sortable: true },
+{ key: 'email', label: 'Email', sortable: true },
+{ key: 'blood_group_id', label: 'Blood Group ID', sortable: true },
+{ key: 'cells_and_association_id', label: 'Cells and Association ID', sortable: true },
+{ key: 'school_name', label: 'School Name', sortable: true },
+{ key: 'college_name', label: 'College Name', sortable: true },
+{ key: 'latest_qualifications', label: 'Latest Qualifications', sortable: true },
+{ key: 'company_name', label: 'Company Name', sortable: true },
+{ key: 'designation_id', label: 'Designation ID', sortable: true },
+{ key: 'family_income_range_id', label: 'Family Income Range ID', sortable: true },
+{ key: 'baptism_date', label: 'Baptism Date', sortable: true },
+{ key: 'baptism_reg_no', label: 'Baptism Reg No', sortable: true },
+{ key: 'baptism_parish', label: 'Baptism Parish', sortable: true },
+{ key: 'confirmation_date', label: 'Confirmation Date', sortable: true },
+{ key: 'confirmation_reg_no', label: 'Confirmation Reg No', sortable: true },
+{ key: 'confirmation_parish', label: 'Confirmation Parish', sortable: true },
+{ key: 'marriage_date', label: 'Marriage Date', sortable: true },
+{ key: 'marriage_reg_no', label: 'Marriage Reg No', sortable: true },
+{ key: 'marriage_parish', label: 'Marriage Parish', sortable: true },
+{ key: 'death_date', label: 'Death Date', sortable: true },
+{ key: 'deaths_reg_no', label: 'Deaths Reg No', sortable: true },
+{ key: 'death_parish', label: 'Death Parish', sortable: true },
+{ key: 'age', label: 'Age', sortable: true },
 { key: 'added_on', label: 'Added On', sortable: true },
 { key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
@@ -77,6 +128,18 @@ const canReadAnyMember = can('read-member');
 const canUpdateAnyMember = can('update-member');
 const canDeleteAnyMember = can('delete-member');
 
+const communityId = ref(null);
+const filters = reactive({
+  column: '',
+  value: '',
+});
+
+const searchColumnsOptions = computed(() => {
+  return columns.map(col => ({
+    id: col.key,
+    name: col.label,
+  }));
+});
 </script>
 
 <template>
@@ -97,12 +160,52 @@ const canDeleteAnyMember = can('delete-member');
                     </Button>
                 </div>
             </div>
-            <!-- Pagination Info -->
-            <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
-                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
-            </div>
-        </DatatableHeader>
+            <div class="mb-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Community Search Dropdown -->
+                    <div>
+                        <Label for="community" class="block text-sm font-medium text-gray-700">Community</Label>
+                        <SearchDropdown
+                            id="community_id"
+                            v-model="communityId"
+                            :options="props.communities"
+                            class="mt-1 block w-full"
+                            placeholder="Select Community"
+                        />
+                    </div>
 
+                    <!-- Search by Column Name -->
+                    <div>
+                        <Label for="column" class="block text-sm font-medium text-gray-700">Search By Column</Label>
+                        <SearchDropdown
+                            id="search_by_column_key"
+                            v-model="filters.column"
+                            :options="searchColumnsOptions"
+                            class="mt-1 block w-full"
+                            placeholder="Search By Column"
+                        />
+
+                    </div>
+
+                    <!-- Search by Column Value -->
+                    <div>
+                        <Label for="value" class="block text-sm font-medium text-gray-700">Search Value</Label>
+                        <Input
+                            id="search_by_column_value"
+                            v-model="filters.value"
+                            class="mt-1 block w-full"
+                            placeholder="Enter value"
+
+                        />
+                    </div>
+                </div>
+            </div>
+            <!-- Pagination Info -->
+            <!-- <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
+                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
+            </div> -->
+
+        </DatatableHeader>
         <DataTable
             v-if="canReadAnyMember"
             :data="enhancedMembers"

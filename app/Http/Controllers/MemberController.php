@@ -14,6 +14,9 @@ use App\Models\Member;
 use App\Models\Relationship;
 use App\Models\State;
 use App\Models\Town;
+use App\Models\Gender;
+use App\Models\Status;
+use App\Models\Parish;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -55,6 +58,7 @@ class MemberController extends Controller
         $perPage = $request->input('perPage', 10);
 
         return Inertia::render('member/Index', [
+            'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
             'members' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
@@ -99,6 +103,15 @@ class MemberController extends Controller
             'designations' => Designation::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
+            'genders' => Gender::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'statuses' => Status::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'parishes' => Parish::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
         ]);
     }
 
@@ -139,6 +152,33 @@ class MemberController extends Controller
             'communities' => Community::with('communityClusters')->get(),
             'cellsAndAssociations' => CellsAndAssociation::all(),
             'familyIncomeRanges' => $familyIncomeRanges,
+            'bloodGroups' => BloodGroup::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'relationships' => Relationship::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'countries' => Country::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'states' => State::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
+            })->toArray(),
+            'towns' => Town::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id, 'country_id' => $item->country_id];
+            })->toArray(),
+            'designations' => Designation::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'genders' => Gender::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'statuses' => Status::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'parishes' => Parish::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
         ]);
     }
 
