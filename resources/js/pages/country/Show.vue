@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
 
 const props = defineProps({
   country: Object,
@@ -11,7 +11,7 @@ const props = defineProps({
   <AppLayout>
     <Head :title="`Country: ${props.country.name}`" />
     <div class="p-6">
-      <h2 class="text-2xl font-bold mb-4">Country Details</h2>
+      <h2 class="mb-4 text-2xl font-bold">Country Details</h2>
       <div>
         <div><strong>ID:</strong> {{ props.country.id }}</div>
         <div><strong>Name:</strong> {{ props.country.name }}</div>

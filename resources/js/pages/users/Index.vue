@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Head } from '@inertiajs/vue3';
 
+import DataTable from '@/components/DataTable2.vue';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
-import DataTable from '@/components/DataTable2.vue';
 import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
   users: Object,
@@ -21,9 +21,7 @@ const columns = [
   { key: 'created_at', label: 'Created At', sortable: true },
 ];
 
-const breadcrumbs = [
-  { name: 'Users', href: '/users/index' },
-];
+const breadcrumbs = [{ name: 'Users', href: '/users/index' }];
 
 const deleteUser = (id: number) => {
   if (confirm('Are you sure you want to delete this user?')) {
@@ -37,10 +35,10 @@ const deleteUser = (id: number) => {
     <Head title="Users" />
 
     <DatatableHeader>
-      <div class="flex justify-between items-center mb-4">
+      <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold">Users</h2>
         <div class="btn-group flex space-x-2">
-          <Button as="a" href="/users/create" class="btn btn-secondary">
+          <Button as="a" href="/users/create">
             <component :is="Plus" />
             <span>Add User</span>
           </Button>
@@ -48,28 +46,13 @@ const deleteUser = (id: number) => {
       </div>
     </DatatableHeader>
 
-    <DataTable
-      :data="users"
-      :columns="columns"
-      :filters="filters"
-      :fetch-url="fetchUrl"
-      :has-actions="true"
-    >
+    <DataTable :data="users" :columns="columns" :filters="filters" :fetch-url="fetchUrl" :has-actions="true">
       <template #actions="{ row }">
         <div class="flex items-center space-x-2">
-          <Button
-            as="a"
-            :href="`/users/${row.id}/edit`"
-            variant="outline"
-            size="icon"
-          >
+          <Button as="a" :href="`/users/${row.id}/edit`" variant="outline" size="icon">
             <component :is="Pencil" class="h-4 w-4" />
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            @click="deleteUser(row.id)"
-          >
+          <Button variant="outline" size="icon" @click="deleteUser(row.id)">
             <component :is="Trash" class="h-4 w-4" />
           </Button>
         </div>

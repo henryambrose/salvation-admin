@@ -25,7 +25,7 @@ const delegatedProps = computed(() => {
 </script>
 
 <template>
-  <SidebarMenuButtonChild class="h-full w-full btn btn-secondary" v-if="!tooltip" v-bind="{ ...delegatedProps, ...$attrs }">
+  <SidebarMenuButtonChild class="h-full w-full " v-if="!tooltip" v-bind="{ ...delegatedProps, ...$attrs }">
     <slot />
   </SidebarMenuButtonChild>
 

@@ -14,6 +14,9 @@ use App\Models\Member;
 use App\Models\Relationship;
 use App\Models\State;
 use App\Models\Town;
+use App\Models\Gender;
+use App\Models\Status;
+use App\Models\Parish;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -27,11 +30,40 @@ class MemberController extends Controller
      */
     public function index(Request $request) :Response
     {
+        // \Log::debug($request->all());
         // $this->authorize('viewAny', Member::class);
+
+        $dropdownColumns = [
+            'community_id' => ['relation' => 'community', 'column' => 'name'],
+            'community_cluster_id' => ['relation' => 'communityCluster', 'column' => 'name'],
+            'blood_group_id' => ['relation' => 'bloodGroup', 'column' => 'name'],
+            'cells_and_association_id' => ['relation' => 'cellsAndAssociation', 'column' => 'name'],
+            'family_income_range_id' => ['relation' => 'familyIncomeRange', 'column' => 'name'],
+            'designation_id' => ['relation' => 'designation', 'column' => 'name'],
+            'gender_id' => ['relation' => 'gender', 'column' => 'name'],
+            'status_id' => ['relation' => 'status', 'column' => 'name'],
+        ];
+
+
+
         $query = Member::query();
+        // isArchived
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         $query->with([
             'community',
             'communityCluster',
+            'cellsAndAssociation',
+            'relationship',
+            // 'relationships.relatedMember',
+            'bloodGroup',
+            'designation',
+            'familyIncomeRange',
+            'status',
+            'gender',
         ]);
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -46,6 +78,27 @@ class MemberController extends Controller
             });
         }
 
+        if ($communityId = $request->input('communityId')) {
+            $query->where('community_id', $communityId);
+        }
+
+        // Filter by custom column
+        if ($filterColumnKey = $request->input('filterColumnKey')) {
+            $filterColumnValue = $request->input('filterColumnValue');
+            if ($filterColumnKey && $filterColumnValue) {
+                if (in_array($filterColumnKey, array_keys($dropdownColumns))) {
+                    // $query->where($filterColumnKey, $filterColumnValue);
+                    $relation = $dropdownColumns[$filterColumnKey]['relation'];
+                    $filterColumnKeyName = $dropdownColumns[$filterColumnKey]['column'];
+                    $query->whereHas($relation, function ($q) use ($filterColumnKeyName, $filterColumnValue) {
+                        $q->where($filterColumnKeyName, 'like', "%$filterColumnValue%");
+                    });
+                }
+            } else if ($filterColumnValue) {
+                $query->where($filterColumnKey, 'like', "%$filterColumnValue%");
+            }
+        }
+
         if ($sort = $request->input('sort')) {
             $query->orderBy($sort, $request->input('direction', 'asc'));
         } else {
@@ -54,10 +107,24 @@ class MemberController extends Controller
 
         $perPage = $request->input('perPage', 10);
 
+        $data = $query->paginate($perPage)->appends($request->query());
+        $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
+            foreach ($dropdownColumns as $key => $relation) {
+                if (isset($item->{$relation['relation']})) {
+                    $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
+                } else {
+                    $item->$key = '';
+                }
+            }
+            return $item;
+        });
+
+        // \Log::debug($data->toArray());
         return Inertia::render('member/Index', [
+            'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
-            'members' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'members' => $data,
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
             'canViewAnyMember' => true,
             'canCreateMember' => true,
             'canEditMember' => true,
@@ -99,6 +166,15 @@ class MemberController extends Controller
             'designations' => Designation::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
+            'genders' => Gender::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'statuses' => Status::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'parishes' => Parish::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
         ]);
     }
 
@@ -111,8 +187,8 @@ class MemberController extends Controller
 
         Member::create($validated);
 
-        Log::debug($validated);
-        Log::debug($request->all());
+        // Log::debug($validated);
+        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member created successfully.');
     }
 
@@ -139,6 +215,33 @@ class MemberController extends Controller
             'communities' => Community::with('communityClusters')->get(),
             'cellsAndAssociations' => CellsAndAssociation::all(),
             'familyIncomeRanges' => $familyIncomeRanges,
+            'bloodGroups' => BloodGroup::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'relationships' => Relationship::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'countries' => Country::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'states' => State::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
+            })->toArray(),
+            'towns' => Town::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id, 'country_id' => $item->country_id];
+            })->toArray(),
+            'designations' => Designation::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'genders' => Gender::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'statuses' => Status::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
+            'parishes' => Parish::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
         ]);
     }
 
@@ -151,8 +254,8 @@ class MemberController extends Controller
 
         $member->update($validated);
 
-        Log::debug($validated);
-        Log::debug($request->all());
+        // Log::debug($validated);
+        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
 
@@ -161,7 +264,9 @@ class MemberController extends Controller
      */
     public function destroy(Member $member)
     {
-        //
+        $member->delete();
+
+        return redirect()->route('member.index')->with('success', 'Member deleted successfully.');
     }
 
     public function showFamilyTree($id)

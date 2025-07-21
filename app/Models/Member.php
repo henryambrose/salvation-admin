@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Member extends Model
 {
     /** @use HasFactory<\Database\Factories\MemberFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'community_id',
@@ -27,19 +28,17 @@ class Member extends Model
         'permanent_add1',
         'permanent_add2',
         'permanent_add3',
-        'permanent_town',
-        'permanent_city',
+        'permanent_town_id',
         'permanent_pincode',
-        'permanent_state',
-        'permanent_country',
+        'permanent_state_id',
+        'permanent_country_id',
         'current_add1',
         'current_add2',
         'current_add3',
-        'current_town',
-        'current_city',
+        'current_town_id',
         'current_pincode',
-        'current_state',
-        'current_country',
+        'current_state_id',
+        'current_country_id',
         'contact_no',
         'email',
         'blood_group_id',
@@ -76,21 +75,38 @@ class Member extends Model
     {
         return $this->belongsTo(CellsAndAssociation::class);
     }
+
+    // relationship
+    public function relationship()
+    {
+        return $this->belongsTo(Relationship::class);
+    }
+
     public function relationships()
     {
         return $this->hasMany(FamilyLink::class);
     }
-    public function statuses()
+    public function status()
     {
-        return $this->hasMany(Status::class);
+        return $this->belongsTo(Status::class);
     }
-    public function genders()
+    public function gender()
     {
-        return $this->hasMany(Gender::class);
+        return $this->belongsTo(Gender::class);
     }
-    public function bloodgroups()
+    public function bloodGroup()
     {
         return $this->belongsTo(BloodGroup::class);
+    }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class);
+    }
+
+    public function familyIncomeRange()
+    {
+        return $this->belongsTo(FamilyIncomeRange::class);
     }
 
     public function relatedMembers()

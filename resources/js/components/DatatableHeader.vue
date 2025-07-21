@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 bg-white shadow rounded datatable2">
-        <slot />
-    </div>
+  <div class="datatable2 rounded bg-white p-4 shadow">
+    <slot />
+  </div>
 </template>
