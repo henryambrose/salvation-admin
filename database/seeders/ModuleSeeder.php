@@ -18,13 +18,13 @@ class ModuleSeeder extends Seeder
         // Define modules and their actions
         $modules = [
             [
-                'name' => 'Member',
+                'name' => 'Members',
                 'slug' => 'member',
                 'icon' => 'UserCircle',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Community',
+                'name' => 'Communities',
                 'slug' => 'community',
                 'icon' => 'CurrencyIcon',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
@@ -36,51 +36,51 @@ class ModuleSeeder extends Seeder
             //     'actions' => ['create', 'read', 'update', 'delete', 'list'],
             // ],
             [
-                'name' => 'Zone',
+                'name' => 'Zones',
                 'slug' => 'zone',
                 'icon' => 'MapPin',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Blood Group',
+                'name' => 'Blood Groups',
                 'slug' => 'blood-group',
                 'icon' => 'Droplet',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Family Income Range',
+                'name' => 'Family Income Ranges',
                 'slug' => 'family-income-range',
                 'icon' => null,
                 // No icon specified
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'SCC Head',
+                'name' => 'SCC Heads',
                 'slug' => 'scc-head',
                 'icon' => 'UserCheck',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'PPC Head',
+                'name' => 'PPC Heads',
                 'slug' => 'ppc-head',
                 'icon' => 'UserCheck',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Country',
+                'name' => 'Countries',
                 'slug' => 'country',
                 'icon' => 'MapPin',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'State',
+                'name' => 'States',
                 'slug' => 'state',
                 'icon' => 'MapPin',
                 // No icon specified
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Town',
+                'name' => 'Towns',
                 'slug' => 'town',
                 'icon' => 'Home',
                 // No icon specified

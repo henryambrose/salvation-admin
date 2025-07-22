@@ -80,22 +80,22 @@ function can(permission) {
       <table class="border text-left">
         <thead>
           <tr>
-            <th v-if="hasActions" class="border p-2">Actions</th>
             <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border p-2">
               {{ col.label }}
               <span v-if="col.sortable && sort === col.key">
                 {{ direction === 'asc' ? '▲' : '▼' }}
               </span>
             </th>
+            <th v-if="hasActions" class="border p-2">Actions</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="item in data.data" :key="item.id">
-            <td v-if="hasActions" class="border p-2 text-right">
-              <slot name="actions" :row="item" />
-            </td>
             <td v-for="col in columns" :key="col.key" class="border p-2">
               {{ item[col.key] }}
+            </td>
+            <td v-if="hasActions" class="border p-2 text-right">
+              <slot name="actions" :row="item" />
             </td>
           </tr>
         </tbody>
