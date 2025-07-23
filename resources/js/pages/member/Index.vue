@@ -55,7 +55,7 @@ const columns: Column[] = [
   { key: 'last_name', label: 'Last Name', sortable: true },
   { key: 'contact_no', label: 'Contact No', sortable: true },
   { key: 'email', label: 'Email', sortable: true },
-  { key: 'age', label: 'Age', sortable: true },
+  { key: 'community_id', label: 'Community Name', sortable: true },
   { key: 'added_on', label: 'Added On', sortable: true },
   { key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
