@@ -175,6 +175,12 @@ export interface State {
 
 export type States = State[];
 
+export interface Column {
+  key: string;
+  label: string;
+  sortable: boolean;
+  filterable?: boolean; // optional
+}
 export interface Town {
   id: number;
   state_id?: number | null;

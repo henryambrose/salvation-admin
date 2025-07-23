@@ -5,9 +5,10 @@ import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
+import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Member } from '@/types';
+import { Column, Member } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
@@ -29,79 +30,32 @@ const props = defineProps({
   },
 });
 
+const showViewModal = ref(false);
+const selectedMember = ref(null);
+
+function openViewModal(member: any) {
+  selectedMember.value = member;
+  showViewModal.value = true;
+}
+
 const enhancedMembers = computed<Record<string, any>>(() => {
   return {
     ...props.members,
     data: props.members?.data.map((item: any) => ({
       ...item,
-      //   community_id: item.community?.name || '',
-      //   community_cluster_id: item.communityCluster?.name || '',
       added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
       last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',
-      //   cells_and_association_id: item.cellsAndAssociation?.name || '',
-      //    blood_group_id: item.bloodGroup?.name || '',
-      //    designation_id: item.designation?.name || '',
-      //    family_income_range_id: item.familyIncomeRange?.name || '',
-      //    status_id: item.status?.name || '',
-      //    gender_id: item.gender?.name || '',
-      //    relationship_id: item.relationship?.name || '',
     })),
   };
 });
 
-const columns = [
-  { key: 'id', label: 'Id', sortable: true },
-  { key: 'first_name', label: 'First Name', sortable: true, filterable: true },
-  { key: 'last_name', label: 'Last Name', sortable: true, filterable: true },
-  { key: 'community_id', label: 'Community ID', sortable: true },
-  { key: 'community_cluster_id', label: 'Community Cluster ID', sortable: true },
-  { key: 'new_olsc_id', label: 'New OLSC ID', sortable: true, filterable: true },
-  { key: 'old_olsc_id', label: 'Old OLSC ID', sortable: true, filterable: true },
-  { key: 'new_sal_id', label: 'New SAL ID', sortable: true, filterable: true },
-  { key: 'old_sal_id', label: 'Old SAL ID', sortable: true, filterable: true },
-  { key: 'aadhar', label: 'Aadhar', sortable: true },
-  { key: 'family_no', label: 'Family No', sortable: true, filterable: true },
-  { key: 'status_id', label: 'Status ID', sortable: true, filterable: true },
-  { key: 'relationship_id', label: 'Relationship ID', sortable: true },
-  { key: 'gender_id', label: 'Gender ID', sortable: true, filterable: true },
-  { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
-  { key: 'permanent_add1', label: 'Permanent Address Line 1', sortable: true },
-  // { key: 'permanent_add2', label: 'Permanent Address Line 2', sortable: true },
-  // { key: 'permanent_add3', label: 'Permanent Address Line 3', sortable: true },
-  // { key: 'permanent_town_id', label: 'Permanent Town ID', sortable: true },
-  // { key: 'permanent_pincode', label: 'Permanent Pincode', sortable: true },
-  // { key: 'permanent_state_id', label: 'Permanent State ID', sortable: true },
-  // { key: 'permanent_country_id', label: 'Permanent Country ID', sortable: true },
-  { key: 'current_add1', label: 'Current Address Line 1', sortable: true },
-  // { key: 'current_add2', label: 'Current Address Line 2', sortable: true },
-  // { key: 'current_add3', label: 'Current Address Line 3', sortable: true },
-  // { key: 'current_town_id', label: 'Current Town ID', sortable: true },
-  // { key: 'current_pincode', label: 'Current Pincode', sortable: true },
-  // { key: 'current_state_id', label: 'Current State ID', sortable: true },
-  // { key: 'current_country_id', label: 'Current Country ID', sortable: true },
-  { key: 'contact_no', label: 'Contact No', sortable: true, filterable: true },
-  { key: 'email', label: 'Email', sortable: true, filterable: true },
-  { key: 'blood_group_id', label: 'Blood Group ID', sortable: true, filterable: true },
-  { key: 'cells_and_association_id', label: 'Cells and Association ID', sortable: true, filterable: true },
-  { key: 'school_name', label: 'School Name', sortable: true },
-  { key: 'college_name', label: 'College Name', sortable: true },
-  { key: 'latest_qualifications', label: 'Latest Qualifications', sortable: true },
-  { key: 'company_name', label: 'Company Name', sortable: true },
-  { key: 'designation_id', label: 'Designation ID', sortable: true, filterable: true },
-  { key: 'family_income_range_id', label: 'Family Income Range ID', sortable: true, filterable: true },
-  // { key: 'baptism_date', label: 'Baptism Date', sortable: true },
-  // { key: 'baptism_reg_no', label: 'Baptism Reg No', sortable: true },
-  // { key: 'baptism_parish', label: 'Baptism Parish', sortable: true },
-  // { key: 'confirmation_date', label: 'Confirmation Date', sortable: true },
-  // { key: 'confirmation_reg_no', label: 'Confirmation Reg No', sortable: true },
-  // { key: 'confirmation_parish', label: 'Confirmation Parish', sortable: true },
-  { key: 'marriage_date', label: 'Marriage Date', sortable: true },
-  { key: 'marriage_reg_no', label: 'Marriage Reg No', sortable: true },
-  { key: 'marriage_parish', label: 'Marriage Parish', sortable: true },
-  { key: 'death_date', label: 'Death Date', sortable: true },
-  { key: 'deaths_reg_no', label: 'Deaths Reg No', sortable: true },
-  { key: 'death_parish', label: 'Death Parish', sortable: true },
-  { key: 'age', label: 'Age', sortable: true, filterable: true },
+// Only show key columns in the table
+const columns: Column[] = [
+  { key: 'first_name', label: 'First Name', sortable: true },
+  { key: 'last_name', label: 'Last Name', sortable: true },
+  { key: 'contact_no', label: 'Contact No', sortable: true },
+  { key: 'email', label: 'Email', sortable: true },
+  { key: 'age', label: 'Age', sortable: true },
   { key: 'added_on', label: 'Added On', sortable: true },
   { key: 'last_updated', label: 'Last Updated', sortable: true },
 ];
@@ -141,16 +95,6 @@ const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(props.filters?.isArchived || false);
 
-// Avoid infinite loop: use immediate: false and deep: false for watch
-// watch(
-//   [search, sort, direction, perPage],
-//   () => {
-//     fetch();
-//   },
-//   { immediate: false, deep: false }
-// );
-
-// Watch inputs
 watch(
   [search, sort, direction, perPage, communityId, filterColumnKey, filterColumnValue, isArchived],
   () => {
@@ -208,37 +152,8 @@ function toggleisArchived() {
           <span>Add Member</span>
         </Button>
       </div>
-      <!-- <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div class="col-span-1 row-span-1">
-          <SearchDropdown
-            id="community_id"
-            v-model="communityId"
-            :options="props.communities || []"
-            class="mt-1 block w-full"
-            placeholder="Select Community"
-            @focus-out="fetch"
-          />
-        </div>
-        <div class="col-span-1 row-span-1">
-          <SearchDropdown
-            id="search_by_column_key"
-            v-model="filterColumnKey"
-            :options="searchColumnsOptions"
-            class="mt-1 block w-full"
-            placeholder="Search By Column"
-            @focus-out="fetch()"
-          />
-        </div>
-        <div class="col-span-1 row-span-1">
-          <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full" placeholder="Enter value" @focus-out="fetch()" />
-        </div>
-      </div> -->
-
-      <!-- Pagination Info -->
-      <!-- <div v-if="props.pagination" class="mb-2 text-sm text-gray-600">
-                Page {{ props.pagination.currentPage }} of {{ props.pagination.lastPage }}
-            </div> -->
     </DatatableHeader>
+
     <div class="overflow-x-auto">
       <div v-if="canReadAnyMember">
         <div class="datatable2 mt-4 rounded bg-white p-4 shadow">
@@ -275,41 +190,54 @@ function toggleisArchived() {
               </Button>
             </div>
           </div>
+
           <div class="overflow-x-auto">
-            <table class="overflow-x-auto border text-left">
+            <table class="w-full overflow-x-auto border text-left">
               <thead>
                 <tr>
-                  <th v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">Actions</th>
-
+                  <th class="border p-2">Actions</th>
                   <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border p-2">
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
+                  <th class="border p-2">Delete</th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="item in enhancedMembers.data" :key="item.id">
-                  <td v-if="canUpdateAnyMember || canDeleteAnyMember" class="border p-2 text-right">
-                    <div class="flex flex-wrap gap-3">
+                  <!-- View + Edit -->
+                  <td class="border p-2">
+                    <div class="flex gap-2">
+                      <Button @click="openViewModal(item)">
+                        <component :is="ZapIcon" />
+                        <span>View</span>
+                      </Button>
                       <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)">
                         <component :is="Pencil" />
                         <span>Edit</span>
                       </Button>
-                      <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)">
-                        <component :is="Trash" />
-                        <span>Delete</span>
-                      </Button>
                     </div>
                   </td>
+
+                  <!-- Main table data -->
                   <td v-for="col in columns" :key="col.key" class="border p-2">
                     {{ item[col.key] }}
+                  </td>
+
+                  <!-- Delete -->
+                  <td class="border p-2">
+                    <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)">
+                      <component :is="Trash" />
+                      <span>Delete</span>
+                    </Button>
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
+
           <div class="mt-3 flex items-center gap-2">
             <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)" class="rounded border px-3 py-1">
               Prev
@@ -317,8 +245,7 @@ function toggleisArchived() {
             <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)" class="rounded border px-3 py-1">
               Next
             </button>
-            <!-- Page count beside Next button, right aligned -->
-            <span v-if="enhancedMembers.current_page && enhancedMembers.last_page" class="ml-auto text-sm" style="margin-left: auto; display: block">
+            <span v-if="enhancedMembers.current_page && enhancedMembers.last_page" class="ml-auto text-sm">
               Page {{ enhancedMembers.current_page }} of {{ enhancedMembers.last_page }}
             </span>
           </div>
@@ -327,4 +254,16 @@ function toggleisArchived() {
       <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
     </div>
   </AppLayout>
+
+  <!-- Member Details Modal -->
+  <ViewMemberModal v-model="showViewModal" :member="selectedMember">
+    <template #extra="{ member }">
+      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div><strong>College:</strong> {{ member.college_name }}</div>
+        <div><strong>Company:</strong> {{ member.company_name }}</div>
+        <div><strong>Designation:</strong> {{ member.designation_id }}</div>
+        <div><strong>Blood Group:</strong> {{ member.blood_group_id }}</div>
+      </div>
+    </template>
+  </ViewMemberModal>
 </template>
