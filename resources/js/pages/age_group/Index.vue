@@ -36,6 +36,14 @@ function deleteAgeGroup(id) {
     router.delete(route('age-group.destroy', id));
   }
 }
+
+import { permissionHelpers } from '@/composables/permissionHelpers';
+const { can } = permissionHelpers();
+
+const canCreateAgeGroup = can('create-age-group');
+const canReadAnyAgeGroup = can('read-age-group');
+const canUpdateAnyAgeGroup = can('update-age-group');
+const canDeleteAnyAgeGroup = can('delete-age-group');
 </script>
 
 <template>
@@ -44,14 +52,14 @@ function deleteAgeGroup(id) {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Age Groups</h2>
-        <Button as="a" href="/age-group/create" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button v-if="canCreateAgeGroup" as="a" href="/age-group/create" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <component :is="Plus" />
           <span>Add Age Group</span>
         </Button>
       </div>
     </DatatableHeader>
 
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyAgeGroup" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -66,11 +74,11 @@ function deleteAgeGroup(id) {
             <tr v-for="row in props.ageGroups.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
                 <div class="flex gap-2">
-                  <Button @click="editAgeGroup(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyAgeGroup" @click="editAgeGroup(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     <component :is="Pencil" />
                     <span>Edit</span>
                   </Button>
-                  <Button @click="deleteAgeGroup(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                  <Button v-if="canDeleteAnyAgeGroup" @click="deleteAgeGroup(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     <component :is="Trash" />
                     <span>Delete</span>
                   </Button>
