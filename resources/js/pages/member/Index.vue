@@ -53,11 +53,12 @@ const enhancedMembers = computed<Record<string, any>>(() => {
 const columns: Column[] = [
   { key: 'first_name', label: 'First Name', sortable: true },
   { key: 'last_name', label: 'Last Name', sortable: true },
+  { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'contact_no', label: 'Contact No', sortable: true },
-  { key: 'email', label: 'Email', sortable: true },
+  { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
-  { key: 'added_on', label: 'Added On', sortable: true },
-  { key: 'last_updated', label: 'Last Updated', sortable: true },
+  { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
+  { key: 'updated_at', label: 'Last Updated', sortable: true },
 ];
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
@@ -146,8 +147,8 @@ function toggleisArchived() {
     <Head title="Members" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold">Members</h2>
-        <Button v-if="canCreateMember" as="a" href="/member/create" class="btn btn-secondary">
+        <h2 class="text-2xl font-bold text-blue-700">Members</h2>
+        <Button v-if="canCreateMember" as="a" href="/member/create" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <component :is="Plus" />
           <span>Add Member</span>
         </Button>
@@ -156,10 +157,11 @@ function toggleisArchived() {
 
     <div class="overflow-x-auto">
       <div v-if="canReadAnyMember">
-        <div class="datatable2 mt-4 rounded bg-white p-4 shadow">
-          <div class="mb-2 flex items-center gap-2">
-            <input v-model="search" type="text" class="rounded border px-2 py-1" placeholder="Search..." />
-            <select v-model="perPage" class="rounded border px-2 py-1">
+        <div class="datatable2 mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+          <!-- Filters -->
+          <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+            <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+            <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
               <option :value="2">2</option>
               <option :value="5">5</option>
               <option :value="10">10</option>
@@ -170,7 +172,7 @@ function toggleisArchived() {
               id="community_id"
               v-model="communityId"
               :options="props.communities || []"
-              class="mt-1 block w-full"
+              class="mt-1 block w-full max-w-xs"
               placeholder="Select Community"
               @focus-out="fetch"
             />
@@ -178,11 +180,11 @@ function toggleisArchived() {
               id="search_by_column_key"
               v-model="filterColumnKey"
               :options="searchColumnsOptions"
-              class="mt-1 block w-full"
+              class="mt-1 block w-full max-w-xs"
               placeholder="Search By Column"
               @focus-out="fetch()"
             />
-            <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full" placeholder="Enter value" @focus-out="fetch()" />
+            <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full max-w-xs rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Enter value" @focus-out="fetch()" />
             <div class="flex items-center gap-2">
               <Button @click="toggleisArchived" :class="isArchived ? 'bg-red-800 text-white' : 'bg-gray-200 text-gray-700'">
                 <component :is="ArchiveIcon" />
@@ -191,44 +193,43 @@ function toggleisArchived() {
             </div>
           </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full overflow-x-auto border text-left">
+          <!-- Table -->
+          <div class="overflow-x-auto rounded-xl border border-gray-100">
+            <table class="w-full border-collapse text-left">
               <thead>
-                <tr>
-                  <th class="border p-2">Actions</th>
-                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border p-2">
+                <tr class="bg-blue-50">
+                  <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition">
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
-                  <th class="border p-2">Delete</th>
+                  <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in enhancedMembers.data" :key="item.id">
+                <tr v-for="item in enhancedMembers.data" :key="item.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
                   <!-- View + Edit -->
-                  <td class="border p-2">
+                  <td class="p-2">
                     <div class="flex gap-2">
-                      <Button @click="openViewModal(item)">
+                      <Button @click="openViewModal(item)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                         <component :is="ZapIcon" />
                         <span>View</span>
                       </Button>
-                      <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)">
+                      <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                         <component :is="Pencil" />
                         <span>Edit</span>
                       </Button>
                     </div>
                   </td>
-
                   <!-- Main table data -->
-                  <td v-for="col in columns" :key="col.key" class="border p-2">
+                  <td v-for="col in columns" :key="col.key" class="p-2">
                     {{ item[col.key] }}
                   </td>
-
                   <!-- Delete -->
-                  <td class="border p-2">
-                    <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)">
+                  <td class="p-2">
+                    <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       <component :is="Trash" />
                       <span>Delete</span>
                     </Button>
@@ -238,14 +239,15 @@ function toggleisArchived() {
             </table>
           </div>
 
-          <div class="mt-3 flex items-center gap-2">
-            <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)" class="rounded border px-3 py-1">
+          <!-- Pagination -->
+          <div class="mt-6 flex items-center gap-2">
+            <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
               Prev
             </button>
-            <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)" class="rounded border px-3 py-1">
+            <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
               Next
             </button>
-            <span v-if="enhancedMembers.current_page && enhancedMembers.last_page" class="ml-auto text-sm">
+            <span v-if="enhancedMembers.current_page && enhancedMembers.last_page" class="ml-auto text-sm text-gray-500">
               Page {{ enhancedMembers.current_page }} of {{ enhancedMembers.last_page }}
             </span>
           </div>
@@ -256,14 +258,5 @@ function toggleisArchived() {
   </AppLayout>
 
   <!-- Member Details Modal -->
-  <ViewMemberModal v-model="showViewModal" :member="selectedMember">
-    <template #extra="{ member }">
-      <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <div><strong>College:</strong> {{ member.college_name }}</div>
-        <div><strong>Company:</strong> {{ member.company_name }}</div>
-        <div><strong>Designation:</strong> {{ member.designation_id }}</div>
-        <div><strong>Blood Group:</strong> {{ member.blood_group_id }}</div>
-      </div>
-    </template>
-  </ViewMemberModal>
+  <ViewMemberModal v-model="showViewModal" :member="selectedMember" />
 </template>

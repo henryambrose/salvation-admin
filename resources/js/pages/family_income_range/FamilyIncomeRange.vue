@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 
-import DataTable from '@/components/DataTable2.vue';
+
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,10 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { ref } from 'vue';
 
 const props = defineProps({
-  familyIncomeRange: Object,
+  familyIncomeRange: {
+    type: Object,
+    default: () => ({ data: [] }),
+  },
   filters: Object,
   fetchUrl: String,
 });
@@ -36,6 +39,12 @@ function submit() {
     },
   });
 }
+
+function handleDelete(id: number) {
+  if (window.confirm('Are you sure you want to delete this item?')) {
+    router.delete(`/family-income-range/${id}`);
+  }
+}
 const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range' }];
 </script>
 
@@ -44,31 +53,48 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
     <Head title="Family Income Range" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold">Family Income Range</h2>
-        <Button @click="showModal = true" class="mr-2"> ➕ Add Family Income Range </Button>
+        <h2 class="text-2xl font-bold text-blue-700">Family Income Range</h2>
+        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+          <span>➕ Add Family Income Range</span>
+        </Button>
       </div>
     </DatatableHeader>
 
-    <DataTable :data="familyIncomeRange" :columns="columns" :filters="filters" :fetch-url="fetchUrl" has-actions>
-      <template #actions="{ row }">
-        <div class="flex flex-wrap gap-3">
-          <Button size="sm" @click="$inertia.visit(`/family-income-range/${row.id}/edit`)"> Edit </Button>
-          <Button
-            size="sm"
-            variant="destructive"
-            @click="
-              () => {
-                if (confirm('Are you sure you want to delete this item?')) {
-                  $inertia.delete(`/family-income-range/${row.id}`);
-                }
-              }
-            "
-          >
-            Delete
-          </Button>
-        </div>
-      </template>
-    </DataTable>
+    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="bg-blue-50">
+              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                {{ col.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in props.familyIncomeRange.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <td class="p-2">
+                <div class="flex gap-2">
+                  <Button @click="router.get(`/family-income-range/${row.id}/edit`)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    @click="handleDelete(row.id)"
+                    class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition"
+                  >
+                    Delete
+                  </Button>
+                </div>
+              </td>
+              <td v-for="col in columns" :key="col.key" class="p-2">
+                {{ row[col.key] }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Modal -->
     <transition name="fade">
@@ -82,28 +108,20 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
                 <Input v-model="form.name" type="text" />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
               </div>
-              <!-- <div class="mb-3">
-                        <label class="block text-sm font-medium mb-1">Starting Range</label>
-                        <Input
-                        v-model="form.starting_range"
-                        type="text"
-
-                        />
-                        <div v-if="form.errors.starting_range" class="text-red-500 text-sm mt-1">{{ form.errors.starting_range }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="block text-sm font-medium mb-1">Ending Range</label>
-                        <Input
-                        v-model="form.ending_range"
-                        type="text"
-
-                        />
-                        <div v-if="form.errors.ending_range" class="text-red-500 text-sm mt-1">{{ form.errors.ending_range }}</div>
-                    </div> -->
-
               <div class="flex justify-end space-x-2">
-                <Button variant="destructive" type="button" @click="showModal = false"> Cancel </Button>
-                <Button type="submit" :disabled="form.processing">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showModal = false"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="form.processing"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
               </div>

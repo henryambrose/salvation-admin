@@ -1,17 +1,25 @@
 <script setup lang="ts">
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 
-import DataTable from '@/components/DataTable2.vue';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { TextareaInput } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
+import { Pencil, Plus, Trash } from 'lucide-vue-next';
+
+declare global {
+  interface Window {
+    app?: any;
+  }
+}
 
 const props = defineProps({
-  zones: Object,
+  zones: {
+    type: Object,
+    default: () => ({ data: [] }),
+  },
   filters: Object,
   fetchUrl: String,
 });
@@ -38,11 +46,11 @@ function submit() {
 }
 const breadcrumbs = [{ title: 'Zone', href: '/zone' }];
 
-const handleEdit = (zone) => {
+const handleEdit = (zone: any) => {
   router.get(route('zone.edit', { zone: zone.id }));
 };
 
-const handleDelete = (zone) => {
+const handleDelete = (zone: any) => {
   if (confirm('Are you sure you want to delete this zone?')) {
     router.delete(route('zone.destroy', { zone: zone.id }), {
       preserveScroll: true,
@@ -50,7 +58,7 @@ const handleDelete = (zone) => {
   }
 };
 
-const page = usePage();
+const page = usePage<{ auth: { roles: string[] } }>();
 const roles = page.props.auth?.roles || [];
 const isSuperAdmin = roles.includes('superadmin');
 
@@ -65,19 +73,47 @@ function can(permission: string) {
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Zone" />
-    <DatatableHeader>
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold">Zones</h2>
-        <Button @click="showModal = true" class="mr-2"> ➕ Add Zone </Button>
-      </div>
-    </DatatableHeader>
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-2xl font-bold text-blue-700">Zones</h2>
+      <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <component :is="Plus" />
+        <span>Add Zone</span>
+      </Button>
+    </div>
 
-    <DataTable :data="zones" :columns="columns" :filters="filters" :fetch-url="fetchUrl" has-actions @edit="handleEdit" @delete="handleDelete">
-      <template #actions="{ row }">
-        <Button class="mr-2" @click="handleEdit(row)"> Edit </Button>
-        <Button class="mr-2" @click="handleDelete(row)" variant="destructive"> Delete </Button>
-      </template>
-    </DataTable>
+    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="bg-blue-50">
+              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                {{ col.label }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in props.zones.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <td class="p-2">
+                <div class="flex gap-2">
+                  <Button @click="handleEdit(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    <component :is="Pencil" />
+                    <span>Edit</span>
+                  </Button>
+                  <Button @click="handleDelete(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <component :is="Trash" />
+                    <span>Delete</span>
+                  </Button>
+                </div>
+              </td>
+              <td v-for="col in columns" :key="col.key" class="p-2">
+                {{ row[col.key] }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     <!-- Modal -->
     <transition name="fade">
@@ -88,24 +124,35 @@ function can(permission: string) {
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
-                <Input v-model="form.name" type="text" />
+                <Input v-model="form.name" :type="'text'" />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
-
                 <TextareaInput
                   name="description"
                   id="description"
                   v-model="form.description"
                   placeholder="Enter description..."
-                  :error="form.errors.description"
+                  :rows="3"
+                  :error="form.errors.description ?? ''"
                 />
                 <div v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</div>
               </div>
               <div class="flex justify-end space-x-2">
-                <Button variant="destructive" type="button" @click="showModal = false"> Cancel </Button>
-                <Button type="submit" :disabled="form.processing">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showModal = false"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="form.processing"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
               </div>
