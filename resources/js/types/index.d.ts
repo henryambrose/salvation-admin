@@ -243,3 +243,16 @@ export interface Designation {
 }
 
 export type Designations = Designation[];
+
+export interface AgeGroup {
+  id: number;
+  name: string;
+  description?: string | null;
+  min_age: number;
+  max_age: number;
+  created_at?: string | null; // ISO 8601 date string
+  updated_at?: string | null; // ISO 8601 date string
+  deleted_at?: string | null; // ISO 8601 date string
+}
+
+export type AgeGroups = AgeGroup[];

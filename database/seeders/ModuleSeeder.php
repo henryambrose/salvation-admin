@@ -26,7 +26,7 @@ class ModuleSeeder extends Seeder
             [
                 'name' => 'Communities',
                 'slug' => 'community',
-                'icon' => 'CurrencyIcon',
+                'icon' => 'UsersRound',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             // [
@@ -44,14 +44,13 @@ class ModuleSeeder extends Seeder
             [
                 'name' => 'Blood Groups',
                 'slug' => 'blood-group',
-                'icon' => 'Droplet',
+                'icon' => 'HeartPulse',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
                 'name' => 'Family Income Ranges',
                 'slug' => 'family-income-range',
-                'icon' => null,
-                // No icon specified
+                'icon' => 'BadgeIndianRupee',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
@@ -76,7 +75,6 @@ class ModuleSeeder extends Seeder
                 'name' => 'States',
                 'slug' => 'state',
                 'icon' => 'MapPin',
-                // No icon specified
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
@@ -85,6 +83,12 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Home',
                 // No icon specified
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+              'name' => 'Age Groups',
+              'slug' => 'age-group',
+              'icon' => 'UsersRound',
+              'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
         ];
 
