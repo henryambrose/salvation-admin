@@ -90,6 +90,13 @@ class ModuleSeeder extends Seeder
               'icon' => 'UsersRound',
               'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
+            [
+              'name' => 'Parishes',
+              'slug' => 'parish',
+              'icon' => 'Church',
+              'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+
         ];
 
         foreach ($modules as $index => $module) {
