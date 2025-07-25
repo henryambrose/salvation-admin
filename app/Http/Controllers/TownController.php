@@ -15,7 +15,12 @@ class TownController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Town::query();
+        $query = Town::query()->with('state');
+        if ($request->input('isArchived')==='true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
 
         // Apply filters
         if ($search = $request->input('search')) {
@@ -29,11 +34,13 @@ class TownController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
+        $states = State::all();
 
         return Inertia::render('town/Index', [
             'towns' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
+            'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('town.index'),
+            'states' => $states,
         ]);
     }
 
@@ -131,7 +138,6 @@ class TownController extends Controller
     {
         $town = Town::onlyTrashed()->findOrFail($id);
         $town->restore();
-
-        return redirect()->route('town.deleted')->with('success', 'Town restored successfully.');
+        return redirect()->route('town.index')->with('success', 'Town restored successfully.');
     }
 }

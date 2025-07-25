@@ -12,16 +12,13 @@ const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 const { isMobile, state } = useSidebar();
 
-const permissions = computed(() => page.props.auth?.permissions);
+const permissions = computed(() => (page.props.auth as any)?.permissions || []);
 
 // Helper function to check permission
-const can = (permission) => {
+const can = (permission: string) => {
   return permissions.value.includes(permission);
 };
 
-console.log('User:', user);
-console.log('Permissions:', permissions.value);
-console.log('Can view dashboard:', can('create all'));
 </script>
 
 <template>

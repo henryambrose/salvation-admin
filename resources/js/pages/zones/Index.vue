@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -8,44 +7,37 @@ import { router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Zone } from '@/types';
-
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
-  communities: {
+  zones: {
     type: Object,
     default: () => ({ data: [] }),
   },
   filters: Object,
   fetchUrl: String,
-  zones: {
-    type: Array as () => Zone[],
-    default: () => [],
-  },
 });
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
-  { key: 'name', label: 'Community Name', sortable: true },
-  { key: 'zone', label: 'Zone', sortable: true },
+  { key: 'name', label: 'Zone Name', sortable: true },
 ];
 
-const breadcrumbs = [{ title: 'Communities', href: '/community/index' }];
+const breadcrumbs = [{ title: 'Zones', href: '/zone/index' }];
+
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
-const editingCommunity = ref<Record<string, any>>();
-const deletingCommunity = ref<Record<string, any>>();
+const editingZone = ref<Record<string, any>>();
+const deletingZone = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
 
 const form = useForm({
   name: '',
-  zone_id: '',
 });
 
 const editForm = useForm({
   name: '',
-  zone_id: '',
 });
 
 const search = ref(props.filters?.search || '');
@@ -53,8 +45,32 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
-const enhancedCommunities = computed(() => {
-  const c = props.communities || {};
+function fetch(page = 1) {
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: search.value,
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page,
+      },
+      {
+        preserveState: true,
+        replace: true,
+      },
+    );
+  }
+}
+
+watch([search, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
+const enhancedZones = computed(() => {
+  const c = props.zones || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -64,30 +80,8 @@ const enhancedCommunities = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
-
-function fetch(page = 1) {
-  router.get(
-    props.fetchUrl || '',
-    {
-      search: search.value,
-      sort: sort.value,
-      direction: direction.value,
-      perPage: perPage.value,
-      isArchived: isArchived.value ? 'true' : 'false',
-      page,
-    },
-    {
-      preserveState: true,
-      replace: true,
-    },
-  );
-}
-
 function submit() {
-  form.post('/community', {
+  form.post('/zone', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
@@ -97,39 +91,38 @@ function submit() {
 }
 
 function openEditModal(row: any) {
-  editingCommunity.value = row;
+  editingZone.value = row;
   editForm.name = row.name;
-  editForm.zone_id = row.zone?.id || '';
   showEditModal.value = true;
 }
 
 function submitEdit() {
-  editForm.put(`/community/${editingCommunity.value?.id || ''}`, {
+  editForm.put(`/zone/${editingZone.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingCommunity.value = undefined;
+      editingZone.value = undefined;
     },
   });
 }
 
 function openDeleteModal(row: any) {
-  deletingCommunity.value = row;
+  deletingZone.value = row;
   showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  router.delete(`/community/${deletingCommunity.value?.id || ''}`, {
+  router.delete(`/zone/${deletingZone.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingCommunity.value = undefined;
+      deletingZone.value = undefined;
     },
   });
 }
 
-function restoreCommunity(id: number) {
-  router.post(`/community/${id}/restore`, {}, {
+function restoreZone(id: number) {
+  router.post(`/zone/${id}/restore`, {}, {
     preserveScroll: true,
     onSuccess: () => {
       fetch();
@@ -140,23 +133,21 @@ function restoreCommunity(id: number) {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Communities" />
+    <Head title="Zones" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Communities</h2>
+        <h2 class="text-2xl font-bold text-blue-700">Zones</h2>
         <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <component :is="Plus" />
-          <span>Add Community</span>
+          <span>➕ Add Zone</span>
         </Button>
       </div>
       <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-        <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
-        <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
-          <option :value="2">2</option>
-          <option :value="5">5</option>
+        <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+        <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
           <option :value="10">10</option>
           <option :value="25">25</option>
           <option :value="50">50</option>
+          <option :value="100">100</option>
         </select>
       </div>
       <div class="flex items-center gap-4 mt-2">
@@ -180,7 +171,7 @@ function restoreCommunity(id: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedCommunities.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            <tr v-for="row in enhancedZones.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -188,18 +179,13 @@ function restoreCommunity(id: number) {
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreCommunity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button @click="restoreZone(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">
-                <template v-if="col.key === 'zone'">
-                  {{ row.zone?.name || '' }}
-                </template>
-                <template v-else>
-                  {{ row[col.key] }}
-                </template>
+                {{ row[col.key] }}
               </td>
               <td class="p-2">
                 <template v-if="!isArchived">
@@ -214,16 +200,15 @@ function restoreCommunity(id: number) {
       </div>
     </div>
 
-    <!-- Pagination Controls -->
     <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedCommunities.prev_page_url" @click="fetch(enhancedCommunities.current_page! - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+      <button v-if="enhancedZones.prev_page_url" @click="fetch(enhancedZones.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Prev
       </button>
-      <button v-if="enhancedCommunities.next_page_url" @click="fetch(enhancedCommunities.current_page! + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+      <button v-if="enhancedZones.next_page_url" @click="fetch(enhancedZones.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Next
       </button>
-      <span v-if="enhancedCommunities.current_page && enhancedCommunities.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedCommunities.current_page }} of {{ enhancedCommunities.last_page }}
+      <span v-if="enhancedZones.current_page && enhancedZones.last_page" class="ml-auto text-sm text-gray-500">
+        Page {{ enhancedZones.current_page }} of {{ enhancedZones.last_page }}
       </span>
     </div>
 
@@ -232,20 +217,12 @@ function restoreCommunity(id: number) {
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Create Community</h3>
+            <h3 class="mb-4 text-xl font-semibold">Create Zone</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
                 <Input v-model="form.name" type="text" />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
-              </div>
-              <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">Zone</label>
-                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                  <option value="">Select Zone</option>
-                  <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
-                </select>
-                <div v-if="form.errors.zone_id" class="mt-1 text-sm text-red-500">{{ form.errors.zone_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button
@@ -275,20 +252,12 @@ function restoreCommunity(id: number) {
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Edit Community</h3>
+            <h3 class="mb-4 text-xl font-semibold">Edit Zone</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
                 <Input v-model="editForm.name" type="text" />
                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
-              </div>
-              <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">Zone</label>
-                <select v-model="editForm.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                  <option value="">Select Zone</option>
-                  <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
-                </select>
-                <div v-if="editForm.errors.zone_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.zone_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button
@@ -318,9 +287,9 @@ function restoreCommunity(id: number) {
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Community</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Zone</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingCommunity?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingZone?.name }}</span>?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button

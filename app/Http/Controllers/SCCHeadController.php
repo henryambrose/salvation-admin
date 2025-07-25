@@ -21,7 +21,11 @@ class SCCHeadController extends Controller
     public function index(Request $request) :Response
     {
         $query = SCCHead::query();
-
+        if ($request->input('isArchived') === 'true') {
+              $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         $query->select('s_c_c_heads.*');
         $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
@@ -33,9 +37,14 @@ class SCCHeadController extends Controller
         if ($memberId = $request->input('member_id')) {
             $query->where('s_c_c_heads.member_id', $memberId);
         }
-        // if ($search = $request->input('search')) {
-        //     $query->where('first_name', 'like', "%$search%");
-        // }
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('members.first_name', 'like', "%$search%")
+                  ->orWhere('members.middle_name', 'like', "%$search%")
+                  ->orWhere('members.last_name', 'like', "%$search%")
+                  ->orWhere('communities.name', 'like', "%$search%");
+            });
+        }
 
         if ($sort = $request->input('sort')) {
             $query->orderBy($sort, $request->input('direction', 'asc'));
@@ -48,7 +57,9 @@ class SCCHeadController extends Controller
         return Inertia::render('s_c_c_head/Index', [
             'fetchUrl' => route('scc-head.index'),
             's_c_c_heads' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+            'communities' => Community::all(),
+            // 'members' => Member::all(), // REMOVE THIS
         ]);
     }
 
@@ -91,7 +102,7 @@ class SCCHeadController extends Controller
      */
     public function edit(SCCHead $sCCHead)
     {
-        return Inertia::render('s_c_c_head/SCCHead', [
+        return Inertia::render('s_c_c_head/Index', [
             'sccHead' => $sCCHead,
             'communities' => Community::all(),
             'members' => Member::all(),
@@ -101,10 +112,10 @@ class SCCHeadController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateSCCHeadRequest $request, SCCHead $sCCHead)
+    public function update(UpdateSCCHeadRequest $request, $id)
     {
+        $sCCHead = SCCHead::findOrFail($id);
         $validated = $request->validated();
-
         $sCCHead->update([
             'member_id' => $validated['member_id'],
             'community_id' => $validated['community_id'],
@@ -116,10 +127,35 @@ class SCCHeadController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(SCCHead $sCCHead)
+    public function destroy($id)
     {
+        $sCCHead = SCCHead::findOrFail($id);
         $sCCHead->delete();
-
         return redirect()->route('scc-head.index')->with('success', 'SCC Head deleted successfully.');
+    }
+
+    /**
+     * Restore the specified resource from storage.
+     */
+    public function restore($id)
+    {
+        $sccHead = SCCHead::withTrashed()->findOrFail($id);
+        $sccHead->restore();
+        return redirect()->route('scc-head.index')->with('success', 'SCC Head restored successfully.');
+    }
+
+    // Add API endpoint for fetching members by community
+    public function membersByCommunity($communityId)
+    {
+        $members = Member::where('community_id', $communityId)
+            ->select('id', 'first_name', 'middle_name', 'last_name')
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
+                ];
+            });
+        return response()->json($members);
     }
 }

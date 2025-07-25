@@ -19,35 +19,13 @@ class ZoneController extends Controller
      */
     public function index(Request $request): Response
     {
-        // $search = $request->input('search');
-
-        // $zones = Zone::query()
-        // ->when($search, function ($query, $search) {
-        //     $query->where('name', 'like', "%{$search}%");
-        // })
-        // ->select('id', 'name')
-        // ->orderBy('id', 'desc')
-        // ->paginate(10)
-        // ->withQueryString(); // preserves search query during pagination
-
-        // Log::debug([
-        //     'zones' => $zones,
-        //     'search' => $search,
-        // ]);
-
-        // return Inertia::render('zones/Zone', [
-        //     'zones' => $zones,
-        //     'filters' => [
-        //         'search' => $search,
-        //     ],
-        //     'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-        //     'status' => $request->session()->get('status'),
-        // ]);
-
-
-
+ 
         $query = Zone::query();
-
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
         }
@@ -58,11 +36,18 @@ class ZoneController extends Controller
 
         $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('zones/Zone2', [
+        return Inertia::render('zones/Index', [
             'fetchUrl' => route('zone.index'),
             'zones' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
         ]);
+    }
+
+    public function restore($id)
+    {
+        $zone = Zone::onlyTrashed()->findOrFail($id);
+        $zone->restore();
+        return redirect()->route('zone.index')->with('success', 'Zone restored successfully.');
     }
 
     /**

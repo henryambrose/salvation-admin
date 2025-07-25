@@ -8,5 +8,5 @@ Route::middleware('auth')->group(function () {
 
     Route::get('community/index', [CommunityController::class, 'index'])->name('community.index');
     Route::resource('community', CommunityController::class)->except(['index']);
-
+    Route::post('/community/{id}/restore', [CommunityController::class, 'restore'])->name('community.restore');
 });

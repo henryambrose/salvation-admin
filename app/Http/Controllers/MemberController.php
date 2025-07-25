@@ -25,13 +25,9 @@ use Inertia\Response;
 
 class MemberController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
+
     public function index(Request $request) :Response
     {
-        // \Log::debug($request->all());
-        // $this->authorize('viewAny', Member::class);
 
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
@@ -47,7 +43,6 @@ class MemberController extends Controller
 
 
         $query = Member::query();
-        // isArchived
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
@@ -58,7 +53,6 @@ class MemberController extends Controller
             'communityCluster',
             'cellsAndAssociation',
             'relationship',
-            // 'relationships.relatedMember',
             'bloodGroup',
             'designation',
             'familyIncomeRange',
@@ -119,7 +113,6 @@ class MemberController extends Controller
             return $item;
         });
 
-        // \Log::debug($data->toArray());
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
             'fetchUrl' => route('member.index'),
@@ -129,7 +122,6 @@ class MemberController extends Controller
             'canCreateMember' => true,
             'canEditMember' => true,
             'canDeleteMember' => true,
-            // Add pagination meta
             'pagination' => [
                 'currentPage' => $query->paginate($perPage)->currentPage(),
                 'lastPage' => $query->paginate($perPage)->lastPage(),
@@ -137,9 +129,6 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(Request $request): Response
     {
         return Inertia::render('member/Member', [
@@ -184,17 +173,11 @@ class MemberController extends Controller
     public function store(StoreMemberRequest $request)
     {
         $validated = $request->validated();
-
         Member::create($validated);
-
-        // Log::debug($validated);
-        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member created successfully.');
     }
 
-    /**
-     * Display the specified resource.
-     */
+
     public function show(Member $member): Response
     {
         return Inertia::render('member/Member', [
@@ -202,9 +185,6 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Member $member)
     {
         $familyIncomeRanges = FamilyIncomeRange::all()->map(function ($item) {
@@ -245,28 +225,27 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(UpdateMemberRequest $request, Member $member)
     {
         $validated = $request->validated();
-
+  
         $member->update($validated);
 
-        // Log::debug($validated);
-        // Log::debug($request->all());
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Member $member)
     {
         $member->delete();
 
         return redirect()->route('member.index')->with('success', 'Member deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $member = Member::onlyTrashed()->findOrFail($id);
+        $member->restore();
+        return redirect()->route('member.index')->with('success', 'Member restored successfully.');
     }
 
     public function showFamilyTree($id)

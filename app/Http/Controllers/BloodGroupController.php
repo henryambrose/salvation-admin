@@ -19,7 +19,11 @@ class BloodGroupController extends Controller
     {
 
         $query = BloodGroup::query();
-
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
         }
@@ -35,7 +39,7 @@ class BloodGroupController extends Controller
         return Inertia::render('blood_group/BloodGroup', [
             'fetchUrl' => route('blood-group.index'),
             'bloodGroups' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
         ]);
     }
 
@@ -102,5 +106,12 @@ class BloodGroupController extends Controller
         $bloodGroup->delete();
 
         return redirect()->route('blood-group.index')->with('success', 'Blood Group deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $bloodGroup = BloodGroup::onlyTrashed()->findOrFail($id);
+        $bloodGroup->restore();
+        return redirect()->route('blood-group.index')->with('success', 'Blood Group restored successfully.');
     }
 }

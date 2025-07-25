@@ -4,6 +4,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolePermissionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\SCCHeadController;
+use App\Http\Controllers\PPCHeadController;
+use App\Http\Controllers\MemberController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome');
@@ -19,6 +22,10 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
         ->name('roles.permissions.update');
 });
+
+Route::get('/api/community/{community}/members', [SCCHeadController::class, 'membersByCommunity']);
+Route::get('/api/ppc-community/{community}/members', [PPCHeadController::class, 'membersByCommunity']);
+Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/member.php';

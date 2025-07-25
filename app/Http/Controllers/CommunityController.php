@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCommunityRequest;
 use App\Http\Requests\UpdateCommunityRequest;
 use App\Models\Community;
+use App\Models\Zone;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
@@ -16,7 +17,13 @@ class CommunityController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Community::query();
+        $query = Community::query()->with('zone');
+
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
 
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
@@ -29,11 +36,16 @@ class CommunityController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
-
+        $data = $query->paginate($perPage)->appends($request->query());
         return Inertia::render('community/Index', [
-            'communities' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => request()->only('search', 'sort', 'direction', 'perPage'),
+            'communities' => $data,
+            'filters' => request()->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('community.index'),
+            'zones' => Zone::all(),
+            'pagination' => [
+                'currentPage' => $query->paginate($perPage)->currentPage(),
+                'lastPage' => $query->paginate($perPage)->lastPage(),
+            ],
         ]);
     }
 
@@ -42,7 +54,9 @@ class CommunityController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('community/Community');
+        return Inertia::render('community/Community', [
+            'zones' => Zone::all(),
+        ]);
     }
 
     /**
@@ -50,8 +64,9 @@ class CommunityController extends Controller
      */
     public function store(StoreCommunityRequest $request)
     {
-        Community::create($request->validated());
-
+        $data = $request->validated();
+        $data['zone_id'] = $request->input('zone_id');
+        Community::create($data);
         return redirect()->route('community.index')->with('success', 'Community created successfully.');
     }
 
@@ -72,6 +87,7 @@ class CommunityController extends Controller
     {
         return Inertia::render('community/Community', [
             'community' => $community,
+            'zones' => Zone::all(),
         ]);
     }
 
@@ -80,7 +96,9 @@ class CommunityController extends Controller
      */
     public function update(UpdateCommunityRequest $request, Community $community)
     {
-        $community->update($request->validated());
+        $data = $request->validated();
+        $data['zone_id'] = $request->input('zone_id');
+        $community->update($data);
 
         return redirect()->route('community.index')->with('success', 'Community updated successfully.');
     }
@@ -90,8 +108,19 @@ class CommunityController extends Controller
      */
     public function destroy(Community $community)
     {
-        $community->delete();
+        
+         $community->delete();
 
         return redirect()->route('community.index')->with('success', 'Community deleted successfully.');
+    }
+
+    /**
+     * Restore a deleted community.
+     */
+    public function restore($id)
+    {
+        $community = Community::onlyTrashed()->findOrFail($id);
+        $community->restore();
+        return redirect()->route('community.index')->with('success', 'Community restored successfully.');
     }
 }

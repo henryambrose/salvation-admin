@@ -37,4 +37,8 @@ class Community extends Model
     {
         return $this->hasMany(Member::class);
     }
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
 }

@@ -11,4 +11,5 @@ Route::middleware('auth')->group(function () {
     Route::put('blood-group/{bloodGroup}', [BloodGroupController::class, 'update'])->name('blood-group.update');
     Route::delete('blood-group/{bloodGroup}', [BloodGroupController::class, 'destroy'])->name('blood-group.destroy');
     Route::resource('blood-group', BloodGroupController::class)->except(['index', 'edit', 'update', 'destroy']);
+    Route::post('/blood-group/{id}/restore', [BloodGroupController::class, 'restore'])->name('blood-group.restore');
 });

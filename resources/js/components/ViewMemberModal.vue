@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 
 const props = defineProps<{
   modelValue: boolean;
   member: Record<string, any> | null;
+  familyIncomeRange: Record<string, any> | null;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
@@ -111,6 +112,17 @@ const tabs = [
     ],
   },
 ];
+
+const enhancedFamilyIncomeRanges = computed(() => {
+  const c = props.familyIncomeRange || {};
+  return {
+    data: c.data || [],
+    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
+    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
+    current_page: c.current_page ?? c.meta?.current_page,
+    last_page: c.last_page ?? c.meta?.last_page,
+  };
+});
 
 function closeModal() {
   emit('update:modelValue', false);

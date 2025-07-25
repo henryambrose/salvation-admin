@@ -11,4 +11,5 @@ Route::middleware('auth')->group(function () {
     Route::put('zone/{zone}', [ZoneController::class, 'update'])->name('zone.update');
     Route::delete('zone/{zone}', [ZoneController::class, 'destroy'])->name('zone.destroy');
     Route::resource('zone', ZoneController::class)->except(['index', 'edit', 'update', 'destroy']);
+    Route::post('/zone/{id}/restore', [ZoneController::class, 'restore'])->name('zone.restore');
 });

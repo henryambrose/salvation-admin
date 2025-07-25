@@ -64,7 +64,6 @@ function fetchOption(page = 1) {
   });
 }
 
-// console.log('fetchOption: ', fetchOption());
 </script>
 
 <template>

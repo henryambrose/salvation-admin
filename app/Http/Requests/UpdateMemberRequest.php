@@ -28,7 +28,7 @@ class UpdateMemberRequest extends FormRequest
             'old_sal_id' => 'nullable|string|max:255',
             'aadhar' => 'nullable|string|max:12',
             'family_no' => 'nullable|string|max:255',
-            'status' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',
+            'status_id' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',
             'relationship' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
