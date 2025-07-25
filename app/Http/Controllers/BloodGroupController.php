@@ -62,8 +62,16 @@ class BloodGroupController extends Controller
         ]);
 
         BloodGroup::create($validated);
-
-        return redirect()->route('blood-group.index')->with('success', 'Blood Group created successfully.');
+        $perPage = $request->input('perPage', 10);
+        $total = BloodGroup::count();
+        $lastPage = (int) ceil($total / $perPage);
+        return redirect()->route('blood-group.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $lastPage,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Blood Group created successfully.');
     }
 
     /**
@@ -94,8 +102,15 @@ class BloodGroupController extends Controller
         ]);
 
         $bloodGroup->update($validated);
-
-        return redirect()->route('blood-group.index')->with('success', 'Blood Group updated successfully.');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('blood-group.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Blood Group updated successfully.');
     }
 
     /**

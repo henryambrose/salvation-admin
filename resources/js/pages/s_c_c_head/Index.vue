@@ -7,7 +7,8 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Plus } from 'lucide-vue-next';
 import { nextTick, ref, watch, computed } from 'vue';
-
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const props = defineProps({
   s_c_c_heads: {
@@ -28,56 +29,57 @@ const columns = [
   { key: 'community_name', label: 'Community Name', sortable: true },
 ];
 
-const editForm = useForm({
-  id: '',
-  member_id: '',
-  community_id: '',
-});
-const createForm = useForm({
-  member_id: '',
-  community_id: '',
-});
-
 const breadcrumbs = [{ title: 'SCC Heads', href: '/scc-head/index' }];
 const showEditModal = ref(false);
+const showDeleteModal = ref(false);
+const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
+const deletingItem = ref<Record<string, any>>();
 const modalMembers = ref<any[]>([]);
 const isArchived = ref(props.filters?.isArchived === 'true');
-const showCreateModal = ref(false);
+const highlightedRowId = ref<number|null>(null);
+
+const editForm = useForm<{ id: string | number; member_id: any; community_id: any }>({
+  id: '',
+  member_id: null,
+  community_id: null,
+});
+const createForm = useForm<{ member_id: any; community_id: any }>({
+  member_id: null,
+  community_id: null,
+});
+
+
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
-const showDeleteModal = ref(false);
-const deletingItem = ref<Record<string, any>>();
 
-watch(
-  () => editForm.community_id,
-  async (newVal, oldVal) => {
-    if (newVal) {
-      const { data } = await axios.get(`/api/community/${newVal}/members`);
-      modalMembers.value = data;
-      editForm.member_id = '';
-    } else {
-      modalMembers.value = [];
-      editForm.member_id = '';
-    }
-  },
-);
+const enhancedSCCHeads = computed(() => {
+  const c = props.s_c_c_heads || {};
+  return {
+    data: c.data || [],
+    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
+    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
+    current_page: c.current_page ?? c.meta?.current_page,
+    last_page: c.last_page ?? c.meta?.last_page,
+  };
+});
 
-watch(
-  () => createForm.community_id,
-  async (newVal) => {
-    if (newVal) {
-      const { data } = await axios.get(`/api/community/${newVal}/members`);
-      modalMembers.value = data;
-      createForm.member_id = '';
-    } else {
-      modalMembers.value = [];
-      createForm.member_id = '';
+watch([search, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`scc-head-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
     }
-  }
-);
+  });
+}
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
@@ -99,49 +101,87 @@ function fetch(page = 1) {
   }
 }
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
 
-const enhancedSCCHeads = computed(() => {
-  const c = props.s_c_c_heads || {};
-  return {
-    data: c.data || [],
-    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
-    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
-    current_page: c.current_page ?? c.meta?.current_page,
-    last_page: c.last_page ?? c.meta?.last_page,
-  };
+watch(
+  () => editForm.community_id,
+  async (newVal: any, oldVal) => {
+    if (newVal) {
+      const { data } = await axios.get(`/api/community/${newVal.id}/members`);
+      modalMembers.value = data;
+      editForm.member_id = null;
+    } else {
+      modalMembers.value = [];
+      editForm.member_id = null;
+    }
+  },
+);
+
+watch(
+  () => createForm.community_id,
+  async (newVal:any) => {
+    if (newVal) {
+      const { data } = await axios.get(`/api/community/${newVal.id}/members`);
+      modalMembers.value = data;
+      createForm.member_id = null;
+    } else {
+      modalMembers.value = [];
+      createForm.member_id = null;
+    }
+  }
+);
+
+watch(() => enhancedSCCHeads.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
 });
 
 function openEditModal(row: any) {
   editingSCCHead.value = row;
-  editForm.id = row.id;
-  editForm.community_id = row.community_id;
+  // Set the full community object
+  editForm.community_id = props.communities.find(c => c.id === row.community_id) || null;
   showEditModal.value = true;
   nextTick(async () => {
     if (editForm.community_id) {
-      const { data } = await axios.get(`/api/community/${editForm.community_id}/members`);
+      const { data } = await axios.get(`/api/community/${editForm.community_id.id}/members`);
       modalMembers.value = data;
-      editForm.member_id = row.member_id;
+      // Set the full member object
+      editForm.member_id = modalMembers.value.find(m => m.id === row.member_id) || null;
     } else {
       modalMembers.value = [];
-      editForm.member_id = '';
+      editForm.member_id = null;
     }
   });
 }
 
-
 function submitEdit() {
-  if (!editForm.member_id) {
-    editForm.errors.member_id = 'Please select a member.';
-    return;
-  }
-  editForm.put(`/scc-head/${editForm.id}`, {
+  if (!editForm.member_id || !editForm.community_id) return;
+  const editedId = editingSCCHead.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedSCCHeads.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+    community_id: editForm.community_id ? editForm.community_id.id : null,
+    member_id: editForm.member_id ? editForm.member_id.id : null,
+  }));
+  editForm.put(`/scc-head/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingSCCHead.value = null;
+      editingSCCHead.value = undefined;
+      nextTick(() => {
+        fetch(enhancedSCCHeads.value.current_page);
+        highlightedRowId.value = editedId;
+      });
     },
   });
 }
@@ -156,13 +196,26 @@ function closeCreateModal() {
 }
 
 function submitCreate() {
-  if (!createForm.member_id || !createForm.community_id) return;
+  createForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedSCCHeads.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+    community_id: createForm.community_id ? createForm.community_id.id : null,
+    member_id: createForm.member_id ? createForm.member_id.id : null,
+  }));
   createForm.post('/scc-head', {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false;
       createForm.reset();
-      fetch();
+      nextTick(() => {
+        fetch(enhancedSCCHeads.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -234,11 +287,11 @@ function restoreSCCHead(id: number) {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedSCCHeads.data" :key="row.id" class="transition even:bg-gray-50 hover:bg-blue-50">
+            <tr v-for="row in enhancedSCCHeads.data" :key="row.id" :id="`scc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -257,13 +310,15 @@ function restoreSCCHead(id: number) {
                 </span>
               </td>
               <td class="p-2">
+                <template v-if="!isArchived">
                 <Button
                   @click="openDeleteModal(row)"
                   variant="destructive"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition"
                 >
-                  Delete
-                </Button>
+                    Delete
+                  </Button>
+                </template>
               </td>
             </tr>
           </tbody>
@@ -289,24 +344,11 @@ function restoreSCCHead(id: number) {
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <select
-                v-model="editForm.community_id"
-                class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
-              >
-                <option value="" disabled>Select Community</option>
-                <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
+              <Multiselect v-model="editForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" />
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <select
-                v-model="editForm.member_id"
-                :disabled="!editForm.community_id"
-                class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
-              >
-                <option value="" disabled>Select Member</option>
-                <option v-for="m in modalMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
-              </select>
+              <Multiselect v-model="editForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!editForm.community_id" />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
             </div>
             <div class="flex justify-end gap-3">
@@ -336,17 +378,17 @@ function restoreSCCHead(id: number) {
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <select v-model="createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
-                <option value="" disabled>Select Community</option>
-                <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
+              <Multiselect v-model="createForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" />
+              <div v-if="createForm.errors.community_id || createForm.errors['community_id']" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.community_id || createForm.errors['community_id'] }}
+              </div>
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <select v-model="createForm.member_id" :disabled="!createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
-                <option value="" disabled>Select Member</option>
-                <option v-for="m in modalMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
-              </select>
+              <Multiselect v-model="createForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!createForm.community_id" />
+              <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.member_id }}
+              </div>
             </div>
             <div class="flex justify-end gap-3">
               <button type="button" @click="closeCreateModal" class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200">Cancel</button>
@@ -424,7 +466,10 @@ function restoreSCCHead(id: number) {
 .switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
-
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s;

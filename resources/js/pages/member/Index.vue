@@ -11,7 +11,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, Member } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const { can } = permissionHelpers();
@@ -170,6 +170,43 @@ function changeSort(field: string) {
 function toggleisArchived() {
   isArchived.value = !isArchived.value;
 }
+
+const highlightedRowId = ref<number|null>(null);
+
+function scrollToRow(rowId: number) {
+  console.log('scrollToRow', rowId);
+  nextTick(() => {
+    const el = document.getElementById(`member-row-${rowId}`);
+    console.log('el', el);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
+
+watch(() => enhancedMembers.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
+
+onMounted(() => {
+  // Check for highlightId in query string
+  const params = new URLSearchParams(window.location.search);
+  const highlightId = params.get('highlightId');
+  if (highlightId) {
+    highlightedRowId.value = Number(highlightId);
+    // Optionally, scroll immediately if data is already loaded
+    scrollToRow(Number(highlightId));
+  }
+});
 </script>
 
 <template>
@@ -183,7 +220,7 @@ function toggleisArchived() {
           <span>Add Member</span>
         </Button>
       </div>
-      <div class="flex items-center gap-4 mt-2">
+      <div class="flex items-center gap-4 mt-2 justify-end">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
@@ -239,7 +276,7 @@ function toggleisArchived() {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in enhancedMembers.data" :key="item.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+                <tr v-for="item in enhancedMembers.data" :key="item.id" :id="`member-row-${item.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === item.id ? 'highlight-row' : '']">
                   <!-- View + Edit or Restore -->
                   <td class="p-2">
                     <div class="flex gap-2">
@@ -302,7 +339,7 @@ function toggleisArchived() {
   </AppLayout>
 
   <!-- Member Details Modal -->
-  <ViewMemberModal v-model="showViewModal" :member="selectedMember" />
+  <ViewMemberModal v-model="showViewModal" :member="selectedMember" :familyIncomeRange="null" />
 
   <!-- Delete Modal -->
   <transition name="fade">
@@ -351,9 +388,10 @@ function toggleisArchived() {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #e5e7eb;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .switch-checkbox[data-state="checked"] {
   background: #2563eb;
@@ -380,5 +418,13 @@ function toggleisArchived() {
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

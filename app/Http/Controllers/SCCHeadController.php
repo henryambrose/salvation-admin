@@ -85,8 +85,18 @@ class SCCHeadController extends Controller
             'member_id' => $validated['member_id'],
             'community_id' => $validated['community_id'],
         ]);
+        $perPage = $request->input('perPage', 10);
+        $total = SCCHead::count();
+        $lastPage = (int) ceil($total / $perPage);
+        return redirect()->route('scc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $lastPage,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'SCC Head created successfully.');
 
-        return redirect()->route('scc-head.index')->with('success', 'SCC Head created successfully.');
+        // return redirect()->route('scc-head.index')->with('success', 'SCC Head created successfully.');
     }
 
     /**
@@ -120,8 +130,16 @@ class SCCHeadController extends Controller
             'member_id' => $validated['member_id'],
             'community_id' => $validated['community_id'],
         ]);
-
-        return redirect()->route('scc-head.index')->with('success', 'SCC Head updated successfully.');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('scc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'SCC Head updated successfully.');
+        // return redirect()->route('scc-head.index')->with('success', 'SCC Head updated successfully.');
     }
 
     /**

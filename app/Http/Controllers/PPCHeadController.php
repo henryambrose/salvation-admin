@@ -82,7 +82,16 @@ class PPCHeadController extends Controller
             'member_id' => $validated['member_id'],
             'community_id' => $validated['community_id'],
         ]);
-        return redirect()->route('ppc-head.index')->with('success', 'PPC Head created successfully.');
+        $perPage = $request->input('perPage', 10);
+        $total = PPCHead::count();
+        $lastPage = (int) ceil($total / $perPage);
+        return redirect()->route('ppc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $lastPage,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'PPC Head created successfully.');
     }
 
     /**
@@ -116,8 +125,15 @@ class PPCHeadController extends Controller
             'member_id' => $validated['member_id'],
             'community_id' => $validated['community_id'],
         ]);
-        
-         return redirect()->route('ppc-head.index')->with('success', 'PPC Head updated successfully.');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('ppc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'PPC Head updated successfully.');
     }
 
     /**

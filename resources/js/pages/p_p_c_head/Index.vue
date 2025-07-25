@@ -3,9 +3,8 @@ import { Head, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { PPCHead } from '@/types';
 import {Plus } from 'lucide-vue-next';
-import { ref, computed, watch, nextTick } from 'vue';
+import { nextTick, ref, watch, computed } from 'vue';
 import axios from 'axios';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -28,6 +27,16 @@ const columns = [
   { key: 'community_name', label: 'Community Name', sortable: true },
 ];
 
+const breadcrumbs = [{ title: 'PPC Heads', href: '/ppc-head/index' }];
+const showEditModal = ref(false);
+const showDeleteModal = ref(false);
+const showCreateModal = ref(false);
+const editingPPCHead = ref<any>(null);
+const deletingItem = ref<Record<string, any>>();
+const modalMembers = ref<any[]>([]);
+const isArchived = ref(props.filters?.isArchived === 'true');
+const highlightedRowId = ref<number|null>(null);
+
 const editForm = useForm({
   id: '',
   member_id: '',
@@ -38,45 +47,36 @@ const createForm = useForm({
   community_id: '',
 });
 
-const breadcrumbs = [{ title: 'PPC Heads', href: '/ppc-head/index' }];
-const showEditModal = ref(false);
-const editingPPCHead = ref<any>(null);
-const modalMembers = ref<any[]>([]);
-const isArchived = ref(props.filters?.isArchived === 'true');
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
-const showCreateModal = ref(false);
-const showDeleteModal = ref(false);
-const deletingItem = ref<Record<string, any>>();
 
-watch(() => editForm.community_id, async (newVal) => {
-  if (newVal) {
-    const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
-    modalMembers.value = data;
-    if (!modalMembers.value.find(m => m.id === editForm.member_id)) {
-      editForm.member_id = '';
-    }
-  } else {
-    modalMembers.value = [];
-    editForm.member_id = '';
-  }
+const enhancedPPCHeads = computed(() => {
+  const c = props.ppcHeads || {};
+  return {
+    data: c.data || [],
+    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
+    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
+    current_page: c.current_page ?? c.meta?.current_page,
+    last_page: c.last_page ?? c.meta?.last_page,
+  };
 });
 
-watch(
-  () => createForm.community_id,
-  async (newVal) => {
-    if (newVal) {
-      const { data } = await axios.get(`/api/community/${newVal}/members`);
-      modalMembers.value = data;
-      createForm.member_id = '';
-    } else {
-      modalMembers.value = [];
-      createForm.member_id = '';
+watch([search, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`ppc-head-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
     }
-  }
-);
+  });
+}
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
@@ -97,20 +97,40 @@ function fetch(page = 1) {
     );
   }
 }
-
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
+watch(() => editForm.community_id, async (newVal, oldVal) => {
+  if (newVal) {
+    const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
+    modalMembers.value = data;
+    editForm.member_id = '';
+  } else {
+    modalMembers.value = [];
+    editForm.member_id = '';
+  }
 });
 
-const enhancedPPCHeads = computed(() => {
-  const c = props.ppcHeads || {};
-  return {
-    data: c.data || [],
-    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
-    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
-    current_page: c.current_page ?? c.meta?.current_page,
-    last_page: c.last_page ?? c.meta?.last_page,
-  };
+watch(
+  () => createForm.community_id,
+  async (newVal) => {
+    if (newVal) {
+      const { data } = await axios.get(`/api/community/${newVal}/members`);
+      modalMembers.value = data;
+      createForm.member_id = '';
+    } else {
+      modalMembers.value = [];
+      createForm.member_id = '';
+    }
+  }
+);
+
+watch(() => enhancedPPCHeads.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
 });
 
 function openEditModal(row: any) {
@@ -130,16 +150,30 @@ function openEditModal(row: any) {
   });
 }
 
+
+
 function submitEdit() {
   if (!editForm.member_id) {
     editForm.errors.member_id = 'Please select a member.';
     return;
   }
+  const editedId = editingPPCHead.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedPPCHeads.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   editForm.put(`/ppc-head/${editForm.id}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingPPCHead.value = null;
+      editingPPCHead.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
   });
 }
@@ -156,12 +190,24 @@ function closeCreateModal() {
 
 function submitCreate() {
   if (!createForm.member_id || !createForm.community_id) return;
+  createForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedPPCHeads.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   createForm.post('/ppc-head', {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false;
       createForm.reset();
-      fetch();
+      nextTick(() => {
+        fetch(enhancedPPCHeads.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -191,6 +237,8 @@ function restorePPCHead(id: number) {
   });
 }
 
+
+
 </script>
 
 <template>
@@ -215,7 +263,7 @@ function restorePPCHead(id: number) {
           <option :value="100">100</option>
         </select>
       </div>
-      <div class="flex items-center gap-4 mt-2">
+      <div class="flex items-center gap-4 mt-2 justify-end">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
@@ -236,7 +284,7 @@ function restorePPCHead(id: number) {
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedPPCHeads.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            <tr v-for="row in enhancedPPCHeads.data" :key="row.id" :id="`ppc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -395,9 +443,10 @@ function restorePPCHead(id: number) {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #e5e7eb;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .switch-checkbox[data-state="checked"] {
   background: #2563eb;
@@ -424,5 +473,13 @@ function restorePPCHead(id: number) {
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

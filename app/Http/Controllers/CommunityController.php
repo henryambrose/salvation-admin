@@ -17,7 +17,7 @@ class CommunityController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Community::query()->with('zone');
+        $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member')->with('members');
 
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -67,7 +67,16 @@ class CommunityController extends Controller
         $data = $request->validated();
         $data['zone_id'] = $request->input('zone_id');
         Community::create($data);
-        return redirect()->route('community.index')->with('success', 'Community created successfully.');
+        $perPage = $request->input('perPage', 10);
+        $total = Community::count();
+        $lastPage = (int) ceil($total / $perPage);
+        return redirect()->route('community.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $lastPage,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Community created successfully.');
     }
 
     /**
@@ -99,8 +108,15 @@ class CommunityController extends Controller
         $data = $request->validated();
         $data['zone_id'] = $request->input('zone_id');
         $community->update($data);
-
-        return redirect()->route('community.index')->with('success', 'Community updated successfully.');
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('community.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Community updated successfully.');
     }
 
     /**

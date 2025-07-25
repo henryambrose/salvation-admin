@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const props = defineProps({
@@ -30,6 +30,18 @@ const showDeleteModal = ref(false);
 const editingBloodGroup = ref<Record<string, any>>();
 const deletingBloodGroup = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
+const highlightedRowId = ref<number|null>(null);
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`blood-group-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
 
 const form = useForm({
   name: '',
@@ -89,11 +101,24 @@ const enhancedBloodGroups = computed(() => {
 });
 
 function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedBloodGroups.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   form.post('/blood-group', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedBloodGroups.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -105,11 +130,23 @@ function openEditModal(row: any) {
 }
 
 function submitEdit() {
-  editForm.put(`/blood-group/${editingBloodGroup.value?.id || ''}`, {
+  const editedId = editingBloodGroup.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedBloodGroups.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  editForm.put(`/blood-group/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
       editingBloodGroup.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
   });
 }
@@ -151,7 +188,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
           <option :value="100">100</option>
         </select>
       </div>
-      <div class="flex items-center gap-4 mt-2">
+      <div class="flex items-center gap-4 mt-2 justify-end">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
@@ -172,7 +209,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedBloodGroups.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            <tr v-for="row in enhancedBloodGroups.data" :key="row.id" :id="`blood-group-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -331,9 +368,10 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #e5e7eb;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .switch-checkbox[data-state="checked"] {
   background: #2563eb;
@@ -360,5 +398,13 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

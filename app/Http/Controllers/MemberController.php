@@ -173,8 +173,30 @@ class MemberController extends Controller
     public function store(StoreMemberRequest $request)
     {
         $validated = $request->validated();
-        Member::create($validated);
-        return redirect()->route('member.index')->with('success', 'Member created successfully.');
+        $member = Member::create($validated);
+        $perPage = $request->input('perPage', 10);
+        // Build the query as in index
+        $query = Member::query();
+        if ($search = $request->input('search')) {
+            $query->where('first_name', 'like', "%$search%");
+            // Add other filters as needed
+        }
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+        $allIds = $query->pluck('id')->toArray();
+        $position = array_search($member->id, $allIds);
+        $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+        return redirect()->route('member.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+                'highlightId' => $member->id,
+            ]
+        ))->with('success', 'Member created successfully.');
     }
 
 
@@ -228,10 +250,30 @@ class MemberController extends Controller
     public function update(UpdateMemberRequest $request, Member $member)
     {
         $validated = $request->validated();
-  
         $member->update($validated);
-
-        return redirect()->route('member.index')->with('success', 'Member updated successfully.');
+        $perPage = $request->input('perPage', 10);
+        // Build the query as in index
+        $query = Member::query();
+        if ($search = $request->input('search')) {
+            $query->where('first_name', 'like', "%$search%");
+            // Add other filters as needed
+        }
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+        $allIds = $query->pluck('id')->toArray();
+        $position = array_search($member->id, $allIds);
+        $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+        return redirect()->route('member.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+                'highlightId' => $member->id,
+            ]
+        ))->with('success', 'Member updated successfully.');
     }
 
     public function destroy(Member $member)

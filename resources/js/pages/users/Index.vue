@@ -162,7 +162,7 @@ const enhancedUsers = computed(() => {
           <option :value="100">100</option>
         </select>
       </div>
-      <div class="flex items-center gap-4 mt-2">
+      <div class="flex items-center gap-4 mt-2 justify-end">
         <label class="flex items-center gap-2 cursor-pointer select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
@@ -306,9 +306,10 @@ const enhancedUsers = computed(() => {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #e5e7eb;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .switch-checkbox[data-state="checked"] {
   background: #2563eb;
