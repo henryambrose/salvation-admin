@@ -20,6 +20,12 @@ class FamilyIncomeRangeController extends Controller
 
         $query = FamilyIncomeRange::query();
 
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
         }
@@ -32,10 +38,10 @@ class FamilyIncomeRangeController extends Controller
 
         $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('family_income_range/FamilyIncomeRange', [
+        return Inertia::render('family_income_range/Index', [
             'fetchUrl' => route('family-income-range.index'),
             'familyIncomeRange' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
         ]);
     }
 
@@ -100,5 +106,12 @@ class FamilyIncomeRangeController extends Controller
         $familyIncomeRange->delete();
 
         return redirect()->route('family-income-range.index')->with('success', 'Family Income Range deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $range = FamilyIncomeRange::onlyTrashed()->findOrFail($id);
+        $range->restore();
+        return redirect()->route('family-income-range.index')->with('success', 'Family Income Range restored successfully.');
     }
 }

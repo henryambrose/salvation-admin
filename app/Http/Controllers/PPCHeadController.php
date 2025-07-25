@@ -19,7 +19,11 @@ class PPCHeadController extends Controller
     public function index(Request $request): Response
     {
         $query = PPCHead::query();
-
+        if ($request->input('isArchived')  === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
         $query->select('p_p_c_heads.*');
         $query->join('members', 'p_p_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
@@ -31,9 +35,14 @@ class PPCHeadController extends Controller
         if ($memberId = $request->input('member_id')) {
             $query->where('p_p_c_heads.member_id', $memberId);
         }
-        // if ($search = $request->input('search')) {
-        //     $query->where('first_name', 'like', "%$search%");
-        // }
+        if ($search = $request->input('search')) {
+            $query->where(function($q) use ($search) {
+                $q->where('members.first_name', 'like', "%$search%")
+                  ->orWhere('members.middle_name', 'like', "%$search%")
+                  ->orWhere('members.last_name', 'like', "%$search%")
+                  ->orWhere('communities.name', 'like', "%$search%");
+            });
+        }
 
         if ($sort = $request->input('sort')) {
             $query->orderBy($sort, $request->input('direction', 'asc'));
@@ -45,8 +54,10 @@ class PPCHeadController extends Controller
 
         return Inertia::render('p_p_c_head/Index', [
             'ppcHeads' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => request()->only('search', 'sort', 'direction', 'perPage'),
+            'filters' => request()->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('ppc-head.index'),
+            'communities' => Community::all(),
+            // 'members' => Member::all(), // REMOVE THIS
         ]);
     }
 
@@ -66,9 +77,21 @@ class PPCHeadController extends Controller
      */
     public function store(StorePPCHeadRequest $request)
     {
-        PPCHead::create($request->validated());
-
-        return redirect()->route('ppc-head.index')->with('success', 'PPC Head created successfully.');
+        $validated = $request->validated();
+        PPCHead::create([
+            'member_id' => $validated['member_id'],
+            'community_id' => $validated['community_id'],
+        ]);
+        $perPage = $request->input('perPage', 10);
+        $total = PPCHead::count();
+        $lastPage = (int) ceil($total / $perPage);
+        return redirect()->route('ppc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $lastPage,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'PPC Head created successfully.');
     }
 
     /**
@@ -94,20 +117,54 @@ class PPCHeadController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdatePPCHeadRequest $request, PPCHead $ppcHead)
+    public function update(UpdatePPCHeadRequest $request, $id)
     {
-        $ppcHead->update($request->validated());
-
-        return redirect()->route('ppc-head.index')->with('success', 'PPC Head updated successfully.');
+        $ppcHead = PPCHead::findOrFail($id);
+        $validated = $request->validated();
+        $ppcHead->update([
+            'member_id' => $validated['member_id'],
+            'community_id' => $validated['community_id'],
+        ]);
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('ppc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'PPC Head updated successfully.');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(PPCHead $ppcHead)
+    public function destroy($id)
     {
+        $ppcHead = PPCHead::findOrFail($id);
         $ppcHead->delete();
-
         return redirect()->route('ppc-head.index')->with('success', 'PPC Head deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $ppcHead = PPCHead::withTrashed()->findOrFail($id);
+        $ppcHead->restore();
+        return redirect()->route('ppc-head.index')->with('success', 'PPC Head restored successfully.');
+    }
+
+    // Add API endpoint for fetching members by community
+    public function membersByCommunity($communityId)
+    {
+        $members = Member::where('community_id', $communityId)
+            ->select('id', 'first_name', 'middle_name', 'last_name')
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
+                ];
+            });
+        return response()->json($members);
     }
 }

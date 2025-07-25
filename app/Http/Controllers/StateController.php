@@ -16,7 +16,12 @@ class StateController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = State::query();
+        $query = State::query()->with('country');
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
 
         // Apply filters
         if ($search = $request->input('search')) {
@@ -35,6 +40,7 @@ class StateController extends Controller
             'states' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
             'fetchUrl' => route('state.index'),
+            'countries' => Country::all(),
         ]);
     }
 
@@ -132,8 +138,7 @@ class StateController extends Controller
     {
         $state = State::onlyTrashed()->findOrFail($id);
         $state->restore();
-
-        return redirect()->route('state.deleted')->with('success', 'State restored successfully.');
+        return redirect()->route('state.index')->with('success', 'State restored successfully.');
     }
 
     /**

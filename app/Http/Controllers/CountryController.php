@@ -15,14 +15,21 @@ class CountryController extends Controller
     public function index(Request $request): Response
     {
         $query = Country::query();
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
 
         // Apply filters
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
         }
 
-        if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
+        $sort = $request->input('sort');
+        $direction = $request->input('direction', 'asc');
+        if ($sort) {
+            $query->orderBy($sort, $direction);
         } else {
             $query->orderBy('id', 'asc');
         }
@@ -119,8 +126,7 @@ class CountryController extends Controller
     {
         $country = Country::onlyTrashed()->findOrFail($id);
         $country->restore();
-
-        return redirect()->route('country.deleted')->with('success', 'Country restored successfully.');
+        return redirect()->route('country.index')->with('success', 'Country restored successfully.');
     }
 
     /**

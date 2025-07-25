@@ -136,14 +136,12 @@ export interface SCCHead {
   member_id: number;
   community_id: number;
 }
-
+export interface Zone { id: number|string; name: string; }
 export interface PPCHead {
   id: number;
-  name: string;
-  created_at: string;
-  updated_at: string;
+  member_id: number;
+  community_id: number;
 }
-
 export interface CommunityFund {
   id: number;
   member_id: number;
@@ -244,6 +242,31 @@ export interface Designation {
 
 export type Designations = Designation[];
 
+// Role Permissions Types
+export interface Role {
+  id: number;
+  name: string;
+}
+
+export interface ModuleAction {
+  id: number;
+  name: string;
+  slug: string;
+  icon?: string;
+}
+
+export interface Module {
+  id: number;
+  name: string;
+  slug: string;
+  icon?: string;
+  actions: ModuleAction[];
+}
+
+export type Roles = Role[];
+export type Modules = Module[];
+
+export type Permissions = Record<number, Record<number, number>>;
 export interface AgeGroup {
   id: number;
   name: string;

@@ -1,17 +1,16 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-
-import DataTable from '@/components/DataTable2.vue';
-import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref, watch, computed, nextTick } from 'vue';
+import { ref, watch, computed } from 'vue';
+import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
+import DatatableHeader from '@/components/DatatableHeader.vue';
 
 const props = defineProps({
-  bloodGroups: {
+  zones: {
     type: Object,
     default: () => ({ data: [] }),
   },
@@ -21,27 +20,17 @@ const props = defineProps({
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
-  { key: 'name', label: 'Name', sortable: true },
+  { key: 'name', label: 'Zone Name', sortable: true },
 ];
+
+const breadcrumbs = [{ title: 'Zones', href: '/zone/index' }];
 
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
-const editingBloodGroup = ref<Record<string, any>>();
-const deletingBloodGroup = ref<Record<string, any>>();
+const editingZone = ref<Record<string, any>>();
+const deletingZone = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
-const highlightedRowId = ref<number|null>(null);
-
-function scrollToRow(rowId: number) {
-  nextTick(() => {
-    const el = document.getElementById(`blood-group-row-${rowId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('highlight-row');
-      setTimeout(() => el.classList.remove('highlight-row'), 2000);
-    }
-  });
-}
 
 const form = useForm({
   name: '',
@@ -55,15 +44,6 @@ const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
-
-function restoreBloodGroup(id: number) {
-  router.post(`/blood-group/${id}/restore`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      fetch();
-    },
-  });
-}
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
@@ -89,8 +69,8 @@ watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
-const enhancedBloodGroups = computed(() => {
-  const c = props.bloodGroups || {};
+const enhancedZones = computed(() => {
+  const c = props.zones || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -101,82 +81,64 @@ const enhancedBloodGroups = computed(() => {
 });
 
 function submit() {
-  form.transform(data => ({
-    ...data,
-    perPage: perPage.value,
-    page: enhancedBloodGroups.value.last_page,
-    search: search.value,
-    sort: sort.value,
-    direction: direction.value,
-    isArchived: isArchived.value ? 'true' : 'false',
-  }));
-  form.post('/blood-group', {
+  form.post('/zone', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
-      nextTick(() => {
-        fetch(enhancedBloodGroups.value.last_page);
-        highlightedRowId.value = -1;
-      });
     },
   });
 }
 
 function openEditModal(row: any) {
-  editingBloodGroup.value = row;
+  editingZone.value = row;
   editForm.name = row.name;
   showEditModal.value = true;
 }
 
 function submitEdit() {
-  const editedId = editingBloodGroup.value?.id;
-  editForm.transform(data => ({
-    ...data,
-    perPage: perPage.value,
-    page: enhancedBloodGroups.value.current_page,
-    search: search.value,
-    sort: sort.value,
-    direction: direction.value,
-    isArchived: isArchived.value ? 'true' : 'false',
-  }));
-  editForm.put(`/blood-group/${editedId || ''}`, {
+  editForm.put(`/zone/${editingZone.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingBloodGroup.value = undefined;
-      highlightedRowId.value = editedId;
-      nextTick(() => scrollToRow(editedId));
+      editingZone.value = undefined;
     },
   });
 }
 
 function openDeleteModal(row: any) {
-  deletingBloodGroup.value = row;
+  deletingZone.value = row;
   showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  router.delete(`/blood-group/${deletingBloodGroup.value?.id || ''}`, {
+  router.delete(`/zone/${deletingZone.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingBloodGroup.value = undefined;
+      deletingZone.value = undefined;
     },
   });
 }
 
-const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
+function restoreZone(id: number) {
+  router.post(`/zone/${id}/restore`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
+    },
+  });
+}
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Blood Groups" />
+    <Head title="Zones" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Blood Groups</h2>
+        <h2 class="text-2xl font-bold text-blue-700">Zones</h2>
         <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <span>➕ Add Blood Group</span>
+          <span>➕ Add Zone</span>
         </Button>
       </div>
       <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
@@ -209,7 +171,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedBloodGroups.data" :key="row.id" :id="`blood-group-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+            <tr v-for="row in enhancedZones.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -217,7 +179,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreBloodGroup(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button @click="restoreZone(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -239,14 +201,14 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
     </div>
 
     <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedBloodGroups.prev_page_url" @click="fetch(enhancedBloodGroups.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+      <button v-if="enhancedZones.prev_page_url" @click="fetch(enhancedZones.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Prev
       </button>
-      <button v-if="enhancedBloodGroups.next_page_url" @click="fetch(enhancedBloodGroups.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+      <button v-if="enhancedZones.next_page_url" @click="fetch(enhancedZones.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Next
       </button>
-      <span v-if="enhancedBloodGroups.current_page && enhancedBloodGroups.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedBloodGroups.current_page }} of {{ enhancedBloodGroups.last_page }}
+      <span v-if="enhancedZones.current_page && enhancedZones.last_page" class="ml-auto text-sm text-gray-500">
+        Page {{ enhancedZones.current_page }} of {{ enhancedZones.last_page }}
       </span>
     </div>
 
@@ -255,7 +217,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Create Blood Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Create Zone</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -290,7 +252,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Edit Blood Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Edit Zone</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -325,10 +287,9 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Blood Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Zone</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingBloodGroup?.name }}</span
-              >?
+              Are you sure you want to delete <span class="font-bold">{{ deletingZone?.name }}</span>?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -355,6 +316,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
     </transition>
   </AppLayout>
 </template>
+
 <style>
 .fade-enter-active,
 .fade-leave-active {
@@ -398,13 +360,5 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
-}
-.highlight-row {
-  animation: highlight-fade 2s;
-  background-color: #fef08a !important; /* Tailwind yellow-200 */
-}
-@keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
 }
 </style>

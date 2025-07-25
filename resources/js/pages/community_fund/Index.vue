@@ -6,9 +6,14 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { CommunityFund, type BreadcrumbItem } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
-  communityFunds: Object,
+  communityFunds: {
+    type: Object,
+    default: () => ({ data: [] }),
+  },
   filters: Object,
   fetchUrl: String,
   members: Array,
@@ -25,11 +30,13 @@ const columns = [
 
 const breadcrumbs: BreadcrumbItem[] = [{ title: 'Community Funds', href: '/community-fund/index' }];
 
-function editCommunityFund(fund: CommunityFund) {
+const isArchived = ref(false);
+
+function editCommunityFund(fund: any) {
   router.get(route('community-fund.edit', fund.id));
 }
 
-function deleteCommunityFund(id: CommunityFund['id']) {
+function deleteCommunityFund(id: any) {
   if (confirm('Delete this community fund?')) {
     router.delete(route('community-fund.destroy', id), {
       onSuccess: () => {
@@ -39,23 +46,27 @@ function deleteCommunityFund(id: CommunityFund['id']) {
   }
 }
 
+function fetch() {
+  if (props.fetchUrl) {
+    router.get(props.fetchUrl, { isArchived: isArchived.value }, { preserveState: true, replace: true });
+  }
+}
+watch(isArchived, fetch);
+
 const enhancedFunds = {
   ...props.communityFunds,
-  data: props.communityFunds.data.map((fund) => ({
+  data: props.communityFunds.data.map((fund: any) => ({
     ...fund,
     member_name: fund.member?.first_name + ' ' + (fund.member?.last_name || ''),
   })),
 };
 
 const page = usePage();
-const roles = page.props.auth?.roles || [];
+const roles = (page as any).props.auth?.roles || [];
 const isSuperAdmin = roles.includes('superadmin');
 
 // Helper to check permission (uses $can if available, else fallback)
 function can(permission: string) {
-  if (typeof window !== 'undefined' && window?.app?.config?.globalProperties?.$can) {
-    return window.app.config.globalProperties.$can(permission);
-  }
   return isSuperAdmin;
 }
 </script>
@@ -73,24 +84,81 @@ function can(permission: string) {
           </Button>
         </div>
       </div>
+      <div class="flex items-center gap-4 mt-2">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <Checkbox v-model="isArchived" class="switch-checkbox" />
+          <span class="text-sm font-medium">Show Archived</span>
+        </label>
+      </div>
     </DatatableHeader>
-    <DataTable :data="enhancedFunds" :columns="columns" :filters="filters" :fetch-url="fetchUrl" :has-actions="true">
-      <template #actions="{ row }">
-        <div class="flex flex-wrap gap-3">
-          <template v-if="isSuperAdmin || can('community-fund.edit')">
-            <Button @click="editCommunityFund(row)">
-              <component :is="Pencil" />
-              <span>Edit</span>
-            </Button>
-          </template>
-          <template v-if="isSuperAdmin || can('community-fund.delete')">
-            <Button @click="deleteCommunityFund(row.id)" variant="destructive">
-              <component :is="Trash" />
-              <span>Delete</span>
-            </Button>
-          </template>
-        </div>
-      </template>
-    </DataTable>
+    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+      <div class="overflow-x-auto rounded-xl border border-gray-100">
+        <table class="w-full border-collapse text-left">
+          <thead>
+            <tr class="bg-blue-50">
+              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                {{ col.label }}
+              </th>
+              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in enhancedFunds.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <td class="p-2">
+                <Button @click="editCommunityFund(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  Edit
+                </Button>
+              </td>
+              <td v-for="col in columns" :key="col.key" class="p-2">
+                {{ row[col.key] }}
+              </td>
+              <td class="p-2">
+                <Button @click="deleteCommunityFund(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                  Delete
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </AppLayout>
 </template>
+
+<style>
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #e5e7eb;
+  position: relative;
+  transition: background 0.2s;
+}
+.switch-checkbox[data-state="checked"] {
+  background: #2563eb;
+}
+.switch-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot="checkbox-indicator"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+  left: 1.375rem;
+}
+</style>

@@ -37,4 +37,16 @@ class Community extends Model
     {
         return $this->hasMany(Member::class);
     }
+    public function ppchead()
+    {
+        return $this->hasOne(PPCHead::class);
+    }
+    public function scchead()
+    {
+        return $this->hasOne(SCCHead::class);
+    }
+    public function zone()
+    {
+        return $this->belongsTo(Zone::class);
+    }
 }

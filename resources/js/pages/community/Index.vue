@@ -1,12 +1,15 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
-
+import { Head, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Community } from '@/types';
 import { router } from '@inertiajs/vue3';
-import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { ref, watch, computed, nextTick, onMounted } from 'vue';
+import { Plus } from 'lucide-vue-next';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Zone } from '@/types';
+
 
 const props = defineProps({
   communities: {
@@ -15,25 +18,174 @@ const props = defineProps({
   },
   filters: Object,
   fetchUrl: String,
+  zones: {
+    type: Array as () => Zone[],
+    default: () => [],
+  },
 });
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Community Name', sortable: true },
-  { key: 'created_at', label: 'Created At', sortable: true },
+  { key: 'zone', label: 'Zone', sortable: true },
+  { key: 'ppchead.member', label: 'PPC Head', sortable: true },
+  { key: 'scchead.member', label: 'SCC Head', sortable: true },
 ];
 
 const breadcrumbs = [{ title: 'Communities', href: '/community/index' }];
+const showModal = ref(false);
+const showEditModal = ref(false);
+const showDeleteModal = ref(false);
+const editingCommunity = ref<Record<string, any>>();
+const deletingCommunity = ref<Record<string, any>>();
+const isArchived = ref(props.filters?.isArchived === 'true');
+const highlightedRowId = ref<number|null>(null);
 
-function editCommunity(community: Community) {
-  router.get(route('community.edit', community.id));
+const form = useForm({
+  name: '',
+  zone_id: '',
+});
+
+const editForm = useForm({
+  name: '',
+  zone_id: '',
+});
+
+const search = ref(props.filters?.search || '');
+const perPage = ref(props.filters?.perPage || 10);
+const sort = ref(props.filters?.sort || '');
+const direction = ref(props.filters?.direction || 'asc');
+
+const enhancedCommunities = computed(() => {
+  const c = props.communities || {};
+  return {
+    data: c.data || [],
+    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
+    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
+    current_page: c.current_page ?? c.meta?.current_page,
+    last_page: c.last_page ?? c.meta?.last_page,
+  };
+});
+
+watch([search, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`community-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
 }
 
-function deleteCommunity(id: Community['id']) {
-  if (confirm('Delete this Community?')) {
-    router.delete(route('community.destroy', id));
+function fetch(page = 1) {
+  router.get(
+    props.fetchUrl || '',
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    {
+      preserveState: true,
+      replace: true,
+    },
+  );
+}
+
+function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCommunities.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  form.post('/community', {
+    preserveScroll: true,
+    onSuccess: () => {
+      form.reset();
+      showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedCommunities.value.last_page);
+        highlightedRowId.value = -1;
+      });
+    },
+  });
+}
+
+function openEditModal(row: any) {
+  editingCommunity.value = row;
+  editForm.name = row.name;
+  editForm.zone_id = row.zone?.id || '';
+  showEditModal.value = true;
+}
+
+function submitEdit() {
+  const editedId = editingCommunity.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCommunities.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  editForm.put(`/community/${editedId || ''}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showEditModal.value = false;
+      editingCommunity.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
+    },
+  });
+}
+
+function openDeleteModal(row: any) {
+  deletingCommunity.value = row;
+  showDeleteModal.value = true;
+}
+
+function confirmDelete() {
+  router.delete(`/community/${deletingCommunity.value?.id || ''}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      deletingCommunity.value = undefined;
+    },
+  });
+}
+
+function restoreCommunity(id: number) {
+  router.post(`/community/${id}/restore`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
+    },
+  });
+}
+
+watch(() => enhancedCommunities.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
   }
-}
+});
 </script>
 
 <template>
@@ -42,10 +194,26 @@ function deleteCommunity(id: Community['id']) {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Communities</h2>
-        <Button as="a" href="/community/create" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <component :is="Plus" />
           <span>Add Community</span>
         </Button>
+      </div>
+      <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+        <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+        <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+          <option :value="2">2</option>
+          <option :value="5">5</option>
+          <option :value="10">10</option>
+          <option :value="25">25</option>
+          <option :value="50">50</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-4 mt-2 justify-end">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <Checkbox v-model="isArchived" class="switch-checkbox" />
+          <span class="text-sm font-medium">Show Archived</span>
+        </label>
       </div>
     </DatatableHeader>
 
@@ -58,29 +226,234 @@ function deleteCommunity(id: Community['id']) {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
+              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in props.communities.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            <tr v-for="row in enhancedCommunities.data" :key="row.id" :id="`community-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
-                <div class="flex gap-2">
-                  <Button @click="editCommunity(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    <component :is="Pencil" />
-                    <span>Edit</span>
+                <template v-if="!isArchived">
+                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    Edit
                   </Button>
-                  <Button @click="deleteCommunity(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    <component :is="Trash" />
-                    <span>Delete</span>
+                </template>
+                <template v-else>
+                  <Button @click="restoreCommunity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    Restore
                   </Button>
-                </div>
+                </template>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
+                <template v-if="col.key === 'zone'">
+                  {{ row.zone?.name || '' }}
+                </template>
+                <template v-else>
+                  {{ row[col.key] }}
+                </template>
+                <template v-if="col.key === 'ppchead.member'">
+                  {{ row.ppchead?.member?.first_name + ' ' + row.ppchead?.member?.last_name || '' }}
+                </template>
+                <template v-if="col.key === 'scchead.member'">
+                  {{ row.scchead?.member?.first_name + ' ' + row.scchead?.member?.last_name || '' }}
+                </template>
+              </td>
+              <td class="p-2">
+                <template v-if="!isArchived">
+                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    Delete
+                  </Button>
+                </template>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
     </div>
+
+    <!-- Pagination Controls -->
+    <div class="mt-6 flex items-center gap-2">
+      <button v-if="enhancedCommunities.prev_page_url" @click="fetch(enhancedCommunities.current_page! - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+        Prev
+      </button>
+      <button v-if="enhancedCommunities.next_page_url" @click="fetch(enhancedCommunities.current_page! + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+        Next
+      </button>
+      <span v-if="enhancedCommunities.current_page && enhancedCommunities.last_page" class="ml-auto text-sm text-gray-500">
+        Page {{ enhancedCommunities.current_page }} of {{ enhancedCommunities.last_page }}
+      </span>
+    </div>
+
+    <!-- Create Modal -->
+    <transition name="fade">
+      <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-white p-6">
+            <h3 class="mb-4 text-xl font-semibold">Create Community</h3>
+            <form @submit.prevent="submit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="form.name" type="text" />
+                <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Zone</label>
+                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <option value="">Select Zone</option>
+                  <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
+                </select>
+                <div v-if="form.errors.zone_id" class="mt-1 text-sm text-red-500">{{ form.errors.zone_id }}</div>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showModal = false"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="form.processing"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
+                  {{ form.processing ? 'Creating...' : 'Create' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Edit Modal -->
+    <transition name="fade">
+      <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-white p-6">
+            <h3 class="mb-4 text-xl font-semibold">Edit Community</h3>
+            <form @submit.prevent="submitEdit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="editForm.name" type="text" />
+                <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Zone</label>
+                <select v-model="editForm.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                  <option value="">Select Zone</option>
+                  <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
+                </select>
+                <div v-if="editForm.errors.zone_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.zone_id }}</div>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showEditModal = false"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="editForm.processing"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
+                  {{ editForm.processing ? 'Saving...' : 'Save' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Delete Modal -->
+    <transition name="fade">
+      <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-white p-6">
+            <h3 class="mb-4 text-xl font-semibold">Delete Community</h3>
+            <p>
+              Are you sure you want to delete <span class="font-bold">{{ deletingCommunity?.name }}</span>?
+            </p>
+            <div class="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                type="button"
+                @click="showDeleteModal = false"
+                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                :disabled="false"
+                @click="confirmDelete"
+                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </AppLayout>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  position: relative;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.switch-checkbox[data-state="checked"] {
+  background: #2563eb;
+}
+.switch-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot="checkbox-indicator"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+  left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
+}
+</style>

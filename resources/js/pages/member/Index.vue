@@ -11,7 +11,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, Member } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, nextTick, onMounted } from 'vue';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const { can } = permissionHelpers();
 
@@ -67,10 +68,39 @@ function editMember(member: Member) {
   router.get(route('member.edit', member.id));
 }
 
-function deleteMember(id: Member['id']) {
-  if (confirm('Delete this member?')) {
-    router.delete(route('member.destroy', id));
+const showDeleteModal = ref(false);
+const deletingMember = ref<any>(null);
+
+function openDeleteModal(member: any) {
+  deletingMember.value = member;
+  showDeleteModal.value = true;
+}
+
+function confirmDelete() {
+  if (deletingMember.value) {
+    router.delete(route('member.destroy', deletingMember.value.id), {
+      preserveScroll: true,
+      onSuccess: () => {
+        showDeleteModal.value = false;
+        deletingMember.value = null;
+      },
+    });
   }
+}
+
+function restoreMember(id: number) {
+  router.post(route('member.restore', id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
+    },
+  });
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
 }
 
 const canCreateMember = can('create-member');
@@ -140,6 +170,43 @@ function changeSort(field: string) {
 function toggleisArchived() {
   isArchived.value = !isArchived.value;
 }
+
+const highlightedRowId = ref<number|null>(null);
+
+function scrollToRow(rowId: number) {
+  console.log('scrollToRow', rowId);
+  nextTick(() => {
+    const el = document.getElementById(`member-row-${rowId}`);
+    console.log('el', el);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
+
+watch(() => enhancedMembers.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
+
+onMounted(() => {
+  // Check for highlightId in query string
+  const params = new URLSearchParams(window.location.search);
+  const highlightId = params.get('highlightId');
+  if (highlightId) {
+    highlightedRowId.value = Number(highlightId);
+    // Optionally, scroll immediately if data is already loaded
+    scrollToRow(Number(highlightId));
+  }
+});
 </script>
 
 <template>
@@ -152,6 +219,12 @@ function toggleisArchived() {
           <component :is="Plus" />
           <span>Add Member</span>
         </Button>
+      </div>
+      <div class="flex items-center gap-4 mt-2 justify-end">
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <Checkbox v-model="isArchived" class="switch-checkbox" />
+          <span class="text-sm font-medium">Show Archived</span>
+        </label>
       </div>
     </DatatableHeader>
 
@@ -185,12 +258,6 @@ function toggleisArchived() {
               @focus-out="fetch()"
             />
             <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full max-w-xs rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Enter value" @focus-out="fetch()" />
-            <div class="flex items-center gap-2">
-              <Button @click="toggleisArchived" :class="isArchived ? 'bg-red-800 text-white' : 'bg-gray-200 text-gray-700'">
-                <component :is="ArchiveIcon" />
-                <span>Archived</span>
-              </Button>
-            </div>
           </div>
 
           <!-- Table -->
@@ -209,30 +276,44 @@ function toggleisArchived() {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in enhancedMembers.data" :key="item.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
-                  <!-- View + Edit -->
+                <tr v-for="item in enhancedMembers.data" :key="item.id" :id="`member-row-${item.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === item.id ? 'highlight-row' : '']">
+                  <!-- View + Edit or Restore -->
                   <td class="p-2">
                     <div class="flex gap-2">
-                      <Button @click="openViewModal(item)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
-                        <component :is="ZapIcon" />
-                        <span>View</span>
-                      </Button>
-                      <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                        <component :is="Pencil" />
-                        <span>Edit</span>
-                      </Button>
+                      <template v-if="!isArchived">
+                        <Button @click="openViewModal(item)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                          <component :is="ZapIcon" />
+                          <span>View</span>
+                        </Button>
+                        <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                          <component :is="Pencil" />
+                          <span>Edit</span>
+                        </Button>
+                      </template>
+                      <template v-else>
+                        <Button @click="restoreMember(item.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                          Restore
+                        </Button>
+                      </template>
                     </div>
                   </td>
                   <!-- Main table data -->
                   <td v-for="col in columns" :key="col.key" class="p-2">
-                    {{ item[col.key] }}
+                    <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
+                      {{ formatDate(item[col.key]) }}
+                    </template>
+                    <template v-else>
+                      {{ item[col.key] }}
+                    </template>
                   </td>
                   <!-- Delete -->
                   <td class="p-2">
-                    <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="deleteMember(item.id)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                      <component :is="Trash" />
-                      <span>Delete</span>
-                    </Button>
+                    <template v-if="!isArchived">
+                      <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="openDeleteModal(item)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                        <component :is="Trash" />
+                        <span>Delete</span>
+                      </Button>
+                    </template>
                   </td>
                 </tr>
               </tbody>
@@ -258,5 +339,92 @@ function toggleisArchived() {
   </AppLayout>
 
   <!-- Member Details Modal -->
-  <ViewMemberModal v-model="showViewModal" :member="selectedMember" />
+  <ViewMemberModal v-model="showViewModal" :member="selectedMember" :familyIncomeRange="null" />
+
+  <!-- Delete Modal -->
+  <transition name="fade">
+    <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+      <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="rounded-lg bg-white p-6">
+          <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
+          <p>
+            Are you sure you want to delete <span class="font-bold">{{ deletingMember?.first_name }} {{ deletingMember?.last_name }}</span>?
+          </p>
+          <div class="mt-6 flex justify-end space-x-2">
+            <Button
+              variant="secondary"
+              type="button"
+              @click="showDeleteModal = false"
+              class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              type="button"
+              :disabled="false"
+              @click="confirmDelete"
+              class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+            >
+              Delete
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
 </template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  position: relative;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.switch-checkbox[data-state="checked"] {
+  background: #2563eb;
+}
+.switch-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot="checkbox-indicator"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+  left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
+}
+</style>
