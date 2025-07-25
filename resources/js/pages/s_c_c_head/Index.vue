@@ -21,7 +21,7 @@ const columns = [
   { key: 'community_name', label: 'Community Name', sortable: true },
 ];
 
-console.log('SCC Heads:', props.s_c_c_heads.data);
+
 
 const breadcrumbs = [{ title: 'SCC Heads', href: '/scc-head/index' }];
 
