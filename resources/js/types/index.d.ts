@@ -267,3 +267,28 @@ export type Roles = Role[];
 export type Modules = Module[];
 
 export type Permissions = Record<number, Record<number, number>>;
+export interface AgeGroup {
+  id: number;
+  name: string;
+  description?: string | null;
+  min_age: number;
+  max_age: number;
+  created_at?: string | null; // ISO 8601 date string
+  updated_at?: string | null; // ISO 8601 date string
+  deleted_at?: string | null; // ISO 8601 date string
+}
+
+export type AgeGroups = AgeGroup[];
+
+export interface Parish {
+  id: number;
+  deanery: string;
+  name: string;
+  code?: string | null;
+  address?: string | null;
+  created_at: string; // ISO 8601 date string
+  updated_at: string; // ISO 8601 date string
+  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+}
+
+export type Parishes = Parish[];
