@@ -2,6 +2,8 @@
 
 // use App\Http\Controllers\BloodGroupController;
 // use App\Http\Controllers\ZoneController;
+use App\Http\Controllers\CatholicCalendarController;
+use App\Http\Controllers\SaintsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +11,11 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
 
+// Catholic Calendar and Saints API Routes
+Route::get('/catholic-calendar', [CatholicCalendarController::class, 'index']);
+Route::get('/saints', [SaintsController::class, 'index']);
+Route::get('/saints/saint-of-the-day', [SaintsController::class, 'saintOfTheDay']);
+Route::get('/saints/image', [SaintsController::class, 'getSaintImageByName']);
 
 // Route::middleware(['auth:sanctum'])->group(function () {
     // Route::apiResource('zone', ZoneController::class);
