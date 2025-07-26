@@ -5,15 +5,36 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreRelationshipRequest;
 use App\Http\Requests\UpdateRelationshipRequest;
 use App\Models\Relationship;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Inertia\Response;
 
 class RelationshipController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        //
+        $query = Relationship::query();
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('relationship/Index', [
+            'fetchUrl' => route('relationship.index'),
+            'relationships' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+        ]);
     }
 
     /**
@@ -21,7 +42,7 @@ class RelationshipController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('relationship/Create');
     }
 
     /**
@@ -29,7 +50,9 @@ class RelationshipController extends Controller
      */
     public function store(StoreRelationshipRequest $request)
     {
-        //
+        Relationship::create($request->validated());
+
+        return redirect()->route('relationship.index')->with('success', 'Relationship created successfully.');
     }
 
     /**
@@ -45,7 +68,9 @@ class RelationshipController extends Controller
      */
     public function edit(Relationship $relationship)
     {
-        //
+        return Inertia::render('relationship/Edit', [
+            'relationship' => $relationship,
+        ]);
     }
 
     /**
@@ -53,7 +78,9 @@ class RelationshipController extends Controller
      */
     public function update(UpdateRelationshipRequest $request, Relationship $relationship)
     {
-        //
+        $relationship->update($request->validated());
+
+        return redirect()->route('relationship.index')->with('success', 'Relationship updated successfully.');
     }
 
     /**
@@ -61,6 +88,8 @@ class RelationshipController extends Controller
      */
     public function destroy(Relationship $relationship)
     {
-        //
+        $relationship->delete();
+
+        return redirect()->route('relationship.index')->with('success', 'Relationship deleted successfully.');
     }
 }

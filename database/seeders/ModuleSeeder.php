@@ -96,6 +96,13 @@ class ModuleSeeder extends Seeder
               'icon' => 'Church',
               'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
+            [
+              'name' => 'Relationships',
+              'slug' => 'relationship',
+              'icon' => 'HeartHandshake',
+              'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+
 
         ];
 

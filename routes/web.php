@@ -40,6 +40,7 @@ require __DIR__.'/country.php';
 require __DIR__.'/state.php';
 require __DIR__.'/town.php';
 require __DIR__.'/age_group.php';
+require __DIR__.'/relationship.php';
 require __DIR__.'/parish.php';
 require __DIR__.'/users.php';
 require __DIR__.'/auth.php';

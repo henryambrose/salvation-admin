@@ -202,12 +202,6 @@ export interface BloodGroup {
 
 export type BloodGroups = BloodGroup[];
 
-export interface Relationship {
-  id: string; // Assuming id is a string, adjust if necessary
-  name: string;
-}
-
-export type Relationships = Relationship[];
 
 // countres
 export interface Country {
@@ -292,3 +286,15 @@ export interface Parish {
 }
 
 export type Parishes = Parish[];
+
+
+export interface Relationship {
+  id: number;
+  name: string;
+  description?: string | null;
+  created_at?: string | null; // ISO 8601 date string
+  updated_at?: string | null; // ISO 8601 date string
+  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+}
+
+export type Relationships = Relationship[];
