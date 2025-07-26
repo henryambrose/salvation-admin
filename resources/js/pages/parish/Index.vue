@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import DataTable2 from '@/components/DataTable2.vue';
 
 const props = defineProps({
   parishes: {
@@ -59,37 +60,26 @@ const canDeleteAnyParish = can('delete-parish');
     </DatatableHeader>
 
     <div v-if="canReadAnyParish" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                {{ col.label }}
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in props.parishes.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
-              <td class="p-2">
-                <div class="flex gap-2">
-                  <Button v-if="canUpdateAnyParish" @click="editParish(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    <component :is="Pencil" />
-                    <span>Edit</span>
-                  </Button>
-                  <Button v-if="canDeleteAnyParish" @click="deleteParish(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                  </Button>
-                </div>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <DataTable2
+        :data="props.parishes"
+        :columns="columns"
+        :filters="props.filters"
+        :fetch-url="props.fetchUrl"
+        :has-actions="canUpdateAnyParish || canDeleteAnyParish"
+      >
+        <template #actions="{ row }">
+          <div class="flex gap-2">
+            <Button v-if="canUpdateAnyParish" @click="editParish(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+              <component :is="Pencil" />
+              <span>Edit</span>
+            </Button>
+            <Button v-if="canDeleteAnyParish" @click="deleteParish(row.id)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+              <component :is="Trash" />
+              <span>Delete</span>
+            </Button>
+          </div>
+        </template>
+      </DataTable2>
     </div>
   </AppLayout>
 </template>
