@@ -297,7 +297,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Zone</label>
-                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500" >
                   <option value="">Select Zone</option>
                   <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
                 </select>
@@ -340,7 +340,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Zone</label>
-                <select v-model="editForm.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                <select v-model="editForm.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500">
                   <option value="">Select Zone</option>
                   <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
                 </select>

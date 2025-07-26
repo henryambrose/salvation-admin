@@ -53,7 +53,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
               autocomplete="email" 
               v-model="form.email" 
               placeholder="Enter your email address" 
-              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-20 rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
+              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
             />
           </div>
           <InputError :message="form.errors.email" />
@@ -73,7 +73,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
               autocomplete="current-password"
               v-model="form.password"
               placeholder="Enter your password"
-              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-20 rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
+              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
             />
           </div>
           <InputError :message="form.errors.password" />
@@ -86,7 +86,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
                 id="remember" 
                 v-model="form.remember" 
                 :tabindex="3"
-                class="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded-md focus:ring-4 focus:ring-blue-500 focus:ring-opacity-20 transition-all duration-200"
+                class="w-5 h-5 text-blue-600 border-2 border-gray-300 rounded-md focus:ring-4 transition-all duration-200"
               />
             </div>
             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">Remember me</span>
@@ -104,7 +104,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
 
       <Button 
         type="submit" 
-        class="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 focus:ring-4 focus:ring-blue-500 focus:ring-opacity-20" 
+        class="w-full h-14 text-base font-semibold bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 " 
         :tabindex="4" 
         :disabled="form.processing"
       >
