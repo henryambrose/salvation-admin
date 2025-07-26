@@ -27,11 +27,11 @@ const columns = [
 
 const breadcrumbs = [{ title: 'Age Groups', href: '/age-group/index' }];
 
-function editAgeGroup(ageGroup) {
+function editAgeGroup(ageGroup: any) {
   router.get(route('age-group.edit', ageGroup.id));
 }
 
-function deleteAgeGroup(id) {
+function deleteAgeGroup(id: number) {
   if (confirm('Delete this Age Group?')) {
     router.delete(route('age-group.destroy', id));
   }

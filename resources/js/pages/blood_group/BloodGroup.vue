@@ -248,7 +248,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
       <span v-if="enhancedBloodGroups.current_page && enhancedBloodGroups.last_page" class="ml-auto text-sm text-gray-500">
         Page {{ enhancedBloodGroups.current_page }} of {{ enhancedBloodGroups.last_page }}
       </span>
-    </div>
+        </div>
 
     <!-- Create Modal -->
     <transition name="fade">

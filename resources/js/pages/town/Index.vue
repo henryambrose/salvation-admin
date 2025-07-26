@@ -147,8 +147,8 @@ function restoreTown(id: number) {
         <h2 class="text-2xl font-bold text-blue-700">Towns</h2>
         <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Town</span>
-        </Button>
-      </div>
+          </Button>
+        </div>
       <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
         <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
         <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
@@ -335,7 +335,7 @@ function restoreTown(id: number) {
                 class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
               >
                 Cancel
-              </Button>
+          </Button>
               <Button
                 variant="destructive"
                 type="button"
@@ -344,7 +344,7 @@ function restoreTown(id: number) {
                 class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
               >
                 Delete
-              </Button>
+          </Button>
             </div>
           </div>
         </div>

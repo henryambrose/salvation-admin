@@ -26,11 +26,11 @@ const columns = [
 
 const breadcrumbs = [{ title: 'Parishes', href: '/parish/index' }];
 
-function editParish(parish) {
+function editParish(parish: any) {
   router.get(route('parish.edit', parish.id));
 }
 
-function deleteParish(id) {
+function deleteParish(id: number) {
   if (confirm('Delete this Parish?')) {
     router.delete(route('parish.destroy', id));
   }

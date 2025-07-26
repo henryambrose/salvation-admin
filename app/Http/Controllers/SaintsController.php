@@ -292,7 +292,7 @@ class SaintsController extends Controller
         if (!$apiKey) {
             return null;
         }
-        
+        dd($apiKey);
         try {
             $query = urlencode($saintName . ' saint');
             $url = "https://pixabay.com/api/?key={$apiKey}&q={$query}&image_type=photo&category=religion&safesearch=true&per_page=3";

@@ -389,7 +389,7 @@ onMounted(() => {
     </div>
 
     <!-- Right Side - Login Form -->
-    <div class="flex-1 flex items-center justify-center p-8 relative">
+    <div class="flex-1 flex items-start justify-center p-8 relative pt-20">
       <!-- Background Pattern -->
       <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900">
         <div class="absolute inset-0 opacity-30 bg-dots-pattern"></div>

@@ -125,7 +125,7 @@ class CommunityController extends Controller
     public function destroy(Community $community)
     {
         
-         $community->delete();
+        $community->delete();
 
         return redirect()->route('community.index')->with('success', 'Community deleted successfully.');
     }
