@@ -47,9 +47,13 @@ html {
   background-clip: text;
 }
 
-/* Enhanced focus states */
+/* Enhanced focus states - Fixed for compatibility */
 .focus-ring {
-  @apply focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500;
+  @apply focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.focus-ring-blue {
+  @apply focus:outline-none focus:ring-4 focus:ring-blue-500 focus:border-blue-500;
 }
 
 /* Custom scrollbar for dashboard */
@@ -120,7 +124,7 @@ html {
 
 /* Dashboard specific styles */
 .dashboard-card {
-  @apply bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105;
+  @apply bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105;
 }
 
 .dashboard-gradient {
@@ -175,5 +179,5 @@ html {
 }
 
 .dashboard-table tr:hover {
-  @apply bg-gray-50 dark:bg-gray-700/50 transition-colors duration-200;
+  @apply bg-gray-50 dark:bg-gray-700 dark:bg-opacity-50 transition-colors duration-200;
 }

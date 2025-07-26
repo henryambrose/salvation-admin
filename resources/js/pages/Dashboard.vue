@@ -50,7 +50,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
         <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-6">
             <!-- Welcome Section -->
             <div class="mb-8">
-                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 dark:border-slate-700/50">
+                <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
                     <div class="flex items-center justify-between">
                         <div>
                             <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
@@ -79,7 +79,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
             <div class="grid gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
                 <Card
                     v-for="statCard in statCards"
-                    class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden"
+                    class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 overflow-hidden"
                     :key="statCard.title"
                 >
                     <div class="relative">
@@ -112,7 +112,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
             <!-- Birthdays Section -->
             <div class="mb-8">
                 <Collapsible class="w-full">
-                    <CollapsibleTrigger class="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20 dark:border-slate-700/50 hover:shadow-2xl transition-all duration-300 group">
+                    <CollapsibleTrigger class="w-full bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50 hover:shadow-2xl transition-all duration-300 group">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
@@ -130,7 +130,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                     </CollapsibleTrigger>
                     
                     <CollapsibleContent class="mt-4">
-                        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20 dark:border-slate-700/50">
+                        <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
                             <div class="overflow-x-auto custom-scrollbar">
                                 <table class="w-full">
                                     <thead>
@@ -182,7 +182,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                 <!-- Table Cards -->
                 <Card
                     v-for="tableCard in tableCards"
-                    class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                    class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                     :key="tableCard.title"
                 >
                     <CardHeader class="p-6 pb-4">
@@ -220,7 +220,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                 </Card>
 
                 <!-- Age Wise Statistics -->
-                <Card class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 md:col-span-2 lg:col-span-1">
+                <Card class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 md:col-span-2 lg:col-span-1">
                     <CardHeader class="p-6 pb-4">
                         <div class="flex items-center justify-between">
                             <CardTitle class="text-lg font-semibold text-gray-900 dark:text-white">
@@ -262,7 +262,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
 
             <!-- Placeholder Section -->
             <div class="mt-8">
-                <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white/20 dark:border-slate-700/50">
+                <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl p-8 shadow-xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
                     <div class="text-center">
                         <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">Additional Features Coming Soon</h3>
                         <p class="text-gray-600 dark:text-gray-400 mb-6">More dashboard widgets and analytics will be added here</p>

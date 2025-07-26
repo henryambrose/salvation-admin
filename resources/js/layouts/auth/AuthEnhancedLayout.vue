@@ -321,8 +321,8 @@ onMounted(() => {
                   </div>
                   
                   <!-- Image Loading Overlay -->
-                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-32 h-32 bg-white/10 rounded-full flex items-center justify-center">
-                    <div class="w-6 h-6 border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
+                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
+                    <div class="w-6 h-6 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
                   </div>
                 </div>
                 
@@ -349,7 +349,7 @@ onMounted(() => {
                 @click="goToSaint(index)"
                 :class="[
                   'w-3 h-3 rounded-full transition-all duration-300 hover:scale-150',
-                  index === currentSaintIndex ? 'bg-yellow-300 shadow-lg shadow-yellow-300/50' : 'bg-white/50 hover:bg-white/70'
+                  index === currentSaintIndex ? 'bg-yellow-300 shadow-lg shadow-yellow-300 shadow-opacity-50' : 'bg-white bg-opacity-50 hover:bg-white hover:bg-opacity-70'
                 ]"
                 :disabled="saints.length === 0"
               />
@@ -358,7 +358,7 @@ onMounted(() => {
             <!-- Previous/Next Buttons -->
             <button 
               @click="previousSaint"
-              class="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20"
+              class="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -368,7 +368,7 @@ onMounted(() => {
             
             <button 
               @click="nextSaint"
-              class="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white/20"
+              class="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
               <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -402,7 +402,7 @@ onMounted(() => {
         </div>
 
         <!-- Login Form -->
-        <div class="bg-white/80 dark:bg-slate-800/80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20 dark:border-slate-700/50">
+        <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
           <div class="text-center mb-8">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
             <p class="text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
