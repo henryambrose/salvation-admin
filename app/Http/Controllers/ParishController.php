@@ -16,10 +16,19 @@ class ParishController extends Controller
    */
   public function index(Request $request): Response
   {
+    \DB::enableQueryLog();
     $query = Parish::query();
 
     if ($search = $request->input('search')) {
-      $query->where('name', 'like', "%$search%");
+      $query->whereRaw(
+          "CONCAT(
+          COALESCE(deanery, ''),
+          COALESCE(name, ''),
+          COALESCE(code, ''),
+          COALESCE(address, '')
+          ) LIKE ?",
+          ["%$search%"]
+      );
     }
 
     if ($sort = $request->input('sort')) {
@@ -34,6 +43,7 @@ class ParishController extends Controller
       'fetchUrl' => route('parish.index'),
       'parishes' => $query->paginate($perPage)->appends($request->query()),
       'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+      'query' => \DB::getQueryLog(),
     ]);
   }
 
