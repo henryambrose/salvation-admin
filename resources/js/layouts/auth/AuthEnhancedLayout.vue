@@ -210,13 +210,21 @@ onMounted(() => {
       <!-- Content Overlay -->
       <div class="relative z-10 flex flex-col w-full p-8">
         <!-- Header with Logo -->
-        <div class="flex items-center gap-4 mb-12">
-          <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 shadow-2xl">
-            <AppLogoIcon class="size-10 fill-current text-white" />
+        <div class="flex items-center gap-6 mb-12">
+          <div class="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group">
+            <AppLogoIcon class="size-16 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
+            <!-- Glow effect -->
+            <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
-          <div>
-            <span class="text-2xl font-bold text-white">{{ title }}</span>
-            <p class="text-blue-200 text-sm">Catholic Community Management</p>
+          <div class="flex-1">
+            <h1 class="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+              {{ title }}
+            </h1>
+            <p class="text-blue-200 text-lg font-medium">Catholic Community Management</p>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <span class="text-sm text-blue-100">Secure • Reliable • Faithful</span>
+            </div>
           </div>
         </div>
 
@@ -389,14 +397,20 @@ onMounted(() => {
       
       <div class="relative z-10 w-full max-w-md">
         <!-- Mobile Logo -->
-        <div class="lg:hidden flex flex-col items-center gap-6 mb-12">
-          <Link :href="route('home')" class="flex flex-col items-center gap-4 group">
-            <div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-2xl group-hover:shadow-3xl transition-all duration-300 group-hover:scale-110">
-              <AppLogoIcon class="size-14 fill-current text-white" />
+        <div class="lg:hidden flex flex-col items-center gap-8 mb-12">
+          <Link :href="route('home')" class="flex flex-col items-center gap-6 group">
+            <div class="flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-110 relative">
+              <AppLogoIcon class="size-20 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
+              <!-- Glow effect for mobile -->
+              <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
             </div>
             <div class="text-center">
-              <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">{{ title }}</h1>
-              <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">{{ description }}</p>
+              <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">{{ title }}</h1>
+              <p class="text-gray-600 dark:text-gray-400 text-lg font-medium">{{ description }}</p>
+              <div class="flex items-center justify-center gap-2 mt-3">
+                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                <span class="text-sm text-gray-500 dark:text-gray-400">Secure • Reliable • Faithful</span>
+              </div>
             </div>
           </Link>
         </div>
