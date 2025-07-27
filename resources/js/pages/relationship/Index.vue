@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, router, useForm } from '@inertiajs/vue3';
+import { router, useForm } from '@inertiajs/vue3';
+import { ref, watch, computed, nextTick } from 'vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
-import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps({
-  ageGroups: {
+  relationships: {
     type: Object,
     default: () => ({ data: [] }),
   },
@@ -18,33 +19,27 @@ const props = defineProps({
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
-  { key: 'name', label: 'Age Group Name', sortable: true },
+  { key: 'name', label: 'Relationship Name', sortable: true },
   { key: 'description', label: 'Description', sortable: false },
-  { key: 'min_age', label: 'Min Age', sortable: true },
-  { key: 'max_age', label: 'Max Age', sortable: true },
 ];
 
-const breadcrumbs = [{ title: 'Age Groups', href: '/age-group/index' }];
+const breadcrumbs = [{ title: 'Relationships', href: '/relationship/index' }];
 
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
-const editingAgeGroup = ref<Record<string, any>>();
-const deletingAgeGroup = ref<Record<string, any>>();
-const highlightedRowId = ref<number | null>(null);
+const editingRelationship = ref<Record<string, any>>();
+const deletingRelationship = ref<Record<string, any>>();
+const highlightedRowId = ref<number|null>(null);
 
 const form = useForm({
   name: '',
   description: '',
-  min_age: '',
-  max_age: '',
 });
 
 const editForm = useForm({
   name: '',
   description: '',
-  min_age: '',
-  max_age: '',
 });
 
 const search = ref(props.filters?.search || '');
@@ -52,8 +47,8 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
-const enhancedAgeGroups = computed(() => {
-  const c = props.ageGroups || {};
+const enhancedRelationships = computed(() => {
+  const c = props.relationships || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -69,7 +64,7 @@ watch([search, sort, direction, perPage], () => {
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
-    const el = document.getElementById(`agegroup-row-${rowId}`);
+    const el = document.getElementById(`relationship-row-${rowId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlight-row');
@@ -96,21 +91,21 @@ function fetch(page = 1) {
 }
 
 function submit() {
-  form.transform((data) => ({
+  form.transform(data => ({
     ...data,
     perPage: perPage.value,
-    page: enhancedAgeGroups.value.last_page,
+    page: enhancedRelationships.value.last_page,
     search: search.value,
     sort: sort.value,
     direction: direction.value,
   }));
-  form.post('/age-group', {
+  form.post('/relationship', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
       nextTick(() => {
-        fetch(enhancedAgeGroups.value.last_page);
+        fetch(enhancedRelationships.value.last_page);
         highlightedRowId.value = -1;
       });
     },
@@ -118,29 +113,27 @@ function submit() {
 }
 
 function openEditModal(row: any) {
-  editingAgeGroup.value = row;
+  editingRelationship.value = row;
   editForm.name = row.name;
   editForm.description = row.description;
-  editForm.min_age = row.min_age;
-  editForm.max_age = row.max_age;
   showEditModal.value = true;
 }
 
 function submitEdit() {
-  const editedId = editingAgeGroup.value?.id;
-  editForm.transform((data) => ({
+  const editedId = editingRelationship.value?.id;
+  editForm.transform(data => ({
     ...data,
     perPage: perPage.value,
-    page: enhancedAgeGroups.value.current_page,
+    page: enhancedRelationships.value.current_page,
     search: search.value,
     sort: sort.value,
     direction: direction.value,
   }));
-  editForm.put(`/age-group/${editedId || ''}`, {
+  editForm.put(`/relationship/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingAgeGroup.value = undefined;
+      editingRelationship.value = undefined;
       highlightedRowId.value = editedId;
       nextTick(() => scrollToRow(editedId));
     },
@@ -148,16 +141,16 @@ function submitEdit() {
 }
 
 function openDeleteModal(row: any) {
-  deletingAgeGroup.value = row;
+  deletingRelationship.value = row;
   showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  router.delete(`/age-group/${deletingAgeGroup.value?.id || ''}`, {
+  router.delete(`/relationship/${deletingRelationship.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingAgeGroup.value = undefined;
+      deletingRelationship.value = undefined;
     },
   });
 }
@@ -165,48 +158,36 @@ function confirmDelete() {
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
-const canCreateAgeGroup = can('create-age-group');
-const canReadAnyAgeGroup = can('read-age-group');
-const canUpdateAnyAgeGroup = can('update-age-group');
-const canDeleteAnyAgeGroup = can('delete-age-group');
+const canCreateRelationship = can('create-relationship');
+const canReadAnyRelationship = can('read-relationship');
+const canUpdateAnyRelationship = can('update-relationship');
+const canDeleteAnyRelationship = can('delete-relationship');
 
-watch(
-  () => enhancedAgeGroups.value.data,
-  (rows) => {
-    if (highlightedRowId.value) {
-      let rowId = highlightedRowId.value;
-      if (rowId === -1 && rows.length) {
-        rowId = rows[rows.length - 1].id;
-      }
-      scrollToRow(rowId);
-      highlightedRowId.value = null;
+watch(() => enhancedRelationships.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
     }
-  },
-);
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Age Groups" />
+    <Head title="Relationships" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Age Groups</h2>
-        <Button
-          v-if="canCreateAgeGroup"
-          @click="showModal = true"
-          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
-        >
+        <h2 class="text-2xl font-bold text-blue-700">Relationships</h2>
+        <Button v-if="canCreateRelationship" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <component :is="Plus" />
-          <span>Add Age Group</span>
+          <span>Add Relationship</span>
         </Button>
       </div>
       <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-        <input
-          v-model="search"
-          type="text"
-          class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
-          placeholder="Search..."
-        />
+        <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
         <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
           <option :value="2">2</option>
           <option :value="5">5</option>
@@ -217,22 +198,14 @@ watch(
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyAgeGroup" class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+    <div v-if="canReadAnyRelationship" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
             <tr class="bg-blue-50">
               <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th
-                v-for="col in columns"
-                :key="col.key"
-                class="cursor-pointer border-b p-3 font-semibold text-gray-700"
-                @click="
-                  col.sortable
-                    ? (sort === col.key ? (direction = direction === 'asc' ? 'desc' : 'asc') : ((sort = col.key), (direction = 'asc')), fetch())
-                    : null
-                "
-              >
+              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
+                  @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
                 {{ col.label }}
                 <span v-if="col.sortable && sort === col.key">
                   {{ direction === 'asc' ? '▲' : '▼' }}
@@ -241,28 +214,14 @@ watch(
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="row in enhancedAgeGroups.data"
-              :key="row.id"
-              :id="`agegroup-row-${row.id}`"
-              :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
-            >
+            <tr v-for="row in enhancedRelationships.data" :key="row.id" :id="`relationship-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <div class="flex gap-2">
-                  <Button
-                    v-if="canUpdateAnyAgeGroup"
-                    @click="openEditModal(row)"
-                    class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
-                  >
+                  <Button v-if="canUpdateAnyRelationship" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     <component :is="Pencil" />
                     <span>Edit</span>
                   </Button>
-                  <Button
-                    v-if="canDeleteAnyAgeGroup"
-                    @click="openDeleteModal(row)"
-                    variant="destructive"
-                    class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
-                  >
+                  <Button v-if="canDeleteAnyRelationship" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     <component :is="Trash" />
                     <span>Delete</span>
                   </Button>
@@ -279,22 +238,14 @@ watch(
 
     <!-- Pagination Controls -->
     <div class="mt-6 flex items-center gap-2">
-      <button
-        v-if="enhancedAgeGroups.prev_page_url"
-        @click="fetch(enhancedAgeGroups.current_page! - 1)"
-        class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow transition hover:bg-blue-50"
-      >
+      <button v-if="enhancedRelationships.prev_page_url" @click="fetch(enhancedRelationships.current_page! - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Prev
       </button>
-      <button
-        v-if="enhancedAgeGroups.next_page_url"
-        @click="fetch(enhancedAgeGroups.current_page! + 1)"
-        class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow transition hover:bg-blue-50"
-      >
+      <button v-if="enhancedRelationships.next_page_url" @click="fetch(enhancedRelationships.current_page! + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
         Next
       </button>
-      <span v-if="enhancedAgeGroups.current_page && enhancedAgeGroups.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedAgeGroups.current_page }} of {{ enhancedAgeGroups.last_page }}
+      <span v-if="enhancedRelationships.current_page && enhancedRelationships.last_page" class="ml-auto text-sm text-gray-500">
+        Page {{ enhancedRelationships.current_page }} of {{ enhancedRelationships.last_page }}
       </span>
     </div>
 
@@ -303,7 +254,7 @@ watch(
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Create Age Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Create Relationship</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -315,31 +266,19 @@ watch(
                 <Input v-model="form.description" type="text" />
                 <div v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</div>
               </div>
-              <div class="mb-3 flex gap-2">
-                <div class="flex-1">
-                  <label class="mb-1 block text-sm font-medium">Min Age</label>
-                  <Input v-model="form.min_age" type="number" />
-                  <div v-if="form.errors.min_age" class="mt-1 text-sm text-red-500">{{ form.errors.min_age }}</div>
-                </div>
-                <div class="flex-1">
-                  <label class="mb-1 block text-sm font-medium">Max Age</label>
-                  <Input v-model="form.max_age" type="number" />
-                  <div v-if="form.errors.max_age" class="mt-1 text-sm text-red-500">{{ form.errors.max_age }}</div>
-                </div>
-              </div>
               <div class="flex justify-end space-x-2">
                 <Button
                   variant="destructive"
                   type="button"
                   @click="showModal = false"
-                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing"
-                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -355,7 +294,7 @@ watch(
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Edit Age Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Edit Relationship</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -367,31 +306,19 @@ watch(
                 <Input v-model="editForm.description" type="text" />
                 <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
               </div>
-              <div class="mb-3 flex gap-2">
-                <div class="flex-1">
-                  <label class="mb-1 block text-sm font-medium">Min Age</label>
-                  <Input v-model="editForm.min_age" type="number" />
-                  <div v-if="editForm.errors.min_age" class="mt-1 text-sm text-red-500">{{ editForm.errors.min_age }}</div>
-                </div>
-                <div class="flex-1">
-                  <label class="mb-1 block text-sm font-medium">Max Age</label>
-                  <Input v-model="editForm.max_age" type="number" />
-                  <div v-if="editForm.errors.max_age" class="mt-1 text-sm text-red-500">{{ editForm.errors.max_age }}</div>
-                </div>
-              </div>
               <div class="flex justify-end space-x-2">
                 <Button
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -407,17 +334,16 @@ watch(
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Age Group</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Relationship</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingAgeGroup?.name }}</span
-              >?
+              Are you sure you want to delete <span class="font-bold">{{ deletingRelationship?.name }}</span>?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
+                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
               >
                 Cancel
               </Button>
@@ -426,7 +352,7 @@ watch(
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
+                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
               >
                 Delete
               </Button>
@@ -452,11 +378,7 @@ watch(
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% {
-    background-color: #fde047;
-  }
-  100% {
-    background-color: inherit;
-  }
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

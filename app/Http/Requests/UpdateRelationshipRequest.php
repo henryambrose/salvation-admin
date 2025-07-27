@@ -11,7 +11,7 @@ class UpdateRelationshipRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,8 @@ class UpdateRelationshipRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => 'required|string|unique:relationships,name,' . $this->route('relationship')->id,
+            'description' => 'nullable|string',
         ];
     }
 }
