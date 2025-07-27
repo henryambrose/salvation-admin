@@ -45,4 +45,15 @@ return [
         'api_key' => env('GOOGLE_CUSTOM_SEARCH_API_KEY'),
     ],
 
+    // OpenAI API for Chat
+    'openai' => [
+        'key' => env('OPENAI_API_KEY'),
+    ],
+
+    // CatéGPT API for Catholic teachings
+    'categpt' => [
+        'key' => env('CATEGPT_API_KEY'),
+        'base_url' => 'https://categpt.chat/api',
+    ],
+
 ];

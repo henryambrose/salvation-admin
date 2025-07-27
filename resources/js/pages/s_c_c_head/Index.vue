@@ -261,20 +261,22 @@ function restoreSCCHead(id: number) {
           </Button>
         </div>
       </div>
-      <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-        <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
-        <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-          <option :value="100">100</option>
-        </select>
-      </div>
-      <div class="mt-2 flex items-center gap-4">
-        <label class="flex cursor-pointer items-center gap-2 select-none">
-          <Checkbox v-model="isArchived" class="switch-checkbox" />
-          <span class="text-sm font-medium">Show Archived</span>
-        </label>
+      <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+          <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-4">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
       </div>
     </DatatableHeader>
 

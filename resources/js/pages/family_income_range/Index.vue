@@ -82,7 +82,10 @@ function fetch(page = 1) {
     );
   }
 }
-watch(isArchived, () => fetch());
+watch([search, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
 
 function submit() {
   form.post('/family-income-range', {

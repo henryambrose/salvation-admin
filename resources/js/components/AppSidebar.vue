@@ -7,7 +7,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BookOpen, LogOut, UserCircle } from 'lucide-vue-next';
+import { BookOpen, LogOut, UserCircle, MessageSquare } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -43,6 +43,12 @@ const footerNavItems: NavItem[] = [
     href: '/roles-permissions',
     icon: BookOpen,
     show: can('update-role-permissions'),
+  },
+  {
+    title: 'AI Chat',
+    href: '/chat',
+    icon: MessageSquare,
+    show: (page.props.auth as any)?.roles?.includes('superadmin') || false,
   },
 ];
 

@@ -26,7 +26,18 @@ class CommunityController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%$search%");
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%$search%")
+                  ->orWhereHas('zone', function($zoneQuery) use ($search) {
+                      $zoneQuery->where('name', 'like', "%$search%");
+                  })
+                  ->orWhereHas('ppchead.member', function($memberQuery) use ($search) {
+                      $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                  })
+                  ->orWhereHas('scchead.member', function($memberQuery) use ($search) {
+                      $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                  });
+            });
         }
 
         if ($sort = $request->input('sort')) {

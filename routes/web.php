@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\SCCHeadController;
@@ -21,6 +22,12 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
         ->name('roles.permissions.index');
     Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
         ->name('roles.permissions.update');
+    
+    // Chat routes
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
+    Route::get('/chat/answer/{uniqueID}', [ChatController::class, 'getSpecificAnswer'])->name('chat.answer');
 });
 
 Route::get('/api/community/{community}/members', [SCCHeadController::class, 'membersByCommunity']);

@@ -92,13 +92,13 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">Remember me</span>
           </Label>
           
-          <a 
+          <!-- <a 
             v-if="canResetPassword" 
             :href="route('password.request')" 
             class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 font-medium hover:underline"
           >
             Forgot password?
-          </a>
+          </a> -->
         </div>
       </div>
 
