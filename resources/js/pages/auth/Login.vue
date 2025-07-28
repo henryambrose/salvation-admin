@@ -112,14 +112,14 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
         {{ form.processing ? 'Signing in...' : 'Sign in to your account' }}
       </Button>
 
-      <div class="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
+      <!-- <div class="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
         <p class="text-sm text-gray-500 dark:text-gray-400">
           By signing in, you agree to our 
           <a href="#" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors duration-200">Terms of Service</a> 
           and 
           <a href="#" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors duration-200">Privacy Policy</a>
         </p>
-      </div>
+      </div> -->
     </form>
   </AuthEnhancedLayout>
 </template>

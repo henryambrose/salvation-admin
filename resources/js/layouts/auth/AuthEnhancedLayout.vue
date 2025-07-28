@@ -507,7 +507,7 @@ onMounted(() => {
                 :key="saint.id"
                 @click="goToSaint(index)"
                 :class="[
-                  'w-3 h-3 lg:w-4 lg:h-4 rounded-full transition-all duration-300 hover:scale-150 flex-shrink-0 border-2',
+                  'w-2 h-2 lg:w-3 lg:h-3 rounded-full transition-all duration-300 hover:scale-150 flex-shrink-0 border-2',
                   index === currentSaintIndex 
                     ? 'bg-yellow-300 border-yellow-200 shadow-lg shadow-yellow-300/50 scale-125' 
                     : 'bg-white/80 border-white/60 hover:bg-white hover:border-white'
