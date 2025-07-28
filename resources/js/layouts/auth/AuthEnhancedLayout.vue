@@ -374,20 +374,24 @@ onMounted(() => {
       <!-- Content Overlay -->
       <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
         <!-- Header with Logo -->
-        <div class="flex items-center gap-2 lg:gap-4 mb-4 lg:mb-6">
-          <div class="flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl lg:rounded-2xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group">
-            <AppLogoIcon class="size-8 lg:size-10 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
-            <!-- Glow effect -->
-            <div class="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+        <div class="flex items-center gap-3 lg:gap-6 mb-6 lg:mb-8">
+          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-600/30 via-purple-600/30 to-indigo-600/30 backdrop-blur-xl border-2 border-white/40 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
+            <AppLogoIcon class="size-10 lg:size-12 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
+            <!-- Enhanced Glow effect -->
+            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <!-- Animated border glow -->
+            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-500"></div>
+            <!-- Shimmer effect -->
+            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
           </div>
           <div class="flex-1">
-            <h1 class="text-lg lg:text-2xl font-bold text-white mb-1 drop-shadow-lg">
+            <h1 class="text-xl lg:text-3xl font-bold text-white mb-2 drop-shadow-lg bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
               {{ title }}
             </h1>
-            <p class="text-blue-200 text-xs lg:text-sm font-medium">Catholic Community Management</p>
-            <div class="flex items-center gap-2 mt-1">
-              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span class="text-xs text-blue-100">Secure • Reliable • Faithful</span>
+            <p class="text-blue-200 text-sm lg:text-base font-medium mb-2">Catholic Community Management</p>
+            <div class="flex items-center gap-3">
+              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+              <span class="text-sm text-blue-100 font-medium">Secure • Reliable • Faithful</span>
             </div>
           </div>
         </div>
