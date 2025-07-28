@@ -374,7 +374,7 @@ onMounted(() => {
       <!-- Content Overlay -->
       <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
         <!-- Header with Logo -->
-        <div class="flex items-center gap-3 lg:gap-6 mb-6 lg:mb-8">
+        <div class="flex items-center gap-3 lg:gap-6 mb-4 lg:mb-6">
           <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-600/30 via-purple-600/30 to-indigo-600/30 backdrop-blur-xl border-2 border-white/40 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
             <AppLogoIcon class="size-10 lg:size-12 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
             <!-- Enhanced Glow effect -->
@@ -446,13 +446,13 @@ onMounted(() => {
         </div>
 
         <!-- Saints Carousel Section -->
-        <div class="flex-1">
-          <h2 class="text-lg lg:text-2xl font-bold mb-3 lg:mb-4 text-center text-white">
+        <div class="flex-1 flex flex-col">
+          <h2 class="text-lg lg:text-2xl font-bold mb-2 lg:mb-3 text-center text-white">
             <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
               Saints of the Church Community
             </span>
           </h2>
-          <div class="relative bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] h-60 lg:h-72">
+          <div class="relative bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] flex-1 min-h-0">
             <!-- Fixed Layout Structure -->
             <div class="h-full flex flex-col">
               <!-- Top Section: Image -->
@@ -496,8 +496,8 @@ onMounted(() => {
                 <p class="text-blue-200 mb-1 text-sm lg:text-base font-medium">
                   {{ saints[currentSaintIndex]?.feastDay || '' }}
                 </p>
-                <div class="h-10 lg:h-12 px-2 lg:px-4 overflow-hidden pb-6 lg:pb-8">
-                  <p class="text-xs text-blue-100 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                <div class="h-6 lg:h-8 px-2 lg:px-4 overflow-hidden pb-10 lg:pb-12">
+                  <p class="text-xs text-blue-100 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
                     {{ saints[currentSaintIndex]?.description || '' }}
                   </p>
                 </div>
