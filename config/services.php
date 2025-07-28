@@ -56,4 +56,9 @@ return [
         'base_url' => 'https://categpt.chat/api',
     ],
 
+    'pexels' => [
+        'key' => env('PEXELS_API_KEY'),
+        'base_url' => 'https://api.pexels.com/v1/',
+    ],
+
 ];

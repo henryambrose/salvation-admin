@@ -15,7 +15,6 @@ class CatholicCalendarController extends Controller
     public function index(Request $request): JsonResponse
     {
         $date = $request->get('date', now());
-        dd($date);
         $carbonDate = Carbon::parse($date);
         
         // Try to fetch from external API first

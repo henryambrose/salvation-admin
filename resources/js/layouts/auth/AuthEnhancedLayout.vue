@@ -80,76 +80,240 @@ const fetchCatholicCalendar = async () => {
   }
 };
 
-// Fetch saints data
-const fetchSaints = async () => {
-  try {
-    const response = await fetch('/api/saints?random=true&count=5');
-    if (response.ok) {
-      const data = await response.json();
-      // Add loading states to saints
-      saints.value = data.map((saint: any) => ({
-        ...saint,
-        loading: false,
-        imageLoading: true,
-        imageError: false
-      }));
+// Fixed saints data
+const fetchSaints = () => {
+  saints.value = [
+    {
+      id: 1,
+      name: 'Peter',
+      feastDay: 'June 29',
+      image: '/images/saints/imgi_12_St.-Peter.jpg',
+      description: 'Saint Peter, also known as Simon Peter, was one of the Twelve Apostles of Jesus Christ and the first Pope of the Catholic Church.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 2,
+      name: 'Augustine',
+      feastDay: 'August 28',
+      image: '/images/saints/imgi_8_St.-Augustine.jpg',
+      description: 'Saint Augustine of Hippo was a theologian and philosopher who became one of the most important figures in the development of Western Christianity.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 3,
+      name: 'Anthony',
+      feastDay: 'June 13',
+      image: '/images/saints/imgi_9_St.-Anthony.jpg',
+      description: 'Saint Anthony of Padua was a Portuguese Catholic priest and friar of the Franciscan Order, known for his powerful preaching and miracles.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 4,
+      name: 'Lawrence',
+      feastDay: 'August 10',
+      image: '/images/saints/imgi_17_St.-Lawrence.jpg',
+      description: 'Saint Lawrence was one of the seven deacons of the city of Rome, martyred during the persecution of Emperor Valerian.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 5,
+      name: 'Faustina',
+      feastDay: 'October 5',
+      image: '/images/saints/imgi_10_St.-Faustina.jpg',
+      description: 'Saint Faustina Kowalska was a Polish nun and mystic who received visions of Jesus and promoted the Divine Mercy devotion.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 6,
+      name: 'Andrew',
+      feastDay: 'November 30',
+      image: '/images/saints/imgi_14_St.-Andrew.jpg',
+      description: 'Saint Andrew was one of the Twelve Apostles of Jesus Christ and the brother of Saint Peter. He is the patron saint of Scotland.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 7,
+      name: 'Francis Xavier',
+      feastDay: 'December 3',
+      image: '/images/saints/imgi_15_St.-Francis-Xavier.jpg',
+      description: 'Saint Francis Xavier was a Jesuit missionary who spread Christianity in Asia, particularly in India, Japan, and the East Indies.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 8,
+      name: 'Blaise',
+      feastDay: 'February 3',
+      image: '/images/saints/imgi_16_St.-Blaise.jpg',
+      description: 'Saint Blaise was a physician and bishop of Sebastea who is venerated as the patron saint of throat ailments.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 9,
+      name: 'Anne',
+      feastDay: 'July 26',
+      image: '/images/saints/imgi_20_St.-Anne.jpg',
+      description: 'Saint Anne is traditionally the mother of the Virgin Mary and grandmother of Jesus Christ, though not mentioned in the canonical gospels.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 10,
+      name: 'Gonsalo Garcia',
+      feastDay: 'February 6',
+      image: '/images/saints/imgi_23_St.-Gonsalo-Garcia.jpg',
+      description: 'Saint Gonsalo Garcia was a Franciscan friar and martyr who was crucified in Japan for his Christian faith.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 11,
+      name: 'Maria Goretti',
+      feastDay: 'July 6',
+      image: '/images/saints/imgi_19_St.-Maria-Goretti.jpg',
+      description: 'Saint Maria Goretti was an Italian virgin martyr who died defending her chastity and is known as the patron saint of purity.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 12,
+      name: 'Sebastian',
+      feastDay: 'January 20',
+      image: '/images/saints/imgi_26_St.-Sebastian.jpg',
+      description: 'Saint Sebastian was a Roman soldier who was martyred for his Christian faith and is often depicted with arrows.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 13,
+      name: 'John the Baptist',
+      feastDay: 'June 24',
+      image: '/images/saints/imgi_27_St.-John-the-Baptist.jpg',
+      description: 'Saint John the Baptist was a Jewish preacher who baptized Jesus and is considered a prophet in Christianity.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 14,
+      name: 'Thomas',
+      feastDay: 'July 3',
+      image: '/images/saints/imgi_24_St.-Thomas.jpg',
+      description: 'Saint Thomas was one of the Twelve Apostles of Jesus Christ, known for his initial doubt about the Resurrection.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 15,
+      name: 'Christopher',
+      feastDay: 'July 25',
+      image: '/images/saints/imgi_13_St.-Christopher.jpg',
+      description: 'Saint Christopher is venerated as a martyr and is considered the patron saint of travelers and motorists.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 16,
+      name: 'Paul',
+      feastDay: 'June 29',
+      image: '/images/saints/imgi_25_St.-Paul.jpg',
+      description: 'Saint Paul was an apostle who spread the teachings of Jesus Christ and wrote many of the New Testament epistles.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 17,
+      name: 'Theresa of Child Jesus',
+      feastDay: 'October 1',
+      image: '/images/saints/imgi_11_St.-Theresa-of-Child-Jesus.jpg',
+      description: 'Saint Therese of Lisieux, also known as the Little Flower, was a French Carmelite nun known for her "Little Way" of spiritual childhood.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 18,
+      name: 'Vincent De Paul',
+      feastDay: 'September 27',
+      image: '/images/saints/imgi_18_St.-Vincent-De-Paul.jpg',
+      description: 'Saint Vincent de Paul was a French priest who dedicated his life to serving the poor and founded the Vincentians.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 19,
+      name: 'Michael',
+      feastDay: 'September 29',
+      image: '/images/saints/imgi_29_St.-Michael.jpg',
+      description: 'Saint Michael the Archangel is a powerful angel who is considered the protector of the Church and the patron of soldiers.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 20,
+      name: 'Martin',
+      feastDay: 'November 11',
+      image: '/images/saints/imgi_21_St.-Martin.jpg',
+      description: 'Saint Martin of Tours was a bishop who is known for cutting his cloak in half to share with a beggar.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 21,
+      name: 'Dominic Savio',
+      feastDay: 'March 9',
+      image: '/images/saints/imgi_28_St.-Dominic-Savio.jpg',
+      description: 'Saint Dominic Savio was a young Italian student of Saint John Bosco who died at the age of 14 and is known for his piety.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 22,
+      name: 'Holy Family',
+      feastDay: 'December 30',
+      image: '/images/saints/imgi_30_St.-Holy-Family.jpg',
+      description: 'The Holy Family consists of Jesus, Mary, and Joseph, serving as a model of family life and Christian virtues.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
+    },
+    {
+      id: 23,
+      name: 'Jude',
+      feastDay: 'October 28',
+      image: '/images/saints/imgi_22_St.-Jude.jpg',
+      description: 'Saint Jude Thaddeus was one of the Twelve Apostles and is known as the patron saint of lost causes and desperate situations.',
+      loading: false,
+      imageLoading: false,
+      imageError: false
     }
-  } catch (error) {
-    console.error('Error fetching saints:', error);
-    // Fallback to default saints if API fails
-    saints.value = [
-      {
-        id: 1,
-        name: 'St. Francis of Assisi',
-        feastDay: 'October 4',
-        image: '/images/saints/francis-assisi.jpg',
-        description: 'Patron saint of animals and ecology',
-        loading: false,
-        imageLoading: false,
-        imageError: false
-      },
-      {
-        id: 2,
-        name: 'St. Therese of Lisieux',
-        feastDay: 'October 1',
-        image: '/images/saints/therese-lisieux.jpg',
-        description: 'The Little Flower of Jesus',
-        loading: false,
-        imageLoading: false,
-        imageError: false
-      },
-      {
-        id: 3,
-        name: 'St. Padre Pio',
-        feastDay: 'September 23',
-        image: '/images/saints/padre-pio.jpg',
-        description: 'Mystic and stigmatist',
-        loading: false,
-        imageLoading: false,
-        imageError: false
-      },
-      {
-        id: 4,
-        name: 'St. Mother Teresa',
-        feastDay: 'September 5',
-        image: '/images/saints/mother-teresa.jpg',
-        description: 'Missionary of Charity',
-        loading: false,
-        imageLoading: false,
-        imageError: false
-      },
-      {
-        id: 5,
-        name: 'St. John Paul II',
-        feastDay: 'October 22',
-        image: '/images/saints/john-paul-ii.jpg',
-        description: 'The Great Pope',
-        loading: false,
-        imageLoading: false,
-        imageError: false
-      }
-    ];
-  }
+  ];
 };
 
 // Carousel navigation methods
@@ -195,7 +359,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
+  <div class="flex min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
     <!-- Left Side - Catholic Content -->
     <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
       <!-- Animated Background -->
@@ -208,83 +372,67 @@ onMounted(() => {
       </div>
       
       <!-- Content Overlay -->
-      <div class="relative z-10 flex flex-col w-full p-8">
+      <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
         <!-- Header with Logo -->
-        <div class="flex items-center gap-6 mb-12">
-          <div class="flex h-24 w-24 items-center justify-center rounded-3xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group">
-            <AppLogoIcon class="size-16 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
+        <div class="flex items-center gap-2 lg:gap-4 mb-4 lg:mb-6">
+          <div class="flex h-12 w-12 lg:h-16 lg:w-16 items-center justify-center rounded-xl lg:rounded-2xl bg-gradient-to-br from-white/20 to-white/10 backdrop-blur-xl border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group">
+            <AppLogoIcon class="size-8 lg:size-10 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
             <!-- Glow effect -->
-            <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="absolute inset-0 rounded-xl lg:rounded-2xl bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </div>
           <div class="flex-1">
-            <h1 class="text-4xl font-bold text-white mb-2 drop-shadow-lg">
+            <h1 class="text-lg lg:text-2xl font-bold text-white mb-1 drop-shadow-lg">
               {{ title }}
             </h1>
-            <p class="text-blue-200 text-lg font-medium">Catholic Community Management</p>
-            <div class="flex items-center gap-2 mt-2">
+            <p class="text-blue-200 text-xs lg:text-sm font-medium">Catholic Community Management</p>
+            <div class="flex items-center gap-2 mt-1">
               <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <span class="text-sm text-blue-100">Secure • Reliable • Faithful</span>
+              <span class="text-xs text-blue-100">Secure • Reliable • Faithful</span>
             </div>
           </div>
         </div>
 
-        <!-- Catholic Calendar Section -->
-        <div class="flex-1 mb-8">
-          <h2 class="text-3xl font-bold mb-8 text-center text-white">
-            <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              Catholic Calendar
-            </span>
-          </h2>
-          <div class="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
-            <div class="text-center mb-6">
-              <div class="text-6xl font-bold text-yellow-300 mb-2 drop-shadow-lg">
-                {{ catholicCalendar.date ? new Date(catholicCalendar.date).getDate() : new Date().getDate() }}
+
+
+        <!-- Catholic Calendar Section (without title) -->
+        <div class="flex-1 mb-3 lg:mb-4">
+          <div class="bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-3 lg:p-4 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
+            <div class="text-center mb-3">
+              <div class="text-lg lg:text-2xl font-bold text-yellow-300 mb-1 drop-shadow-lg">
+                {{ catholicCalendar.date ? new Date(catholicCalendar.date).getDate() : new Date().getDate() }} {{ catholicCalendar.date ? new Date(catholicCalendar.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
               </div>
-              <div class="text-xl text-blue-200 font-medium">
-                {{ catholicCalendar.date ? new Date(catholicCalendar.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
-              </div>
-              <div v-if="catholicCalendar.weekday" class="text-sm text-blue-100 mt-2 font-medium">
+              <div v-if="catholicCalendar.weekday" class="text-sm text-blue-100 font-medium">
                 {{ catholicCalendar.weekday }}
               </div>
             </div>
             
-            <div class="grid grid-cols-2 gap-6">
-              <div class="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                <div class="text-sm text-blue-200 mb-2">Liturgical Season</div>
-                <div class="text-lg font-semibold text-white">{{ catholicCalendar.liturgicalSeason || 'Ordinary Time' }}</div>
-                <div v-if="catholicCalendar.seasonWeek" class="text-xs text-blue-100 mt-1">
+            <div class="grid grid-cols-2 gap-3">
+              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+                <div class="text-xs text-blue-200 mb-1">Liturgical Season</div>
+                <div class="text-sm font-semibold text-white">{{ catholicCalendar.liturgicalSeason || 'Ordinary Time' }}</div>
+                <div v-if="catholicCalendar.seasonWeek" class="text-xs text-blue-100">
                   Week {{ catholicCalendar.seasonWeek }}
                 </div>
               </div>
               
-              <div class="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                <div class="text-sm text-blue-200 mb-2">Feast Day</div>
-                <div class="text-lg font-semibold text-white">{{ catholicCalendar.feastDay || 'No special feast today' }}</div>
+              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+                <div class="text-xs text-blue-200 mb-1">Feast Day</div>
+                <div class="text-sm font-semibold text-white">{{ catholicCalendar.feastDay || 'No special feast today' }}</div>
               </div>
               
-              <div class="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                <div class="text-sm text-blue-200 mb-2">Saint of the Day</div>
-                <div class="text-lg font-semibold text-white">{{ catholicCalendar.saintOfTheDay || 'No saint feast today' }}</div>
+              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+                <div class="text-xs text-blue-200 mb-1">Saint of the Day</div>
+                <div class="text-sm font-semibold text-white">{{ catholicCalendar.saintOfTheDay || 'No saint feast today' }}</div>
               </div>
               
-              <div class="text-center p-4 bg-white/5 rounded-xl border border-white/10">
-                <div class="text-sm text-blue-200 mb-2">Liturgical Color</div>
-                <div class="text-lg font-semibold text-white">{{ catholicCalendar.color || 'Green' }}</div>
-              </div>
-            </div>
-            
-            <!-- Additional Celebrations -->
-            <div v-if="catholicCalendar.celebrations && catholicCalendar.celebrations.length > 1" class="mt-6 p-4 bg-white/5 rounded-xl border border-white/10">
-              <div class="text-sm text-blue-200 mb-3 text-center">Other Celebrations</div>
-              <div class="text-xs text-blue-100 space-y-1">
-                <div v-for="celebration in catholicCalendar.celebrations.slice(1)" :key="celebration.title" class="text-center">
-                  {{ celebration.title }} ({{ celebration.rank }})
-                </div>
+              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+                <div class="text-xs text-blue-200 mb-1">Liturgical Color</div>
+                <div class="text-sm font-semibold text-white">{{ catholicCalendar.color || 'Green' }}</div>
               </div>
             </div>
             
             <!-- API Source Indicator -->
-            <div v-if="catholicCalendar.source" class="text-center mt-6 pt-4 border-t border-white/20">
+            <div v-if="catholicCalendar.source" class="text-center mt-3 pt-2 border-t border-white/20">
               <div class="text-xs text-blue-100 flex items-center justify-center gap-2">
                 <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                 Data from external Catholic calendar API
@@ -295,54 +443,57 @@ onMounted(() => {
 
         <!-- Saints Carousel Section -->
         <div class="flex-1">
-          <h2 class="text-3xl font-bold mb-8 text-center text-white">
+          <h2 class="text-lg lg:text-2xl font-bold mb-3 lg:mb-4 text-center text-white">
             <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              Saints of the Church
+              Saints of the Church Community
             </span>
           </h2>
-          <div class="relative bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] h-80">
-            <div class="absolute inset-0 flex items-center justify-center">
-              <div class="text-center w-full">
-                <!-- Saint Image -->
-                <div class="relative w-32 h-32 mx-auto mb-6">
+          <div class="relative bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] h-60 lg:h-72">
+            <!-- Fixed Layout Structure -->
+            <div class="h-full flex flex-col">
+              <!-- Top Section: Image -->
+              <div class="flex-shrink-0 flex justify-center mb-2 lg:mb-3">
+                <div class="relative w-20 h-20 lg:w-24 lg:h-24">
                   <!-- Loading State -->
-                  <div v-if="saints[currentSaintIndex]?.loading" class="w-32 h-32 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                    <div class="w-8 h-8 border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
+                  <div v-if="saints[currentSaintIndex]?.loading" class="w-20 h-20 lg:w-24 lg:h-24 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
+                    <div class="w-5 h-5 lg:w-6 lg:h-6 border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
                   </div>
                   
                   <!-- Image Container -->
-                  <div v-else class="relative w-32 h-32">
+                  <div v-else class="relative w-20 h-20 lg:w-24 lg:h-24">
                     <img 
                       v-if="saints[currentSaintIndex]?.image && !saints[currentSaintIndex]?.imageError"
                       :src="saints[currentSaintIndex].image" 
                       :alt="saints[currentSaintIndex]?.name"
                       @load="handleImageLoad(currentSaintIndex)"
                       @error="handleImageError(currentSaintIndex)"
-                      class="w-32 h-32 rounded-full object-cover border-4 border-white/30 shadow-2xl transition-all duration-500 hover:scale-110 hover:shadow-3xl"
+                      class="w-20 h-20 lg:w-24 lg:h-24 rounded-full object-cover border-4 border-white/30 shadow-2xl transition-all duration-500 hover:scale-110 hover:shadow-3xl"
                       :class="{ 'opacity-0': saints[currentSaintIndex]?.imageLoading }"
                     />
                     
                     <!-- Fallback Icon -->
-                    <div v-else class="w-32 h-32 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
-                      <span class="text-5xl">🙏</span>
+                    <div v-else class="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                      <span class="text-3xl lg:text-4xl">🙏</span>
                     </div>
                   </div>
                   
                   <!-- Image Loading Overlay -->
-                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-32 h-32 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
-                    <div class="w-6 h-6 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
+                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
+                    <div class="w-4 h-4 lg:w-5 lg:h-5 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
                   </div>
                 </div>
-                
-                <!-- Saint Information -->
-                <div class="space-y-3">
-                  <h3 class="text-2xl font-bold text-white mb-3 transition-all duration-500">
-                    {{ saints[currentSaintIndex]?.name || 'Loading...' }}
-                  </h3>
-                  <p class="text-blue-200 mb-3 text-lg font-medium">
-                    {{ saints[currentSaintIndex]?.feastDay || '' }}
-                  </p>
-                  <p class="text-sm text-blue-100 leading-relaxed max-w-xs mx-auto">
+              </div>
+              
+              <!-- Middle Section: Saint Info (Fixed Height) -->
+              <div class="flex-1 flex flex-col justify-center text-center min-h-0">
+                <h3 class="text-lg lg:text-xl font-bold text-white mb-1 transition-all duration-500">
+                  {{ saints[currentSaintIndex]?.name || 'Loading...' }}
+                </h3>
+                <p class="text-blue-200 mb-1 text-sm lg:text-base font-medium">
+                  {{ saints[currentSaintIndex]?.feastDay || '' }}
+                </p>
+                <div class="h-10 lg:h-12 px-2 lg:px-4 overflow-hidden pb-6 lg:pb-8">
+                  <p class="text-xs text-blue-100 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
                     {{ saints[currentSaintIndex]?.description || '' }}
                   </p>
                 </div>
@@ -350,14 +501,16 @@ onMounted(() => {
             </div>
             
             <!-- Carousel Navigation -->
-            <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3">
+            <div class="absolute bottom-4 lg:bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-3 py-2 rounded-full border-2 border-white/30">
               <button
                 v-for="(saint, index) in saints"
                 :key="saint.id"
                 @click="goToSaint(index)"
                 :class="[
-                  'w-3 h-3 rounded-full transition-all duration-300 hover:scale-150',
-                  index === currentSaintIndex ? 'bg-yellow-300 shadow-lg shadow-yellow-300 shadow-opacity-50' : 'bg-white bg-opacity-50 hover:bg-white hover:bg-opacity-70'
+                  'w-3 h-3 lg:w-4 lg:h-4 rounded-full transition-all duration-300 hover:scale-150 flex-shrink-0 border-2',
+                  index === currentSaintIndex 
+                    ? 'bg-yellow-300 border-yellow-200 shadow-lg shadow-yellow-300/50 scale-125' 
+                    : 'bg-white/80 border-white/60 hover:bg-white hover:border-white'
                 ]"
                 :disabled="saints.length === 0"
               />
@@ -366,20 +519,20 @@ onMounted(() => {
             <!-- Previous/Next Buttons -->
             <button 
               @click="previousSaint"
-              class="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="absolute left-2 lg:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
             </button>
             
             <button 
               @click="nextSaint"
-              class="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="absolute right-2 lg:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
               </svg>
             </button>
