@@ -20,6 +20,13 @@ class AgeGroupController extends Controller
 
     $query = AgeGroup::query();
 
+    // Handle archived records
+    if ($request->input('isArchived') === 'true') {
+      $query->onlyTrashed();
+    } else {
+      $query->withoutTrashed();
+    }
+
     if ($search = $request->input('search')) {
       $query->where('name', 'like', "%$search%");
     }
@@ -35,7 +42,7 @@ class AgeGroupController extends Controller
     return Inertia::render('age_group/Index', [
       'fetchUrl' => route('age-group.index'),
       'ageGroups' => $query->paginate($perPage)->appends($request->query()),
-      'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+      'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
     ]);
   }
 
@@ -93,5 +100,13 @@ class AgeGroupController extends Controller
     $ageGroup->delete();
 
     return redirect()->route('age-group.index')->with('success', 'Age Group deleted successfully.');
+  }
+
+  public function restore($id)
+  {
+    $ageGroup = AgeGroup::onlyTrashed()->findOrFail($id);
+    $ageGroup->restore();
+
+    return redirect()->route('age-group.index')->with('success', 'Age Group restored successfully.');
   }
 }

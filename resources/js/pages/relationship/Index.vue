@@ -3,6 +3,7 @@ import { Head } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
@@ -20,7 +21,7 @@ const props = defineProps({
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Relationship Name', sortable: true },
-  { key: 'description', label: 'Description', sortable: false },
+  // { key: 'description', label: 'Description', sortable: false },
 ];
 
 const breadcrumbs = [{ title: 'Relationships', href: '/relationship/index' }];
@@ -31,15 +32,14 @@ const showDeleteModal = ref(false);
 const editingRelationship = ref<Record<string, any>>();
 const deletingRelationship = ref<Record<string, any>>();
 const highlightedRowId = ref<number|null>(null);
+const isArchived = ref(props.filters?.isArchived === 'true');
 
 const form = useForm({
   name: '',
-  description: '',
 });
 
 const editForm = useForm({
   name: '',
-  description: '',
 });
 
 const search = ref(props.filters?.search || '');
@@ -58,7 +58,7 @@ const enhancedRelationships = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage], () => {
+watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
@@ -81,6 +81,7 @@ function fetch(page = 1) {
       sort: sort.value,
       direction: direction.value,
       perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
       page,
     },
     {
@@ -98,6 +99,7 @@ function submit() {
     search: search.value,
     sort: sort.value,
     direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
   }));
   form.post('/relationship', {
     preserveScroll: true,
@@ -115,7 +117,6 @@ function submit() {
 function openEditModal(row: any) {
   editingRelationship.value = row;
   editForm.name = row.name;
-  editForm.description = row.description;
   showEditModal.value = true;
 }
 
@@ -128,6 +129,7 @@ function submitEdit() {
     search: search.value,
     sort: sort.value,
     direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
   }));
   editForm.put(`/relationship/${editedId || ''}`, {
     preserveScroll: true,
@@ -151,6 +153,15 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingRelationship.value = undefined;
+    },
+  });
+}
+
+function restoreRelationship(id: number) {
+  router.post(`/relationship/${id}/restore`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
     },
   });
 }
@@ -186,15 +197,23 @@ watch(() => enhancedRelationships.value.data, (rows) => {
           <span>Add Relationship</span>
         </Button>
       </div>
-      <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-        <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
-        <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
-          <option :value="2">2</option>
-          <option :value="5">5</option>
-          <option :value="10">10</option>
-          <option :value="25">25</option>
-          <option :value="50">50</option>
-        </select>
+      <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+          <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+            <option :value="2">2</option>
+            <option :value="5">5</option>
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
       </div>
     </DatatableHeader>
 
@@ -211,24 +230,36 @@ watch(() => enhancedRelationships.value.data, (rows) => {
                   {{ direction === 'asc' ? '▲' : '▼' }}
                 </span>
               </th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in enhancedRelationships.data" :key="row.id" :id="`relationship-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <div class="flex gap-2">
-                  <Button v-if="canUpdateAnyRelationship" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    <component :is="Pencil" />
-                    <span>Edit</span>
-                  </Button>
-                  <Button v-if="canDeleteAnyRelationship" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                  </Button>
+                  <template v-if="!isArchived">
+                    <Button v-if="canUpdateAnyRelationship" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                      <component :is="Pencil" />
+                      <span>Edit</span>
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <Button @click="restoreRelationship(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      Restore
+                    </Button>
+                  </template>
                 </div>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">
                 {{ row[col.key] }}
+              </td>
+              <td v-if="!isArchived" class="p-2">
+                <template v-if="canDeleteAnyRelationship">
+                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <component :is="Trash" />
+                    <span>Delete</span>
+                  </Button>
+                </template>
               </td>
             </tr>
           </tbody>
@@ -260,11 +291,6 @@ watch(() => enhancedRelationships.value.data, (rows) => {
                 <label class="mb-1 block text-sm font-medium">Name</label>
                 <Input v-model="form.name" type="text" />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
-              </div>
-              <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">Description</label>
-                <Input v-model="form.description" type="text" />
-                <div v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button
@@ -300,11 +326,6 @@ watch(() => enhancedRelationships.value.data, (rows) => {
                 <label class="mb-1 block text-sm font-medium">Name</label>
                 <Input v-model="editForm.name" type="text" />
                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
-              </div>
-              <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">Description</label>
-                <Input v-model="editForm.description" type="text" />
-                <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button
@@ -372,6 +393,41 @@ watch(() => enhancedRelationships.value.data, (rows) => {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  position: relative;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.switch-checkbox[data-state="checked"] {
+  background: #2563eb;
+}
+.switch-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot="checkbox-indicator"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+  left: 1.375rem;
 }
 .highlight-row {
   animation: highlight-fade 2s;

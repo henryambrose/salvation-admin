@@ -4,6 +4,7 @@
 // use App\Http\Controllers\ZoneController;
 use App\Http\Controllers\CatholicCalendarController;
 use App\Http\Controllers\SaintsController;
+use App\Http\Controllers\MemberController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,12 @@ Route::get('/catholic-calendar', [CatholicCalendarController::class, 'index']);
 Route::get('/saints', [SaintsController::class, 'index']);
 Route::get('/saints/saint-of-the-day', [SaintsController::class, 'saintOfTheDay']);
 Route::get('/saints/image', [SaintsController::class, 'getSaintImageByName']);
+
+// Community Members API Route
+Route::get('/community/{community}/members', [MemberController::class, 'getMembersByCommunity']);
+
+// Family Members API Route
+Route::get('/family/{familyNo}/members', [MemberController::class, 'getMembersByFamily']);
 
 // Route::middleware(['auth:sanctum'])->group(function () {
     // Route::apiResource('zone', ZoneController::class);

@@ -13,6 +13,5 @@ class Relationship extends Model
 
     protected $fillable = [
         'name',
-        'description',
     ];
 }

@@ -169,7 +169,7 @@ function restoreZone(id: number) {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>

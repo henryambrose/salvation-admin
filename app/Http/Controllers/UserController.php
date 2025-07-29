@@ -16,10 +16,19 @@ class UserController extends Controller
     {
         $query = User::query();
 
+        // Handle archived records
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         if ($request->has('search')) {
             $search = $request->get('search');
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('email', 'like', "%{$search}%");
+            });
         }
 
         $users = $query->paginate(10)
@@ -27,7 +36,7 @@ class UserController extends Controller
 
         return Inertia::render('users/Index', [
             'users' => $users,
-            'filters' => $request->only(['search']),
+            'filters' => $request->only(['search', 'isArchived']),
             'fetchUrl' => '/users/index',
         ]);
     }

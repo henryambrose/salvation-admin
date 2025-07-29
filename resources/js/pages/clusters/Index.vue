@@ -1,43 +1,69 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import DataTable from '@/components/DataTable2.vue';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
-import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Column } from '@/types';
+import { router } from '@inertiajs/vue3';
+import { Input } from '@/components/ui/input';
+import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
+import { computed, ref, watch, nextTick } from 'vue';
 
 const props = defineProps({
-  countries: {
-    type: Object,
-    default: () => ({ data: [] }),
-  },
+  clusters: Object,
   filters: Object,
   fetchUrl: String,
 });
 
-const columns = [
-  { key: 'id', label: 'Id', sortable: true },
-  { key: 'name', label: 'Country Name', sortable: true },
-  
-];
 
-const breadcrumbs = [{ title: 'Countries', href: '/country/index' }];
+const columns: Column[] = [
+  { key: 'id', label: 'Id', sortable: true },
+  { key: 'name', label: 'Name', sortable: true },
+];
 
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
-const editingCountry = ref<Record<string, any>>();
-const deletingCountry = ref<Record<string, any>>();
-const isArchived = ref(false);
+const editingCluster = ref<Record<string, any>>();
+const deletingCluster = ref<Record<string, any>>();
+const isArchived = ref(props.filters?.isArchived === 'true');
+const highlightedRowId = ref<number|null>(null);
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`cluster-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
+
+const form = useForm({
+  name: '',
+});
+
+const editForm = useForm({
+  name: '',
+});
 
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
+
+
+function restoreCluster(id: number) {
+  console.log(id)
+  router.post(`/clusters/${id}/restore`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
+    },
+  });
+}
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
@@ -48,7 +74,7 @@ function fetch(page = 1) {
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
-        isArchived: isArchived.value,
+        isArchived: isArchived.value ? 'true' : 'false',
         page,
       },
       {
@@ -56,15 +82,15 @@ function fetch(page = 1) {
         replace: true,
       },
     );
-}
+  }
 }
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
-const enhancedCountries = computed(() => {
-  const c = props.countries || {};
+const enhancedCluster = computed(() => {
+  const c = props.clusters || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -74,76 +100,85 @@ const enhancedCountries = computed(() => {
   };
 });
 
-const form = useForm({
-  name: '',
-});
-
-const editForm = useForm({
-  name: '',
-});
-
 function submit() {
-  form.post('/country', {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCluster.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  form.post('/clusters', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedCluster.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
 
 function openEditModal(row: any) {
-  editingCountry.value = row;
+  console.log(row.name);
+  editingCluster.value = row;
   editForm.name = row.name;
   showEditModal.value = true;
 }
 
 function submitEdit() {
-  editForm.put(`/country/${editingCountry.value?.id || ''}`, {
+  const editedId = editingCluster.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCluster.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  editForm.put(`/clusters/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingCountry.value = undefined;
+      editingCluster.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
   });
 }
 
 function openDeleteModal(row: any) {
-  deletingCountry.value = row;
+  deletingCluster.value = row;
   showDeleteModal.value = true;
 }
-
 function confirmDelete() {
-  router.delete(`/country/${deletingCountry.value?.id || ''}`, {
+  router.delete(`/clusters/${deletingCluster.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingCountry.value = undefined;
+      deletingCluster.value = undefined;
     },
   });
 }
-
-function restoreCountry(id: number) {
-  router.post(`/country/${id}/restore`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      fetch();
-    },
-  });
-}
+const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Countries" />
-    <DatatableHeader>
+    <Head title="Clusters" />
+     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Countries</h2>
+        <h2 class="text-2xl font-bold text-blue-700">Cluster</h2>
         <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <span>➕ Add Country</span>
-          </Button>
-        </div>
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3">
+          <span>➕ Add Cluster</span>
+        </Button>
+      </div>
+      <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
@@ -153,27 +188,28 @@ function restoreCountry(id: number) {
             <option :value="100">100</option>
           </select>
         </div>
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <Checkbox v-model="isArchived" class="switch-checkbox" />
-          <span class="text-sm font-medium">Show Archived</span>
-        </label>
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
       </div>
     </DatatableHeader>
-
     <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
               <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
             </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            </thead>
+            <tbody>
+            <tr v-for="row in enhancedCluster.data" :key="row.id" :id="`cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -181,7 +217,7 @@ function restoreCountry(id: number) {
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreCountry(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button @click="restoreCluster(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -198,28 +234,29 @@ function restoreCountry(id: number) {
               </td>
             </tr>
           </tbody>
-        </table>
-      </div>
-    </div>
+          </table>
+        </div>
 
-    <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedCountries.prev_page_url" @click="fetch(enhancedCountries.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Prev
-      </button>
-      <button v-if="enhancedCountries.next_page_url" @click="fetch(enhancedCountries.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Next
-      </button>
-      <span v-if="enhancedCountries.current_page && enhancedCountries.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedCountries.current_page }} of {{ enhancedCountries.last_page }}
-      </span>
-    </div>
+        <!-- Pagination -->
+        <div class="mt-6 flex items-center gap-2">
+          <button v-if="clusters?.prev_page_url" @click="fetch(clusters.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+            Prev
+          </button>
+          <button v-if="clusters?.next_page_url" @click="fetch(clusters.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
+            Next
+          </button>
+          <span v-if="clusters?.current_page && clusters?.last_page" class="ml-auto text-sm text-gray-500">
+            Page {{ clusters.current_page }} of {{ clusters.last_page }}
+          </span>
+        </div>
+      </div>
 
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Create Country</h3>
+            <h3 class="mb-4 text-xl font-semibold">Create Cluster</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -249,12 +286,11 @@ function restoreCountry(id: number) {
       </div>
     </transition>
 
-    <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Edit Country</h3>
+            <h3 class="mb-4 text-xl font-semibold">Edit Cluster</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
@@ -289,9 +325,10 @@ function restoreCountry(id: number) {
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Country</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Cluster</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingCountry?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingCluster?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -301,7 +338,7 @@ function restoreCountry(id: number) {
                 class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
               >
                 Cancel
-          </Button>
+              </Button>
               <Button
                 variant="destructive"
                 type="button"
@@ -310,7 +347,7 @@ function restoreCountry(id: number) {
                 class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
               >
                 Delete
-          </Button>
+              </Button>
             </div>
           </div>
         </div>
@@ -332,7 +369,7 @@ function restoreCountry(id: number) {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #ef4444; /* Tailwind red-500 */
+  background: #ef4444;
   box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
   transition: background 0.2s, box-shadow 0.2s;
@@ -363,4 +400,12 @@ function restoreCountry(id: number) {
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
 }
-</style>
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
+}
+</style> 

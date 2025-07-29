@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -32,6 +32,7 @@ const showDeleteModal = ref(false);
 const editingState = ref<Record<string, any>>();
 const deletingState = ref<Record<string, any>>();
 const isArchived = ref(false);
+const highlightedRowId = ref<number|null>(null);
 
 const form = useForm({
   name: '',
@@ -85,12 +86,27 @@ const enhancedStates = computed(() => {
   };
 });
 
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`state-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
+
 function submit() {
   form.post('/state', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedStates.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -104,11 +120,14 @@ function openEditModal(row: any) {
 }
 
 function submitEdit() {
+  const editedId = editingState.value?.id;
   editForm.put(`/state/${editingState.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
       editingState.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
   });
 }
@@ -136,6 +155,28 @@ function restoreState(id: number) {
     },
   });
 }
+
+watch(() => enhancedStates.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
+
+onMounted(() => {
+  // Check for highlightId in query string
+  const params = new URLSearchParams(window.location.search);
+  const highlightId = params.get('highlightId');
+  if (highlightId) {
+    highlightedRowId.value = Number(highlightId);
+    // Optionally, scroll immediately if data is already loaded
+    scrollToRow(Number(highlightId));
+  }
+});
 </script>
 
 <template>
@@ -174,15 +215,15 @@ function restoreState(id: number) {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedStates.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+            <tr v-for="row in enhancedStates.data" :key="row.id" :id="`state-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    Edit
+                    Edit 
                   </Button>
                 </template>
                 <template v-else>
@@ -395,5 +436,13 @@ function restoreState(id: number) {
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

@@ -7,7 +7,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BookOpen, LogOut, UserCircle, MessageSquare } from 'lucide-vue-next';
+import { BookOpen, UserCircle, MessageSquare } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -31,6 +31,97 @@ const modules = computed(() => {
 const mainNavItems: NavItem[] = modules.value;
 
 const filteredMainNavItems = mainNavItems.filter((item) => item.show);
+
+// Custom ordered navigation items
+const orderedNavItems: NavItem[] = [
+  {
+    title: 'Members',
+    href: '/member/index',
+    icon: UserCircle,
+    show: can('view-member'),
+  },
+  {
+    title: 'Community',
+    href: '/community',
+    icon: BookOpen,
+    show: can('view-community'),
+  },
+  {
+    title: 'Zone',
+    href: '/zone',
+    icon: BookOpen,
+    show: can('view-zone'),
+  },
+  {
+    title: 'Community Clusters',
+    href: '/community-clusters',
+    icon: BookOpen,
+    show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+  },
+  {
+    title: 'Clusters',
+    href: '/clusters',
+    icon: BookOpen,
+    show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+  },
+  {
+    title: 'SCC Head',
+    href: '/scc-head',
+    icon: UserCircle,
+    show: can('view-s-c-c-head'),
+  },
+  {
+    title: 'PPC Head',
+    href: '/ppc-head',
+    icon: UserCircle,
+    show: can('view-p-p-c-head'),
+  },
+  {
+    title: 'Relationship',
+    href: '/relationship',
+    icon: BookOpen,
+    show: can('view-relationship'),
+  },
+  {
+    title: 'Age Group',
+    href: '/age-group',
+    icon: BookOpen,
+    show: can('view-age-group'),
+  },
+  {
+    title: 'Parishes',
+    href: '/parish',
+    icon: BookOpen,
+    show: can('view-parish'),
+  },
+  {
+    title: 'Blood Group',
+    href: '/blood-group',
+    icon: BookOpen,
+    show: can('view-blood-group'),
+  },
+  {
+    title: 'Countries',
+    href: '/country',
+    icon: BookOpen,
+    show: can('view-country'),
+  },
+  {
+    title: 'State',
+    href: '/state',
+    icon: BookOpen,
+    show: can('view-state'),
+  },
+  {
+    title: 'Town',
+    href: '/town',
+    icon: BookOpen,
+    show: can('view-town'),
+  },
+];
+
+const filteredOrderedNavItems = orderedNavItems.filter((item) => item.show);
+
 const footerNavItems: NavItem[] = [
   {
     title: 'Users',
@@ -53,18 +144,6 @@ const footerNavItems: NavItem[] = [
 ];
 
 const filteredFooterNavItems = footerNavItems.filter((item) => item.show);
-
-function handleLogout() {
-  router.post(
-    route('logout'),
-    {},
-    {
-      onSuccess: () => {
-        router.visit(route('login'));
-      },
-    },
-  );
-}
 </script>
 
 <template>
@@ -83,22 +162,12 @@ function handleLogout() {
 
     <SidebarContent>
       <!-- <NavMain :items="mainNavItems" /> -->
-      <NavMain :items="filteredMainNavItems" />
+      <NavMain :items="filteredOrderedNavItems" />
     </SidebarContent>
 
     <SidebarFooter>
       <!-- <NavFooter :items="footerNavItems" /> -->
       <NavFooter :items="filteredFooterNavItems" />
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton as-child>
-            <Link :href="route('logout')" method="post" as="button" @click.prevent="handleLogout" class="flex w-full items-center">
-              <LogOut class="mr-2 h-4 w-4" />
-              Log out
-            </Link>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
       <NavUser />
     </SidebarFooter>
   </Sidebar>

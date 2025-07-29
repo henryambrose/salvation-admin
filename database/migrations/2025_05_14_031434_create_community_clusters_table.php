@@ -13,12 +13,10 @@ return new class extends Migration
     {
         Schema::create('community_clusters', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
             $table->foreignId('community_id')->constrained('communities');
+            $table->foreignId('cluster_id')->constrained('clusters');
             $table->timestamps();
             $table->softDeletes();
-            $table->unique(['name', 'community_id'], 'unique_community_cluster_name');
-            $table->index(['name', 'community_id'], 'index_community_cluster_name');
         });
     }
 

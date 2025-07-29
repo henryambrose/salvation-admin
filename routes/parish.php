@@ -8,4 +8,5 @@ Route::middleware('auth')->group(function () {
 
   Route::get('parish/index', [ParishController::class, 'index'])->name('parish.index');
   Route::resource('parish', ParishController::class)->except(['index']);
+  Route::post('parish/{id}/restore', [ParishController::class, 'restore'])->name('parish.restore');
 });

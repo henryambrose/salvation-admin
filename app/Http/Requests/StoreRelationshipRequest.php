@@ -23,7 +23,6 @@ class StoreRelationshipRequest extends FormRequest
     {
         return [
             'name' => 'required|string|unique:relationships,name',
-            'description' => 'nullable|string',
         ];
     }
 }

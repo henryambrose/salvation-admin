@@ -228,7 +228,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -259,7 +259,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                   {{ row.scchead?.member?.first_name + ' ' + row.scchead?.member?.last_name || '' }}
                 </template>
               </td>
-              <td class="p-2">
+              <td v-if="!isArchived" class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete

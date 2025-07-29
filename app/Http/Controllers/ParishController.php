@@ -19,6 +19,13 @@ class ParishController extends Controller
     \DB::enableQueryLog();
     $query = Parish::query();
 
+    // Handle archived records
+    if ($request->input('isArchived') === 'true') {
+      $query->onlyTrashed();
+    } else {
+      $query->withoutTrashed();
+    }
+
     if ($search = $request->input('search')) {
       $query->whereRaw(
           "CONCAT(
@@ -42,7 +49,7 @@ class ParishController extends Controller
     return Inertia::render('parish/Index', [
       'fetchUrl' => route('parish.index'),
       'parishes' => $query->paginate($perPage)->appends($request->query()),
-      'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+      'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
       'query' => \DB::getQueryLog(),
     ]);
   }
@@ -101,5 +108,13 @@ class ParishController extends Controller
     $parish->delete();
 
     return redirect()->route('parish.index')->with('success', 'Parish deleted successfully.');
+  }
+
+  public function restore($id)
+  {
+    $parish = Parish::onlyTrashed()->findOrFail($id);
+    $parish->restore();
+
+    return redirect()->route('parish.index')->with('success', 'Parish restored successfully.');
   }
 }

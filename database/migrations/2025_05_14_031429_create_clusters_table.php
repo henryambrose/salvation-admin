@@ -11,10 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('community_cluster_heads', function (Blueprint $table) {
+        Schema::create('clusters', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('member_id')->constrained('members');
-            $table->foreignId('community_cluster_id')->constrained('community_clusters');
+            $table->string('name');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('community_cluster_heads');
+        Schema::dropIfExists('clusters');
     }
 };

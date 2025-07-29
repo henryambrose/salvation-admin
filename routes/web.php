@@ -28,12 +28,17 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
     Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
     Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
     Route::get('/chat/answer/{uniqueID}', [ChatController::class, 'getSpecificAnswer'])->name('chat.answer');
+   
+
+
 });
 
 Route::get('/api/community/{community}/members', [SCCHeadController::class, 'membersByCommunity']);
 Route::get('/api/ppc-community/{community}/members', [PPCHeadController::class, 'membersByCommunity']);
 Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
 
+
+require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/member.php';
 require __DIR__.'/community.php';
@@ -50,4 +55,5 @@ require __DIR__.'/age_group.php';
 require __DIR__.'/relationship.php';
 require __DIR__.'/parish.php';
 require __DIR__.'/users.php';
-require __DIR__.'/auth.php';
+require __DIR__.'/clusters.php';
+require __DIR__.'/community_clusters.php';

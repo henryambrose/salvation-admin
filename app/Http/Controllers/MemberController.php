@@ -28,7 +28,6 @@ class MemberController extends Controller
 
     public function index(Request $request) :Response
     {
-
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
             'community_cluster_id' => ['relation' => 'communityCluster', 'column' => 'name'],
@@ -40,14 +39,16 @@ class MemberController extends Controller
             'status_id' => ['relation' => 'status', 'column' => 'name'],
         ];
 
-
-
         $query = Member::query();
+        
+        // Handle archived records
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
         }
+        
+        // Load relationships
         $query->with([
             'community',
             'communityCluster',
@@ -59,10 +60,14 @@ class MemberController extends Controller
             'status',
             'gender',
         ]);
+
+        // Enhanced search logic
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
                   ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                  ->orWhere('family_no', 'like', "%$search%")
                   ->orWhereHas('community', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%$search%");
                   })
@@ -72,16 +77,46 @@ class MemberController extends Controller
             });
         }
 
+        // Community filter
         if ($communityId = $request->input('communityId')) {
             $query->where('community_id', $communityId);
         }
 
-        // Filter by custom column
+        // Relationship filter
+        if ($relationship = $request->input('relationship')) {
+            $query->where('relationship_id', $relationship);
+        }
+
+        // Age group filter - filter by calculated age based on min and max age from age group
+        if ($ageGroup = $request->input('ageGroup')) {
+            $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
+            
+            if ($ageGroupModel) {
+                $minAge = $ageGroupModel->min_age;
+                $maxAge = $ageGroupModel->max_age;
+                
+                $query->whereRaw('
+                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?
+                ', [$minAge, $maxAge]);
+            }
+
+        }
+
+        // Blood group filter
+        if ($bloodGroup = $request->input('bloodGroup')) {
+            $query->where('blood_group_id', $bloodGroup);
+        }
+
+        // Gender filter
+        if ($gender = $request->input('gender')) {
+            $query->where('gender_id', $gender);
+        }
+
+        // Legacy filter support (keeping for backward compatibility)
         if ($filterColumnKey = $request->input('filterColumnKey')) {
             $filterColumnValue = $request->input('filterColumnValue');
             if ($filterColumnKey && $filterColumnValue) {
                 if (in_array($filterColumnKey, array_keys($dropdownColumns))) {
-                    // $query->where($filterColumnKey, $filterColumnValue);
                     $relation = $dropdownColumns[$filterColumnKey]['relation'];
                     $filterColumnKeyName = $dropdownColumns[$filterColumnKey]['column'];
                     $query->whereHas($relation, function ($q) use ($filterColumnKeyName, $filterColumnValue) {
@@ -93,6 +128,7 @@ class MemberController extends Controller
             }
         }
 
+        // Sorting
         if ($sort = $request->input('sort')) {
             $query->orderBy($sort, $request->input('direction', 'asc'));
         } else {
@@ -100,6 +136,9 @@ class MemberController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
+
+        // Get total count before pagination
+        $totalCount = $query->count();
 
         $data = $query->paginate($perPage)->appends($request->query());
         $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
@@ -115,9 +154,14 @@ class MemberController extends Controller
 
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
+            'relationships' => Relationship::all(),
+            'ageGroups' => \App\Models\AgeGroup::all(),
+            'bloodGroups' => BloodGroup::all(),
+            'genders' => Gender::all(),
             'fetchUrl' => route('member.index'),
             'members' => $data,
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
+            'totalCount' => $totalCount,
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
             'canViewAnyMember' => true,
             'canCreateMember' => true,
             'canEditMember' => true,
@@ -319,6 +363,187 @@ class MemberController extends Controller
             ];
         });
 
+        return response()->json($members);
+    }
+
+    public function exportxls(Request $request)
+    {
+        $format = $request->input('format', 'csv');
+        
+        // Build the same query as in index method
+        $query = Member::query();
+        
+        // Handle archived records
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+        
+        // Load relationships
+        $query->with([
+            'community',
+            'communityCluster',
+            'cellsAndAssociation',
+            'relationship',
+            'bloodGroup',
+            'designation',
+            'familyIncomeRange',
+            'status',
+            'gender',
+        ]);
+
+        // Apply all filters
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                  ->orWhere('family_no', 'like', "%$search%")
+                  ->orWhereHas('community', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%");
+                  })
+                  ->orWhereHas('communityCluster', function ($q3) use ($search) {
+                      $q3->where('name', 'like', "%$search%");
+                  });
+            });
+        }
+
+        if ($communityId = $request->input('communityId')) {
+            $query->where('community_id', $communityId);
+        }
+
+        if ($relationship = $request->input('relationship')) {
+            $query->where('relationship_id', $relationship);
+        }
+
+        if ($ageGroup = $request->input('ageGroup')) {
+            $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
+            if ($ageGroupModel) {
+                $minAge = $ageGroupModel->min_age;
+                $maxAge = $ageGroupModel->max_age;
+                
+                $query->whereRaw('
+                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?
+                ', [$minAge, $maxAge]);
+            }
+        }
+
+        if ($bloodGroup = $request->input('bloodGroup')) {
+            $query->where('blood_group_id', $bloodGroup);
+        }
+
+        if ($gender = $request->input('gender')) {
+            $query->where('gender_id', $gender);
+        }
+
+        $members = $query->get();
+         // Prepare data for export
+        $exportData = [];
+        $headers = [
+            'ID', 'First Name', 'Last Name', 'Family No', 'Contact No', 
+            'Email', 'Date of Birth', 'Age', 'Community', 'Cluster', 'Relationship',
+            'Blood Group', 'Gender', 'Status', 'Created At', 'Updated At'
+        ];
+
+        foreach ($members as $member) {
+            // Calculate age
+            $age = '';
+            if ($member->date_of_birth) {
+                $birthDate = new \DateTime($member->date_of_birth);
+                $today = new \DateTime();
+                $age = $today->diff($birthDate)->y;
+            }
+  
+            $exportData[] = [
+                $member->id,
+                $member->first_name ?? '',
+                $member->last_name ?? '',
+                $member->family_no ?? '',
+                $member->contact_no ?? '',
+                $member->email ?? '',
+                $member->date_of_birth ?? '',
+                $age,
+                $member->community?->name ?? '',
+                $member->communityCluster?->name ?? '',
+                $member->relationship?->name ?? '',
+                $member->bloodGroup?->name ?? '',
+                $member->gender?->name ?? '',
+                $member->status?->name ?? '',
+                $member->created_at ?? '',
+                $member->updated_at ?? '',
+            ];
+        }
+        if ($format === 'csv') {
+            return $this->exportToCsv($headers, $exportData, 'members.csv');
+        } else {
+            return $this->exportToXls($headers, $exportData, 'members.xlsx');
+        }
+    }
+
+    // private function exportToCsv($headers, $data, $filename)
+    // {
+    //     $handle = fopen('php://temp', 'r+');
+        
+    //     // Add headers
+    //     fputcsv($handle, $headers);
+        
+    //     // Add data
+    //     foreach ($data as $row) {
+    //         fputcsv($handle, $row);
+    //     }
+        
+    //     rewind($handle);
+    //     $csv = stream_get_contents($handle);
+    //     fclose($handle);
+        
+    //     return response($csv)
+    //         ->header('Content-Type', 'text/csv')
+    //         ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    // }
+
+    private function exportToXls($headers, $data, $filename)
+    {
+        // For XLS export, we'll use a CSV format that Excel can open
+        // Excel can open CSV files directly, so we'll use .csv extension
+        $filename = str_replace('.xlsx', '.csv', $filename);
+        
+        $handle = fopen('php://temp', 'r+');
+        
+        // Add headers
+        fputcsv($handle, $headers);
+        
+        // Add data
+        foreach ($data as $row) {
+            fputcsv($handle, $row);
+        }
+        
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+        
+        return response($csv)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    public function getMembersByCommunity($communityId)
+    {
+        $members = Member::where('community_id', $communityId)
+            ->select('id', 'first_name', 'last_name', 'community_id')
+            ->selectRaw('CONCAT(first_name, " ", last_name) as name')
+            ->get();
+        
+        return response()->json($members);
+    }
+
+    public function getMembersByFamily($familyNo)
+    {
+        $members = Member::where('family_no', $familyNo)
+            ->with('relationship')
+            ->select('id', 'first_name', 'last_name', 'date_of_birth', 'relationship_id')
+            ->get();
+        
         return response()->json($members);
     }
 }

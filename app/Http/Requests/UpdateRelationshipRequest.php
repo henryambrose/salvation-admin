@@ -23,7 +23,6 @@ class UpdateRelationshipRequest extends FormRequest
     {
         return [
             'name' => 'required|string|unique:relationships,name,' . $this->route('relationship')->id,
-            'description' => 'nullable|string',
         ];
     }
 }

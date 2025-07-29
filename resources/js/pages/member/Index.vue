@@ -18,7 +18,12 @@ const { can } = permissionHelpers();
 
 const props = defineProps({
   communities: Array<{ id: string | number; name: string }>,
+  relationships: Array<{ id: string | number; name: string }>,
+  ageGroups: Array<{ id: string | number; name: string }>,
+  bloodGroups: Array<{ id: string | number; name: string }>,
+  genders: Array<{ id: string | number; name: string }>,
   members: Object,
+  totalCount: Number,
   filters: Object,
   fetchUrl: String,
   canViewAnyMember: Boolean,
@@ -33,6 +38,7 @@ const props = defineProps({
 
 const showViewModal = ref(false);
 const selectedMember = ref(null);
+const showFilters = ref(false);
 
 function openViewModal(member: any) {
   selectedMember.value = member;
@@ -58,8 +64,12 @@ const columns: Column[] = [
   { key: 'contact_no', label: 'Contact No', sortable: true },
   { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
+  { key: 'age', label: 'Age', sortable: false },
+  { key: 'relationship_id', label: 'Relationship', sortable: true },
+  { key: 'blood_group_id', label: 'Blood Group', sortable: true },
+  { key: 'gender_id', label: 'Gender', sortable: true },
   { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
-  { key: 'updated_at', label: 'Last Updated', sortable: true },
+  
 ];
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
@@ -103,6 +113,36 @@ function formatDate(dateStr: string) {
   return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
 }
 
+function calculateAge(dateStr: string) {
+  if (!dateStr) return '';
+  const birthDate = new Date(dateStr);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
+function getRelationshipName(relationshipId: number | string) {
+  if (!relationshipId) return '';
+  const relationship = props.relationships?.find(r => r.id == relationshipId);
+  return relationship?.name || '';
+}
+
+function getBloodGroupName(bloodGroupId: number | string) {
+  if (!bloodGroupId) return '';
+  const bloodGroup = props.bloodGroups?.find(b => b.id == bloodGroupId);
+  return bloodGroup?.name || '';
+}
+
+function getGenderName(genderId: number | string) {
+  if (!genderId) return '';
+  const gender = props.genders?.find(g => g.id == genderId);
+  return gender?.name || '';
+}
+
 const canCreateMember = can('create-member');
 const canReadAnyMember = can('read-member');
 const canUpdateAnyMember = can('update-member');
@@ -122,12 +162,16 @@ const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 const perPage = ref(props.filters?.perPage || 10);
 const communityId = ref(props.filters?.communityId || '');
+const relationship = ref(props.filters?.relationship || '');
+const ageGroup = ref(props.filters?.ageGroup || '');
+const bloodGroup = ref(props.filters?.bloodGroup || '');
+const gender = ref(props.filters?.gender || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(props.filters?.isArchived || false);
 
 watch(
-  [search, sort, direction, perPage, communityId, filterColumnKey, filterColumnValue, isArchived],
+  [search, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived],
   () => {
     fetch();
   },
@@ -144,9 +188,13 @@ function fetch(page = 1) {
         direction: direction.value,
         perPage: perPage.value,
         communityId: communityId.value,
+        relationship: relationship.value,
+        ageGroup: ageGroup.value,
+        bloodGroup: bloodGroup.value,
+        gender: gender.value,
         filterColumnKey: filterColumnKey.value,
         filterColumnValue: filterColumnValue.value,
-        isArchived: isArchived.value,
+        isArchived: isArchived.value ? 'true' : 'false', // send as string
         page,
       },
       {
@@ -169,6 +217,47 @@ function changeSort(field: string) {
 
 function toggleisArchived() {
   isArchived.value = !isArchived.value;
+}
+
+async function downloadXLS() {
+  const params = new URLSearchParams({
+    search: search.value,
+    communityId: communityId.value,
+    relationship: relationship.value,
+    ageGroup: ageGroup.value,
+    bloodGroup: bloodGroup.value,
+    gender: gender.value,
+    isArchived: isArchived.value,
+    format: 'xls'
+  });
+  
+  try {
+    const response = await window.fetch(`/member/exportxls?${params.toString()}`, {
+      method: 'GET',
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'members.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  } catch (error) {
+    console.error('Download failed:', error);
+    alert('Download failed. Please try again.');
+  }
 }
 
 const highlightedRowId = ref<number|null>(null);
@@ -213,52 +302,62 @@ onMounted(() => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Members" />
     <DatatableHeader>
-      <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Members</h2>
-        <Button v-if="canCreateMember" as="a" href="/member/create" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <component :is="Plus" />
-          <span>Add Member</span>
-        </Button>
+      <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+        <div class="flex flex-1 items-center gap-2">
+          <input v-model="search" type="text" class="flex-1 rounded-full border border-gray-300 px-3 py-2" placeholder="Search name or family no..." />
+          <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+            {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <Button @click="downloadXLS" class="px-3 py-2 rounded-full bg-blue-600 text-white">Export</Button>
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
       </div>
-      <div class="flex items-center gap-4 mt-2 justify-end">
-        <label class="flex items-center gap-2 cursor-pointer select-none">
-          <Checkbox v-model="isArchived" class="switch-checkbox" />
-          <span class="text-sm font-medium">Show Archived</span>
-        </label>
+      <transition name="fade">
+        <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
+          <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
+            <option value="">All Communities</option>
+            <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
+          </select>
+          <select v-model="relationship" class="rounded border px-2 py-1 text-sm">
+            <option value="">All Relationships</option>
+            <option v-for="r in props.relationships" :key="r.id" :value="r.id">{{ r.name }}</option>
+          </select>
+          <select v-model="ageGroup" class="rounded border px-2 py-1 text-sm">
+            <option value="">All Age Groups</option>
+            <option v-for="a in props.ageGroups" :key="a.id" :value="a.id">{{ a.name }}</option>
+          </select>
+          <select v-model="bloodGroup" class="rounded border px-2 py-1 text-sm">
+            <option value="">All Blood Groups</option>
+            <option v-for="b in props.bloodGroups" :key="b.id" :value="b.id">{{ b.name }}</option>
+          </select>
+          <select v-model="gender" class="rounded border px-2 py-1 text-sm">
+            <option value="">All Genders</option>
+            <option v-for="g in props.genders" :key="g.id" :value="g.id">{{ g.name }}</option>
+          </select>
+          <select v-model="perPage" class="rounded border px-2 py-1 text-sm">
+            <option :value="10">10 per page</option>
+            <option :value="25">25 per page</option>
+            <option :value="50">50 per page</option>
+            <option :value="100">100 per page</option>
+          </select>
+        </div>
+      </transition>
+      <div class="mb-2 text-sm text-gray-600">
+        Showing <span class="font-semibold">{{ totalCount || 0 }}</span> members
+        <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
       </div>
     </DatatableHeader>
 
     <div class="overflow-x-auto">
       <div v-if="canReadAnyMember">
         <div class="datatable2 mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-          <!-- Filters -->
-          <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
-            <input v-model="search" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
-            <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
-              <option :value="2">2</option>
-              <option :value="5">5</option>
-              <option :value="10">10</option>
-              <option :value="25">25</option>
-              <option :value="50">50</option>
-            </select>
-            <SearchDropdown
-              id="community_id"
-              v-model="communityId"
-              :options="props.communities || []"
-              class="mt-1 block w-full max-w-xs"
-              placeholder="Select Community"
-              @focus-out="fetch"
-            />
-            <SearchDropdown
-              id="search_by_column_key"
-              v-model="filterColumnKey"
-              :options="searchColumnsOptions"
-              class="mt-1 block w-full max-w-xs"
-              placeholder="Search By Column"
-              @focus-out="fetch()"
-            />
-            <Input id="search_by_column_value" v-model="filterColumnValue" class="mt-1 block w-full max-w-xs rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Enter value" @focus-out="fetch()" />
-          </div>
+          <!-- Enhanced Search & Filters -->
+    
 
           <!-- Table -->
           <div class="overflow-x-auto rounded-xl border border-gray-100">
@@ -272,7 +371,7 @@ onMounted(() => {
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
-                  <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                  <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
                 </tr>
               </thead>
               <tbody>
@@ -302,14 +401,26 @@ onMounted(() => {
                     <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
                       {{ formatDate(item[col.key]) }}
                     </template>
+                    <template v-else-if="col.key === 'age'">
+                      {{ calculateAge(item.date_of_birth) }}
+                    </template>
+                    <template v-else-if="col.key === 'relationship_id'">
+                      {{ getRelationshipName(item.relationship_id) }}
+                    </template>
+                    <template v-else-if="col.key === 'blood_group_id'">
+                      {{ getBloodGroupName(item.blood_group_id) }}
+                    </template>
+                    <template v-else-if="col.key === 'gender_id'">
+                      {{ getGenderName(item.gender_id) }}
+                    </template>
                     <template v-else>
                       {{ item[col.key] }}
                     </template>
                   </td>
                   <!-- Delete -->
-                  <td class="p-2">
-                    <template v-if="!isArchived">
-                      <Button v-if="canDeleteAnyMember && !item.deleted_at" variant="destructive" @click="openDeleteModal(item)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                  <td v-if="!isArchived" class="p-2">
+                    <template v-if="canDeleteAnyMember && !item.deleted_at">
+                      <Button variant="destructive" @click="openDeleteModal(item)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                         <component :is="Trash" />
                         <span>Delete</span>
                       </Button>

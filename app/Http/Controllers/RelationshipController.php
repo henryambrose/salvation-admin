@@ -18,6 +18,13 @@ class RelationshipController extends Controller
     {
         $query = Relationship::query();
 
+        // Handle archived records
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         if ($search = $request->input('search')) {
             $query->where('name', 'like', "%$search%");
         }
@@ -33,7 +40,7 @@ class RelationshipController extends Controller
         return Inertia::render('relationship/Index', [
             'fetchUrl' => route('relationship.index'),
             'relationships' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
         ]);
     }
 
@@ -91,5 +98,13 @@ class RelationshipController extends Controller
         $relationship->delete();
 
         return redirect()->route('relationship.index')->with('success', 'Relationship deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $relationship = Relationship::onlyTrashed()->findOrFail($id);
+        $relationship->restore();
+
+        return redirect()->route('relationship.index')->with('success', 'Relationship restored successfully.');
     }
 }

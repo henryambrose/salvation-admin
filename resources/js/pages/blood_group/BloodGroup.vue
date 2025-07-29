@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-
-import DataTable from '@/components/DataTable2.vue';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,7 +163,16 @@ function confirmDelete() {
     },
   });
 }
-
+watch(() => enhancedBloodGroups.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
 const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
 </script>
 
@@ -197,7 +204,6 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
         </div>
       </div>
     </DatatableHeader>
-
     <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
@@ -207,7 +213,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
             </tr>
           </thead>
           <tbody>
@@ -227,7 +233,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
               <td v-for="col in columns" :key="col.key" class="p-2">
                 {{ row[col.key] }}
               </td>
-              <td class="p-2">
+              <td v-if="!isArchived" class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete

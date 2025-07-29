@@ -101,6 +101,15 @@ function confirmDelete() {
   });
 }
 
+function restoreUser(id: string) {
+  router.post(`/users/${id}/restore`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      fetch();
+    },
+  });
+}
+
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -116,7 +125,7 @@ function fetch(page = 1) {
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
-        isArchived: isArchived.value,
+        isArchived: isArchived.value ? 'true' : 'false',
         page,
       },
       {
@@ -178,7 +187,7 @@ const enhancedUsers = computed(() => {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -196,9 +205,14 @@ const enhancedUsers = computed(() => {
                   {{ row[col.key] }}
                 </template>
               </td>
-              <td class="p-2">
+              <td v-if="!isArchived" class="p-2">
                 <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                   Delete
+                </Button>
+              </td>
+              <td v-if="isArchived" class="p-2">
+                <Button @click="restoreUser(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  Restore
                 </Button>
               </td>
             </tr>
