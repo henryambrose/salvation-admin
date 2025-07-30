@@ -18,6 +18,15 @@ class Member extends Model
         'old_sal_id',
         'aadhar',
         'family_no',
+        'member_no',
+        'registration_year',
+        'church_code',
+        'family_sequence',
+        'member_sequence',
+        'marital_status',
+        'current_family_no',
+        'spouse_member_id',
+        'marriage_date',
         'status_id',
         'relationship_id',
         'last_name',
@@ -55,12 +64,19 @@ class Member extends Model
         'confirmation_date',
         'confirmation_reg_no',
         'confirmation_parish',
-        'marriage_date',
         'marriage_reg_no',
         'marriage_parish',
         'death_date',
         'deaths_reg_no',
         'death_parish',
+    ];
+
+    protected $casts = [
+        'marriage_date' => 'date',
+        'date_of_birth' => 'date',
+        'baptism_date' => 'date',
+        'confirmation_date' => 'date',
+        'death_date' => 'date'
     ];
 
     public function community()
@@ -97,6 +113,83 @@ class Member extends Model
     public function bloodGroup()
     {
         return $this->belongsTo(BloodGroup::class);
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+        
+        static::creating(function ($member) {
+            if (!$member->family_no) {
+                $numberingService = new \App\Services\FamilyNumberingService($member->church_code ?? 'SAL');
+                
+                // Generate family number
+                $member->family_no = $numberingService->generateFamilyNumber(
+                    $member->registration_year ?? date('Y'),
+                    $member->church_code ?? 'SAL'
+                );
+                
+                // Parse family number to extract components
+                $familyInfo = $numberingService->parseFamilyNumber($member->family_no);
+                $member->family_sequence = $familyInfo['family_sequence'];
+                $member->registration_year = $familyInfo['year'];
+                $member->church_code = $familyInfo['church_code'];
+                
+                // Generate member number
+                $member->member_no = $numberingService->generateMemberNumber(
+                    $member->family_no,
+                    $member->family_sequence
+                );
+                
+                // Set member sequence
+                $member->member_sequence = (int) explode('-', $member->member_no)[1];
+            }
+        });
+    }
+    
+    public function getEffectiveFamilyNumberAttribute()
+    {
+        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        return $numberingService->getEffectiveFamilyNumber($this);
+    }
+    
+    public function getDisplayFamilyNumberAttribute()
+    {
+        $display = $this->effective_family_number;
+        
+        if ($this->family_no !== $this->effective_family_number) {
+            $display .= " (née " . $this->family_no . ")";
+        }
+        
+        return $display;
+    }
+    
+    public function getChurchNameAttribute()
+    {
+        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        $familyInfo = $numberingService->getFamilyInfo($this->family_no);
+        return $familyInfo['church_name'];
+    }
+    
+    public function birthFamily()
+    {
+        return $this->belongsTo(Member::class, 'family_no', 'family_no');
+    }
+    
+    public function currentFamily()
+    {
+        return $this->belongsTo(Member::class, 'current_family_no', 'family_no');
+    }
+    
+    public function spouse()
+    {
+        return $this->belongsTo(Member::class, 'spouse_member_id');
+    }
+    
+    public function familyMembers()
+    {
+        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        return $numberingService->getFamilyMembers($this->effective_family_number);
     }
 
     public function designation()

@@ -70,10 +70,8 @@ class MemberController extends Controller
                   ->orWhere('family_no', 'like', "%$search%")
                   ->orWhereHas('community', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%$search%");
-                  })
-                  ->orWhereHas('communityCluster', function ($q3) use ($search) {
-                      $q3->where('name', 'like', "%$search%");
                   });
+
             });
         }
 
@@ -216,31 +214,78 @@ class MemberController extends Controller
      */
     public function store(StoreMemberRequest $request)
     {
-        $validated = $request->validated();
-        $member = Member::create($validated);
-        $perPage = $request->input('perPage', 10);
-        // Build the query as in index
-        $query = Member::query();
-        if ($search = $request->input('search')) {
-            $query->where('first_name', 'like', "%$search%");
-            // Add other filters as needed
+        DB::beginTransaction();
+        
+        try {
+            $data = $request->validated();
+            
+            // Set default values for family numbering
+            $data['church_code'] = $data['church_code'] ?? 'SAL';
+            $data['registration_year'] = $data['registration_year'] ?? date('Y');
+            $data['marital_status'] = $data['marital_status'] ?? 'single';
+            
+            // Check if this is a new family or existing family
+            if ($request->has('existing_family_no') && $request->existing_family_no) {
+                $familyNo = $request->existing_family_no;
+                
+                $numberingService = new \App\Services\FamilyNumberingService();
+                
+                // Validate existing family number
+                if (!$numberingService->validateFamilyNumber($familyNo)) {
+                    throw new \Exception('Invalid family number format. Expected: YYYY-SAL-FNNNNN');
+                }
+                
+                $familyInfo = $numberingService->getFamilyInfo($familyNo);
+                $data['family_no'] = $familyNo;
+                $data['family_sequence'] = $familyInfo['family_sequence'];
+                $data['registration_year'] = $familyInfo['year'];
+                $data['church_code'] = $familyInfo['church_code'];
+                
+                // Generate member number for existing family
+                $data['member_no'] = $numberingService->generateMemberNumber(
+                    $familyNo,
+                    $familyInfo['family_sequence']
+                );
+                $data['member_sequence'] = (int) explode('-', $data['member_no'])[1];
+                
+            } else {
+                // New family - numbers will be auto-generated in model
+                $data['registration_year'] = date('Y');
+            }
+            
+            $member = Member::create($data);
+            
+            DB::commit();
+            
+            $perPage = $request->input('perPage', 10);
+            // Build the query as in index
+            $query = Member::query();
+            if ($search = $request->input('search')) {
+                $query->where('first_name', 'like', "%$search%");
+                // Add other filters as needed
+            }
+            if ($sort = $request->input('sort')) {
+                $query->orderBy($sort, $request->input('direction', 'asc'));
+            } else {
+                $query->orderBy('id', 'asc');
+            }
+            $allIds = $query->pluck('id')->toArray();
+            $position = array_search($member->id, $allIds);
+            $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+            
+            return redirect()->route('member.index', array_merge(
+                $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+                [
+                    'page' => $page,
+                    'perPage' => $perPage,
+                    'highlightId' => $member->id,
+                ]
+            ))->with('success', 'Member created successfully with Family No: ' . $member->family_no);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->withErrors(['error' => $e->getMessage()]);
         }
-        if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
-        } else {
-            $query->orderBy('id', 'asc');
-        }
-        $allIds = $query->pluck('id')->toArray();
-        $position = array_search($member->id, $allIds);
-        $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
-        return redirect()->route('member.index', array_merge(
-            $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
-            [
-                'page' => $page,
-                'perPage' => $perPage,
-                'highlightId' => $member->id,
-            ]
-        ))->with('success', 'Member created successfully.');
     }
 
 
@@ -402,10 +447,8 @@ class MemberController extends Controller
                   ->orWhere('family_no', 'like', "%$search%")
                   ->orWhereHas('community', function ($q2) use ($search) {
                       $q2->where('name', 'like', "%$search%");
-                  })
-                  ->orWhereHas('communityCluster', function ($q3) use ($search) {
-                      $q3->where('name', 'like', "%$search%");
                   });
+
             });
         }
 
@@ -545,6 +588,113 @@ class MemberController extends Controller
             ->get();
         
         return response()->json($members);
+    }
+
+    public function moveFamily(Request $request, $familyNo)
+    {
+        $request->validate([
+            'new_community_id' => 'required|exists:communities,id',
+            'move_date' => 'required|date',
+            'reason' => 'nullable|string'
+        ]);
+        
+        $numberingService = new \App\Services\FamilyNumberingService();
+        
+        DB::beginTransaction();
+        
+        try {
+            // Move family to new community
+            $members = $numberingService->handleFamilyMove(
+                $familyNo, 
+                $request->new_community_id
+            );
+            
+            // Log the move
+            DB::table('family_move_logs')->insert([
+                'family_no' => $familyNo,
+                'old_community_id' => $members->first()->community_id,
+                'new_community_id' => $request->new_community_id,
+                'move_date' => $request->move_date,
+                'reason' => $request->reason,
+                'moved_by' => auth()->id(),
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Family moved successfully',
+                'family_no' => $familyNo,
+                'new_community' => \App\Models\Community::find($request->new_community_id)->name
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to move family: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function handleMarriage(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'spouse_id' => 'required|exists:members,id',
+            'marriage_date' => 'required|date'
+        ]);
+        
+        $numberingService = new \App\Services\FamilyNumberingService();
+        
+        DB::beginTransaction();
+        
+        try {
+            $result = $numberingService->handleMarriage(
+                $request->member_id,
+                $request->spouse_id
+            );
+            
+            DB::commit();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Marriage recorded successfully',
+                'member' => $result['member'],
+                'spouse' => $result['spouse']
+            ]);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record marriage: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function searchFamilies(Request $request)
+    {
+        $query = $request->input('q', '');
+        
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+        
+        $numberingService = new \App\Services\FamilyNumberingService();
+        $results = $numberingService->searchFamilies($query);
+        
+        return response()->json($results);
+    }
+
+    public function getChurchStatistics($churchCode = 'SAL')
+    {
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+        $statistics = $numberingService->getChurchStatistics($churchCode);
+        
+        return response()->json($statistics);
     }
 }
 

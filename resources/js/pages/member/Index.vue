@@ -61,6 +61,8 @@ const columns: Column[] = [
   { key: 'first_name', label: 'First Name', sortable: true },
   { key: 'last_name', label: 'Last Name', sortable: true },
   { key: 'family_no', label: 'Family No', sortable: true },
+  { key: 'member_no', label: 'Member No', sortable: true },
+  { key: 'church_code', label: 'Church', sortable: true },
   { key: 'contact_no', label: 'Contact No', sortable: true },
   { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
@@ -69,7 +71,6 @@ const columns: Column[] = [
   { key: 'blood_group_id', label: 'Blood Group', sortable: true },
   { key: 'gender_id', label: 'Gender', sortable: true },
   { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
-  
 ];
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
@@ -412,6 +413,11 @@ onMounted(() => {
                     </template>
                     <template v-else-if="col.key === 'gender_id'">
                       {{ getGenderName(item.gender_id) }}
+                    </template>
+                    <template v-else-if="col.key === 'church_code'">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {{ item[col.key] || 'SAL' }}
+                      </span>
                     </template>
                     <template v-else>
                       {{ item[col.key] }}

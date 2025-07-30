@@ -40,8 +40,8 @@ class DatabaseSeeder extends Seeder
             CountrySeeder::class,
             StateSeeder::class,
             TownSeeder::class,
-            // MemberSeeder::class,
-            FakeMemberSeeder::class,
+            MemberSeeder::class,
+            // FakeMemberSeeder::class,
             PPCHeadSeeder::class,
             SCCHeadSeeder::class,
 

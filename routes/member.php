@@ -11,5 +11,14 @@ Route::middleware('auth')->group(function () {
     Route::get('member/search-options', [MemberController::class, 'searchOptions'])
         ->name('member.search-options');
     
+    // Family numbering system routes
+    Route::post('member/move-family/{familyNo}', [MemberController::class, 'moveFamily'])
+        ->name('member.move-family');
+    Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
+        ->name('member.handle-marriage');
+    Route::get('member/search-families', [MemberController::class, 'searchFamilies'])
+        ->name('member.search-families');
+    Route::get('member/church-statistics/{churchCode?}', [MemberController::class, 'getChurchStatistics'])
+        ->name('member.church-statistics');
 });
 
