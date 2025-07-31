@@ -503,7 +503,7 @@ class MemberController extends Controller
                 $member->first_name ?? '',
                 $member->last_name ?? '',
                 $member->family_no ?? '',
-                $member->contact_no ?? '',
+                $member->contact_no_1 ?? '',
                 $member->email ?? '',
                 $member->date_of_birth ?? '',
                 $age,

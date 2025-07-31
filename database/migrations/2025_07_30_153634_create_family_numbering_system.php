@@ -14,7 +14,7 @@ return new class extends Migration
         // Create family numbering sequences table
         Schema::create('church_family_numbering_sequences', function (Blueprint $table) {
             $table->id();
-            $table->string('year', 4);
+            $table->string('year', 4)->nullable(); // Nullable for family group sequences
             $table->string('church_code', 3); // SAL, ABC, XYZ, etc.
             $table->unsignedInteger('last_sequence');
             $table->timestamps();

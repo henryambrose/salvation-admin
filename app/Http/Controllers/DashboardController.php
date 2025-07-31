@@ -74,7 +74,7 @@ class DashboardController extends Controller
         $birthdays = Member::select(['id', 'first_name', 'middle_name', 'last_name', 'date_of_birth', DB::raw("CASE
                             WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
                             ELSE NULL
-                        END AS age"), 'contact_no', 'email'])->where(function ($query) use ($today, $tomorrow, $dayAfterTomorrow) {
+                        END AS age"), 'contact_no_1', 'email'])->where(function ($query) use ($today, $tomorrow, $dayAfterTomorrow) {
             $query->whereMonth('date_of_birth', $today->month)
                 ->whereDay('date_of_birth', $today->day);
         })->orWhere(function ($query) use ($tomorrow) {

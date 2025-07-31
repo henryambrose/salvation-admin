@@ -78,14 +78,20 @@ const form = useForm({
   relationship_id: member?.relationship_id ? member.relationship_id : '',
   parish_id: member?.parish_id ? member.parish_id : '',
   date_of_birth: member?.date_of_birth ? member.date_of_birth : '',
-  contact_no: member?.contact_no ? member.contact_no : '',
+  contact_no_1: member?.contact_no_1 ? member.contact_no_1 : '',
   email: member?.email ? member.email : '',
   aadhar: member?.aadhar ? member.aadhar : '',
   family_no: member?.family_no ? member.family_no : '',
+  member_no: member?.member_no ? member.member_no : '',
+  registration_year: member?.registration_year ? member.registration_year : '',
+  church_code: member?.church_code ? member.church_code : 'SAL',
+  family_sequence: member?.family_sequence ? member.family_sequence : '',
+  member_sequence: member?.member_sequence ? member.member_sequence : '',
+  marital_status: member?.marital_status ? member.marital_status : 'single',
+  // current_family_no is managed by business logic (marriage, etc.) - not editable
+  spouse_member_id: member?.spouse_member_id ? member.spouse_member_id : '',
   community_id: member?.community_id ? member.community_id : '',
   community_cluster_id: member?.community_cluster_id ? member.community_cluster_id : '',
-  new_olsc_id: member?.new_olsc_id ? member.new_olsc_id : '',
-  old_sal_id: member?.old_sal_id ? member.old_sal_id : '',
   permanent_add1: member?.permanent_add1 ? member.permanent_add1 : '',
   permanent_add2: member?.permanent_add2 ? member.permanent_add2 : '',
   permanent_add3: member?.permanent_add3 ? member.permanent_add3 : '',
@@ -297,9 +303,9 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.blood_group_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="contact_no">Contact No</Label>
-              <Input id="contact_no" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no" autocomplete="contact_no" placeholder="Contact no" />
-              <InputError class="mt-2" :message="form.errors.contact_no" />
+              <Label for="contact_no_1">Contact No</Label>
+              <Input id="contact_no_1" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_1" autocomplete="contact_no_1" placeholder="Contact no" />
+              <InputError class="mt-2" :message="form.errors.contact_no_1" />
             </div>
             <div class="grid gap-2">
               <Label for="email">Email</Label>
@@ -315,6 +321,73 @@ function formatDate(dateStr: string) {
               <Label for="family_no">Family No</Label>
               <Input id="family_no" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.family_no" autocomplete="family_no" placeholder="Family no" />
               <InputError class="mt-2" :message="form.errors.family_no" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="member_no">Member No</Label>
+              <Input id="member_no" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.member_no" autocomplete="member_no" placeholder="Member no" />
+              <InputError class="mt-2" :message="form.errors.member_no" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="registration_year">Registration Year</Label>
+              <Input id="registration_year" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.registration_year" autocomplete="registration_year" placeholder="YYYY" />
+              <InputError class="mt-2" :message="form.errors.registration_year" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="church_code">Church Code</Label>
+              <Input id="church_code" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.church_code" autocomplete="church_code" placeholder="SAL" />
+              <InputError class="mt-2" :message="form.errors.church_code" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="marital_status">Marital Status</Label>
+              <SelectInput
+                id="marital_status"
+                v-model="form.marital_status"
+                :options="[
+                  { id: 'single', name: 'Single' },
+                  { id: 'married', name: 'Married' },
+                  { id: 'divorced', name: 'Divorced' },
+                  { id: 'widowed', name: 'Widowed' }
+                ]"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Select Marital Status"
+              />
+              <InputError class="mt-2" :message="form.errors.marital_status" />
+            </div>
+            <div class="grid gap-2">
+                              <Label for="current_family_no">Current Family No</Label>
+                <div class="mt-1 block w-full rounded-full border border-gray-300 px-4 py-2 bg-gray-50 text-gray-600">
+                  {{ member?.current_family_no || 'Same as birth family' }}
+                </div>
+                <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p>
+            </div>
+          </div>
+          
+          <!-- Family Information Display -->
+          <div v-if="form.family_no" class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 class="text-sm font-semibold text-blue-800 mb-3">Family Information</h4>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">Family Number:</span>
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium font-mono">
+                  {{ form.family_no }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">Member Number:</span>
+                <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium font-mono">
+                  {{ form.member_no || 'Auto-generated' }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">Church Code:</span>
+                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                  {{ form.church_code || 'SAL' }}
+                </span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="font-medium text-gray-700">Registration Year:</span>
+                <span class="text-gray-900">{{ form.registration_year || 'Current Year' }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -743,19 +816,24 @@ function formatDate(dateStr: string) {
           </div>
         </div>
 
-        <!-- Other Details -->
+        <!-- Family Numbering Details -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Other Details</h3>
+          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Numbering Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
-              <Label for="new_olsc_id">New OLSC ID</Label>
-              <Input id="new_olsc_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.new_olsc_id" autocomplete="new_olsc_id" placeholder="New OLSC ID" />
-              <InputError class="mt-2" :message="form.errors.new_olsc_id" />
+              <Label for="family_sequence">Family Sequence</Label>
+              <Input id="family_sequence" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.family_sequence" autocomplete="family_sequence" placeholder="Family sequence" />
+              <InputError class="mt-2" :message="form.errors.family_sequence" />
             </div>
             <div class="grid gap-2">
-              <Label for="old_sal_id">Old SAL ID</Label>
-              <Input id="old_sal_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.old_sal_id" autocomplete="old_sal_id" placeholder="Old SAL ID" />
-              <InputError class="mt-2" :message="form.errors.old_sal_id" />
+              <Label for="member_sequence">Member Sequence</Label>
+              <Input id="member_sequence" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.member_sequence" autocomplete="member_sequence" placeholder="Member sequence" />
+              <InputError class="mt-2" :message="form.errors.member_sequence" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="spouse_member_id">Spouse Member ID</Label>
+              <Input id="spouse_member_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.spouse_member_id" autocomplete="spouse_member_id" placeholder="Spouse member ID" />
+              <InputError class="mt-2" :message="form.errors.spouse_member_id" />
             </div>
           </div>
         </div>

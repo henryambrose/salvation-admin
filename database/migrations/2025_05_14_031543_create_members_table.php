@@ -15,13 +15,13 @@ return new class extends Migration
             $table->id();
             $table->foreignId('community_id')->nullable()->constrained('communities');
             $table->foreignId('community_cluster_id')->nullable()->constrained('community_clusters');
+            $table->string('old_family_no')->nullable();
             $table->string('aadhar')->nullable();
             $table->string('family_no')->nullable();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
             $table->date('date_of_birth')->nullable();
-            $table->string('age')->nullable();
             $table->string('permanent_add1')->nullable();
             $table->string('permanent_add2')->nullable();
             $table->string('permanent_add3')->nullable();

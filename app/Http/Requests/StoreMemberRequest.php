@@ -25,8 +25,6 @@ class StoreMemberRequest extends FormRequest
         return [
             'community_id' => 'nullable|exists:communities,id',
             'community_cluster_id' => 'nullable|exists:community_clusters,id',
-            'new_olsc_id' => 'nullable|string|max:255',
-            'old_sal_id' => 'nullable|string|max:255',
             'aadhar' => 'nullable|string|max:12',
             'family_no' => 'nullable|string|max:255',
             'member_no' => 'nullable|string|max:255',
@@ -35,7 +33,7 @@ class StoreMemberRequest extends FormRequest
             'family_sequence' => 'nullable|integer',
             'member_sequence' => 'nullable|integer',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
-            'current_family_no' => 'nullable|string|max:255',
+            // 'current_family_no' => 'nullable|string|max:255', // Managed by business logic
             'spouse_member_id' => 'nullable|exists:members,id',
             'existing_family_no' => 'nullable|string|max:255',
             // 'status' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',

@@ -24,10 +24,16 @@ class UpdateMemberRequest extends FormRequest
         return [
             'community_id' => 'nullable|exists:communities,id',
             'community_cluster_id' => 'nullable|exists:community_clusters,id',
-            'new_olsc_id' => 'nullable|string|max:255',
-            'old_sal_id' => 'nullable|string|max:255',
             'aadhar' => 'nullable|string|max:12',
             'family_no' => 'nullable|string|max:255',
+            'member_no' => 'nullable|string|max:255',
+            'registration_year' => 'nullable|string|max:4',
+            'church_code' => 'nullable|string|max:3',
+            'family_sequence' => 'nullable|integer',
+            'member_sequence' => 'nullable|integer',
+            'marital_status' => 'nullable|in:single,married,divorced,widowed',
+            // 'current_family_no' => 'nullable|string|max:255', // Managed by business logic
+            'spouse_member_id' => 'nullable|exists:members,id',
             'status_id' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',
             'relationship' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',

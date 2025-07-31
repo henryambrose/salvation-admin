@@ -53,7 +53,7 @@ const tabs = [
     key: 'contact',
     label: 'Contact Info',
     fields: [
-      { key: 'contact_no', label: 'Contact No' },
+      { key: 'contact_no_1', label: 'Contact No' },
       { key: 'email', label: 'Email' },
     ],
   },
@@ -92,6 +92,11 @@ const tabs = [
       { key: 'community_id', label: 'Community' },
       { key: 'community_cluster_id', label: 'Cluster' },
       { key: 'family_no', label: 'Family No' },
+      { key: 'member_no', label: 'Member No' },
+      { key: 'registration_year', label: 'Registration Year' },
+      { key: 'church_code', label: 'Church Code' },
+      { key: 'marital_status', label: 'Marital Status' },
+      { key: 'current_family_no', label: 'Current Family No' },
     ],
   },
   {
@@ -175,6 +180,17 @@ function formatFieldValue(fieldKey: string, value: any) {
   // Handle community cluster objects
   if (fieldKey === 'community_cluster_id' && typeof value === 'object' && value.name) {
     return value.name;
+  }
+  
+  // Handle church code with badge styling
+  if (fieldKey === 'church_code') {
+    return value || 'SAL';
+  }
+  
+  // Handle marital status with proper formatting
+  if (fieldKey === 'marital_status') {
+    if (!value) return '—';
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
   
   // Handle date formatting
@@ -307,7 +323,14 @@ watch(() => currentTab.value, (newTab) => {
               >
                 <div class="text-xs font-semibold text-gray-500">{{ field.label }}</div>
                 <div class="mt-1 text-base font-medium text-gray-800 break-all">
-                  {{ formatFieldValue(field.key, member[field.key]) }}
+                  <template v-if="field.key === 'church_code'">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      {{ formatFieldValue(field.key, member[field.key]) }}
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ formatFieldValue(field.key, member[field.key]) }}
+                  </template>
                 </div>
               </div>
             </div>

@@ -24,6 +24,9 @@ Route::get('/community/{community}/members', [MemberController::class, 'getMembe
 // Family Members API Route
 Route::get('/family/{familyNo}/members', [MemberController::class, 'getMembersByFamily']);
 
+// Family Search API Route
+Route::get('/families/search', [MemberController::class, 'searchFamilies']);
+
 // Route::middleware(['auth:sanctum'])->group(function () {
     // Route::apiResource('zone', ZoneController::class);
     // Route::apiResource('blood-group', BloodGroupController::class);

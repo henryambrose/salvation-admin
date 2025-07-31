@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
+import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, Member } from '@/types';
@@ -38,21 +39,93 @@ const props = defineProps({
 
 const showViewModal = ref(false);
 const selectedMember = ref(null);
+const showAddModal = ref(false);
 const showFilters = ref(false);
+const groupByFamily = ref(false);
+const expandedFamilies = ref<string[]>([]);
+
+function toggleFamilyExpansion(familyNo: string) {
+  const index = expandedFamilies.value.indexOf(familyNo);
+  if (index > -1) {
+    expandedFamilies.value.splice(index, 1);
+  } else {
+    expandedFamilies.value.push(familyNo);
+  }
+}
 
 function openViewModal(member: any) {
   selectedMember.value = member;
   showViewModal.value = true;
 }
 
+const familyStats = computed(() => {
+  if (!props.members?.data) return { totalFamilies: 0, totalMembers: 0, averageMembersPerFamily: 0 };
+  
+  const familyCounts = props.members.data.reduce((acc: any, member: any) => {
+    const familyNo = member.family_no || 'No Family';
+    acc[familyNo] = (acc[familyNo] || 0) + 1;
+    return acc;
+  }, {});
+  
+  const totalFamilies = Object.keys(familyCounts).filter(f => f !== 'No Family').length;
+  const totalMembers = props.members.data.length;
+  const averageMembersPerFamily = totalFamilies > 0 ? (totalMembers / totalFamilies).toFixed(1) : 0;
+  
+  return { totalFamilies, totalMembers, averageMembersPerFamily };
+});
+
 const enhancedMembers = computed<Record<string, any>>(() => {
+  let members = props.members?.data.map((item: any) => ({
+    ...item,
+    added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
+    last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',
+  }));
+
+  // Filter by family search
+  if (familySearch.value) {
+    members = members.filter((member: any) => 
+      member.family_no && member.family_no.toLowerCase().includes(familySearch.value.toLowerCase())
+    );
+  }
+
+  if (groupByFamily.value) {
+    // Group members by family_no
+    const grouped = members.reduce((acc: any, member: any) => {
+      const familyNo = member.family_no || 'No Family';
+      if (!acc[familyNo]) {
+        acc[familyNo] = [];
+      }
+      acc[familyNo].push(member);
+      return acc;
+    }, {});
+
+    // Convert back to array with family headers
+    const groupedArray: any[] = [];
+    Object.entries(grouped).forEach(([familyNo, familyMembers]: [string, any]) => {
+      if (familyNo !== 'No Family') {
+        groupedArray.push({
+          isFamilyHeader: true,
+          family_no: familyNo,
+          member_count: familyMembers.length,
+          familyMembers: familyMembers
+        });
+      } else {
+        // Add ungrouped members at the end
+        familyMembers.forEach((member: any) => {
+          groupedArray.push(member);
+        });
+      }
+    });
+
+    return {
+      ...props.members,
+      data: groupedArray
+    };
+  }
+
   return {
     ...props.members,
-    data: props.members?.data.map((item: any) => ({
-      ...item,
-      added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
-      last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',
-    })),
+    data: members
   };
 });
 
@@ -63,7 +136,7 @@ const columns: Column[] = [
   { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'member_no', label: 'Member No', sortable: true },
   { key: 'church_code', label: 'Church', sortable: true },
-  { key: 'contact_no', label: 'Contact No', sortable: true },
+  { key: 'contact_no_1', label: 'Contact No', sortable: true },
   { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
   { key: 'age', label: 'Age', sortable: false },
@@ -77,6 +150,10 @@ const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
 
 function editMember(member: Member) {
   router.get(route('member.edit', member.id));
+}
+
+function addNewMember() {
+  showAddModal.value = true;
 }
 
 const showDeleteModal = ref(false);
@@ -159,6 +236,7 @@ const searchColumnsOptions = computed(() => {
 });
 
 const search = ref(props.filters?.search || '');
+const familySearch = ref('');
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 const perPage = ref(props.filters?.perPage || 10);
@@ -303,21 +381,30 @@ onMounted(() => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Members" />
     <DatatableHeader>
-      <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
-        <div class="flex flex-1 items-center gap-2">
-          <input v-model="search" type="text" class="flex-1 rounded-full border border-gray-300 px-3 py-2" placeholder="Search name or family no..." />
-          <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-            {{ showFilters ? 'Hide Filters' : 'More Filters' }}
-          </button>
+              <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+          <div class="flex flex-1 items-center gap-2">
+            <input v-model="search" type="text" class="flex-1 rounded-full border border-gray-300 px-3 py-2" placeholder="Search name or family no..." />
+            <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2" placeholder="Search by family no..." />
+            <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+              {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <Button v-if="canCreateMember" @click="addNewMember" class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
+              <component :is="Plus" />
+              <span>Add New Member</span>
+            </Button>
+            <Button @click="downloadXLS" class="px-3 py-2 rounded-full bg-blue-600 text-white">Export</Button>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <Checkbox v-model="groupByFamily" class="switch-checkbox" />
+              <span class="text-sm font-medium">Group by Family</span>
+            </label>
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <Checkbox v-model="isArchived" class="switch-checkbox" />
+              <span class="text-sm font-medium">Show Archived</span>
+            </label>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <Button @click="downloadXLS" class="px-3 py-2 rounded-full bg-blue-600 text-white">Export</Button>
-          <label class="flex items-center gap-2 cursor-pointer select-none">
-            <Checkbox v-model="isArchived" class="switch-checkbox" />
-            <span class="text-sm font-medium">Show Archived</span>
-          </label>
-        </div>
-      </div>
       <transition name="fade">
         <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
           <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
@@ -348,9 +435,23 @@ onMounted(() => {
           </select>
         </div>
       </transition>
-      <div class="mb-2 text-sm text-gray-600">
-        Showing <span class="font-semibold">{{ totalCount || 0 }}</span> members
-        <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+      <div class="mb-2 flex items-center justify-between">
+        <div class="text-sm text-gray-600">
+          Showing <span class="font-semibold">{{ totalCount || 0 }}</span> members
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+        </div>
+        <div class="flex items-center gap-4 text-sm text-gray-600">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+              {{ familyStats.totalFamilies }} Families
+            </span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+              {{ familyStats.averageMembersPerFamily }} Avg/Family
+            </span>
+          </div>
+        </div>
       </div>
     </DatatableHeader>
 
@@ -376,22 +477,53 @@ onMounted(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="item in enhancedMembers.data" :key="item.id" :id="`member-row-${item.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === item.id ? 'highlight-row' : '']">
+                <template v-for="item in enhancedMembers.data" :key="item.isFamilyHeader ? `family-${item.family_no}` : `member-${item.id}`">
+                  <!-- Family Header Row -->
+                  <tr v-if="item.isFamilyHeader" class="family-header">
+                    <td colspan="14" class="p-3">
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                          <span class="text-lg font-bold text-blue-800">Family: {{ item.family_no }}</span>
+                          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                            {{ item.member_count }} member{{ item.member_count > 1 ? 's' : '' }}
+                          </span>
+                        </div>
+                        <button 
+                          @click="toggleFamilyExpansion(item.family_no)"
+                          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
+                          {{ expandedFamilies.includes(item.family_no) ? 'Collapse' : 'Expand' }}
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                  <!-- Family Members -->
+                  <template v-if="!item.isFamilyHeader || expandedFamilies.includes(item.family_no)">
+                    <tr 
+                      v-for="member in item.isFamilyHeader ? item.familyMembers : [item]" 
+                      :key="member.id" 
+                      :id="`member-row-${member.id}`" 
+                      :class="[
+                        'even:bg-gray-50 hover:bg-blue-50 transition', 
+                        highlightedRowId === member.id ? 'highlight-row' : '',
+                        item.isFamilyHeader ? 'family-member-row' : ''
+                      ]"
+                    >
                   <!-- View + Edit or Restore -->
                   <td class="p-2">
                     <div class="flex gap-2">
                       <template v-if="!isArchived">
-                        <Button @click="openViewModal(item)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                        <Button @click="openViewModal(member)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                           <component :is="ZapIcon" />
                           <span>View</span>
                         </Button>
-                        <Button v-if="canUpdateAnyMember && !item.deleted_at" @click="editMember(item)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                        <Button v-if="canUpdateAnyMember && !member.deleted_at" @click="editMember(member)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
                           <span>Edit</span>
                         </Button>
                       </template>
                       <template v-else>
-                        <Button @click="restoreMember(item.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                        <Button @click="restoreMember(member.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                           Restore
                         </Button>
                       </template>
@@ -400,39 +532,51 @@ onMounted(() => {
                   <!-- Main table data -->
                   <td v-for="col in columns" :key="col.key" class="p-2">
                     <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
-                      {{ formatDate(item[col.key]) }}
+                      {{ formatDate(member[col.key]) }}
                     </template>
                     <template v-else-if="col.key === 'age'">
-                      {{ calculateAge(item.date_of_birth) }}
+                      {{ calculateAge(member.date_of_birth) }}
                     </template>
                     <template v-else-if="col.key === 'relationship_id'">
-                      {{ getRelationshipName(item.relationship_id) }}
+                      {{ getRelationshipName(member.relationship_id) }}
                     </template>
                     <template v-else-if="col.key === 'blood_group_id'">
-                      {{ getBloodGroupName(item.blood_group_id) }}
+                      {{ getBloodGroupName(member.blood_group_id) }}
                     </template>
                     <template v-else-if="col.key === 'gender_id'">
-                      {{ getGenderName(item.gender_id) }}
+                      {{ getGenderName(member.gender_id) }}
                     </template>
                     <template v-else-if="col.key === 'church_code'">
                       <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {{ item[col.key] || 'SAL' }}
+                        {{ member[col.key] || 'SAL' }}
+                      </span>
+                    </template>
+                    <template v-else-if="col.key === 'family_no'">
+                      <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium font-mono">
+                        {{ member[col.key] || '—' }}
+                      </span>
+                    </template>
+                    <template v-else-if="col.key === 'member_no'">
+                      <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium font-mono">
+                        {{ member[col.key] || '—' }}
                       </span>
                     </template>
                     <template v-else>
-                      {{ item[col.key] }}
+                      {{ member[col.key] }}
                     </template>
                   </td>
                   <!-- Delete -->
                   <td v-if="!isArchived" class="p-2">
-                    <template v-if="canDeleteAnyMember && !item.deleted_at">
-                      <Button variant="destructive" @click="openDeleteModal(item)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <template v-if="canDeleteAnyMember && !member.deleted_at">
+                      <Button variant="destructive" @click="openDeleteModal(member)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                         <component :is="Trash" />
                         <span>Delete</span>
                       </Button>
                     </template>
                   </td>
                 </tr>
+                  </template>
+                </template>
               </tbody>
             </table>
           </div>
@@ -457,6 +601,13 @@ onMounted(() => {
 
   <!-- Member Details Modal -->
   <ViewMemberModal v-model="showViewModal" :member="selectedMember" :familyIncomeRange="null" />
+
+  <!-- Add Member Modal -->
+  <AddMemberModal 
+    v-model="showAddModal" 
+    :communities="props.communities || []" 
+    :relationships="props.relationships || []" 
+  />
 
   <!-- Delete Modal -->
   <transition name="fade">
@@ -543,5 +694,24 @@ onMounted(() => {
 @keyframes highlight-fade {
   0% { background-color: #fde047; }
   100% { background-color: inherit; }
+}
+
+.bg-gray-25 {
+  background-color: #fafafa;
+}
+
+.family-header {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-bottom: 2px solid #3b82f6;
+}
+
+.family-member-row {
+  background-color: #fafafa;
+  border-left: 3px solid #e5e7eb;
+}
+
+.family-member-row:hover {
+  background-color: #f3f4f6;
+  border-left-color: #3b82f6;
 }
 </style>

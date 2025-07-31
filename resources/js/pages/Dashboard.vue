@@ -160,7 +160,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                                             </td>
                                             <td class="p-4">
                                                 <div class="flex items-center gap-2">
-                                                    <a v-if="birthday.contact_no" :href="`tel:${birthday.contact_no}`" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200">
+                                                    <a v-if="birthday.contact_no_1" :href="`tel:${birthday.contact_no_1}`" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200">
                                                         <Phone class="w-4 h-4" />
                                                     </a>
                                                     <a v-if="birthday.email" :href="`mailto:${birthday.email}`" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200">

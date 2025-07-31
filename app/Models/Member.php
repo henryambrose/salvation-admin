@@ -120,29 +120,37 @@ class Member extends Model
         parent::boot();
         
         static::creating(function ($member) {
-            if (!$member->family_no) {
-                $numberingService = new \App\Services\FamilyNumberingService($member->church_code ?? 'SAL');
-                
-                // Generate family number
-                $member->family_no = $numberingService->generateFamilyNumber(
+            $numberingService = new \App\Services\FamilyNumberingService($member->church_code ?? 'SAL');
+            
+            // Generate independent member number if not set
+            if (!$member->member_no) {
+                $member->member_no = $numberingService->generateMemberNumber(
                     $member->registration_year ?? date('Y'),
                     $member->church_code ?? 'SAL'
                 );
-                
-                // Parse family number to extract components
-                $familyInfo = $numberingService->parseFamilyNumber($member->family_no);
-                $member->family_sequence = $familyInfo['family_sequence'];
-                $member->registration_year = $familyInfo['year'];
-                $member->church_code = $familyInfo['church_code'];
-                
-                // Generate member number
-                $member->member_no = $numberingService->generateMemberNumber(
-                    $member->family_no,
-                    $member->family_sequence
+            }
+            
+            // Generate family group and member number if not set
+            if (!$member->family_no) {
+                $familyGroup = $numberingService->generateFamilyGroupNumber(
+                    $member->church_code ?? 'SAL'
                 );
-                
-                // Set member sequence
-                $member->member_sequence = (int) explode('-', $member->member_no)[1];
+                $member->family_no = $numberingService->generateMemberNumberInFamily($familyGroup);
+            }
+            
+            // Parse member number to extract components
+            if ($member->member_no) {
+                $memberInfo = $numberingService->parseMemberNumber($member->member_no);
+                $member->registration_year = $memberInfo['year'];
+                $member->church_code = $memberInfo['church_code'];
+                $member->member_sequence = $memberInfo['member_sequence'];
+            }
+            
+            // Parse family number to extract components
+            if ($member->family_no) {
+                $familyInfo = $numberingService->parseFamilyNumber($member->family_no);
+                $member->family_sequence = $familyInfo['family_group'];
+                $member->member_sequence = $familyInfo['member_sequence'];
             }
         });
     }

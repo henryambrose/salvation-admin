@@ -43,10 +43,16 @@ export interface Member {
   id: number;
   community_id?: number | null;
   community_cluster_id?: number | null;
-  new_olsc_id?: string | null;
-  old_sal_id?: string | null;
   aadhar?: string | null;
   family_no?: string | null;
+  member_no?: string | null;
+  registration_year?: string | null;
+  church_code?: string | null;
+  family_sequence?: number | null;
+  member_sequence?: number | null;
+  marital_status?: 'single' | 'married' | 'divorced' | 'widowed';
+  current_family_no?: string | null;
+  spouse_member_id?: number | null;
   status: 'Resident' | 'Non-Resident' | 'Dead' | 'Redevelopment Unsettled';
   relationship?: string | null;
   last_name?: string | null;
@@ -69,7 +75,7 @@ export interface Member {
   current_pincode?: string | null;
   current_state_id?: number | null;
   current_country_id?: number | null;
-  contact_no?: string | null;
+  contact_no_1?: string | null;
   email?: string | null;
   blood_group_id?: number | null;
   cells_and_association_id?: number | null;

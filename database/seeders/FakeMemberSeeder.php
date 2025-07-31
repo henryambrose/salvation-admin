@@ -126,7 +126,7 @@ class FakeMemberSeeder extends Seeder
                 'current_pincode' => $faker->numerify('######'),
                 'current_state_id' => $states->random()->id,
                 'current_country_id' => $countries->random()->id,
-                'contact_no' => $contactNo,
+                'contact_no_1' => $contactNo,
                 'email' => $email,
                 'blood_group_id' => $bloodGroups->random()->id,
                 'cells_and_association_id' => $cellsAndAssociations->random()->id,
