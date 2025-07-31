@@ -22,32 +22,20 @@ class FamilyNumberingService
         $churchCode = $churchCode ?? $this->churchCode;
         $churchCode = strtoupper($churchCode);
         
-        // Get or create sequence for this church
-        $sequence = DB::table('church_family_numbering_sequences')
+        // Find the highest family group number for this church
+        $highestFamily = DB::table('members')
             ->where('church_code', $churchCode)
-            ->whereNull('year') // Family group sequences are not year-specific
-            ->lockForUpdate()
+            ->whereNotNull('family_no')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
             ->first();
         
-        if (!$sequence) {
-            // Create new sequence
-            $nextSequence = 1;
-            DB::table('church_family_numbering_sequences')->insert([
-                'year' => null,
-                'church_code' => $churchCode,
-                'last_sequence' => $nextSequence,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+        if ($highestFamily) {
+            // Parse the highest family number to get the group sequence
+            $parsed = $this->parseFamilyNumber($highestFamily->family_no);
+            $nextSequence = $parsed['family_group'] + 1;
         } else {
-            // Increment existing sequence
-            $nextSequence = $sequence->last_sequence + 1;
-            DB::table('church_family_numbering_sequences')
-                ->where('id', $sequence->id)
-                ->update([
-                    'last_sequence' => $nextSequence,
-                    'updated_at' => now()
-                ]);
+            // No existing families for this church, start with 1
+            $nextSequence = 1;
         }
         
         // Format: SAL-XXX
@@ -86,32 +74,21 @@ class FamilyNumberingService
         $churchCode = $churchCode ?? $this->churchCode;
         $churchCode = strtoupper($churchCode);
         
-        // Get or create sequence for this year and church
-        $sequence = DB::table('church_family_numbering_sequences')
-            ->where('year', $year)
+        // Find the highest member sequence for this year and church
+        $highestMember = DB::table('members')
+            ->where('registration_year', $year)
             ->where('church_code', $churchCode)
-            ->lockForUpdate()
+            ->whereNotNull('member_no')
+            ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
             ->first();
         
-        if (!$sequence) {
-            // Create new sequence for this year and church
-            $nextSequence = 1;
-            DB::table('church_family_numbering_sequences')->insert([
-                'year' => $year,
-                'church_code' => $churchCode,
-                'last_sequence' => $nextSequence,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
+        if ($highestMember) {
+            // Parse the highest member number to get the sequence
+            $parsed = $this->parseMemberNumber($highestMember->member_no);
+            $nextSequence = $parsed['member_sequence'] + 1;
         } else {
-            // Increment existing sequence
-            $nextSequence = $sequence->last_sequence + 1;
-            DB::table('church_family_numbering_sequences')
-                ->where('id', $sequence->id)
-                ->update([
-                    'last_sequence' => $nextSequence,
-                    'updated_at' => now()
-                ]);
+            // No existing members for this year/church, start with 1
+            $nextSequence = 1;
         }
         
         // Format: YYYY-SAL-MNNNNN
@@ -182,6 +159,7 @@ class FamilyNumberingService
             'church_code' => $parsed['church_code'],
             'family_group' => $parsed['family_group'],
             'member_sequence' => $parsed['member_sequence'],
+            'year' => date('Y'), // Current year for new members
             'church_name' => $this->getChurchName($parsed['church_code'])
         ];
     }
@@ -257,7 +235,7 @@ class FamilyNumberingService
         ];
     }
 
-    private function getFamilyGroupFromNumber($familyNo)
+    public function getFamilyGroupFromNumber($familyNo)
     {
         $parsed = $this->parseFamilyNumber($familyNo);
         return $parsed['church_code'] . '-' . str_pad($parsed['family_group'], 3, '0', STR_PAD_LEFT);
@@ -328,7 +306,8 @@ class FamilyNumberingService
 
             if ($members->count() > 0) {
                 $families[] = [
-                    'family_no' => $familyGroup,
+                    'family_no' => $familyNo, // Use the actual family number from database
+                    'family_group' => $familyGroup, // Keep family group for reference
                     'member_count' => $members->count(),
                     'members' => $members->map(function ($member) {
                         return $member->first_name . ' ' . $member->last_name;

@@ -281,7 +281,7 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.status_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="relationship_id">Relationship</Label>
+              <Label for="relationship_id">Relationship <span class="text-red-500">*</span></Label>
               <SearchDropdown
                 id="relationship_id"
                 v-model="form.relationship_id"
@@ -397,7 +397,7 @@ function formatDate(dateStr: string) {
           <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Community Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
-              <Label for="community_id">Community</Label>
+              <Label for="community_id">Community <span class="text-red-500">*</span></Label>
               <SearchDropdown
                 id="community_id"
                 v-model="form.community_id"

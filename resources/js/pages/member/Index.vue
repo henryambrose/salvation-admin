@@ -9,7 +9,7 @@ import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Column, Member } from '@/types';
+import { Column, Member, FamilyStats } from '@/types';
 import { router } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
@@ -25,6 +25,7 @@ const props = defineProps({
   genders: Array<{ id: string | number; name: string }>,
   members: Object,
   totalCount: Number,
+  familyStats: Object as () => FamilyStats,
   filters: Object,
   fetchUrl: String,
   canViewAnyMember: Boolean,
@@ -59,19 +60,8 @@ function openViewModal(member: any) {
 }
 
 const familyStats = computed(() => {
-  if (!props.members?.data) return { totalFamilies: 0, totalMembers: 0, averageMembersPerFamily: 0 };
-  
-  const familyCounts = props.members.data.reduce((acc: any, member: any) => {
-    const familyNo = member.family_no || 'No Family';
-    acc[familyNo] = (acc[familyNo] || 0) + 1;
-    return acc;
-  }, {});
-  
-  const totalFamilies = Object.keys(familyCounts).filter(f => f !== 'No Family').length;
-  const totalMembers = props.members.data.length;
-  const averageMembersPerFamily = totalFamilies > 0 ? (totalMembers / totalFamilies).toFixed(1) : 0;
-  
-  return { totalFamilies, totalMembers, averageMembersPerFamily };
+  // Use server-provided statistics for total records
+  return props.familyStats || { totalFamilies: 0, totalMembers: 0, averageMembersPerFamily: 0 };
 });
 
 const enhancedMembers = computed<Record<string, any>>(() => {
@@ -80,48 +70,6 @@ const enhancedMembers = computed<Record<string, any>>(() => {
     added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
     last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',
   }));
-
-  // Filter by family search
-  if (familySearch.value) {
-    members = members.filter((member: any) => 
-      member.family_no && member.family_no.toLowerCase().includes(familySearch.value.toLowerCase())
-    );
-  }
-
-  if (groupByFamily.value) {
-    // Group members by family_no
-    const grouped = members.reduce((acc: any, member: any) => {
-      const familyNo = member.family_no || 'No Family';
-      if (!acc[familyNo]) {
-        acc[familyNo] = [];
-      }
-      acc[familyNo].push(member);
-      return acc;
-    }, {});
-
-    // Convert back to array with family headers
-    const groupedArray: any[] = [];
-    Object.entries(grouped).forEach(([familyNo, familyMembers]: [string, any]) => {
-      if (familyNo !== 'No Family') {
-        groupedArray.push({
-          isFamilyHeader: true,
-          family_no: familyNo,
-          member_count: familyMembers.length,
-          familyMembers: familyMembers
-        });
-      } else {
-        // Add ungrouped members at the end
-        familyMembers.forEach((member: any) => {
-          groupedArray.push(member);
-        });
-      }
-    });
-
-    return {
-      ...props.members,
-      data: groupedArray
-    };
-  }
 
   return {
     ...props.members,
@@ -249,33 +197,52 @@ const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(props.filters?.isArchived || false);
 
+// Debounced search to prevent too many API calls
+let searchTimeout: number;
+
 watch(
-  [search, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived],
-  () => {
-    fetch();
+  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived, groupByFamily],
+  (newValues, oldValues) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      console.log('Search values changed:', {
+        search: search.value,
+        familySearch: familySearch.value,
+        groupByFamily: groupByFamily.value,
+        newValues,
+        oldValues
+      });
+      fetch();
+    }, 300); // 300ms debounce
   },
   { immediate: false, deep: false },
 );
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
+    const params = {
+      search: search.value,
+      familySearch: familySearch.value,
+      groupByFamily: groupByFamily.value ? 'true' : 'false',
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      communityId: communityId.value,
+      relationship: relationship.value,
+      ageGroup: ageGroup.value,
+      bloodGroup: bloodGroup.value,
+      gender: gender.value,
+      filterColumnKey: filterColumnKey.value,
+      filterColumnValue: filterColumnValue.value,
+      isArchived: isArchived.value ? 'true' : 'false', // send as string
+      page,
+    };
+    
+    console.log('Fetching with params:', params);
+    
     router.get(
       props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        communityId: communityId.value,
-        relationship: relationship.value,
-        ageGroup: ageGroup.value,
-        bloodGroup: bloodGroup.value,
-        gender: gender.value,
-        filterColumnKey: filterColumnKey.value,
-        filterColumnValue: filterColumnValue.value,
-        isArchived: isArchived.value ? 'true' : 'false', // send as string
-        page,
-      },
+      params,
       {
         preserveState: true,
         replace: true,
@@ -298,9 +265,86 @@ function toggleisArchived() {
   isArchived.value = !isArchived.value;
 }
 
+// Search handling functions
+function handleSearchInput() {
+  // The watch will handle the debounced search
+}
+
+function handleFamilySearchInput() {
+  // The watch will handle the debounced search
+}
+
+function clearSearch() {
+  search.value = '';
+  // Force immediate fetch to clear results
+  clearTimeout(searchTimeout);
+  // Force fresh request without preserving state
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        familySearch: familySearch.value,
+        groupByFamily: groupByFamily.value ? 'true' : 'false',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        communityId: communityId.value,
+        relationship: relationship.value,
+        ageGroup: ageGroup.value,
+        bloodGroup: bloodGroup.value,
+        gender: gender.value,
+        filterColumnKey: filterColumnKey.value,
+        filterColumnValue: filterColumnValue.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      {
+        preserveState: false,
+        replace: true,
+      },
+    );
+  }
+}
+
+function clearFamilySearch() {
+  familySearch.value = '';
+  // Force immediate fetch to clear results
+  clearTimeout(searchTimeout);
+  // Force fresh request without preserving state
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: search.value,
+        familySearch: '',
+        groupByFamily: groupByFamily.value ? 'true' : 'false',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        communityId: communityId.value,
+        relationship: relationship.value,
+        ageGroup: ageGroup.value,
+        bloodGroup: bloodGroup.value,
+        gender: gender.value,
+        filterColumnKey: filterColumnKey.value,
+        filterColumnValue: filterColumnValue.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      {
+        preserveState: false,
+        replace: true,
+      },
+    );
+  }
+}
+
 async function downloadXLS() {
   const params = new URLSearchParams({
     search: search.value,
+    familySearch: familySearch.value,
+    groupByFamily: groupByFamily.value ? 'true' : 'false',
     communityId: communityId.value,
     relationship: relationship.value,
     ageGroup: ageGroup.value,
@@ -383,8 +427,40 @@ onMounted(() => {
     <DatatableHeader>
               <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
           <div class="flex flex-1 items-center gap-2">
-            <input v-model="search" type="text" class="flex-1 rounded-full border border-gray-300 px-3 py-2" placeholder="Search name or family no..." />
-            <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2" placeholder="Search by family no..." />
+            <div class="flex-1 relative">
+              <input 
+                v-model="search" 
+                type="text" 
+                class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8" 
+                placeholder="Search name or family no..." 
+                @input="handleSearchInput"
+                @keydown.escape="clearSearch"
+              />
+              <button 
+                v-if="search" 
+                @click="clearSearch" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            <div class="relative">
+              <input 
+                v-model="familySearch" 
+                type="text" 
+                class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8" 
+                placeholder="Search by family no..." 
+                @input="handleFamilySearchInput"
+                @keydown.escape="clearFamilySearch"
+              />
+              <button 
+                v-if="familySearch" 
+                @click="clearFamilySearch" 
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
             <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
               {{ showFilters ? 'Hide Filters' : 'More Filters' }}
             </button>
@@ -437,7 +513,7 @@ onMounted(() => {
       </transition>
       <div class="mb-2 flex items-center justify-between">
         <div class="text-sm text-gray-600">
-          Showing <span class="font-semibold">{{ totalCount || 0 }}</span> members
+          Showing <span class="font-semibold">{{ familyStats.totalMembers || 0 }}</span> total members
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
         <div class="flex items-center gap-4 text-sm text-gray-600">

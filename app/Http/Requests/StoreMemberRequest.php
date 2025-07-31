@@ -23,7 +23,7 @@ class StoreMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'community_id' => 'nullable|exists:communities,id',
+            'community_id' => 'required|exists:communities,id',
             'community_cluster_id' => 'nullable|exists:community_clusters,id',
             'aadhar' => 'nullable|string|max:12',
             'family_no' => 'nullable|string|max:255',
@@ -82,7 +82,7 @@ class StoreMemberRequest extends FormRequest
             'death_parish' => 'nullable|string|max:255',
             'gender_id' => 'nullable|exists:genders,id',
             'status_id' => 'nullable|exists:statuses,id',
-            'relationship_id' => 'nullable|exists:relationships,id',
+            'relationship_id' => 'required|exists:relationships,id',
             'parish_id' => 'nullable|exists:parishes,id',
             'designation_id' => 'nullable|exists:designations,id',
         ];

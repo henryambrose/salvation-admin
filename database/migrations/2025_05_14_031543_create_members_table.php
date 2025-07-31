@@ -47,7 +47,7 @@ return new class extends Migration
             $table->string('college_name')->nullable();
             $table->string('latest_qualifications')->nullable();
             $table->string('company_name')->nullable();
-            $table->string('designation')->nullable();
+            // $table->string('designation')->nullable();
             $table->string('annual_income')->nullable();
             $table->date('baptism_date')->nullable();
             $table->string('baptism_reg_no')->nullable();

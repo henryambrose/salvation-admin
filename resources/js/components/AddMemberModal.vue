@@ -19,6 +19,7 @@
             <div class="mb-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Family Information</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- New Family Option -->
                 <div class="space-y-4">
                   <label class="flex items-center space-x-3 cursor-pointer">
                     <input 
@@ -36,6 +37,7 @@
                   </div>
                 </div>
                 
+                <!-- Existing Family Option -->
                 <div class="space-y-4">
                   <label class="flex items-center space-x-3 cursor-pointer">
                     <input 
@@ -46,25 +48,23 @@
                     />
                     <span class="text-gray-700">Existing Family</span>
                   </label>
-                  <div v-if="familyType === 'existing'" class="ml-6">
-                    <div class="space-y-2">
-                      <input 
-                        v-model="existingFamilyNo" 
-                        type="text" 
-                        placeholder="Enter family number (e.g., SAL-001-001)"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                                             <button 
-                         type="button"
-                         @click="searchFamilies"
-                         :disabled="isSearching"
-                         class="text-sm text-blue-600 hover:text-blue-800 underline disabled:opacity-50 disabled:cursor-not-allowed"
-                       >
-                         <span v-if="isSearching">Searching...</span>
-                         <span v-else>Search existing families</span>
-                       </button>
-                      <p class="text-xs text-gray-500">Enter the existing family number to add this member to that family</p>
-                    </div>
+                  <div v-if="familyType === 'existing'" class="ml-6 space-y-3">
+                    <input 
+                      v-model="existingFamilyNo" 
+                      type="text"
+                      placeholder="Enter family number (e.g., SAL-001-001)"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <button 
+                      type="button"
+                      @click="searchFamilies"
+                      :disabled="isSearching"
+                      class="text-sm text-blue-600 hover:text-blue-800 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <span v-if="isSearching">Searching...</span>
+                      <span v-else>Search existing families</span>
+                    </button>
+                    <p class="text-xs text-gray-500">Enter the existing family number to add this member to that family</p>
                     
                     <!-- Family Search Results -->
                     <div v-if="showFamilySearch" class="mt-4 p-4 bg-gray-50 rounded-lg">
@@ -108,11 +108,12 @@
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Member Information</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">First Name <span class="text-red-500">*</span></label>
                   <input 
                     v-model="form.first_name" 
                     type="text" 
                     required
+                    placeholder="Enter first name"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -122,6 +123,7 @@
                   <input 
                     v-model="form.last_name" 
                     type="text" 
+                    placeholder="Enter last name"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -131,6 +133,7 @@
                   <input 
                     v-model="form.middle_name" 
                     type="text" 
+                    placeholder="Enter middle name"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -149,6 +152,7 @@
                   <input 
                     v-model="form.contact_no_1" 
                     type="tel" 
+                    placeholder="Enter contact number"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -158,6 +162,7 @@
                   <input 
                     v-model="form.email" 
                     type="email" 
+                    placeholder="Enter email address"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -169,7 +174,7 @@
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Community Information</h3>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Community</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Community <span class="text-red-500">*</span></label>
                   <select 
                     v-model="form.community_id" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -182,7 +187,7 @@
                 </div>
                 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Relationship <span class="text-red-500">*</span></label>
                   <select 
                     v-model="form.relationship_id" 
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -203,13 +208,13 @@
                 <div>
                   <span class="font-medium text-gray-700">Family Number:</span>
                   <span class="ml-2 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium font-mono">
-                    {{ previewFamilyNo }}
+                    {{ previewFamilyNo === 'Loading...' ? 'Loading...' : previewFamilyNo }}
                   </span>
                 </div>
                 <div>
                   <span class="font-medium text-gray-700">Member Number:</span>
                   <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium font-mono">
-                    {{ previewMemberNo }}
+                    {{ previewMemberNo === 'Loading...' ? 'Loading...' : previewMemberNo }}
                   </span>
                 </div>
               </div>
@@ -287,15 +292,32 @@ const form = ref({
   existing_family_no: ''
 });
 
-// Computed properties for preview
-const previewFamilyNo = computed(() => {
-  return 'SAL-001-001'; // This would be generated by the backend
-});
+// Preview data
+const previewFamilyNo = ref('Loading...');
+const previewMemberNo = ref('Loading...');
 
-const previewMemberNo = computed(() => {
-  const year = new Date().getFullYear();
-  return `${year}-SAL-M000001`; // This would be generated by the backend
-});
+// Fetch next available numbers
+const fetchNextNumbers = async () => {
+  try {
+    console.log('Fetching next numbers...');
+    const response = await fetch('/api/members/next-numbers');
+    if (response.ok) {
+      const data = await response.json();
+      console.log('Received data:', data);
+      previewFamilyNo.value = data.next_family_no;
+      previewMemberNo.value = data.next_member_no;
+      console.log('Updated preview - Family:', previewFamilyNo.value, 'Member:', previewMemberNo.value);
+    } else {
+      console.error('API response not ok:', response.status);
+      previewFamilyNo.value = 'Error loading';
+      previewMemberNo.value = 'Error loading';
+    }
+  } catch (error) {
+    console.error('Error fetching next numbers:', error);
+    previewFamilyNo.value = 'Error loading';
+    previewMemberNo.value = 'Error loading';
+  }
+};
 
 // Family search functions
 const searchFamilies = () => {
@@ -363,13 +385,21 @@ const validateForm = () => {
     errors.value.push('First name is required');
   }
   
+  if (!form.value.community_id) {
+    errors.value.push('Community is required');
+  }
+  
+  if (!form.value.relationship_id) {
+    errors.value.push('Relationship is required');
+  }
+  
   if (familyType.value === 'existing' && !existingFamilyNo.value.trim()) {
     errors.value.push('Existing family number is required');
   }
   
   if (familyType.value === 'existing' && existingFamilyNo.value.trim()) {
     // Validate family number format
-    const familyNoPattern = /^[A-Z]{3}-\d{3}-\d{3}$/;
+    const familyNoPattern = /^SAL-\d{3}-\d{3}$/;
     if (!familyNoPattern.test(existingFamilyNo.value)) {
       errors.value.push('Family number must be in format: SAL-XXX-YYY');
     }
@@ -378,13 +408,14 @@ const validateForm = () => {
   return errors.value.length === 0;
 };
 
-// Form submission
+// Submit form
 const submitForm = async () => {
   if (!validateForm()) {
     return;
   }
   
   isSubmitting.value = true;
+  errors.value = [];
   
   try {
     const formData = {
@@ -432,6 +463,8 @@ const resetForm = () => {
   familySearchQuery.value = '';
   familySearchResults.value = [];
   isSearching.value = false;
+  previewFamilyNo.value = 'Loading...';
+  previewMemberNo.value = 'Loading...';
 };
 
 // Close modal
@@ -442,8 +475,19 @@ const closeModal = () => {
 
 // Watch for modal state changes
 watch(() => props.modelValue, (newValue) => {
-  if (!newValue) {
+  if (newValue) {
+    // Modal opened - fetch next numbers
+    fetchNextNumbers();
+  } else {
     resetForm();
+  }
+});
+
+// Watch for family type changes
+watch(familyType, (newType) => {
+  if (newType === 'new') {
+    // User selected new family - refresh numbers
+    fetchNextNumbers();
   }
 });
 </script>
@@ -451,12 +495,13 @@ watch(() => props.modelValue, (newValue) => {
 <style scoped>
 .fade-scale-enter-active,
 .fade-scale-leave-active {
-  transition: all 0.3s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
 }
-
 .fade-scale-enter-from,
 .fade-scale-leave-to {
   opacity: 0;
-  transform: scale(0.9);
+  transform: scale(0.95);
 }
 </style> 

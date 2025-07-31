@@ -304,3 +304,9 @@ export interface Relationship {
 }
 
 export type Relationships = Relationship[];
+
+export interface FamilyStats {
+  totalMembers: number;
+  totalFamilies: number;
+  averageMembersPerFamily: number;
+}

@@ -22,6 +22,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use DB;
 
 class MemberController extends Controller
 {
@@ -73,6 +74,11 @@ class MemberController extends Controller
                   });
 
             });
+        }
+
+        // Family-specific search logic (server-side)
+        if ($familySearch = $request->input('familySearch')) {
+            $query->where('family_no', 'like', "%$familySearch%");
         }
 
         // Community filter
@@ -134,21 +140,139 @@ class MemberController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
+        $groupByFamily = $request->input('groupByFamily') === 'true';
 
-        // Get total count before pagination
-        $totalCount = $query->count();
-
-        $data = $query->paginate($perPage)->appends($request->query());
-        $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
-            foreach ($dropdownColumns as $key => $relation) {
-                if (isset($item->{$relation['relation']})) {
-                    $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
-                } else {
-                    $item->$key = '';
-                }
+        // Handle family grouping
+        if ($groupByFamily) {
+            // Get all families that match the current filters
+            $familyQuery = clone $query;
+            $familyNumbers = $familyQuery->distinct()->pluck('family_no')->filter()->values();
+            
+            // Get all members from these families
+            $allFamilyMembers = $query->whereIn('family_no', $familyNumbers)->get();
+            
+            // Group by family
+            $groupedData = [];
+            $familyGroups = $allFamilyMembers->groupBy('family_no');
+            
+            foreach ($familyGroups as $familyNo => $members) {
+                // Add family header
+                $groupedData[] = [
+                    'isFamilyHeader' => true,
+                    'family_no' => $familyNo,
+                    'member_count' => $members->count(),
+                    'familyMembers' => $members->map(function ($item) use ($dropdownColumns) {
+                        foreach ($dropdownColumns as $key => $relation) {
+                            if (isset($item->{$relation['relation']})) {
+                                $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
+                            } else {
+                                $item->$key = '';
+                            }
+                        }
+                        return $item;
+                    })->toArray()
+                ];
             }
-            return $item;
-        });
+            
+            // Add ungrouped members (those without family_no)
+            $ungroupedMembers = $query->whereNull('family_no')->get();
+            foreach ($ungroupedMembers as $member) {
+                foreach ($dropdownColumns as $key => $relation) {
+                    if (isset($member->{$relation['relation']})) {
+                        $member->$key = $member->{$relation['relation']}->{$relation['column']} ?? '';
+                    } else {
+                        $member->$key = '';
+                    }
+                }
+                $groupedData[] = $member;
+            }
+            
+            // Create pagination-like structure
+            $totalCount = count($groupedData);
+            $data = new \Illuminate\Pagination\LengthAwarePaginator(
+                collect($groupedData),
+                $totalCount,
+                $perPage,
+                1,
+                ['path' => request()->url(), 'pageName' => 'page']
+            );
+        } else {
+            // Normal pagination
+            $totalCount = $query->count();
+            $data = $query->paginate($perPage)->appends($request->query());
+            $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
+                foreach ($dropdownColumns as $key => $relation) {
+                    if (isset($item->{$relation['relation']})) {
+                        $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
+                    } else {
+                        $item->$key = '';
+                    }
+                }
+                return $item;
+            });
+        }
+
+        // Calculate total family statistics (for all data, not just current page)
+        $totalStatsQuery = Member::query();
+        
+        // Apply the same filters as the main query
+        if ($request->input('isArchived') === 'true') {
+            $totalStatsQuery->onlyTrashed();
+        } else {
+            $totalStatsQuery->withoutTrashed();
+        }
+        
+        if ($search = $request->input('search')) {
+            $totalStatsQuery->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                  ->orWhere('family_no', 'like', "%$search%")
+                  ->orWhereHas('community', function ($q2) use ($search) {
+                      $q2->where('name', 'like', "%$search%");
+                  });
+            });
+        }
+        
+        if ($familySearch = $request->input('familySearch')) {
+            $totalStatsQuery->where('family_no', 'like', "%$familySearch%");
+        }
+        
+        if ($communityId = $request->input('communityId')) {
+            $totalStatsQuery->where('community_id', $communityId);
+        }
+        
+        if ($relationship = $request->input('relationship')) {
+            $totalStatsQuery->where('relationship_id', $relationship);
+        }
+        
+        if ($ageGroup = $request->input('ageGroup')) {
+            $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
+            if ($ageGroupModel) {
+                $minAge = $ageGroupModel->min_age;
+                $maxAge = $ageGroupModel->max_age;
+                $totalStatsQuery->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$minAge, $maxAge]);
+            }
+        }
+        
+        if ($bloodGroup = $request->input('bloodGroup')) {
+            $totalStatsQuery->where('blood_group_id', $bloodGroup);
+        }
+        
+        if ($gender = $request->input('gender')) {
+            $totalStatsQuery->where('gender_id', $gender);
+        }
+        
+        // Get total statistics
+        $totalMembers = $totalStatsQuery->count();
+        $totalFamilies = $totalStatsQuery->distinct()->whereNotNull('family_no')->count('family_no');
+        $averageMembersPerFamily = $totalFamilies > 0 ? round($totalMembers / $totalFamilies, 1) : 0;
+        
+        $familyStats = [
+            'totalMembers' => $totalMembers,
+            'totalFamilies' => $totalFamilies,
+            'averageMembersPerFamily' => $averageMembersPerFamily
+        ];
 
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
@@ -159,6 +283,7 @@ class MemberController extends Controller
             'fetchUrl' => route('member.index'),
             'members' => $data,
             'totalCount' => $totalCount,
+            'familyStats' => $familyStats,
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
             'canViewAnyMember' => true,
             'canCreateMember' => true,
@@ -232,21 +357,24 @@ class MemberController extends Controller
                 
                 // Validate existing family number
                 if (!$numberingService->validateFamilyNumber($familyNo)) {
-                    throw new \Exception('Invalid family number format. Expected: YYYY-SAL-FNNNNN');
+                    throw new \Exception('Invalid family number format. Expected: SAL-XXX-YYY');
+                }
+                
+                // Check if family actually exists in database
+                $existingFamily = Member::where('family_no', 'like', $numberingService->getFamilyGroupFromNumber($familyNo) . '-%')->first();
+                if (!$existingFamily) {
+                    throw new \Exception('Family number "' . $familyNo . '" does not exist. Please search for existing families or create a new family.');
                 }
                 
                 $familyInfo = $numberingService->getFamilyInfo($familyNo);
                 $data['family_no'] = $familyNo;
-                $data['family_sequence'] = $familyInfo['family_sequence'];
+                $data['family_sequence'] = $familyInfo['family_group'];
                 $data['registration_year'] = $familyInfo['year'];
                 $data['church_code'] = $familyInfo['church_code'];
                 
                 // Generate member number for existing family
-                $data['member_no'] = $numberingService->generateMemberNumber(
-                    $familyNo,
-                    $familyInfo['family_sequence']
-                );
-                $data['member_sequence'] = (int) explode('-', $data['member_no'])[1];
+                $data['member_no'] = $numberingService->generateMemberNumber();
+                $data['member_sequence'] = $familyInfo['member_sequence'];
                 
             } else {
                 // New family - numbers will be auto-generated in model
@@ -452,6 +580,11 @@ class MemberController extends Controller
             });
         }
 
+        // Family-specific search filter
+        if ($familySearch = $request->input('familySearch')) {
+            $query->where('family_no', 'like', "%$familySearch%");
+        }
+
         if ($communityId = $request->input('communityId')) {
             $query->where('community_id', $communityId);
         }
@@ -480,7 +613,22 @@ class MemberController extends Controller
             $query->where('gender_id', $gender);
         }
 
-        $members = $query->get();
+        $groupByFamily = $request->input('groupByFamily') === 'true';
+        
+        if ($groupByFamily) {
+            // Get all families that match the current filters
+            $familyQuery = clone $query;
+            $familyNumbers = $familyQuery->distinct()->pluck('family_no')->filter()->values();
+            
+            // Get all members from these families
+            $members = $query->whereIn('family_no', $familyNumbers)->get();
+            
+            // Also get ungrouped members
+            $ungroupedMembers = $query->whereNull('family_no')->get();
+            $members = $members->merge($ungroupedMembers);
+        } else {
+            $members = $query->get();
+        }
          // Prepare data for export
         $exportData = [];
         $headers = [
@@ -695,6 +843,32 @@ class MemberController extends Controller
         $statistics = $numberingService->getChurchStatistics($churchCode);
         
         return response()->json($statistics);
+    }
+
+    public function getNextAvailableNumbers()
+    {
+        $numberingService = new \App\Services\FamilyNumberingService('SAL');
+        
+        $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
+        $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
+        $nextMemberNo = $numberingService->generateMemberNumber();
+        
+        return response()->json([
+            'next_family_no' => $nextFamilyNo,
+            'next_member_no' => $nextMemberNo,
+            'family_group' => $nextFamilyGroup,
+            'timestamp' => now()->toISOString(),
+            'debug_info' => [
+                'highest_member_in_db' => DB::table('members')
+                    ->whereNotNull('member_no')
+                    ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
+                    ->value('member_no'),
+                'highest_family_in_db' => DB::table('members')
+                    ->whereNotNull('family_no')
+                    ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
+                    ->value('family_no')
+            ]
+        ]);
     }
 }
 

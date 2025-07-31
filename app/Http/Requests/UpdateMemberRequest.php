@@ -22,7 +22,7 @@ class UpdateMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'community_id' => 'nullable|exists:communities,id',
+            'community_id' => 'required|exists:communities,id',
             'community_cluster_id' => 'nullable|exists:community_clusters,id',
             'aadhar' => 'nullable|string|max:12',
             'family_no' => 'nullable|string|max:255',
@@ -34,7 +34,7 @@ class UpdateMemberRequest extends FormRequest
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
             // 'current_family_no' => 'nullable|string|max:255', // Managed by business logic
             'spouse_member_id' => 'nullable|exists:members,id',
-            'status_id' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',
+            'status_id' => 'nullable|exists:statuses,id',
             'relationship' => 'nullable|string|max:255',
             'last_name' => 'nullable|string|max:255',
             'first_name' => 'required|string|max:255',
@@ -80,7 +80,7 @@ class UpdateMemberRequest extends FormRequest
             'death_parish' => 'nullable|string|max:255',
             'gender_id' => 'nullable|exists:genders,id',
             'status_id' => 'nullable|exists:statuses,id',
-            'relationship_id' => 'nullable|exists:relationships,id',
+            'relationship_id' => 'required|exists:relationships,id',
             'parish_id' => 'nullable|exists:parishes,id',
             'designation_id' => 'nullable|exists:designations,id',
         ];
