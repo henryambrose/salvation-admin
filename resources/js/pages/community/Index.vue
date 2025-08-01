@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Download } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Zone } from '@/types';
 
@@ -176,6 +176,28 @@ function restoreCommunity(id: number) {
   });
 }
 
+function downloadExcel() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    sort: sort.value || 'id',
+    direction: direction.value || 'asc',
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/community/export?${params.toString()}`;
+}
+
+import { permissionHelpers } from '@/composables/permissionHelpers';
+const { can } = permissionHelpers();
+
+const canCreateCommunity = can('create-community');
+const canReadAnyCommunity = can('read-community');
+const canUpdateAnyCommunity = can('update-community');
+const canDeleteAnyCommunity = can('delete-community');
+const canExportCommunity = can('read-community');
+
 watch(() => enhancedCommunities.value.data, (rows) => {
   if (highlightedRowId.value) {
     let rowId = highlightedRowId.value;
@@ -194,10 +216,20 @@ watch(() => enhancedCommunities.value.data, (rows) => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Communities</h2>
-        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <div class="btn-group flex space-x-2">
+          <Button
+            v-if="canExportCommunity"
+            @click="downloadExcel"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition"
+          >
+            <component :is="Download" />
+            <span>Export Excel</span>
+          </Button>
+          <Button v-if="canCreateCommunity" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
             <component :is="Plus" />
             <span>Add Community</span>
           </Button>
+        </div>
         </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">

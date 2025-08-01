@@ -31,9 +31,9 @@ class State extends Model
     {
         return $this->belongsTo(Country::class);
     } 
-    public function towns()
+    public function cities()
     {
-        return $this->hasMany(Town::class);
+        return $this->hasMany(City::class);
     }  
   
 }

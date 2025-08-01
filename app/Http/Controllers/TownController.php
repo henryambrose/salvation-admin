@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Town;
-use App\Models\State;
+use App\Models\City;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +15,7 @@ class TownController extends Controller
      */
     public function index(Request $request): Response
     {
-        $query = Town::query()->with('state');
+        $query = Town::query()->with('city');
         if ($request->input('isArchived')==='true') {
             $query->onlyTrashed();
         } else {
@@ -34,13 +34,13 @@ class TownController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
-        $states = State::all();
+        $cities = City::all();
 
         return Inertia::render('town/Index', [
             'towns' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('town.index'),
-            'states' => $states,
+            'cities' => $cities,
         ]);
     }
 
@@ -49,10 +49,10 @@ class TownController extends Controller
      */
     public function create(): Response
     {
-        $states = State::all();
+        $cities = City::all();
 
         return Inertia::render('town/Create', [
-            'states' => $states,
+            'cities' => $cities,
         ]);
     }
 
@@ -64,10 +64,10 @@ class TownController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'pincode' => 'nullable|string|max:10',
-            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
         ]);
 
-        Town::create($request->only('name', 'pincode', 'state_id'));
+        Town::create($request->only('name', 'pincode', 'city_id'));
 
         return redirect()->route('town.index')->with('success', 'Town created successfully.');
     }
@@ -77,11 +77,11 @@ class TownController extends Controller
      */
     public function edit(Town $town): Response
     {
-        $states = State::all();
+        $cities = City::all();
 
         return Inertia::render('town/Edit', [
             'town' => $town,
-            'states' => $states,
+            'cities' => $cities,
         ]);
     }
 
@@ -93,10 +93,10 @@ class TownController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'pincode' => 'nullable|string|max:10',
-            'state_id' => 'required|exists:states,id',
+            'city_id' => 'required|exists:cities,id',
         ]);
 
-        $town->update($request->only('name', 'pincode', 'state_id'));
+        $town->update($request->only('name', 'pincode', 'city_id'));
 
         return redirect()->route('town.index')->with('success', 'Town updated successfully.');
     }

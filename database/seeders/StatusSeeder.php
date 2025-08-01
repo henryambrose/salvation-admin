@@ -17,8 +17,8 @@ class StatusSeeder extends Seeder
             ['name' => 'Resident'], 
             ['name' => 'Redevelopment Unsettled'], 
             ['name' => 'Non-Resident'], 
-            ['name' => 'Dead']
-            ]            ;
+            ['name' => 'Deceased']
+            ];
 
         Status::insert($statuses);
     }

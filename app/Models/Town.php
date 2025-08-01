@@ -10,7 +10,7 @@ class Town extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'pincode', 'state_id'];
+    protected $fillable = ['name', 'pincode', 'city_id'];
 
     protected $casts = [
         'created_at' => 'datetime',
@@ -27,8 +27,8 @@ class Town extends Model
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
 
-    public function state()
+    public function city()
     {
-        return $this->belongsTo(State::class);
+        return $this->belongsTo(City::class);
     }   
 }

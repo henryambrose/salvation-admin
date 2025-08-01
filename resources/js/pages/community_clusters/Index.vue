@@ -7,7 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { nextTick, ref, watch, computed } from 'vue';
 import { Head, router, useForm, usePage} from '@inertiajs/vue3';
 import axios from 'axios';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Download } from 'lucide-vue-next';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
@@ -282,6 +282,28 @@ function restoreSCCHead(id: number) {
     },
   });
 }
+
+function downloadExcel() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    sort: sort.value || 'id',
+    direction: direction.value || 'asc',
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/community-clusters/export?${params.toString()}`;
+}
+
+import { permissionHelpers } from '@/composables/permissionHelpers';
+const { can } = permissionHelpers();
+
+const canCreateCommunityCluster = can('create-community-cluster');
+const canReadAnyCommunityCluster = can('read-community-cluster');
+const canUpdateAnyCommunityCluster = can('update-community-cluster');
+const canDeleteAnyCommunityCluster = can('delete-community-cluster');
+const canExportCommunityCluster = can('read-community-cluster');
 </script>
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
@@ -290,7 +312,11 @@ function restoreSCCHead(id: number) {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold">Community Clusters</h2>
         <div class="btn-group flex space-x-2">
-          <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+          <Button v-if="canExportCommunityCluster" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <component :is="Download" />
+            <span>Export Excel</span>
+          </Button>
+          <Button v-if="canCreateCommunityCluster" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
             <component :is="Plus" />
             <span>Add Community Cluster</span>
           </Button>

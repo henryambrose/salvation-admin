@@ -176,4 +176,113 @@ class SCCHeadController extends Controller
             });
         return response()->json($members);
     }
+
+    public function export(Request $request)
+    {
+        try {
+            $query = SCCHead::with(['member', 'community']);
+            
+            if ($request->input('isArchived') === 'true') {
+                $query->onlyTrashed();
+            } else {
+                $query->withoutTrashed();
+            }
+            
+            $query->select('s_c_c_heads.*');
+            $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
+            $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
+            $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'members.middle_name as member_middle_name', 'members.last_name as member_last_name', 'communities.name as community_name');
+
+            // Apply filters
+            if ($communityId = $request->input('community_id')) {
+                $query->where('s_c_c_heads.community_id', $communityId);
+            }
+            if ($memberId = $request->input('member_id')) {
+                $query->where('s_c_c_heads.member_id', $memberId);
+            }
+            if ($search = $request->input('search')) {
+                $query->where(function($q) use ($search) {
+                    $q->where('members.first_name', 'like', "%$search%")
+                      ->orWhere('members.middle_name', 'like', "%$search%")
+                      ->orWhere('members.last_name', 'like', "%$search%")
+                      ->orWhere('communities.name', 'like', "%$search%");
+                });
+            }
+
+            // Validate sort column to prevent SQL injection
+            $allowedSortColumns = ['id', 'member_first_name', 'community_name'];
+            $sort = $request->input('sort', 'id');
+            $direction = $request->input('direction', 'asc');
+            
+            if (in_array($sort, $allowedSortColumns)) {
+                if ($sort === 'member_first_name') {
+                    $query->orderBy('members.first_name', $direction)
+                          ->orderBy('members.last_name', $direction);
+                } elseif ($sort === 'community_name') {
+                    $query->orderBy('communities.name', $direction);
+                } else {
+                    $query->orderBy($sort, $direction);
+                }
+            } else {
+                $query->orderBy('id', 'asc');
+            }
+
+            $data = $query->get();
+
+            // Transform data for export
+            $exportData = [];
+            foreach ($data as $item) {
+                $memberName = trim($item->member_first_name . ' ' . ($item->member_middle_name ? $item->member_middle_name . ' ' : '') . $item->member_last_name);
+                
+                $exportData[] = [
+                    'ID' => $item->id,
+                    'Member Name' => $memberName,
+                    'Community Name' => $item->community_name ?? '',
+                ];
+            }
+
+            // Create Excel file
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = $spreadsheet->getActiveSheet();
+
+            // Set headers
+            $headers = array_keys($exportData[0] ?? []);
+            $col = 'A';
+            foreach ($headers as $header) {
+                $sheet->setCellValue($col . '1', $header);
+                $sheet->getColumnDimension($col)->setAutoSize(true);
+                $col++;
+            }
+
+            // Set data
+            $row = 2;
+            foreach ($exportData as $rowData) {
+                $col = 'A';
+                foreach ($rowData as $value) {
+                    $sheet->setCellValue($col . $row, $value);
+                    $col++;
+                }
+                $row++;
+            }
+
+            // Style header row
+            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+
+            // Create writer and output
+            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+            $filename = 'scc_heads_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+            // Save to temporary file and return as download
+            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
+            $writer->save($tempFile);
+            
+            return response()->download($tempFile, $filename, [
+                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            ])->deleteFileAfterSend();
+
+        } catch (\Exception $e) {
+            \Log::error('SCC Head Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+        }
+    }
 }

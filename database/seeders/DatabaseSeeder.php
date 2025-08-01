@@ -22,7 +22,6 @@ class DatabaseSeeder extends Seeder
          $this->call([
             UserSeeder::class,
             ModuleSeeder::class,
-            // CreateRoleNPermissionSeeder::class,
             AgeGroupSeeder::class,
             BloodGroupSeeder::class,
             ZoneSeeder::class,
@@ -39,9 +38,9 @@ class DatabaseSeeder extends Seeder
             RelationshipSeeder::class,
             CountrySeeder::class,
             StateSeeder::class,
+            CitySeeder::class,
             TownSeeder::class,
             MemberSeeder::class,
-            // FakeMemberSeeder::class,
             PPCHeadSeeder::class,
             SCCHeadSeeder::class,
 

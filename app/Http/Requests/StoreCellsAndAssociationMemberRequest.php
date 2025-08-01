@@ -11,7 +11,7 @@ class StoreCellsAndAssociationMemberRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,8 @@ class StoreCellsAndAssociationMemberRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'member_id' => 'required|exists:members,id',
+            'cells_and_association_id' => 'required|exists:cells_and_associations,id',
         ];
     }
 }

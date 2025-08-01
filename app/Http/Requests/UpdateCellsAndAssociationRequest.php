@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateCellsAndAssociationRequest extends FormRequest
 {
@@ -11,7 +12,7 @@ class UpdateCellsAndAssociationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +23,11 @@ class UpdateCellsAndAssociationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('cells_and_associations', 'name')->ignore($this->cells_and_association->id),
+            ],
         ];
     }
 }

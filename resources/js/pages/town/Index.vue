@@ -11,7 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 
 const props = defineProps<{
   towns: { data: any[]; meta?: any };
-  states: { id: string | number; name: string }[];
+  cities: { id: string | number; name: string }[];
   filters: any;
   fetchUrl: string;
 }>();
@@ -20,7 +20,7 @@ const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Town Name', sortable: true },
   { key: 'pincode', label: 'Pincode', sortable: true },
-  { key: 'state', label: 'State Name', sortable: true },
+  { key: 'city', label: 'City Name', sortable: true },
 ];
 
 const breadcrumbs = [{ title: 'Towns', href: '/town/index' }];
@@ -36,13 +36,13 @@ const highlightedRowId = ref<number|null>(null);
 const form = useForm({
   name: '',
   pincode: '',
-  state_id: '',
+  city_id: '',
 });
 
 const editForm = useForm({
   name: '',
   pincode: '',
-  state_id: '',
+  city_id: '',
 });
 
 const search = ref(props.filters?.search || '');
@@ -115,7 +115,7 @@ function openEditModal(row: any) {
   editingTown.value = row;
   editForm.name = row.name;
   editForm.pincode = row.pincode;
-  editForm.state_id = row.state_id;
+  editForm.city_id = row.city_id;
   showEditModal.value = true;
 }
 
@@ -235,7 +235,7 @@ onMounted(() => {
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">
                 <span>
-                  {{ col.key === 'state' ? (row.state?.name || row.state_name || '') : row[col.key] }}
+                  {{ col.key === 'city' ? (row.city?.name || '') : row[col.key] }}
                 </span>
               </td>
               <td class="p-2">
@@ -281,12 +281,12 @@ onMounted(() => {
                 <div v-if="form.errors.pincode" class="mt-1 text-sm text-red-500">{{ form.errors.pincode }}</div>
               </div>
               <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">State</label>
-                <select v-model="form.state_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select State</option>
-                  <option v-for="s in props.states" :key="s.id" :value="s.id">{{ s.name }}</option>
+                <label class="mb-1 block text-sm font-medium">City</label>
+                <select v-model="form.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <option value="" disabled>Select City</option>
+                  <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
-                <div v-if="form.errors.state_id" class="mt-1 text-sm text-red-500">{{ form.errors.state_id }}</div>
+                <div v-if="form.errors.city_id" class="mt-1 text-sm text-red-500">{{ form.errors.city_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button
@@ -329,12 +329,12 @@ onMounted(() => {
                 <div v-if="editForm.errors.pincode" class="mt-1 text-sm text-red-500">{{ editForm.errors.pincode }}</div>
               </div>
               <div class="mb-3">
-                <label class="mb-1 block text-sm font-medium">State</label>
-                <select v-model="editForm.state_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select State</option>
-                  <option v-for="s in props.states" :key="s.id" :value="s.id">{{ s.name }}</option>
+                <label class="mb-1 block text-sm font-medium">City</label>
+                <select v-model="editForm.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                  <option value="" disabled>Select City</option>
+                  <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
-                <div v-if="editForm.errors.state_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.state_id }}</div>
+                <div v-if="editForm.errors.city_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.city_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">
                 <Button

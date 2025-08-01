@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Plus } from 'lucide-vue-next';
+import { Plus, Download } from 'lucide-vue-next';
 import { nextTick, ref, watch, computed } from 'vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
@@ -246,6 +246,28 @@ function restoreSCCHead(id: number) {
     },
   });
 }
+
+function downloadExcel() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    sort: sort.value || 'id',
+    direction: direction.value || 'asc',
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/scc-head/export?${params.toString()}`;
+}
+
+import { permissionHelpers } from '@/composables/permissionHelpers';
+const { can } = permissionHelpers();
+
+const canCreateSCCHead = can('create-s-c-c-head');
+const canReadAnySCCHead = can('read-s-c-c-head');
+const canUpdateAnySCCHead = can('update-s-c-c-head');
+const canDeleteAnySCCHead = can('delete-s-c-c-head');
+const canExportSCCHead = can('read-s-c-c-head');
 </script>
 
 <template>
@@ -255,7 +277,11 @@ function restoreSCCHead(id: number) {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold">SCC Head</h2>
         <div class="btn-group flex space-x-2">
-          <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+          <Button v-if="canExportSCCHead" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <component :is="Download" />
+            <span>Export Excel</span>
+          </Button>
+          <Button v-if="canCreateSCCHead" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
             <component :is="Plus" />
             <span>Add SCC Head</span>
           </Button>

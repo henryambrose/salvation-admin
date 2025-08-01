@@ -5,15 +5,43 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCellsAndAssociationRequest;
 use App\Http\Requests\UpdateCellsAndAssociationRequest;
 use App\Models\CellsAndAssociation;
+use Inertia\Inertia;
+use Illuminate\Http\Request;
+use Inertia\Response;
 
 class CellsAndAssociationController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        //
+        $query = CellsAndAssociation::query();
+
+        // Handle archived records
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('cells-and-association/Index', [
+            'fetchUrl' => route('cells-and-association.index'),
+            'cellsAndAssociations' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+        ]);
     }
 
     /**
@@ -21,7 +49,7 @@ class CellsAndAssociationController extends Controller
      */
     public function create()
     {
-        //
+        return Inertia::render('cells-and-association/Create');
     }
 
     /**
@@ -29,7 +57,9 @@ class CellsAndAssociationController extends Controller
      */
     public function store(StoreCellsAndAssociationRequest $request)
     {
-        //
+        CellsAndAssociation::create($request->validated());
+
+        return redirect()->route('cells-and-association.index')->with('success', 'Cells and Association created successfully.');
     }
 
     /**
@@ -45,7 +75,9 @@ class CellsAndAssociationController extends Controller
      */
     public function edit(CellsAndAssociation $cellsAndAssociation)
     {
-        //
+        return Inertia::render('cells-and-association/Edit', [
+            'cellsAndAssociation' => $cellsAndAssociation,
+        ]);
     }
 
     /**
@@ -53,7 +85,9 @@ class CellsAndAssociationController extends Controller
      */
     public function update(UpdateCellsAndAssociationRequest $request, CellsAndAssociation $cellsAndAssociation)
     {
-        //
+        $cellsAndAssociation->update($request->validated());
+
+        return redirect()->route('cells-and-association.index')->with('success', 'Cells and Association updated successfully.');
     }
 
     /**
@@ -61,6 +95,16 @@ class CellsAndAssociationController extends Controller
      */
     public function destroy(CellsAndAssociation $cellsAndAssociation)
     {
-        //
+        $cellsAndAssociation->delete();
+
+        return redirect()->route('cells-and-association.index')->with('success', 'Cells and Association deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $cellsAndAssociation = CellsAndAssociation::onlyTrashed()->findOrFail($id);
+        $cellsAndAssociation->restore();
+
+        return redirect()->route('cells-and-association.index')->with('success', 'Cells and Association restored successfully.');
     }
 }

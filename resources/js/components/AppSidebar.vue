@@ -65,6 +65,18 @@ const orderedNavItems: NavItem[] = [
     show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
   },
   {
+    title: 'Cells and Association',
+    href: '/cells-and-association',
+    icon: BookOpen,
+    show: can('view-cells-and-association'),
+  },
+  {
+    title: 'Cells Association Members',
+    href: '/cells-and-association-members',
+    icon: BookOpen,
+    show: can('view-cells-and-association-member'),
+  },
+  {
     title: 'SCC Head',
     href: '/scc-head',
     icon: UserCircle,
@@ -77,10 +89,22 @@ const orderedNavItems: NavItem[] = [
     show: can('view-p-p-c-head'),
   },
   {
+    title: 'Family Income Range',
+    href: '/family-income-range',
+    icon: BookOpen,
+    show: can('view-family-income-range'),
+  },
+  {
     title: 'Relationship',
     href: '/relationship',
     icon: BookOpen,
     show: can('view-relationship'),
+  },
+  {
+    title: 'Designation',
+    href: '/designation',
+    icon: BookOpen,
+    show: can('view-designation'),
   },
   {
     title: 'Age Group',
@@ -101,6 +125,18 @@ const orderedNavItems: NavItem[] = [
     show: can('view-blood-group'),
   },
   {
+    title: 'Gender',
+    href: '/gender',
+    icon: BookOpen,
+    show: can('view-gender'),
+  },
+  {
+    title: 'Status',
+    href: '/status',
+    icon: BookOpen,
+    show: can('view-status'),
+  },
+  {
     title: 'Countries',
     href: '/country',
     icon: BookOpen,
@@ -111,6 +147,12 @@ const orderedNavItems: NavItem[] = [
     href: '/state',
     icon: BookOpen,
     show: can('view-state'),
+  },
+  {
+    title: 'City',
+    href: '/city',
+    icon: BookOpen,
+    show: can('view-city'),
   },
   {
     title: 'Town',

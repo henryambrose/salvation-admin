@@ -11,7 +11,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, Member, FamilyStats } from '@/types';
 import { router } from '@inertiajs/vue3';
-import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
+import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon, Download } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
@@ -173,6 +173,7 @@ const canCreateMember = can('create-member');
 const canReadAnyMember = can('read-member');
 const canUpdateAnyMember = can('update-member');
 const canDeleteAnyMember = can('delete-member');
+const canExportMember = can('read-member');
 
 const searchColumnsOptions = computed(() => {
   return columns
@@ -340,47 +341,23 @@ function clearFamilySearch() {
   }
 }
 
-async function downloadXLS() {
+function downloadExcel() {
   const params = new URLSearchParams({
-    search: search.value,
-    familySearch: familySearch.value,
-    groupByFamily: groupByFamily.value ? 'true' : 'false',
-    communityId: communityId.value,
-    relationship: relationship.value,
-    ageGroup: ageGroup.value,
-    bloodGroup: bloodGroup.value,
-    gender: gender.value,
-    isArchived: isArchived.value,
-    format: 'xls'
+    search: search.value || '',
+    familySearch: familySearch.value || '',
+    communityId: communityId.value || '',
+    relationship: relationship.value || '',
+    ageGroup: ageGroup.value || '',
+    bloodGroup: bloodGroup.value || '',
+    gender: gender.value || '',
+    sort: sort.value || 'id',
+    direction: direction.value || 'asc',
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
   });
   
-  try {
-    const response = await window.fetch(`/member/exportxls?${params.toString()}`, {
-      method: 'GET',
-      credentials: 'same-origin',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
-    });
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const blob = await response.blob();
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'members.csv';
-    document.body.appendChild(a);
-    a.click();
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(a);
-  } catch (error) {
-    console.error('Download failed:', error);
-    alert('Download failed. Please try again.');
-  }
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/member/export?${params.toString()}`;
 }
 
 const highlightedRowId = ref<number|null>(null);
@@ -470,7 +447,10 @@ onMounted(() => {
               <component :is="Plus" />
               <span>Add New Member</span>
             </Button>
-            <Button @click="downloadXLS" class="px-3 py-2 rounded-full bg-blue-600 text-white">Export</Button>
+            <Button v-if="canExportMember" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+  <component :is="Download" />
+  <span>Export Excel</span>
+</Button>
             <label class="flex items-center gap-2 cursor-pointer select-none">
               <Checkbox v-model="groupByFamily" class="switch-checkbox" />
               <span class="text-sm font-medium">Group by Family</span>

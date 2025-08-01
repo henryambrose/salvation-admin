@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
-import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { Pencil, Plus, Trash, Download } from 'lucide-vue-next';
 
 const props = defineProps({
   relationships: {
@@ -166,6 +166,19 @@ function restoreRelationship(id: number) {
   });
 }
 
+function downloadExcel() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    sort: sort.value || 'id',
+    direction: direction.value || 'asc',
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/relationship/export?${params.toString()}`;
+}
+
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
@@ -173,6 +186,7 @@ const canCreateRelationship = can('create-relationship');
 const canReadAnyRelationship = can('read-relationship');
 const canUpdateAnyRelationship = can('update-relationship');
 const canDeleteAnyRelationship = can('delete-relationship');
+const canExportRelationship = can('read-relationship');
 
 watch(() => enhancedRelationships.value.data, (rows) => {
   if (highlightedRowId.value) {
@@ -192,10 +206,16 @@ watch(() => enhancedRelationships.value.data, (rows) => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Relationships</h2>
-        <Button v-if="canCreateRelationship" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <component :is="Plus" />
-          <span>Add Relationship</span>
-        </Button>
+        <div class="btn-group flex space-x-2">
+          <Button v-if="canExportRelationship" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <component :is="Download" />
+            <span>Export Excel</span>
+          </Button>
+          <Button v-if="canCreateRelationship" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+            <component :is="Plus" />
+            <span>Add Relationship</span>
+          </Button>
+        </div>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">

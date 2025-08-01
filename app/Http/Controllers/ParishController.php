@@ -117,4 +117,97 @@ class ParishController extends Controller
 
     return redirect()->route('parish.index')->with('success', 'Parish restored successfully.');
   }
+
+  public function export(Request $request)
+  {
+    try {
+      $query = Parish::query();
+      
+      if ($request->input('isArchived') === 'true') {
+        $query->onlyTrashed();
+      } else {
+        $query->withoutTrashed();
+      }
+      
+      if ($search = $request->input('search')) {
+        $query->whereRaw(
+          "CONCAT(
+          COALESCE(deanery, ''),
+          COALESCE(name, ''),
+          COALESCE(code, ''),
+          COALESCE(address, '')
+          ) LIKE ?",
+          ["%$search%"]
+        );
+      }
+
+      // Validate sort column to prevent SQL injection
+      $allowedSortColumns = ['id', 'deanery', 'name'];
+      $sort = $request->input('sort', 'id');
+      $direction = $request->input('direction', 'asc');
+      
+      if (in_array($sort, $allowedSortColumns)) {
+        $query->orderBy($sort, $direction);
+      } else {
+        $query->orderBy('id', 'asc');
+      }
+
+      $data = $query->get();
+
+      // Transform data for export
+      $exportData = [];
+      foreach ($data as $item) {
+        $exportData[] = [
+          'ID' => $item->id,
+          'Deanery' => $item->deanery ?? '',
+          'Parish Name' => $item->name ?? '',
+          'Code' => $item->code ?? '',
+          'Address' => $item->address ?? '',
+        ];
+      }
+
+      // Create Excel file
+      $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+      $sheet = $spreadsheet->getActiveSheet();
+
+      // Set headers
+      $headers = array_keys($exportData[0] ?? []);
+      $col = 'A';
+      foreach ($headers as $header) {
+        $sheet->setCellValue($col . '1', $header);
+        $sheet->getColumnDimension($col)->setAutoSize(true);
+        $col++;
+      }
+
+      // Set data
+      $row = 2;
+      foreach ($exportData as $rowData) {
+        $col = 'A';
+        foreach ($rowData as $value) {
+          $sheet->setCellValue($col . $row, $value);
+          $col++;
+        }
+        $row++;
+      }
+
+      // Style header row
+      $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+
+      // Create writer and output
+      $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+      $filename = 'parishes_' . date('Y-m-d_H-i-s') . '.xlsx';
+
+      // Save to temporary file and return as download
+      $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
+      $writer->save($tempFile);
+      
+      return response()->download($tempFile, $filename, [
+        'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      ])->deleteFileAfterSend();
+
+    } catch (\Exception $e) {
+      \Log::error('Parish Export failed: ' . $e->getMessage());
+      return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+    }
+  }
 }
