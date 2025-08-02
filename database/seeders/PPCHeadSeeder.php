@@ -15,27 +15,33 @@ class PPCHeadSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all communities and members
-        $communities = Community::all();
-        $members = Member::all();
-        
-        // Clear existing PPC heads
-        PPCHead::truncate();
-        
-        // Create PPC heads for each community
-        foreach ($communities as $community) {
-            // Randomly assign a member as PPC head (80% chance)
-            $memberId = null;
-            if ($members->count() > 0 && rand(1, 100) <= 80) {
-                $memberId = $members->random()->id;
-            }
-            
-            PPCHead::create([
-                'community_id' => $community->id,
-                'member_id' => $memberId,
-            ]);
-        }
-        
-        $this->command->info('PPC Heads created successfully!');
+        $ppcHeads =  [
+            ['member_id' => '939', 'community_id' => '1', ],
+            ['member_id' => '685', 'community_id' => '2', ],
+            ['member_id' => '685', 'community_id' => '3', ],
+            ['member_id' => '5226', 'community_id' => '4', ],
+            ['member_id' => '1981', 'community_id' => '5', ],
+            ['member_id' => '4172', 'community_id' => '6', ],
+            ['member_id' => '181', 'community_id' => '7', ],
+            ['member_id' => '5292', 'community_id' => '8', ],
+            ['member_id' => '4733', 'community_id' => '9', ],
+            ['member_id' => '687', 'community_id' => '10', ],
+            ['member_id' => '5156', 'community_id' => '11', ],
+            ['member_id' => '685', 'community_id' => '12', ],
+            ['member_id' => '5317', 'community_id' => '13', ],
+            ['member_id' => '2678', 'community_id' => '14', ],
+            ['member_id' => '4561', 'community_id' => '15', ],
+            ['member_id' => '5568', 'community_id' => '16', ],
+            ['member_id' => '3295', 'community_id' => '17', ],
+            ['member_id' => '1146', 'community_id' => '18', ],
+            ['member_id' => '685', 'community_id' => '19', ],
+            ['member_id' => '685', 'community_id' => '20', ],
+            ['member_id' => '685', 'community_id' => '21', ],
+            ['member_id' => '2167', 'community_id' => '22', ],
+            ['member_id' => '3791', 'community_id' => '23', ]
+        ];
+        PPCHead::insert($ppcHeads);
+
+
     }
 }

@@ -15,27 +15,33 @@ class SCCHeadSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get all communities and members
-        $communities = Community::all();
-        $members = Member::all();
-        
-        // Clear existing SCC heads
-        SCCHead::truncate();
-        
-        // Create SCC heads for each community
-        foreach ($communities as $community) {
-            // Randomly assign a member as SCC head (80% chance)
-            $memberId = null;
-            if ($members->count() > 0 && rand(1, 100) <= 80) {
-                $memberId = $members->random()->id;
-            }
-            
-            SCCHead::create([
-                'community_id' => $community->id,
-                'member_id' => $memberId,
-            ]);
-        }
-        
-        $this->command->info('SCC Heads created successfully!');
+        $sccHeads =  [
+           
+                ['member_id' => '426', 'community_id' => '1', ],
+                ['member_id' => '685', 'community_id' => '2', ],
+                ['member_id' => '3725', 'community_id' => '3', ],
+                ['member_id' => '685', 'community_id' => '4', ],
+                ['member_id' => '3712', 'community_id' => '5', ],
+                ['member_id' => '4859', 'community_id' => '6', ],
+                ['member_id' => '2187', 'community_id' => '7', ],
+                ['member_id' => '4711', 'community_id' => '8', ],
+                ['member_id' => '5294', 'community_id' => '9', ],
+                ['member_id' => '4630', 'community_id' => '10', ],
+                ['member_id' => '501', 'community_id' => '11', ],
+                ['member_id' => '49', 'community_id' => '12', ],
+                ['member_id' => '685', 'community_id' => '13', ],
+                ['member_id' => '685', 'community_id' => '14', ],
+                ['member_id' => '336', 'community_id' => '15', ],
+                ['member_id' => '1416', 'community_id' => '16', ],
+                ['member_id' => '3695', 'community_id' => '17', ],
+                ['member_id' => '685', 'community_id' => '18', ],
+                ['member_id' => '632', 'community_id' => '19', ],
+                ['member_id' => '2882', 'community_id' => '20', ],
+                ['member_id' => '4455', 'community_id' => '21', ],
+                ['member_id' => '3902', 'community_id' => '22', ],
+                ['member_id' => '2331', 'community_id' => '23', ]
+               
+        ];
+        SCCHead::insert($sccHeads); 
     }
 }
