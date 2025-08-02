@@ -3,11 +3,14 @@ import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
 import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings } from 'lucide-vue-next';
+import { LogOut, Settings, Users, Shield } from 'lucide-vue-next';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 
 interface Props {
   user: User;
 }
+
+const { can } = permissionHelpers();
 
 const handleLogout = () => {
   router.flushAll();
@@ -24,6 +27,18 @@ defineProps<Props>();
   </DropdownMenuLabel>
   <DropdownMenuSeparator />
   <DropdownMenuGroup>
+    <DropdownMenuItem :as-child="true" v-if="can('view-Users')">
+      <Link class="block w-full" href="/users/index" prefetch as="button">
+        <Users class="mr-2 h-4 w-4" />
+        Users
+      </Link>
+    </DropdownMenuItem>
+    <DropdownMenuItem :as-child="true" v-if="can('update-role-permissions')">
+      <Link class="block w-full" href="/roles-permissions" prefetch as="button">
+        <Shield class="mr-2 h-4 w-4" />
+        Role Permissions
+      </Link>
+    </DropdownMenuItem>
     <DropdownMenuItem :as-child="true">
       <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
         <Settings class="mr-2 h-4 w-4" />

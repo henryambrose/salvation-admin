@@ -14,7 +14,8 @@ const props = defineProps<{
     id: string | number
     name: string
   }[],
-  fetchUrl?: string // Optional: for AJAX data source
+  fetchUrl?: string, // Optional: for AJAX data source
+  tabindex?: string | number
 }>()
 
 const emits = defineEmits<{
@@ -69,41 +70,46 @@ function fetchOption(page = 1) {
 <template>
   <div class="relative w-full" ref="dropdownRef">
     <div
-      class="border rounded px-3 py-1 bg-white cursor-pointer flex items-center justify-between text-black"
+      :class="cn(
+        'border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] cursor-pointer items-center justify-between',
+        'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+        'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+        props.class,
+      )"
       @click="open = !open"
     >
-      <span>
+      <span class="text-foreground flex-1">
         {{
           props.options.find(opt => opt.id === modelValue)?.name ||
           'Select Option'
         }}
       </span>
-      <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>
     <div
       v-if="open"
-      class="absolute left-0 right-0 z-10 bg-white border rounded shadow mt-1 max-h-60 overflow-auto"
+      class="absolute left-0 right-0 z-10 bg-background border border-input rounded-md shadow-lg mt-1 max-h-60 overflow-auto"
     >
       <input
         type="text"
         v-model="search"
-        class="w-full border-b px-3 py-2 outline-none focus:border-blue-500 text-black"
+        class="w-full border-b border-input px-3 py-2 outline-none focus:border-ring focus:ring-ring/50 focus:ring-[3px] text-foreground bg-transparent"
         placeholder="Search..."
         @keydown.stop
       />
-      <div v-if="loading" class="px-3 py-2 text-xs text-gray-400 text-black">Loading...</div>
+      <div v-if="loading" class="px-3 py-2 text-xs text-muted-foreground">Loading...</div>
       <div v-else>
         <div
           v-for="option in displayOptions"
           :key="option.id"
-          class="px-3 py-2 cursor-pointer hover:bg-gray-100 text-black"
+          class="px-3 py-2 cursor-pointer hover:bg-accent text-foreground"
           @click="emits('update:modelValue', option.id); open = false"
         >
           {{ option.name }}
         </div>
-        <div v-if="!displayOptions.length" class="px-3 py-2 text-gray-400 text-sm text-black">No options found</div>
+        <div v-if="!displayOptions.length" class="px-3 py-2 text-muted-foreground text-sm">No options found</div>
       </div>
     </div>
   </div>

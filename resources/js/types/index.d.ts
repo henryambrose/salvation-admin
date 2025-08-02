@@ -189,6 +189,13 @@ export interface Column {
   sortable: boolean;
   filterable?: boolean; // optional
 }
+
+export interface City {
+  id: number;
+  name: string;
+}
+export type Cities = City[];
+
 export interface Town {
   id: number;
   state_id?: number | null;

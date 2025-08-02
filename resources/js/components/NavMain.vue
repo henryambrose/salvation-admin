@@ -17,7 +17,7 @@ const page = usePage<SharedData>();
       <!-- <span v-for="item in items" :key="item.title"> -->
       <!-- <SidebarMenuItem v-for="item in items" :key="item.title"> -->
       <SidebarMenuItem v-for="item in items" :key="item.title">
-        <SidebarMenuButton as-child :is-active="item.href === page.url" :tooltip="item.title">
+        <SidebarMenuButton as-child :is-active="item.href === page.url" :tooltip="item.title" class="gap-1">
           <Link :href="item.href">
             <component :is="item.icon" />
             <span>{{ item.title }}</span>

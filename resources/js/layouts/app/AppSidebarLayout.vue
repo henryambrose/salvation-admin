@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
 import type { BreadcrumbItemType } from '@/types';
+import { useScrollRestoration } from '@/composables/useScrollRestoration';
 
 interface Props {
   breadcrumbs?: BreadcrumbItemType[];
@@ -12,6 +13,9 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   breadcrumbs: () => [],
 });
+
+// Initialize scroll restoration
+useScrollRestoration();
 </script>
 
 <template>

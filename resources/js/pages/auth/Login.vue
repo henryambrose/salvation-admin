@@ -25,11 +25,11 @@ const submit = () => {
   });
 };
 
-const AppName = import.meta.env.VITE_APP_NAME || 'Salvation';
+const AppName = import.meta.env.VITE_APP_NAME || 'Our Lady of Salvation';
 </script>
 
 <template>
-  <AuthEnhancedLayout :title="AppName" description="Welcome back! Please enter your credentials to access your account.">
+  <AuthEnhancedLayout title="Our Lady of Salvation" description="Welcome back! Please enter your credentials to access your account.">
     <Head title="Log in" />
 
     <div v-if="status" class="mb-6 p-4 text-center text-sm font-medium text-green-600 bg-green-50 border border-green-200 rounded-xl backdrop-blur-sm">

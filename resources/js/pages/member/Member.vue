@@ -12,7 +12,6 @@ import { SelectInput } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
   BloodGroups,
-  CellsAndAssociations,
   Communities,
   Community,
   Countries,
@@ -20,6 +19,7 @@ import {
   FamilyIncomeRanges,
   Member,
   Relationships,
+  Cities,
   States,
   Towns,
   type BreadcrumbItem,
@@ -28,18 +28,18 @@ import {
   type CommunityCluster,
 } from '@/types';
 import { List } from 'lucide-vue-next';
-import { ref, watch } from 'vue';
-import type { State, Town } from '@/types';
+import { ref, watch, nextTick } from 'vue';
+import type { State, Town, City } from '@/types';
 
 interface Props {
   member?: Member;
   communities: Communities;
-  cellsAndAssociations: CellsAndAssociations;
   familyIncomeRanges: FamilyIncomeRanges;
   bloodGroups: BloodGroups;
   relationships: Relationships;
   countries: Countries;
   states: States;
+  cities: Cities;
   towns: Towns;
   designations: Designations;
   genders: any[];
@@ -66,7 +66,7 @@ const genderArray = genderList.map((gender) => ({ id: gender, name: gender.charA
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 const member = page.props.member as Member;
-
+console.log('member',member);
 const form = useForm({
   id: member?.id ? member.id : '',
   first_name: member?.first_name ? member.first_name : '',
@@ -98,23 +98,24 @@ const form = useForm({
   permanent_town_id: member?.permanent_town_id ? member.permanent_town_id : '',
   permanent_city_id: member?.permanent_city_id ? member.permanent_city_id : '',
   permanent_pincode: member?.permanent_pincode ? member.permanent_pincode : '',
-  permanent_state_id: member?.permanent_state_id ? member.permanent_state_id : '',
-  permanent_country_id: member?.permanent_country_id? member.permanent_country_id : '',
+  permanent_state_id: member?.permanent_state_id ? member.permanent_state_id : 21, // Maharashtra
+  permanent_country_id: member?.permanent_country_id? member.permanent_country_id : 95, // India
   current_add1: member?.current_add1 ? member.current_add1 : '',
   current_add2: member?.current_add2 ? member.current_add2 : '',
   current_add3: member?.current_add3 ? member.current_add3 : '',
   current_town_id: member?.current_town_id ? member.current_town_id : '',
   current_city_id: member?.current_city_id ? member.current_city_id : '',
   current_pincode: member?.current_pincode ? member.current_pincode : '',
-  current_state_id: member?.current_state_id ? member.current_state_id : '',
-  current_country_id: member?.current_country_id ? member.current_country_id : '',
-  cells_and_association_id: member?.cells_and_association_id ? member.cells_and_association_id : '',
+  current_state_id: member?.current_state_id ? member.current_state_id : 21, // Maharashtra
+  current_country_id: member?.current_country_id ? member.current_country_id : 95, // India
+
   school_name: member?.school_name ? member.school_name : '',
   college_name: member?.college_name ? member.college_name : '',
   latest_qualifications: member?.latest_qualifications ? member.latest_qualifications : '',
   company_name: member?.company_name ? member.company_name : '',
   designation_id: member?.designation? member.designation : '',
-  family_income_range_id: member?.family_income_range? member.family_income_range: '',
+  annual_income: (member as any)?.annual_income ? (member as any).annual_income : '',
+  contact_no_2: (member as any)?.contact_no_2 ? (member as any).contact_no_2 : '',
   baptism_date: member?.baptism_date ? member.baptism_date : '',
   baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
   baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
@@ -170,8 +171,8 @@ watch(
 const filteredStatesPermanent = ref<State[]>([]);
 
 const fetchfilteredStatesPermanent = async () => {
-  if (!form.permanent_country_id) return;
-  filteredStatesPermanent.value = props.states.filter((state) => state.country_id === Number(form.permanent_country_id));
+  const countryId = form.permanent_country_id || 95; // Default to India if not set
+  filteredStatesPermanent.value = props.states.filter((state) => state.country_id === Number(countryId));
 };
 
 watch(
@@ -198,8 +199,8 @@ watch(
 const filteredStatesCurrent = ref<State[]>([]);
 
 const fetchfilteredStatesCurrent = async () => {
-  if (!form.current_country_id) return;
-  filteredStatesCurrent.value = props.states.filter((state) => state.country_id === Number(form.current_country_id));
+  const countryId = form.current_country_id || 95; // Default to India if not set
+  filteredStatesCurrent.value = props.states.filter((state) => state.country_id === Number(countryId));
 };
 
 watch(
@@ -208,6 +209,42 @@ watch(
     fetchfilteredStatesCurrent();
   },
 );
+
+const filteredCitiesPermanent = ref<City[]>([]);
+
+const fetchfilteredCitiesPermanent = async () => {
+  // Use all cities since City interface doesn't have state_id
+  filteredCitiesPermanent.value = props.cities;
+};
+
+watch(
+  () => form.permanent_state_id,
+  () => {
+    fetchfilteredCitiesPermanent();
+  },
+);
+
+const filteredCitiesCurrent = ref<City[]>([]);
+
+const fetchfilteredCitiesCurrent = async () => {
+  // Use all cities since City interface doesn't have state_id
+  filteredCitiesCurrent.value = props.cities;
+};
+
+watch(
+  () => form.current_state_id,
+  () => {
+    fetchfilteredCitiesCurrent();
+  },
+);
+
+// Initialize filtered arrays on component mount
+nextTick(() => {
+  fetchfilteredCitiesPermanent();
+  fetchfilteredCitiesCurrent();
+  fetchfilteredStatesPermanent();
+  fetchfilteredStatesCurrent();
+});
 
 function cancel() {
   window.location.href = '/member/index';
@@ -286,7 +323,7 @@ function formatDate(dateStr: string) {
                 id="relationship_id"
                 v-model="form.relationship_id"
                 :options="props.relationships"
-                class="mt-1 block w-full rounded-full"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
                 placeholder="Select Relationship"
               />
               <InputError class="mt-2" :message="form.errors.relationship_id" />
@@ -317,26 +354,7 @@ function formatDate(dateStr: string) {
               <Input id="aadhar" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.aadhar" autocomplete="aadhar" placeholder="Aadhar" />
               <InputError class="mt-2" :message="form.errors.aadhar" />
             </div>
-            <div class="grid gap-2">
-              <Label for="family_no">Family No</Label>
-              <Input id="family_no" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.family_no" autocomplete="family_no" placeholder="Family no" />
-              <InputError class="mt-2" :message="form.errors.family_no" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="member_no">Member No</Label>
-              <Input id="member_no" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.member_no" autocomplete="member_no" placeholder="Member no" />
-              <InputError class="mt-2" :message="form.errors.member_no" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="registration_year">Registration Year</Label>
-              <Input id="registration_year" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.registration_year" autocomplete="registration_year" placeholder="YYYY" />
-              <InputError class="mt-2" :message="form.errors.registration_year" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="church_code">Church Code</Label>
-              <Input id="church_code" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.church_code" autocomplete="church_code" placeholder="SAL" />
-              <InputError class="mt-2" :message="form.errors.church_code" />
-            </div>
+
             <div class="grid gap-2">
               <Label for="marital_status">Marital Status</Label>
               <SelectInput
@@ -354,11 +372,19 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.marital_status" />
             </div>
             <div class="grid gap-2">
-                              <Label for="current_family_no">Current Family No</Label>
-                <div class="mt-1 block w-full rounded-full border border-gray-300 px-4 py-2 bg-gray-50 text-gray-600">
-                  {{ member?.current_family_no || 'Same as birth family' }}
-                </div>
-                <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p>
+              <Label for="current_family_no">Current Family No</Label>
+              <div class="mt-1 block w-full rounded-full border border-gray-300 px-4 py-2 bg-gray-50 text-gray-600">
+                <span v-if="member?.current_family_no">{{ member.current_family_no }}</span>
+  <span v-else class="mt-1 text-xs text-gray-500">
+    Managed automatically through marriage and family changes
+  </span>
+              </div>
+              <!-- <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p> -->
+            </div>
+            <div class="grid gap-2">
+              <Label for="spouse_member_id">Spouse Member ID</Label>
+              <Input id="spouse_member_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.spouse_member_id" autocomplete="spouse_member_id" placeholder="Spouse member ID" />
+              <InputError class="mt-2" :message="form.errors.spouse_member_id" />
             </div>
           </div>
           
@@ -472,12 +498,12 @@ function formatDate(dateStr: string) {
             </div>
             <div class="grid gap-2">
               <Label for="permanent_city">City</Label>
-              <Input
+              <SearchDropdown
                 id="permanent_city"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
                 v-model="form.permanent_city_id"
-                autocomplete="permanent_city"
-                placeholder="Permanent City"
+                :options="filteredCitiesPermanent"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Select Permanent City"
               />
               <InputError class="mt-2" :message="form.errors.permanent_city_id" />
             </div>
@@ -567,7 +593,13 @@ function formatDate(dateStr: string) {
             </div>
             <div class="grid gap-2">
               <Label for="current_city">City</Label>
-              <Input id="current_city_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.current_city_id" autocomplete="current_city_id" placeholder="Current City" />
+              <SearchDropdown
+                id="current_city"
+                v-model="form.current_city_id"
+                :options="filteredCitiesCurrent"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Select Current City"
+              />
               <InputError class="mt-2" :message="form.errors.current_city_id" />
             </div>
             <div class="grid gap-2">
@@ -587,7 +619,7 @@ function formatDate(dateStr: string) {
                 id="current_state_id"
                 v-model="form.current_state_id"
                 :options="filteredStatesCurrent"
-                class="mt-1 block w-full rounded-full"
+                class="mt-1 block w-full rounded-full focus:ring-2 focus:ring-blue-200"
                 placeholder="Select Current State"
               />
               <InputError class="mt-2" :message="form.errors.current_state_id" />
@@ -648,36 +680,32 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.designation_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="family_income_range_id">Family Income Range</Label>
-              <SelectInput
-                id="family_income_range_id"
-                v-model="form.family_income_range_id"
-                :options="familyIncomeRanges"
-                class="mt-1 block w-full rounded-full"
-                placeholder="Select Family Income Range"
+              <Label for="annual_income">Annual Income</Label>
+              <Input
+                id="annual_income"
+                type="number"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                v-model="form.annual_income"
+                autocomplete="annual_income"
+                placeholder="Annual income"
               />
-              <InputError class="mt-2" :message="form.errors.family_income_range_id" />
+              <InputError class="mt-2" :message="form.errors.annual_income" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="contact_no_2">Contact No 2</Label>
+              <Input
+                id="contact_no_2"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                v-model="form.contact_no_2"
+                autocomplete="contact_no_2"
+                placeholder="Alternative contact number"
+              />
+              <InputError class="mt-2" :message="form.errors.contact_no_2" />
             </div>
           </div>
         </div>
 
-        <!-- Cells & Associations -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Cells & Associations</h3>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="grid gap-2">
-              <Label for="cells_and_association_id">Cells and Association</Label>
-              <SearchDropdown
-                id="cells_and_association_id"
-                v-model="form.cells_and_association_id"
-                :options="cellsAndAssociations"
-                class="mt-1 block w-full rounded-full"
-                placeholder="Select Cells & Association"
-              />
-              <InputError class="mt-2" :message="form.errors.cells_and_association_id" />
-            </div>
-          </div>
-        </div>
+
 
         <!-- Sacrament Details -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
@@ -817,26 +845,7 @@ function formatDate(dateStr: string) {
         </div>
 
         <!-- Family Numbering Details -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Numbering Details</h3>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
-            <div class="grid gap-2">
-              <Label for="family_sequence">Family Sequence</Label>
-              <Input id="family_sequence" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.family_sequence" autocomplete="family_sequence" placeholder="Family sequence" />
-              <InputError class="mt-2" :message="form.errors.family_sequence" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="member_sequence">Member Sequence</Label>
-              <Input id="member_sequence" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.member_sequence" autocomplete="member_sequence" placeholder="Member sequence" />
-              <InputError class="mt-2" :message="form.errors.member_sequence" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="spouse_member_id">Spouse Member ID</Label>
-              <Input id="spouse_member_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.spouse_member_id" autocomplete="spouse_member_id" placeholder="Spouse member ID" />
-              <InputError class="mt-2" :message="form.errors.spouse_member_id" />
-            </div>
-          </div>
-        </div>
+
 
         <!-- Action Bar -->
         <div class="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-4 bg-gray-50 p-4 rounded-b-2xl shadow-inner">

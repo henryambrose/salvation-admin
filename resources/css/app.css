@@ -82,6 +82,16 @@
     --font-sans:
       'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   }
+  
+  /* Prevent automatic scroll restoration */
+  html {
+    scroll-behavior: auto !important;
+  }
+  
+  /* Disable smooth scrolling that might interfere with scroll restoration */
+  * {
+    scroll-behavior: auto !important;
+  }
 }
 
 :root {

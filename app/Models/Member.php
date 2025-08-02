@@ -122,20 +122,23 @@ class Member extends Model
         static::creating(function ($member) {
             $numberingService = new \App\Services\FamilyNumberingService($member->church_code ?? 'SAL');
             
+            // Set default values
+            $member->church_code = $member->church_code ?? 'SAL';
+            $member->registration_year = $member->registration_year ?? date('Y');
+            
             // Generate independent member number if not set
             if (!$member->member_no) {
                 $member->member_no = $numberingService->generateMemberNumber(
-                    $member->registration_year ?? date('Y'),
-                    $member->church_code ?? 'SAL'
+                    $member->registration_year,
+                    $member->church_code
                 );
             }
             
-            // Generate family group and member number if not set
+            // Generate family number if not set
             if (!$member->family_no) {
-                $familyGroup = $numberingService->generateFamilyGroupNumber(
-                    $member->church_code ?? 'SAL'
+                $member->family_no = $numberingService->generateFamilyGroupNumber(
+                    $member->church_code
                 );
-                $member->family_no = $numberingService->generateMemberNumberInFamily($familyGroup);
             }
             
             // Parse member number to extract components
@@ -150,7 +153,6 @@ class Member extends Model
             if ($member->family_no) {
                 $familyInfo = $numberingService->parseFamilyNumber($member->family_no);
                 $member->family_sequence = $familyInfo['family_group'];
-                $member->member_sequence = $familyInfo['member_sequence'];
             }
         });
     }

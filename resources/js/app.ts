@@ -43,3 +43,8 @@ createInertiaApp({
 
 // This will set light / dark mode on page load...
 initializeTheme();
+
+// Disable browser scroll restoration to prevent auto-scroll to top
+if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+}

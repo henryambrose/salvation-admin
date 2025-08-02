@@ -26,7 +26,7 @@ class FamilyNumberingService
         $highestFamily = DB::table('members')
             ->where('church_code', $churchCode)
             ->whereNotNull('family_no')
-            ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
+            ->orderByRaw('CAST(SUBSTRING_INDEX(family_no, "-", -1) AS UNSIGNED) DESC')
             ->first();
         
         if ($highestFamily) {
@@ -45,24 +45,14 @@ class FamilyNumberingService
     }
 
     /**
-     * Generate member number within a family group: SAL-XXX-YYY
+     * Generate member number within a family group: SAL-XXX
+     * Note: This method now returns just the family group number since all members share the same family number
      */
     public function generateMemberNumberInFamily($familyGroup, $churchCode = null)
     {
-        $churchCode = $churchCode ?? $this->churchCode;
-        $churchCode = strtoupper($churchCode);
-        
-        // Get next member sequence for this family group
-        $lastMember = Member::where('family_no', 'like', "{$familyGroup}-%")
-            ->orderBy('member_sequence', 'desc')
-            ->first();
-        
-        $memberSequence = $lastMember ? $lastMember->member_sequence + 1 : 1;
-        
-        // Format: SAL-XXX-YYY
-        $memberPart = str_pad($memberSequence, 3, '0', STR_PAD_LEFT);
-        
-        return "{$familyGroup}-{$memberPart}";
+        // For new family numbering system, all members in a family share the same family number
+        // The family group is the family number itself
+        return $familyGroup;
     }
 
     /**
@@ -98,19 +88,19 @@ class FamilyNumberingService
     }
 
     /**
-     * Parse family number: SAL-XXX-YYY
+     * Parse family number: SAL-XXX
      */
     public function parseFamilyNumber($familyNo)
     {
-        // Parse: SAL-XXX-YYY
-        if (!preg_match('/^([A-Z]{3})-(\d{3})-(\d{3})$/', $familyNo, $matches)) {
-            throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX-YYY');
+        // Parse: SAL-XXX
+        if (!preg_match('/^([A-Z]{3})-(\d{3})$/', $familyNo, $matches)) {
+            throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX');
         }
         
         return [
             'church_code' => $matches[1],
             'family_group' => (int) $matches[2],
-            'member_sequence' => (int) $matches[3]
+            'member_sequence' => 1 // All members in a family share the same family number
         ];
     }
 
@@ -191,7 +181,7 @@ class FamilyNumberingService
     public function handleFamilyMove($familyNo, $newCommunityId, $newChurchCode = null)
     {
         // Family number stays the same, only community and church code change
-        $members = Member::where('family_no', 'like', $this->getFamilyGroupFromNumber($familyNo) . '-%')->get();
+        $members = Member::where('family_no', $this->getFamilyGroupFromNumber($familyNo))->get();
         
         foreach ($members as $member) {
             $updateData = ['community_id' => $newCommunityId];
@@ -249,7 +239,7 @@ class FamilyNumberingService
 
     public function getFamilyMembers($familyGroup, $includeMarriedMembers = true)
     {
-        $query = Member::where('family_no', 'like', $familyGroup . '-%');
+        $query = Member::where('family_no', $familyGroup);
         
         if (!$includeMarriedMembers) {
             $query->where('marital_status', '!=', 'married');
@@ -271,7 +261,7 @@ class FamilyNumberingService
         }
         
         $totalMembers = $query->count();
-        $totalFamilies = $query->distinct('family_no')->count();
+        $totalFamilies = $query->distinct('family_no')->count('family_no');
         
         return [
             'church_code' => $churchCode,
@@ -299,7 +289,7 @@ class FamilyNumberingService
         $families = [];
         foreach ($familyNumbers as $familyNo) {
             $familyGroup = $this->getFamilyGroupFromNumber($familyNo);
-            $members = Member::where('family_no', 'like', $familyGroup . '-%')
+            $members = Member::where('family_no', $familyGroup)
                 ->with(['relationship', 'community'])
                 ->orderBy('member_sequence')
                 ->get();

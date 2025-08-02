@@ -40,6 +40,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 const currentDate = new Date();
 const currentHour = currentDate.getHours();
 const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
+
+// Format date to dd-MM-yyyy
+const formatDate = (dateString: string) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+};
 </script>
 
 <template>
@@ -54,7 +64,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                     <div class="flex items-center justify-between">
                         <div>
                             <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">
-                                {{ greeting }}, Welcome to Salvation
+                                {{ greeting }}, Welcome to Our Lady of Salvation
                             </h1>
                             <p class="text-gray-600 dark:text-gray-400 text-lg">
                                 Catholic Community Management Dashboard
@@ -152,7 +162,7 @@ const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Af
                                             <td class="p-4 font-medium text-gray-900 dark:text-white">
                                                 {{ birthday.first_name }} {{ birthday.middle_name || '' }} {{ birthday.last_name }}
                                             </td>
-                                            <td class="p-4 text-gray-600 dark:text-gray-400">{{ birthday.date_of_birth }}</td>
+                                            <td class="p-4 text-gray-600 dark:text-gray-400">{{ formatDate(birthday.date_of_birth) }}</td>
                                             <td class="p-4">
                                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                                                     {{ birthday.age }} years

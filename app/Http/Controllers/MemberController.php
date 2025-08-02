@@ -14,6 +14,7 @@ use App\Models\Member;
 use App\Models\Relationship;
 use App\Models\State;
 use App\Models\Town;
+use App\Models\City;
 use App\Models\Gender;
 use App\Models\Status;
 use App\Models\Parish;
@@ -316,6 +317,9 @@ class MemberController extends Controller
             'states' => State::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
+            'cities' => City::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),
             'towns' => Town::with('city.state.country')->get()->map(function ($item) {
                 return [
                     'id' => $item->id, 
@@ -363,24 +367,22 @@ class MemberController extends Controller
                 
                 // Validate existing family number
                 if (!$numberingService->validateFamilyNumber($familyNo)) {
-                    throw new \Exception('Invalid family number format. Expected: SAL-XXX-YYY');
+                    throw new \Exception('Invalid family number format. Expected: SAL-XXX');
                 }
                 
                 // Check if family actually exists in database
-                $existingFamily = Member::where('family_no', 'like', $numberingService->getFamilyGroupFromNumber($familyNo) . '-%')->first();
+                $existingFamily = Member::where('family_no', $familyNo)->first();
                 if (!$existingFamily) {
                     throw new \Exception('Family number "' . $familyNo . '" does not exist. Please search for existing families or create a new family.');
                 }
                 
-                $familyInfo = $numberingService->getFamilyInfo($familyNo);
+                $familyInfo = $numberingService->parseFamilyNumber($familyNo);
                 $data['family_no'] = $familyNo;
                 $data['family_sequence'] = $familyInfo['family_group'];
-                $data['registration_year'] = $familyInfo['year'];
                 $data['church_code'] = $familyInfo['church_code'];
                 
                 // Generate member number for existing family
                 $data['member_no'] = $numberingService->generateMemberNumber();
-                $data['member_sequence'] = $familyInfo['member_sequence'];
                 
             } else {
                 // New family - numbers will be auto-generated in model
@@ -452,6 +454,9 @@ class MemberController extends Controller
             'states' => State::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
+            'cities' => City::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            })->toArray(),  
             'towns' => Town::with('city.state.country')->get()->map(function ($item) {
                 return [
                     'id' => $item->id, 

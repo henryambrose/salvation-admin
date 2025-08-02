@@ -22,8 +22,11 @@ class DashboardController extends Controller
     {
         $communityCount = Community::count();
         $memberCount = Member::count();
-        $familyCount = Member::distinct('family_no')->count('family_no');
-
+        $familyCount = DB::table('members')
+            ->whereNotNull('family_no')
+            ->whereRaw('TRIM(family_no) != ?', [''])
+            ->distinct('family_no')
+            ->count('family_no');
         $genders = Gender::all()->pluck('name', 'id')->map(function ($gender) {
             return ucfirst($gender);
         })->toArray();
@@ -97,12 +100,17 @@ class DashboardController extends Controller
         // \Log::debug('Community Wise Members:', $communityWiseMembers->toArray());
 
         // COMMUNITY WISE FAMILY
-        $communityWiseFamilies = Community::withCount(['members as family_count' => function ($query) {
-            $query->select(DB::raw('COUNT(DISTINCT family_no)'));
-        }])->get()
-            ->mapWithKeys(function ($community) {
-                return [$community->name => $community->family_count];
-            });
+        $communityWiseFamilies = Community::with('members')
+        ->get()
+        ->mapWithKeys(function ($community) {
+            $familyCount = $community->members
+                ->filter(fn($m) => !is_null($m->family_no) && trim($m->family_no) !== '')
+                ->pluck('family_no')
+                ->unique()
+                ->count();
+    
+            return [$community->name => $familyCount];
+        });
 
         // \Log::debug('Community Wise Families:', $communityWiseFamilies->toArray());
 

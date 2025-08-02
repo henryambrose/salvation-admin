@@ -1,13 +1,35 @@
 <script setup lang="ts">
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
+import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BookOpen, UserCircle, MessageSquare } from 'lucide-vue-next';
+import { 
+  BookOpen, 
+  UserCircle, 
+  MessageSquare, 
+  Users, 
+  MapPin, 
+  Network, 
+  Building2, 
+  Heart, 
+  UserCheck, 
+  Calendar, 
+  Church, 
+  Droplets, 
+  CheckCircle, 
+  Globe, 
+  Map, 
+  Building, 
+  Home,
+  Crown,
+  Shield,
+  Bot
+} from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -32,160 +54,180 @@ const mainNavItems: NavItem[] = modules.value;
 
 const filteredMainNavItems = mainNavItems.filter((item) => item.show);
 
-// Custom ordered navigation items
-const orderedNavItems: NavItem[] = [
+// Organized navigation groups
+const navigationGroups = [
   {
-    title: 'Members',
-    href: '/member/index',
-    icon: UserCircle,
-    show: can('view-member'),
+    label: 'Core Management',
+    items: [
+      {
+        title: 'Members',
+        href: '/member/index',
+        icon: Users,
+        show: can('view-member'),
+      },
+      {
+        title: 'Community',
+        href: '/community',
+        icon: Building2,
+        show: can('view-community'),
+      },
+      {
+        title: 'Parishes',
+        href: '/parish',
+        icon: Church,
+        show: can('view-parish'),
+      },
+    ]
   },
   {
-    title: 'Community',
-    href: '/community',
-    icon: BookOpen,
-    show: can('view-community'),
+    label: 'Organizational Structure',
+    items: [
+      {
+        title: 'Zone',
+        href: '/zone',
+        icon: MapPin,
+        show: can('view-zone'),
+      },
+      {
+        title: 'Community Clusters',
+        href: '/community-clusters',
+        icon: Network,
+        show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+      },
+      {
+        title: 'Clusters',
+        href: '/clusters',
+        icon: Network,
+        show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+      },
+      {
+        title: 'Cells and Association',
+        href: '/cells-and-association',
+        icon: Heart,
+        show: can('view-cells-and-association'),
+      },
+      {
+        title: 'Cells Association Members',
+        href: '/cells-and-association-members',
+        icon: UserCheck,
+        show: can('view-cells-and-association-member'),
+      },
+      
+    ]
   },
   {
-    title: 'Zone',
-    href: '/zone',
-    icon: BookOpen,
-    show: can('view-zone'),
+    label: 'Leadership',
+    items: [
+      {
+        title: 'SCC Head',
+        href: '/scc-head',
+        icon: Crown,
+        show: can('view-s-c-c-head'),
+      },
+      {
+        title: 'PPC Head',
+        href: '/ppc-head',
+        icon: Shield,
+        show: can('view-p-p-c-head'),
+      },
+    ]
   },
   {
-    title: 'Community Clusters',
-    href: '/community-clusters',
-    icon: BookOpen,
-    show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+    label: 'Member Attributes',
+    items: [
+      {
+        title: 'Relationship',
+        href: '/relationship',
+        icon: UserCheck,
+        show: can('view-relationship'),
+      },
+      {
+        title: 'Designation',
+        href: '/designation',
+        icon: Crown,
+        show: can('view-designation'),
+      },
+      {
+        title: 'Age Group',
+        href: '/age-group',
+        icon: Calendar,
+        show: can('view-age-group'),
+      },
+      {
+        title: 'Blood Group',
+        href: '/blood-group',
+        icon: Droplets,
+        show: can('view-blood-group'),
+      },
+      {
+        title: 'Gender',
+        href: '/gender',
+        icon: UserCircle,
+        show: can('view-gender'),
+      },
+      {
+        title: 'Status',
+        href: '/status',
+        icon: CheckCircle,
+        show: can('view-status'),
+      },
+      {
+        title: 'Family Income Range',
+        href: '/family-income-range',
+        icon: Heart,
+        show: can('view-family-income-range'),
+      },
+    ]
   },
   {
-    title: 'Clusters',
-    href: '/clusters',
-    icon: BookOpen,
-    show: (page.props.auth as any)?.roles?.includes('superadmin') || (page.props.auth as any)?.roles?.includes('admin'),
+    label: 'Geographic Data',
+    items: [
+      {
+        title: 'Countries',
+        href: '/country',
+        icon: Globe,
+        show: can('view-country'),
+      },
+      {
+        title: 'State',
+        href: '/state',
+        icon: Map,
+        show: can('view-state'),
+      },
+      {
+        title: 'City',
+        href: '/city',
+        icon: Building,
+        show: can('view-city'),
+      },
+      {
+        title: 'Town',
+        href: '/town',
+        icon: Home,
+        show: can('view-town'),
+      },
+      
+    ]
   },
   {
-    title: 'Cells and Association',
-    href: '/cells-and-association',
-    icon: BookOpen,
-    show: can('view-cells-and-association'),
-  },
-  {
-    title: 'Cells Association Members',
-    href: '/cells-and-association-members',
-    icon: BookOpen,
-    show: can('view-cells-and-association-member'),
-  },
-  {
-    title: 'SCC Head',
-    href: '/scc-head',
-    icon: UserCircle,
-    show: can('view-s-c-c-head'),
-  },
-  {
-    title: 'PPC Head',
-    href: '/ppc-head',
-    icon: UserCircle,
-    show: can('view-p-p-c-head'),
-  },
-  {
-    title: 'Family Income Range',
-    href: '/family-income-range',
-    icon: BookOpen,
-    show: can('view-family-income-range'),
-  },
-  {
-    title: 'Relationship',
-    href: '/relationship',
-    icon: BookOpen,
-    show: can('view-relationship'),
-  },
-  {
-    title: 'Designation',
-    href: '/designation',
-    icon: BookOpen,
-    show: can('view-designation'),
-  },
-  {
-    title: 'Age Group',
-    href: '/age-group',
-    icon: BookOpen,
-    show: can('view-age-group'),
-  },
-  {
-    title: 'Parishes',
-    href: '/parish',
-    icon: BookOpen,
-    show: can('view-parish'),
-  },
-  {
-    title: 'Blood Group',
-    href: '/blood-group',
-    icon: BookOpen,
-    show: can('view-blood-group'),
-  },
-  {
-    title: 'Gender',
-    href: '/gender',
-    icon: BookOpen,
-    show: can('view-gender'),
-  },
-  {
-    title: 'Status',
-    href: '/status',
-    icon: BookOpen,
-    show: can('view-status'),
-  },
-  {
-    title: 'Countries',
-    href: '/country',
-    icon: BookOpen,
-    show: can('view-country'),
-  },
-  {
-    title: 'State',
-    href: '/state',
-    icon: BookOpen,
-    show: can('view-state'),
-  },
-  {
-    title: 'City',
-    href: '/city',
-    icon: BookOpen,
-    show: can('view-city'),
-  },
-  {
-    title: 'Town',
-    href: '/town',
-    icon: BookOpen,
-    show: can('view-town'),
-  },
+    label: 'AI Assistance',
+      items: [
+        {
+          title: 'AI Chat',
+          href: '/chat',
+          icon: Bot,
+          show: (page.props.auth as any)?.roles?.includes('superadmin') || false,
+        },
+      ]
+  }
 ];
 
-const filteredOrderedNavItems = orderedNavItems.filter((item) => item.show);
+const filteredNavigationGroups = navigationGroups.map(group => ({
+  ...group,
+  items: group.items.filter(item => item.show)
+})).filter(group => group.items.length > 0);
 
-const footerNavItems: NavItem[] = [
-  {
-    title: 'Users',
-    href: '/users/index',
-    icon: UserCircle,
-    show: can('view-Users'),
-  },
-  {
-    title: 'Role Permissions',
-    href: '/roles-permissions',
-    icon: BookOpen,
-    show: can('update-role-permissions'),
-  },
-  {
-    title: 'AI Chat',
-    href: '/chat',
-    icon: MessageSquare,
-    show: (page.props.auth as any)?.roles?.includes('superadmin') || false,
-  },
-];
 
-const filteredFooterNavItems = footerNavItems.filter((item) => item.show);
 </script>
 
 <template>
@@ -204,12 +246,10 @@ const filteredFooterNavItems = footerNavItems.filter((item) => item.show);
 
     <SidebarContent>
       <!-- <NavMain :items="mainNavItems" /> -->
-      <NavMain :items="filteredOrderedNavItems" />
+      <NavMainGrouped :groups="filteredNavigationGroups" />
     </SidebarContent>
 
     <SidebarFooter>
-      <!-- <NavFooter :items="footerNavItems" /> -->
-      <NavFooter :items="filteredFooterNavItems" />
       <NavUser />
     </SidebarFooter>
   </Sidebar>
