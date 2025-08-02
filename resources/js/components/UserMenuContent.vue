@@ -13,7 +13,8 @@ interface Props {
 const { can } = permissionHelpers();
 
 const handleLogout = () => {
-  router.flushAll();
+  // Simple redirect to logout URL
+  window.location.href = '/logout';
 };
 
 defineProps<Props>();
@@ -47,10 +48,8 @@ defineProps<Props>();
     </DropdownMenuItem>
   </DropdownMenuGroup>
   <DropdownMenuSeparator />
-  <DropdownMenuItem :as-child="true">
-    <Link class="block w-full" method="post" :href="route('logout')" @click="handleLogout" as="button">
-      <LogOut class="mr-2 h-4 w-4" />
-      Log out
-    </Link>
+  <DropdownMenuItem @click="handleLogout">
+    <LogOut class="mr-2 h-4 w-4" />
+    Log out
   </DropdownMenuItem>
 </template>

@@ -35,7 +35,7 @@ const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },
   { key: 'cluster_name', label: 'Cluster Name', sortable: true },
-  { key: 'member_name', label: 'Member Name', sortable: true },
+  { key: 'member_name', label: 'Co-ordinator', sortable: true },
 ];
 
 

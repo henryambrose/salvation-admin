@@ -56,6 +56,11 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+function clearSearch() {
+  search.value = '';
+  fetch();
+}
+
 const enhancedSCCHeads = computed(() => {
   const c = props.s_c_c_heads || {};
   return {
@@ -290,7 +295,10 @@ const canExportSCCHead = can('read-s-c-c-head');
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
-          <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+          <div class="relative">
+            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
+            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+          </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>
