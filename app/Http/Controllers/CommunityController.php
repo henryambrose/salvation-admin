@@ -75,9 +75,7 @@ class CommunityController extends Controller
      */
     public function store(StoreCommunityRequest $request)
     {
-        $data = $request->validated();
-        $data['zone_id'] = $request->input('zone_id');
-        Community::create($data);
+        Community::create($request->validated());
         $perPage = $request->input('perPage', 10);
         $total = Community::count();
         $lastPage = (int) ceil($total / $perPage);
@@ -116,9 +114,7 @@ class CommunityController extends Controller
      */
     public function update(UpdateCommunityRequest $request, Community $community)
     {
-        $data = $request->validated();
-        $data['zone_id'] = $request->input('zone_id');
-        $community->update($data);
+        $community->update($request->validated());
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
         return redirect()->route('community.index', array_merge(

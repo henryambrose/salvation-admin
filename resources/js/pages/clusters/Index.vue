@@ -49,6 +49,21 @@ const editForm = useForm({
   name: '',
 });
 
+// Validation function to check for duplicate cluster names
+const validateClusterName = (name: string, excludeId?: number) => {
+  if (!name || name.trim() === '') {
+    return 'The cluster name cannot be empty.';
+  }
+  
+  const existingClusters = enhancedCluster.value.data;
+  const duplicate = existingClusters.find((cluster: any) => {
+    if (excludeId && cluster.id === excludeId) return false;
+    return cluster.name.toLowerCase() === name.toLowerCase();
+  });
+  
+  return duplicate ? 'A cluster with this name already exists.' : null;
+};
+
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
@@ -87,6 +102,26 @@ function fetch(page = 1) {
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
+});
+
+// Watch for changes in cluster name to validate duplicates
+watch(() => form.name, () => {
+  const error = validateClusterName(form.name);
+  if (error) {
+    form.setError('name', error);
+  } else {
+    if (form.errors.name) form.setError('name', '');
+  }
+});
+
+// Watch for changes in edit form cluster name
+watch(() => editForm.name, () => {
+  const error = validateClusterName(editForm.name, editingCluster.value?.id);
+  if (error) {
+    editForm.setError('name', error);
+  } else {
+    if (editForm.errors.name) editForm.setError('name', '');
+  }
 });
 
 const enhancedCluster = computed(() => {
@@ -274,7 +309,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 </Button>
                 <Button
                   type="submit"
-                  :disabled="form.processing"
+                  :disabled="form.processing || form.errors.name"
                   class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
@@ -308,7 +343,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 </Button>
                 <Button
                   type="submit"
-                  :disabled="editForm.processing"
+                  :disabled="editForm.processing || editForm.errors.name"
                   class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}

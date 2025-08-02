@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreClusterRequest;
+use App\Http\Requests\UpdateClusterRequest;
 use App\Models\Cluster;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -53,13 +55,9 @@ class ClusterController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreClusterRequest $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        Cluster::create($validated);
+        Cluster::create($request->validated());
 
         return redirect()->route('clusters.index')
                         ->with('success', 'Cluster created successfully.');
@@ -90,13 +88,9 @@ class ClusterController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Cluster $cluster)
+    public function update(UpdateClusterRequest $request, Cluster $cluster)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $cluster->update($validated);
+        $cluster->update($request->validated());
 
         return redirect()->route('clusters.index')
                         ->with('success', 'Cluster updated successfully.');

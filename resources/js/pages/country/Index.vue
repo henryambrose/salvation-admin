@@ -131,6 +131,28 @@ function restoreCountry(id: number) {
     },
   });
 }
+
+function clearSearch() {
+  search.value = '';
+  // Force immediate fetch to clear results
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      {
+        preserveState: false,
+        replace: true,
+      },
+    );
+  }
+}
 </script>
 
 <template>
@@ -145,7 +167,23 @@ function restoreCountry(id: number) {
         </div>
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
-          <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" placeholder="Search..." />
+          <div class="relative">
+            <input 
+              v-model="search" 
+              @keyup.enter="fetch()" 
+              type="text" 
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" 
+              placeholder="Search..." 
+              @keydown.escape="clearSearch"
+            />
+            <button 
+              v-if="search" 
+              @click="clearSearch" 
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>

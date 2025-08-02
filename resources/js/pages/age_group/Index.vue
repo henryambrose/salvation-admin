@@ -49,6 +49,24 @@ const editForm = useForm({
   max_age: '',
 });
 
+// Validation function to check for duplicate age ranges
+const validateAgeRange = (minAge: string, maxAge: string, excludeId?: number) => {
+  if (!minAge || !maxAge) return null;
+  
+  const min = parseInt(minAge);
+  const max = parseInt(maxAge);
+  
+  if (isNaN(min) || isNaN(max)) return null;
+  
+  const existingAgeGroups = enhancedAgeGroups.value.data;
+  const duplicate = existingAgeGroups.find((ageGroup: any) => {
+    if (excludeId && ageGroup.id === excludeId) return false;
+    return ageGroup.min_age === min && ageGroup.max_age === max;
+  });
+  
+  return duplicate ? 'An age group with this min age and max age combination already exists.' : null;
+};
+
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
@@ -67,6 +85,32 @@ const enhancedAgeGroups = computed(() => {
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
+});
+
+// Watch for changes in min_age and max_age to validate duplicates
+watch([() => form.min_age, () => form.max_age], () => {
+  const error = validateAgeRange(form.min_age, form.max_age);
+  if (error) {
+    form.setError('min_age', error);
+    form.setError('max_age', error);
+  } else {
+    // Clear errors by setting them to empty string
+    if (form.errors.min_age) form.setError('min_age', '');
+    if (form.errors.max_age) form.setError('max_age', '');
+  }
+});
+
+// Watch for changes in edit form min_age and max_age
+watch([() => editForm.min_age, () => editForm.max_age], () => {
+  const error = validateAgeRange(editForm.min_age, editForm.max_age, editingAgeGroup.value?.id);
+  if (error) {
+    editForm.setError('min_age', error);
+    editForm.setError('max_age', error);
+  } else {
+    // Clear errors by setting them to empty string
+    if (editForm.errors.min_age) editForm.setError('min_age', '');
+    if (editForm.errors.max_age) editForm.setError('max_age', '');
+  }
 });
 
 function scrollToRow(rowId: number) {
@@ -176,6 +220,28 @@ function restoreAgeGroup(id: number) {
   });
 }
 
+function clearSearch() {
+  search.value = '';
+  // Force immediate fetch to clear results
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      {
+        preserveState: false,
+        replace: true,
+      },
+    );
+  }
+}
+
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
@@ -216,12 +282,22 @@ watch(
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
-          <input
-            v-model="search"
-            type="text"
-            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
-            placeholder="Search..."
-          />
+          <div class="relative">
+            <input
+              v-model="search"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button
+              v-if="search"
+              @click="clearSearch"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              ✕
+            </button>
+          </div>
           <select v-model="perPage" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="2">2</option>
             <option :value="5">5</option>

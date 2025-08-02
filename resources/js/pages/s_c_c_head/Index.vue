@@ -25,8 +25,9 @@ const props = defineProps({
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
-  { key: 'member_first_name', label: 'Member Name', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },
+  { key: 'member_full_name', label: 'Member Name', sortable: true },
+
 ];
 
 const breadcrumbs = [{ title: 'SCC Heads', href: '/scc-head/index' }];
@@ -402,7 +403,7 @@ const canExportSCCHead = can('read-s-c-c-head');
     <transition name="fade">
       <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-white p-8 shadow-2xl sm:w-[420px]">
-          <h2 class="mb-6 text-2xl font-bold text-gray-900">Create SCC Head</h2>
+          <h2 class="mb-6 text-2xl font-bold text-gray-900">Create SCC Member</h2>
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
@@ -423,14 +424,14 @@ const canExportSCCHead = can('read-s-c-c-head');
               <button type="submit" class="rounded-full bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">Create</button>
             </div>
           </form>
-        </div>
+        </div>s
       </div>
     </transition>
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete SCC Head</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete SCC Member</h3>
             <p>
               Are you sure you want to delete this SCC Head?
             </p>

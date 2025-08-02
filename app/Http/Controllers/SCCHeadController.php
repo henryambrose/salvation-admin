@@ -10,6 +10,7 @@ use App\Models\SCCHead;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -29,7 +30,10 @@ class SCCHeadController extends Controller
         $query->select('s_c_c_heads.*');
         $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
-        $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'communities.name as community_name');
+        $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'members.last_name as member_last_name',
+    DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
+    'communities.name as community_name'
+);
         // Apply filters
         if ($communityId = $request->input('community_id')) {
             $query->where('s_c_c_heads.community_id', $communityId);

@@ -10,6 +10,7 @@ use App\Models\PPCHead;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
 
 class PPCHeadController extends Controller
 {
@@ -27,7 +28,10 @@ class PPCHeadController extends Controller
         $query->select('p_p_c_heads.*');
         $query->join('members', 'p_p_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
-        $query->select('p_p_c_heads.*', 'members.first_name as member_first_name', 'communities.name as community_name');
+        $query->select('p_p_c_heads.*','members.first_name as member_first_name','members.last_name as member_last_name',
+    DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
+    'communities.name as community_name'
+);
         // Apply filters
         if ($communityId = $request->input('community_id')) {
             $query->where('p_p_c_heads.community_id', $communityId);

@@ -11,7 +11,7 @@ class Community extends Model
     /** @use HasFactory<\Database\Factories\CommunityFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'zone_id'];
 
     protected $casts = [
         'created_at' => 'datetime',

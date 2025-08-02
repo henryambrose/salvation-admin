@@ -24,6 +24,7 @@ class UpdateCommunityRequest extends FormRequest
     {
         return [
             'name' => 'required|string|max:255',
+            'zone_id' => 'required|exists:zones,id',
         ];
     }
 }

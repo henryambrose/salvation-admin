@@ -20,11 +20,12 @@ const props = defineProps({
   filters: Object,
   fetchUrl: String,
 });
-
+console.log(props.ppcHeads);
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
-  { key: 'member_first_name', label: 'Member Name', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },
+  { key: 'member_full_name', label: 'Member Name', sortable: true },
+
 ];
 
 const breadcrumbs = [{ title: 'PPC Heads', href: '/ppc-head/index' }];
@@ -324,9 +325,8 @@ const canExportPPCHead = can('read-p-p-c-head');
                 </template>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">
-                <span>
                   {{ row[col.key] }}
-                </span>
+
               </td>
               <td v-if="!isArchived" class="p-2">
                 <template v-if="!isArchived">
