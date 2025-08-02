@@ -77,6 +77,7 @@ function fetchOption(page = 1) {
         props.class,
       )"
       @click="open = !open"
+      tabindex="0"
     >
       <span class="text-foreground flex-1">
         {{
