@@ -8,6 +8,7 @@ use App\Models\Gender;
 use App\Models\Member;
 use App\Models\Relationship;
 use App\Models\Status;
+use App\Models\Zone;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -91,28 +92,53 @@ class DashboardController extends Controller
         ->orderByRaw("MONTH(date_of_birth), DAY(date_of_birth)")
         ->get(['name', 'date_of_birth']);
 
-        /** community wise members with community name and member count */
-        $communityWiseMembers = Community::withCount('members')
+        /** COMMUNITY WISE STATISTICS (MEMBERS AND FAMILIES) */
+        $communityWiseStats = Community::with('members')
             ->get()
             ->mapWithKeys(function ($community) {
-                return [$community->name => $community->members_count];
+                $memberCount = $community->members->count();
+                $familyCount = $community->members
+                    ->filter(fn($m) => !is_null($m->family_no) && trim($m->family_no) !== '')
+                    ->pluck('family_no')
+                    ->unique()
+                    ->count();
+        
+                return [$community->name => [
+                    'members' => $memberCount,
+                    'families' => $familyCount
+                ]];
+            })
+            ->filter(function ($stats) {
+                return $stats['members'] > 0 || $stats['families'] > 0; // Only show communities with data
             });
-        // \Log::debug('Community Wise Members:', $communityWiseMembers->toArray());
 
-        // COMMUNITY WISE FAMILY
-        $communityWiseFamilies = Community::with('members')
-        ->get()
-        ->mapWithKeys(function ($community) {
-            $familyCount = $community->members
-                ->filter(fn($m) => !is_null($m->family_no) && trim($m->family_no) !== '')
-                ->pluck('family_no')
-                ->unique()
-                ->count();
-    
-            return [$community->name => $familyCount];
-        });
+        // \Log::debug('Community Wise Stats:', $communityWiseStats->toArray());
 
-        // \Log::debug('Community Wise Families:', $communityWiseFamilies->toArray());
+        // ZONE WISE STATISTICS (MEMBERS AND FAMILIES)
+        $zoneWiseStats = Zone::with('communities.members')
+            ->get()
+            ->mapWithKeys(function ($zone) {
+                $memberCount = $zone->communities->sum(function ($community) {
+                    return $community->members->count();
+                });
+                
+                $familyCount = $zone->communities->flatMap(function ($community) {
+                    return $community->members
+                        ->filter(fn($m) => !is_null($m->family_no) && trim($m->family_no) !== '')
+                        ->pluck('family_no');
+                })->unique()->count();
+                
+                return [$zone->name => [
+                    'members' => $memberCount,
+                    'families' => $familyCount
+                ]];
+            })
+            ->filter(function ($stats) {
+                return $stats['members'] > 0 || $stats['families'] > 0; // Only show zones with data
+            });
+
+        // Debug zone-wise data
+        \Log::debug('Zone Wise Stats:', $zoneWiseStats->toArray());
 
         // STATUS WISE
         $statuses = Status::all()->pluck('name', 'id')->map(function ($status) {
@@ -189,6 +215,20 @@ class DashboardController extends Controller
         ];
         $tableCards = [
             [
+                'title' => 'Zone-wise Statistics',
+                'data' => $zoneWiseStats,
+                'icon' => 'i-heroicons-map',
+                'bgClass' => 'bg-orange-500',
+                'borderClass' => 'border-orange-800',
+            ],
+            [
+                'title' => 'Community-wise Statistics',
+                'data' => $communityWiseStats,
+                'icon' => 'i-heroicons-users',
+                'bgClass' => 'bg-purple-500',
+                'borderClass' => 'border-purple-800',
+            ],
+            [
                 'title' => 'Gender Wise',
                 'data' => $genderData,
                 'icon' => 'i-heroicons-chart-bar',
@@ -196,18 +236,11 @@ class DashboardController extends Controller
                 'borderClass' => 'border-indigo-800',
             ],
             [
-                'title' => 'Community Wise Members',
-                'data' => $communityWiseMembers,
+                'title' => 'Relationship Wise Members',
+                'data' => $relationshipWiseMembers,
                 'icon' => 'i-heroicons-users',
-                'bgClass' => 'bg-purple-500',
-                'borderClass' => 'border-purple-800',
-            ],
-            [
-                'title' => 'Community Wise Families',
-                'data' => $communityWiseFamilies,
-                'icon' => 'i-heroicons-home',
-                'bgClass' => 'bg-sky-500',
-                'borderClass' => 'border-sky-800',
+                'bgClass' => 'bg-red-500',
+                'borderClass' => 'border-red-800',
             ],
             [
                 'title' => 'Status Wise Members',
@@ -229,13 +262,6 @@ class DashboardController extends Controller
                 'icon' => 'i-heroicons-graduation-cap',
                 'bgClass' => 'bg-blue-500',
                 'borderClass' => 'border-blue-800',
-            ],
-            [
-                'title' => 'Relationship Wise Members',
-                'data' => $relationshipWiseMembers,
-                'icon' => 'i-heroicons-users',
-                'bgClass' => 'bg-red-500',
-                'borderClass' => 'border-red-800',
             ],
         ];
 

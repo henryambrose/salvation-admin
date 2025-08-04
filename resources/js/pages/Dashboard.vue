@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
-import { Users, Calendar, Church, Heart, Gift, Cake, Mail, Phone } from 'lucide-vue-next';
+import { Users, Calendar, Church, Heart, Gift, Cake, Mail, Phone, MapPin, Home } from 'lucide-vue-next';
 
 defineProps({
     statCards: {
@@ -49,6 +49,50 @@ const formatDate = (dateString: string) => {
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
+};
+
+// Get appropriate icon for each card
+const getIconForCard = (title: string) => {
+    const iconMap: Record<string, any> = {
+        'Gender Wise': Users,
+        'Community Wise Members': Users,
+        'Community Wise Families': Home,
+        'Status Wise Members': Heart,
+        'Designation Wise Members': Gift,
+        'Latest Qualifications Wise Members': Gift,
+        'Relationship Wise Members': Users,
+        'Zone-wise Statistics': MapPin,
+        'Community-wise Statistics': Users,
+    };
+    return iconMap[title] || Heart;
+};
+
+// Get appropriate gradient for each card
+const getGradientForCard = (title: string) => {
+    const gradientMap: Record<string, string> = {
+        'Gender Wise': 'bg-gradient-to-br from-indigo-500 to-purple-600',
+        'Community Wise Members': 'bg-gradient-to-br from-purple-500 to-pink-600',
+        'Community Wise Families': 'bg-gradient-to-br from-sky-500 to-blue-600',
+        'Status Wise Members': 'bg-gradient-to-br from-green-500 to-emerald-600',
+        'Designation Wise Members': 'bg-gradient-to-br from-yellow-500 to-orange-600',
+        'Latest Qualifications Wise Members': 'bg-gradient-to-br from-blue-500 to-indigo-600',
+        'Relationship Wise Members': 'bg-gradient-to-br from-red-500 to-pink-600',
+        'Zone-wise Statistics': 'bg-gradient-to-br from-orange-500 to-red-600',
+        'Community-wise Statistics': 'bg-gradient-to-br from-purple-500 to-pink-600',
+    };
+    return gradientMap[title] || 'bg-gradient-to-br from-green-500 to-emerald-600';
+};
+
+// Check if card is a statistics card (has members and families)
+const isStatisticsCard = (title: string): boolean => {
+    return title === 'Zone-wise Statistics' || title === 'Community-wise Statistics';
+};
+
+// Get appropriate column header for statistics cards
+const getColumnHeader = (title: string): string => {
+    if (title === 'Zone-wise Statistics') return 'Zone';
+    if (title === 'Community-wise Statistics') return 'Community';
+    return 'Status';
 };
 </script>
 
@@ -200,8 +244,11 @@ const formatDate = (dateString: string) => {
                             <CardTitle class="text-lg font-semibold text-gray-900 dark:text-white">
                                 {{ tableCard.title }}
                             </CardTitle>
-                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                                <Heart class="w-5 h-5 text-white" />
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg" :class="getGradientForCard(tableCard.title)">
+                                <component 
+                                    :is="getIconForCard(tableCard.title)" 
+                                    class="w-5 h-5 text-white" 
+                                />
                             </div>
                         </div>
                     </CardHeader>
@@ -209,9 +256,11 @@ const formatDate = (dateString: string) => {
                     <CardContent class="p-6 pt-0">
                         <div class="space-y-3">
                             <!-- Table Header -->
-                            <div class="grid grid-cols-2 gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl font-semibold text-gray-900 dark:text-white">
-                                <div>Status</div>
-                                <div>Count</div>
+                            <div class="grid gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl font-semibold text-gray-900 dark:text-white text-sm"
+                                 :class="isStatisticsCard(tableCard.title) ? 'grid-cols-3' : 'grid-cols-2'">
+                                <div>{{ getColumnHeader(tableCard.title) }}</div>
+                                <div>{{ isStatisticsCard(tableCard.title) ? 'Members' : 'Count' }}</div>
+                                <div v-if="isStatisticsCard(tableCard.title)">Families</div>
                             </div>
 
                             <!-- Table Rows -->
@@ -219,10 +268,13 @@ const formatDate = (dateString: string) => {
                                 <div 
                                     v-for="(row, index) in tableCard.data" 
                                     :key="index"
-                                    class="grid grid-cols-2 gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                                    class="grid gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-sm"
+                                    :class="isStatisticsCard(tableCard.title) ? 'grid-cols-3' : 'grid-cols-2'"
                                 >
                                     <div class="font-medium text-gray-900 dark:text-white">{{ index || 'Other' }}</div>
-                                    <div class="text-blue-600 dark:text-blue-400 font-semibold">{{ row }}</div>
+                                    <div v-if="isStatisticsCard(tableCard.title)" class="text-blue-600 dark:text-blue-400 font-semibold">{{ row.members }}</div>
+                                    <div v-else class="text-blue-600 dark:text-blue-400 font-semibold">{{ row }}</div>
+                                    <div v-if="isStatisticsCard(tableCard.title)" class="text-green-600 dark:text-green-400 font-semibold">{{ row.families }}</div>
                                 </div>
                             </div>
                         </div>
