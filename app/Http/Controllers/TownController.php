@@ -36,13 +36,12 @@ class TownController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
-        $cities = City::all();
 
         return Inertia::render('town/Index', [
             'towns' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('town.index'),
-            'cities' => $cities,
+            'cities' => City::select('id', 'name')->orderBy('name')->get(),
         ]);
     }
 

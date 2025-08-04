@@ -44,18 +44,32 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   // Check if the current URL matches any variation of the item href
   const variations = urlVariations[itemHref as keyof typeof urlVariations];
   if (variations) {
-    return variations.includes(currentUrl);
+    // Check if current URL starts with any of the variations
+    return variations.some(variation => currentUrl.startsWith(variation));
   }
   
-  // Default exact match for any other pages
-  return itemHref === currentUrl;
+  // For other pages, check if current URL starts with the item href
+  return currentUrl.startsWith(itemHref);
 };
 
 const handleNavigation = (href: string) => {
-  // Navigate to the new page without scroll restoration
+  // Store the current sidebar scroll position before navigation
+  const sidebarContent = document.querySelector('[data-slot="sidebar-content"]');
+  const scrollPosition = sidebarContent?.scrollTop || 0;
+  
+  // Navigate to the new page
   router.visit(href, {
     preserveScroll: false,
     preserveState: false,
+    onSuccess: () => {
+      // Restore the sidebar scroll position after the page loads
+      setTimeout(() => {
+        const newSidebarContent = document.querySelector('[data-slot="sidebar-content"]');
+        if (newSidebarContent && scrollPosition > 0) {
+          newSidebarContent.scrollTop = scrollPosition;
+        }
+      }, 50);
+    },
   });
 };
 </script>

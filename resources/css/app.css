@@ -92,6 +92,11 @@
   * {
     scroll-behavior: auto !important;
   }
+  
+  /* Prevent sidebar from auto-scrolling to top on navigation */
+  [data-slot="sidebar-content"] {
+    scroll-behavior: auto !important;
+  }
 }
 
 :root {

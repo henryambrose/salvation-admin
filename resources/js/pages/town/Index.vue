@@ -97,6 +97,8 @@ function scrollToRow(rowId: number) {
   });
 }
 
+
+
 function submit() {
   form.post('/town', {
     preserveScroll: true,
@@ -111,11 +113,19 @@ function submit() {
   });
 }
 
+function openCreateModal() {
+  console.log('Opening create modal...');
+  console.log('Cities in create modal:', props.cities?.length || 0);
+  showModal.value = true;
+}
+
 function openEditModal(row: any) {
+  console.log('Opening edit modal...');
   editingTown.value = row;
   editForm.name = row.name;
   editForm.pincode = row.pincode;
   editForm.city_id = row.city_id;
+  console.log('Cities in edit modal:', props.cities?.length || 0);
   showEditModal.value = true;
 }
 
@@ -208,7 +218,7 @@ onMounted(() => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Towns</h2>
-        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Town</span>
           </Button>
         </div>
@@ -357,7 +367,7 @@ onMounted(() => {
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">City</label>
                 <select v-model="form.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select City</option>
+                  <option value="" disabled>Select City ({{ props.cities?.length || 0 }} cities loaded)</option>
                   <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
                 <div v-if="form.errors.city_id" class="mt-1 text-sm text-red-500">{{ form.errors.city_id }}</div>
@@ -405,7 +415,7 @@ onMounted(() => {
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">City</label>
                 <select v-model="editForm.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select City</option>
+                  <option value="" disabled>Select City ({{ props.cities?.length || 0 }} cities loaded)</option>
                   <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
                 <div v-if="editForm.errors.city_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.city_id }}</div>

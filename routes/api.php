@@ -78,3 +78,8 @@ Route::post('/validate-parish', function (Illuminate\Http\Request $request) {
     // Route::apiResource('community', CommunityController::class);
     // Route::apiResource('member', MembersController::class);
 // });
+
+// Cities API Route for town forms - placed outside middleware groups
+Route::get('/cities', function () {
+    return \App\Models\City::select('id', 'name')->orderBy('name')->get();
+});
