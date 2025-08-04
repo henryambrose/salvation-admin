@@ -467,9 +467,9 @@ const validateForm = () => {
   if (familyType.value === 'existing' && existingFamilyNo.value.trim()) {
     // Validate family number format
     const churchCode = page.props.church_code;
-    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3}-\\d{3}$`);
+    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3}$`);
     if (!familyNoPattern.test(existingFamilyNo.value)) {
-      errors.value.push(`Family number must be in format: ${churchCode}-XXX-YYY`);
+      errors.value.push(`Family number must be in format: ${churchCode}-XXX`);
     }
   }
   

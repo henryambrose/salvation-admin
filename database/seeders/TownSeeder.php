@@ -14,9 +14,10 @@ class TownSeeder extends Seeder
     public function run(): void
     {
         $towns =[
-            ['name' => 'Dadar', 'city_id' => 1, 'pincode' => '400028'],
-            ['name' => 'Prabhadevi', 'city_id' => 1, 'pincode' => '400025'],
-            ['name' => 'Lower Parel', 'city_id' => 1, 'pincode' => '400013']
+            ['name' => 'Other', 'pincode' => '000000', 'city_id' => '2' ],
+            ['name' => 'Dadar', 'pincode' => '400028', 'city_id' => '2' ],
+            ['name' => 'Prabhadevi', 'pincode' => '400025', 'city_id' => '2' ],
+            ['name' => 'Lower Parel', 'pincode' => '400013', 'city_id' => '3' ]
         ];
 
         Town::insert($towns);

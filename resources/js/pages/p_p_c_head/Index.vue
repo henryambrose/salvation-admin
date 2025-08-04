@@ -197,6 +197,17 @@ function closeCreateModal() {
 
 function submitCreate() {
   if (!createForm.member_id || !createForm.community_id) return;
+  
+  // Check for duplicate community
+  const existingCommunity = enhancedPPCHeads.value.data.find(
+    head => head.community_id === createForm.community_id?.id
+  );
+  
+  if (existingCommunity) {
+    createForm.setError('community_id', 'This community already has a PPC Head assigned.');
+    return;
+  }
+  
   createForm.transform(data => ({
     ...data,
     perPage: perPage.value,
@@ -415,6 +426,9 @@ const canExportPPCHead = can('read-p-p-c-head');
                 <option value="" disabled>Select Community</option>
                 <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
+              <div v-if="editForm.errors.community_id" class="mt-1 text-sm text-red-500">
+                {{ editForm.errors.community_id }}
+              </div>
             </div>
             <div class="mb-6">
               <label class="block mb-2 font-medium text-gray-700">Member</label>
@@ -452,7 +466,7 @@ const canExportPPCHead = can('read-p-p-c-head');
     <transition name="fade">
       <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
         <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-white p-8 shadow-2xl sm:w-[420px]">
-          <h2 class="mb-6 text-2xl font-bold text-gray-900">Create SCC Head</h2>
+          <h2 class="mb-6 text-2xl font-bold text-gray-900">Create PPC Head</h2>
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
@@ -460,6 +474,9 @@ const canExportPPCHead = can('read-p-p-c-head');
                 <option value="" disabled>Select Community</option>
                 <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>
+              <div v-if="createForm.errors.community_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.community_id }}
+              </div>
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
@@ -467,6 +484,9 @@ const canExportPPCHead = can('read-p-p-c-head');
                 <option value="" disabled>Select Member</option>
                 <option v-for="m in modalMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
               </select>
+              <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.member_id }}
+              </div>
             </div>
             <div class="flex justify-end gap-3">
               <button type="button" @click="closeCreateModal" class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200">Cancel</button>

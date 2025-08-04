@@ -23,7 +23,19 @@ class UpdateSCCHeadRequest extends FormRequest
     {
         return [
             'member_id' => 'required|integer|exists:members,id',
-            'community_id' => 'required|integer|exists:communities,id',
+            'community_id' => 'required|integer|exists:communities,id|unique:s_c_c_heads,community_id,' . $this->route('scc-head'),
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'community_id.unique' => 'This community already has an SCC Head assigned.',
         ];
     }
 }

@@ -115,31 +115,6 @@ const highlightedIndex = ref(-1);
 // Debounce timer
 let searchTimeout: number;
 
-// Watch for external value changes
-watch(() => props.modelValue, (newValue) => {
-  if (newValue && !selectedMember.value) {
-    // If we have a value but no selected member, we need to fetch the member details
-    fetchMemberDetails(newValue);
-  } else if (!newValue) {
-    selectedMember.value = null;
-    searchQuery.value = '';
-  }
-}, { immediate: true });
-
-// Watch search query for debounced search
-watch(searchQuery, (newQuery) => {
-  clearTimeout(searchTimeout);
-  
-  if (newQuery.length >= 2) {
-    searchTimeout = setTimeout(() => {
-      performSearch(newQuery);
-    }, 300); // 300ms debounce
-  } else {
-    searchResults.value = [];
-    showDropdown.value = false;
-  }
-});
-
 // Methods
 const performSearch = async (query: string) => {
   if (query.length < 2) return;
@@ -179,6 +154,31 @@ const fetchMemberDetails = async (memberId: number) => {
     console.error('Error fetching member details:', error);
   }
 };
+
+// Watch for external value changes
+watch(() => props.modelValue, (newValue) => {
+  if (newValue && !selectedMember.value) {
+    // If we have a value but no selected member, we need to fetch the member details
+    fetchMemberDetails(newValue);
+  } else if (!newValue) {
+    selectedMember.value = null;
+    searchQuery.value = '';
+  }
+}, { immediate: true });
+
+// Watch search query for debounced search
+watch(searchQuery, (newQuery) => {
+  clearTimeout(searchTimeout);
+  
+  if (newQuery.length >= 2) {
+    searchTimeout = setTimeout(() => {
+      performSearch(newQuery);
+    }, 300); // 300ms debounce
+  } else {
+    searchResults.value = [];
+    showDropdown.value = false;
+  }
+});
 
 const selectMember = (member: Member) => {
   selectedMember.value = member;

@@ -16,7 +16,7 @@ const props = defineProps({
     default: () => ({ data: [] }),
   },
   communities: {
-    type: Array as () => { id: string | number; name: string }[],
+    type: Array as () => Array<{ id: string | number; name: string }>,
     default: () => [],
   },
   filters: Object,
@@ -203,6 +203,16 @@ function closeCreateModal() {
 }
 
 function submitCreate() {
+  // Check for duplicate community
+  const existingCommunity = enhancedSCCHeads.value.data.find(
+    (head: any) => head.community_id === createForm.community_id?.id
+  );
+  
+  if (existingCommunity) {
+    createForm.setError('community_id', 'This community already has an SCC Head assigned.');
+    return;
+  }
+  
   createForm.transform(data => ({
     ...data,
     perPage: perPage.value,
@@ -308,7 +318,7 @@ const canExportSCCHead = can('read-s-c-c-head');
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex cursor-pointer items-center gap-2 select-none">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -383,7 +393,7 @@ const canExportSCCHead = can('read-s-c-c-head');
           <select 
             v-if="enhancedSCCHeads.last_page && enhancedSCCHeads.last_page > 1"
             :value="enhancedSCCHeads.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedSCCHeads.last_page" :key="page" :value="page">
@@ -510,9 +520,10 @@ const canExportSCCHead = can('read-s-c-c-head');
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #e5e7eb;
+  background: #ef4444; /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
   position: relative;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s;
 }
 .switch-checkbox[data-state='checked'] {
   background: #2563eb;

@@ -32,15 +32,16 @@
 
     <!-- Dropdown Selection -->
     <div v-if="selectionMode === 'dropdown'" class="space-y-2">
-      <SelectInput
+      <SearchDropdown
         :id="`${id}_dropdown`"
         v-model="selectedParishId"
         :options="parishOptions"
-        placeholder="Select a parish..."
-        @change="onParishSelected"
+        placeholder="Search and select a parish..."
+        class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+        @update:modelValue="onParishSelected"
       />
       <p class="text-xs text-gray-500">
-        Select from existing parishes in the system
+        Search and select from existing parishes in the system
       </p>
     </div>
 
@@ -75,7 +76,7 @@
 import { ref, watch, computed, onMounted } from 'vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { SelectInput } from '@/components/ui/select';
+import { SearchDropdown } from '@/components/ui/searchDropdown';
 import axios from 'axios';
 
 interface Props {
@@ -101,7 +102,7 @@ const parishOptions = computed(() => {
   return [
     { id: '', name: 'Select a parish...' },
     ...props.parishes.map(parish => ({
-      id: parish.id.toString(),
+      id: parish.id,
       name: parish.name
     }))
   ];
@@ -132,12 +133,22 @@ watch(() => props.modelValue, (newValue) => {
 }, { deep: true });
 
 // Handle parish selection from dropdown
-const onParishSelected = () => {
-  const parishId = selectedParishId.value;
-  const parishName = parishId ? props.parishes.find(p => p.id === parishId)?.name : null;
+const onParishSelected = (parishId: number | string | null) => {
+  // Handle empty string case
+  if (parishId === '' || parishId === null) {
+    selectedParishId.value = null;
+    emit('update:modelValue', {
+      parishId: null,
+      parishName: null
+    });
+    return;
+  }
+  
+  selectedParishId.value = parishId as number;
+  const parishName = props.parishes.find(p => p.id === parishId)?.name || null;
   
   emit('update:modelValue', {
-    parishId: parishId,
+    parishId: parishId as number,
     parishName: null // Clear custom name when using dropdown
   });
   

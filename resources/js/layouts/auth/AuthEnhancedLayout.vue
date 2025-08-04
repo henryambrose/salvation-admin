@@ -375,8 +375,8 @@ onMounted(() => {
       <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
         <!-- Header with Logo -->
         <div class="flex items-center gap-3 lg:gap-6 mb-4 lg:mb-6">
-          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-600/30 via-purple-600/30 to-indigo-600/30 backdrop-blur-xl border-2 border-white/40 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
-            <AppLogoIcon class="size-10 lg:size-12 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
+          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-white/90 backdrop-blur-xl border-2 border-white shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
+            <AppLogoIcon class="size-10 lg:size-12 fill-current text-blue-600 drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
             <!-- Enhanced Glow effect -->
             <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
             <!-- Animated border glow -->

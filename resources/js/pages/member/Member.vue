@@ -69,7 +69,20 @@ const genderArray = genderList.map((gender) => ({ id: gender, name: gender.charA
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 const member = page.props.member as Member;
-console.log('member',member);
+
+// Format date for HTML date input (YYYY-MM-DD)
+const formatDateForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
+};
+
 const form = useForm({
   id: member?.id ? member.id : '',
   first_name: member?.first_name ? member.first_name : '',
@@ -80,7 +93,7 @@ const form = useForm({
   status_id: member?.status_id ? member.status_id : '',
   relationship_id: member?.relationship_id ? member.relationship_id : '',
   parish_id: member?.parish_id ? member.parish_id : '',
-  date_of_birth: member?.date_of_birth ? member.date_of_birth : '',
+  date_of_birth: formatDateForInput(member?.date_of_birth),
   contact_no_1: member?.contact_no_1 ? member.contact_no_1 : '',
   contact_no_2: member?.contact_no_2 ? member.contact_no_2 : '',
   email: member?.email ? member.email : '',
@@ -100,17 +113,17 @@ const form = useForm({
   permanent_add2: member?.permanent_add2 ? member.permanent_add2 : '',
   permanent_add3: member?.permanent_add3 ? member.permanent_add3 : '',
   permanent_town_id: member?.permanent_town_id ? member.permanent_town_id : '',
-  permanent_city_id: member?.permanent_city_id ? member.permanent_city_id : '',
+  permanent_city_id: member?.permanent_city_id ? member.permanent_city_id : 2,
   permanent_pincode: member?.permanent_pincode ? member.permanent_pincode : '',
-  permanent_state_id: member?.permanent_state_id ? member.permanent_state_id : 21, // Maharashtra
+  permanent_state_id: member?.permanent_state_id ? member.permanent_state_id : 22, // Maharashtra
   permanent_country_id: member?.permanent_country_id? member.permanent_country_id : 95, // India
   current_add1: member?.current_add1 ? member.current_add1 : '',
   current_add2: member?.current_add2 ? member.current_add2 : '',
   current_add3: member?.current_add3 ? member.current_add3 : '',
   current_town_id: member?.current_town_id ? member.current_town_id : '',
-  current_city_id: member?.current_city_id ? member.current_city_id : '',
+  current_city_id: member?.current_city_id ? member.current_city_id : 2,
   current_pincode: member?.current_pincode ? member.current_pincode : '',
-  current_state_id: member?.current_state_id ? member.current_state_id : 21, // Maharashtra
+  current_state_id: member?.current_state_id ? member.current_state_id : 22, // Maharashtra
   current_country_id: member?.current_country_id ? member.current_country_id : 95, // India
 
   school_name: member?.school_name ? member.school_name : '',
@@ -119,19 +132,19 @@ const form = useForm({
   company_name: member?.company_name ? member.company_name : '',
   designation_id: member?.designation? member.designation : '',
   income_range_id: member?.income_range_id ? member.income_range_id : '',
-  baptism_date: member?.baptism_date ? member.baptism_date : '',
+  baptism_date: formatDateForInput(member?.baptism_date),
   baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
   baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
   baptism_parish_id: member?.baptism_parish_id ? member.baptism_parish_id : '',
-  confirmation_date: member?.confirmation_date ? member.confirmation_date : '',
+  confirmation_date: formatDateForInput(member?.confirmation_date),
   confirmation_reg_no: member?.confirmation_reg_no ? member.confirmation_reg_no : '',
   confirmation_parish: member?.confirmation_parish ? member.confirmation_parish : '',
   confirmation_parish_id: member?.confirmation_parish_id ? member.confirmation_parish_id : '',
-  marriage_date: member?.marriage_date ? member.marriage_date : '',
+  marriage_date: formatDateForInput(member?.marriage_date),
   marriage_reg_no: member?.marriage_reg_no ? member.marriage_reg_no : '',
   marriage_parish: member?.marriage_parish ? member.marriage_parish : '',
   marriage_parish_id: member?.marriage_parish_id ? member.marriage_parish_id : '',
-  death_date: member?.death_date ? member.death_date : '',
+  death_date: formatDateForInput(member?.death_date),
   deaths_reg_no: member?.deaths_reg_no ? member.deaths_reg_no : '',
   death_parish: member?.death_parish ? member.death_parish : '',
   death_parish_id: member?.death_parish_id ? member.death_parish_id : '',
@@ -240,6 +253,82 @@ const deathParishSelection = computed({
     form.death_parish = value.parishName || '';
   }
 });
+
+// Watch for member prop changes and update form data
+watch(
+  () => props.member,
+  (newMember) => {
+    if (newMember) {
+      console.log('Member prop changed, updating form data');
+      console.log('New member date_of_birth:', newMember.date_of_birth);
+      
+      // Update form with new member data
+      form.id = newMember.id || '';
+      form.first_name = newMember.first_name || '';
+      form.middle_name = newMember.middle_name || '';
+      form.last_name = newMember.last_name || '';
+      form.gender = newMember.gender_id || '';
+      form.blood_group_id = newMember.blood_group_id || '';
+      form.status_id = newMember.status_id || '';
+      form.relationship_id = newMember.relationship_id || '';
+      form.parish_id = newMember.parish_id || '';
+      form.date_of_birth = formatDateForInput(newMember.date_of_birth);
+      form.contact_no_1 = newMember.contact_no_1 || '';
+      form.contact_no_2 = newMember.contact_no_2 || '';
+      form.email = newMember.email || '';
+      form.aadhar = newMember.aadhar || '';
+      form.family_no = newMember.family_no || '';
+      form.member_no = newMember.member_no || '';
+      form.registration_year = newMember.registration_year || '';
+      form.church_code = newMember.church_code || page.props.church_code;
+      form.family_sequence = newMember.family_sequence || '';
+      form.member_sequence = newMember.member_sequence || '';
+      form.marital_status = newMember.marital_status || 'single';
+      form.spouse_member_id = newMember.spouse_member_id ? Number(newMember.spouse_member_id) : null;
+      form.community_id = newMember.community_id || '';
+      form.community_cluster_id = newMember.community_cluster_id || '';
+      form.permanent_add1 = newMember.permanent_add1 || '';
+      form.permanent_add2 = newMember.permanent_add2 || '';
+      form.permanent_add3 = newMember.permanent_add3 || '';
+      form.permanent_town_id = newMember.permanent_town_id || '';
+      form.permanent_city_id = newMember.permanent_city_id || 2;
+      form.permanent_pincode = newMember.permanent_pincode || '';
+      form.permanent_state_id = newMember.permanent_state_id || 22;
+      form.permanent_country_id = newMember.permanent_country_id || 95;
+      form.current_add1 = newMember.current_add1 || '';
+      form.current_add2 = newMember.current_add2 || '';
+      form.current_add3 = newMember.current_add3 || '';
+      form.current_town_id = newMember.current_town_id || '';
+      form.current_city_id = newMember.current_city_id || 2;
+      form.current_pincode = newMember.current_pincode || '';
+      form.current_state_id = newMember.current_state_id || 22;
+      form.current_country_id = newMember.current_country_id || 95;
+      form.school_name = newMember.school_name || '';
+      form.college_name = newMember.college_name || '';
+      form.latest_qualifications = newMember.latest_qualifications || '';
+      form.company_name = newMember.company_name || '';
+      form.designation_id = newMember.designation || '';
+      form.income_range_id = newMember.income_range_id || '';
+      form.baptism_date = formatDateForInput(newMember.baptism_date);
+      form.baptism_reg_no = newMember.baptism_reg_no || '';
+      form.baptism_parish = newMember.baptism_parish || '';
+      form.baptism_parish_id = newMember.baptism_parish_id || '';
+      form.confirmation_date = formatDateForInput(newMember.confirmation_date);
+      form.confirmation_reg_no = newMember.confirmation_reg_no || '';
+      form.confirmation_parish = newMember.confirmation_parish || '';
+      form.confirmation_parish_id = newMember.confirmation_parish_id || '';
+      form.marriage_date = formatDateForInput(newMember.marriage_date);
+      form.marriage_reg_no = newMember.marriage_reg_no || '';
+      form.marriage_parish = newMember.marriage_parish || '';
+      form.marriage_parish_id = newMember.marriage_parish_id || '';
+      form.death_date = formatDateForInput(newMember.death_date);
+      form.deaths_reg_no = newMember.deaths_reg_no || '';
+      form.death_parish = newMember.death_parish || '';
+      form.death_parish_id = newMember.death_parish_id || '';
+    }
+  },
+  { immediate: true }
+);
 
 // Initialize community clusters when component loads
 watch(
@@ -876,17 +965,7 @@ function formatDate(dateStr: string) {
               />
               <InputError class="mt-2" :message="form.errors.income_range_id" />
             </div>
-            <div class="grid gap-2">
-              <Label for="contact_no_2">Contact No 2</Label>
-              <Input
-                id="contact_no_2"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.contact_no_2"
-                autocomplete="contact_no_2"
-                placeholder="Alternative contact number"
-              />
-              <InputError class="mt-2" :message="form.errors.contact_no_2" />
-            </div>
+
           </div>
         </div>
 

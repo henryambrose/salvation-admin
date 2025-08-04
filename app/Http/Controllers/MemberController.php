@@ -34,6 +34,7 @@ class MemberController extends Controller
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
             'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
+            'relationship_id' => ['relation' => 'relationship', 'column' => 'name'],
             'blood_group_id' => ['relation' => 'bloodGroup', 'column' => 'name'],
             'income_range_id' => ['relation' => 'incomeRange', 'column' => 'name'],
             'designation_id' => ['relation' => 'designation', 'column' => 'name'],
