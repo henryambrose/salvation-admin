@@ -172,10 +172,10 @@ const navigationGroups = [
         show: can('view-status'),
       },
       {
-        title: 'Family Income Range',
-        href: '/family-income-range',
+        title: 'Income Range',
+        href: '/income-range',
         icon: Heart,
-        show: can('view-family-income-range'),
+        show: can('view-income-range'),
       },
     ]
   },

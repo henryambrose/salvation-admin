@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('family_income_ranges', function (Blueprint $table) {
+        Schema::create('income_ranges', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique();
             $table->unsignedBigInteger('starting_range')->default('0');
@@ -26,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('family_income_ranges');
+        Schema::dropIfExists('income_ranges');
     }
 };

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,7 @@ import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const { can } = permissionHelpers();
+const page = usePage();
 
 const props = defineProps({
   communities: Array<{ id: string | number; name: string }>,
@@ -23,6 +24,7 @@ const props = defineProps({
   ageGroups: Array<{ id: string | number; name: string }>,
   bloodGroups: Array<{ id: string | number; name: string }>,
   genders: Array<{ id: string | number; name: string }>,
+  communityClusters: Array<{ id: string | number; name: string; community_id: string | number }>,
   members: Object,
   totalCount: Number,
   familyStats: Object as () => FamilyStats,
@@ -42,17 +44,7 @@ const showViewModal = ref(false);
 const selectedMember = ref(null);
 const showAddModal = ref(false);
 const showFilters = ref(false);
-const groupByFamily = ref(false);
-const expandedFamilies = ref<string[]>([]);
 
-function toggleFamilyExpansion(familyNo: string) {
-  const index = expandedFamilies.value.indexOf(familyNo);
-  if (index > -1) {
-    expandedFamilies.value.splice(index, 1);
-  } else {
-    expandedFamilies.value.push(familyNo);
-  }
-}
 
 function openViewModal(member: any) {
   selectedMember.value = member;
@@ -83,15 +75,16 @@ const columns: Column[] = [
   { key: 'last_name', label: 'Last Name', sortable: true },
   { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'member_no', label: 'Member No', sortable: true },
-  { key: 'church_code', label: 'Church', sortable: true },
-  { key: 'contact_no_1', label: 'Contact No', sortable: true },
+  { key: 'contact_no_1', label: 'Contact No 1', sortable: true },
+  { key: 'contact_no_2', label: 'Contact No 2', sortable: true },
   { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
   { key: 'age', label: 'Age', sortable: false },
+  { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
   { key: 'relationship_id', label: 'Relationship', sortable: true },
   { key: 'blood_group_id', label: 'Blood Group', sortable: true },
   { key: 'gender_id', label: 'Gender', sortable: true },
-  { key: 'date_of_birth', label: 'Date of Birth', sortable: true },
+
 ];
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
@@ -157,9 +150,16 @@ function getRelationshipName(relationshipId: number | string) {
   return relationship?.name || '';
 }
 
+function getClusterName(clusterId: number | string) {
+  if (!clusterId) return '';
+  const cluster = props.communityClusters?.find(c => c.id == clusterId);
+  return cluster?.name || '';
+}
+
 function getBloodGroupName(bloodGroupId: number | string) {
   if (!bloodGroupId) return '';
   const bloodGroup = props.bloodGroups?.find(b => b.id == bloodGroupId);
+ 
   return bloodGroup?.name || '';
 }
 
@@ -167,6 +167,12 @@ function getGenderName(genderId: number | string) {
   if (!genderId) return '';
   const gender = props.genders?.find(g => g.id == genderId);
   return gender?.name || '';
+}
+
+function getCommunityName(communityId: number | string) {
+  if (!communityId) return '';
+  const community = props.communities?.find(c => c.id == communityId);
+  return community?.name || '';
 }
 
 const canCreateMember = can('create-member');
@@ -202,14 +208,13 @@ const isArchived = ref(props.filters?.isArchived || false);
 let searchTimeout: number;
 
 watch(
-  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived, groupByFamily],
+  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived],
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       console.log('Search values changed:', {
         search: search.value,
         familySearch: familySearch.value,
-        groupByFamily: groupByFamily.value,
         newValues,
         oldValues
       });
@@ -224,7 +229,6 @@ function fetch(page = 1) {
     const params = {
       search: search.value,
       familySearch: familySearch.value,
-      groupByFamily: groupByFamily.value ? 'true' : 'false',
       sort: sort.value,
       direction: direction.value,
       perPage: perPage.value,
@@ -286,7 +290,6 @@ function clearSearch() {
       {
         search: '',
         familySearch: familySearch.value,
-        groupByFamily: groupByFamily.value ? 'true' : 'false',
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
@@ -319,7 +322,6 @@ function clearFamilySearch() {
       {
         search: search.value,
         familySearch: '',
-        groupByFamily: groupByFamily.value ? 'true' : 'false',
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
@@ -451,10 +453,7 @@ onMounted(() => {
   <component :is="Download" />
   <span>Export Excel</span>
 </Button>
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <Checkbox v-model="groupByFamily" class="switch-checkbox" />
-              <span class="text-sm font-medium">Group by Family</span>
-            </label>
+
             <label class="flex items-center gap-2 cursor-pointer select-none">
               <Checkbox v-model="isArchived" class="switch-checkbox" />
               <span class="text-sm font-medium">Show Archived</span>
@@ -522,60 +521,37 @@ onMounted(() => {
             <table class="w-full border-collapse text-left">
               <thead>
                 <tr class="bg-blue-50">
-                  <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition">
+                  <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
+                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
-                  <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                  <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
                 </tr>
               </thead>
               <tbody>
-                <template v-for="item in enhancedMembers.data" :key="item.isFamilyHeader ? `family-${item.family_no}` : `member-${item.id}`">
-                  <!-- Family Header Row -->
-                  <tr v-if="item.isFamilyHeader" class="family-header">
-                    <td colspan="14" class="p-3">
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                          <span class="text-lg font-bold text-blue-800">Family: {{ item.family_no }}</span>
-                          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                            {{ item.member_count }} member{{ item.member_count > 1 ? 's' : '' }}
-                          </span>
-                        </div>
-                        <button 
-                          @click="toggleFamilyExpansion(item.family_no)"
-                          class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                        >
-                          {{ expandedFamilies.includes(item.family_no) ? 'Collapse' : 'Expand' }}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <!-- Family Members -->
-                  <template v-if="!item.isFamilyHeader || expandedFamilies.includes(item.family_no)">
-                    <tr 
-                      v-for="member in item.isFamilyHeader ? item.familyMembers : [item]" 
-                      :key="member.id" 
-                      :id="`member-row-${member.id}`" 
-                      :class="[
-                        'even:bg-gray-50 hover:bg-blue-50 transition', 
-                        highlightedRowId === member.id ? 'highlight-row' : '',
-                        item.isFamilyHeader ? 'family-member-row' : ''
-                      ]"
-                    >
+                <tr 
+                  v-for="member in enhancedMembers.data" 
+                  :key="member.id" 
+                  :id="`member-row-${member.id}`" 
+                  :class="[
+                    'even:bg-gray-50 hover:bg-blue-50 transition', 
+                    highlightedRowId === member.id ? 'highlight-row' : ''
+                  ]"
+                >
                   <!-- View + Edit or Restore -->
-                  <td class="p-2">
+                  <td class="p-2 whitespace-nowrap">
                     <div class="flex gap-2">
                       <template v-if="!isArchived">
                         <Button @click="openViewModal(member)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                           <component :is="ZapIcon" />
-                          <span>View</span>
+                          <!-- <span>View</span> -->
                         </Button>
                         <Button v-if="canUpdateAnyMember && !member.deleted_at" @click="editMember(member)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
-                          <span>Edit</span>
+                          <!-- <span>Edit</span> -->
                         </Button>
                       </template>
                       <template v-else>
@@ -586,25 +562,32 @@ onMounted(() => {
                     </div>
                   </td>
                   <!-- Main table data -->
-                  <td v-for="col in columns" :key="col.key" class="p-2">
+                  <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
+
                     <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
                       {{ formatDate(member[col.key]) }}
+                    </template>
+                    <template v-else-if="col.key === 'community_cluster_id'">
+                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{ member.community_cluster_id || '—' }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'community_id'">
+                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'age'">
                       {{ calculateAge(member.date_of_birth) }}
                     </template>
                     <template v-else-if="col.key === 'relationship_id'">
-                      {{ getRelationshipName(member.relationship_id) }}
+                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'blood_group_id'">
-                      {{ getBloodGroupName(member.blood_group_id) }}
+                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'gender_id'">
-                      {{ getGenderName(member.gender_id) }}
+                      <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'church_code'">
                       <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {{ member[col.key] || 'SAL' }}
+                        {{ member[col.key] || page.props.church_code }}
                       </span>
                     </template>
                     <template v-else-if="col.key === 'family_no'">
@@ -618,37 +601,71 @@ onMounted(() => {
                       </span>
                     </template>
                     <template v-else>
-                      {{ member[col.key] }}
+                      <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
                     </template>
                   </td>
                   <!-- Delete -->
-                  <td v-if="!isArchived" class="p-2">
+                  <td v-if="!isArchived" class="p-2 whitespace-nowrap">
                     <template v-if="canDeleteAnyMember && !member.deleted_at">
                       <Button variant="destructive" @click="openDeleteModal(member)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                         <component :is="Trash" />
-                        <span>Delete</span>
+                        <!-- <span>Delete</span> -->
                       </Button>
                     </template>
                   </td>
                 </tr>
-                  </template>
-                </template>
               </tbody>
             </table>
           </div>
 
           <!-- Pagination -->
-          <div class="mt-6 flex items-center gap-2">
-            <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-              Prev
-            </button>
-            <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-              Next
-            </button>
-            <span v-if="enhancedMembers.current_page && enhancedMembers.last_page" class="ml-auto text-sm text-gray-500">
-              Page {{ enhancedMembers.current_page }} of {{ enhancedMembers.last_page }}
-            </span>
-          </div>
+              <!-- Enhanced Pagination -->
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button 
+          v-if="enhancedMembers.prev_page_url" 
+          @click="fetch(enhancedMembers.current_page - 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Prev
+        </button>
+        
+        <!-- Page Number Dropdown -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Page</span>
+          <select 
+            v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
+            :value="enhancedMembers.current_page" 
+            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
+              {{ page }}
+            </option>
+          </select>
+          <span v-if="enhancedMembers.last_page" class="text-sm text-gray-600">of {{ enhancedMembers.last_page }}</span>
+        </div>
+        
+        <button 
+          v-if="enhancedMembers.next_page_url" 
+          @click="fetch(enhancedMembers.current_page + 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Total Records Info -->
+      <div class="text-sm text-gray-500">
+        <span v-if="enhancedMembers.total">Total: {{ enhancedMembers.total }} records</span>
+      </div>
+    </div>
         </div>
       </div>
       <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
@@ -656,13 +673,15 @@ onMounted(() => {
   </AppLayout>
 
   <!-- Member Details Modal -->
-  <ViewMemberModal v-model="showViewModal" :member="selectedMember" :familyIncomeRange="null" />
+  <ViewMemberModal v-model="showViewModal" :member="selectedMember" :incomeRange="null" />
 
   <!-- Add Member Modal -->
   <AddMemberModal 
     v-model="showAddModal" 
     :communities="props.communities || []" 
     :relationships="props.relationships || []" 
+    :communityClusters="props.communityClusters || []" 
+    :towns="[]" 
   />
 
   <!-- Delete Modal -->

@@ -48,8 +48,8 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Family Income Ranges',
-                'slug' => 'family-income-range',
+                'name' => 'Income Ranges',
+                'slug' => 'income-range',
                 'icon' => 'BadgeIndianRupee',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],

@@ -32,7 +32,7 @@
                   </label>
                   <div v-if="familyType === 'new'" class="ml-6 p-4 bg-blue-50 rounded-lg">
                     <p class="text-sm text-blue-800">
-                      A new family number will be automatically generated in the format: <strong>SAL-XXX</strong>
+                      A new family number will be automatically generated in the format: <strong>{{ page.props.church_code }}-XXX</strong>
                     </p>
                   </div>
                 </div>
@@ -52,7 +52,7 @@
                     <input 
                       v-model="existingFamilyNo" 
                       type="text"
-                      placeholder="Enter family number (e.g., SAL-001-001)"
+                      placeholder="Enter family number (e.g., {{ page.props.church_code }}-001-001)"
                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <button 
@@ -148,11 +148,21 @@
                 </div>
                 
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number</label>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number 1</label>
                   <input 
                     v-model="form.contact_no_1" 
                     type="tel" 
-                    placeholder="Enter contact number"
+                    placeholder="Enter primary contact number"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number 2</label>
+                  <input 
+                    v-model="form.contact_no_2" 
+                    type="tel" 
+                    placeholder="Enter secondary contact number (optional)"
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -187,6 +197,23 @@
                 </div>
                 
                 <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Cluster <span class="text-red-500">*</span></label>
+                  <select 
+                    v-model="form.community_cluster_id" 
+                    :disabled="!form.community_id"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  >
+                    <option value="">{{ form.community_id ? 'Select Cluster' : 'Select Community First' }}</option>
+                    <option v-for="cluster in filteredClusters" :key="cluster.id" :value="cluster.id">
+                      {{ cluster.name }}
+                    </option>
+                  </select>
+                  <p v-if="!form.community_id" class="text-xs text-gray-500 mt-1">
+                    Please select a community first to choose a cluster (required)
+                  </p>
+                </div>
+                
+                <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Relationship <span class="text-red-500">*</span></label>
                   <select 
                     v-model="form.relationship_id" 
@@ -198,6 +225,14 @@
                     </option>
                   </select>
                 </div>
+                
+                <!-- <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Spouse Member (Optional)</label>
+                  <SpouseSearchDropdown 
+                    v-model="form.spouse_member_id" 
+                    placeholder="Search for spouse by name, member number, or family number..."
+                  />
+                </div> -->
               </div>
             </div>
 
@@ -255,18 +290,24 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3';
 
 interface Props {
   modelValue: boolean;
   communities: Array<{ id: string | number; name: string }>;
   relationships: Array<{ id: string | number; name: string }>;
+  communityClusters: Array<{ id: string | number; name: string; community_id: string | number }>;
+  towns: Array<{ id: string | number; name: string; state_id: string | number }>;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
   'update:modelValue': [value: boolean];
 }>();
+
+const page = usePage();
+
+
 
 // Form data
 const familyType = ref<'new' | 'existing'>('new');
@@ -286,15 +327,37 @@ const form = ref({
   middle_name: '',
   date_of_birth: '',
   contact_no_1: '',
+  contact_no_2: '',
   email: '',
   community_id: '',
+  community_cluster_id: '',
   relationship_id: '',
+  spouse_member_id: null as number | null,
   existing_family_no: ''
 });
 
 // Preview data
 const previewFamilyNo = ref('Loading...');
 const previewMemberNo = ref('Loading...');
+
+// Computed property for filtered clusters
+const filteredClusters = computed(() => {
+  if (!form.value.community_id) {
+    // If no community is selected, show no clusters (dropdown is disabled)
+    return [];
+  }
+  
+  // Filter clusters by selected community
+  return (props.communityClusters || []).filter(cluster => 
+    Number(cluster.community_id) === Number(form.value.community_id)
+  );
+});
+
+// Watch for community changes to reset cluster selection
+watch(() => form.value.community_id, (newCommunityId) => {
+  // Reset cluster selection when community changes
+  form.value.community_cluster_id = '';
+});
 
 // Fetch next available numbers
 const fetchNextNumbers = async () => {
@@ -389,6 +452,10 @@ const validateForm = () => {
     errors.value.push('Community is required');
   }
   
+  if (!form.value.community_cluster_id) {
+    errors.value.push('Cluster is required');
+  }
+  
   if (!form.value.relationship_id) {
     errors.value.push('Relationship is required');
   }
@@ -399,9 +466,10 @@ const validateForm = () => {
   
   if (familyType.value === 'existing' && existingFamilyNo.value.trim()) {
     // Validate family number format
-    const familyNoPattern = /^SAL-\d{3}-\d{3}$/;
+    const churchCode = page.props.church_code;
+    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3}-\\d{3}$`);
     if (!familyNoPattern.test(existingFamilyNo.value)) {
-      errors.value.push('Family number must be in format: SAL-XXX-YYY');
+      errors.value.push(`Family number must be in format: ${churchCode}-XXX-YYY`);
     }
   }
   
@@ -451,9 +519,12 @@ const resetForm = () => {
     middle_name: '',
     date_of_birth: '',
     contact_no_1: '',
+    contact_no_2: '',
     email: '',
     community_id: '',
+    community_cluster_id: '',
     relationship_id: '',
+    spouse_member_id: null,
     existing_family_no: ''
   };
   familyType.value = 'new';

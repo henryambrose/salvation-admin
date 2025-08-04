@@ -33,14 +33,23 @@ const closeFlash = () => {
 </script>
 
 <template>
-    <div
-        v-if="flashMessage"
-        :class="[
-            'fixed top-15 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded shadow flex items-center space-x-2',
-            flashType === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-        ]"
-        >
-        <span class="flex-grow">{{ flashMessage }}</span>
-        <button @click="closeFlash" class="text-white text-xl leading-none">&times;</button>
-    </div>
+    <Transition
+        enter-active-class="transition ease-out duration-300"
+        enter-from-class="transform opacity-0 scale-95"
+        enter-to-class="transform opacity-100 scale-100"
+        leave-active-class="transition ease-in duration-200"
+        leave-from-class="transform opacity-100 scale-100"
+        leave-to-class="transform opacity-0 scale-95"
+    >
+        <div
+            v-if="flashMessage"
+            :class="[
+                'fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg flex items-center space-x-2 z-[9999] min-w-[300px] max-w-[600px]',
+                flashType === 'success' ? 'bg-green-500 text-white border border-green-600' : 'bg-red-500 text-white border border-red-600'
+            ]"
+            >
+            <span class="flex-grow">{{ flashMessage }}</span>
+            <button @click="closeFlash" class="text-white text-xl leading-none hover:text-gray-200 transition-colors">&times;</button>
+        </div>
+    </Transition>
 </template>

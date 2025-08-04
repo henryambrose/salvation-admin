@@ -10,7 +10,7 @@ import { ref, watch, computed } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 
 const props = defineProps({
-  familyIncomeRange: {
+  incomeRange: {
     type: Object,
     default: () => ({ data: [] }),
   },
@@ -43,19 +43,20 @@ const editForm = useForm({
   name: '',
 });
 
-const enhancedFamilyIncomeRanges = computed(() => {
-  const c = props.familyIncomeRange || {};
+const enhancedIncomeRanges = computed(() => {
+  const c = props.incomeRange || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total,
   };
 });
 
-function restoreFamilyIncomeRange(id: number) {
-  router.post(`/family-income-range/${id}/restore`, {}, {
+function restoreIncomeRange(id: number) {
+      router.post(`/income-range/${id}/restore`, {}, {
     preserveScroll: true,
     onSuccess: () => {
       fetch();
@@ -110,7 +111,7 @@ watch([search, sort, direction, perPage, isArchived], () => {
 
 
 function submit() {
-  form.post('/family-income-range', {
+  form.post('/income-range', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
@@ -126,7 +127,7 @@ function openEditModal(row: any) {
 }
 
 function submitEdit() {
-  editForm.put(`/family-income-range/${editingItem.value?.id || ''}`, {
+  editForm.put(`/income-range/${editingItem.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
@@ -141,7 +142,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/family-income-range/${deletingItem.value?.id || ''}`, {
+  router.delete(`/income-range/${deletingItem.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
@@ -149,17 +150,17 @@ function confirmDelete() {
     },
   });
 }
-const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range' }];
+const breadcrumbs = [{ title: 'Income Range', href: '/income-range' }];
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Family Income Ranges" />
+    <Head title="Income Ranges" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Family Income Ranges</h2>
+        <h2 class="text-2xl font-bold text-blue-700">Income Ranges</h2>
         <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <span>➕ Add Family Income Range</span>
+          <span>➕ Add Income Range</span>
         </Button>
       </div>
       <div class="mb-4 flex flex-wrap items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
@@ -207,7 +208,7 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
             </tr>
           </thead>
           <tbody>
-            <tr v-for="row in enhancedFamilyIncomeRanges.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+                            <tr v-for="row in enhancedIncomeRanges.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
                 <template v-if="!isArchived">
                   <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
@@ -215,7 +216,7 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreFamilyIncomeRange(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                                          <Button @click="restoreIncomeRange(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -235,23 +236,59 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
         </table>
       </div>
     </div>
-    <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedFamilyIncomeRanges.prev_page_url" @click="fetch(enhancedFamilyIncomeRanges.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Prev
-      </button>
-      <button v-if="enhancedFamilyIncomeRanges.next_page_url" @click="fetch(enhancedFamilyIncomeRanges.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Next
-      </button>
-      <span v-if="enhancedFamilyIncomeRanges.current_page && enhancedFamilyIncomeRanges.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedFamilyIncomeRanges.current_page }} of {{ enhancedFamilyIncomeRanges.last_page }}
-      </span>
+    <!-- Enhanced Pagination -->
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button 
+                    v-if="enhancedIncomeRanges.prev_page_url"
+          @click="fetch(enhancedIncomeRanges.current_page - 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Prev
+        </button>
+        
+        <!-- Page Number Dropdown -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Page</span>
+          <select 
+            v-if="enhancedIncomeRanges.last_page && enhancedIncomeRanges.last_page > 1"
+            :value="enhancedIncomeRanges.current_page" 
+            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option v-for="page in enhancedIncomeRanges.last_page" :key="page" :value="page">
+              {{ page }}
+            </option>
+          </select>
+          <span v-if="enhancedIncomeRanges.last_page" class="text-sm text-gray-600">of {{ enhancedIncomeRanges.last_page }}</span>
+        </div>
+        
+        <button 
+                    v-if="enhancedIncomeRanges.next_page_url"
+          @click="fetch(enhancedIncomeRanges.current_page + 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Total Records Info -->
+      <div class="text-sm text-gray-500">
+        <span v-if="enhancedIncomeRanges.total">Total: {{ enhancedIncomeRanges.total }} records</span>
+      </div>
     </div>
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Create Family Income Range</h3>
+            <h3 class="mb-4 text-xl font-semibold">Create Income Range</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Range</label>
@@ -286,7 +323,7 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Edit Family Income Range</h3>
+            <h3 class="mb-4 text-xl font-semibold">Edit Income Range</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Range</label>
@@ -321,7 +358,7 @@ const breadcrumbs = [{ title: 'Family Income Range', href: '/family-income-range
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Family Income Range</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Income Range</h3>
             <p>
               Are you sure you want to delete <span class="font-bold">{{ deletingItem?.name }}</span>?
             </p>

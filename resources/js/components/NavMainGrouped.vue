@@ -32,7 +32,7 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
     '/age-group': ['/age-group/index','/age-group'],
     '/blood-group': ['/blood-group/index','/blood-group'],
     '/gender': ['/gender/index','/gender'],
-    '/family-income-range': ['/family-income-range/index','/family-income-range'],
+    '/income-range': ['/income-range/index','/income-range'],
     '/status': ['/status/index','/status'],
     '/country': ['/country/index','/country'],
     '/state': ['/state/index','/state'],

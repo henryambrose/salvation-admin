@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\State;
+use App\Http\Requests\StoreCityRequest;
+use App\Http\Requests\UpdateCityRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -69,14 +71,9 @@ class CityController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCityRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'state_id' => 'required|exists:states,id',
-        ]);
-
-        City::create($request->only('name', 'state_id'));
+        City::create($request->validated());
 
         return redirect()->route('city.index')->with('success', 'City created successfully.');
     }
@@ -107,14 +104,9 @@ class CityController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, City $city)
+    public function update(UpdateCityRequest $request, City $city)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'state_id' => 'required|exists:states,id',
-        ]);
-
-        $city->update($request->only('name', 'state_id'));
+        $city->update($request->validated());
 
         return redirect()->route('city.index')->with('success', 'City updated successfully.');
     }

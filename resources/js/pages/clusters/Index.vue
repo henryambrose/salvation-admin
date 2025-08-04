@@ -25,6 +25,13 @@ const columns: Column[] = [
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+
+// Function to open create modal and reset form
+function openCreateModal() {
+  form.reset();
+  form.clearErrors();
+  showModal.value = true;
+}
 const editingCluster = ref<Record<string, any>>();
 const deletingCluster = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
@@ -109,23 +116,44 @@ watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
+// Watch for modal state changes to reset form when closed
+watch(showModal, (newValue) => {
+  if (!newValue) {
+    // Modal closed - reset form
+    form.reset();
+    form.clearErrors();
+  }
+});
+
 // Watch for changes in cluster name to validate duplicates
 watch(() => form.name, () => {
+  // Don't validate if the form is empty (during reset)
+  if (!form.name || form.name.trim() === '') {
+    if (form.errors.name) form.clearErrors('name');
+    return;
+  }
+  
   const error = validateClusterName(form.name);
   if (error) {
     form.setError('name', error);
   } else {
-    if (form.errors.name) form.setError('name', '');
+    if (form.errors.name) form.clearErrors('name');
   }
 });
 
 // Watch for changes in edit form cluster name
 watch(() => editForm.name, () => {
+  // Don't validate if the form is empty (during reset)
+  if (!editForm.name || editForm.name.trim() === '') {
+    if (editForm.errors.name) editForm.clearErrors('name');
+    return;
+  }
+  
   const error = validateClusterName(editForm.name, editingCluster.value?.id);
   if (error) {
     editForm.setError('name', error);
   } else {
-    if (editForm.errors.name) editForm.setError('name', '');
+    if (editForm.errors.name) editForm.clearErrors('name');
   }
 });
 
@@ -154,11 +182,15 @@ function submit() {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
+      form.clearErrors();
       showModal.value = false;
       nextTick(() => {
         fetch(enhancedCluster.value.last_page);
         highlightedRowId.value = -1;
       });
+    },
+    onError: () => {
+      // Keep modal open on error
     },
   });
 }
@@ -214,7 +246,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
      <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Cluster</h2>
-        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Cluster</span>
         </Button>
       </div>
@@ -280,24 +312,60 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
           </table>
         </div>
 
-        <!-- Pagination -->
-        <div class="mt-6 flex items-center gap-2">
-          <button v-if="clusters?.prev_page_url" @click="fetch(clusters.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-            Prev
-          </button>
-          <button v-if="clusters?.next_page_url" @click="fetch(clusters.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-            Next
-          </button>
-          <span v-if="clusters?.current_page && clusters?.last_page" class="ml-auto text-sm text-gray-500">
-            Page {{ clusters.current_page }} of {{ clusters.last_page }}
-          </span>
+        <!-- Enhanced Pagination -->
+        <div class="mt-6 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2">
+            <button 
+              v-if="clusters?.prev_page_url" 
+              @click="fetch(clusters.current_page - 1)" 
+              class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+              </svg>
+              Prev
+            </button>
+            
+            <!-- Page Number Dropdown -->
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">Page</span>
+              <select 
+                v-if="clusters?.last_page && clusters.last_page > 1"
+                :value="clusters.current_page" 
+                @change="fetch(Number($event.target.value))"
+                class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option v-for="page in clusters.last_page" :key="page" :value="page">
+                  {{ page }}
+                </option>
+              </select>
+              <span v-if="clusters?.last_page" class="text-sm text-gray-600">of {{ clusters.last_page }}</span>
+            </div>
+            
+            <button 
+              v-if="clusters?.next_page_url" 
+              @click="fetch(clusters.current_page + 1)" 
+              class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+            >
+              Next
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <!-- Total Records Info -->
+          <div class="text-sm text-gray-500">
+            <span v-if="clusters?.total">Total: {{ clusters.total }} records</span>
+          </div>
         </div>
       </div>
 
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
           <div class="rounded-lg bg-white p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Cluster</h3>
             <form @submit.prevent="submit">
@@ -310,7 +378,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 <Button
                   variant="destructive"
                   type="button"
-                  @click="showModal = false"
+                  @click="() => { showModal = false; form.reset(); form.clearErrors(); }"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel

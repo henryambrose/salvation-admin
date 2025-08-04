@@ -86,6 +86,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Church Code Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the church code used for member numbering and
+    | family identification throughout the application.
+    |
+    */
+
+    'church_code' => env('CHURCH_CODE', 'SAL'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Encryption Key
     |--------------------------------------------------------------------------
     |

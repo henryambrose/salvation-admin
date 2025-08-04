@@ -25,6 +25,7 @@ export interface SharedData extends PageProps {
   auth: Auth;
   ziggy: Config & { location: string };
   sidebarOpen: boolean;
+  church_code: string;
 }
 
 export interface User {
@@ -76,9 +77,9 @@ export interface Member {
   current_state_id?: number | null;
   current_country_id?: number | null;
   contact_no_1?: string | null;
+  contact_no_2?: string | null;
   email?: string | null;
   blood_group_id?: number | null;
-  cells_and_association_id?: number | null;
   school_name?: string | null;
   gender_id?: number | null;
   status_id?: number | null;
@@ -88,19 +89,27 @@ export interface Member {
   latest_qualifications?: string | null;
   company_name?: string | null;
   designation?: string | null;
-  family_income_range?: string | null;
+  income_range_id?: number | null;
   baptism_date?: string | null; // ISO 8601 date string
   baptism_reg_no?: string | null;
   baptism_parish?: string | null;
+  baptism_parish_id?: number | null;
   confirmation_date?: string | null; // ISO 8601 date string
   confirmation_reg_no?: string | null;
   confirmation_parish?: string | null;
+  confirmation_parish_id?: number | null;
   marriage_date?: string | null; // ISO 8601 date string
   marriage_reg_no?: string | null;
   marriage_parish?: string | null;
+  marriage_parish_id?: number | null;
   death_date?: string | null; // ISO 8601 date string
   deaths_reg_no?: string | null;
   death_parish?: string | null;
+  death_parish_id?: number | null;
+  cellsAndAssociations?: Array<{ id: number; name: string }> | null;
+  scc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
+  ppc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
+  cluster_heads?: Array<{ id: number; community?: { id: number; name: string }; cluster?: { id: number; name: string } }> | null;
   created_at: string; // ISO 8601 date string
   updated_at: string; // ISO 8601 date string
   deleted_at?: string | null; // ISO 8601 date string for soft deletes
@@ -123,19 +132,14 @@ export interface Community {
 
 export type Communities = Community[];
 
-export interface CellsAndAssociation {
-  id: number;
-  name: string;
-}
 
-export type CellsAndAssociations = CellsAndAssociation[];
 
-export interface FamilyIncomeRange {
+export interface IncomeRange {
   id: number; // changed from string to number
   name: string;
 }
 
-export type FamilyIncomeRanges = FamilyIncomeRange[];
+export type IncomeRanges = IncomeRange[];
 
 export interface SCCHead {
   id: number;
@@ -311,6 +315,16 @@ export interface Relationship {
 }
 
 export type Relationships = Relationship[];
+
+export interface CellsAndAssociation {
+  id: number;
+  name: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
+}
+
+export type CellsAndAssociations = CellsAndAssociation[];
 
 export interface FamilyStats {
   totalMembers: number;

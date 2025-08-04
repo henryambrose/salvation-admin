@@ -5,11 +5,10 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
 use App\Models\BloodGroup;
-use App\Models\CellsAndAssociation;
 use App\Models\Community;
 use App\Models\Country;
 use App\Models\Designation;
-use App\Models\FamilyIncomeRange;
+use App\Models\IncomeRange;
 use App\Models\Member;
 use App\Models\Relationship;
 use App\Models\State;
@@ -18,6 +17,8 @@ use App\Models\City;
 use App\Models\Gender;
 use App\Models\Status;
 use App\Models\Parish;
+use App\Models\CommunityCluster;
+use App\Models\AgeGroup;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -32,13 +33,20 @@ class MemberController extends Controller
     {
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
-            'community_cluster_id' => ['relation' => 'communityCluster', 'column' => 'name'],
+            'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
             'blood_group_id' => ['relation' => 'bloodGroup', 'column' => 'name'],
-            'cells_and_association_id' => ['relation' => 'cellsAndAssociation', 'column' => 'name'],
-            'family_income_range_id' => ['relation' => 'familyIncomeRange', 'column' => 'name'],
+            'income_range_id' => ['relation' => 'incomeRange', 'column' => 'name'],
             'designation_id' => ['relation' => 'designation', 'column' => 'name'],
             'gender_id' => ['relation' => 'gender', 'column' => 'name'],
             'status_id' => ['relation' => 'status', 'column' => 'name'],
+            'permanent_town_id' => ['relation' => 'permanentTown', 'column' => 'name'],
+            'permanent_city_id' => ['relation' => 'permanentCity', 'column' => 'name'],
+            'permanent_state_id' => ['relation' => 'permanentState', 'column' => 'name'],
+            'permanent_country_id' => ['relation' => 'permanentCountry', 'column' => 'name'],
+            'current_town_id' => ['relation' => 'currentTown', 'column' => 'name'],
+            'current_city_id' => ['relation' => 'currentCity', 'column' => 'name'],
+            'current_state_id' => ['relation' => 'currentState', 'column' => 'name'],
+            'current_country_id' => ['relation' => 'currentCountry', 'column' => 'name'],
         ];
 
         $query = Member::query();
@@ -53,14 +61,30 @@ class MemberController extends Controller
         // Load relationships
         $query->with([
             'community',
-            'communityCluster',
-            'cellsAndAssociation',
+            'communityCluster.cluster',
             'relationship',
             'bloodGroup',
             'designation',
-            'familyIncomeRange',
+            'incomeRange',
             'status',
             'gender',
+            'baptismParish',
+            'confirmationParish',
+            'marriageParish',
+            'deathParish',
+            'permanentTown',
+            'permanentCity',
+            'permanentState',
+            'permanentCountry',
+            'currentTown',
+            'currentCity',
+            'currentState',
+            'currentCountry',
+            'cellsAndAssociations',
+            'sccHeads.community',
+            'ppcHeads.community',
+            'clusterHeads.community',
+            'clusterHeads.cluster',
         ]);
 
         // Enhanced search logic
@@ -141,77 +165,37 @@ class MemberController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
-        $groupByFamily = $request->input('groupByFamily') === 'true';
 
-        // Handle family grouping
-        if ($groupByFamily) {
-            // Get all families that match the current filters
-            $familyQuery = clone $query;
-            $familyNumbers = $familyQuery->distinct()->pluck('family_no')->filter()->values();
-            
-            // Get all members from these families
-            $allFamilyMembers = $query->whereIn('family_no', $familyNumbers)->get();
-            
-            // Group by family
-            $groupedData = [];
-            $familyGroups = $allFamilyMembers->groupBy('family_no');
-            
-            foreach ($familyGroups as $familyNo => $members) {
-                // Add family header
-                $groupedData[] = [
-                    'isFamilyHeader' => true,
-                    'family_no' => $familyNo,
-                    'member_count' => $members->count(),
-                    'familyMembers' => $members->map(function ($item) use ($dropdownColumns) {
-                        foreach ($dropdownColumns as $key => $relation) {
-                            if (isset($item->{$relation['relation']})) {
-                                $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
-                            } else {
-                                $item->$key = '';
-                            }
-                        }
-                        return $item;
-                    })->toArray()
-                ];
-            }
-            
-            // Add ungrouped members (those without family_no)
-            $ungroupedMembers = $query->whereNull('family_no')->get();
-            foreach ($ungroupedMembers as $member) {
-                foreach ($dropdownColumns as $key => $relation) {
-                    if (isset($member->{$relation['relation']})) {
-                        $member->$key = $member->{$relation['relation']}->{$relation['column']} ?? '';
+        // Normal pagination
+        $totalCount = $query->count();
+        $data = $query->paginate($perPage)->appends($request->query());
+        $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
+            foreach ($dropdownColumns as $key => $relation) {
+                $relationPath = explode('.', $relation['relation']);
+                $currentRelation = $item;
+                $found = true;
+                
+                foreach ($relationPath as $path) {
+                    if (isset($currentRelation->{$path}) && $currentRelation->{$path}) {
+                        $currentRelation = $currentRelation->{$path};
                     } else {
-                        $member->$key = '';
+                        $found = false;
+                        break;
                     }
                 }
-                $groupedData[] = $member;
-            }
-            
-            // Create pagination-like structure
-            $totalCount = count($groupedData);
-            $data = new \Illuminate\Pagination\LengthAwarePaginator(
-                collect($groupedData),
-                $totalCount,
-                $perPage,
-                1,
-                ['path' => request()->url(), 'pageName' => 'page']
-            );
-        } else {
-            // Normal pagination
-            $totalCount = $query->count();
-            $data = $query->paginate($perPage)->appends($request->query());
-            $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
-                foreach ($dropdownColumns as $key => $relation) {
-                    if (isset($item->{$relation['relation']})) {
-                        $item->$key = $item->{$relation['relation']}->{$relation['column']} ?? '';
-                    } else {
-                        $item->$key = '';
+                
+                if ($found) {
+                    $item->$key = $currentRelation->{$relation['column']} ?? '';
+                } else {
+                    // For debugging, let's see what's happening with community_cluster_id
+                    if ($key === 'community_cluster_id' && $item->community_cluster_id) {
+                        \Log::info("Member {$item->id} has community_cluster_id: {$item->community_cluster_id} but no relationship loaded");
                     }
+                    $item->$key = '';
                 }
-                return $item;
-            });
-        }
+            }
+            return $item;
+        });
 
         // Calculate total family statistics (for all data, not just current page)
         $totalStatsQuery = Member::query();
@@ -278,9 +262,13 @@ class MemberController extends Controller
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
             'relationships' => Relationship::all(),
-            'ageGroups' => \App\Models\AgeGroup::all(),
+            'ageGroups' => AgeGroup::all(),
             'bloodGroups' => BloodGroup::all(),
             'genders' => Gender::all(),
+            'parishes' => Parish::all(),
+            'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
+            })->toArray(),
             'fetchUrl' => route('member.index'),
             'members' => $data,
             'totalCount' => $totalCount,
@@ -300,9 +288,11 @@ class MemberController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('member/Member', [
-            'communities' => Community::with('communityClusters')->get(),
-            'cellsAndAssociations' => CellsAndAssociation::all(),
-            'familyIncomeRanges' => FamilyIncomeRange::all()->map(function ($item) {
+            'communities' => Community::all(),
+            'incomeRanges' => IncomeRange::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            }),
+            'parishes' => Parish::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             }),
             'bloodGroups' => BloodGroup::all()->map(function ($item) {
@@ -341,6 +331,9 @@ class MemberController extends Controller
             'parishes' => Parish::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
+            'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
+            })->toArray(),
         ]);
     }
 
@@ -355,7 +348,7 @@ class MemberController extends Controller
             $data = $request->validated();
             
             // Set default values for family numbering
-            $data['church_code'] = $data['church_code'] ?? 'SAL';
+            $data['church_code'] = $data['church_code'] ?? config('app.church_code', 'SAL');
             $data['registration_year'] = $data['registration_year'] ?? date('Y');
             $data['marital_status'] = $data['marital_status'] ?? 'single';
             
@@ -434,14 +427,19 @@ class MemberController extends Controller
 
     public function edit(Member $member)
     {
-        $familyIncomeRanges = FamilyIncomeRange::all()->map(function ($item) {
+        $incomeRanges = IncomeRange::all()->map(function ($item) {
             return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
         return Inertia::render('member/Member', [
             'member' => $member,
-            'communities' => Community::with('communityClusters')->get(),
-            'cellsAndAssociations' => CellsAndAssociation::all(),
-            'familyIncomeRanges' => $familyIncomeRanges,
+            'communities' => Community::all(),
+            'parishes' => Parish::all()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name];
+            }),
+            'incomeRanges' => $incomeRanges,
+            'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
+            })->toArray(),
             'bloodGroups' => BloodGroup::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
@@ -572,11 +570,10 @@ class MemberController extends Controller
             $query->with([
                 'community',
                 'communityCluster',
-                'cellsAndAssociation',
                 'relationship',
                 'bloodGroup',
                 'designation',
-                'familyIncomeRange',
+                                  'incomeRange',
                 'status',
                 'gender',
             ]);
@@ -854,8 +851,9 @@ class MemberController extends Controller
         return response()->json($results);
     }
 
-    public function getChurchStatistics($churchCode = 'SAL')
+    public function getChurchStatistics($churchCode = null)
     {
+        $churchCode = $churchCode ?? config('app.church_code', 'SAL');
         $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         $statistics = $numberingService->getChurchStatistics($churchCode);
         
@@ -864,7 +862,8 @@ class MemberController extends Controller
 
     public function getNextAvailableNumbers()
     {
-        $numberingService = new \App\Services\FamilyNumberingService('SAL');
+        $churchCode = config('app.church_code', 'SAL');
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         
         $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
         $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
@@ -886,6 +885,45 @@ class MemberController extends Controller
                     ->value('family_no')
             ]
         ]);
+    }
+
+    /**
+     * Search members for spouse selection
+     */
+    public function searchMembers(Request $request)
+    {
+        $query = $request->input('q', '');
+        $limit = $request->input('limit', 10);
+        
+        if (empty($query) || strlen($query) < 2) {
+            return response()->json([]);
+        }
+        
+        $members = Member::with(['community', 'relationship', 'gender'])
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                  ->orWhere('last_name', 'like', "%{$query}%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+                  ->orWhere('member_no', 'like', "%{$query}%")
+                  ->orWhere('family_no', 'like', "%{$query}%");
+            })
+            ->where('id', '!=', $request->input('exclude_id')) // Exclude current member
+            ->limit($limit)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'text' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$member->family_no}",
+                    'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
+                    'full_name' => "{$member->first_name} {$member->last_name}",
+                    'community' => $member->community->name ?? '',
+                    'relationship' => $member->relationship->name ?? '',
+                    'gender' => $member->gender->name ?? ''
+                ];
+            });
+        
+        return response()->json($members);
     }
 }
 

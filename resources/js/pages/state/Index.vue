@@ -288,16 +288,52 @@ onMounted(() => {
       </div>
     </div>
 
-    <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedStates.prev_page_url" @click="fetch(enhancedStates.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Prev
-      </button>
-      <button v-if="enhancedStates.next_page_url" @click="fetch(enhancedStates.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Next
-      </button>
-      <span v-if="enhancedStates.current_page && enhancedStates.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedStates.current_page }} of {{ enhancedStates.last_page }}
-      </span>
+    <!-- Enhanced Pagination -->
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button 
+          v-if="enhancedStates.prev_page_url" 
+          @click="fetch(enhancedStates.current_page - 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Prev
+        </button>
+        
+        <!-- Page Number Dropdown -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Page</span>
+          <select 
+            v-if="enhancedStates.last_page && enhancedStates.last_page > 1"
+            :value="enhancedStates.current_page" 
+            @change="fetch(Number($event.target.value))"
+            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option v-for="page in enhancedStates.last_page" :key="page" :value="page">
+              {{ page }}
+            </option>
+          </select>
+          <span v-if="enhancedStates.last_page" class="text-sm text-gray-600">of {{ enhancedStates.last_page }}</span>
+        </div>
+        
+        <button 
+          v-if="enhancedStates.next_page_url" 
+          @click="fetch(enhancedStates.current_page + 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Total Records Info -->
+      <div class="text-sm text-gray-500">
+        <span v-if="enhancedStates.total">Total: {{ enhancedStates.total }} records</span>
+      </div>
     </div>
 
     <!-- Create Modal -->

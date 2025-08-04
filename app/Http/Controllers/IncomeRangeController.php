@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreFamilyIncomeRangeRequest;
-use App\Http\Requests\UpdateFamilyIncomeRangeRequest;
+use App\Http\Requests\StoreIncomeRangeRequest;
+use App\Http\Requests\UpdateIncomeRangeRequest;
 use App\Models\IncomeRange;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -56,7 +56,7 @@ class IncomeRangeController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreFamilyIncomeRangeRequest $request)
+    public function store(StoreIncomeRangeRequest $request)
     {
         $validated = $request->validated();
 

@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 
 const props = defineProps<{
   modelValue: boolean;
   member: Record<string, any> | null;
-  familyIncomeRange: Record<string, any> | null;
+  incomeRange: Record<string, any> | null;
 }>();
 
 const emit = defineEmits(['update:modelValue']);
+
+const page = usePage();
+console.log('Page props in ViewMemberModal:', page.props);
 
 const modalRef = ref<HTMLElement | null>(null);
 const currentTab = ref('personal');
@@ -27,8 +31,7 @@ const tabs = [
       { key: 'date_of_birth', label: 'Date of Birth' },
       { key: 'age', label: 'Age' },
       { key: 'aadhar', label: 'Aadhar' },
-      { key: 'new_olsc_id', label: 'New OLSC ID' },
-      { key: 'old_sal_id', label: 'Old SAL ID' },
+      { key: 'blood_group_id', label: 'Blood Group' },
     ],
   },
   {
@@ -53,7 +56,8 @@ const tabs = [
     key: 'contact',
     label: 'Contact Info',
     fields: [
-      { key: 'contact_no_1', label: 'Contact No' },
+      { key: 'contact_no_1', label: 'Contact No 1' },
+      { key: 'contact_no_2', label: 'Contact No 2' },
       { key: 'email', label: 'Email' },
     ],
   },
@@ -64,11 +68,11 @@ const tabs = [
       { key: 'permanent_add1', label: 'Address 1' },
       { key: 'permanent_add2', label: 'Address 2' },
       { key: 'permanent_add3', label: 'Address 3' },
-      { key: 'permanent_town', label: 'Town' },
-      { key: 'permanent_city', label: 'City' },
+      { key: 'permanent_town_id', label: 'Town' },
+      { key: 'permanent_city_id', label: 'City' },
       { key: 'permanent_pincode', label: 'Pincode' },
-      { key: 'permanent_state', label: 'State' },
-      { key: 'permanent_country', label: 'Country' },
+      { key: 'permanent_state_id', label: 'State' },
+      { key: 'permanent_country_id', label: 'Country' },
     ],
   },
   {
@@ -78,11 +82,11 @@ const tabs = [
       { key: 'current_add1', label: 'Address 1' },
       { key: 'current_add2', label: 'Address 2' },
       { key: 'current_add3', label: 'Address 3' },
-      { key: 'current_town', label: 'Town' },
-      { key: 'current_city', label: 'City' },
+      { key: 'current_town_id', label: 'Town' },
+      { key: 'current_city_id', label: 'City' },
       { key: 'current_pincode', label: 'Pincode' },
-      { key: 'current_state', label: 'State' },
-      { key: 'current_country', label: 'Country' },
+      { key: 'current_state_id', label: 'State' },
+      { key: 'current_country_id', label: 'Country' },
     ],
   },
   {
@@ -108,21 +112,23 @@ const tabs = [
       { key: 'latest_qualifications', label: 'Latest Qualifications' },
       { key: 'company_name', label: 'Company Name' },
       { key: 'designation', label: 'Designation' },
-      { key: 'family_income_range', label: 'Family Income Range' },
+      { key: 'income_range', label: 'Income Range' },
     ],
   },
   {
-    key: 'other',
-    label: 'Other',
+    key: 'leadership',
+    label: 'Leadership Roles',
     fields: [
-      { key: 'blood_group_id', label: 'Blood Group' },
-      { key: 'cells_and_association_id', label: 'Cells & Association' },
+      { key: 'scc_heads', label: 'SCC Head' },
+      { key: 'ppc_heads', label: 'PPC Head' },
+      { key: 'cluster_heads', label: 'Cluster Head' },
+      { key: 'cells_and_associations', label: 'Cells & Associations' },
     ],
   },
 ];
 
-const enhancedFamilyIncomeRanges = computed(() => {
-  const c = props.familyIncomeRange || {};
+const enhancedIncomeRanges = computed(() => {
+  const c = props.incomeRange || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -141,10 +147,16 @@ function calculateAge(dateStr: string) {
   if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
     age--;
   }
-  return age;
+  return age.toString();
 }
 
 function formatFieldValue(fieldKey: string, value: any) {
+  // Handle age calculation first (before early return)
+  if (fieldKey === 'age') {
+    const age = calculateAge(props.member?.date_of_birth || '');
+    return age || '—';
+  }
+  
   if (value === null || value === undefined) return '—';
   
   // Handle relationship objects
@@ -157,8 +169,8 @@ function formatFieldValue(fieldKey: string, value: any) {
     return value.name;
   }
   
-  // Handle family income range objects
-  if (fieldKey === 'family_income_range' && typeof value === 'object' && value.name) {
+  // Handle Income Range objects
+  if (fieldKey === 'income_range' && typeof value === 'object' && value.name) {
     return value.name;
   }
   
@@ -167,9 +179,34 @@ function formatFieldValue(fieldKey: string, value: any) {
     return value.name;
   }
   
-  // Handle cells and association objects
-  if (fieldKey === 'cells_and_association_id' && typeof value === 'object' && value.name) {
-    return value.name;
+  // Handle cells and associations relationship
+  if (fieldKey === 'cells_and_associations') {
+    if (Array.isArray(value) && value.length > 0) {
+      return value.map(item => `• ${item.name}`).join('\n');
+    }
+    return '—';
+  }
+
+  // Handle leadership roles
+  if (fieldKey === 'scc_heads') {
+    if (Array.isArray(value) && value.length > 0) {
+      return value.map(item => `• ${item.community?.name || 'Unknown Community'}`).join('\n');
+    }
+    return '—';
+  }
+
+  if (fieldKey === 'ppc_heads') {
+    if (Array.isArray(value) && value.length > 0) {
+      return value.map(item => `• ${item.community?.name || 'Unknown Community'}`).join('\n');
+    }
+    return '—';
+  }
+
+  if (fieldKey === 'cluster_heads') {
+    if (Array.isArray(value) && value.length > 0) {
+      return value.map(item => `• ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`).join('\n');
+    }
+    return '—';
   }
   
   // Handle community objects
@@ -182,9 +219,72 @@ function formatFieldValue(fieldKey: string, value: any) {
     return value.name;
   }
   
+
+  
+  // Handle parish relationships
+  if (fieldKey === 'baptism_parish') {
+    // Check if value is a JSON object with name property
+    if (typeof value === 'object' && value !== null && value.name) {
+      return value.name;
+    }
+    // Check if relationship is loaded
+    if (props.member?.baptism_parish_id && props.member?.baptismParish) {
+      return props.member.baptismParish.name;
+    }
+    // Return string value or fallback
+    return (typeof value === 'string' ? value : '') || '—';
+  }
+  if (fieldKey === 'confirmation_parish') {
+    // Check if value is a JSON object with name property
+    if (typeof value === 'object' && value !== null && value.name) {
+      return value.name;
+    }
+    // Check if relationship is loaded
+    if (props.member?.confirmation_parish_id && props.member?.confirmationParish) {
+      return props.member.confirmationParish.name;
+    }
+    // Return string value or fallback
+    return (typeof value === 'string' ? value : '') || '—';
+  }
+  if (fieldKey === 'marriage_parish') {
+    // Check if value is a JSON object with name property
+    if (typeof value === 'object' && value !== null && value.name) {
+      return value.name;
+    }
+    // Check if relationship is loaded
+    if (props.member?.marriage_parish_id && props.member?.marriageParish) {
+      return props.member.marriageParish.name;
+    }
+    // Return string value or fallback
+    return (typeof value === 'string' ? value : '') || '—';
+  }
+  if (fieldKey === 'death_parish') {
+    // Check if value is a JSON object with name property
+    if (typeof value === 'object' && value !== null && value.name) {
+      return value.name;
+    }
+    // Check if relationship is loaded
+    if (props.member?.death_parish_id && props.member?.deathParish) {
+      return props.member.deathParish.name;
+    }
+    // Return string value or fallback
+    return (typeof value === 'string' ? value : '') || '—';
+  }
+  
+  // Handle address fields (town, city, state, country)
+  if (fieldKey.includes('_town_id') || fieldKey.includes('_city_id') || fieldKey.includes('_state_id') || fieldKey.includes('_country_id')) {
+    // The value should be the name string from the transformed data
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+    // Return fallback
+    return '—';
+  }
+  
+
   // Handle church code with badge styling
   if (fieldKey === 'church_code') {
-    return value || 'SAL';
+            return value || '—';
   }
   
   // Handle marital status with proper formatting
@@ -195,13 +295,14 @@ function formatFieldValue(fieldKey: string, value: any) {
   
   // Handle date formatting
   if (fieldKey.includes('date') && value) {
-    return new Date(value).toLocaleDateString();
+    const date = new Date(value);
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   }
   
-  // Handle age calculation
-  if (fieldKey === 'age' && value) {
-    return calculateAge(value);
-  }
+
   
   return value;
 }
@@ -277,10 +378,10 @@ watch(() => currentTab.value, (newTab) => {
 
 <template>
   <transition name="fade-scale">
-    <div v-if="modelValue" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black" role="dialog" aria-modal="true">
+    <div v-if="modelValue" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4" role="dialog" aria-modal="true">
       <div
         ref="modalRef"
-        class="max-h-[90vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-200 bg-gray-50 p-0 shadow-2xl transition-all duration-200"
+        class="w-full max-w-6xl h-[90vh] flex flex-col rounded-2xl border border-gray-200 bg-gray-50 shadow-2xl transition-all duration-200"
         style="overflow-x:hidden;"
       >
         <!-- Header -->
@@ -307,7 +408,7 @@ watch(() => currentTab.value, (newTab) => {
         </div>
 
         <!-- Tab Content -->
-        <div v-if="member" class="bg-white px-6 py-6">
+        <div v-if="member" class="bg-white px-6 py-6 flex-1 overflow-y-auto">
           <div
             v-for="tab in tabs"
             :key="tab.key"
@@ -319,13 +420,16 @@ watch(() => currentTab.value, (newTab) => {
               <div
                 v-for="field in tab.fields"
                 :key="field.key"
-                class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 shadow-sm"
+                class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 shadow-sm min-h-[80px]"
               >
-                <div class="text-xs font-semibold text-gray-500">{{ field.label }}</div>
-                <div class="mt-1 text-base font-medium text-gray-800 break-all">
+                <div class="text-xs font-semibold text-gray-500 mb-2">{{ field.label }}</div>
+                <div 
+                  class="text-base font-medium text-gray-800 break-words line-clamp-3"
+                  :class="{ 'whitespace-pre-line': field.key === 'cells_and_associations' || field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' }"
+                >
                   <template v-if="field.key === 'church_code'">
                     <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {{ formatFieldValue(field.key, member[field.key]) }}
+                      {{ formatFieldValue(field.key, page.props.church_code) }}
                     </span>
                   </template>
                   <template v-else>
@@ -339,6 +443,7 @@ watch(() => currentTab.value, (newTab) => {
             <div v-if="tab.key === 'community' && member.family_no" class="mt-8">
               <div class="border-t border-gray-200 pt-6">
                 <h4 class="mb-4 text-lg font-semibold text-gray-800">Family Members</h4>
+                <div class="max-h-96 overflow-y-auto">
                 
                 <div v-if="loadingFamilyMembers" class="flex justify-center py-8">
                   <div class="text-gray-500">Loading family members...</div>
@@ -380,6 +485,7 @@ watch(() => currentTab.value, (newTab) => {
             </div>
           </div>
         </div>
+      </div>
 
         <!-- Footer -->
         <div class="sticky bottom-0 left-0 right-0 z-10 flex justify-end rounded-b-2xl bg-gray-100 px-6 py-4">
@@ -403,5 +509,12 @@ watch(() => currentTab.value, (newTab) => {
 .fade-scale-leave-to {
   opacity: 0;
   transform: scale(0.95);
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 </style>

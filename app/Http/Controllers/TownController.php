@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Town;
 use App\Models\City;
+use App\Http\Requests\StoreTownRequest;
+use App\Http\Requests\UpdateTownRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,15 +61,9 @@ class TownController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreTownRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'pincode' => 'nullable|string|max:10',
-            'city_id' => 'required|exists:cities,id',
-        ]);
-
-        Town::create($request->only('name', 'pincode', 'city_id'));
+        Town::create($request->validated());
 
         return redirect()->route('town.index')->with('success', 'Town created successfully.');
     }
@@ -88,15 +84,9 @@ class TownController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Town $town)
+    public function update(UpdateTownRequest $request, Town $town)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'pincode' => 'nullable|string|max:10',
-            'city_id' => 'required|exists:cities,id',
-        ]);
-
-        $town->update($request->only('name', 'pincode', 'city_id'));
+        $town->update($request->validated());
 
         return redirect()->route('town.index')->with('success', 'Town updated successfully.');
     }

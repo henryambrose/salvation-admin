@@ -17,7 +17,10 @@ return new class extends Migration
             $table->foreignId('community_cluster_id')->nullable()->constrained('community_clusters');
             $table->string('old_family_no')->nullable();
             $table->string('aadhar')->nullable();
+            $table->string('current_family_no')->nullable();
             $table->string('family_no')->nullable();
+            $table->string('member_no')->nullable();
+            $table->string('registration_year')->nullable();
             $table->string('first_name');
             $table->string('middle_name')->nullable();
             $table->string('last_name')->nullable();
@@ -42,13 +45,11 @@ return new class extends Migration
             $table->string('contact_no_2')->nullable();
             $table->string('email')->nullable();
             $table->foreignId('blood_group_id')->nullable()->constrained('blood_groups');
-            $table->foreignId('cells_and_association_id')->nullable()->constrained('cells_and_associations');
             $table->string('school_name')->nullable();
             $table->string('college_name')->nullable();
             $table->string('latest_qualifications')->nullable();
             $table->string('company_name')->nullable();
-            // $table->string('designation')->nullable();
-            $table->string('annual_income')->nullable();
+            $table->foreignId('income_range_id')->nullable()->constrained('income_ranges');
             $table->date('baptism_date')->nullable();
             $table->string('baptism_reg_no')->nullable();
             $table->string('baptism_parish')->nullable();
@@ -61,6 +62,10 @@ return new class extends Migration
             $table->date('death_date')->nullable();
             $table->string('deaths_reg_no')->nullable();
             $table->string('death_parish')->nullable();
+            $table->string('family_sequence')->nullable();
+            $table->string('member_sequence')->nullable();
+            $table->string('marital_status')->nullable();
+            $table->foreignId('spouse_member_id')->nullable()->constrained('members');
             $table->timestamps();
             $table->softDeletes();
         });

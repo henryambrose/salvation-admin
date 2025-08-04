@@ -14,13 +14,13 @@ class Member extends Model
     protected $fillable = [
         'community_id',
         'community_cluster_id',
-        'new_olsc_id',
-        'old_sal_id',
+        // 'new_olsc_id', // Not in database yet
+        // 'old_sal_id', // Not in database yet
         'aadhar',
         'family_no',
         'member_no',
         'registration_year',
-        'church_code',
+        // 'church_code', // Not stored in DB - comes from .env config
         'family_sequence',
         'member_sequence',
         'marital_status',
@@ -48,27 +48,31 @@ class Member extends Model
         'current_pincode',
         'current_state_id',
         'current_country_id',
-        'contact_no',
+        'contact_no_1',
+        'contact_no_2',
         'email',
         'blood_group_id',
-        'cells_and_association_id',
         'school_name',
         'college_name',
         'latest_qualifications',
         'company_name',
         'designation_id',
-        'family_income_range_id',
+        'income_range_id',
         'baptism_date',
         'baptism_reg_no',
         'baptism_parish',
+        'baptism_parish_id',
         'confirmation_date',
         'confirmation_reg_no',
         'confirmation_parish',
+        'confirmation_parish_id',
         'marriage_reg_no',
         'marriage_parish',
+        'marriage_parish_id',
         'death_date',
         'deaths_reg_no',
         'death_parish',
+        'death_parish_id',
     ];
 
     protected $casts = [
@@ -86,10 +90,6 @@ class Member extends Model
     public function communityCluster()
     {
         return $this->belongsTo(CommunityCluster::class);
-    }
-    public function cellsAndAssociation()
-    {
-        return $this->belongsTo(CellsAndAssociation::class);
     }
 
     // relationship
@@ -120,24 +120,24 @@ class Member extends Model
         parent::boot();
         
         static::creating(function ($member) {
-            $numberingService = new \App\Services\FamilyNumberingService($member->church_code ?? 'SAL');
+            $churchCode = config('app.church_code', 'SAL');
+            $numberingService = new \App\Services\FamilyNumberingService($churchCode);
             
             // Set default values
-            $member->church_code = $member->church_code ?? 'SAL';
             $member->registration_year = $member->registration_year ?? date('Y');
             
             // Generate independent member number if not set
             if (!$member->member_no) {
                 $member->member_no = $numberingService->generateMemberNumber(
                     $member->registration_year,
-                    $member->church_code
+                    $churchCode
                 );
             }
             
             // Generate family number if not set
             if (!$member->family_no) {
                 $member->family_no = $numberingService->generateFamilyGroupNumber(
-                    $member->church_code
+                    $churchCode
                 );
             }
             
@@ -145,7 +145,6 @@ class Member extends Model
             if ($member->member_no) {
                 $memberInfo = $numberingService->parseMemberNumber($member->member_no);
                 $member->registration_year = $memberInfo['year'];
-                $member->church_code = $memberInfo['church_code'];
                 $member->member_sequence = $memberInfo['member_sequence'];
             }
             
@@ -159,7 +158,8 @@ class Member extends Model
     
     public function getEffectiveFamilyNumberAttribute()
     {
-        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        $churchCode = config('app.church_code', 'SAL');
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         return $numberingService->getEffectiveFamilyNumber($this);
     }
     
@@ -176,7 +176,8 @@ class Member extends Model
     
     public function getChurchNameAttribute()
     {
-        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        $churchCode = config('app.church_code', 'SAL');
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         $familyInfo = $numberingService->getFamilyInfo($this->family_no);
         return $familyInfo['church_name'];
     }
@@ -198,7 +199,8 @@ class Member extends Model
     
     public function familyMembers()
     {
-        $numberingService = new \App\Services\FamilyNumberingService($this->church_code);
+        $churchCode = config('app.church_code', 'SAL');
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         return $numberingService->getFamilyMembers($this->effective_family_number);
     }
 
@@ -207,14 +209,96 @@ class Member extends Model
         return $this->belongsTo(Designation::class);
     }
 
-    public function familyIncomeRange()
+    public function incomeRange()
     {
-        return $this->belongsTo(FamilyIncomeRange::class);
+        return $this->belongsTo(IncomeRange::class);
+    }
+
+    // Parish relationships
+    public function baptismParish()
+    {
+        return $this->belongsTo(Parish::class, 'baptism_parish_id');
+    }
+
+    public function confirmationParish()
+    {
+        return $this->belongsTo(Parish::class, 'confirmation_parish_id');
+    }
+
+    public function marriageParish()
+    {
+        return $this->belongsTo(Parish::class, 'marriage_parish_id');
+    }
+
+    public function deathParish()
+    {
+        return $this->belongsTo(Parish::class, 'death_parish_id');
+    }
+
+    // Address relationships
+    public function permanentTown()
+    {
+        return $this->belongsTo(Town::class, 'permanent_town_id');
+    }
+
+    public function permanentCity()
+    {
+        return $this->belongsTo(City::class, 'permanent_city_id');
+    }
+
+    public function permanentState()
+    {
+        return $this->belongsTo(State::class, 'permanent_state_id');
+    }
+
+    public function permanentCountry()
+    {
+        return $this->belongsTo(Country::class, 'permanent_country_id');
+    }
+
+    public function currentTown()
+    {
+        return $this->belongsTo(Town::class, 'current_town_id');
+    }
+
+    public function currentCity()
+    {
+        return $this->belongsTo(City::class, 'current_city_id');
+    }
+
+    public function currentState()
+    {
+        return $this->belongsTo(State::class, 'current_state_id');
+    }
+
+    public function currentCountry()
+    {
+        return $this->belongsTo(Country::class, 'current_country_id');
     }
 
     public function relatedMembers()
     {
         return $this->belongsToMany(Member::class, 'family_links', 'member_id', 'related_member_id')
                     ->withPivot('relationship_id');
+    }
+
+    public function cellsAndAssociations()
+    {
+        return $this->belongsToMany(CellsAndAssociation::class, 'cells_and_association_members', 'member_id', 'cells_and_association_id');
+    }
+
+    public function sccHeads()
+    {
+        return $this->hasMany(SCCHead::class);
+    }
+
+    public function ppcHeads()
+    {
+        return $this->hasMany(PPCHead::class);
+    }
+
+    public function clusterHeads()
+    {
+        return $this->hasMany(CommunityCluster::class, 'member_id');
     }
 }

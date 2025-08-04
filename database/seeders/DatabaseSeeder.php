@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
             CellsAndAssociationMemberSeeder::class,
             CellsAndAssociationSeeder::class,
             CommunityClusterSeeder::class,
-            FamilyIncomeRangeSeeder::class,
+            IncomeRangeSeeder::class,
             ParishSeeder::class,
             DesignationSeeder::class,
             GenderSeeder::class,

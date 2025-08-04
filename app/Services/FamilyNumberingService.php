@@ -9,9 +9,9 @@ class FamilyNumberingService
 {
     protected $churchCode;
 
-    public function __construct($churchCode = 'SAL')
+    public function __construct($churchCode = null)
     {
-        $this->churchCode = strtoupper($churchCode);
+        $this->churchCode = strtoupper($churchCode ?? config('app.church_code', 'SAL'));
     }
 
     /**
@@ -24,8 +24,8 @@ class FamilyNumberingService
         
         // Find the highest family group number for this church
         $highestFamily = DB::table('members')
-            ->where('church_code', $churchCode)
             ->whereNotNull('family_no')
+            ->where('family_no', 'like', $churchCode . '-%')
             ->orderByRaw('CAST(SUBSTRING_INDEX(family_no, "-", -1) AS UNSIGNED) DESC')
             ->first();
         
@@ -67,7 +67,7 @@ class FamilyNumberingService
         // Find the highest member sequence for this year and church
         $highestMember = DB::table('members')
             ->where('registration_year', $year)
-            ->where('church_code', $churchCode)
+            ->where('member_no', 'like', '%' . $churchCode . '-M%')
             ->whereNotNull('member_no')
             ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
             ->first();
@@ -186,9 +186,8 @@ class FamilyNumberingService
         foreach ($members as $member) {
             $updateData = ['community_id' => $newCommunityId];
             
-            if ($newChurchCode) {
-                $updateData['church_code'] = strtoupper($newChurchCode);
-            }
+            // Note: church_code is not stored in database, it's from .env config
+            // If church code changes, family numbers would need to be regenerated
             
             $member->update($updateData);
         }
@@ -254,7 +253,7 @@ class FamilyNumberingService
     {
         $churchCode = $churchCode ?? $this->churchCode;
         
-        $query = Member::where('church_code', $churchCode);
+        $query = Member::where('family_no', 'like', $churchCode . '-%');
         
         if ($year) {
             $query->where('registration_year', $year);

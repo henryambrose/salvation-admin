@@ -80,16 +80,33 @@ const enhancedCommunityClusters = computed(() => {
 
 const filteredMembers = computed(() => {
   if (!createForm.community_id) return [];
-  return props.members.filter((member: any) => Number(member.community_id) === Number(createForm.community_id.id));
+  const communityId = createForm.community_id.id || createForm.community_id;
+  return props.members.filter((member: any) => Number(member.community_id) === Number(communityId));
 });
 
 const filteredEditMembers = computed(() => {
   if (!editForm.community_id) return [];
-  return props.members.filter((member: any) => Number(member.community_id) === Number(editForm.community_id.id));
+  const communityId = editForm.community_id.id || editForm.community_id;
+  return props.members.filter((member: any) => Number(member.community_id) === Number(communityId));
+});
+
+// Filter clusters based on selected community (if needed)
+const filteredClusters = computed(() => {
+  if (!createForm.community_id) return props.clusters;
+  // For now, return all clusters since the relationship between communities and clusters
+  // might be through community_clusters table
+  return props.clusters;
 });
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
+});
+
+// Watch for community changes in create form to reset member selection
+watch(() => createForm.community_id, (newCommunity) => {
+  // Reset member and cluster selection when community changes
+  createForm.member_id = null;
+  createForm.cluster_id = null;
 });
 
 function scrollToRow(rowId: number) {
@@ -425,16 +442,52 @@ const canExportCommunityCluster = can('read-community-cluster');
         </table>
       </div>
     </div>
-    <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedCommunityClusters.prev_page_url" @click="fetch(enhancedCommunityClusters.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Prev
-      </button>
-      <button v-if="enhancedCommunityClusters.next_page_url" @click="fetch(enhancedCommunityClusters.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Next
-      </button>
-      <span v-if="enhancedCommunityClusters.current_page && enhancedCommunityClusters.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedCommunityClusters.current_page }} of {{ enhancedCommunityClusters.last_page }}
-      </span>
+    <!-- Enhanced Pagination -->
+    <div class="mt-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-2">
+        <button 
+          v-if="enhancedCommunityClusters.prev_page_url" 
+          @click="fetch(enhancedCommunityClusters.current_page - 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+          </svg>
+          Prev
+        </button>
+        
+        <!-- Page Number Dropdown -->
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Page</span>
+          <select 
+            v-if="enhancedCommunityClusters.last_page && enhancedCommunityClusters.last_page > 1"
+            :value="enhancedCommunityClusters.current_page" 
+            @change="fetch(Number($event.target.value))"
+            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option v-for="page in enhancedCommunityClusters.last_page" :key="page" :value="page">
+              {{ page }}
+            </option>
+          </select>
+          <span v-if="enhancedCommunityClusters.last_page" class="text-sm text-gray-600">of {{ enhancedCommunityClusters.last_page }}</span>
+        </div>
+        
+        <button 
+          v-if="enhancedCommunityClusters.next_page_url" 
+          @click="fetch(enhancedCommunityClusters.current_page + 1)" 
+          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
+        >
+          Next
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <!-- Total Records Info -->
+      <div class="text-sm text-gray-500">
+        <span v-if="enhancedCommunityClusters.total">Total: {{ enhancedCommunityClusters.total }} records</span>
+      </div>
     </div>
     <!-- //bg-black bg-opacity-20 -->
     <transition name="fade">
@@ -510,7 +563,7 @@ const canExportCommunityCluster = can('read-community-cluster');
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Cluster</label>
-              <Multiselect v-model="createForm.cluster_id" :options="props.clusters" label="name" track-by="id" placeholder="Select Cluster" :disabled="!createForm.community_id" />
+              <Multiselect v-model="createForm.cluster_id" :options="filteredClusters" label="name" track-by="id" placeholder="Select Cluster" :disabled="!createForm.community_id" />
               <div v-if="createForm.errors.cluster_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.cluster_id }}
               </div>

@@ -4,6 +4,8 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import FormBody from '@/components/FormBody.vue';
 import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';
+import SpouseSearchDropdown from '@/components/SpouseSearchDropdown.vue';
+import ParishSelection from '@/components/ParishSelection.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,7 +18,7 @@ import {
   Community,
   Countries,
   Designations,
-  FamilyIncomeRanges,
+  IncomeRanges,
   Member,
   Relationships,
   Cities,
@@ -28,13 +30,13 @@ import {
   type CommunityCluster,
 } from '@/types';
 import { List } from 'lucide-vue-next';
-import { ref, watch, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted, computed } from 'vue';
 import type { State, Town, City } from '@/types';
 
 interface Props {
   member?: Member;
   communities: Communities;
-  familyIncomeRanges: FamilyIncomeRanges;
+  incomeRanges: IncomeRanges;
   bloodGroups: BloodGroups;
   relationships: Relationships;
   countries: Countries;
@@ -45,6 +47,7 @@ interface Props {
   genders: any[];
   statuses: any[];
   parishes: any[];
+  communityClusters: CommunityCluster[];
 }
 
 const props = defineProps<Props>();
@@ -79,17 +82,18 @@ const form = useForm({
   parish_id: member?.parish_id ? member.parish_id : '',
   date_of_birth: member?.date_of_birth ? member.date_of_birth : '',
   contact_no_1: member?.contact_no_1 ? member.contact_no_1 : '',
+  contact_no_2: member?.contact_no_2 ? member.contact_no_2 : '',
   email: member?.email ? member.email : '',
   aadhar: member?.aadhar ? member.aadhar : '',
   family_no: member?.family_no ? member.family_no : '',
   member_no: member?.member_no ? member.member_no : '',
   registration_year: member?.registration_year ? member.registration_year : '',
-  church_code: member?.church_code ? member.church_code : 'SAL',
+  church_code: member?.church_code ? member.church_code : page.props.church_code,
   family_sequence: member?.family_sequence ? member.family_sequence : '',
   member_sequence: member?.member_sequence ? member.member_sequence : '',
   marital_status: member?.marital_status ? member.marital_status : 'single',
   // current_family_no is managed by business logic (marriage, etc.) - not editable
-  spouse_member_id: member?.spouse_member_id ? member.spouse_member_id : '',
+  spouse_member_id: member?.spouse_member_id ? Number(member.spouse_member_id) : null,
   community_id: member?.community_id ? member.community_id : '',
   community_cluster_id: member?.community_cluster_id ? member.community_cluster_id : '',
   permanent_add1: member?.permanent_add1 ? member.permanent_add1 : '',
@@ -114,20 +118,23 @@ const form = useForm({
   latest_qualifications: member?.latest_qualifications ? member.latest_qualifications : '',
   company_name: member?.company_name ? member.company_name : '',
   designation_id: member?.designation? member.designation : '',
-  annual_income: (member as any)?.annual_income ? (member as any).annual_income : '',
-  contact_no_2: (member as any)?.contact_no_2 ? (member as any).contact_no_2 : '',
+  income_range_id: member?.income_range_id ? member.income_range_id : '',
   baptism_date: member?.baptism_date ? member.baptism_date : '',
   baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
   baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
+  baptism_parish_id: member?.baptism_parish_id ? member.baptism_parish_id : '',
   confirmation_date: member?.confirmation_date ? member.confirmation_date : '',
   confirmation_reg_no: member?.confirmation_reg_no ? member.confirmation_reg_no : '',
   confirmation_parish: member?.confirmation_parish ? member.confirmation_parish : '',
+  confirmation_parish_id: member?.confirmation_parish_id ? member.confirmation_parish_id : '',
   marriage_date: member?.marriage_date ? member.marriage_date : '',
   marriage_reg_no: member?.marriage_reg_no ? member.marriage_reg_no : '',
   marriage_parish: member?.marriage_parish ? member.marriage_parish : '',
+  marriage_parish_id: member?.marriage_parish_id ? member.marriage_parish_id : '',
   death_date: member?.death_date ? member.death_date : '',
   deaths_reg_no: member?.deaths_reg_no ? member.deaths_reg_no : '',
   death_parish: member?.death_parish ? member.death_parish : '',
+  death_parish_id: member?.death_parish_id ? member.death_parish_id : '',
 });
 
 const submit = () => {
@@ -142,23 +149,130 @@ const submit = () => {
 const communityClusters = ref<CommunityCluster[]>([]);
 
 const fetchCommunityCluster = async () => {
-  if (!form.community_id) return;
-  const clusters = props.communities.find((community: Community) => community.id === form.community_id)?.community_clusters;
-  communityClusters.value = Array.isArray(clusters) ? clusters : clusters ? [clusters] : [];
+  console.log('fetchCommunityCluster called');
+  console.log('form.community_id:', form.community_id);
+  console.log('props.communityClusters:', props.communityClusters);
+  
+  if (!form.community_id) {
+    // If no community is selected but we have a cluster_id, show all clusters
+    if (form.community_cluster_id) {
+      console.log('No community_id but have cluster_id, showing all clusters');
+      communityClusters.value = props.communityClusters;
+    } else {
+      communityClusters.value = [];
+      console.log('No community_id, clearing clusters');
+    }
+    return;
+  }
+  
+  // Filter community clusters based on the selected community
+  const filteredClusters = props.communityClusters.filter((cluster: CommunityCluster) => 
+    Number(cluster.community_id) === Number(form.community_id)
+  );
+  
+  console.log('Filtered clusters:', filteredClusters);
+  communityClusters.value = filteredClusters;
+  console.log('communityClusters.value set to:', communityClusters.value);
 };
+
+// Debug watcher for communityClusters ref
+watch(communityClusters, (newValue) => {
+  console.log('communityClusters ref changed to:', newValue);
+});
 
 watch(
   () => form.community_id,
   () => {
+    console.log('form.community_id changed to:', form.community_id);
     fetchCommunityCluster();
   },
+);
+
+// Debug watcher for community_cluster_id
+watch(
+  () => form.community_cluster_id,
+  () => {
+    console.log('form.community_cluster_id changed to:', form.community_cluster_id);
+  },
+);
+
+// Parish selection computed properties
+const baptismParishSelection = computed({
+  get: () => ({
+    parishId: form.baptism_parish_id ? Number(form.baptism_parish_id) : null,
+    parishName: form.baptism_parish || null
+  }),
+  set: (value: { parishId?: number | null; parishName?: string | null }) => {
+    form.baptism_parish_id = value.parishId || '';
+    form.baptism_parish = value.parishName || '';
+  }
+});
+
+const confirmationParishSelection = computed({
+  get: () => ({
+    parishId: form.confirmation_parish_id ? Number(form.confirmation_parish_id) : null,
+    parishName: form.confirmation_parish || null
+  }),
+  set: (value: { parishId?: number | null; parishName?: string | null }) => {
+    form.confirmation_parish_id = value.parishId || '';
+    form.confirmation_parish = value.parishName || '';
+  }
+});
+
+const marriageParishSelection = computed({
+  get: () => ({
+    parishId: form.marriage_parish_id ? Number(form.marriage_parish_id) : null,
+    parishName: form.marriage_parish || null
+  }),
+  set: (value: { parishId?: number | null; parishName?: string | null }) => {
+    form.marriage_parish_id = value.parishId || '';
+    form.marriage_parish = value.parishName || '';
+  }
+});
+
+const deathParishSelection = computed({
+  get: () => ({
+    parishId: form.death_parish_id ? Number(form.death_parish_id) : null,
+    parishName: form.death_parish || null
+  }),
+  set: (value: { parishId?: number | null; parishName?: string | null }) => {
+    form.death_parish_id = value.parishId || '';
+    form.death_parish = value.parishName || '';
+  }
+});
+
+// Initialize community clusters when component loads
+watch(
+  () => props.communityClusters,
+  () => {
+    console.log('communityClusters prop changed');
+    console.log('form.community_id:', form.community_id);
+    console.log('form.community_cluster_id:', form.community_cluster_id);
+    
+    // If we have a community_cluster_id but no community_id, we need to find the community
+    if (form.community_cluster_id && !form.community_id) {
+      const cluster = props.communityClusters.find(c => c.id === form.community_cluster_id);
+      if (cluster) {
+        console.log('Found cluster, setting community_id to:', cluster.community_id);
+        form.community_id = cluster.community_id;
+      }
+    }
+    
+    if (form.community_id) {
+      fetchCommunityCluster();
+    }
+  },
+  { immediate: true }
 );
 
 const filteredTownPermanent = ref<Town[]>([]);
 
 const fetchfilteredTownPermanent = async () => {
-  if (!form.permanent_country_id) return;
+  if (!form.permanent_state_id) return;
+  console.log('Filtering towns for state_id:', form.permanent_state_id);
+  console.log('Available towns:', props.towns);
   filteredTownPermanent.value = props.towns.filter((town) => town.state_id === Number(form.permanent_state_id));
+  console.log('Filtered towns:', filteredTownPermanent.value);
 };
 
 watch(
@@ -185,8 +299,11 @@ watch(
 const filteredTownCurrent = ref<Town[]>([]);
 
 const fetchfilteredTownCurrent = async () => {
-  if (!form.current_country_id) return;
+  if (!form.current_state_id) return;
+  console.log('Filtering towns for state_id:', form.current_state_id);
+  console.log('Available towns:', props.towns);
   filteredTownCurrent.value = props.towns.filter((town) => town.state_id === Number(form.current_state_id));
+  console.log('Filtered towns:', filteredTownCurrent.value);
 };
 
 watch(
@@ -244,6 +361,28 @@ nextTick(() => {
   fetchfilteredCitiesCurrent();
   fetchfilteredStatesPermanent();
   fetchfilteredStatesCurrent();
+  fetchfilteredTownPermanent();
+  fetchfilteredTownCurrent();
+});
+
+// Initialize community clusters on mount
+onMounted(() => {
+  console.log('Component mounted');
+  console.log('Initial form.community_id:', form.community_id);
+  console.log('Initial form.community_cluster_id:', form.community_cluster_id);
+  console.log('Initial props.communityClusters:', props.communityClusters);
+  
+  if (form.community_cluster_id && !form.community_id) {
+    const cluster = props.communityClusters.find(c => c.id === form.community_cluster_id);
+    if (cluster) {
+      console.log('Found cluster on mount, setting community_id to:', cluster.community_id);
+      form.community_id = cluster.community_id;
+    }
+  }
+  
+  if (form.community_id) {
+    fetchCommunityCluster();
+  }
 });
 
 function cancel() {
@@ -251,6 +390,30 @@ function cancel() {
 }
 
 const selectedDesignations = ref([]); // For v-model
+
+// Same as permanent address functionality
+const sameAsPermanent = ref(false);
+
+const copyPermanentToCurrent = () => {
+  if (sameAsPermanent.value) {
+    // Copy permanent address to current address
+    form.current_add1 = form.permanent_add1;
+    form.current_add2 = form.permanent_add2;
+    form.current_add3 = form.permanent_add3;
+    form.current_town_id = form.permanent_town_id;
+    form.current_city_id = form.permanent_city_id;
+    form.current_pincode = form.permanent_pincode;
+    form.current_state_id = form.permanent_state_id;
+    form.current_country_id = form.permanent_country_id;
+    
+    // Update filtered dropdowns
+    nextTick(() => {
+      fetchfilteredTownCurrent();
+      fetchfilteredStatesCurrent();
+      fetchfilteredCitiesCurrent();
+    });
+  }
+};
 
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
@@ -340,9 +503,14 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.blood_group_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="contact_no_1">Contact No</Label>
-              <Input id="contact_no_1" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_1" autocomplete="contact_no_1" placeholder="Contact no" />
+              <Label for="contact_no_1">Contact No 1</Label>
+              <Input id="contact_no_1" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_1" autocomplete="contact_no_1" placeholder="Primary contact number" />
               <InputError class="mt-2" :message="form.errors.contact_no_1" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="contact_no_2">Contact No 2</Label>
+              <Input id="contact_no_2" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_2" autocomplete="contact_no_2" placeholder="Secondary contact number" />
+              <InputError class="mt-2" :message="form.errors.contact_no_2" />
             </div>
             <div class="grid gap-2">
               <Label for="email">Email</Label>
@@ -382,8 +550,12 @@ function formatDate(dateStr: string) {
               <!-- <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p> -->
             </div>
             <div class="grid gap-2">
-              <Label for="spouse_member_id">Spouse Member ID</Label>
-              <Input id="spouse_member_id" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.spouse_member_id" autocomplete="spouse_member_id" placeholder="Spouse member ID" />
+              <Label for="spouse_member_id">Spouse Member</Label>
+              <SpouseSearchDropdown 
+                v-model="form.spouse_member_id" 
+                :exclude-id="member?.id"
+                placeholder="Search for spouse by name, member number, or family number..."
+              />
               <InputError class="mt-2" :message="form.errors.spouse_member_id" />
             </div>
           </div>
@@ -407,7 +579,7 @@ function formatDate(dateStr: string) {
               <div class="flex items-center gap-2">
                 <span class="font-medium text-gray-700">Church Code:</span>
                 <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                  {{ form.church_code || 'SAL' }}
+                  {{ form.church_code || page.props.church_code }}
                 </span>
               </div>
               <div class="flex items-center gap-2">
@@ -435,7 +607,7 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.community_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="community_cluster_id">Community Cluster</Label>
+              <Label for="community_cluster_id">Community Cluster <span class="text-red-500">*</span></Label>
               <SearchDropdown
                 id="community_cluster_id"
                 v-model="form.community_cluster_id"
@@ -546,6 +718,20 @@ function formatDate(dateStr: string) {
         <!-- Current Address -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
           <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Current Address</h3>
+          
+          <!-- Same as Permanent Address Checkbox -->
+          <div class="mb-4">
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <input 
+                type="checkbox" 
+                v-model="sameAsPermanent"
+                @change="copyPermanentToCurrent"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-sm font-medium text-gray-700">Same as Permanent Address</span>
+            </label>
+          </div>
+          
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
               <Label for="current_add1">Address 1</Label>
@@ -680,16 +866,15 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.designation_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="annual_income">Annual Income</Label>
-              <Input
-                id="annual_income"
-                type="number"
+              <Label for="income_range_id">Income Range</Label>
+              <SelectInput
+                id="income_range_id"
+                v-model="form.income_range_id"
+                :options="props.incomeRanges"
+                placeholder="Select income range"
                 class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.annual_income"
-                autocomplete="annual_income"
-                placeholder="Annual income"
               />
-              <InputError class="mt-2" :message="form.errors.annual_income" />
+              <InputError class="mt-2" :message="form.errors.income_range_id" />
             </div>
             <div class="grid gap-2">
               <Label for="contact_no_2">Contact No 2</Label>
@@ -735,15 +920,14 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.baptism_reg_no" />
             </div>
             <div class="grid gap-2">
-              <Label for="baptism_parish">Baptism Parish</Label>
-              <Input
+              <ParishSelection
                 id="baptism_parish"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.baptism_parish"
-                autocomplete="baptism_parish"
-                placeholder="Baptism parish"
+                label="Baptism Parish"
+                v-model="baptismParishSelection"
+                :parishes="props.parishes"
               />
               <InputError class="mt-2" :message="form.errors.baptism_parish" />
+              <InputError class="mt-2" :message="form.errors.baptism_parish_id" />
             </div>
             <div class="grid gap-2">
               <Label for="confirmation_date">Confirmation Date</Label>
@@ -769,15 +953,14 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.confirmation_reg_no" />
             </div>
             <div class="grid gap-2">
-              <Label for="confirmation_parish">Confirmation Parish</Label>
-              <Input
+              <ParishSelection
                 id="confirmation_parish"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.confirmation_parish"
-                autocomplete="confirmation_parish"
-                placeholder="Confirmation parish"
+                label="Confirmation Parish"
+                v-model="confirmationParishSelection"
+                :parishes="props.parishes"
               />
               <InputError class="mt-2" :message="form.errors.confirmation_parish" />
+              <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
             </div>
             <div class="grid gap-2">
               <Label for="marriage_date">Marriage Date</Label>
@@ -803,15 +986,14 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.marriage_reg_no" />
             </div>
             <div class="grid gap-2">
-              <Label for="marriage_parish">Marriage Parish</Label>
-              <Input
+              <ParishSelection
                 id="marriage_parish"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.marriage_parish"
-                autocomplete="marriage_parish"
-                placeholder="Marriage parish"
+                label="Marriage Parish"
+                v-model="marriageParishSelection"
+                :parishes="props.parishes"
               />
               <InputError class="mt-2" :message="form.errors.marriage_parish" />
+              <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
             </div>
             <div class="grid gap-2">
               <Label for="death_date">Death Date</Label>
@@ -837,9 +1019,14 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.deaths_reg_no" />
             </div>
             <div class="grid gap-2">
-              <Label for="death_parish">Death Parish</Label>
-              <Input id="death_parish" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.death_parish" autocomplete="death_parish" placeholder="Death parish" />
+              <ParishSelection
+                id="death_parish"
+                label="Death Parish"
+                v-model="deathParishSelection"
+                :parishes="props.parishes"
+              />
               <InputError class="mt-2" :message="form.errors.death_parish" />
+              <InputError class="mt-2" :message="form.errors.death_parish_id" />
             </div>
           </div>
         </div>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Country;
+use App\Http\Requests\StoreCountryRequest;
+use App\Http\Requests\UpdateCountryRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,13 +56,9 @@ class CountryController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreCountryRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        Country::create($request->only('name'));
+        Country::create($request->validated());
 
         return redirect()->route('country.index')->with('success', 'Country created successfully.');
     }
@@ -78,13 +76,9 @@ class CountryController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Country $country)
+    public function update(UpdateCountryRequest $request, Country $country)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-        ]);
-
-        $country->update($request->only('name'));
+        $country->update($request->validated());
 
         return redirect()->route('country.index')->with('success', 'Country updated successfully.');
     }

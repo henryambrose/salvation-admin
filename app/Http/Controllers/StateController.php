@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\State;
 use App\Models\Country;
+use App\Http\Requests\StoreStateRequest;
+use App\Http\Requests\UpdateStateRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,15 +61,9 @@ class StateController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreStateRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'abbr' => 'nullable|string|max:10',
-            'country_id' => 'required|exists:countries,id',
-        ]);
-
-        State::create($request->only('name', 'abbr', 'country_id'));
+        State::create($request->validated());
 
         return redirect()->route('state.index')->with('success', 'State created successfully.');
     }
@@ -88,15 +84,9 @@ class StateController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, State $state)
+    public function update(UpdateStateRequest $request, State $state)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'abbr' => 'nullable|string|max:10',
-            'country_id' => 'required|exists:countries,id',
-        ]);
-
-        $state->update($request->only('name', 'abbr', 'country_id'));
+        $state->update($request->validated());
 
         return redirect()->route('state.index')->with('success', 'State updated successfully.');
     }

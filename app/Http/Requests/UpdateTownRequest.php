@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreIncomeRangeRequest extends FormRequest
+class UpdateTownRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -12,7 +12,6 @@ class StoreIncomeRangeRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
-        // return false;
     }
 
     /**
@@ -23,9 +22,9 @@ class StoreIncomeRangeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|unique:income_ranges,name',
-            // 'starting_range' => 'required|string',
-            // 'ending_range' => 'required|string',
+            'name' => 'required|string|max:255|unique:towns,name,' . $this->town->id,
+            'pincode' => 'nullable|string|max:10',
+            'city_id' => 'required|exists:cities,id',
         ];
     }
-}
+} 
