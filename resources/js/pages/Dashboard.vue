@@ -233,9 +233,9 @@ const getColumnHeader = (title: string): string => {
 
             <!-- Detailed Statistics -->
             <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <!-- Table Cards -->
+                <!-- Zone-wise Statistics -->
                 <Card
-                    v-for="tableCard in tableCards"
+                    v-for="tableCard in tableCards.filter(card => ['Zone-wise Statistics', 'Community-wise Statistics', 'Gender Wise', 'Relationship Wise Members'].includes(card.title))"
                     class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
                     :key="tableCard.title"
                 >
@@ -315,6 +315,54 @@ const getColumnHeader = (title: string): string => {
                                     <div class="text-blue-600 dark:text-blue-400 font-semibold">{{ row['Male'] + row['Female'] }}</div>
                                     <div class="text-blue-500 dark:text-blue-300">{{ row['Male'] }}</div>
                                     <div class="text-pink-500 dark:text-pink-300">{{ row['Female'] }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <!-- Remaining Table Cards -->
+                <Card
+                    v-for="tableCard in tableCards.filter(card => !['Zone-wise Statistics', 'Community-wise Statistics', 'Gender Wise', 'Relationship Wise Members'].includes(card.title))"
+                    class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-2xl border-0 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105"
+                    :key="tableCard.title"
+                >
+                    <CardHeader class="p-6 pb-4">
+                        <div class="flex items-center justify-between">
+                            <CardTitle class="text-lg font-semibold text-gray-900 dark:text-white">
+                                {{ tableCard.title }}
+                            </CardTitle>
+                            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg" :class="getGradientForCard(tableCard.title)">
+                                <component 
+                                    :is="getIconForCard(tableCard.title)" 
+                                    class="w-5 h-5 text-white" 
+                                />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    
+                    <CardContent class="p-6 pt-0">
+                        <div class="space-y-3">
+                            <!-- Table Header -->
+                            <div class="grid gap-4 p-3 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl font-semibold text-gray-900 dark:text-white text-sm"
+                                 :class="isStatisticsCard(tableCard.title) ? 'grid-cols-3' : 'grid-cols-2'">
+                                <div>{{ getColumnHeader(tableCard.title) }}</div>
+                                <div>{{ isStatisticsCard(tableCard.title) ? 'Members' : 'Count' }}</div>
+                                <div v-if="isStatisticsCard(tableCard.title)">Families</div>
+                            </div>
+
+                            <!-- Table Rows -->
+                            <div class="max-h-64 overflow-y-auto custom-scrollbar space-y-2">
+                                <div 
+                                    v-for="(row, index) in tableCard.data" 
+                                    :key="index"
+                                    class="grid gap-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200 text-sm"
+                                    :class="isStatisticsCard(tableCard.title) ? 'grid-cols-3' : 'grid-cols-2'"
+                                >
+                                    <div class="font-medium text-gray-900 dark:text-white">{{ index || 'Other' }}</div>
+                                    <div v-if="isStatisticsCard(tableCard.title)" class="text-blue-600 dark:text-blue-400 font-semibold">{{ row.members }}</div>
+                                    <div v-else class="text-blue-600 dark:text-blue-400 font-semibold">{{ row }}</div>
+                                    <div v-if="isStatisticsCard(tableCard.title)" class="text-green-600 dark:text-green-400 font-semibold">{{ row.families }}</div>
                                 </div>
                             </div>
                         </div>
