@@ -15,8 +15,9 @@ class ModuleSeeder extends Seeder
      */
     public function run(): void
     {
-        // Define modules and their actions
+        // Define modules and their actions - Ordered to match sidebar navigation
         $modules = [
+            // Core Management
             [
                 'name' => 'Members',
                 'slug' => 'member',
@@ -29,12 +30,14 @@ class ModuleSeeder extends Seeder
                 'icon' => 'UsersRound',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
-            // [
-            //     'name' => 'Community Fund',
-            //     'slug' => 'community-fund',
-            //     'icon' => 'CurrencyIcon',
-            //     'actions' => ['create', 'read', 'update', 'delete', 'list'],
-            // ],
+            [
+                'name' => 'Parishes',
+                'slug' => 'parish',
+                'icon' => 'Church',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            
+            // Organizational Structure
             [
                 'name' => 'Zones',
                 'slug' => 'zone',
@@ -42,17 +45,31 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Blood Groups',
-                'slug' => 'blood-group',
-                'icon' => 'HeartPulse',
+                'name' => 'Community Clusters',
+                'slug' => 'community-cluster',
+                'icon' => 'Network',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Income Ranges',
-                'slug' => 'income-range',
-                'icon' => 'BadgeIndianRupee',
+                'name' => 'Clusters',
+                'slug' => 'cluster',
+                'icon' => 'Network',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
+            [
+                'name' => 'Cells and Associations',
+                'slug' => 'cells-and-association',
+                'icon' => 'Heart',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Cells and Association Members',
+                'slug' => 'cells-and-association-member',
+                'icon' => 'UserCheck',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            
+            // Leadership
             [
                 'name' => 'SCC Heads',
                 'slug' => 'scc-head',
@@ -65,6 +82,52 @@ class ModuleSeeder extends Seeder
                 'icon' => 'UserCheck',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
+            
+            // Member Attributes
+            [
+                'name' => 'Relationships',
+                'slug' => 'relationship',
+                'icon' => 'HeartHandshake',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Designations',
+                'slug' => 'designation',
+                'icon' => 'Crown',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Age Groups',
+                'slug' => 'age-group',
+                'icon' => 'UsersRound',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Blood Groups',
+                'slug' => 'blood-group',
+                'icon' => 'HeartPulse',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Genders',
+                'slug' => 'gender',
+                'icon' => 'UserCircle',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Statuses',
+                'slug' => 'status',
+                'icon' => 'CheckCircle',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Income Ranges',
+                'slug' => 'income-range',
+                'icon' => 'BadgeIndianRupee',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            
+            // Geographic Data
             [
                 'name' => 'Countries',
                 'slug' => 'country',
@@ -78,32 +141,39 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-                'name' => 'Towns',
-                'slug' => 'town',
-                'icon' => 'Home',
-                // No icon specified
+                'name' => 'Cities',
+                'slug' => 'city',
+                'icon' => 'Building',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-              'name' => 'Age Groups',
-              'slug' => 'age-group',
-              'icon' => 'UsersRound',
-              'actions' => ['create', 'read', 'update', 'delete', 'list'],
+                'name' => 'Towns',
+                'slug' => 'town',
+                'icon' => 'Home',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            
+            // System Management
+            [
+                'name' => 'Users',
+                'slug' => 'user',
+                'icon' => 'User',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
-              'name' => 'Parishes',
-              'slug' => 'parish',
-              'icon' => 'Church',
-              'actions' => ['create', 'read', 'update', 'delete', 'list'],
+                'name' => 'Role Management',
+                'slug' => 'role',
+                'icon' => 'Shield',
+                'actions' => ['read', 'manage'], // Role management has read and manage actions
             ],
+            
+            // Special Pages
             [
-              'name' => 'Relationships',
-              'slug' => 'relationship',
-              'icon' => 'HeartHandshake',
-              'actions' => ['create', 'read', 'update', 'delete', 'list'],
+                'name' => 'Dashboard',
+                'slug' => 'dashboard',
+                'icon' => 'LayoutDashboard',
+                'actions' => ['read'], // Dashboard only needs read permission
             ],
-
-
         ];
 
         foreach ($modules as $index => $module) {
@@ -130,3 +200,4 @@ class ModuleSeeder extends Seeder
 
     }
 }
+

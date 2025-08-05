@@ -17,6 +17,8 @@ class CommunityController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Community::class);
+        
         $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member')->with('members');
 
         if ($request->input('isArchived') === 'true') {
@@ -65,6 +67,8 @@ class CommunityController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create', Community::class);
+        
         return Inertia::render('community/Community', [
             'zones' => Zone::all(),
         ]);
@@ -75,6 +79,8 @@ class CommunityController extends Controller
      */
     public function store(StoreCommunityRequest $request)
     {
+        $this->authorize('create', Community::class);
+        
         Community::create($request->validated());
         $perPage = $request->input('perPage', 10);
         $total = Community::count();
@@ -93,6 +99,8 @@ class CommunityController extends Controller
      */
     public function show(Community $community): Response
     {
+        $this->authorize('view', $community);
+        
         return Inertia::render('community/Community', [
             'community' => $community,
         ]);
@@ -103,6 +111,8 @@ class CommunityController extends Controller
      */
     public function edit(Community $community): Response
     {
+        $this->authorize('update', $community);
+        
         return Inertia::render('community/Community', [
             'community' => $community,
             'zones' => Zone::all(),
@@ -114,6 +124,8 @@ class CommunityController extends Controller
      */
     public function update(UpdateCommunityRequest $request, Community $community)
     {
+        $this->authorize('update', $community);
+        
         $community->update($request->validated());
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
@@ -131,6 +143,7 @@ class CommunityController extends Controller
      */
     public function destroy(Community $community)
     {
+        $this->authorize('delete', $community);
         
         $community->delete();
 
@@ -143,12 +156,16 @@ class CommunityController extends Controller
     public function restore($id)
     {
         $community = Community::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $community);
+        
         $community->restore();
         return redirect()->route('community.index')->with('success', 'Community restored successfully.');
     }
 
     public function export(Request $request)
     {
+        $this->authorize('viewAny', Community::class);
+        
         try {
             $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member');
             

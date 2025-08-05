@@ -9,11 +9,14 @@ export function permissionHelpers() {
     }
 
     const roles = page.props.auth?.roles || [];
+    
+    // Superadmin has all permissions
     if (roles.includes('superadmin')) {
       return true;
     }
 
-    return page.props.auth?.permissions?.includes(permission); // || role.permission.includes(permission)
+    // For other roles, check specific permissions
+    return page.props.auth?.permissions?.includes(permission);
   };
 
   return {

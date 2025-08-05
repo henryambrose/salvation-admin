@@ -147,35 +147,7 @@
                   />
                 </div>
                 
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number 1</label>
-                  <input 
-                    v-model="form.contact_no_1" 
-                    type="tel" 
-                    placeholder="Enter primary contact number"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Contact Number 2</label>
-                  <input 
-                    v-model="form.contact_no_2" 
-                    type="tel" 
-                    placeholder="Enter secondary contact number (optional)"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
-                
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                  <input 
-                    v-model="form.email" 
-                    type="email" 
-                    placeholder="Enter email address"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  />
-                </div>
+
               </div>
             </div>
 
@@ -226,13 +198,7 @@
                   </select>
                 </div>
                 
-                <!-- <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Spouse Member (Optional)</label>
-                  <SpouseSearchDropdown 
-                    v-model="form.spouse_member_id" 
-                    placeholder="Search for spouse by name, member number, or family number..."
-                  />
-                </div> -->
+
               </div>
             </div>
 
@@ -292,12 +258,13 @@
 import { ref, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 
+
+
 interface Props {
   modelValue: boolean;
   communities: Array<{ id: string | number; name: string }>;
   relationships: Array<{ id: string | number; name: string }>;
   communityClusters: Array<{ id: string | number; name: string; community_id: string | number }>;
-  towns: Array<{ id: string | number; name: string; state_id: string | number }>;
 }
 
 const props = defineProps<Props>();
@@ -326,13 +293,9 @@ const form = ref({
   last_name: '',
   middle_name: '',
   date_of_birth: '',
-  contact_no_1: '',
-  contact_no_2: '',
-  email: '',
   community_id: '',
   community_cluster_id: '',
   relationship_id: '',
-  spouse_member_id: null as number | null,
   existing_family_no: ''
 });
 
@@ -518,13 +481,9 @@ const resetForm = () => {
     last_name: '',
     middle_name: '',
     date_of_birth: '',
-    contact_no_1: '',
-    contact_no_2: '',
-    email: '',
     community_id: '',
     community_cluster_id: '',
     relationship_id: '',
-    spouse_member_id: null,
     existing_family_no: ''
   };
   familyType.value = 'new';

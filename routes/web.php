@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\SCCHeadController;
@@ -37,6 +38,20 @@ Route::get('/api/community/{community}/members', [SCCHeadController::class, 'mem
 Route::get('/api/ppc-community/{community}/members', [PPCHeadController::class, 'membersByCommunity']);
 Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
 
+// User routes
+// Route::middleware('auth')->group(function () {
+//     Route::get('users', [UserController::class, 'index'])->name('users.index');
+//     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
+//     Route::post('users', [UserController::class, 'store'])->name('users.store');
+//     Route::get('users/{user}', [UserController::class, 'show'])->name('users.show');
+//     Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+//     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
+//     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+//     Route::post('users/{user}/restore', [UserController::class, 'restore'])->name('users.restore');
+    
+//     // Test route for UserController2
+//     // Route::get('users2', [UserController2::class, 'index'])->name('users2.index');
+// });
 
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';

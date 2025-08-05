@@ -288,7 +288,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
       </div>
     </DatatableHeader>
 
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyCommunity" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -304,12 +304,12 @@ watch(() => enhancedCommunities.value.data, (rows) => {
             <tr v-for="row in enhancedCommunities.data" :key="row.id" :id="`community-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyCommunity" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreCommunity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button v-if="canUpdateAnyCommunity" @click="restoreCommunity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -330,7 +330,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               </td>
               <td v-if="!isArchived" class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                  <Button v-if="canDeleteAnyCommunity" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete
                   </Button>
                 </template>
@@ -340,9 +340,10 @@ watch(() => enhancedCommunities.value.data, (rows) => {
         </table>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view communities.</div>
 
     <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
+    <div v-if="canReadAnyCommunity" class="mt-6 flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <button 
           v-if="enhancedCommunities.prev_page_url" 

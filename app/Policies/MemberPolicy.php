@@ -13,8 +13,7 @@ class MemberPolicy
      */
     public function viewAny(User $user): bool
     {
-        \Log::debug(['Checking if user can view any members', ['user_id' => $user->id]]);
-        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+        if ($user->hasRole('superadmin')) {
             return true;
         }
         return $user->can('read-member');
@@ -25,8 +24,7 @@ class MemberPolicy
      */
     public function view(User $user, Member $member): bool
     {
-        \Log::debug(['Checking if user can view any members', ['user_id' => $user->id]]);
-        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+        if ($user->hasRole('superadmin')) {
             return true;
         }
         return $user->can('read-member');
@@ -37,7 +35,7 @@ class MemberPolicy
      */
     public function create(User $user): bool
     {
-        if (auth()->check() && auth()->user()->hasRole('superadmin')) {
+        if ($user->hasRole('superadmin')) {
             return true;
         }
         return $user->can('create-member');
@@ -48,6 +46,9 @@ class MemberPolicy
      */
     public function update(User $user, Member $member): bool
     {
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
         return $user->can('update-member');
     }
 
@@ -56,6 +57,9 @@ class MemberPolicy
      */
     public function delete(User $user, Member $member): bool
     {
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
         return $user->can('delete-member');
     }
 
@@ -64,7 +68,10 @@ class MemberPolicy
      */
     public function restore(User $user, Member $member): bool
     {
-        return false; // Restoration logic can be added if needed
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+        return $user->can('update-member'); // Use update permission for restore
     }
 
     /**
@@ -72,6 +79,9 @@ class MemberPolicy
      */
     public function forceDelete(User $user, Member $member): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+        return $user->can('delete-member');
     }
 }

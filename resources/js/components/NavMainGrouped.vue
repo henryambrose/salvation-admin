@@ -15,16 +15,21 @@ defineProps<{
 const page = usePage<SharedData>();
 
 const isActivePage = (itemHref: string, currentUrl: string): boolean => {
+  // Handle clashing URLs first - use exact match for URLs that might clash with others
+  if (itemHref === '/cells-and-association' || itemHref === '/cells-and-association-members') {
+    return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
+  }
+  
+  if (itemHref === '/community' || itemHref === '/community-clusters') {
+    return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
+  }
+  
   // Handle different URL patterns for the same page
   const urlVariations = {
     '/member/index': ['/member/index', '/member'],
-    '/community': ['/community/index','/community'],
     '/parish': ['/parish/index','/parish'],
     '/zone': ['/zone/index','/zone'],
-    '/community-clusters': ['/community-clusters/index','/community-clusters'],
     '/clusters': ['/clusters/index','/clusters'],
-    '/cells-and-association': ['/cells-and-association/index','/cells-and-association'],
-    '/cells-and-association-members': ['/cells-and-association-members/index','/cells-and-association-members'],
     '/scc-head': ['/scc-head/index','/scc-head'],
     '/ppc-head': ['/ppc-head/index','/ppc-head'],
     '/relationship': ['/relationship/index','/relationship'],

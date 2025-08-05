@@ -9,6 +9,9 @@ import { router } from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
 import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick } from 'vue';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
 
 const props = defineProps({
   clusters: Object,
@@ -16,6 +19,12 @@ const props = defineProps({
   fetchUrl: String,
 });
 
+// Permission checks
+const canCreateCluster = can('create-cluster');
+const canReadAnyCluster = can('read-cluster');
+const canUpdateAnyCluster = can('update-cluster');
+const canDeleteAnyCluster = can('delete-cluster');
+const canExportCluster = can('read-cluster');
 
 const columns: Column[] = [
   { key: 'id', label: 'Id', sortable: true },
@@ -246,7 +255,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
      <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Cluster</h2>
-        <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button v-if="canCreateCluster" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Cluster</span>
         </Button>
       </div>
@@ -271,7 +280,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
         </div>
       </div>
     </DatatableHeader>
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyCluster" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
             <thead>
@@ -287,7 +296,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
             <tr v-for="row in enhancedCluster.data" :key="row.id" :id="`cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
                 </template>
@@ -301,7 +310,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 {{ row[col.key] }}
               </td>
               <td v-if="!isArchived" class="p-2">
-                <template v-if="!isArchived">
+                <template v-if="canDeleteAnyCluster">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete
                   </Button>
@@ -360,6 +369,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
           </div>
         </div>
       </div>
+      <div v-else class="py-10 text-center text-gray-500">You do not have permission to view clusters.</div>
 
     <!-- Create Modal -->
     <transition name="fade">

@@ -9,6 +9,9 @@ import { ref, watch, computed } from 'vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { Checkbox } from '@/components/ui/checkbox';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
 
 const props = defineProps({
   users: {
@@ -19,6 +22,13 @@ const props = defineProps({
   fetchUrl: String,
 });
 
+// Permission checks
+const canCreateUser = can('create-user');
+const canReadAnyUser = can('read-user');
+const canUpdateAnyUser = can('update-user');
+const canDeleteAnyUser = can('delete-user');
+const canExportUser = can('read-user');
+
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
@@ -26,7 +36,7 @@ const columns = [
   { key: 'created_at', label: 'Created At', sortable: true },
 ];
 
-const breadcrumbs = [{ title: 'Users', href: '/users/index' }];
+const breadcrumbs = [{ title: 'Users', href: '/users' }];
 
 const showModal = ref(false);
 const showEditModal = ref(false);
@@ -180,7 +190,7 @@ const enhancedUsers = computed(() => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Users</h2>
-        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button v-if="canCreateUser" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add User</span>
         </Button>
       </div>
@@ -216,7 +226,7 @@ const enhancedUsers = computed(() => {
         </label>
       </div>
     </DatatableHeader>
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyUser" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -231,7 +241,7 @@ const enhancedUsers = computed(() => {
           <tbody>
             <tr v-for="row in enhancedUsers.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
-                <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                <Button v-if="canUpdateAnyUser" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                   Edit
                 </Button>
               </td>
@@ -244,7 +254,7 @@ const enhancedUsers = computed(() => {
                 </template>
               </td>
               <td v-if="!isArchived" class="p-2">
-                <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                <Button v-if="canDeleteAnyUser" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                   Delete
                 </Button>
               </td>
@@ -258,6 +268,7 @@ const enhancedUsers = computed(() => {
         </table>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view users.</div>
     <!-- Enhanced Pagination -->
     <div class="mt-6 flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">

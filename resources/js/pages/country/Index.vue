@@ -9,6 +9,9 @@ import { router } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
 
 const props = defineProps({
   countries: {
@@ -18,6 +21,13 @@ const props = defineProps({
   filters: Object,
   fetchUrl: String,
 });
+
+// Permission checks
+const canCreateCountry = can('create-country');
+const canReadAnyCountry = can('read-country');
+const canUpdateAnyCountry = can('update-country');
+const canDeleteAnyCountry = can('delete-country');
+const canExportCountry = can('read-country');
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
@@ -161,7 +171,7 @@ function clearSearch() {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Countries</h2>
-        <Button @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button v-if="canCreateCountry" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Country</span>
           </Button>
         </div>
@@ -198,7 +208,7 @@ function clearSearch() {
       </div>
     </DatatableHeader>
 
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyCountry" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -214,7 +224,7 @@ function clearSearch() {
             <tr v-for="row in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
               <td class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyCountry" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
                 </template>
@@ -228,7 +238,7 @@ function clearSearch() {
                 {{ row[col.key] }}
               </td>
               <td v-if="!isArchived" class="p-2">
-                <template v-if="!isArchived">
+                <template v-if="canDeleteAnyCountry">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete
                   </Button>
@@ -239,6 +249,7 @@ function clearSearch() {
         </table>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view countries.</div>
 
     <!-- Enhanced Pagination -->
     <div class="mt-6 flex items-center justify-between gap-4">

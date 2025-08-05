@@ -9,6 +9,12 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import { Users, Calendar, Church, Heart, Gift, Cake, Mail, Phone, MapPin, Home } from 'lucide-vue-next';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
+
+// Permission checks
+const canViewDashboard = can('read-dashboard');
 
 defineProps({
     statCards: {
@@ -101,7 +107,7 @@ const getColumnHeader = (title: string): string => {
 
     <AppLayout :breadcrumbs="breadcrumbs">
         <!-- Enhanced Dashboard Container -->
-        <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-6">
+        <div v-if="canViewDashboard" class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-6">
             <!-- Welcome Section -->
             <div class="mb-8">
                 <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
@@ -381,6 +387,7 @@ const getColumnHeader = (title: string): string => {
                 </div>
             </div>
         </div>
+        <div v-else class="py-10 text-center text-gray-500">You do not have permission to view the dashboard.</div>
     </AppLayout>
 </template>
 

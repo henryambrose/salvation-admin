@@ -31,6 +31,8 @@ class MemberController extends Controller
 
     public function index(Request $request) :Response
     {
+        $this->authorize('viewAny', Member::class);
+        
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
             'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
@@ -288,6 +290,8 @@ class MemberController extends Controller
 
     public function create(Request $request): Response
     {
+        $this->authorize('create', Member::class);
+        
         return Inertia::render('member/Member', [
             'communities' => Community::all(),
             'incomeRanges' => IncomeRange::all()->map(function ($item) {
@@ -315,6 +319,7 @@ class MemberController extends Controller
                 return [
                     'id' => $item->id, 
                     'name' => $item->name, 
+                    'pincode' => $item->pincode,
                     'city_id' => $item->city_id, 
                     'state_id' => $item->city->state_id ?? null, 
                     'country_id' => $item->city->state->country_id ?? null
@@ -343,6 +348,8 @@ class MemberController extends Controller
      */
     public function store(StoreMemberRequest $request)
     {
+        $this->authorize('create', Member::class);
+        
         DB::beginTransaction();
         
         try {
@@ -421,6 +428,8 @@ class MemberController extends Controller
 
     public function show(Member $member): Response
     {
+        $this->authorize('view', $member);
+        
         return Inertia::render('member/Member', [
             'member' => $member
         ]);
@@ -428,6 +437,8 @@ class MemberController extends Controller
 
     public function edit(Member $member)
     {
+        $this->authorize('update', $member);
+        
         $incomeRanges = IncomeRange::all()->map(function ($item) {
             return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
@@ -460,6 +471,7 @@ class MemberController extends Controller
                 return [
                     'id' => $item->id, 
                     'name' => $item->name, 
+                    'pincode' => $item->pincode,
                     'city_id' => $item->city_id, 
                     'state_id' => $item->city->state_id ?? null, 
                     'country_id' => $item->city->state->country_id ?? null
@@ -482,6 +494,8 @@ class MemberController extends Controller
 
     public function update(UpdateMemberRequest $request, Member $member)
     {
+        $this->authorize('update', $member);
+        
         $validated = $request->validated();
         $member->update($validated);
         $perPage = $request->input('perPage', 10);
@@ -511,6 +525,8 @@ class MemberController extends Controller
 
     public function destroy(Member $member)
     {
+        $this->authorize('delete', $member);
+        
         $member->delete();
 
         return redirect()->route('member.index')->with('success', 'Member deleted successfully.');
@@ -519,6 +535,8 @@ class MemberController extends Controller
     public function restore($id)
     {
         $member = Member::onlyTrashed()->findOrFail($id);
+        $this->authorize('restore', $member);
+        
         $member->restore();
         return redirect()->route('member.index')->with('success', 'Member restored successfully.');
     }
@@ -557,6 +575,8 @@ class MemberController extends Controller
 
     public function export(Request $request)
     {
+        $this->authorize('viewAny', Member::class);
+        
         try {
             $query = Member::query();
             

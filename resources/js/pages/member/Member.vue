@@ -6,6 +6,7 @@ import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';
 import SpouseSearchDropdown from '@/components/SpouseSearchDropdown.vue';
 import ParishSelection from '@/components/ParishSelection.vue';
+import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -83,6 +84,258 @@ const formatDateForInput = (dateString: string | null | undefined): string => {
   }
 };
 
+// Validate Indian phone number (mobile or landline)
+const validateIndianPhone = (phoneNumber: string): boolean => {
+  if (!phoneNumber) return true; // Allow empty values
+  
+  // Remove all non-digit characters
+  const cleanNumber = phoneNumber.replace(/\D/g, '');
+  
+  // Indian Mobile Number: 10 digits starting with 6, 7, 8, 9
+  const mobilePattern = /^[6-9]\d{9}$/;
+  
+  // Indian Landline Number: 10-11 digits (with or without STD code)
+  const landlinePattern = /^(?:[2-4]\d{1,3})?\d{6,8}$/;
+  
+  // Check if it's a valid mobile number
+  if (mobilePattern.test(cleanNumber)) {
+    return true;
+  }
+  
+  // Check if it's a valid landline number
+  if (landlinePattern.test(cleanNumber) && cleanNumber.length >= 10 && cleanNumber.length <= 11) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Validate email address
+const validateEmail = (email: string): boolean => {
+  if (!email) return true; // Allow empty values
+  
+  // Basic email format validation
+  const emailRegex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+  
+  if (!emailRegex.test(email)) {
+    return false;
+  }
+  
+  // Additional checks
+  const emailLower = email.toLowerCase().trim();
+  
+  // Check length
+  if (emailLower.length > 254) {
+    return false;
+  }
+  
+  // Split email
+  const parts = emailLower.split('@');
+  if (parts.length !== 2) {
+    return false;
+  }
+  
+  const localPart = parts[0];
+  const domain = parts[1];
+  
+  // Check local part
+  if (localPart.length > 64 || localPart.length === 0) {
+    return false;
+  }
+  
+  // Check for consecutive dots
+  if (localPart.includes('..') || domain.includes('..')) {
+    return false;
+  }
+  
+  // Check if starts or ends with dot
+  if (localPart.startsWith('.') || localPart.endsWith('.') || domain.startsWith('.') || domain.endsWith('.')) {
+    return false;
+  }
+  
+  // Check TLD
+  const tld = domain.split('.').pop();
+  if (!tld || tld.length < 2) {
+    return false;
+  }
+  
+  // Check for disposable domains
+  const disposableDomains = [
+    '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'tempmail.org',
+    'throwaway.email', 'yopmail.com', 'temp-mail.org', 'sharklasers.com'
+  ];
+  
+  if (disposableDomains.includes(domain)) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Aadhar validation function
+const validateAadhar = (aadhar: string): boolean => {
+  if (!aadhar) return true; // Allow empty values
+  
+  // Remove any spaces, dashes, or other separators
+  const cleanAadhar = aadhar.replace(/\D/g, '');
+  
+  // Check if it's exactly 12 digits
+  if (cleanAadhar.length !== 12) {
+    return false;
+  }
+  
+  // Check if it's all zeros (invalid Aadhar)
+  if (cleanAadhar === '000000000000') {
+    return false;
+  }
+  
+  // Check if it starts with 0 or 1 (invalid Aadhar)
+  if (['0', '1'].includes(cleanAadhar[0])) {
+    return false;
+  }
+  
+  // Basic pattern check (12 digits, not all same)
+  const digitPattern = /^(\d)\1{11}$/;
+  if (digitPattern.test(cleanAadhar)) {
+    return false;
+  }
+  
+  return true;
+};
+
+// Date validation function - check if date is not in future
+const validateNotFutureDate = (dateStr: string): boolean => {
+  if (!dateStr) return true;
+  const inputDate = new Date(dateStr);
+  const today = new Date();
+  today.setHours(23, 59, 59, 999); // End of today
+  return inputDate <= today;
+};
+
+// Get today's date in YYYY-MM-DD format for HTML5 max attribute
+const getTodayDate = (): string => {
+  const today = new Date();
+  return today.toISOString().split('T')[0]; // YYYY-MM-DD format
+};
+
+// Validation error modal state
+const showValidationModal = ref(false);
+const validationErrors = ref<Array<{ field: string; message: string }>>([]);
+
+// Collect all validation errors
+const collectValidationErrors = () => {
+  const errors: Array<{ field: string; message: string }> = [];
+  
+  // Check required fields
+  if (!form.first_name?.trim()) {
+    errors.push({ field: 'first_name', message: 'First name is required' });
+  }
+  
+  if (!form.relationship_id) {
+    errors.push({ field: 'relationship_id', message: 'Relationship is required' });
+  }
+  
+  // Check phone number validation
+  if (form.contact_no_1 && !validateIndianPhone(form.contact_no_1)) {
+    errors.push({ field: 'contact_no_1', message: 'Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, 9) or landline number (10-11 digits with STD code)' });
+  }
+  
+  if (form.contact_no_2 && !validateIndianPhone(form.contact_no_2)) {
+    errors.push({ field: 'contact_no_2', message: 'Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, 9) or landline number (10-11 digits with STD code)' });
+  }
+  
+  // Check email validation
+  if (form.email && !validateEmail(form.email)) {
+    errors.push({ field: 'email', message: 'Please enter a valid email address. Disposable email domains are not allowed' });
+  }
+  
+  // Check Aadhar validation
+  if (form.aadhar && !validateAadhar(form.aadhar)) {
+    errors.push({ field: 'aadhar', message: 'Please enter a valid 12-digit Aadhar number. It cannot start with 0 or 1, and cannot be all zeros or repeated digits' });
+  }
+  
+  // Check date validation for all date fields
+  if (form.date_of_birth && !validateNotFutureDate(form.date_of_birth)) {
+    errors.push({ field: 'date_of_birth', message: 'Date of birth cannot be in the future' });
+  }
+  
+  if (form.baptism_date && !validateNotFutureDate(form.baptism_date)) {
+    errors.push({ field: 'baptism_date', message: 'Baptism date cannot be in the future' });
+  }
+  
+  if (form.confirmation_date && !validateNotFutureDate(form.confirmation_date)) {
+    errors.push({ field: 'confirmation_date', message: 'Confirmation date cannot be in the future' });
+  }
+  
+  if (form.marriage_date && !validateNotFutureDate(form.marriage_date)) {
+    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be in the future' });
+  }
+  
+  if (form.death_date && !validateNotFutureDate(form.death_date)) {
+    errors.push({ field: 'death_date', message: 'Death date cannot be in the future' });
+  }
+  
+  // Check parish validation - only validate if both parish name and ID are provided but don't match
+  // For custom parish names, parish_id should be empty/null
+  // For selected parishes, parish_id should be set and parish name should match
+  if (form.baptism_parish && form.baptism_parish_id) {
+    // If both are provided, it should be a valid selection
+    const selectedParish = props.parishes?.find(p => p.id === form.baptism_parish_id);
+    if (!selectedParish || selectedParish.name !== form.baptism_parish) {
+      errors.push({ field: 'baptism_parish', message: 'Please either select a parish from the dropdown or enter a custom parish name, but not both' });
+    }
+  }
+  
+  if (form.confirmation_parish && form.confirmation_parish_id) {
+    const selectedParish = props.parishes?.find(p => p.id === form.confirmation_parish_id);
+    if (!selectedParish || selectedParish.name !== form.confirmation_parish) {
+      errors.push({ field: 'confirmation_parish', message: 'Please either select a parish from the dropdown or enter a custom parish name, but not both' });
+    }
+  }
+  
+  if (form.marriage_parish && form.marriage_parish_id) {
+    const selectedParish = props.parishes?.find(p => p.id === form.marriage_parish_id);
+    if (!selectedParish || selectedParish.name !== form.marriage_parish) {
+      errors.push({ field: 'marriage_parish', message: 'Please either select a parish from the dropdown or enter a custom parish name, but not both' });
+    }
+  }
+  
+  if (form.death_parish && form.death_parish_id) {
+    const selectedParish = props.parishes?.find(p => p.id === form.death_parish_id);
+    if (!selectedParish || selectedParish.name !== form.death_parish) {
+      errors.push({ field: 'death_parish', message: 'Please either select a parish from the dropdown or enter a custom parish name, but not both' });
+    }
+  }
+  
+  return errors;
+};
+
+// Handle validation modal events
+const handleFocusField = (field: string) => {
+  // Find the field element and focus it
+  const fieldElement = document.getElementById(field);
+  if (fieldElement) {
+    fieldElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    fieldElement.focus();
+    
+    // Add highlight effect
+    fieldElement.classList.add('highlight-field');
+    setTimeout(() => {
+      fieldElement.classList.remove('highlight-field');
+    }, 2000);
+  }
+};
+
+const handleSubmitAnyway = () => {
+  // Submit the form even with validation errors
+  const routeName = member?.id ? 'member.update' : 'member.store';
+  const method = member?.id ? 'put' : 'post';
+
+  form[method](route(routeName, { id: member?.id }), {
+    preserveScroll: true,
+  });
+};
+
 const form = useForm({
   id: member?.id ? member.id : '',
   first_name: member?.first_name ? member.first_name : '',
@@ -130,7 +383,7 @@ const form = useForm({
   college_name: member?.college_name ? member.college_name : '',
   latest_qualifications: member?.latest_qualifications ? member.latest_qualifications : '',
   company_name: member?.company_name ? member.company_name : '',
-  designation_id: member?.designation? member.designation : '',
+  designation_id: member?.designation_id ? member.designation_id : '',
   income_range_id: member?.income_range_id ? member.income_range_id : '',
   baptism_date: formatDateForInput(member?.baptism_date),
   baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
@@ -151,6 +404,17 @@ const form = useForm({
 });
 
 const submit = () => {
+  // Collect validation errors
+  const errors = collectValidationErrors();
+  
+  if (errors.length > 0) {
+    // Show validation modal
+    validationErrors.value = errors;
+    showValidationModal.value = true;
+    return;
+  }
+  
+  // Proceed with form submission
   const routeName = member?.id ? 'member.update' : 'member.store'; // Determine the route
   const method = member?.id ? 'put' : 'post'; // Determine the HTTP method
 
@@ -206,6 +470,38 @@ watch(
   () => form.community_cluster_id,
   () => {
     console.log('form.community_cluster_id changed to:', form.community_cluster_id);
+  },
+);
+
+// Auto-populate pincode when permanent town is selected
+watch(
+  () => form.permanent_town_id,
+  (newTownId) => {
+    if (newTownId) {
+      const selectedTown = props.towns?.find(town => town.id === newTownId);
+      if (selectedTown?.pincode) {
+        form.permanent_pincode = selectedTown.pincode;
+      }
+    } else {
+      // Clear pincode when town is cleared
+      form.permanent_pincode = '';
+    }
+  },
+);
+
+// Auto-populate pincode when current town is selected
+watch(
+  () => form.current_town_id,
+  (newTownId) => {
+    if (newTownId) {
+      const selectedTown = props.towns?.find(town => town.id === newTownId);
+      if (selectedTown?.pincode) {
+        form.current_pincode = selectedTown.pincode;
+      }
+    } else {
+      // Clear pincode when town is cleared
+      form.current_pincode = '';
+    }
   },
 );
 
@@ -307,7 +603,7 @@ watch(
       form.college_name = newMember.college_name || '';
       form.latest_qualifications = newMember.latest_qualifications || '';
       form.company_name = newMember.company_name || '';
-      form.designation_id = newMember.designation || '';
+      form.designation_id = newMember.designation_id || '';
       form.income_range_id = newMember.income_range_id || '';
       form.baptism_date = formatDateForInput(newMember.baptism_date);
       form.baptism_reg_no = newMember.baptism_reg_no || '';
@@ -557,11 +853,20 @@ function formatDate(dateStr: string) {
               <Input
                 id="date_of_birth"
                 type="date"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
                 v-model="form.date_of_birth"
+                :max="getTodayDate()"
                 autocomplete="date_of_birth"
                 placeholder="Date of birth"
               />
+              <div v-if="!showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth)" class="mt-1 text-sm text-red-500">
+                Date cannot be in the future.
+              </div>
               <InputError class="mt-2" :message="form.errors.date_of_birth" />
             </div>
             <div class="grid gap-2">
@@ -593,22 +898,79 @@ function formatDate(dateStr: string) {
             </div>
             <div class="grid gap-2">
               <Label for="contact_no_1">Contact No 1</Label>
-              <Input id="contact_no_1" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_1" autocomplete="contact_no_1" placeholder="Primary contact number" />
+              <Input 
+                id="contact_no_1" 
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.contact_no_1 && !validateIndianPhone(form.contact_no_1) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
+                v-model="form.contact_no_1" 
+                autocomplete="contact_no_1" 
+                placeholder="Primary contact number (e.g., 9876543210 or 022-12345678)" 
+              />
+              <div v-if="!showValidationModal && form.contact_no_1 && !validateIndianPhone(form.contact_no_1)" class="mt-1 text-sm text-red-500">
+                Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, 9) or landline number (10-11 digits with STD code).
+              </div>
               <InputError class="mt-2" :message="form.errors.contact_no_1" />
             </div>
             <div class="grid gap-2">
               <Label for="contact_no_2">Contact No 2</Label>
-              <Input id="contact_no_2" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.contact_no_2" autocomplete="contact_no_2" placeholder="Secondary contact number" />
+              <Input 
+                id="contact_no_2" 
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.contact_no_2 && !validateIndianPhone(form.contact_no_2) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
+                v-model="form.contact_no_2" 
+                autocomplete="contact_no_2" 
+                placeholder="Secondary contact number (e.g., 9876543210 or 022-12345678)" 
+              />
+              <div v-if="!showValidationModal && form.contact_no_2 && !validateIndianPhone(form.contact_no_2)" class="mt-1 text-sm text-red-500">
+                Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, 9) or landline number (10-11 digits with STD code).
+              </div>
               <InputError class="mt-2" :message="form.errors.contact_no_2" />
             </div>
             <div class="grid gap-2">
               <Label for="email">Email</Label>
-              <Input id="email" type="email" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.email" autocomplete="email" placeholder="Email" />
+              <Input 
+                id="email" 
+                type="email" 
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.email && !validateEmail(form.email) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
+                v-model="form.email" 
+                autocomplete="email" 
+                placeholder="Enter email address (e.g., user@example.com)" 
+              />
+              <div v-if="!showValidationModal && form.email && !validateEmail(form.email)" class="mt-1 text-sm text-red-500">
+                Please enter a valid email address. Disposable email domains are not allowed.
+              </div>
               <InputError class="mt-2" :message="form.errors.email" />
             </div>
             <div class="grid gap-2">
               <Label for="aadhar">Aadhar</Label>
-              <Input id="aadhar" class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200" v-model="form.aadhar" autocomplete="aadhar" placeholder="Aadhar" />
+              <Input 
+                id="aadhar" 
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.aadhar && !validateAadhar(form.aadhar) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
+                v-model="form.aadhar" 
+                autocomplete="aadhar" 
+                placeholder="Enter 12-digit Aadhar number (e.g., 234567890123)" 
+              />
+              <div v-if="!showValidationModal && form.aadhar && !validateAadhar(form.aadhar)" class="mt-1 text-sm text-red-500">
+                Please enter a valid 12-digit Aadhar number. It cannot start with 0 or 1, and cannot be all zeros or repeated digits.
+              </div>
               <InputError class="mt-2" :message="form.errors.aadhar" />
             </div>
 
@@ -747,37 +1109,15 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.permanent_add3" />
             </div>
             <div class="grid gap-2">
-              <Label for="permanent_town_id">Town</Label>
+              <Label for="permanent_country_id">Country</Label>
               <SearchDropdown
-                id="permanent_town_id"
-                v-model="form.permanent_town_id"
-                :options="filteredTownPermanent"
+                id="permanent_country_id"
+                v-model="form.permanent_country_id"
+                :options="props.countries"
                 class="mt-1 block w-full rounded-full"
-                placeholder="Select Permanent Town"
+                placeholder="Select Permanent Country"
               />
-              <InputError class="mt-2" :message="form.errors.permanent_town_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="permanent_city">City</Label>
-              <SearchDropdown
-                id="permanent_city"
-                v-model="form.permanent_city_id"
-                :options="filteredCitiesPermanent"
-                class="mt-1 block w-full rounded-full"
-                placeholder="Select Permanent City"
-              />
-              <InputError class="mt-2" :message="form.errors.permanent_city_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="permanent_pincode">Pincode</Label>
-              <Input
-                id="permanent_pincode"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.permanent_pincode"
-                autocomplete="permanent_pincode"
-                placeholder="Permanent Pincode"
-              />
-              <InputError class="mt-2" :message="form.errors.permanent_pincode" />
+              <InputError class="mt-2" :message="form.errors.permanent_country_id" />
             </div>
             <div class="grid gap-2">
               <Label for="permanent_state_id">State</Label>
@@ -791,15 +1131,37 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.permanent_state_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="permanent_country_id">Country</Label>
+              <Label for="permanent_city">City</Label>
               <SearchDropdown
-                id="permanent_country_id"
-                v-model="form.permanent_country_id"
-                :options="props.countries"
+                id="permanent_city"
+                v-model="form.permanent_city_id"
+                :options="filteredCitiesPermanent"
                 class="mt-1 block w-full rounded-full"
-                placeholder="Select Permanent Country"
+                placeholder="Select Permanent City"
               />
-              <InputError class="mt-2" :message="form.errors.permanent_country_id" />
+              <InputError class="mt-2" :message="form.errors.permanent_city_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="permanent_town_id">Town</Label>
+              <SearchDropdown
+                id="permanent_town_id"
+                v-model="form.permanent_town_id"
+                :options="filteredTownPermanent"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Select Permanent Town"
+              />
+              <InputError class="mt-2" :message="form.errors.permanent_town_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="permanent_pincode">Pincode</Label>
+              <Input
+                id="permanent_pincode"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                v-model="form.permanent_pincode"
+                autocomplete="permanent_pincode"
+                placeholder="Permanent Pincode"
+              />
+              <InputError class="mt-2" :message="form.errors.permanent_pincode" />
             </div>
           </div>
         </div>
@@ -856,37 +1218,15 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.current_add3" />
             </div>
             <div class="grid gap-2">
-              <Label for="current_town_id">Town</Label>
+              <Label for="current_country_id">Country</Label>
               <SearchDropdown
-                id="current_town_id"
-                v-model="form.current_town_id"
-                :options="filteredTownCurrent"
+                id="current_country_id"
+                v-model="form.current_country_id"
+                :options="props.countries"
                 class="mt-1 block w-full rounded-full"
-                placeholder="Select Current Town"
+                placeholder="Select Current Country"
               />
-              <InputError class="mt-2" :message="form.errors.current_town_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="current_city">City</Label>
-              <SearchDropdown
-                id="current_city"
-                v-model="form.current_city_id"
-                :options="filteredCitiesCurrent"
-                class="mt-1 block w-full rounded-full"
-                placeholder="Select Current City"
-              />
-              <InputError class="mt-2" :message="form.errors.current_city_id" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="current_pincode">Pincode</Label>
-              <Input
-                id="current_pincode"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.current_pincode"
-                autocomplete="current_pincode"
-                placeholder="Current Pincode"
-              />
-              <InputError class="mt-2" :message="form.errors.current_pincode" />
+              <InputError class="mt-2" :message="form.errors.current_country_id" />
             </div>
             <div class="grid gap-2">
               <Label for="current_state_id">State</Label>
@@ -900,15 +1240,37 @@ function formatDate(dateStr: string) {
               <InputError class="mt-2" :message="form.errors.current_state_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="current_country_id">Country</Label>
+              <Label for="current_city">City</Label>
               <SearchDropdown
-                id="current_country_id"
-                v-model="form.current_country_id"
-                :options="props.countries"
+                id="current_city"
+                v-model="form.current_city_id"
+                :options="filteredCitiesCurrent"
                 class="mt-1 block w-full rounded-full"
-                placeholder="Select Current Country"
+                placeholder="Select Current City"
               />
-              <InputError class="mt-2" :message="form.errors.current_country_id" />
+              <InputError class="mt-2" :message="form.errors.current_city_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="current_town_id">Town</Label>
+              <SearchDropdown
+                id="current_town_id"
+                v-model="form.current_town_id"
+                :options="filteredTownCurrent"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Select Current Town"
+              />
+              <InputError class="mt-2" :message="form.errors.current_town_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="current_pincode">Pincode</Label>
+              <Input
+                id="current_pincode"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                v-model="form.current_pincode"
+                autocomplete="current_pincode"
+                placeholder="Current Pincode"
+              />
+              <InputError class="mt-2" :message="form.errors.current_pincode" />
             </div>
           </div>
         </div>
@@ -980,11 +1342,20 @@ function formatDate(dateStr: string) {
               <Input
                 id="baptism_date"
                 type="date"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
                 v-model="form.baptism_date"
+                :max="getTodayDate()"
                 autocomplete="baptism_date"
                 placeholder="Baptism date"
               />
+              <div v-if="!showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)" class="mt-1 text-sm text-red-500">
+                Date cannot be in the future.
+              </div>
               <InputError class="mt-2" :message="form.errors.baptism_date" />
             </div>
             <div class="grid gap-2">
@@ -1013,11 +1384,20 @@ function formatDate(dateStr: string) {
               <Input
                 id="confirmation_date"
                 type="date"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.confirmation_date && !validateNotFutureDate(form.confirmation_date) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
                 v-model="form.confirmation_date"
+                :max="getTodayDate()"
                 autocomplete="confirmation_date"
                 placeholder="Confirmation date"
               />
+              <div v-if="!showValidationModal && form.confirmation_date && !validateNotFutureDate(form.confirmation_date)" class="mt-1 text-sm text-red-500">
+                Date cannot be in the future.
+              </div>
               <InputError class="mt-2" :message="form.errors.confirmation_date" />
             </div>
             <div class="grid gap-2">
@@ -1046,11 +1426,20 @@ function formatDate(dateStr: string) {
               <Input
                 id="marriage_date"
                 type="date"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
                 v-model="form.marriage_date"
+                :max="getTodayDate()"
                 autocomplete="marriage_date"
                 placeholder="Marriage date"
               />
+              <div v-if="!showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)" class="mt-1 text-sm text-red-500">
+                Date cannot be in the future.
+              </div>
               <InputError class="mt-2" :message="form.errors.marriage_date" />
             </div>
             <div class="grid gap-2">
@@ -1079,11 +1468,20 @@ function formatDate(dateStr: string) {
               <Input
                 id="death_date"
                 type="date"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                :class="[
+                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
+                  !showValidationModal && form.death_date && !validateNotFutureDate(form.death_date) 
+                    ? 'border-red-300 focus:ring-red-200' 
+                    : 'border-gray-300'
+                ]"
                 v-model="form.death_date"
+                :max="getTodayDate()"
                 autocomplete="death_date"
                 placeholder="Death date"
               />
+              <div v-if="!showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)" class="mt-1 text-sm text-red-500">
+                Date cannot be in the future.
+              </div>
               <InputError class="mt-2" :message="form.errors.death_date" />
             </div>
             <div class="grid gap-2">
@@ -1135,4 +1533,30 @@ function formatDate(dateStr: string) {
       </form>
     </FormBody>
   </AppLayout>
+
+  <!-- Validation Error Modal -->
+  <ValidationErrorModal
+    v-model="showValidationModal"
+    :errors="validationErrors"
+    @focus-field="handleFocusField"
+    @submit-anyway="handleSubmitAnyway"
+  />
 </template>
+
+<style>
+.highlight-field {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+  border-color: #f59e0b !important; /* Tailwind amber-500 */
+}
+@keyframes highlight-fade {
+  0% { 
+    background-color: #fde047; /* Tailwind yellow-300 */
+    border-color: #f59e0b; /* Tailwind amber-500 */
+  }
+  100% { 
+    background-color: inherit;
+    border-color: inherit;
+  }
+}
+</style>

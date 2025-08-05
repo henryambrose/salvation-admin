@@ -395,7 +395,7 @@ const canExportCommunityCluster = can('read-community-cluster');
         </div>
       </div>
     </DatatableHeader>
-    <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+    <div v-if="canReadAnyCommunityCluster" class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -411,12 +411,12 @@ const canExportCommunityCluster = can('read-community-cluster');
             <tr v-for="row in enhancedCommunityClusters.data" :key="row.id" :id="`scc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyCommunityCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
                 </template>
                 <template v-if="isArchived">
-                  <Button @click="restoreSCCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button v-if="canUpdateAnyCommunityCluster" @click="restoreSCCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -429,6 +429,7 @@ const canExportCommunityCluster = can('read-community-cluster');
               <td class="p-2">
                 <template v-if="!isArchived">
                 <Button
+                  v-if="canDeleteAnyCommunityCluster"
                   @click="openDeleteModal(row)"
                   variant="destructive"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition"
@@ -442,8 +443,9 @@ const canExportCommunityCluster = can('read-community-cluster');
         </table>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view community clusters.</div>
     <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
+    <div v-if="canReadAnyCommunityCluster" class="mt-6 flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <button 
           v-if="enhancedCommunityClusters.prev_page_url" 

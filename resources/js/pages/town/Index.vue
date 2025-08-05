@@ -8,6 +8,9 @@ import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
 
 const props = defineProps<{
   towns: { data: any[]; meta?: any };
@@ -15,6 +18,13 @@ const props = defineProps<{
   filters: any;
   fetchUrl: string;
 }>();
+
+// Permission checks
+const canCreateTown = can('create-town');
+const canReadAnyTown = can('read-town');
+const canUpdateAnyTown = can('update-town');
+const canDeleteAnyTown = can('delete-town');
+const canExportTown = can('read-town');
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
@@ -218,7 +228,7 @@ onMounted(() => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Towns</h2>
-        <Button @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button v-if="canCreateTown" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
           <span>➕ Add Town</span>
           </Button>
         </div>
@@ -255,7 +265,7 @@ onMounted(() => {
       </div>
     </DatatableHeader>
 
-    <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyTown" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
       <div class="overflow-x-auto rounded-xl border border-gray-100">
         <table class="w-full border-collapse text-left">
           <thead>
@@ -271,7 +281,7 @@ onMounted(() => {
             <tr v-for="row in enhancedTowns.data" :key="row.id" :id="`town-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <template v-if="!isArchived">
-                  <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                  <Button v-if="canUpdateAnyTown" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
                 </template>
@@ -287,7 +297,7 @@ onMounted(() => {
                 </span>
               </td>
               <td class="p-2">
-                <template v-if="!isArchived">
+                <template v-if="canDeleteAnyTown">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete
                   </Button>
@@ -298,6 +308,7 @@ onMounted(() => {
         </table>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view towns.</div>
 
     <!-- Enhanced Pagination -->
     <div class="mt-6 flex items-center justify-between gap-4">

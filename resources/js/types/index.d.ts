@@ -88,7 +88,7 @@ export interface Member {
   college_name?: string | null;
   latest_qualifications?: string | null;
   company_name?: string | null;
-  designation?: string | null;
+  designation_id?: number | null;
   income_range_id?: number | null;
   baptism_date?: string | null; // ISO 8601 date string
   baptism_reg_no?: string | null;
@@ -202,11 +202,13 @@ export type Cities = City[];
 
 export interface Town {
   id: number;
-  state_id?: number | null;
   name: string;
   pincode?: string | null;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
+  city_id?: number | null;
+  state_id?: number | null;
+  country_id?: number | null;
+  created_at?: string | null; // ISO 8601 date string
+  updated_at?: string | null; // ISO 8601 date string
   deleted_at?: string | null; // ISO 8601 date string for soft deletes
 }
 
@@ -236,13 +238,7 @@ export interface State {
 
 export type States = State[];
 
-export interface Town {
-  id: number;
-  name: string;
-  state_id: number; // Foreign key to State
-}
 
-export type Towns = Town[];
 
 export interface Designation {
   id: number;

@@ -28,8 +28,8 @@ defineProps<Props>();
   </DropdownMenuLabel>
   <DropdownMenuSeparator />
   <DropdownMenuGroup>
-    <DropdownMenuItem :as-child="true" v-if="can('view-Users')">
-      <Link class="block w-full" href="/users/index" prefetch as="button">
+    <DropdownMenuItem :as-child="true" v-if="can('read-users') || (user as any)?.roles?.includes('superadmin')">
+      <Link class="block w-full" href="/users" prefetch as="button">
         <Users class="mr-2 h-4 w-4" />
         Users
       </Link>

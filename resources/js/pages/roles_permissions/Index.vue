@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Roles, Modules, Permissions } from '@/types';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+
+const { can } = permissionHelpers();
 
 const props = defineProps<{
   roles: Roles;
@@ -12,10 +15,34 @@ const props = defineProps<{
   modulesIdWise: Record<number, any>;
 }>();
 
+// Permission checks
+const canManageRoles = can('manage-roles');
+const canViewRoles = can('read-role');
+
 const actions = ['create', 'read', 'update', 'delete', 'list'];
 
 const selectedRoleId = ref(props.roles.length > 0 ? props.roles[0].id : 0);
 const permissionState = ref(props.permissions[selectedRoleId.value] ? JSON.parse(JSON.stringify(props.permissions[selectedRoleId.value])) : {});
+
+// Define module order to match sidebar navigation
+const moduleOrder = [
+  'member', 'community', 'parish', // Core Management
+  'zone', 'community-cluster', 'cluster', 'cells-and-association', 'cells-and-association-member', // Organizational Structure
+  'scc-head', 'ppc-head', // Leadership
+  'relationship', 'designation', 'age-group', 'blood-group', 'gender', 'status', 'income-range', // Member Attributes
+  'country', 'state', 'city', 'town', // Geographic Data
+  'users', 'role', // System Management
+  'dashboard' // Special Pages
+];
+
+// Sort modules to match sidebar order
+const sortedModules = computed(() => {
+  return [...props.modules].sort((a, b) => {
+    const aIndex = moduleOrder.indexOf(a.slug);
+    const bIndex = moduleOrder.indexOf(b.slug);
+    return aIndex - bIndex;
+  });
+});
 
 watch(selectedRoleId, (newRoleId) => {
   if (newRoleId && props.permissions[newRoleId]) {
@@ -42,7 +69,7 @@ function savePermissions() {
 <template>
   <AppLayout>
     <Head title="Role Permissions" />
-    <div class="mx-auto max-w-4xl py-8">
+    <div v-if="canViewRoles" class="mx-auto max-w-4xl py-8">
       <h2 class="mb-6 text-2xl font-bold">Role Permissions</h2>
       <div class="mb-4">
         <label class="mb-1 block font-semibold">Select Role</label>
@@ -60,21 +87,22 @@ function savePermissions() {
             </tr>
           </thead>
           <tbody>
-              <tr v-for="module in props.modules" :key="(module as { id: number }).id" class="even:bg-gray-50 hover:bg-blue-50 transition">
-                <td class="border-b p-3 font-semibold">{{ (module as { name: string }).name }}</td>
-                <td v-for="action in (module as { actions: { id: number; name: string }[] }).actions" :key="action.id" class="border-b p-3 text-center">
-                  <input type="checkbox" :checked="permissionState[module.id]?.[action.id] === 1" @change="togglePermission(module.id, action.id)" class="accent-blue-600 w-5 h-5 rounded-full border-gray-300 focus:ring-2 focus:ring-blue-200" />
+            <tr v-for="module in sortedModules" :key="module.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <td class="border-b p-3 font-semibold">{{ module.name }}</td>
+              <td v-for="action in module.actions" :key="action.id" class="border-b p-3 text-center">
+                <input type="checkbox" :checked="permissionState[module.id]?.[action.id] === 1" @change="togglePermission(module.id, action.id)" class="accent-blue-600 w-5 h-5 rounded-full border-gray-300 focus:ring-2 focus:ring-blue-200" />
               </td>
             </tr>
           </tbody>
         </table>
       </div>
       <div class="mt-6 flex justify-end">
-          <Button class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2" @click="savePermissions">
+          <Button v-if="canManageRoles" class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2" @click="savePermissions">
             Save Permissions
           </Button>
         </div>
       </div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view role permissions.</div>
   </AppLayout>
 </template>
