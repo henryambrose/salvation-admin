@@ -281,9 +281,9 @@ watch(() => enhancedStatuses.value.data, (rows) => {
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreStatus(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                      Restore
-                    </Button>
+                                    <Button v-if="canRestoreStatus" @click="restoreStatus(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  Restore
+                </Button>
                   </template>
                 </div>
               </td>

@@ -339,7 +339,7 @@ watch(
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreParish(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button v-if="canRestoreParish" @click="restoreParish(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                       Restore
                     </Button>
                   </template>

@@ -226,7 +226,7 @@ const breadcrumbs = [{ title: 'Income Range', href: '/income-range' }];
                   </Button>
                 </template>
                 <template v-else>
-                                          <Button @click="restoreIncomeRange(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                                          <Button v-if="canRestoreIncomeRange" @click="restoreIncomeRange(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>

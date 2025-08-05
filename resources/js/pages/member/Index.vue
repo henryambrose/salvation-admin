@@ -34,6 +34,7 @@ const props = defineProps({
   canCreateMember: Boolean,
   canEditMember: Boolean,
   canDeleteMember: Boolean,
+  canRestoreMember: Boolean,
   pagination: {
     type: Object,
     default: () => ({ currentPage: 1, lastPage: 1 }),
@@ -555,9 +556,9 @@ onMounted(() => {
                         </Button>
                       </template>
                       <template v-else>
-                        <Button @click="restoreMember(member.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                          Restore
-                        </Button>
+                                        <Button v-if="canRestoreMember" @click="restoreMember(member.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  Restore
+                </Button>
                       </template>
                     </div>
                   </td>

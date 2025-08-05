@@ -19,6 +19,7 @@ const props = defineProps({
   },
   filters: Object,
   fetchUrl: String,
+  canRestoreZone: Boolean,
 });
 
 // Permission checks
@@ -26,6 +27,7 @@ const canCreateZone = can('create-zone');
 const canReadAnyZone = can('read-zone');
 const canUpdateAnyZone = can('update-zone');
 const canDeleteAnyZone = can('delete-zone');
+const canRestoreZone = props.canRestoreZone || can('restore-zone');
 const canExportZone = can('read-zone');
 
 const columns = [
@@ -270,9 +272,9 @@ onMounted(() => {
                 </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreZone(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                    Restore
-                  </Button>
+                                  <Button v-if="canRestoreZone" @click="restoreZone(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  Restore
+                </Button>
                 </template>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">

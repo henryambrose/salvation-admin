@@ -40,6 +40,7 @@ class ZoneController extends Controller
             'fetchUrl' => route('zone.index'),
             'zones' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+            'canRestoreZone' => auth()->user()->can('restore-zone'),
         ]);
     }
 

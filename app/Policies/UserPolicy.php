@@ -72,7 +72,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        return $user->can('delete-user');
+        return $user->can('restore-users');
     }
 
     /**

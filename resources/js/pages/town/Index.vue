@@ -286,9 +286,9 @@ onMounted(() => {
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restoreTown(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                    Restore
-                  </Button>
+                                  <Button v-if="canRestoreTown" @click="restoreTown(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  Restore
+                </Button>
                 </template>
               </td>
               <td v-for="col in columns" :key="col.key" class="p-2">

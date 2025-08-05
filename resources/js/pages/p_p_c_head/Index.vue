@@ -339,7 +339,7 @@ const canExportPPCHead = can('read-p-p-c-head');
                   </Button>
                 </template>
                 <template v-else>
-                  <Button @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button v-if="canRestorePPCHead" @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>

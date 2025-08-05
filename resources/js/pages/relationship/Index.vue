@@ -301,7 +301,7 @@ watch(() => enhancedRelationships.value.data, (rows) => {
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreRelationship(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button v-if="canRestoreRelationship" @click="restoreRelationship(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                       Restore
                     </Button>
                   </template>

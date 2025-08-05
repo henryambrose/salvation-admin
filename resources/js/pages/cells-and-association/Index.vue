@@ -280,7 +280,7 @@ watch(() => enhancedCellsAndAssociations.value.data, (rows) => {
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreCellsAndAssociation(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button v-if="canRestoreCellsAndAssociation" @click="restoreCellsAndAssociation(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                       Restore
                     </Button>
                   </template>

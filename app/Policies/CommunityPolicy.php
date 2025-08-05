@@ -71,7 +71,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        return $user->can('update-community'); // Use update permission for restore
+        return $user->can('restore-community');
     }
 
     /**

@@ -404,7 +404,7 @@ const canExportCellsAndAssociationMember = can('read-cells-and-association-membe
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreItem(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button v-if="canRestoreCellsAndAssociationMember" @click="restoreItem(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                       Restore
                     </Button>
                   </template>

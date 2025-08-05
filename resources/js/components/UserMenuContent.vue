@@ -28,7 +28,7 @@ defineProps<Props>();
   </DropdownMenuLabel>
   <DropdownMenuSeparator />
   <DropdownMenuGroup>
-    <DropdownMenuItem :as-child="true" v-if="can('read-users') || (user as any)?.roles?.includes('superadmin')">
+    <!-- <DropdownMenuItem :as-child="true" v-if="can('read-users') || (user as any)?.roles?.includes('superadmin')">
       <Link class="block w-full" href="/users" prefetch as="button">
         <Users class="mr-2 h-4 w-4" />
         Users
@@ -39,7 +39,7 @@ defineProps<Props>();
         <Shield class="mr-2 h-4 w-4" />
         Role Permissions
       </Link>
-    </DropdownMenuItem>
+    </DropdownMenuItem> -->
     <DropdownMenuItem :as-child="true">
       <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
         <Settings class="mr-2 h-4 w-4" />

@@ -71,7 +71,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        return $user->can('update-member'); // Use update permission for restore
+        return $user->can('restore-member');
     }
 
     /**

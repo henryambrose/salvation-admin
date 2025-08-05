@@ -27,6 +27,7 @@ const canCreateUser = can('create-user');
 const canReadAnyUser = can('read-user');
 const canUpdateAnyUser = can('update-user');
 const canDeleteAnyUser = can('delete-user');
+const canRestoreUser = can('restore-users');
 const canExportUser = can('read-user');
 
 const columns = [
@@ -259,7 +260,7 @@ const enhancedUsers = computed(() => {
                 </Button>
               </td>
               <td v-if="isArchived" class="p-2">
-                <Button @click="restoreUser(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                <Button v-if="canRestoreUser" @click="restoreUser(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                   Restore
                 </Button>
               </td>
