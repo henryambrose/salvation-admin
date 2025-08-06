@@ -97,7 +97,7 @@ function removeSelected(id: string | number) {
     </div>
     <div
       v-if="open"
-      class="absolute left-0 right-0 z-10 bg-white border rounded shadow mt-1 max-h-60 overflow-auto"
+      class="absolute left-0 right-0 z-50 bg-white border rounded shadow mt-1 max-h-60 overflow-auto"
     >
       <input
         type="text"

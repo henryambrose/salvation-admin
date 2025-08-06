@@ -62,9 +62,16 @@ class ParishValidation implements ValidationRule
             return;
         }
 
-        // Check for invalid characters
-        if (!preg_match('/^[a-zA-Z0-9\s\-\'\.\(\)]+$/', $parishName)) {
-            $fail('Parish name contains invalid characters. Only letters, numbers, spaces, hyphens, apostrophes, dots, and parentheses are allowed.');
+        // Check for invalid characters - allow most printable characters except control characters
+        // This allows for multilingual parish names and common punctuation
+        if (!preg_match('/^[\p{L}\p{N}\s\p{P}]+$/u', $parishName)) {
+            $fail('Parish name contains invalid characters. Please use only letters, numbers, spaces, and common punctuation marks.');
+            return;
+        }
+        
+        // Additional check to prevent obviously problematic characters
+        if (preg_match('/[<>{}[\]\\|]/', $parishName)) {
+            $fail('Parish name contains invalid characters. Please avoid using <, >, {, }, [, ], \\, or | characters.');
             return;
         }
     }

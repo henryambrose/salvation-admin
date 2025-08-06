@@ -38,8 +38,8 @@ class FamilyNumberingService
             $nextSequence = 1;
         }
         
-        // Format: SAL-XXX
-        $familyGroupSequence = str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+        // Format: SAL-XXX (3 digits)
+        $familyGroupSequence = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
         
         return "{$churchCode}-{$familyGroupSequence}";
     }
@@ -92,8 +92,9 @@ class FamilyNumberingService
      */
     public function parseFamilyNumber($familyNo)
     {
-        // Parse: SAL-XXX
-        if (!preg_match('/^([A-Z]{3})-(\d{3})$/', $familyNo, $matches)) {
+
+        // Parse: SAL-XXX (3 digits)
+        if (!preg_match('/^([A-Z]{3})-(\d{4})$/', $familyNo, $matches)) {
             throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX');
         }
         

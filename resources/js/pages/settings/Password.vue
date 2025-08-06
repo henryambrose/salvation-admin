@@ -32,18 +32,11 @@ const updatePassword = () => {
     preserveScroll: true,
     onSuccess: () => form.reset(),
     onError: (errors: any) => {
-      if (errors.password) {
-        form.reset('password', 'password_confirmation');
-        if (passwordInput.value instanceof HTMLInputElement) {
-          passwordInput.value.focus();
-        }
-      }
-
-      if (errors.current_password) {
-        form.reset('current_password');
-        if (currentPasswordInput.value instanceof HTMLInputElement) {
-          currentPasswordInput.value.focus();
-        }
+      // Focus on the first field with an error
+      if (errors.password && passwordInput.value instanceof HTMLInputElement) {
+        passwordInput.value.focus();
+      } else if (errors.current_password && currentPasswordInput.value instanceof HTMLInputElement) {
+        currentPasswordInput.value.focus();
       }
     },
   });

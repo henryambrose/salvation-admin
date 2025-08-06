@@ -10,17 +10,12 @@ class SuperAdminMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !$request->user()->hasRole('superadmin')) {
-            if ($request->expectsJson()) {
-                return response()->json(['error' => 'Unauthorized. Superadmin access required.'], 403);
-            }
-            
-            return redirect()->route('dashboard')->with('error', 'Access denied. Superadmin privileges required.');
+        // Check if user is authenticated and is a superadmin
+        if (!auth()->check() || !auth()->user()->is_superadmin) {
+            abort(403, 'Access denied. Superadmin privileges required.');
         }
 
         return $next($request);

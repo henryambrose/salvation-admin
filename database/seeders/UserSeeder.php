@@ -22,8 +22,12 @@ class UserSeeder extends Seeder
             [
                 'name' => 'Super Admin',
                 'password' => bcrypt('superadmin'), // Change password after first login
+                'is_superadmin' => true, // Set superadmin flag
             ]
         );
+
+        // Ensure is_superadmin is set to true (in case user already existed)
+        $user->update(['is_superadmin' => true]);
 
         // Assign role to user
         if (!$user->hasRole($superAdminRole)) {

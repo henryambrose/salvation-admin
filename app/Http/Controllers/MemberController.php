@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
+use App\Models\AuditLog;
 use App\Models\BloodGroup;
 use App\Models\Community;
 use App\Models\Country;
@@ -362,7 +363,7 @@ class MemberController extends Controller
             $data['marital_status'] = $data['marital_status'] ?? 'single';
             
             // Check if this is a new family or existing family
-            if ($request->has('existing_family_no') && $request->existing_family_no) {
+            if ($request->has('existing_family_no') && $request->existing_family_no && !empty($request->existing_family_no)) {
                 $familyNo = $request->existing_family_no;
                 
                 $numberingService = new \App\Services\FamilyNumberingService();
@@ -392,6 +393,17 @@ class MemberController extends Controller
             }
             
             $member = Member::create($data);
+            
+            // Create audit log for the creation
+            AuditLog::create([
+                'table_name' => 'members',
+                'action' => 'CREATE',
+                'record_id' => $member->id,
+                'new_values' => $member->toArray(),
+                'user_id' => auth()->id(),
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
             
             DB::commit();
             
@@ -497,8 +509,24 @@ class MemberController extends Controller
     {
         $this->authorize('update', $member);
         
+        // Capture old values before update
+        $oldValues = $member->toArray();
+        
         $validated = $request->validated();
         $member->update($validated);
+        
+        // Create audit log for the update
+        AuditLog::create([
+            'table_name' => 'members',
+            'action' => 'UPDATE',
+            'record_id' => $member->id,
+            'old_values' => $oldValues,
+            'new_values' => $member->fresh()->toArray(),
+            'user_id' => auth()->id(),
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+        
         $perPage = $request->input('perPage', 10);
         // Build the query as in index
         $query = Member::query();
@@ -528,7 +556,21 @@ class MemberController extends Controller
     {
         $this->authorize('delete', $member);
         
+        // Capture member data before deletion
+        $memberData = $member->toArray();
+        
         $member->delete();
+
+        // Create audit log for the deletion
+        AuditLog::create([
+            'table_name' => 'members',
+            'action' => 'DELETE',
+            'record_id' => $memberData['id'],
+            'old_values' => $memberData,
+            'user_id' => auth()->id(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
 
         return redirect()->route('member.index')->with('success', 'Member deleted successfully.');
     }

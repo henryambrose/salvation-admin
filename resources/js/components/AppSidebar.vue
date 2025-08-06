@@ -28,7 +28,8 @@ import {
   Home,
   Crown,
   Shield,
-  Bot
+  Bot,
+  FileText
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -223,6 +224,12 @@ const navigationGroups = [
         href: '/roles-permissions',
         icon: Shield,
         show: can('read-role'),
+      },
+      {
+        title: 'Audit Logs',
+        href: route('audit.logs.index'),
+        icon: FileText,
+        show: (page.props.auth as any)?.is_superadmin || false,
       },
     ]
   },

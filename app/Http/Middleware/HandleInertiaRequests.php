@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'permissions' => $request->user() ? $request->user()->getAllPermissions()->pluck('name') : [],
                 'roles' => $request->user() ? $request->user()->getRoleNames() : [],
+                'is_superadmin' => $request->user() ? $request->user()->is_superadmin : false,
             ],
             'modules' => Module::where('is_active', true)
                 ->orderBy('sort_order')

@@ -73,7 +73,7 @@ function fetchOption(page = 1) {
       :class="cn(
         'border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] cursor-pointer items-center justify-between',
         'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
-        'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
+        'shadow-xs focus:ring-2 focus:ring-gray-900 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive',
         props.class,
       )"
       @click="open = !open"
@@ -85,7 +85,7 @@ function fetchOption(page = 1) {
           'Select Option'
         }}
       </span>
-      <svg class="w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="absolute top-[2px] right-[15px] h-full w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>

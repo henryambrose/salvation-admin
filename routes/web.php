@@ -38,6 +38,36 @@ Route::get('/api/community/{community}/members', [SCCHeadController::class, 'mem
 Route::get('/api/ppc-community/{community}/members', [PPCHeadController::class, 'membersByCommunity']);
 Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
 
+// Next available numbers route
+Route::get('/members/next-numbers', [MemberController::class, 'getNextAvailableNumbers'])
+    ->middleware(['auth'])
+    ->name('members.next-numbers');
+
+// Test route for debugging
+Route::get('/test-next-numbers', function() {
+    try {
+        $churchCode = config('app.church_code', 'SAL');
+        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+        
+        $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
+        $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
+        $nextMemberNo = $numberingService->generateMemberNumber();
+        
+        return response()->json([
+            'success' => true,
+            'next_family_no' => $nextFamilyNo,
+            'next_member_no' => $nextMemberNo,
+            'family_group' => $nextFamilyGroup,
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+})->middleware(['auth']);
+
 // User routes
 // Route::middleware('auth')->group(function () {
 //     Route::get('users', [UserController::class, 'index'])->name('users.index');
@@ -78,3 +108,4 @@ require __DIR__.'/parish.php';
 require __DIR__.'/users.php';
 require __DIR__.'/clusters.php';
 require __DIR__.'/community_clusters.php';
+require __DIR__.'/audit.php';

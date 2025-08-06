@@ -32,7 +32,7 @@
                   </label>
                   <div v-if="familyType === 'new'" class="ml-6 p-4 bg-blue-50 rounded-lg">
                     <p class="text-sm text-blue-800">
-                      A new family number will be automatically generated in the format: <strong>{{ page.props.church_code }}-XXX</strong>
+                      A new family number will be automatically generated in the format: <strong>{{ page.props.church_code }}-XXXX</strong>
                     </p>
                   </div>
                 </div>

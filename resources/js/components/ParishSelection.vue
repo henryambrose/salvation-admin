@@ -37,7 +37,7 @@
         v-model="selectedParishId"
         :options="parishOptions"
         placeholder="Search and select a parish..."
-        class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+        class="mt-1 block w-full rounded-full"
         @update:modelValue="onParishSelected"
       />
       <p class="text-xs text-gray-500">
@@ -92,7 +92,7 @@ const emit = defineEmits<{
 }>();
 
 const selectionMode = ref<'dropdown' | 'custom'>('dropdown');
-const selectedParishId = ref<number | null>(null);
+const selectedParishId = ref<number | string | undefined>(undefined);
 const customParishName = ref<string>('');
 const validationMessage = ref<{ type: 'error' | 'warning'; text: string } | null>(null);
 const similarParishes = ref<string[]>([]);
@@ -128,15 +128,15 @@ watch(() => props.modelValue, (newValue) => {
   } else if (newValue.parishName) {
     selectionMode.value = 'custom';
     customParishName.value = newValue.parishName;
-    selectedParishId.value = null;
+    selectedParishId.value = undefined;
   }
 }, { deep: true });
 
 // Handle parish selection from dropdown
 const onParishSelected = (parishId: number | string | null) => {
   // Handle empty string case
-  if (parishId === '' || parishId === null) {
-    selectedParishId.value = null;
+  if (parishId === '' || parishId === null || parishId === undefined) {
+    selectedParishId.value = undefined;
     emit('update:modelValue', {
       parishId: null,
       parishName: null
@@ -159,7 +159,7 @@ const onParishSelected = (parishId: number | string | null) => {
 // Handle custom parish input
 const onCustomParishInput = () => {
   // Clear dropdown selection when using custom input
-  selectedParishId.value = null;
+  selectedParishId.value = undefined;
   
   emit('update:modelValue', {
     parishId: null,
@@ -218,7 +218,7 @@ const selectSimilarParish = (parishName: string) => {
     selectionMode.value = 'dropdown';
     selectedParishId.value = parish.id;
     customParishName.value = '';
-    onParishSelected();
+    onParishSelected(parish.id);
   }
 };
 </script> 
