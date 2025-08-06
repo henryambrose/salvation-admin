@@ -190,8 +190,14 @@
                 <h4 class="font-semibold text-gray-900 mb-3 text-red-700">
                   Previous Values
                 </h4>
-                <div class="max-h-64 overflow-y-auto">
-                  <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(selectedLog.old_values, null, 2) }}</pre>
+                <div class="max-h-64 overflow-y-auto space-y-2">
+                  <div v-for="(value, key) in selectedLog.old_values" :key="key" 
+                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-red-400">
+                    <span class="font-medium text-gray-600">{{ key }}:</span>
+                    <span class="text-red-700 bg-red-50 px-2 py-1 rounded border">
+                      {{ formatValue(value) }}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -200,8 +206,14 @@
                 <h4 class="font-semibold text-gray-900 mb-3 text-green-700">
                   New Values
                 </h4>
-                <div class="max-h-64 overflow-y-auto">
-                  <pre class="text-xs bg-white p-3 rounded border overflow-x-auto">{{ JSON.stringify(selectedLog.new_values, null, 2) }}</pre>
+                <div class="max-h-64 overflow-y-auto space-y-2">
+                  <div v-for="(value, key) in selectedLog.new_values" :key="key" 
+                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-green-400">
+                    <span class="font-medium text-gray-600">{{ key }}:</span>
+                    <span class="text-green-700 bg-green-50 px-2 py-1 rounded border">
+                      {{ formatValue(value) }}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -211,13 +223,20 @@
                   Changes Summary
                 </h4>
                 <div class="space-y-2 text-sm max-h-64 overflow-y-auto">
-                  <div v-for="(value, key) in selectedLog.new_values" :key="key" class="flex justify-between items-center p-2 bg-white rounded">
+                  <div v-for="(value, key) in selectedLog.new_values" :key="key" 
+                       v-show="hasValueChanged(selectedLog.old_values[key], value)"
+                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-yellow-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
                     <div class="flex items-center space-x-2">
-                      <span v-if="selectedLog.old_values[key] !== value" class="text-red-600 line-through text-xs">
-                        {{ selectedLog.old_values[key] }}
+                      <!-- Show old value if it exists and is different -->
+                      <span v-if="selectedLog.old_values[key] !== undefined && hasValueChanged(selectedLog.old_values[key], value)" 
+                            class="text-red-600 line-through text-xs bg-red-50 px-2 py-1 rounded border">
+                        {{ formatValue(selectedLog.old_values[key]) }}
                       </span>
-                      <span class="text-green-600 font-medium">{{ value }}</span>
+                      <!-- Show new value -->
+                      <span class="text-green-600 font-medium bg-green-50 px-2 py-1 rounded border">
+                        {{ formatValue(value) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -278,6 +297,43 @@ function formatTime(dateTime) {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+function formatValue(value) {
+  if (value === null || value === undefined || value === '') {
+    return 'N/A'
+  }
+  
+  // Check if the value is a date (common date field names or ISO date format)
+  const dateFields = ['created_at', 'updated_at', 'date_of_birth', 'marriage_date', 'baptism_date', 'confirmation_date', 'death_date']
+  const isDateField = (key) => dateFields.some(field => key.toLowerCase().includes(field))
+  
+  // Check if it's an ISO date string (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
+  const isISODate = /^\d{4}-\d{2}-\d{2}/.test(value)
+  
+  if (isISODate) {
+    try {
+      const date = new Date(value)
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })
+      }
+    } catch (e) {
+      // If date parsing fails, return original value
+    }
+  }
+  
+  return value
+}
+
+function hasValueChanged(oldValue, newValue) {
+  // Handle null/undefined/empty string comparisons
+  const oldFormatted = oldValue === null || oldValue === undefined || oldValue === '' ? null : oldValue
+  const newFormatted = newValue === null || newValue === undefined || newValue === '' ? null : newValue
+  return oldFormatted !== newFormatted
 }
 
 function viewLogDetails(log) {
