@@ -8,11 +8,37 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import axios from 'axios';
 
-const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+// CSRF Token Management
+const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+const token = getCsrfToken();
 if (token) {
     axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
     axios.defaults.withCredentials = true;
-  }// Extend ImportMeta interface for Vite...
+}
+
+// Refresh CSRF token periodically to prevent expiration
+setInterval(() => {
+    const newToken = getCsrfToken();
+    if (newToken && newToken !== token) {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = newToken;
+    }
+}, 300000); // Check every 5 minutes
+
+// Handle 419 errors globally
+axios.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 419) {
+            // CSRF token expired - refresh the page
+            console.warn('CSRF token expired, refreshing page...');
+            window.location.reload();
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Extend ImportMeta interface for Vite...
 // declare module 'vite/client' {
 //     interface ImportMetaEnv {
 //         readonly VITE_APP_NAME: string;
