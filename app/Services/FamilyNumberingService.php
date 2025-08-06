@@ -92,10 +92,9 @@ class FamilyNumberingService
      */
     public function parseFamilyNumber($familyNo)
     {
-
-        // Parse: SAL-XXX (3 digits)
-        if (!preg_match('/^([A-Z]{3})-(\d{4})$/', $familyNo, $matches)) {
-            throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX');
+        // Parse: SAL-XXX (3 digits) or SAL-XXXX (4 digits)
+        if (!preg_match('/^([A-Z]{3})-(\d{3,4})$/', $familyNo, $matches)) {
+            throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX or SAL-XXXX');
         }
         
         return [

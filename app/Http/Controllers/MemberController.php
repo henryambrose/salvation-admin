@@ -901,18 +901,78 @@ class MemberController extends Controller
         }
     }
 
+    public function getFamilyDetails($familyNo)
+    {
+        try {
+            $familyMembers = Member::where('family_no', $familyNo)
+                ->with(['community', 'communityCluster.cluster'])
+                ->get();
+            
+            if ($familyMembers->isEmpty()) {
+                return response()->json(['error' => 'Family not found'], 404);
+            }
+            
+            // Get the first member's community and cluster info
+            $firstMember = $familyMembers->first();
+            $communityId = $firstMember->community_id;
+            
+            // Find the correct community cluster ID for this community
+            // If the stored community_cluster_id doesn't match the community, find the first one for this community
+            $correctClusterId = $firstMember->community_cluster_id;
+            
+            // Check if the stored cluster belongs to the correct community
+            $storedCluster = \App\Models\CommunityCluster::find($firstMember->community_cluster_id);
+            if (!$storedCluster || $storedCluster->community_id != $communityId) {
+                // Find the first cluster for this community
+                $correctCluster = \App\Models\CommunityCluster::where('community_id', $communityId)->first();
+                if ($correctCluster) {
+                    $correctClusterId = $correctCluster->id;
+                }
+            }
+            
+            return response()->json([
+                'family_no' => $familyNo,
+                'community_id' => $communityId,
+                'community_cluster_id' => $correctClusterId,
+                'community_name' => $firstMember->community?->name,
+                'cluster_name' => $firstMember->communityCluster?->cluster?->name,
+                'member_count' => $familyMembers->count(),
+                'members' => $familyMembers->map(function ($member) {
+                    return [
+                        'id' => $member->id,
+                        'name' => $member->first_name . ' ' . $member->last_name,
+                        'member_no' => $member->member_no
+                    ];
+                })
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error getting family details: ' . $e->getMessage());
+            return response()->json(['error' => 'An error occurred while fetching family details'], 500);
+        }
+    }
+
     public function searchFamilies(Request $request)
     {
-        $query = $request->input('q', '');
-        
-        if (strlen($query) < 2) {
-            return response()->json([]);
+        try {
+            $query = $request->input('q', '');
+            
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+            
+            $numberingService = new \App\Services\FamilyNumberingService();
+            $results = $numberingService->searchFamilies($query);
+            
+            return response()->json($results);
+        } catch (\Exception $e) {
+            \Log::error('Error in searchFamilies: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'An error occurred while searching families',
+                'message' => $e->getMessage()
+            ], 500);
         }
-        
-        $numberingService = new \App\Services\FamilyNumberingService();
-        $results = $numberingService->searchFamilies($query);
-        
-        return response()->json($results);
     }
 
     public function getChurchStatistics($churchCode = null)

@@ -194,7 +194,7 @@
                   <div v-for="(value, key) in selectedLog.old_values" :key="key" 
                        class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-red-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
-                    <span class="text-red-700 bg-red-50 px-2 py-1 rounded border">
+                    <span class="text-red-700 bg-red-50 px-2 py-1 rounded shadow-sm">
                       {{ formatValue(value) }}
                     </span>
                   </div>
@@ -210,7 +210,7 @@
                   <div v-for="(value, key) in selectedLog.new_values" :key="key" 
                        class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-green-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
-                    <span class="text-green-700 bg-green-50 px-2 py-1 rounded border">
+                    <span class="text-green-700 bg-green-50 px-2 py-1 rounded shadow-sm">
                       {{ formatValue(value) }}
                     </span>
                   </div>
@@ -230,11 +230,11 @@
                     <div class="flex items-center space-x-2">
                       <!-- Show old value if it exists and is different -->
                       <span v-if="selectedLog.old_values[key] !== undefined && hasValueChanged(selectedLog.old_values[key], value)" 
-                            class="text-red-600 line-through text-xs bg-red-50 px-2 py-1 rounded border">
+                            class="text-red-600 line-through text-xs bg-red-50 px-2 py-1 rounded shadow-sm">
                         {{ formatValue(selectedLog.old_values[key]) }}
                       </span>
                       <!-- Show new value -->
-                      <span class="text-green-600 font-medium bg-green-50 px-2 py-1 rounded border">
+                      <span class="text-green-600 font-medium bg-green-50 px-2 py-1 rounded shadow-sm">
                         {{ formatValue(value) }}
                       </span>
                     </div>

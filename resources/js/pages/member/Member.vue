@@ -594,7 +594,7 @@ watch(
       form.permanent_city_id = props.member.permanent_city_id || 2;
       form.permanent_pincode = props.member.permanent_pincode || '';
       form.permanent_state_id = props.member.permanent_state_id || 22;
-      form.permanent_country_id = props.member.permanent_country_id || 95;
+      form.permanent_country_id = props.member.permanent_country_id || 96;
       form.current_add1 = props.member.current_add1 || '';
       form.current_add2 = props.member.current_add2 || '';
       form.current_add3 = props.member.current_add3 || '';
@@ -602,7 +602,7 @@ watch(
       form.current_city_id = props.member.current_city_id || 2;
       form.current_pincode = props.member.current_pincode || '';
       form.current_state_id = props.member.current_state_id || 22;
-      form.current_country_id = props.member.current_country_id || 95;
+      form.current_country_id = props.member.current_country_id || 96;
       form.school_name = props.member.school_name || '';
       form.college_name = props.member.college_name || '';
       form.latest_qualifications = props.member.latest_qualifications || '';

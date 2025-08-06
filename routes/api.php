@@ -28,6 +28,9 @@ Route::get('/family/{familyNo}/members', [MemberController::class, 'getMembersBy
 // Family Search API Route
 Route::get('/families/search', [MemberController::class, 'searchFamilies']);
 
+// Family Details API Route
+Route::get('/families/{familyNo}/details', [MemberController::class, 'getFamilyDetails']);
+
 // Next Available Numbers API Route
 Route::get('/members/next-numbers', [MemberController::class, 'getNextAvailableNumbers']);
 

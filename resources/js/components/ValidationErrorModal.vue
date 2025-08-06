@@ -297,6 +297,8 @@ const submitAnyway = () => {
 }
 
 .error-section {
-  @apply border-l-4 border-gray-200 pl-4;
+  border-left-width: 4px;
+  padding-left: 1rem;
+  
 }
 </style> 

@@ -154,6 +154,20 @@
             <!-- Community Information -->
             <div class="mb-6">
               <h3 class="text-lg font-semibold text-gray-900 mb-4">Community Information</h3>
+              
+              <!-- Pre-populated indicator -->
+              <div v-if="familyType === 'existing' && existingFamilyNo && isPrePopulated" 
+                   class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="flex items-center gap-2">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span class="text-sm text-blue-800">
+                    Community and Cluster pre-selected from family {{ existingFamilyNo }}
+                  </span>
+                </div>
+              </div>
+              
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Community <span class="text-red-500">*</span></label>
@@ -255,7 +269,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 
 
@@ -287,6 +301,7 @@ const showFamilySearch = ref(false);
 const familySearchQuery = ref('');
 const familySearchResults = ref<any[]>([]);
 const isSearching = ref(false);
+const isPrePopulated = ref(false);
 
 const form = ref({
   first_name: '',
@@ -321,6 +336,62 @@ watch(() => form.value.community_id, (newCommunityId) => {
   // Reset cluster selection when community changes
   form.value.community_cluster_id = '';
 });
+
+// Watch for existing family number changes with debounce
+let familyNoTimeout: number;
+watch(existingFamilyNo, async (newFamilyNo) => {
+  clearTimeout(familyNoTimeout);
+  
+  if (familyType.value === 'existing' && newFamilyNo.trim()) {
+    // Validate family number format
+    const churchCode = page.props.church_code;
+    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3,4}$`);
+    
+    if (familyNoPattern.test(newFamilyNo.trim())) {
+      // Valid family number format - fetch details with debounce
+      familyNoTimeout = setTimeout(() => {
+        fetchFamilyDetails(newFamilyNo.trim());
+      }, 500); // 500ms debounce
+    } else {
+      // Invalid format - reset pre-populated flag
+      isPrePopulated.value = false;
+    }
+  } else {
+    // No family number or not existing family type - reset
+    isPrePopulated.value = false;
+  }
+});
+
+// Function to fetch family details (extracted from selectFamily)
+const fetchFamilyDetails = async (familyNo: string) => {
+  try {
+    const response = await fetch(`/api/families/${encodeURIComponent(familyNo)}/details`);
+    if (response.ok) {
+      const familyDetails = await response.json();
+      
+      // Store the cluster ID before setting community (which triggers the watcher)
+      const clusterId = familyDetails.community_cluster_id?.toString() || '';
+      
+      // Set community first (this will trigger the watcher and reset cluster)
+      form.value.community_id = familyDetails.community_id?.toString() || '';
+      
+      // Use nextTick to ensure the watcher has run and then set the cluster
+      await nextTick();
+      form.value.community_cluster_id = clusterId;
+      
+      // Set pre-populated flag
+      isPrePopulated.value = true;
+      
+      console.log('Auto-pre-populated family details:', familyDetails);
+    } else {
+      console.error('Failed to fetch family details');
+      isPrePopulated.value = false;
+    }
+  } catch (error) {
+    console.error('Error fetching family details:', error);
+    isPrePopulated.value = false;
+  }
+};
 
 // Fetch next available numbers
 const fetchNextNumbers = async () => {
@@ -382,11 +453,14 @@ const performFamilySearch = async () => {
   }
 };
 
-const selectFamily = (familyNo: string) => {
+const selectFamily = async (familyNo: string) => {
   existingFamilyNo.value = familyNo;
   showFamilySearch.value = false;
   familySearchQuery.value = '';
   familySearchResults.value = [];
+  
+  // Fetch family details to pre-populate community and cluster
+  await fetchFamilyDetails(familyNo);
 };
 
 // Watch for search query changes with debounce
@@ -430,9 +504,9 @@ const validateForm = () => {
   if (familyType.value === 'existing' && existingFamilyNo.value.trim()) {
     // Validate family number format
     const churchCode = page.props.church_code;
-    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3}$`);
+    const familyNoPattern = new RegExp(`^${churchCode}-\\d{3,4}$`);
     if (!familyNoPattern.test(existingFamilyNo.value)) {
-      errors.value.push(`Family number must be in format: ${churchCode}-XXX`);
+      errors.value.push(`Family number must be in format: ${churchCode}-XXX or ${churchCode}-XXXX`);
     }
   }
   
@@ -493,6 +567,7 @@ const resetForm = () => {
   familySearchQuery.value = '';
   familySearchResults.value = [];
   isSearching.value = false;
+  isPrePopulated.value = false;
   previewFamilyNo.value = 'Loading...';
   previewMemberNo.value = 'Loading...';
 };
@@ -518,6 +593,8 @@ watch(familyType, (newType) => {
   if (newType === 'new') {
     // User selected new family - refresh numbers
     fetchNextNumbers();
+    // Reset pre-populated flag
+    isPrePopulated.value = false;
   }
 });
 </script>
