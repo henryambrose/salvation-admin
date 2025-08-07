@@ -209,13 +209,13 @@ class FamilyNumberingService
         // Update marital status
         $member->update([
             'marital_status' => 'married', 
-            'spouse_member_id' => $spouseId,
+            'relation_member_id' => $spouseId,
             'family_no' => $newMemberNumber
         ]);
         
         $spouse->update([
             'marital_status' => 'married', 
-            'spouse_member_id' => $memberId
+            'relation_member_id' => $memberId
         ]);
         
         return [

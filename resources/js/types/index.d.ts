@@ -53,7 +53,10 @@ export interface Member {
   member_sequence?: number | null;
   marital_status?: 'single' | 'married' | 'divorced' | 'widowed';
   current_family_no?: string | null;
-  spouse_member_id?: number | null;
+  // relation_member_id?: number | null;
+  mother_id?: number | null;
+  father_id?: number | null;
+  spouse_id?: number | null;  
   status: 'Resident' | 'Non-Resident' | 'Dead' | 'Redevelopment Unsettled';
   relationship?: string | null;
   last_name?: string | null;

@@ -37,6 +37,12 @@ Route::get('/members/next-numbers', [MemberController::class, 'getNextAvailableN
 // Member Search API Route for Spouse Selection
 Route::get('/members/search-spouse', [MemberController::class, 'searchMembers']);
 
+// Family Tree API Routes
+Route::get('/member/{id}/family-tree-data', [MemberController::class, 'getFamilyTreeData']);
+Route::get('/family-tree/search-members', [MemberController::class, 'searchFamilyMembers']);
+Route::post('/family-tree/add-relationship', [MemberController::class, 'addFamilyRelationship']);
+Route::delete('/family-tree/remove-relationship', [MemberController::class, 'removeFamilyRelationship']);
+
 // Parish validation endpoint
 Route::post('/validate-parish', function (Illuminate\Http\Request $request) {
     $name = trim($request->name);

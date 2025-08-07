@@ -23,8 +23,7 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   if (itemHref === '/community' || itemHref === '/community-clusters') {
     return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
   }
-  // console.log(itemHref);
-  console.log(currentUrl);
+  
   // Handle different URL patterns for the same page
   const urlVariations = {
     '/member/index': ['/member/index', '/member'],

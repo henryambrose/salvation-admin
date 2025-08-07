@@ -354,7 +354,9 @@ const form = useForm({
   member_sequence: member?.member_sequence ? member.member_sequence : '',
   marital_status: member?.marital_status ? member.marital_status : 'single',
   // current_family_no is managed by business logic (marriage, etc.) - not editable
-  spouse_member_id: member?.spouse_member_id ? Number(member.spouse_member_id) : null,
+  mother_id: member?.mother_id || null,
+  father_id: member?.father_id || null,
+  spouse_id: member?.spouse_id || null,
   community_id: member?.community_id ? member.community_id : '',
   community_cluster_id: member?.community_cluster_id ? member.community_cluster_id : '',
   permanent_add1: member?.permanent_add1 ? member.permanent_add1 : '',
@@ -398,7 +400,12 @@ const form = useForm({
   death_parish_id: member?.death_parish_id ? member.death_parish_id : '',
 });
 
+
+
+// Modify the submit function to include debugging:
 const submit = () => {
+
+  
   // Collect validation errors
   const errors = collectValidationErrors();
   
@@ -410,15 +417,12 @@ const submit = () => {
   }
   
   // Proceed with form submission
-  const routeName = member?.id ? 'member.update' : 'member.store'; // Determine the route
-  const method = member?.id ? 'put' : 'post'; // Determine the HTTP method
+  const routeName = member?.id ? 'member.update' : 'member.store';
+  const method = member?.id ? 'put' : 'post';
 
   form[method](route(routeName, { id: member?.id }), {
     preserveScroll: true,
     onError: (errors: any) => {
-      // Preserve form data on validation errors
-      // The form data will be automatically preserved by Inertia.js
-      // but we can add any additional error handling here if needed
       console.log('Server validation errors:', errors);
     },
   });
@@ -427,18 +431,14 @@ const submit = () => {
 const communityClusters = ref<CommunityCluster[]>([]);
 
 const fetchCommunityCluster = async () => {
-  console.log('fetchCommunityCluster called');
-  console.log('form.community_id:', form.community_id);
-  console.log('props.communityClusters:', props.communityClusters);
+
   
   if (!form.community_id) {
     // If no community is selected but we have a cluster_id, show all clusters
     if (form.community_cluster_id) {
-      console.log('No community_id but have cluster_id, showing all clusters');
       communityClusters.value = props.communityClusters;
     } else {
       communityClusters.value = [];
-      console.log('No community_id, clearing clusters');
     }
     return;
   }
@@ -448,20 +448,18 @@ const fetchCommunityCluster = async () => {
     Number(cluster.community_id) === Number(form.community_id)
   );
   
-  console.log('Filtered clusters:', filteredClusters);
+  
   communityClusters.value = filteredClusters;
-  console.log('communityClusters.value set to:', communityClusters.value);
 };
 
 // Debug watcher for communityClusters ref
 watch(communityClusters, (newValue) => {
-  console.log('communityClusters ref changed to:', newValue);
+  // console.log('communityClusters ref changed to:', newValue);
 });
 
 watch(
   () => form.community_id,
   () => {
-    console.log('form.community_id changed to:', form.community_id);
     fetchCommunityCluster();
   },
 );
@@ -559,8 +557,6 @@ watch(
     // Only update form data if we're switching to a different member
     // or if this is the initial load (oldMemberId is undefined)
     if (newMemberId !== oldMemberId && props.member) {
-      console.log('Member ID changed, updating form data');
-      console.log('New member date_of_birth:', props.member.date_of_birth);
       
       // Update form with new member data
       form.id = props.member.id || '';
@@ -584,7 +580,9 @@ watch(
       form.family_sequence = props.member.family_sequence || '';
       form.member_sequence = props.member.member_sequence || '';
       form.marital_status = props.member.marital_status || 'single';
-      form.spouse_member_id = props.member.spouse_member_id ? Number(props.member.spouse_member_id) : null;
+      form.father_id = props.member.father_id || null;
+      form.mother_id = props.member.mother_id || null;
+      form.spouse_id = props.member.spouse_id || null;
       form.community_id = props.member.community_id || '';
       form.community_cluster_id = props.member.community_cluster_id || '';
       form.permanent_add1 = props.member.permanent_add1 || '';
@@ -634,15 +632,11 @@ watch(
 watch(
   () => props.communityClusters,
   () => {
-    console.log('communityClusters prop changed');
-    console.log('form.community_id:', form.community_id);
-    console.log('form.community_cluster_id:', form.community_cluster_id);
     
     // If we have a community_cluster_id but no community_id, we need to find the community
     if (form.community_cluster_id && !form.community_id) {
       const cluster = props.communityClusters.find(c => c.id === form.community_cluster_id);
       if (cluster) {
-        console.log('Found cluster, setting community_id to:', cluster.community_id);
         form.community_id = cluster.community_id;
       }
     }
@@ -658,10 +652,7 @@ const filteredTownPermanent = ref<Town[]>([]);
 
 const fetchfilteredTownPermanent = async () => {
   if (!form.permanent_state_id) return;
-  console.log('Filtering towns for state_id:', form.permanent_state_id);
-  console.log('Available towns:', props.towns);
   filteredTownPermanent.value = props.towns.filter((town) => town.state_id === Number(form.permanent_state_id));
-  console.log('Filtered towns:', filteredTownPermanent.value);
 };
 
 watch(
@@ -689,10 +680,7 @@ const filteredTownCurrent = ref<Town[]>([]);
 
 const fetchfilteredTownCurrent = async () => {
   if (!form.current_state_id) return;
-  console.log('Filtering towns for state_id:', form.current_state_id);
-  console.log('Available towns:', props.towns);
   filteredTownCurrent.value = props.towns.filter((town) => town.state_id === Number(form.current_state_id));
-  console.log('Filtered towns:', filteredTownCurrent.value);
 };
 
 watch(
@@ -756,15 +744,10 @@ nextTick(() => {
 
 // Initialize community clusters on mount
 onMounted(() => {
-  console.log('Component mounted');
-  console.log('Initial form.community_id:', form.community_id);
-  console.log('Initial form.community_cluster_id:', form.community_cluster_id);
-  console.log('Initial props.communityClusters:', props.communityClusters);
   
   if (form.community_cluster_id && !form.community_id) {
     const cluster = props.communityClusters.find(c => c.id === form.community_cluster_id);
     if (cluster) {
-      console.log('Found cluster on mount, setting community_id to:', cluster.community_id);
       form.community_id = cluster.community_id;
     }
   }
@@ -809,6 +792,11 @@ function formatDate(dateStr: string) {
   const date = new Date(dateStr);
   return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
 }
+
+// Add this watcher after the existing watchers (around line 600)
+watch(() => form.mother_id, (newValue, oldValue) => {
+  console.log('form.relation_member_id changed:', { oldValue, newValue });
+});
 </script>
 
 <template>
@@ -1005,13 +993,34 @@ function formatDate(dateStr: string) {
               <!-- <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p> -->
             </div>
             <div class="grid gap-2">
-              <Label for="spouse_member_id">Spouse Member</Label>
+              <Label for="relation_member_id">Spouse Member {{ form.spouse_id }}</Label>
               <SpouseSearchDropdown 
-                v-model="form.spouse_member_id" 
+                :model-value="form.spouse_id"
+                @update:model-value="(value) => { console.log('SpouseSearchDropdown emitted:', value); form.spouse_id = value; }"
                 :exclude-id="member?.id"
                 placeholder="Search for spouse by name, member number, or family number..."
               />
-              <InputError class="mt-2" :message="form.errors.spouse_member_id" />
+              <InputError class="mt-2" :message="form.errors.spouse_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="relation_member_id">Father Member {{ form.father_id }}</Label>
+              <SpouseSearchDropdown 
+                :model-value="form.father_id"
+                @update:model-value="(value) => { console.log('SpouseSearchDropdown emitted:', value); form.father_id = value; }"
+                :exclude-id="member?.id"
+                placeholder="Search for spouse by name, member number, or family number..."
+              />
+              <InputError class="mt-2" :message="form.errors.father_id" />
+            </div>
+            <div class="grid gap-2">
+              <Label for="relation_member_id">Mother Member {{ form.mother_id }}</Label>
+              <SpouseSearchDropdown 
+                :model-value="form.mother_id"
+                @update:model-value="(value) => { console.log('SpouseSearchDropdown emitted:', value); form.mother_id = value; }"
+                :exclude-id="member?.id"
+                placeholder="Search for spouse by name, member number, or family number..."
+              />
+              <InputError class="mt-2" :message="form.errors.mother_id" />
             </div>
           </div>
           

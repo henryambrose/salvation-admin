@@ -34,7 +34,10 @@ class StoreMemberRequest extends FormRequest
             'member_sequence' => 'nullable|integer',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
             // 'current_family_no' => 'nullable|string|max:255', // Managed by business logic
-            'spouse_member_id' => 'nullable|exists:members,id',
+            'relation_member_id' => 'nullable|exists:members,id',
+            'mother_id' => 'nullable|exists:members,id',
+            'father_id' => 'nullable|exists:members,id',
+            'spouse_id' => 'nullable|exists:members,id',
             'existing_family_no' => 'nullable|string|max:255',
             // 'status' => 'required|in:Resident,Non-Resident,Dead,Redevelopment Unsettled',
             // 'relationship' => 'nullable|string|max:255',

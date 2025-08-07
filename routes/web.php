@@ -9,6 +9,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\SCCHeadController;
 use App\Http\Controllers\PPCHeadController;
 use App\Http\Controllers\MemberController;
+use App\Http\Controllers\ExternalMemberController;
 
 Route::get('/', function () {
     // return Inertia::render('Welcome');
@@ -83,9 +84,16 @@ Route::get('/test-next-numbers', function() {
 //     // Route::get('users2', [UserController2::class, 'index'])->name('users2.index');
 // });
 
+// External Members Routes
+Route::middleware('auth')->group(function () {
+    Route::resource('external-members', ExternalMemberController::class);
+    Route::get('/external-members/by-family', [ExternalMemberController::class, 'getByFamily'])->name('external-members.by-family');
+});
+
 require __DIR__.'/auth.php';
 require __DIR__.'/settings.php';
 require __DIR__.'/member.php';
+require __DIR__.'/family_tree.php';
 require __DIR__.'/community.php';
 require __DIR__.'/community_fund.php';
 require __DIR__.'/zones.php';

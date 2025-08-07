@@ -71,6 +71,11 @@
         </div>
       </div>
     </div>
+    
+    <!-- Help Text -->
+    <!-- <div class="text-xs text-gray-500 mt-1">
+      💡 Tip: Type member number (e.g., SAL-001) and press Enter, or click on search results
+    </div> -->
   </div>
 </template>
 
@@ -115,6 +120,9 @@ const highlightedIndex = ref(-1);
 // Debounce timer
 let searchTimeout: number;
 
+// Member number pattern
+const memberNumberPattern = /^[A-Z]{3}-\d{3}$/;
+
 // Methods
 const performSearch = async (query: string) => {
   if (query.length < 2) return;
@@ -145,20 +153,86 @@ const performSearch = async (query: string) => {
 
 const fetchMemberDetails = async (memberId: number) => {
   try {
+    isLoading.value = true;
+    // First try to get member details from the search API
     const response = await axios.get(`/api/members/search-spouse?q=${memberId}&limit=1`);
+    console.log(response.data);
     if (response.data.length > 0) {
       selectedMember.value = response.data[0];
       searchQuery.value = selectedMember.value?.full_name || '';
+    } else {
+      // If not found by search, try to get member details directly
+      try {
+        const memberResponse = await axios.get(`/api/members/${memberId}`);
+        if (memberResponse.data) {
+          const member = memberResponse.data;
+          // Create full name from individual name parts
+          const fullName = `${member.first_name || ''} ${member.middle_name || ''} ${member.last_name || ''}`.trim();
+          
+          selectedMember.value = {
+            id: member.id,
+            text: fullName,
+            member_no: member.member_no || '',
+            family_no: member.family_no || '',
+            full_name: fullName,
+            community: member.community?.name || '',
+            relationship: member.relationship?.name || '',
+            gender: member.gender?.name || ''
+          };
+          searchQuery.value = fullName;
+        }
+      } catch (directError) {
+        console.error('Error fetching member details directly:', directError);
+        // If direct fetch fails, try to construct from available data
+        const fullName = `Member ID: ${memberId}`;
+        selectedMember.value = {
+          id: memberId,
+          text: fullName,
+          member_no: '',
+          family_no: '',
+          full_name: fullName,
+          community: '',
+          relationship: '',
+          gender: ''
+        };
+        searchQuery.value = fullName;
+      }
     }
   } catch (error) {
     console.error('Error fetching member details:', error);
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// Watch for external value changes
+const handleMemberNumberInput = async () => {
+  // Check if the input looks like a member number (e.g., SAL-001)
+  if (memberNumberPattern.test(searchQuery.value)) {
+    try {
+      isLoading.value = true;
+      const response = await axios.get(`/api/members/search-spouse?q=${searchQuery.value}&limit=1`);
+      if (response.data.length > 0) {
+        selectMember(response.data[0]);
+      } else {
+        // Show error or clear if member not found
+        searchQuery.value = '';
+        showDropdown.value = false;
+      }
+    } catch (error) {
+      console.error('Error searching by member number:', error);
+      searchQuery.value = '';
+      showDropdown.value = false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+};
+
+// Update the watch for modelValue to properly handle initial loading:
 watch(() => props.modelValue, (newValue) => {
+  console.log('SpouseSearchDropdown modelValue changed:', newValue);
   if (newValue && !selectedMember.value) {
-    // If we have a value but no selected member, we need to fetch the member details
+    console.log('Fetching member details for ID:', newValue);
     fetchMemberDetails(newValue);
   } else if (!newValue) {
     selectedMember.value = null;
@@ -177,6 +251,11 @@ watch(searchQuery, (newQuery) => {
   } else {
     searchResults.value = [];
     showDropdown.value = false;
+  }
+  
+  // Check if it's a member number and handle it
+  if (memberNumberPattern.test(newQuery)) {
+    handleMemberNumberInput();
   }
 });
 
@@ -227,6 +306,9 @@ const selectFirstResult = () => {
   if (searchResults.value.length > 0) {
     const index = highlightedIndex.value >= 0 ? highlightedIndex.value : 0;
     selectMember(searchResults.value[index]);
+  } else if (memberNumberPattern.test(searchQuery.value)) {
+    // If no results but input looks like member number, try to find it
+    handleMemberNumberInput();
   }
 };
 </script> 

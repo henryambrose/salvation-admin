@@ -14,40 +14,32 @@ class Member extends Model
     protected $fillable = [
         'community_id',
         'community_cluster_id',
-        // 'new_olsc_id', // Not in database yet
-        // 'old_sal_id', // Not in database yet
+        'old_family_no',
         'aadhar',
+        'current_family_no',
         'family_no',
         'member_no',
         'registration_year',
-        // 'church_code', // Not stored in DB - comes from .env config
-        'family_sequence',
-        'member_sequence',
-        'marital_status',
-        'current_family_no',
-        'spouse_member_id',
-        'marriage_date',
-        'status_id',
-        'relationship_id',
-        'last_name',
         'first_name',
         'middle_name',
-        'gender_id',
+        'last_name',
         'date_of_birth',
         'permanent_add1',
         'permanent_add2',
         'permanent_add3',
         'permanent_town_id',
-        'permanent_pincode',
+        'permanent_city_id',
         'permanent_state_id',
         'permanent_country_id',
+        'permanent_pincode',
         'current_add1',
         'current_add2',
         'current_add3',
         'current_town_id',
-        'current_pincode',
+        'current_city_id',
         'current_state_id',
         'current_country_id',
+        'current_pincode',
         'contact_no_1',
         'contact_no_2',
         'email',
@@ -56,23 +48,26 @@ class Member extends Model
         'college_name',
         'latest_qualifications',
         'company_name',
-        'designation_id',
         'income_range_id',
         'baptism_date',
         'baptism_reg_no',
         'baptism_parish',
-        'baptism_parish_id',
         'confirmation_date',
         'confirmation_reg_no',
         'confirmation_parish',
-        'confirmation_parish_id',
+        'marriage_date',
         'marriage_reg_no',
         'marriage_parish',
-        'marriage_parish_id',
         'death_date',
         'deaths_reg_no',
         'death_parish',
-        'death_parish_id',
+        'family_sequence',
+        'member_sequence',
+        'marital_status',
+        'relation_member_id', // Keep for backward compatibility
+        'mother_id', // New field
+        'father_id', // New field
+        'spouse_id', // New field
     ];
 
     protected $casts = [
@@ -82,6 +77,14 @@ class Member extends Model
         'confirmation_date' => 'date',
         'death_date' => 'date'
     ];
+
+    /**
+     * Get the member's full name
+     */
+    public function getFullNameAttribute(): string
+    {
+        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . ($this->last_name ?? ''));
+    }
 
     public function community()
     {
@@ -192,9 +195,28 @@ class Member extends Model
         return $this->belongsTo(Member::class, 'current_family_no', 'family_no');
     }
     
+    /**
+     * Get the member's mother
+     */
+    public function mother()
+    {
+        return $this->belongsTo(Member::class, 'mother_id');
+    }
+
+    /**
+     * Get the member's father
+     */
+    public function father()
+    {
+        return $this->belongsTo(Member::class, 'father_id');
+    }
+
+    /**
+     * Get the member's spouse
+     */
     public function spouse()
     {
-        return $this->belongsTo(Member::class, 'spouse_member_id');
+        return $this->belongsTo(Member::class, 'spouse_id');
     }
     
     public function familyMembers()
@@ -278,7 +300,7 @@ class Member extends Model
 
     public function relatedMembers()
     {
-        return $this->belongsToMany(Member::class, 'family_links', 'member_id', 'related_member_id')
+        return $this->belongsToMany(Member::class, 'familylinks', 'member_id', 'related_member_id')
                     ->withPivot('relationship_id');
     }
 

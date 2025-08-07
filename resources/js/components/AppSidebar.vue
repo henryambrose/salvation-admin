@@ -67,6 +67,12 @@ const navigationGroups = [
         show: can('read-member'),
       },
       {
+        title: 'External Members',
+        href: '/external-members',
+        icon: Globe,
+        show: true, // Show to all authenticated users
+      },
+      {
         title: 'Community',
         href: '/community',
         icon: Building2,

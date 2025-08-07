@@ -20,6 +20,8 @@ use App\Models\Status;
 use App\Models\Parish;
 use App\Models\CommunityCluster;
 use App\Models\AgeGroup;
+use App\Models\FamilyLink;
+use App\Services\FamilyTreeService;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -457,6 +459,7 @@ class MemberController extends Controller
         })->toArray();
         return Inertia::render('member/Member', [
             'member' => $member,
+            'members' => Member::with('spouse')->get(), // Add this line to pass all members
             'communities' => Community::all(),
             'parishes' => Parish::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
@@ -586,9 +589,112 @@ class MemberController extends Controller
 
     public function showFamilyTree($id)
     {
-        $member = Member::with(['relationships.relatedMember', 'relatedMembers'])->findOrFail($id);
+        $member = Member::with([
+            'gender', 
+            'community', 
+            'relationship',
+            'relationships.relatedMember.gender',
+            'relationships.relatedMember.community',
+            'relationships.relationship'
+        ])->findOrFail($id);
+        
+        $familyTreeService = new FamilyTreeService();
+        $familyTree = $familyTreeService->getFamilyTree($member);
+        
+        return Inertia::render('member/FamilyTree', [
+            'member' => $member,
+            'familyTree' => $familyTree,
+            'relationships' => $familyTreeService->getAvailableRelationships()
+        ]);
+    }
 
-        return view('members.family_tree', compact('member'));
+    /**
+     * Get family tree data via API
+     */
+    public function getFamilyTreeData($id)
+    {
+        $member = Member::findOrFail($id);
+        $familyTreeService = new FamilyTreeService();
+        $familyTree = $familyTreeService->getFamilyTree($member);
+        
+        return response()->json($familyTree);
+    }
+
+    /**
+     * Search members for family tree
+     */
+    public function searchFamilyMembers(Request $request)
+    {
+        $query = $request->input('q', '');
+        $limit = $request->input('limit', 10);
+        
+        if (empty($query) || strlen($query) < 2) {
+            return response()->json([]);
+        }
+        
+        $familyTreeService = new FamilyTreeService();
+        $members = $familyTreeService->searchMembers($query, $limit);
+        
+        return response()->json($members);
+    }
+
+    /**
+     * Add relationship between members
+     */
+    public function addFamilyRelationship(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'related_member_id' => 'nullable|exists:members,id',
+            'related_external_member_id' => 'nullable|exists:external_members,id',
+            'relationship_id' => 'required|exists:relationships,id'
+        ]);
+
+        $familyTreeService = new FamilyTreeService();
+        
+        // Check if we're adding a relationship with an external member
+        if ($request->has('related_external_member_id') && $request->related_external_member_id) {
+            $success = $familyTreeService->addExternalRelationship(
+                $request->member_id,
+                $request->related_external_member_id,
+                $request->relationship_id
+            );
+        } else {
+            $success = $familyTreeService->addRelationship(
+                $request->member_id,
+                $request->related_member_id,
+                $request->relationship_id
+            );
+        }
+
+        if (!$success) {
+            return response()->json(['error' => 'Relationship already exists'], 400);
+        }
+
+        return response()->json(['message' => 'Relationship added successfully']);
+    }
+
+    /**
+     * Remove relationship between members
+     */
+    public function removeFamilyRelationship(Request $request)
+    {
+        $request->validate([
+            'member_id' => 'required|exists:members,id',
+            'related_member_id' => 'required|exists:members,id'
+        ]);
+
+        $familyTreeService = new FamilyTreeService();
+        $success = $familyTreeService->removeRelationship(
+            $request->member_id,
+            $request->related_member_id
+        );
+
+        if (!$success) {
+            return response()->json(['error' => 'Relationship not found'], 404);
+        }
+
+        return response()->json(['message' => 'Relationship removed successfully']);
     }
 
     public function searchOptions(Request $request)
@@ -1019,19 +1125,32 @@ class MemberController extends Controller
         $query = $request->input('q', '');
         $limit = $request->input('limit', 10);
         
-        if (empty($query) || strlen($query) < 2) {
+        if (empty($query)) {
             return response()->json([]);
         }
         
-        $members = Member::with(['community', 'relationship', 'gender'])
-            ->where(function ($q) use ($query) {
+        $members = Member::with(['community', 'relationship', 'gender']);
+        
+        // Check if query is a numeric ID
+        if (is_numeric($query)) {
+            // Search by ID
+            $members = $members->where('id', $query);
+        } else {
+            // Search by name, member number, or family number (existing logic)
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+            
+            $members = $members->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                   ->orWhere('last_name', 'like', "%{$query}%")
                   ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
                   ->orWhere('member_no', 'like', "%{$query}%")
                   ->orWhere('family_no', 'like', "%{$query}%");
-            })
-            ->where('id', '!=', $request->input('exclude_id')) // Exclude current member
+            });
+        }
+        
+        $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
             ->limit($limit)
             ->get()
             ->map(function ($member) {
@@ -1048,6 +1167,247 @@ class MemberController extends Controller
             });
         
         return response()->json($members);
+    }
+
+    /**
+     * Debug method to check family links
+     */
+    public function debugFamilyLinks($id)
+    {
+        $member = Member::findOrFail($id);
+        
+        $familyLinks = FamilyLink::where('member_id', $member->id)
+            ->orWhere('related_member_id', $member->id)
+            ->with(['member', 'relatedMember', 'relationship'])
+            ->get();
+            
+        $familyMembers = Member::where('family_no', $member->family_no)->get();
+        
+        return response()->json([
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'family_no' => $member->family_no,
+                'gender' => $member->gender?->name ?? 'Unknown',
+                'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown'
+            ],
+            'familyLinks' => $familyLinks->map(function ($link) {
+                return [
+                    'id' => $link->id,
+                    'member_id' => $link->member_id,
+                    'related_member_id' => $link->related_member_id,
+                    'relationship' => $link->relationship ? $link->relationship->name : 'Unknown',
+                    'member_name' => $link->member ? $link->member->full_name : 'Unknown',
+                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'Unknown'
+                ];
+            }),
+            'familyMembers' => $familyMembers->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->full_name,
+                    'family_no' => $member->family_no,
+                    'gender' => $member->gender?->name ?? 'Unknown',
+                    'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown'
+                ];
+            })
+        ]);
+    }
+
+    /**
+     * Debug method to test relationship suggestions
+     */
+    public function debugRelationshipSuggestions($id)
+    {
+        $member = Member::findOrFail($id);
+        $familyTreeService = new FamilyTreeService();
+        
+        $familyMembers = Member::where('family_no', $member->family_no)
+            ->where('id', '!=', $member->id)
+            ->with(['gender'])
+            ->get();
+            
+        $suggestions = [];
+        
+        foreach ($familyMembers as $familyMember) {
+            // Test the suggestion logic
+            $suggestion = $familyTreeService->suggestRelationship($member, $familyMember);
+            $confidence = $familyTreeService->getSuggestionConfidence($member, $familyMember);
+            
+            $suggestions[] = [
+                'member' => [
+                    'id' => $familyMember->id,
+                    'name' => $familyMember->full_name,
+                    'gender' => $familyMember->gender?->name ?? 'Unknown',
+                    'age' => $familyMember->date_of_birth ? \Carbon\Carbon::parse($familyMember->date_of_birth)->age : 'Unknown'
+                ],
+                'suggestedRelationship' => $suggestion,
+                'confidence' => $confidence,
+                'isGenderAppropriate' => $suggestion ? $familyTreeService->isGenderAppropriate($suggestion, $familyMember->gender?->name ?? '') : false
+            ];
+        }
+        
+        return response()->json([
+            'currentMember' => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'gender' => $member->gender?->name ?? 'Unknown',
+                'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown'
+            ],
+            'suggestions' => $suggestions
+        ]);
+    }
+
+    /**
+     * Debug method to check specific member relationships
+     */
+    public function debugSpecificMember($memberNo)
+    {
+        $member = Member::where('member_no', $memberNo)->first();
+        
+        if (!$member) {
+            return response()->json(['error' => 'Member not found'], 404);
+        }
+        
+        // Get all family links for this member
+        $familyLinks = FamilyLink::where('member_id', $member->id)
+            ->orWhere('related_member_id', $member->id)
+            ->with(['member', 'relatedMember', 'relationship'])
+            ->get();
+            
+        // Get all family members
+        $familyMembers = Member::where('family_no', $member->family_no)
+            ->with(['gender', 'relationship'])
+            ->get();
+            
+        // Get all relationships from the relationships table
+        $allRelationships = \App\Models\Relationship::all();
+        
+        return response()->json([
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'member_no' => $member->member_no,
+                'family_no' => $member->family_no,
+                'gender' => $member->gender?->name ?? 'Unknown',
+                'relationship' => $member->relationship?->name ?? 'Unknown'
+            ],
+            'familyLinks' => $familyLinks->map(function ($link) {
+                return [
+                    'id' => $link->id,
+                    'member_id' => $link->member_id,
+                    'related_member_id' => $link->related_member_id,
+                    'member_name' => $link->member->full_name,
+                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'null',
+                    'relationship_name' => $link->relationship->name,
+                    'relationship_id' => $link->relationship_id
+                ];
+            }),
+            'familyMembers' => $familyMembers->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->full_name,
+                    'member_no' => $member->member_no,
+                    'gender' => $member->gender?->name ?? 'Unknown',
+                    'relationship' => $member->relationship?->name ?? 'Unknown'
+                ];
+            }),
+            'allRelationships' => $allRelationships->map(function ($rel) {
+                return [
+                    'id' => $rel->id,
+                    'name' => $rel->name
+                ];
+            })
+        ]);
+    }
+
+    /**
+     * Debug method to check member by ID
+     */
+    public function debugMemberById($id)
+    {
+        $member = Member::find($id);
+        
+        if (!$member) {
+            return response()->json(['error' => 'Member not found'], 404);
+        }
+        
+        // Get all family links for this member
+        $familyLinks = FamilyLink::where('member_id', $member->id)
+            ->orWhere('related_member_id', $member->id)
+            ->with(['member', 'relatedMember', 'relationship'])
+            ->get();
+            
+        // Get all family members
+        $familyMembers = Member::where('family_no', $member->family_no)
+            ->with(['gender', 'relationship'])
+            ->get();
+            
+        // Test suggestion logic
+        $familyTreeService = new FamilyTreeService();
+        $suggestions = [];
+        
+        foreach ($familyMembers as $familyMember) {
+            if ($familyMember->id !== $member->id) {
+                $suggestion = $familyTreeService->suggestRelationship($member, $familyMember);
+                $suggestions[] = [
+                    'family_member_id' => $familyMember->id,
+                    'family_member_name' => $familyMember->full_name,
+                    'family_member_gender' => $familyMember->gender?->name ?? 'Unknown',
+                    'suggestion' => $suggestion,
+                    'is_appropriate' => $suggestion ? $familyTreeService->isGenderAppropriate($suggestion, $familyMember->gender?->name ?? '') : false
+                ];
+            }
+        }
+        
+        return response()->json([
+            'member' => [
+                'id' => $member->id,
+                'name' => $member->full_name,
+                'member_no' => $member->member_no,
+                'family_no' => $member->family_no,
+                'gender' => $member->gender?->name ?? 'Unknown',
+                'relationship' => $member->relationship?->name ?? 'Unknown'
+            ],
+            'familyLinks' => $familyLinks->map(function ($link) {
+                return [
+                    'id' => $link->id,
+                    'member_id' => $link->member_id,
+                    'related_member_id' => $link->related_member_id,
+                    'member_name' => $link->member->full_name,
+                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'null',
+                    'relationship_name' => $link->relationship->name,
+                    'relationship_id' => $link->relationship_id
+                ];
+            }),
+            'familyMembers' => $familyMembers->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->full_name,
+                    'member_no' => $member->member_no,
+                    'gender' => $member->gender?->name ?? 'Unknown',
+                    'relationship' => $member->relationship?->name ?? 'Unknown'
+                ];
+            }),
+            'suggestions' => $suggestions
+        ]);
+    }
+
+    public function getMemberDetails($id)
+    {
+        $member = Member::with(['gender', 'community', 'relationship'])
+            ->findOrFail($id);
+        
+        return response()->json([
+            'id' => $member->id,
+            'first_name' => $member->first_name,
+            'last_name' => $member->last_name,
+            'full_name' => $member->full_name,
+            'member_no' => $member->member_no,
+            'family_no' => $member->family_no,
+            'community' => $member->community,
+            'relationship' => $member->relationship,
+            'gender' => $member->gender
+        ]);
     }
 }
 
