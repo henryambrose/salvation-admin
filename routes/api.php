@@ -92,3 +92,9 @@ Route::post('/validate-parish', function (Illuminate\Http\Request $request) {
 Route::get('/cities', function () {
     return \App\Models\City::select('id', 'name')->orderBy('name')->get();
 });
+
+// Add this route to the API routes
+Route::get('/family-numbers/search', [App\Http\Controllers\ExternalMemberController::class, 'searchFamilyNumbers']);
+
+// Add this route for getting external member details
+Route::get('/external-members/{id}', [App\Http\Controllers\ExternalMemberController::class, 'getDetails']);

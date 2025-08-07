@@ -118,6 +118,35 @@ export interface Member {
   deleted_at?: string | null; // ISO 8601 date string for soft deletes
 }
 
+export interface ExternalMember {
+  id: number;
+  external_member_no?: string | null;
+  first_name: string;
+  last_name?: string | null;
+  gender_id?: number;
+  family_no: string;
+  father_id?: number;
+  mother_id?: number;
+  spouse_id?: number;
+  address?: string;
+  relationship_id?: number;
+  father_data?: {
+    id: number
+    name: string
+    type: 'internal' | 'external'
+  } | null
+  mother_data?: {
+    id: number
+    name: string
+    type: 'internal' | 'external'
+  } | null
+  spouse_data?: {
+    id: number
+    name: string
+    type: 'internal' | 'external'
+  } | null
+}
+
 export interface CommunityCluster {
   id: number;
   name: string;

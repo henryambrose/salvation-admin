@@ -117,3 +117,4 @@ require __DIR__.'/users.php';
 require __DIR__.'/clusters.php';
 require __DIR__.'/community_clusters.php';
 require __DIR__.'/audit.php';
+require __DIR__.'/external_members.php';

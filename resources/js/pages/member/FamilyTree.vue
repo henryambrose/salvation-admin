@@ -105,36 +105,42 @@
       </div>
     </div>
 
-    <!-- Family Members (Head-Centric Approach) -->
-    <div v-if="familyTree.familyMembers && familyTree.familyMembers.length > 0" class="mb-6">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-md font-medium text-gray-700">Family Members ({{ member.family_no }}) - Head-Centric</h3>
-        <button @click="showAddRelationshipModal = true"
-          class="px-3 py-1 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-          Add Relationship
-        </button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div v-for="familyMember in familyTree.familyMembers" :key="familyMember.member.id" 
-          class="p-3 rounded-lg border transition cursor-pointer bg-indigo-50 border-indigo-200 hover:bg-indigo-100"
-          @click="selectFamilyMemberForRelationship(familyMember)">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="font-medium">{{ familyMember.member.full_name }}</div>
-              <div class="text-sm text-indigo-600">
-                {{ familyMember.relationship }} (relationship_id based)
-              </div>
-              <div class="text-xs text-gray-500 mt-1">{{ familyMember.member.member_no }}</div>
-            </div>
-            <div class="text-green-500">
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fill-rule="evenodd"
-                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                  clip-rule="evenodd"></path>
-              </svg>
-            </div>
+    <!-- Family Members Section -->
+    <div v-if="internalFamilyMembers.length > 0" class="mb-8">
+      <h3 class="text-lg font-semibold mb-4 text-blue-800">Family Members</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="familyMember in internalFamilyMembers" 
+             :key="familyMember.member.id"
+             class="p-4 rounded-lg border-2 bg-blue-50 border-blue-200">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-medium text-gray-900">{{ familyMember.member.full_name }}</h4>
+            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              Internal
+            </span>
           </div>
+          <p class="text-sm text-gray-600 mb-2">{{ familyMember.relationship }}</p>
+          <p class="text-xs text-gray-500">{{ familyMember.member.member_no }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- External Members Section -->
+    <div v-if="externalFamilyMembers.length > 0" class="mb-8">
+      <h3 class="text-lg font-semibold mb-4 text-orange-800">External Family Members</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div v-for="externalMember in externalFamilyMembers" 
+             :key="externalMember.member.id"
+             class="p-4 rounded-lg border-2 bg-orange-50 border-orange-200">
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="font-medium text-gray-900">{{ externalMember.member.full_name }}</h4>
+            <span class="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+              External
+            </span>
+          </div>
+          <p class="text-sm text-gray-600 mb-2">{{ externalMember.relationship }}</p>
+          <p class="text-xs text-gray-500">{{ externalMember.member.family_no }}</p>
+          <p v-if="externalMember.member.address" 
+             class="text-xs text-gray-500 mt-1">{{ externalMember.member.address }}</p>
         </div>
       </div>
     </div>
@@ -202,13 +208,25 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 
 const props = defineProps({
   member: Object,
   familyTree: Object,
   relationships: Array
+});
+
+// Computed property to filter internal members from familyMembers
+const internalFamilyMembers = computed(() => {
+  if (!props.familyTree?.familyMembers) return [];
+  return props.familyTree.familyMembers.filter(member => !member.is_external);
+});
+
+// Computed property to filter external members from familyMembers
+const externalFamilyMembers = computed(() => {
+  if (!props.familyTree?.familyMembers) return [];
+  return props.familyTree.familyMembers.filter(member => member.is_external);
 });
 
 // Reactive data

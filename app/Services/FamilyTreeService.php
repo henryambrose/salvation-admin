@@ -11,67 +11,31 @@ use Illuminate\Support\Collection;
 class FamilyTreeService
 {
     /**
-     * Age threshold configuration for relationship suggestions
-     */
-    private const AGE_THRESHOLDS = [
-        'sibling' => ['min' => 0, 'max' => 15],
-        'parent_child' => ['min' => 15, 'max' => 40],
-        'grandparent_grandchild' => ['min' => 40, 'max' => 80],
-        'great_grandparent' => ['min' => 80, 'max' => 120]
-    ];
-
-    /**
      * Get complete family tree for a member
      */
     public function getFamilyTree(Member $member, int $maxGenerations = 3): array
     {
-        // Debug: Check if there are any family links for this member
-        $totalLinks = FamilyLink::where('member_id', $member->id)
-            ->orWhere('related_member_id', $member->id)
-            ->count();
-            
-        // Get the family head for reference
-        $familyHead = $this->getFamilyHead($member->family_no);
-        $headInfo = null;
-        if ($familyHead) {
-            $headInfo = [
-                'id' => $familyHead->id,
-                'name' => $familyHead->full_name,
-                'gender' => $familyHead->gender?->name ?? 'Unknown',
-                'is_current_member' => $member->id === $familyHead->id,
-                'relationship_to_head' => $member->id !== $familyHead->id ? $this->calculateRelationshipToHead($member, $familyHead) : 'Self'
-            ];
-        }
-            
-        $tree = [
+        // Get all family members first
+        $allFamilyMembers = $this->getAllFamilyMembers($member);
+        
+        // Categorize them
+        $categorized = $this->categorizeFamilyMembers($member, $allFamilyMembers);
+        
+        return [
             'member' => $this->formatMember($member),
-            'familyHead' => $headInfo,
-            'parents' => $this->getParents($member),
-            'spouse' => $this->getSpouse($member),
-            'children' => $this->getChildren($member),
-            'siblings' => $this->getSiblings($member),
+            'parents' => $categorized['parents'],
+            'spouse' => $categorized['spouse'],
+            'children' => $categorized['children'],
+            'siblings' => $categorized['siblings'],
             'grandparents' => $this->getGrandparents($member),
             'grandchildren' => $this->getGrandchildren($member),
-            'relationships' => $this->getAllRelationships($member),
-                         'familyMembers' => $this->getFamilyMembers($member),
-             'externalMembers' => $this->getExternalMembers($member),
-                         'debug' => [
-                 'totalFamilyLinks' => $totalLinks,
-                 'familyNo' => $member->family_no,
-                 'familyMembersCount' => $member->family_no ? Member::where('family_no', $member->family_no)->count() : 0,
-                 'memberGender' => $member->gender?->name ?? 'Unknown',
-                 'memberAge' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown',
-                 'headCentered' => true,
-                 'approach' => 'dynamic_relationship_calculation',
-                 'currentMemberAsCenter' => true
-             ]
+            'familyMembers' => $categorized['familyMembers'],
+            // Remove externalMembers since they're now included in familyMembers
         ];
-
-        return $tree;
     }
 
     /**
-     * Get family members with dynamic relationship calculation based on current member
+     * Get family members with simple relationship calculation
      */
     public function getFamilyMembers(Member $member): array
     {
@@ -79,43 +43,274 @@ class FamilyTreeService
             return [];
         }
 
-        $familyMembers = Member::where('family_no', $member->family_no)
-            ->where('id', '!=', $member->id) // Exclude the current member
+        // Get all family members except the current member
+        $allFamilyMembers = Member::where('family_no', $member->family_no)
+            ->where('id', '!=', $member->id)
             ->with(['gender', 'community', 'relationship'])
             ->get();
 
-        return $familyMembers->map(function ($familyMember) use ($member) {
-            // Calculate dynamic relationship based on current member as center point
-            $dynamicRelationship = $this->calculateDynamicRelationship($member, $familyMember);
+        // Get IDs to remove from family members section
+        $childIds = $this->getChildIds($member);
+        $spouseIds = $this->getSpouseIds($member); // New method to get all spouse IDs
+
+        // Remove children and spouses from the main array
+        $remainingFamilyMembers = $allFamilyMembers->filter(function ($familyMember) use ($childIds, $spouseIds) {
+            return !in_array($familyMember->id, $childIds) && !in_array($familyMember->id, $spouseIds);
+        });
+
+        // Calculate relationships for remaining members
+        return $remainingFamilyMembers->map(function ($familyMember) use ($member) {
+            $relationship = $this->calculateSimpleRelationship($member, $familyMember);
             
-            // Debug logging for specific case
-            if ($member->member_no === 'SAL-002' || $familyMember->id === 5) {
-                \Log::info("Dynamic relationship calculation for SAL-002 or member ID 5", [
-                    'current_member_id' => $member->id,
-                    'current_member_name' => $member->full_name,
-                    'current_member_no' => $member->member_no,
-                    'family_member_id' => $familyMember->id,
-                    'family_member_name' => $familyMember->full_name,
-                    'family_member_no' => $familyMember->member_no,
-                    'family_member_gender' => $familyMember->gender?->name ?? 'Unknown',
-                    'family_member_relationship_id' => $familyMember->relationship_id,
-                    'family_member_relationship_name' => $familyMember->relationship?->name ?? 'Unknown',
-                    'calculated_dynamic_relationship' => $dynamicRelationship
-                ]);
+            // Only include members with explicit relationships
+            if ($relationship !== 'Family Member') {
+                return [
+                    'member' => $this->formatMember($familyMember),
+                    'relationship' => $relationship,
+                    'hasDefinedRelationship' => true,
+                    'is_external' => false
+                ];
             }
             
-            return [
-                'member' => $this->formatMember($familyMember),
-                'relationship' => $dynamicRelationship,
-                'hasDefinedRelationship' => true, // Always true since we're using dynamic calculation
-                'suggestedRelationship' => null, // No suggestions in dynamic approach
-                'is_external' => false
-            ];
+            return null;
+        })->filter(function ($item) {
+            return $item !== null;
         })->toArray();
     }
 
     /**
-     * Get external members for the family
+     * Simple relationship calculation that works for both internal and external members
+     */
+    private function calculateSimpleRelationship(Member $currentMember, $familyMember): string
+    {
+        // Handle both Member and ExternalMember objects
+        $isExternal = $familyMember instanceof ExternalMember;
+        
+        // Direct parent-child relationships
+        if ($currentMember->mother_id == $familyMember->id) {
+            return 'Mother';
+        }
+        if ($currentMember->father_id == $familyMember->id) {
+            return 'Father';
+        }
+        if ($familyMember->mother_id == $currentMember->id) {
+            return $familyMember->gender?->name === 'Male' ? 'Son' : 'Daughter';
+        }
+        if ($familyMember->father_id == $currentMember->id) {
+            return $familyMember->gender?->name === 'Male' ? 'Son' : 'Daughter';
+        }
+
+        // Spouse relationships
+        if ($currentMember->spouse_id == $familyMember->id) {
+            return $familyMember->gender?->name === 'Male' ? 'Husband' : 'Wife';
+        }
+        if ($familyMember->spouse_id == $currentMember->id) {
+            return $familyMember->gender?->name === 'Male' ? 'Husband' : 'Wife';
+        }
+
+        // Sibling relationships (check if they share the same parent)
+        if ($this->areSiblings($currentMember, $familyMember)) {
+            return $familyMember->gender?->name === 'Male' ? 'Brother' : 'Sister';
+        }
+
+        // Uncle/Aunt relationships (sibling of parent)
+        if ($this->isUncleOrAunt($currentMember, $familyMember)) {
+            return $familyMember->gender?->name === 'Male' ? 'Uncle' : 'Aunt';
+        }
+
+        // Nephew/Niece relationships (child of sibling)
+        if ($this->isNephewOrNiece($currentMember, $familyMember)) {
+            return $familyMember->gender?->name === 'Male' ? 'Nephew' : 'Niece';
+        }
+
+        // In-law relationships (check this BEFORE grandparent/grandchild)
+        $inLawRelationship = $this->checkInLawRelationship($currentMember, $familyMember);
+        if ($inLawRelationship) {
+            return $inLawRelationship;
+        }
+
+        // Grandparent relationships (check AFTER in-law relationships)
+        if ($this->isGrandparent($currentMember, $familyMember)) {
+            return $familyMember->gender?->name === 'Male' ? 'Grand Father' : 'Grand Mother';
+        }
+        
+        // Grandchild relationships - only check if it's a direct grandchild (child of child)
+        if ($this->isDirectGrandchild($currentMember, $familyMember)) {
+            return $familyMember->gender?->name === 'Male' ? 'Grandson' : 'Granddaughter';
+        }
+
+        // Default
+        return 'Family Member';
+    }
+
+    /**
+     * Check for in-law relationships
+     */
+    private function checkInLawRelationship(Member $currentMember, $familyMember): ?string
+    {
+        // Check if family member is spouse of current member's child (daughter-in-law/son-in-law)
+        $currentMemberChildren = $this->getChildIds($currentMember);
+        foreach ($currentMemberChildren as $childId) {
+            $child = Member::find($childId);
+            if (!$child) {
+                $child = ExternalMember::find($childId);
+            }
+            
+            if ($child && $child->spouse_id == $familyMember->id) {
+                return $familyMember->gender?->name === 'Male' ? 'Son-in-Law' : 'Daughter-in-Law';
+            }
+        }
+
+        // Check if current member is spouse of family member's child (mother-in-law/father-in-law)
+        $familyMemberChildren = $this->getChildIds($familyMember);
+        foreach ($familyMemberChildren as $childId) {
+            $child = Member::find($childId);
+            if (!$child) {
+                $child = ExternalMember::find($childId);
+            }
+            
+            if ($child && $child->spouse_id == $currentMember->id) {
+                return $currentMember->gender?->name === 'Male' ? 'Father-in-Law' : 'Mother-in-Law';
+            }
+        }
+
+        // Check if family member is sibling of current member's spouse (sister-in-law/brother-in-law)
+        if ($currentMember->spouse_id) {
+            $spouse = Member::find($currentMember->spouse_id);
+            if (!$spouse) {
+                $spouse = ExternalMember::find($currentMember->spouse_id);
+            }
+            
+            if ($spouse && $this->areSiblings($spouse, $familyMember)) {
+                return $familyMember->gender?->name === 'Male' ? 'Brother-in-Law' : 'Sister-in-Law';
+            }
+        }
+
+        // Check if current member is sibling of family member's spouse (sister-in-law/brother-in-Law)
+        if ($familyMember->spouse_id) {
+            $familyMemberSpouse = Member::find($familyMember->spouse_id);
+            if (!$familyMemberSpouse) {
+                $familyMemberSpouse = ExternalMember::find($familyMember->spouse_id);
+            }
+            
+            if ($familyMemberSpouse && $this->areSiblings($familyMemberSpouse, $currentMember)) {
+                return $currentMember->gender?->name === 'Male' ? 'Brother-in-Law' : 'Sister-in-Law';
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if family member is grandparent of current member (works for both internal and external)
+     */
+    private function isGrandparent(Member $currentMember, $familyMember): bool
+    {
+        $currentMemberParents = $this->getParentIds($currentMember);
+        
+        foreach ($currentMemberParents as $parentId) {
+            $parent = Member::find($parentId);
+            if (!$parent) {
+                // Check if it's an external member
+                $parent = ExternalMember::find($parentId);
+            }
+            
+            if ($parent && ($parent->mother_id == $familyMember->id || $parent->father_id == $familyMember->id)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if family member is a direct grandchild of current member (child of child)
+     */
+    private function isDirectGrandchild(Member $currentMember, $familyMember): bool
+    {
+        // Get current member's children
+        $currentMemberChildren = $this->getChildIds($currentMember);
+        
+        // Check if family member is a child of any of current member's children
+        foreach ($currentMemberChildren as $childId) {
+            $child = Member::find($childId);
+            if (!$child) {
+                $child = ExternalMember::find($childId);
+            }
+            
+            if ($child) {
+                $childChildren = $this->getChildIds($child);
+                if (in_array($familyMember->id, $childChildren)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if family member is nephew/niece of current member (child of sibling)
+     */
+    private function isNephewOrNiece(Member $currentMember, $familyMember): bool
+    {
+        // Get current member's siblings
+        $siblingIds = $this->getSiblingIds($currentMember);
+        
+        // Check if family member is a child of any of current member's siblings
+        foreach ($siblingIds as $siblingId) {
+            $sibling = Member::find($siblingId);
+            if (!$sibling) {
+                $sibling = ExternalMember::find($siblingId);
+            }
+            
+            if ($sibling) {
+                $siblingChildren = $this->getChildIds($sibling);
+                if (in_array($familyMember->id, $siblingChildren)) {
+                    return true;
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if two members are siblings (works for both internal and external)
+     */
+    private function areSiblings(Member $member1, $member2): bool
+    {
+        $member1Parents = $this->getParentIds($member1);
+        $member2Parents = $this->getParentIds($member2);
+        
+        return !empty(array_intersect($member1Parents, $member2Parents));
+    }
+
+    /**
+     * Check if family member is uncle/aunt of current member (sibling of parent)
+     */
+    private function isUncleOrAunt(Member $currentMember, $familyMember): bool
+    {
+        // Get current member's parents
+        $parentIds = $this->getParentIds($currentMember);
+        
+        // Check if family member is a sibling of any of current member's parents
+        foreach ($parentIds as $parentId) {
+            $parent = Member::find($parentId);
+            if (!$parent) {
+                $parent = ExternalMember::find($parentId);
+            }
+            
+            if ($parent && $this->areSiblings($parent, $familyMember)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get external members with simple relationship calculation
      */
     public function getExternalMembers(Member $member): array
     {
@@ -124,504 +319,102 @@ class FamilyTreeService
         }
 
         $externalMembers = ExternalMember::where('family_no', $member->family_no)
-            ->with(['relationship'])
+            ->with(['relationship', 'gender'])
             ->get();
 
         return $externalMembers->map(function ($externalMember) use ($member) {
-            // Check if there's an existing relationship
-            $existingRelationship = $this->getExistingExternalRelationship($member, $externalMember);
+            // Treat external members as regular family members for relationship calculation
+            $relationship = $this->calculateSimpleRelationship($member, $externalMember);
             
             return [
                 'member' => $this->formatExternalMember($externalMember),
-                'relationship' => $existingRelationship ? $existingRelationship->name : 'External Family Member',
-                'hasDefinedRelationship' => $existingRelationship ? true : false,
-                'is_external' => true
+                'relationship' => $relationship,
+                'hasDefinedRelationship' => true,
+                'is_external' => true,
+                'member_type' => 'external'
             ];
         })->toArray();
     }
 
     /**
-     * Get suggested relationships for family members (only for members without existing relationships)
+     * Simple external member relationship calculation
      */
-    public function getSuggestedRelationships(Member $member): array
+    private function calculateExternalRelationship(Member $currentMember, ExternalMember $externalMember): string
     {
-        if (!$member->family_no) {
-            return [];
+        // External member is current member's parent
+        if ($currentMember->father_id == $externalMember->id) {
+            return 'Father';
+        }
+        if ($currentMember->mother_id == $externalMember->id) {
+            return 'Mother';
         }
 
-        $familyMembers = Member::where('family_no', $member->family_no)
-            ->where('id', '!=', $member->id)
-            ->with(['gender', 'relationship'])
-            ->get();
+        // Current member is external member's parent
+        if ($externalMember->father_id == $currentMember->id) {
+            return $externalMember->gender?->name === 'Male' ? 'Son' : 'Daughter';
+        }
+        if ($externalMember->mother_id == $currentMember->id) {
+            return $externalMember->gender?->name === 'Male' ? 'Son' : 'Daughter';
+        }
 
-        $suggestions = [];
+        // Spouse relationships
+        if ($currentMember->spouse_id == $externalMember->id) {
+            return $externalMember->gender?->name === 'Male' ? 'Husband' : 'Wife';
+        }
+        if ($externalMember->spouse_id == $currentMember->id) {
+            return $externalMember->gender?->name === 'Male' ? 'Husband' : 'Wife';
+        }
 
-        foreach ($familyMembers as $familyMember) {
-            // Only suggest if no relationship exists (head-centered approach)
-            if (!$this->getExistingRelationship($member, $familyMember)) {
-                $suggestion = $this->suggestRelationship($member, $familyMember);
-                if ($suggestion) {
-                    // Validate that the suggestion is gender-appropriate
-                    $familyMemberGender = $familyMember->gender?->name ?? '';
-                    $memberGender = $member->gender?->name ?? '';
-                    
-                    // Double-check gender appropriateness
-                    $isAppropriate = $this->isGenderAppropriate($suggestion, $familyMemberGender);
-                    
-                    // Additional validation for spouse relationships
-                    if (in_array($suggestion, ['Husband', 'Wife'])) {
-                        if ($suggestion === 'Husband' && $memberGender !== 'Male') {
-                            $isAppropriate = false; // Only males can be husbands
-                        } elseif ($suggestion === 'Wife' && $memberGender !== 'Female') {
-                            $isAppropriate = false; // Only females can be wives
-                        }
-                    }
-                    
-                    if ($isAppropriate) {
-                        $suggestions[] = [
-                            'member' => $this->formatMember($familyMember),
-                            'suggestedRelationship' => $suggestion,
-                            'confidence' => $this->getSuggestionConfidence($member, $familyMember),
-                            'is_external' => false,
-                            'headCentered' => true
-                        ];
-                    } else {
-                        // Debug logging for rejected suggestions
-                        if ($member->id === 5 || $familyMember->id === 5) {
-                            \Log::info("Rejected suggestion for member ID 5", [
-                                'member_id' => $member->id,
-                                'member_name' => $member->full_name,
-                                'member_gender' => $memberGender,
-                                'family_member_id' => $familyMember->id,
-                                'family_member_name' => $familyMember->full_name,
-                                'family_member_gender' => $familyMemberGender,
-                                'suggestion' => $suggestion,
-                                'is_appropriate' => $isAppropriate,
-                                'reason' => 'Gender inappropriate for head-centered suggestion'
-                            ]);
-                        }
-                    }
+        // Grandparent relationships
+        if ($this->isExternalGrandparent($currentMember, $externalMember)) {
+            return $externalMember->gender?->name === 'Male' ? 'Grand Father' : 'Grand Mother';
+        }
+        if ($this->isExternalGrandchild($currentMember, $externalMember)) {
+            return $externalMember->gender?->name === 'Male' ? 'Grandson' : 'Granddaughter';
+        }
+
+        // Fallback
+        if ($externalMember->relationship_id) {
+            $relationship = Relationship::find($externalMember->relationship_id);
+            if ($relationship) {
+                return $relationship->name;
+            }
+        }
+
+        return 'External Family Member';
+    }
+
+    /**
+     * Check if external member is grandparent of current member
+     */
+    private function isExternalGrandparent(Member $currentMember, ExternalMember $externalMember): bool
+    {
+        $currentMemberParents = $this->getParentIds($currentMember);
+        
+        foreach ($currentMemberParents as $parentId) {
+            $parent = Member::find($parentId);
+            if ($parent && ($parent->mother_id == $externalMember->id || $parent->father_id == $externalMember->id)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if external member is grandchild of current member
+     */
+    private function isExternalGrandchild(Member $currentMember, ExternalMember $externalMember): bool
+    {
+        $externalMemberParents = [$externalMember->father_id, $externalMember->mother_id];
+        
+        foreach ($externalMemberParents as $parentId) {
+            if ($parentId) {
+                $parent = Member::find($parentId);
+                if ($parent && ($parent->mother_id == $currentMember->id || $parent->father_id == $currentMember->id)) {
+                    return true;
                 }
             }
-        }
-
-        return $suggestions;
-    }
-
-    /**
-     * Get existing relationship between two members
-     */
-    private function getExistingRelationship(Member $member1, Member $member2): ?FamilyLink
-    {
-        // Check both directions for existing relationships
-        $relationship = FamilyLink::where('member_id', $member1->id)
-            ->where('related_member_id', $member2->id)
-            ->with('relationship')
-            ->first();
-            
-        if (!$relationship) {
-            // Check reverse direction
-            $relationship = FamilyLink::where('member_id', $member2->id)
-                ->where('related_member_id', $member1->id)
-                ->with('relationship')
-                ->first();
-        }
-        
-        // Debug logging for specific case
-        if ($member1->member_no === 'SAL-002' || $member2->member_no === 'SAL-002' || $member1->id === 5 || $member2->id === 5) {
-            \Log::info("Debugging relationship for SAL-002 or member ID 5", [
-                'member1_id' => $member1->id,
-                'member1_name' => $member1->full_name,
-                'member1_no' => $member1->member_no,
-                'member2_id' => $member2->id,
-                'member2_name' => $member2->full_name,
-                'member2_no' => $member2->member_no,
-                'relationship_found' => $relationship ? true : false,
-                'relationship_name' => $relationship ? $relationship->relationship->name : 'null',
-                'relationship_direction' => $relationship ? ($relationship->member_id === $member1->id ? 'direct' : 'reverse') : 'none'
-            ]);
-        }
-        
-        return $relationship;
-    }
-
-    /**
-     * Get existing relationship between a member and external member
-     */
-    private function getExistingExternalRelationship(Member $member, ExternalMember $externalMember): ?FamilyLink
-    {
-        return FamilyLink::where('member_id', $member->id)
-            ->where('related_external_member_id', $externalMember->id)
-            ->with('relationship')
-            ->first();
-    }
-
-    /**
-     * Get the head of the family (person with relationship_id = "Head" or oldest person)
-     */
-    private function getFamilyHead(string $familyNo): ?Member
-    {
-        // First, try to find someone with relationship_id = "Head"
-        $head = Member::where('family_no', $familyNo)
-            ->whereHas('relationship', function ($query) {
-                $query->where('name', 'Head');
-            })
-            ->with(['gender'])
-            ->first();
-
-        if ($head) {
-            // Debug logging for head found
-            \Log::info("Found family head", [
-                'family_no' => $familyNo,
-                'head_id' => $head->id,
-                'head_name' => $head->full_name,
-                'head_gender' => $head->gender?->name ?? 'Unknown',
-                'head_type' => 'designated_head'
-            ]);
-            return $head;
-        }
-
-        // If no head found, return the oldest person
-        $oldestPerson = Member::where('family_no', $familyNo)
-            ->whereNotNull('date_of_birth')
-            ->with(['gender'])
-            ->orderBy('date_of_birth', 'asc')
-            ->first();
-
-        if ($oldestPerson) {
-            // Debug logging for oldest person as head
-            \Log::info("Using oldest person as family head", [
-                'family_no' => $familyNo,
-                'head_id' => $oldestPerson->id,
-                'head_name' => $oldestPerson->full_name,
-                'head_gender' => $oldestPerson->gender?->name ?? 'Unknown',
-                'head_type' => 'oldest_person',
-                'date_of_birth' => $oldestPerson->date_of_birth
-            ]);
-        }
-
-        return $oldestPerson;
-    }
-
-    /**
-     * Suggest relationship based on head-centered logic
-     */
-    public function suggestRelationship(Member $member1, Member $member2): ?string
-    {
-        if (!$member1->family_no || $member1->family_no !== $member2->family_no) {
-            return null;
-        }
-
-        // Get the family head (or oldest person if no head)
-        $familyHead = $this->getFamilyHead($member1->family_no);
-        if (!$familyHead) {
-            return null;
-        }
-
-        // Debug logging for member ID 5
-        if ($member1->id === 5 || $member2->id === 5) {
-            \Log::info("Head-centered suggestion for member ID 5", [
-                'member1_id' => $member1->id,
-                'member1_name' => $member1->full_name,
-                'member1_gender' => $member1->gender?->name ?? 'Unknown',
-                'member2_id' => $member2->id,
-                'member2_name' => $member2->full_name,
-                'member2_gender' => $member2->gender?->name ?? 'Unknown',
-                'head_id' => $familyHead->id,
-                'head_name' => $familyHead->full_name,
-                'head_gender' => $familyHead->gender?->name ?? 'Unknown'
-            ]);
-        }
-
-        // Calculate relationships relative to the head
-        $member1ToHead = $this->calculateRelationshipToHead($member1, $familyHead);
-        $member2ToHead = $this->calculateRelationshipToHead($member2, $familyHead);
-
-        // If either member is the head, use direct head-based logic
-        if ($member1->id === $familyHead->id) {
-            return $this->suggestRelationshipFromHead($member1, $member2);
-        }
-        if ($member2->id === $familyHead->id) {
-            return $this->suggestRelationshipToHead($member1, $member2);
-        }
-
-        // Both members are not the head - calculate relationship between them
-        return $this->calculateRelationshipBetweenMembers($member1, $member2, $familyHead);
-    }
-
-    /**
-     * Suggest relationship from head's perspective (head → other member)
-     */
-    private function suggestRelationshipFromHead(Member $head, Member $otherMember): ?string
-    {
-        $ageDiff = $this->getAgeDifference($head, $otherMember);
-        $otherGender = $otherMember->gender?->name ?? '';
-
-        // Head is older than other member
-        if ($ageDiff > 0) {
-            if ($ageDiff >= self::AGE_THRESHOLDS['great_grandparent']['min']) {
-                return $otherGender === 'Male' ? 'Great Grand Son' : 'Great Grand Daughter';
-            } elseif ($ageDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-                return $otherGender === 'Male' ? 'Grand Son' : 'Grand Daughter';
-            } elseif ($ageDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-                return $otherGender === 'Male' ? 'Son' : 'Daughter';
-            } elseif ($ageDiff <= self::AGE_THRESHOLDS['sibling']['max']) {
-                return $otherGender === 'Male' ? 'Brother' : 'Sister';
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Suggest relationship to head (other member → head)
-     */
-    private function suggestRelationshipToHead(Member $otherMember, Member $head): ?string
-    {
-        $ageDiff = $this->getAgeDifference($otherMember, $head);
-        $headGender = $head->gender?->name ?? '';
-
-        // Other member is younger than head
-        if ($ageDiff < 0) {
-            $absAgeDiff = abs($ageDiff);
-            
-            if ($absAgeDiff >= self::AGE_THRESHOLDS['great_grandparent']['min']) {
-                return $headGender === 'Male' ? 'Great Grand Father' : 'Great Grand Mother';
-            } elseif ($absAgeDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-                return $headGender === 'Male' ? 'Grand Father' : 'Grand Mother';
-            } elseif ($absAgeDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-                return $headGender === 'Male' ? 'Father' : 'Mother';
-            } elseif ($absAgeDiff <= self::AGE_THRESHOLDS['sibling']['max']) {
-                return $headGender === 'Male' ? 'Brother' : 'Sister';
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Calculate relationship between two non-head members using head as reference
-     */
-    private function calculateRelationshipBetweenMembers(Member $member1, Member $member2, Member $head): ?string
-    {
-        $ageDiff = $this->getAgeDifference($member1, $member2);
-        $gender1 = $member1->gender?->name ?? '';
-        $gender2 = $member2->gender?->name ?? '';
-
-        // Debug logging for member ID 5
-        if ($member1->id === 5 || $member2->id === 5) {
-            \Log::info("Calculating relationship between members", [
-                'member1_id' => $member1->id,
-                'member1_name' => $member1->full_name,
-                'member1_gender' => $gender1,
-                'member2_id' => $member2->id,
-                'member2_name' => $member2->full_name,
-                'member2_gender' => $gender2,
-                'age_diff' => $ageDiff,
-                'age_diff_abs' => abs($ageDiff)
-            ]);
-        }
-
-        // Similar age - likely siblings or spouses
-        if (abs($ageDiff) <= self::AGE_THRESHOLDS['sibling']['max']) {
-            if ($gender1 !== $gender2) {
-                // Different genders - likely spouses
-                // Validate gender appropriateness before suggesting
-                if ($gender1 === 'Male' && $gender2 === 'Female') {
-                    return 'Husband'; // member1 is male, member2 is female
-                } elseif ($gender1 === 'Female' && $gender2 === 'Male') {
-                    return 'Wife'; // member1 is female, member2 is male
-                }
-            } else {
-                // Same gender - likely siblings
-                return $gender1 === 'Male' ? 'Brother' : 'Sister';
-            }
-        }
-
-        // Age difference suggests parent/child relationship
-        if (abs($ageDiff) >= self::AGE_THRESHOLDS['parent_child']['min'] && 
-            abs($ageDiff) <= self::AGE_THRESHOLDS['parent_child']['max']) {
-            
-            if ($ageDiff > 0) {
-                // member1 is older than member2, so member1 is parent, member2 is child
-                return $gender2 === 'Male' ? 'Son' : 'Daughter';
-            } else {
-                // member2 is older than member1, so member2 is parent, member1 is child
-                return $gender2 === 'Male' ? 'Father' : 'Mother';
-            }
-        }
-
-        // Age difference suggests grandparent/grandchild relationship
-        if (abs($ageDiff) >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-            if ($ageDiff > 0) {
-                // member1 is older than member2, so member1 is grandparent, member2 is grandchild
-                return $gender2 === 'Male' ? 'Grand Son' : 'Grand Daughter';
-            } else {
-                // member2 is older than member1, so member2 is grandparent, member1 is grandchild
-                return $gender2 === 'Male' ? 'Grand Father' : 'Grand Mother';
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Calculate relationship from a member to the head
-     */
-    private function calculateRelationshipToHead(Member $member, Member $head): ?string
-    {
-        $ageDiff = $this->getAgeDifference($member, $head);
-        $memberGender = $member->gender?->name ?? '';
-        $headGender = $head->gender?->name ?? '';
-
-        // If member is younger than head
-        if ($ageDiff < 0) {
-            $absAgeDiff = abs($ageDiff);
-            
-            if ($absAgeDiff >= self::AGE_THRESHOLDS['great_grandparent']['min']) {
-                return $headGender === 'Male' ? 'Great Grand Father' : 'Great Grand Mother';
-            } elseif ($absAgeDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-                return $headGender === 'Male' ? 'Grand Father' : 'Grand Mother';
-            } elseif ($absAgeDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-                return $headGender === 'Male' ? 'Father' : 'Mother';
-            } elseif ($absAgeDiff <= self::AGE_THRESHOLDS['sibling']['max']) {
-                return $headGender === 'Male' ? 'Brother' : 'Sister';
-            }
-        }
-        // If member is older than head
-        elseif ($ageDiff > 0) {
-            if ($ageDiff >= self::AGE_THRESHOLDS['great_grandparent']['min']) {
-                return $memberGender === 'Male' ? 'Great Grand Son' : 'Great Grand Daughter';
-            } elseif ($ageDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-                return $memberGender === 'Male' ? 'Grand Son' : 'Grand Daughter';
-            } elseif ($ageDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-                return $memberGender === 'Male' ? 'Son' : 'Daughter';
-            } elseif ($ageDiff <= self::AGE_THRESHOLDS['sibling']['max']) {
-                return $memberGender === 'Male' ? 'Brother' : 'Sister';
-            }
-        }
-        // Same age - likely siblings
-        else {
-            return $memberGender === 'Male' ? 'Brother' : 'Sister';
-        }
-
-        return null;
-    }
-
-    /**
-     * Get age difference between two members
-     */
-    private function getAgeDifference(Member $member1, Member $member2): int
-    {
-        if (!$member1->date_of_birth || !$member2->date_of_birth) {
-            return 0;
-        }
-
-        $date1 = \Carbon\Carbon::parse($member1->date_of_birth);
-        $date2 = \Carbon\Carbon::parse($member2->date_of_birth);
-
-        return $date1->diffInYears($date2, false);
-    }
-
-    /**
-     * Get confidence level for relationship suggestion
-     */
-    public function getSuggestionConfidence(Member $member1, Member $member2): string
-    {
-        $ageDiff = abs($this->getAgeDifference($member1, $member2));
-        
-        if ($ageDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-            return 'high'; // Grandparent/grandchild relationship
-        } elseif ($ageDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-            return 'medium'; // Parent/child relationship
-        } elseif ($ageDiff <= self::AGE_THRESHOLDS['sibling']['max']) {
-            return 'high'; // Sibling/spouse relationship
-        } else {
-            return 'low'; // Uncertain
-        }
-    }
-
-    /**
-     * Get reverse relationship name
-     */
-    private function getReverseRelationshipName(string $relationshipName): string
-    {
-        $reverseMap = [
-            'Father' => 'Son',
-            'Mother' => 'Daughter',
-            'Son' => 'Father',
-            'Daughter' => 'Mother',
-            'Husband' => 'Wife',
-            'Wife' => 'Husband',
-            'Brother' => 'Brother',
-            'Sister' => 'Sister',
-            'Grand Father' => 'Grand Son',
-            'Grand Mother' => 'Grand Daughter',
-            'Grand Son' => 'Grand Father',
-            'Grand Daughter' => 'Grand Mother',
-            'Great Grand Father' => 'Great Grand Son',
-            'Great Grand Mother' => 'Great Grand Daughter',
-            'Great Grand Son' => 'Great Grand Father',
-            'Great Grand Daughter' => 'Great Grand Mother',
-            'Uncle' => 'Nephew',
-            'Aunty' => 'Niece',
-            'Nephew' => 'Uncle',
-            'Niece' => 'Aunty',
-            'Cousin' => 'Cousin',
-            'Spouse' => 'Spouse',
-            'Head' => 'Family Member',
-            // In-law relationships - these are typically bidirectional
-            'Daughter-in-Law' => 'Mother-in-Law',
-            'Son-in-Law' => 'Father-in-Law',
-            'Mother-in-Law' => 'Daughter-in-Law',
-            'Father-in-Law' => 'Son-in-Law',
-            'Sister-in-Law' => 'Sister-in-Law',
-            'Brother-in-Law' => 'Brother-in-Law'
-        ];
-        
-        $reverseName = $reverseMap[$relationshipName] ?? $relationshipName; // Keep original if not found
-        
-        // Debug logging for specific case
-        if ($relationshipName === 'Mother' || $relationshipName === 'Father' || $relationshipName === 'Son' || $relationshipName === 'Daughter' || $relationshipName === 'Daughter-in-Law') {
-            \Log::info("Reverse relationship mapping", [
-                'original' => $relationshipName,
-                'reverse' => $reverseName,
-                'found_in_map' => isset($reverseMap[$relationshipName])
-            ]);
-        }
-        
-        return $reverseName;
-    }
-
-    /**
-     * Validate if a relationship is gender-appropriate
-     */
-    public function isGenderAppropriate(string $relationshipName, string $gender): bool
-    {
-        $maleRelationships = [
-            'Father', 'Son', 'Husband', 'Brother', 'Grand Father', 'Grand Son',
-            'Great Grand Father', 'Great Grand Son', 'Uncle', 'Nephew',
-            'Son-in-Law', 'Father-in-Law', 'Brother-in-Law'
-        ];
-        
-        $femaleRelationships = [
-            'Mother', 'Daughter', 'Wife', 'Sister', 'Grand Mother', 'Grand Daughter',
-            'Great Grand Mother', 'Great Grand Daughter', 'Aunty', 'Niece',
-            'Daughter-in-Law', 'Mother-in-Law', 'Sister-in-Law'
-        ];
-        
-        $neutralRelationships = [
-            'Cousin', 'Spouse', 'Head', 'Family Member', 'External Family Member'
-        ];
-        
-        if (in_array($relationshipName, $neutralRelationships)) {
-            return true;
-        }
-        
-        if ($gender === 'Male') {
-            return in_array($relationshipName, $maleRelationships);
-        } elseif ($gender === 'Female') {
-            return in_array($relationshipName, $femaleRelationships);
         }
         
         return false;
@@ -1020,210 +813,24 @@ class FamilyTreeService
             'address' => $member->address,
             'family_no' => $member->family_no,
             'relationship' => $member->relationship,
-            'is_external' => true
+            'gender' => $member->gender,
+            'community' => null, // External members don't have community
+            'father' => $member->father,
+            'mother' => $member->mother,
+            'spouse' => $member->spouse,
+            'is_external' => true,
+            'member_type' => 'external'
         ];
     }
 
     /**
-     * Calculate dynamic relationship based on current member as center
+     * Get parent IDs for a member (works for both internal and external)
      */
-    private function calculateDynamicRelationship(Member $currentMember, Member $familyMember): string
-    {
-        // Get all family links to understand the family structure
-        $familyLinks = $this->getAllFamilyLinks($currentMember->family_no);
-        
-        // Debug logging for Trevin's case
-        if ($currentMember->member_no === '2025-SAL-M000007') {
-            \Log::info("Calculating relationship for Trevin", [
-                'current_member_id' => $currentMember->id,
-                'current_member_name' => $currentMember->full_name,
-                'current_member_marital_status' => $currentMember->marital_status,
-                'current_member_relation_member_id' => $currentMember->relation_member_id,
-                'family_member_id' => $familyMember->id,
-                'family_member_name' => $familyMember->full_name,
-                'family_member_marital_status' => $familyMember->marital_status,
-                'family_member_relation_member_id' => $familyMember->relation_member_id,
-            ]);
-        }
-        
-        // Check for spouse relationship first (highest priority)
-        $spouseRelationship = $this->checkSpouseRelationship($currentMember, $familyMember);
-        if ($spouseRelationship) {
-            if ($currentMember->member_no === '2025-SAL-M000007') {
-                \Log::info("Found spouse relationship", ['relationship' => $spouseRelationship]);
-            }
-            return $spouseRelationship;
-        }
-        
-        // Check for parent-child relationship
-        $parentChildRelationship = $this->checkParentChildRelationship($currentMember, $familyMember, $familyLinks);
-        if ($parentChildRelationship) {
-            if ($currentMember->member_no === '2025-SAL-M000007') {
-                \Log::info("Found parent-child relationship", ['relationship' => $parentChildRelationship]);
-            }
-            return $parentChildRelationship;
-        }
-        
-        // Check for sibling relationship
-        $siblingRelationship = $this->checkSiblingRelationship($currentMember, $familyMember, $familyLinks);
-        if ($siblingRelationship) {
-            if ($currentMember->member_no === '2025-SAL-M000007') {
-                \Log::info("Found sibling relationship", ['relationship' => $siblingRelationship]);
-            }
-            return $siblingRelationship;
-        }
-        
-        // Check for in-law relationships
-        $inLawRelationship = $this->checkInLawRelationship($currentMember, $familyMember, $familyLinks);
-        if ($inLawRelationship) {
-            if ($currentMember->member_no === '2025-SAL-M000007') {
-                \Log::info("Found in-law relationship", ['relationship' => $inLawRelationship]);
-            }
-            return $inLawRelationship;
-        }
-        
-        // Fallback to age-based relationship
-        $ageBasedRelationship = $this->calculateAgeBasedRelationship($currentMember, $familyMember);
-        if ($currentMember->member_no === '2025-SAL-M000007') {
-            \Log::info("Using age-based relationship", ['relationship' => $ageBasedRelationship]);
-        }
-        return $ageBasedRelationship;
-    }
-
-    /**
-     * Get all family links for a family
-     */
-    private function getAllFamilyLinks(string $familyNo): array
-    {
-        return FamilyLink::whereHas('member', function ($query) use ($familyNo) {
-            $query->where('family_no', $familyNo);
-        })->orWhereHas('relatedMember', function ($query) use ($familyNo) {
-            $query->where('family_no', $familyNo);
-        })->with(['member', 'relatedMember', 'relationship'])->get()->toArray();
-    }
-
-    /**
-     * Check if two members are spouses
-     */
-    private function checkSpouseRelationship(Member $member1, Member $member2): ?string
-    {
-        // Check if they are spouses using the new spouse_id field
-        if ($member1->spouse_id == $member2->id) {
-            return $member1->gender?->name === 'Male' ? 'Wife' : 'Husband';
-        }
-        
-        return null;
-    }
-
-    /**
-     * Check parent-child relationship
-     */
-    private function checkParentChildRelationship(Member $currentMember, Member $familyMember, array $familyLinks): ?string
-    {
-        // Check if family member is current member's parent
-        if ($currentMember->mother_id == $familyMember->id) {
-            return 'Mother';
-        }
-        if ($currentMember->father_id == $familyMember->id) {
-            return 'Father';
-        }
-        
-        // Check if current member is family member's parent
-        if ($familyMember->mother_id == $currentMember->id) {
-            return 'Daughter';
-        }
-        if ($familyMember->father_id == $currentMember->id) {
-            return 'Son';
-        }
-        
-        return null;
-    }
-
-    /**
-     * Check sibling relationship
-     */
-    private function checkSiblingRelationship(Member $currentMember, Member $familyMember, array $familyLinks): ?string
-    {
-        // Check if they share the same parents
-        $currentMemberParents = $this->getParentIds($currentMember);
-        $familyMemberParents = $this->getParentIds($familyMember);
-        
-        if (!empty(array_intersect($currentMemberParents, $familyMemberParents))) {
-            return $familyMember->gender?->name === 'Male' ? 'Brother' : 'Sister';
-        }
-        
-        return null;
-    }
-
-    /**
-     * Check in-law relationship
-     */
-    private function checkInLawRelationship(Member $currentMember, Member $familyMember, array $familyLinks): ?string
-    {
-        // Check if family member is spouse of current member's child
-        $currentMemberChildren = $this->getChildIds($currentMember);
-        foreach ($currentMemberChildren as $childId) {
-            $child = Member::find($childId);
-            if ($child && $this->checkSpouseRelationship($child, $familyMember)) {
-                return $familyMember->gender?->name === 'Male' ? 'Son-in-Law' : 'Daughter-in-Law';
-            }
-        }
-        
-        // Check if current member is spouse of family member's child
-        $familyMemberChildren = $this->getChildIds($familyMember);
-        foreach ($familyMemberChildren as $childId) {
-            $child = Member::find($childId);
-            if ($child && $this->checkSpouseRelationship($child, $currentMember)) {
-                return $familyMember->gender?->name === 'Male' ? 'Father-in-Law' : 'Mother-in-Law';
-            }
-        }
-        
-        return null;
-    }
-
-    /**
-     * Calculate age-based relationship as fallback
-     */
-    private function calculateAgeBasedRelationship(Member $currentMember, Member $familyMember): string
-    {
-        $ageDiff = $this->getAgeDifference($currentMember, $familyMember);
-        $familyMemberGender = $familyMember->gender?->name ?? '';
-        
-        // Similar age - likely siblings
-        if (abs($ageDiff) <= self::AGE_THRESHOLDS['sibling']['max']) {
-            return $familyMemberGender === 'Male' ? 'Brother' : 'Sister';
-        }
-        
-        // Current member is older - family member is child
-        if ($ageDiff > 0) {
-            return $familyMemberGender === 'Male' ? 'Son' : 'Daughter';
-        }
-        
-        // Current member is younger - family member is parent or grandparent
-        $absAgeDiff = abs($ageDiff);
-        
-        // Grandparent relationship (40+ years difference)
-        if ($absAgeDiff >= self::AGE_THRESHOLDS['grandparent_grandchild']['min']) {
-            return $familyMemberGender === 'Male' ? 'Grand Father' : 'Grand Mother';
-        }
-        
-        // Parent relationship (15-40 years difference)
-        if ($absAgeDiff >= self::AGE_THRESHOLDS['parent_child']['min']) {
-            return $familyMemberGender === 'Male' ? 'Father' : 'Mother';
-        }
-        
-        // Fallback to parent for smaller age differences
-        return $familyMemberGender === 'Male' ? 'Father' : 'Mother';
-    }
-
-    /**
-     * Get parent IDs for a member
-     */
-    private function getParentIds(Member $member): array
+    private function getParentIds($member): array
     {
         $parentIds = [];
         
-        // Use the new separate parent fields
+        // Use the separate parent fields
         if ($member->mother_id) {
             $parentIds[] = $member->mother_id;
         }
@@ -1231,27 +838,44 @@ class FamilyTreeService
             $parentIds[] = $member->father_id;
         }
         
-        // Also check family links for parent relationships (for backward compatibility)
-        $linkParentIds = FamilyLink::where('related_member_id', $member->id)
-            ->whereHas('relationship', function ($query) {
-                $query->whereIn('name', ['Father', 'Mother']);
-            })->pluck('member_id')->toArray();
-        
-        return array_merge($parentIds, $linkParentIds);
+        return $parentIds;
     }
 
     /**
-     * Get child IDs for a member
+     * Get child IDs for a member (works for both internal and external)
      */
-    private function getChildIds(Member $member): array
+    private function getChildIds($member): array
     {
         $childIds = [];
         
         // Use the new parent fields
-        $childIds = Member::where('mother_id', $member->id)
-            ->orWhere('father_id', $member->id)
-            ->pluck('id')
-            ->toArray();
+        if ($member instanceof Member) {
+            $childIds = Member::where('mother_id', $member->id)
+                ->orWhere('father_id', $member->id)
+                ->pluck('id')
+                ->toArray();
+            
+            // Also check external members who have this member as parent
+            $externalChildIds = ExternalMember::where('mother_id', $member->id)
+                ->orWhere('father_id', $member->id)
+                ->pluck('id')
+                ->toArray();
+            
+            $childIds = array_merge($childIds, $externalChildIds);
+        } elseif ($member instanceof ExternalMember) {
+            $childIds = Member::where('mother_id', $member->id)
+                ->orWhere('father_id', $member->id)
+                ->pluck('id')
+                ->toArray();
+            
+            // Also check external members
+            $externalChildIds = ExternalMember::where('mother_id', $member->id)
+                ->orWhere('father_id', $member->id)
+                ->pluck('id')
+                ->toArray();
+            
+            $childIds = array_merge($childIds, $externalChildIds);
+        }
         
         // Also check family links for children (for backward compatibility)
         $linkChildIds = FamilyLink::where('member_id', $member->id)
@@ -1260,5 +884,151 @@ class FamilyTreeService
             })->pluck('related_member_id')->toArray();
         
         return array_merge($childIds, $linkChildIds);
+    }
+
+    /**
+     * Get sibling IDs for a member (works for both internal and external)
+     */
+    private function getSiblingIds($member): array
+    {
+        $parentIds = $this->getParentIds($member);
+        
+        if (empty($parentIds)) {
+            return [];
+        }
+
+        // Find siblings through parents
+        $siblingIds = Member::where(function ($query) use ($parentIds) {
+            $query->whereIn('mother_id', $parentIds)
+                  ->orWhereIn('father_id', $parentIds);
+        })
+        ->where('id', '!=', $member->id)
+        ->pluck('id')
+        ->toArray();
+
+        // Also check external members
+        $externalSiblingIds = ExternalMember::where(function ($query) use ($parentIds) {
+            $query->whereIn('mother_id', $parentIds)
+                  ->orWhereIn('father_id', $parentIds);
+        })
+        ->where('id', '!=', $member->id)
+        ->pluck('id')
+        ->toArray();
+
+        return array_merge($siblingIds, $externalSiblingIds);
+    }
+
+    /**
+     * Get all family members (internal and external)
+     */
+    private function getAllFamilyMembers(Member $member): Collection
+    {
+        $familyMembers = Member::where('family_no', $member->family_no)
+            ->where('id', '!=', $member->id) // Filter out current member
+            ->with(['gender', 'community', 'relationship'])
+            ->get();
+
+        $externalMembers = ExternalMember::where('family_no', $member->family_no)
+            ->with(['gender', 'relationship'])
+            ->get();
+
+        return $familyMembers->merge($externalMembers);
+    }
+
+    /**
+     * Get all spouse IDs (bidirectional) - includes external members
+     */
+    private function getSpouseIds(Member $member): array
+    {
+        $spouseIds = [];
+        
+        // Current member's spouse
+        if ($member->spouse_id) {
+            $spouseIds[] = $member->spouse_id;
+        }
+        
+        // Members who have current member as their spouse
+        $spouseIds = array_merge($spouseIds, 
+            Member::where('spouse_id', $member->id)->pluck('id')->toArray()
+        );
+        
+        // External members who have current member as their spouse
+        $spouseIds = array_merge($spouseIds,
+            ExternalMember::where('spouse_id', $member->id)->pluck('id')->toArray()
+        );
+        
+        return array_unique($spouseIds);
+    }
+
+    /**
+     * Get all family members and categorize them
+     */
+    private function categorizeFamilyMembers(Member $member, Collection $allMembers): array
+    {
+        $childIds = $this->getChildIds($member);
+        $spouseIds = $this->getSpouseIds($member);
+        $parentIds = $this->getParentIds($member);
+        $siblingIds = $this->getSiblingIds($member);
+        
+        $categorized = [
+            'parents' => [],
+            'spouse' => null,
+            'children' => [],
+            'siblings' => [],
+            'familyMembers' => []
+        ];
+        
+        foreach ($allMembers as $familyMember) {
+            $memberId = $familyMember->id;
+            
+            if (in_array($memberId, $parentIds)) {
+                $categorized['parents'][] = [
+                    'member' => $familyMember instanceof ExternalMember 
+                        ? $this->formatExternalMember($familyMember) 
+                        : $this->formatMember($familyMember),
+                    'relationship' => $member->mother_id == $memberId ? 'Mother' : 'Father'
+                ];
+            }
+            elseif (in_array($memberId, $spouseIds)) {
+                $categorized['spouse'] = [
+                    'member' => $familyMember instanceof ExternalMember 
+                        ? $this->formatExternalMember($familyMember) 
+                        : $this->formatMember($familyMember),
+                    'relationship' => $familyMember->gender?->name === 'Male' ? 'Husband' : 'Wife'
+                ];
+            }
+            elseif (in_array($memberId, $childIds)) {
+                $categorized['children'][] = [
+                    'member' => $familyMember instanceof ExternalMember 
+                        ? $this->formatExternalMember($familyMember) 
+                        : $this->formatMember($familyMember),
+                    'relationship' => $familyMember->gender?->name === 'Male' ? 'Son' : 'Daughter'
+                ];
+            }
+            elseif (in_array($memberId, $siblingIds)) {
+                $categorized['siblings'][] = [
+                    'member' => $familyMember instanceof ExternalMember 
+                        ? $this->formatExternalMember($familyMember) 
+                        : $this->formatMember($familyMember),
+                    'relationship' => $familyMember->gender?->name === 'Male' ? 'Brother' : 'Sister'
+                ];
+            }
+            else {
+                // Only members not in other categories
+                $relationship = $this->calculateSimpleRelationship($member, $familyMember);
+                if ($relationship !== 'Family Member') {
+                    $categorized['familyMembers'][] = [
+                        'member' => $familyMember instanceof ExternalMember 
+                            ? $this->formatExternalMember($familyMember) 
+                            : $this->formatMember($familyMember),
+                        'relationship' => $relationship,
+                        'hasDefinedRelationship' => true,
+                        'is_external' => $familyMember instanceof ExternalMember
+                    ];
+                }
+            }
+        }
+        
+        return $categorized;
     }
 } 

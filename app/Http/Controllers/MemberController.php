@@ -280,11 +280,11 @@ class MemberController extends Controller
             'totalCount' => $totalCount,
             'familyStats' => $familyStats,
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
-            'canViewAnyMember' => auth()->user()->can('read-member'),
-            'canCreateMember' => auth()->user()->can('create-member'),
-            'canEditMember' => auth()->user()->can('update-member'),
-            'canDeleteMember' => auth()->user()->can('delete-member'),
-            'canRestoreMember' => auth()->user()->can('restore-member'),
+            'canViewAnyMember' => auth()->user()->can('read-external-member'),
+            'canCreateMember' => auth()->user()->can('create-external-member'),
+            'canEditMember' => auth()->user()->can('update-external-member'),
+            'canDeleteMember' => auth()->user()->can('delete-external-member'),
+            'canRestoreMember' => auth()->user()->can('restore-external-member'),
             'pagination' => [
                 'currentPage' => $query->paginate($perPage)->currentPage(),
                 'lastPage' => $query->paginate($perPage)->lastPage(),
@@ -1122,7 +1122,7 @@ class MemberController extends Controller
      */
     public function searchMembers(Request $request)
     {
-        $query = $request->input('q', '');
+        $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
         $limit = $request->input('limit', 10);
         
         if (empty($query)) {
@@ -1160,6 +1160,8 @@ class MemberController extends Controller
                     'member_no' => $member->member_no,
                     'family_no' => $member->family_no,
                     'full_name' => "{$member->first_name} {$member->last_name}",
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
                     'community' => $member->community->name ?? '',
                     'relationship' => $member->relationship->name ?? '',
                     'gender' => $member->gender->name ?? ''

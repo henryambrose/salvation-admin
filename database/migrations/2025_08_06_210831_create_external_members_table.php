@@ -13,19 +13,23 @@ return new class extends Migration
     {
         Schema::create('external_members', function (Blueprint $table) {
             $table->id();
+            $table->string('external_member_no')->unique()->nullable();
+
             $table->string('first_name'); // Required
             $table->string('last_name')->nullable();
             $table->text('address')->nullable();
             $table->string('family_no'); // Default from initiating family
-            $table->unsignedBigInteger('relationship_id');
-            $table->timestamps();
-
-            // Foreign key constraints
-            $table->foreign('relationship_id')->references('id')->on('relationships')->onDelete('cascade');
-            
-            // Indexes for better performance
+            $table->foreignId('relationship_id')->constrained('relationships')->onDelete('cascade');
+            $table->unsignedBigInteger('father_id')->nullable();
+            $table->unsignedBigInteger('mother_id')->nullable();
+            $table->unsignedBigInteger('spouse_id')->nullable();
+            $table->index('father_id');
+            $table->index('mother_id');
+            $table->index('spouse_id');
             $table->index('family_no');
-            $table->index('relationship_id');
+            $table->timestamps();
+            $table->softDeletes();
+            $table->index('external_member_no');
         });
     }
 

@@ -4,11 +4,12 @@ export function permissionHelpers() {
   const page = usePage();
 
   const can = (permission: any) => {
-    if (!page.props.auth || !page.props.auth.permissions) {
+    const auth = page.props.auth as any;
+    if (!auth || !auth.permissions) {
       return false;
     }
 
-    const roles = page.props.auth?.roles || [];
+    const roles = auth.roles || [];
     
     // Superadmin has all permissions
     if (roles.includes('superadmin')) {
@@ -16,7 +17,7 @@ export function permissionHelpers() {
     }
 
     // For other roles, check specific permissions
-    return page.props.auth?.permissions?.includes(permission);
+    return auth.permissions?.includes(permission);
   };
 
   return {

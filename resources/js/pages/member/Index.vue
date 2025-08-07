@@ -164,7 +164,7 @@ function getClusterName(clusterId: number | string) {
 function getBloodGroupName(bloodGroupId: number | string) {
   if (!bloodGroupId) return '';
   const bloodGroup = props.bloodGroups?.find(b => b.id == bloodGroupId);
- 
+
   return bloodGroup?.name || '';
 }
 
@@ -180,11 +180,7 @@ function getCommunityName(communityId: number | string) {
   return community?.name || '';
 }
 
-const canCreateMember = can('create-member');
-const canReadAnyMember = can('read-member');
-const canUpdateAnyMember = can('update-member');
-const canDeleteAnyMember = can('delete-member');
-const canExportMember = can('read-member');
+
 
 const searchColumnsOptions = computed(() => {
   return columns
@@ -247,9 +243,9 @@ function fetch(page = 1) {
       isArchived: isArchived.value ? 'true' : 'false', // send as string
       page,
     };
-    
+
     console.log('Fetching with params:', params);
-    
+
     router.get(
       props.fetchUrl,
       params,
@@ -362,12 +358,12 @@ function downloadExcel() {
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
-  
+
   // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/member/export?${params.toString()}`;
 }
 
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
   console.log('scrollToRow', rowId);
@@ -407,64 +403,50 @@ onMounted(() => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
+
     <Head title="Members" />
     <DatatableHeader>
-              <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
-          <div class="flex flex-1 items-center gap-2">
-            <div class="flex-1 relative">
-              <input 
-                v-model="search" 
-                type="text" 
-                class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8" 
-                placeholder="Search name or family no..." 
-                @input="handleSearchInput"
-                @keydown.escape="clearSearch"
-              />
-              <button 
-                v-if="search" 
-                @click="clearSearch" 
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            <div class="relative">
-              <input 
-                v-model="familySearch" 
-                type="text" 
-                class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8" 
-                placeholder="Search by family no..." 
-                @input="handleFamilySearchInput"
-                @keydown.escape="clearFamilySearch"
-              />
-              <button 
-                v-if="familySearch" 
-                @click="clearFamilySearch" 
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            </div>
-            <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-              {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+      <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+        <div class="flex flex-1 items-center gap-2">
+          <div class="flex-1 relative">
+            <input v-model="search" type="text" class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
+              placeholder="Search name or family no..." @input="handleSearchInput" @keydown.escape="clearSearch" />
+            <button v-if="search" @click="clearSearch"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              ✕
             </button>
           </div>
-          <div class="flex items-center gap-2">
-            <Button v-if="canCreateMember" @click="addNewMember" class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
-              <component :is="Plus" />
-              <span>Add New Member</span>
-            </Button>
-            <Button v-if="canExportMember" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
-  <component :is="Download" />
-  <span>Export Excel</span>
-</Button>
-
-            <label class="flex items-center gap-2 cursor-pointer select-none">
-              <Checkbox v-model="isArchived" class="switch-checkbox" />
-              <span class="text-sm font-medium">Show Archived</span>
-            </label>
+          <div class="relative">
+            <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8"
+              placeholder="Search by family no..." @input="handleFamilySearchInput"
+              @keydown.escape="clearFamilySearch" />
+            <button v-if="familySearch" @click="clearFamilySearch"
+              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
+          <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+            {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+          </button>
         </div>
+        <div class="flex items-center gap-2">
+          <Button v-if="props.canCreateMember" @click="addNewMember"
+            class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
+            <component :is="Plus" />
+            <span>Add New Member</span>
+          </Button>
+          <Button  @click="downloadExcel"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <component :is="Download" />
+            <span>Export Excel</span>
+          </Button>
+
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
+      </div>
       <transition name="fade">
         <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
           <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
@@ -516,10 +498,10 @@ onMounted(() => {
     </DatatableHeader>
 
     <div class="overflow-x-auto">
-      <div v-if="canReadAnyMember">
+      <div v-if="props.canViewAnyMember">
         <div class="datatable2 mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
           <!-- Enhanced Search & Filters -->
-    
+
 
           <!-- Table -->
           <div class="overflow-x-auto rounded-xl border border-gray-100">
@@ -527,7 +509,8 @@ onMounted(() => {
               <thead>
                 <tr class="bg-blue-50">
                   <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
-                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null" class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
+                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
+                    class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
@@ -537,38 +520,40 @@ onMounted(() => {
                 </tr>
               </thead>
               <tbody>
-                <tr 
-                  v-for="member in enhancedMembers.data" 
-                  :key="member.id" 
-                  :id="`member-row-${member.id}`" 
-                  :class="[
-                    'even:bg-gray-50 hover:bg-blue-50 transition', 
-                    highlightedRowId === member.id ? 'highlight-row' : ''
-                  ]"
-                >
+                <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
+                  'even:bg-gray-50 hover:bg-blue-50 transition',
+                  highlightedRowId === member.id ? 'highlight-row' : ''
+                ]">
                   <!-- View + Edit or Restore -->
                   <td class="p-2 whitespace-nowrap">
                     <div class="flex gap-2">
                       <template v-if="!isArchived">
-                        <Button @click="openViewModal(member)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                        <Button @click="openViewModal(member)"
+                          class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                           <component :is="ZapIcon" />
                           <!-- <span>View</span> -->
                         </Button>
-                        <Button v-if="canUpdateAnyMember && !member.deleted_at" @click="editMember(member)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                        <Button v-if="canEditMember && !member.deleted_at" @click="editMember(member)"
+                          class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
                           <!-- <span>Edit</span> -->
                         </Button>
-                        <Button @click="viewFamilyTree(member)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition" title="View Family Tree">
+                        <Button @click="viewFamilyTree(member)"
+                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
+                          title="View Family Tree">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
                           </svg>
                         </Button>
                       </template>
                       <template v-else>
-                                        <Button v-if="canRestoreMember" @click="restoreMember(member.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                  Restore
-                </Button>
+                        <Button v-if="canRestoreMember" @click="restoreMember(member.id)"
+                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                          Restore
+                        </Button>
                       </template>
                     </div>
                   </td>
@@ -579,19 +564,23 @@ onMounted(() => {
                       {{ formatDate(member[col.key]) }}
                     </template>
                     <template v-else-if="col.key === 'community_cluster_id'">
-                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{ member.community_cluster_id || '—' }}</span>
+                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{
+                        member.community_cluster_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'community_id'">
-                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—' }}</span>
+                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
+                        }}</span>
                     </template>
                     <template v-else-if="col.key === 'age'">
                       {{ calculateAge(member.date_of_birth) }}
                     </template>
                     <template v-else-if="col.key === 'relationship_id'">
-                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id || '—' }}</span>
+                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
+                        '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'blood_group_id'">
-                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—' }}</span>
+                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
+                        }}</span>
                     </template>
                     <template v-else-if="col.key === 'gender_id'">
                       <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
@@ -617,8 +606,9 @@ onMounted(() => {
                   </td>
                   <!-- Delete -->
                   <td v-if="!isArchived" class="p-2 whitespace-nowrap">
-                    <template v-if="canDeleteAnyMember && !member.deleted_at">
-                      <Button variant="destructive" @click="openDeleteModal(member)" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <template v-if="canDeleteMember && !member.deleted_at">
+                      <Button variant="destructive" @click="openDeleteModal(member)"
+                        class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                         <component :is="Trash" />
                         <!-- <span>Delete</span> -->
                       </Button>
@@ -630,53 +620,46 @@ onMounted(() => {
           </div>
 
           <!-- Pagination -->
-              <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <button 
-          v-if="enhancedMembers.prev_page_url" 
-          @click="fetch(enhancedMembers.current_page - 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Prev
-        </button>
-        
-        <!-- Page Number Dropdown -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">Page</span>
-          <select 
-            v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
-            :value="enhancedMembers.current_page" 
-            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
-              {{ page }}
-            </option>
-          </select>
-          <span v-if="enhancedMembers.last_page" class="text-sm text-gray-600">of {{ enhancedMembers.last_page }}</span>
-        </div>
-        
-        <button 
-          v-if="enhancedMembers.next_page_url" 
-          @click="fetch(enhancedMembers.current_page + 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          Next
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Total Records Info -->
-      <div class="text-sm text-gray-500">
-        <span v-if="enhancedMembers.total">Total: {{ enhancedMembers.total }} records</span>
-      </div>
-    </div>
+          <!-- Enhanced Pagination -->
+          <div class="mt-6 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+              <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)"
+                class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                </svg>
+                Prev
+              </button>
+
+              <!-- Page Number Dropdown -->
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-gray-600">Page</span>
+                <select v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
+                  :value="enhancedMembers.current_page"
+                  @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+                  class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
+                    {{ page }}
+                  </option>
+                </select>
+                <span v-if="enhancedMembers.last_page" class="text-sm text-gray-600">of {{ enhancedMembers.last_page
+                  }}</span>
+              </div>
+
+              <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)"
+                class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1">
+                Next
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Total Records Info -->
+            <div class="text-sm text-gray-500">
+              <span v-if="enhancedMembers.total">Total: {{ enhancedMembers.total }} records</span>
+            </div>
+          </div>
         </div>
       </div>
       <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
@@ -687,39 +670,27 @@ onMounted(() => {
   <ViewMemberModal v-model="showViewModal" :member="selectedMember" :incomeRange="null" />
 
   <!-- Add Member Modal -->
-  <AddMemberModal 
-    v-model="showAddModal" 
-    :communities="props.communities || []" 
-    :relationships="props.relationships || []" 
-    :communityClusters="props.communityClusters || []" 
-    :towns="[]" 
-  />
+  <AddMemberModal v-model="showAddModal" :communities="props.communities || []"
+    :relationships="props.relationships || []" :communityClusters="props.communityClusters || []" :towns="[]" />
 
   <!-- Delete Modal -->
   <transition name="fade">
-    <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+    <div v-if="showDeleteModal"
+      class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
       <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
         <div class="rounded-lg bg-white p-6">
           <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
           <p>
-            Are you sure you want to delete <span class="font-bold">{{ deletingMember?.first_name }} {{ deletingMember?.last_name }}</span>?
+            Are you sure you want to delete <span class="font-bold">{{ deletingMember?.first_name }} {{
+              deletingMember?.last_name }}</span>?
           </p>
           <div class="mt-6 flex justify-end space-x-2">
-            <Button
-              variant="secondary"
-              type="button"
-              @click="showDeleteModal = false"
-              class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
-            >
+            <Button variant="secondary" type="button" @click="showDeleteModal = false"
+              class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              type="button"
-              :disabled="false"
-              @click="confirmDelete"
-              class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
-            >
+            <Button variant="destructive" type="button" :disabled="false" @click="confirmDelete"
+              class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">
               Delete
             </Button>
           </div>
@@ -734,22 +705,27 @@ onMounted(() => {
 .fade-leave-active {
   transition: opacity 0.3s;
 }
+
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
 }
+
 .switch-checkbox {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  background: #ef4444;
+  /* Tailwind red-500 */
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0, 0, 0, 0.10);
   position: relative;
   transition: background 0.2s, box-shadow 0.2s;
 }
+
 .switch-checkbox[data-state="checked"] {
   background: #2563eb;
 }
+
 .switch-checkbox input[type="checkbox"] {
   opacity: 0;
   width: 100%;
@@ -760,6 +736,7 @@ onMounted(() => {
   margin: 0;
   cursor: pointer;
 }
+
 .switch-checkbox [data-slot="checkbox-indicator"] {
   position: absolute;
   left: 0.125rem;
@@ -770,16 +747,25 @@ onMounted(() => {
   background: #fff;
   transition: left 0.2s;
 }
+
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
 }
+
 .highlight-row {
   animation: highlight-fade 2s;
-  background-color: #fef08a !important; /* Tailwind yellow-200 */
+  background-color: #fef08a !important;
+  /* Tailwind yellow-200 */
 }
+
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+
+  100% {
+    background-color: inherit;
+  }
 }
 
 .bg-gray-25 {
