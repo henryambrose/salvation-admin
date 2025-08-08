@@ -79,7 +79,7 @@ class ExternalMemberController extends Controller
                 $externalMember->father_data = $father ? [
                     'id' => $father->id,
                     'name' => trim($father->first_name . ' ' . $father->last_name),
-                    'type' => $father instanceof \App\Models\Member ? 'internal' : 'external'
+                    'type' => $father instanceof \App\Models\Member ? 'Member' : 'External'
                 ] : null;
             }
             
@@ -92,7 +92,7 @@ class ExternalMemberController extends Controller
                 $externalMember->mother_data = $mother ? [
                     'id' => $mother->id,
                     'name' => trim($mother->first_name . ' ' . $mother->last_name),
-                    'type' => $mother instanceof \App\Models\Member ? 'internal' : 'external'
+                    'type' => $mother instanceof \App\Models\Member ? 'Member' : 'External'
                 ] : null;
             }
             
@@ -105,7 +105,7 @@ class ExternalMemberController extends Controller
                 $externalMember->spouse_data = $spouse ? [
                     'id' => $spouse->id,
                     'name' => trim($spouse->first_name . ' ' . $spouse->last_name),
-                    'type' => $spouse instanceof \App\Models\Member ? 'internal' : 'external'
+                    'type' => $spouse instanceof \App\Models\Member ? 'Member' : 'External'
                 ] : null;
             }
             
@@ -164,20 +164,23 @@ class ExternalMemberController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'gender_id' => 'nullable|exists:genders,id',
+            'gender_id' => 'required|exists:genders,id',
             'family_no' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
             'father_id' => 'nullable|integer',
             'mother_id' => 'nullable|integer',
             'spouse_id' => 'nullable|integer',
-            'relationship_id' => 'nullable|exists:relationships,id',
+            'father_source' => 'nullable|string|max:255',
+            'mother_source' => 'nullable|string|max:255',
+            'spouse_source' => 'nullable|string|max:255',
+            'relationship_id' => 'required|exists:relationships,id',
         ]);
         
         // Use the provided family_no if user doesn't have one set
         $validated['family_no'] = auth()->user()->family_no ?? $validated['family_no'];
         
         $externalMember = ExternalMember::create($validated);
-        
+
         return redirect()->route('external-members.index')
             ->with('success', 'External member created successfully.');
     }
@@ -191,7 +194,7 @@ class ExternalMemberController extends Controller
         if ($externalMember->family_no !== (auth()->user()->family_no ?? $externalMember->family_no)) {
             abort(403, 'Unauthorized access to external member.');
         }
-        
+
         return Inertia::render('ExternalMembers/Show', [
             'externalMember' => $externalMember->load(['relationship', 'father', 'mother', 'spouse']),
         ]);
@@ -214,66 +217,51 @@ class ExternalMemberController extends Controller
         
         // Load relationship data for the external member
         $externalMember->load(['relationship', 'gender']);
-        
+        $type='External';
         // Manually load father, mother, and spouse data with type information
-        if ($externalMember->father_id) {
+        if ($externalMember->father_id && $externalMember->father_source == 'Member') {
             $father = \App\Models\Member::find($externalMember->father_id);
-            if (!$father) {
-                $father = ExternalMember::find($externalMember->father_id);
-            }
-            $externalMember->father_data = $father ? [
-                'id' => $father->id,
-                'name' => $father->first_name . ' ' . $father->last_name,
-                'type' => $father instanceof \App\Models\Member ? 'internal' : 'external'
-            ] : null;
-            
-            \Log::info('Father data loaded', [
-                'father_id' => $externalMember->father_id,
-                'father_data' => $externalMember->father_data
-            ]);
+            $type='Member';
+        } else {
+            $father = ExternalMember::find($externalMember->father_id);
+            $type='External';
         }
+        $externalMember->father_data = $father ? [
+            'id' => $father->id,
+            'name' => $father->first_name . ' ' . $father->last_name,
+            'type' => $type
+        ] : null;
+            
         
-        if ($externalMember->mother_id) {
+        if ($externalMember->mother_id && $externalMember->mother_source == 'Member') {
             $mother = \App\Models\Member::find($externalMember->mother_id);
-            if (!$mother) {
-                $mother = ExternalMember::find($externalMember->mother_id);
-            }
-            $externalMember->mother_data = $mother ? [
-                'id' => $mother->id,
-                'name' => $mother->first_name . ' ' . $mother->last_name,
-                'type' => $mother instanceof \App\Models\Member ? 'internal' : 'external'
-            ] : null;
-            
-            \Log::info('Mother data loaded', [
-                'mother_id' => $externalMember->mother_id,
-                'mother_data' => $externalMember->mother_data
-            ]);
+            $type='Member';
+        } else {
+            $mother = ExternalMember::find($externalMember->mother_id);
+            $type='External';
         }
+        $externalMember->mother_data = $mother ? [
+            'id' => $mother->id,
+            'name' => $mother->first_name . ' ' . $mother->last_name,
+            'type' => $type
+        ] : null;
         
-        if ($externalMember->spouse_id) {
+        if ($externalMember->spouse_id && $externalMember->spouse_source == 'Member') {
             $spouse = \App\Models\Member::find($externalMember->spouse_id);
-            if (!$spouse) {
-                $spouse = ExternalMember::find($externalMember->spouse_id);
-            }
-            $externalMember->spouse_data = $spouse ? [
-                'id' => $spouse->id,
-                'name' => $spouse->first_name . ' ' . $spouse->last_name,
-                'type' => $spouse instanceof \App\Models\Member ? 'internal' : 'external'
-            ] : null;
-            
-            \Log::info('Spouse data loaded', [
-                'spouse_id' => $externalMember->spouse_id,
-                'spouse_data' => $externalMember->spouse_data
-            ]);
+            $type='Member';
+        } else {
+            $spouse = ExternalMember::find($externalMember->spouse_id);
+            $type='External';
         }
+        $externalMember->spouse_data = $spouse ? [
+            'id' => $spouse->id,
+            'name' => $spouse->first_name . ' ' . $spouse->last_name,
+            'type' => $type
+        ] : null;
         
         $genders = Gender::all();
         $relationships = Relationship::all();
-        
-        \Log::info('ExternalMemberController::edit returning data', [
-            'external_member' => $externalMember->toArray()
-        ]);
-        
+
         return Inertia::render('ExternalMembers/Edit', [
             'externalMember' => $externalMember,
             'genders' => $genders,
@@ -294,17 +282,20 @@ class ExternalMemberController extends Controller
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'gender_id' => 'nullable|exists:genders,id',
+            'gender_id' => 'required|exists:genders,id',
             'family_no' => 'required|string|max:255',
             'address' => 'nullable|string|max:500',
             'father_id' => 'nullable|integer',
             'mother_id' => 'nullable|integer',
             'spouse_id' => 'nullable|integer',
-            'relationship_id' => 'nullable|exists:relationships,id',
+            'father_source' => 'nullable|string|max:255',
+            'mother_source' => 'nullable|string|max:255',
+            'spouse_source' => 'nullable|string|max:255',
+            'relationship_id' => 'required|exists:relationships,id',
         ]);
         
         $externalMember->update($validated);
-        
+
         return redirect()->route('external-members.index')
             ->with('success', 'External member updated successfully.');
     }
@@ -318,9 +309,9 @@ class ExternalMemberController extends Controller
         
         try {
             $externalMember->delete(); // This will now be a soft delete
-            
-            return redirect()->route('external-members.index')
-                ->with('success', 'External member deleted successfully.');
+
+        return redirect()->route('external-members.index')
+            ->with('success', 'External member deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('external-members.index')
                 ->with('error', 'Failed to delete external member.');
@@ -372,12 +363,13 @@ class ExternalMemberController extends Controller
     {
         $query = $request->get('query', '');
         $familyNo = auth()->user()->family_no;
-        
+
         $externalMembers = ExternalMember::where('family_no', $familyNo)
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                   ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('family_no', 'like', "%{$query}%");
+                  ->orWhere('family_no', 'like', "%{$query}%")
+                  ->orWhere('member_no', 'like', "%{$query}%");
             })
             ->with(['relationship'])
             ->limit(10)
@@ -467,9 +459,9 @@ class ExternalMemberController extends Controller
                         'family_no' => $family->family_no,
                         'member_count' => $memberCount,
                         'sample_members' => $sampleMembers
-                    ];
-                });
-            
+                ];
+            });
+
             return response()->json($familyNumbers);
             
         } catch (\Exception $e) {

@@ -24,8 +24,16 @@
           </div>
           <!-- Gender -->
           <div>
-            <Label for="gender_id">Gender</Label>
-            <SelectInput id="gender_id" v-model="form.gender_id" :options="genderOptions" :error="form.errors.gender_id" placeholder="Select gender" />
+            <Label for="gender_id">Gender <span class="text-red-500">*</span></Label>
+            <SelectInput
+              id="gender_id"
+              v-model="form.gender_id"
+              :options="genderOptions"
+              :error="form.errors.gender_id"
+              placeholder="Select gender"
+              required
+            />
+            <InputError :message="form.errors.gender_id" class="mt-2" />
           </div>
           <!-- Family Number -->
           <div>
@@ -37,6 +45,7 @@
             <Label for="father_id">Father</Label>
             <MemberTypeSearchDropdown 
               v-model="form.father_id" 
+              v-model:sourceType="form.father_source"
               :error="form.errors.father_id" 
               placeholder="Search for father"
               :existing-data="externalMember.father_data || undefined"
@@ -47,6 +56,7 @@
             <Label for="mother_id">Mother</Label>
             <MemberTypeSearchDropdown 
               v-model="form.mother_id" 
+              v-model:sourceType="form.mother_source"
               :error="form.errors.mother_id" 
               placeholder="Search for mother"
               :existing-data="externalMember.mother_data || undefined"
@@ -57,6 +67,7 @@
             <Label for="spouse_id">Spouse</Label>
             <MemberTypeSearchDropdown 
               v-model="form.spouse_id" 
+              v-model:sourceType="form.spouse_source"
               :error="form.errors.spouse_id" 
               placeholder="Search for spouse"
               :existing-data="externalMember.spouse_data || undefined"
@@ -133,11 +144,14 @@ const breadcrumbs = [
 const form = useForm({
   first_name: props.externalMember.first_name,
   last_name: props.externalMember.last_name || '',
-  gender_id: props.externalMember.gender_id,
+  gender_id: props.externalMember.gender_id || undefined, // Handle null values
   family_no: props.externalMember.family_no,
   father_id: props.externalMember.father_id,
   mother_id: props.externalMember.mother_id,
   spouse_id: props.externalMember.spouse_id,
+  father_source: props.externalMember.father_source,
+  mother_source: props.externalMember.mother_source,
+  spouse_source: props.externalMember.spouse_source,
   address: props.externalMember.address || '',
   relationship_id: props.externalMember.relationship_id
 })

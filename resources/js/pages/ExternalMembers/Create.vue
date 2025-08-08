@@ -19,6 +19,7 @@ import { ref, watch, nextTick, onMounted, computed } from 'vue';
 
 interface Props {
   relationships: Relationships;
+  genders: Array<{ id: number; name: string }>;
   familyNo?: string;
 }
 
@@ -41,12 +42,16 @@ const user = page.props.auth.user as User;
 const form = useForm({
   first_name: '',
   last_name: '',
+  gender_id: '',
   address: '',
   family_no: props.familyNo || '',
   father_id: undefined,
   mother_id: undefined,
   spouse_id: undefined,
   relationship_id: '',
+  father_source: '',
+  mother_source: '',
+  spouse_source: '',
 });
 
 const submit = () => {
@@ -88,7 +93,7 @@ watch(() => form.errors, (errors) => {
         <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
           <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Personal Information</h3>
           
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
               <Label for="first_name">First Name <span class="text-red-500">*</span></Label>
               <Input
@@ -112,6 +117,19 @@ watch(() => form.errors, (errors) => {
                 placeholder="Last name"
               />
               <InputError :message="form.errors.last_name" class="mt-2" />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="gender_id">Gender <span class="text-red-500">*</span></Label>
+              <SelectInput
+                id="gender_id"
+                v-model="form.gender_id"
+                :options="genders"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                placeholder="Select gender"
+                required
+              />
+              <InputError :message="form.errors.gender_id" class="mt-2" />
             </div>
           </div>
 
@@ -168,6 +186,8 @@ watch(() => form.errors, (errors) => {
               <Label>Father</Label>
               <MemberTypeSearchDropdown
                 v-model="form.father_id"
+                v-model:sourceType="form.father_source"
+                :memberType="form.father_source"
                 placeholder="Search for father..."
                 class="mt-1"
               />
@@ -178,6 +198,7 @@ watch(() => form.errors, (errors) => {
               <Label>Mother</Label>
               <MemberTypeSearchDropdown
                 v-model="form.mother_id"
+                v-model:sourceType="form.mother_source"
                 placeholder="Search for mother..."
                 class="mt-1"
               />
@@ -188,6 +209,8 @@ watch(() => form.errors, (errors) => {
               <Label>Spouse</Label>
               <MemberTypeSearchDropdown
                 v-model="form.spouse_id"
+                 v-model:sourceType="form.spouse_source"
+                :memberType="form.spouse_source"
                 placeholder="Search for spouse..."
                 class="mt-1"
               />

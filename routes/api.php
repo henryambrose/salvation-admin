@@ -96,5 +96,6 @@ Route::get('/cities', function () {
 // Add this route to the API routes
 Route::get('/family-numbers/search', [App\Http\Controllers\ExternalMemberController::class, 'searchFamilyNumbers']);
 
-// Add this route for getting external member details
+// External member search endpoints
+Route::get('/external-members/search-all', [App\Http\Controllers\ExternalMemberController::class, 'searchAll']); // must be before {id}
 Route::get('/external-members/{id}', [App\Http\Controllers\ExternalMemberController::class, 'getDetails']);

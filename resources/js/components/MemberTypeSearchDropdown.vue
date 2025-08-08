@@ -8,16 +8,16 @@
           <input
             type="radio"
             v-model="memberType"
-            value="internal"
+            value="Member"
             class="mr-2"
           />
-          <span class="text-sm">Internal Member</span>
+          <span class="text-sm">Member</span>
         </label>
         <label class="flex items-center">
           <input
             type="radio"
             v-model="memberType"
-            value="external"
+            value="External"
             class="mr-2"
           />
           <span class="text-sm">External Member</span>
@@ -50,12 +50,12 @@
             <div>
               <div class="font-medium">{{ result.name }}</div>
               <div class="text-sm text-gray-500">
-                {{ result.family_no }} • {{ result.type === 'external' ? 'External' : 'Internal' }}
+                {{ result.family_no }} • {{ result.type === 'external' ? 'External' : 'Member' }}
               </div>
             </div>
             <div class="text-xs px-2 py-1 rounded-full"
                  :class="result.type === 'external' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
-              {{ result.type === 'external' ? 'External' : 'Internal' }}
+              {{ result.type === 'external' ? 'External' : 'Member' }}
             </div>
           </div>
         </div>
@@ -72,7 +72,7 @@
         <div class="flex items-center space-x-2">
           <span class="text-xs px-2 py-1 rounded-full"
                 :class="selectedMember.type === 'external' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
-            {{ selectedMember.type === 'external' ? 'External' : 'Internal' }}
+            {{ selectedMember.type === 'external' ? 'External' : 'Member' }}
           </span>
           <button
             @click="clearSelection"
@@ -103,12 +103,16 @@ const props = defineProps({
   existingData: {
     type: Object,
     default: null
+  },
+  sourceType: {
+    type: String,
+    default: ''
   }
 })
 
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'update:sourceType'])
 
-const memberType = ref('internal')
+const memberType = ref('Member')
 const searchQuery = ref('')
 const searchResults = ref([])
 const showDropdown = ref(false)
@@ -150,45 +154,39 @@ const handleSearch = () => {
   }, 300)
 }
 
+// Re-run search when memberType toggles
+watch(memberType, () => {
+  searchResults.value = [];
+  if (searchQuery.value.length >= 2) performSearch();
+});
+
+// Ensure we include family_no safely
 const performSearch = async () => {
   try {
-    const endpoint = memberType.value === 'external' 
+    const endpoint = memberType.value === 'External'
       ? '/api/external-members/search-all'
-      : '/api/members/search-spouse'
-    
-    console.log('Searching with endpoint:', endpoint)
-    console.log('Search query:', searchQuery.value)
-    console.log('Member type:', memberType.value)
-    
-    const response = await fetch(`${endpoint}?query=${encodeURIComponent(searchQuery.value)}`)
-    console.log('Response status:', response.status)
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-    
-    const data = await response.json()
-    console.log('Search results:', data)
-    
-    searchResults.value = data.map(item => ({
+      : '/api/members/search-spouse';
+
+    const response = await fetch(`${endpoint}?query=${encodeURIComponent(searchQuery.value)}`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+
+    const data = await response.json();
+    searchResults.value = data.map((item) => ({
       id: item.id,
-      name: item.first_name + ' ' + (item.last_name || ''),
-      family_no: item.family_no,
-      type: memberType.value
-    }))
-    
-    console.log('Processed results:', searchResults.value)
-    
-  } catch (error) {
-    console.error('Search error:', error)
-    searchResults.value = []
+      name: (item.first_name || '') + ' ' + (item.last_name || ''),
+      family_no: item.family_no || '',
+      type: memberType.value,
+    }));
+  } catch {
+    searchResults.value = [];
   }
-}
+};
 
 const selectResult = (result) => {
   console.log('Selecting result:', result)
   selectedMember.value = result
   emit('update:modelValue', result.id)
+  emit('update:sourceType', result.type)
   searchQuery.value = result.name
   showDropdown.value = false
 }
@@ -223,9 +221,9 @@ const fetchMemberDetails = async (memberId) => {
         id: data.id,
         name: data.first_name + ' ' + (data.last_name || ''),
         family_no: data.family_no,
-        type: 'internal'
+        type: 'Member'
       }
-      memberType.value = 'internal'
+      memberType.value = 'Member'
       searchQuery.value = selectedMember.value.name
       console.log('Set internal member:', selectedMember.value)
       return

@@ -128,6 +128,9 @@ export interface ExternalMember {
   father_id?: number;
   mother_id?: number;
   spouse_id?: number;
+  father_source?: string;
+  mother_source?: string;
+  spouse_source?: string;
   address?: string;
   relationship_id?: number;
   father_data?: {

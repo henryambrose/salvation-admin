@@ -19,11 +19,15 @@ class ExternalMember extends Model
         'father_id',
         'mother_id',
         'spouse_id',
+        'father_source',
+        'mother_source',
+        'spouse_source',
         'relationship_id',
         'gender_id',
-        'external_member_no'
+        'external_member_no',
+        'uid',
     ];
-
+    
     protected static function boot()
     {
         parent::boot();
@@ -194,5 +198,10 @@ class ExternalMember extends Model
     public function getMemberTypeAttribute(): string
     {
         return 'external';
+    }
+
+    public function getUidAttribute(): string
+    {
+        return 'E-' . $this->id;
     }
 }

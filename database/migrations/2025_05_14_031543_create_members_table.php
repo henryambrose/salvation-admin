@@ -68,6 +68,9 @@ return new class extends Migration
             $table->foreignId('mother_id')->nullable()->constrained('members');
             $table->foreignId('father_id')->nullable()->constrained('members');
             $table->foreignId('spouse_id')->nullable()->constrained('members');
+            $table->string('father_source')->nullable()->default('Member');
+            $table->string('mother_source')->nullable()->default('Member');
+            $table->string('spouse_source')->nullable()->default('Member');
             $table->timestamps();
             $table->softDeletes();
         });

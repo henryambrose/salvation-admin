@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 use DB;
+use App\Models\UnifiedPerson;
 
 class MemberController extends Controller
 {
@@ -599,8 +600,14 @@ class MemberController extends Controller
         ])->findOrFail($id);
         
         $familyTreeService = new FamilyTreeService();
-        $familyTree = $familyTreeService->getFamilyTree($member);
+        $unifiedPerson = UnifiedPerson::where('uid', 'M-' . $member->id)->first();
         
+        if ($unifiedPerson) {
+            $familyTree = $familyTreeService->getFamilyTree($unifiedPerson);
+        } else {
+            return redirect()->route('member.index')->with('error', 'Member not found');
+        }
+
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
             'familyTree' => $familyTree,

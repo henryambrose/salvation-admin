@@ -23,6 +23,9 @@ return new class extends Migration
             $table->unsignedBigInteger('father_id')->nullable();
             $table->unsignedBigInteger('mother_id')->nullable();
             $table->unsignedBigInteger('spouse_id')->nullable();
+            $table->string('father_source')->nullable();
+            $table->string('mother_source')->nullable();
+            $table->string('spouse_source')->nullable();
             $table->index('father_id');
             $table->index('mother_id');
             $table->index('spouse_id');

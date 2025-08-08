@@ -68,6 +68,10 @@ class Member extends Model
         'mother_id', // New field
         'father_id', // New field
         'spouse_id', // New field
+        'father_source',
+        'mother_source',
+        'spouse_source',
+        'uid',
     ];
 
     protected $casts = [
@@ -322,5 +326,10 @@ class Member extends Model
     public function clusterHeads()
     {
         return $this->hasMany(CommunityCluster::class, 'member_id');
+    }
+
+    public function getUidAttribute(): string
+    {
+        return 'M-' . $this->id;
     }
 }
