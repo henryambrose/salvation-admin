@@ -11,6 +11,7 @@ use App\Models\Country;
 use App\Models\Designation;
 use App\Models\IncomeRange;
 use App\Models\Member;
+use App\Models\ExternalMember;
 use App\Models\Relationship;
 use App\Models\State;
 use App\Models\Town;
@@ -588,10 +589,15 @@ class MemberController extends Controller
         return redirect()->route('member.index')->with('success', 'Member restored successfully.');
     }
 
-    public function showFamilyTree($id)
-    {
-        $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
-        $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+    public function showFamilyTree($id, $type)
+    {       
+        if ($type == 'internal') {
+            $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
+            $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+        } else {
+            $member = ExternalMember::with(['gender','relationship'])->findOrFail($id);
+            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
+        }
         $service = new FamilyTreeService();
         $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)
         ->where('uid', '!=', $person->uid)

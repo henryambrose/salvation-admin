@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { Head, usePage } from '@inertiajs/vue3';
-
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SearchDropdown } from '@/components/ui/searchDropdown';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -53,7 +50,6 @@ function openViewModal(member: any) {
 }
 
 const familyStats = computed(() => {
-  // Use server-provided statistics for total records
   return props.familyStats || { totalFamilies: 0, totalMembers: 0, averageMembersPerFamily: 0 };
 });
 
@@ -94,8 +90,8 @@ function editMember(member: Member) {
   router.get(route('member.edit', member.id));
 }
 
-function viewFamilyTree(member: Member) {
-  router.get(route('member.family-tree', member.id));
+function viewFamilyTree(member: any) {
+  router.get(route('member.family-tree', { id: member.id, type: 'internal' }));
 }
 
 function addNewMember() {
@@ -148,48 +144,6 @@ function calculateAge(dateStr: string) {
   }
   return age;
 }
-
-function getRelationshipName(relationshipId: number | string) {
-  if (!relationshipId) return '';
-  const relationship = props.relationships?.find(r => r.id == relationshipId);
-  return relationship?.name || '';
-}
-
-function getClusterName(clusterId: number | string) {
-  if (!clusterId) return '';
-  const cluster = props.communityClusters?.find(c => c.id == clusterId);
-  return cluster?.name || '';
-}
-
-function getBloodGroupName(bloodGroupId: number | string) {
-  if (!bloodGroupId) return '';
-  const bloodGroup = props.bloodGroups?.find(b => b.id == bloodGroupId);
-
-  return bloodGroup?.name || '';
-}
-
-function getGenderName(genderId: number | string) {
-  if (!genderId) return '';
-  const gender = props.genders?.find(g => g.id == genderId);
-  return gender?.name || '';
-}
-
-function getCommunityName(communityId: number | string) {
-  if (!communityId) return '';
-  const community = props.communities?.find(c => c.id == communityId);
-  return community?.name || '';
-}
-
-
-
-const searchColumnsOptions = computed(() => {
-  return columns
-    .filter((col) => col.filterable)
-    .map((col) => ({
-      id: col.key,
-      name: col.label,
-    }));
-});
 
 const search = ref(props.filters?.search || '');
 const familySearch = ref('');
@@ -266,13 +220,9 @@ function changeSort(field: string) {
   }
   fetch();
 }
-
-function toggleisArchived() {
-  isArchived.value = !isArchived.value;
-}
-
 // Search handling functions
 function handleSearchInput() {
+
   // The watch will handle the debounced search
 }
 

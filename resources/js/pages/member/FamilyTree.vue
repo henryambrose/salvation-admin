@@ -8,9 +8,23 @@
 
     <div v-else class="space-y-8">
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">Family Tree</h2>
+        <div class="flex items-center gap-3">
+          <button
+            type="button"
+            class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+            @click="goBack"
+            aria-label="Go back"
+          >
+            <svg class="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"></polyline>
+              <line x1="9" y1="12" x2="21" y2="12"></line>
+            </svg>
+            Back
+          </button>
+          <h2 class="text-xl font-semibold">Family Tree</h2>
+        </div>
         <div class="text-sm text-gray-500">
-          {{ displayNameWithNo(person) || 'Unknown' }} }}
+          {{ displayNameWithNo(person) || 'Unknown' }}
         </div>
       </div>
 
@@ -183,6 +197,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import { router } from '@inertiajs/vue3'
 
 const props = defineProps({
   person: { type: Object, default: null },
@@ -262,6 +277,15 @@ const hasAnyMembers = computed(() => {
     externalMembers.value.length ||
     spouse.value)
 })
+
+// Navigation
+function goBack() {
+  if (window.history.length > 1) {
+    window.history.back()
+  } else {
+    router.visit('/member/index')
+  }
+}
 </script>
 
 <style scoped>

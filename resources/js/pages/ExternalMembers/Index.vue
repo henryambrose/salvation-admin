@@ -1,9 +1,7 @@
 <script setup lang="ts">
 import { Head, usePage } from '@inertiajs/vue3';
-
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
@@ -33,43 +31,7 @@ const props = defineProps({
   },
 });
 
-// Debug logging to see what's happening
-console.log('ExternalMembers Index - Debug Info:', {
-  userRoles: (page.props.auth as any)?.roles,
-  userPermissions: (page.props.auth as any)?.permissions,
-  isSuperadmin: (page.props.auth as any)?.roles?.includes('superadmin')
-});
 
-// Use permission helper for all permission checks
-const canViewAnyExternalMember = computed(() => {
-  const result = can('list-external-member');
-  console.log('canViewAnyExternalMember:', result);
-  return result;
-});
-
-const canCreateExternalMember = computed(() => {
-  const result = can('create-external-member');
-  console.log('canCreateExternalMember:', result);
-  return result;
-});
-
-const canEditExternalMember = computed(() => {
-  const result = can('update-external-member');
-  console.log('canEditExternalMember:', result);
-  return result;
-});
-
-const canDeleteExternalMember = computed(() => {
-  const result = can('delete-external-member');
-  console.log('canDeleteExternalMember:', result);
-  return result;
-});
-
-const canRestoreExternalMember = computed(() => {
-  const result = can('restore-external-member');
-  console.log('canRestoreExternalMember:', result);
-  return result;
-});
 
 const showFilters = ref(false);
 const search = ref(props.filters?.search || '');
@@ -132,17 +94,18 @@ function changeSort(field: string) {
   fetch();
 }
 
-function toggleisArchived() {
-  isArchived.value = !isArchived.value;
-}
-
-// Search handling functions
 function handleSearchInput() {
-  // The watch will handle the debounced search
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetch();
+  }, 300);
 }
 
 function handleFamilySearchInput() {
-  // The watch will handle the debounced search
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetch();
+  }, 300);
 }
 
 function clearSearch() {
@@ -206,10 +169,6 @@ const columns: Column[] = [
   { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'external_member_no', label: 'External Member No', sortable: true },
   { key: 'address', label: 'Address', sortable: false },
-  { key: 'relationship_id', label: 'Relationship', sortable: true },
-  { key: 'father_id', label: 'Father', sortable: false },
-  { key: 'mother_id', label: 'Mother', sortable: false },
-  { key: 'spouse_id', label: 'Spouse', sortable: false },
 ];
 
 const breadcrumbs = [{ title: 'External Members', href: '/external-members' }];
@@ -258,10 +217,8 @@ function downloadExcel() {
   window.open(`/external-members/export?${queryString}`, '_blank');
 }
 
-function getRelationshipName(relationshipId: number | string) {
-  if (!relationshipId) return '';
-  const relationship = props.relationships?.find(r => r.id == relationshipId);
-  return relationship?.name || '';
+function viewFamilyTree(member: any) {
+  router.get(route('member.family-tree',{id: member.id, type:'external'}));
 }
 
 const highlightedRowId = ref<number | null>(null);
@@ -410,6 +367,16 @@ function confirmDelete() {
                         <Button v-if="canEditExternalMember && !member.deleted_at" @click="editExternalMember(member)"
                           class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
+                        </Button>
+                        <Button @click="viewFamilyTree(member)"
+                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
+                          title="View Family Tree">
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                          </svg>
                         </Button>
                       </template>
                       <template v-else>
