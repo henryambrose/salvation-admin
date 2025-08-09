@@ -300,6 +300,7 @@ class FamilyTreeService
             'gender_id' => $p->gender_id,
             'gender_name' => $p->gender_name,
             'family_no' => $p->family_no,
+            'member_no' => $p->member_no,
             'source' => $p->source,
             'is_member' => $p->isMember(),
             'is_external' => $p->isExternal()

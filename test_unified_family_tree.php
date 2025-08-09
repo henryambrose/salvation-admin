@@ -22,7 +22,7 @@ echo "Members: $members, External: $externals\n\n";
 
 // Test 2: Find a specific person (Trevin)
 
-$trevin = UnifiedPerson::where('uid', '=', 'M-3')->first();
+$trevin = UnifiedPerson::where('uid', '=', 'M-6')->first();
 if ($trevin) {
     echo "Found: {$trevin->full_name} (UID: {$trevin->uid})\n";
     echo "Family No: {$trevin->family_no}\n";
@@ -38,7 +38,7 @@ if ($trevin) {
     echo "3. Generating Full Family Relationship Map for $trevin->first_name...\n";
 
     $service = new FamilyTreeService();
-    $familyTree = $service->getFamilyTree($trevin);
+    // $familyTree = $service->getFamilyTree($trevin);
 
     // Load all people in same family
     $allFamilyMembers = UnifiedPerson::where('family_no', $trevin->family_no)

@@ -590,28 +590,25 @@ class MemberController extends Controller
 
     public function showFamilyTree($id)
     {
-        $member = Member::with([
-            'gender', 
-            'community', 
-            'relationship',
-            'relationships.relatedMember.gender',
-            'relationships.relatedMember.community',
-            'relationships.relationship'
-        ])->findOrFail($id);
-        
-        $familyTreeService = new FamilyTreeService();
-        $unifiedPerson = UnifiedPerson::where('uid', 'M-' . $member->id)->first();
-        
-        if ($unifiedPerson) {
-            $familyTree = $familyTreeService->getFamilyTree($unifiedPerson);
-        } else {
+        $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
+        $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+        $service = new FamilyTreeService();
+        $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)
+        ->where('uid', '!=', $person->uid)
+        ->get();
+
+        if (!$allFamilyMembers) {
             return redirect()->route('member.index')->with('error', 'Member not found');
         }
-
+        foreach ($allFamilyMembers as $familyMember) {
+            $relation = $service->calculateRelationship($person, $familyMember);
+            $familyMember->relation = $relation;
+        }
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
-            'familyTree' => $familyTree,
-            'relationships' => $familyTreeService->getAvailableRelationships()
+            'person' => $person,
+            'familyTree' => $allFamilyMembers,
+            'relationships' => $service->getAvailableRelationships()
         ]);
     }
 
@@ -621,10 +618,10 @@ class MemberController extends Controller
     public function getFamilyTreeData($id)
     {
         $member = Member::findOrFail($id);
-        $familyTreeService = new FamilyTreeService();
-        $familyTree = $familyTreeService->getFamilyTree($member);
-        
-        return response()->json($familyTree);
+        $service = new FamilyTreeService();
+        $person = UnifiedPerson::where('uid', 'M-'.$member->id)->first();
+
+        return response()->json($person ? $service->getFamilyTree($person) : []);
     }
 
     /**
