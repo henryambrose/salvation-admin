@@ -85,7 +85,7 @@ function applyPermissionGroup(groupId: string) {
   if (!group) return;
 
   // Reset all permissions to 0
-  const newPermissionState = {};
+  const newPermissionState: Record<number, Record<number, number>> = {};
   props.modules.forEach(module => {
     newPermissionState[module.id] = {};
     module.actions.forEach(action => {

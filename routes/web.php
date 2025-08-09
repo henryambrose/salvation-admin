@@ -19,7 +19,7 @@ Route::get('/', function () {
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 
-Route::middleware(['auth', 'role:superadmin'])->group(function () {
+Route::middleware(['auth', 'role:super admin'])->group(function () {
     Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
         ->name('roles.permissions.index');
     Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])

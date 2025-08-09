@@ -10,9 +10,10 @@ export function permissionHelpers() {
     }
 
     const roles = auth.roles || [];
+    const isSuper = auth.is_superadmin === true || roles.includes('superadmin') || roles.includes('super admin');
     
     // Superadmin has all permissions
-    if (roles.includes('superadmin')) {
+    if (isSuper) {
       return true;
     }
 

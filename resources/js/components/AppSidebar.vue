@@ -9,9 +9,7 @@ import { type NavItem } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import { 
-  BookOpen, 
   UserCircle, 
-  MessageSquare, 
   Users, 
   MapPin, 
   Network, 
@@ -223,13 +221,13 @@ const navigationGroups = [
         title: 'Users',
         href: route('users.index'),
         icon: UserCircle,
-        show: can('read-users') || (page.props.auth as any)?.roles?.includes('superadmin'),
+        show: can('read-users') || (page.props.auth as any)?.roles?.includes('super admin'),
       },
       {
         title: 'Roles & Permissions',
         href: '/roles-permissions',
         icon: Shield,
-        show: can('read-role'),
+        show: (page.props.auth as any)?.roles?.includes('super admin'),
       },
       {
         title: 'Audit Logs',
@@ -246,7 +244,7 @@ const navigationGroups = [
           title: 'AI Chat',
           href: '/chat',
           icon: Bot,
-          show: (page.props.auth as any)?.roles?.includes('superadmin') || false,
+          show: (page.props.auth as any)?.roles?.includes('super admin') || false,
         },
       ]
   }
@@ -256,8 +254,7 @@ const filteredNavigationGroups = navigationGroups.map(group => ({
   ...group,
   items: group.items.filter(item => item.show)
 })).filter(group => group.items.length > 0);
-
-
+console.log(page.props.auth)
 </script>
 
 <template>
