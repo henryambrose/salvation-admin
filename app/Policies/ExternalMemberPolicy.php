@@ -33,9 +33,19 @@ class ExternalMemberPolicy
         if (!$user->can('read-external-member')) {
             return false;
         }
-
-        // Family-scoped access for non-superadmin users
-        return $externalMember->family_no === ($user->family_no ?? $externalMember->family_no);
+        // Community-scoped access for head roles; otherwise allow
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return true;
+        }
+        // Prefer direct column
+        if (!is_null($externalMember->community_id)) {
+            return in_array($externalMember->community_id, $allowed, true);
+        }
+        // Fallback: check via family_no -> members community
+        $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+        return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
     /**
@@ -64,9 +74,16 @@ class ExternalMemberPolicy
         if (!$user->can('update-external-member')) {
             return false;
         }
-
-        // Family-scoped access for non-superadmin users
-        return $externalMember->family_no === ($user->family_no ?? $externalMember->family_no);
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return true;
+        }
+        if (!is_null($externalMember->community_id)) {
+            return in_array($externalMember->community_id, $allowed, true);
+        }
+        $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+        return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
     /**
@@ -82,9 +99,16 @@ class ExternalMemberPolicy
         if (!$user->can('delete-external-member')) {
             return false;
         }
-
-        // Family-scoped access for non-superadmin users
-        return $externalMember->family_no === ($user->family_no ?? $externalMember->family_no);
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return true;
+        }
+        if (!is_null($externalMember->community_id)) {
+            return in_array($externalMember->community_id, $allowed, true);
+        }
+        $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+        return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
     /**
@@ -96,8 +120,19 @@ class ExternalMemberPolicy
             return true;
         }
 
-        return $user->can('restore-external-member') && 
-               $externalMember->family_no === ($user->family_no ?? $externalMember->family_no);
+        if (!$user->can('restore-external-member')) {
+            return false;
+        }
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return true;
+        }
+        if (!is_null($externalMember->community_id)) {
+            return in_array($externalMember->community_id, $allowed, true);
+        }
+        $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+        return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
     /**
@@ -109,7 +144,18 @@ class ExternalMemberPolicy
             return true;
         }
 
-        return $user->can('force-delete-external-member') && 
-               $externalMember->family_no === ($user->family_no ?? $externalMember->family_no);
+        if (!$user->can('force-delete-external-member')) {
+            return false;
+        }
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return true;
+        }
+        if (!is_null($externalMember->community_id)) {
+            return in_array($externalMember->community_id, $allowed, true);
+        }
+        $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+        return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 }

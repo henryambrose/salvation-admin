@@ -3,8 +3,6 @@ import { Head, usePage } from '@inertiajs/vue3';
 
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { SearchDropdown } from '@/components/ui/searchDropdown';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -95,7 +93,7 @@ function editMember(member: Member) {
 }
 
 function viewFamilyTree(member: Member) {
-  router.get(route('member.family-tree', member.id));
+  router.get(route('member.family-tree',{ id: member.id, type: 'internal' }));
 }
 
 function addNewMember() {

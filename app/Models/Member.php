@@ -83,6 +83,23 @@ class Member extends Model
     ];
 
     /**
+     * Scope members to the allowed communities for the given user (ppc/scc heads).
+     * Returns unmodified query if unrestricted.
+     */
+    public function scopeForUserCommunities($query, $user)
+    {
+        $service = new \App\Services\CommunityAccessService();
+        $allowed = $service->getAllowedCommunityIds($user);
+        if ($allowed === null) {
+            return $query; // unrestricted
+        }
+        if (empty($allowed)) {
+            return $query->whereRaw('1=0');
+        }
+        return $query->whereIn('community_id', $allowed);
+    }
+
+    /**
      * Get the member's full name
      */
     public function getFullNameAttribute(): string

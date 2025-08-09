@@ -22,7 +22,7 @@ echo "Members: $members, External: $externals\n\n";
 
 // Test 2: Find a specific person (Trevin)
 
-$trevin = UnifiedPerson::where('uid', '=', 'M-6')->first();
+$trevin = UnifiedPerson::where('uid', '=', 'E-1')->first();
 if ($trevin) {
     echo "Found: {$trevin->full_name} (UID: {$trevin->uid})\n";
     echo "Family No: {$trevin->family_no}\n";

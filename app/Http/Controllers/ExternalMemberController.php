@@ -17,6 +17,7 @@ class ExternalMemberController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', ExternalMember::class);
         // Add debugging
         \Log::info('ExternalMemberController::index', [
             'user_id' => auth()->id(),
@@ -34,10 +35,8 @@ class ExternalMemberController extends Controller
             $query->withoutTrashed();
         }
         
-        // If user is not superadmin and has family_no, scope by family
-        if (!auth()->user()->hasRole('superadmin') && auth()->user()->family_no) {
-            $query->where('family_no', auth()->user()->family_no);
-        }
+        // Scope by allowed communities for PPC/SCC heads
+        $query->forUserCommunities(auth()->user());
         
         // Handle search
         if ($search = $request->input('search')) {
@@ -132,7 +131,7 @@ class ExternalMemberController extends Controller
                 'currentPage' => $externalMembers->currentPage(),
                 'lastPage' => $externalMembers->lastPage(),
             ],
-            'canViewAnyExternalMember' => auth()->user()->can('read-external-member'),
+            'canViewAnyExternalMember' => auth()->user()->can('list-external-member'),
             'canCreateExternalMember' => auth()->user()->can('create-external-member'),
             'canEditExternalMember' => auth()->user()->can('update-external-member'),
             'canDeleteExternalMember' => auth()->user()->can('delete-external-member'),
@@ -190,10 +189,7 @@ class ExternalMemberController extends Controller
      */
     public function show(ExternalMember $externalMember)
     {
-        // Ensure family-scoped access
-        if ($externalMember->family_no !== (auth()->user()->family_no ?? $externalMember->family_no)) {
-            abort(403, 'Unauthorized access to external member.');
-        }
+        $this->authorize('view', $externalMember);
 
         return Inertia::render('ExternalMembers/Show', [
             'externalMember' => $externalMember->load(['relationship', 'father', 'mother', 'spouse']),

@@ -11,6 +11,7 @@ use App\Models\Country;
 use App\Models\Designation;
 use App\Models\IncomeRange;
 use App\Models\Member;
+use App\Models\ExternalMember;
 use App\Models\Relationship;
 use App\Models\State;
 use App\Models\Town;
@@ -93,6 +94,9 @@ class MemberController extends Controller
             'clusterHeads.community',
             'clusterHeads.cluster',
         ]);
+
+        // Restrict by allowed communities for PPC/SCC heads
+        $query->forUserCommunities(auth()->user());
 
         // Enhanced search logic
         if ($search = $request->input('search')) {
@@ -255,6 +259,9 @@ class MemberController extends Controller
             $totalStatsQuery->where('gender_id', $gender);
         }
         
+        // Apply community scope to totals as well
+        $totalStatsQuery->forUserCommunities(auth()->user());
+
         // Get total statistics
         $totalMembers = $totalStatsQuery->count();
         $totalFamilies = $totalStatsQuery->distinct()->whereNotNull('family_no')->count('family_no');
@@ -281,11 +288,11 @@ class MemberController extends Controller
             'totalCount' => $totalCount,
             'familyStats' => $familyStats,
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
-            'canViewAnyMember' => auth()->user()->can('read-external-member'),
-            'canCreateMember' => auth()->user()->can('create-external-member'),
-            'canEditMember' => auth()->user()->can('update-external-member'),
-            'canDeleteMember' => auth()->user()->can('delete-external-member'),
-            'canRestoreMember' => auth()->user()->can('restore-external-member'),
+            'canViewAnyMember' => auth()->user()->can('list-member'),
+            'canCreateMember' => auth()->user()->can('create-member'),
+            'canEditMember' => auth()->user()->can('update-member'),
+            'canDeleteMember' => auth()->user()->can('delete-member'),
+            'canRestoreMember' => auth()->user()->can('restore-member'),
             'pagination' => [
                 'currentPage' => $query->paginate($perPage)->currentPage(),
                 'lastPage' => $query->paginate($perPage)->lastPage(),
@@ -588,10 +595,15 @@ class MemberController extends Controller
         return redirect()->route('member.index')->with('success', 'Member restored successfully.');
     }
 
-    public function showFamilyTree($id)
+    public function showFamilyTree($id, $type)
     {
-        $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
-        $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+        if($type == 'external'){
+            $member = ExternalMember::with(['gender','relationship'])->findOrFail($id);
+            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
+        }else{      
+            $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
+            $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+        }
         $service = new FamilyTreeService();
         $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)
         ->where('uid', '!=', $person->uid)

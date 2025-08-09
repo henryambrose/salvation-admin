@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {
     // Family tree display
-    Route::get('/member/{id}/family-tree', [MemberController::class, 'showFamilyTree'])->name('member.family-tree');
+    Route::get('/member/{id}/family-tree/{type}', [MemberController::class, 'showFamilyTree'])->name('member.family-tree');
     
     // Family tree API routes
     Route::get('/member/{id}/family-tree-data', [MemberController::class, 'getFamilyTreeData']);

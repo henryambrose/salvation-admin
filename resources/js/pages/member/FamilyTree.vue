@@ -10,7 +10,7 @@
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-semibold">Family Tree</h2>
         <div class="text-sm text-gray-500">
-          {{ displayNameWithNo(person) || 'Unknown' }} }}
+          {{ displayNameWithNo(person) || 'Unknown' }} 
         </div>
       </div>
 

@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('last_name')->nullable();
             $table->text('address')->nullable();
             $table->string('family_no'); // Default from initiating family
+            // Optional direct community link for performance (denormalized)
+            $table->foreignId('community_id')->nullable()->constrained('communities');
             $table->foreignId('relationship_id')->constrained('relationships')->onDelete('cascade');
             $table->unsignedBigInteger('father_id')->nullable();
             $table->unsignedBigInteger('mother_id')->nullable();
@@ -30,6 +32,7 @@ return new class extends Migration
             $table->index('mother_id');
             $table->index('spouse_id');
             $table->index('family_no');
+            $table->index('community_id');
             $table->timestamps();
             $table->softDeletes();
             $table->index('external_member_no');
