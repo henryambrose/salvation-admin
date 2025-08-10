@@ -19,7 +19,7 @@ Route::get('/', function () {
 Route::get('dashboard', [DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 
-Route::middleware(['auth', 'role:superadmin'])->group(function () {
+Route::middleware(['auth', 'role:super admin'])->group(function () {
     Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
         ->name('roles.permissions.index');
     Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
@@ -34,6 +34,14 @@ Route::middleware(['auth', 'role:superadmin'])->group(function () {
 
 
 });
+
+Route::get('/roles-permissions/users', [RolePermissionController::class, 'users'])->name('roles.permissions.users');
+Route::post('/roles-permissions/assign-role', [RolePermissionController::class, 'assignRole'])->name('roles.permissions.assign-role');
+Route::post('/roles-permissions/remove-role', [RolePermissionController::class, 'removeRole'])->name('roles.permissions.remove-role');
+Route::post('/roles-permissions/assign-role-from-group', [RolePermissionController::class, 'assignRoleFromGroup'])
+    ->name('roles.permissions.assign-role-from-group');
+Route::post('/roles-permissions/update-user-permissions', [RolePermissionController::class, 'updateUserPermissions'])
+    ->name('roles.permissions.update-user-permissions');
 
 Route::get('/api/community/{community}/members', [SCCHeadController::class, 'membersByCommunity']);
 Route::get('/api/ppc-community/{community}/members', [PPCHeadController::class, 'membersByCommunity']);
@@ -118,3 +126,5 @@ require __DIR__.'/clusters.php';
 require __DIR__.'/community_clusters.php';
 require __DIR__.'/audit.php';
 require __DIR__.'/external_members.php';
+
+Route::get('/debug-user/{email}', [RolePermissionController::class, 'debugUser']);

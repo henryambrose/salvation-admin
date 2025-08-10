@@ -30,7 +30,7 @@ class CreateRoleNPermissionSeeder extends Seeder
 
         // $user = User::find(1);
         $user = User::create(
-            ['email' => 'superadmin@salvationchurch.in', 'name' => 'Super Admin', 'password' => bcrypt('superadmin')]
+            ['email' => 'superadmin@salvationchurch.in', 'name' => 'Super Admin', 'is_superadmin' => true, 'password' => bcrypt('superadmin')]
         );
         $user->assignRole('super admin');
 

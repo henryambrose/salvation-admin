@@ -175,6 +175,12 @@ class MemberController extends Controller
             $query->orderBy('id', 'asc');
         }
 
+        // Apply PPC/SCC community scoping
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+        if ($allowedCommunityIds !== null) {
+            $query->whereIn('community_id', $allowedCommunityIds);
+        }
+
         $perPage = $request->input('perPage', 10);
 
         // Normal pagination
@@ -216,6 +222,11 @@ class MemberController extends Controller
             $totalStatsQuery->onlyTrashed();
         } else {
             $totalStatsQuery->withoutTrashed();
+        }
+
+        // Apply PPC/SCC community scoping to stats query
+        if ($allowedCommunityIds !== null) {
+            $totalStatsQuery->whereIn('community_id', $allowedCommunityIds);
         }
         
         if ($search = $request->input('search')) {
@@ -596,13 +607,13 @@ class MemberController extends Controller
     }
 
     public function showFamilyTree($id, $type)
-    {
-        if($type == 'external'){
-            $member = ExternalMember::with(['gender','relationship'])->findOrFail($id);
-            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
-        }else{      
+    {       
+        if ($type == 'internal') {
             $member = Member::with(['gender','community','relationship','relationships.relatedMember.gender','relationships.relatedMember.community','relationships.relationship'])->findOrFail($id);
             $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+        } else {
+            $member = ExternalMember::with(['gender','relationship'])->findOrFail($id);
+            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
         }
         $service = new FamilyTreeService();
         $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)

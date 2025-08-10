@@ -35,8 +35,17 @@ class ExternalMemberController extends Controller
             $query->withoutTrashed();
         }
         
-        // Scope by allowed communities for PPC/SCC heads
-        $query->forUserCommunities(auth()->user());
+
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+        if ($allowedCommunityIds !== null) {
+            // Use whereExists to check if any member with this family_no is in allowed communities
+            $query->whereExists(function ($subquery) use ($allowedCommunityIds) {
+                $subquery->select(\DB::raw(1))
+                        ->from('members')
+                        ->whereColumn('members.family_no', 'external_members.family_no')
+                        ->whereIn('members.community_id', $allowedCommunityIds);
+            });
+        }
         
         // Handle search
         if ($search = $request->input('search')) {

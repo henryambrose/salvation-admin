@@ -35,7 +35,9 @@ class DatabaseSeeder extends Seeder
             MemberSeeder::class,
             PPCHeadSeeder::class,
             SCCHeadSeeder::class,
-
-         ]);
+            PermissionGroupSeeder::class,
+            PPCHeadPermissionSeeder::class,
+            SCCHeadPermissionSeeder::class,
+        ]);
     }
 }

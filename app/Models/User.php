@@ -50,4 +50,19 @@ class User extends Authenticatable
             'is_superadmin' => 'boolean',
         ];
     }
+
+    public function getAllPermissionsAttribute()
+    {
+        $permissions = collect();
+        
+        // Get permissions from roles
+        foreach ($this->roles as $role) {
+            $permissions = $permissions->merge($role->permissions);
+        }
+        
+        // Get direct permissions
+        $permissions = $permissions->merge($this->permissions);
+        
+        return $permissions->unique('name')->pluck('name');
+    }
 }

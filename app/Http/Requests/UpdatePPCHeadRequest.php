@@ -21,10 +21,20 @@ class UpdatePPCHeadRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $rules = [
             'member_id' => 'required|integer|exists:members,id',
-            'community_id' => 'required|integer|exists:communities,id|unique:p_p_c_heads,community_id,' . $this->route('ppc-head'),
+            'community_id' => [
+                'required',
+                'integer',
+                'exists:communities,id',
+            ],
         ];
+    
+        if ($this->isMethod('post')) { // create
+            $rules['community_id'][] = 'unique:p_p_c_heads,community_id';
+        }
+    
+        return $rules;
     }
 
     /**

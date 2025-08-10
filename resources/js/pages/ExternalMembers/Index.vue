@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, usePage } from '@inertiajs/vue3';
-
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -32,32 +31,6 @@ const props = defineProps({
   },
 });
 
-// Use permission helper for all permission checks
-const canViewAnyExternalMember = computed(() => {
-  const result = can('list-external-member');
-  return result;
-});
-
-const canCreateExternalMember = computed(() => {
-  const result = can('create-external-member');
-  return result;
-});
-
-const canEditExternalMember = computed(() => {
-  const result = can('update-external-member');
-  return result;
-});
-
-const canDeleteExternalMember = computed(() => {
-  const result = can('delete-external-member');
-  console.log('canDeleteExternalMember:', result);
-  return result;
-});
-
-const canRestoreExternalMember = computed(() => {
-  const result = can('restore-external-member');
-  return result;
-});
 
 const showFilters = ref(false);
 const search = ref(props.filters?.search || '');
@@ -120,17 +93,18 @@ function changeSort(field: string) {
   fetch();
 }
 
-function toggleisArchived() {
-  isArchived.value = !isArchived.value;
-}
-
-// Search handling functions
 function handleSearchInput() {
-  // The watch will handle the debounced search
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetch();
+  }, 300);
 }
 
 function handleFamilySearchInput() {
-  // The watch will handle the debounced search
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    fetch();
+  }, 300);
 }
 
 function clearSearch() {
@@ -247,10 +221,8 @@ function downloadExcel() {
   window.open(`/external-members/export?${queryString}`, '_blank');
 }
 
-function getRelationshipName(relationshipId: number | string) {
-  if (!relationshipId) return '';
-  const relationship = props.relationships?.find(r => r.id == relationshipId);
-  return relationship?.name || '';
+function viewFamilyTree(member: any) {
+  router.get(route('member.family-tree',{id: member.id, type:'external'}));
 }
 
 const highlightedRowId = ref<number | null>(null);
@@ -400,16 +372,14 @@ function confirmDelete() {
                           class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
                         </Button>
-                        <Button
-                          @click="viewFamilyTreeForExternal(member)"
+                        <Button @click="viewFamilyTree(member)"
                           class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
-                          title="View Family Tree"
-                        >
+                          title="View Family Tree">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"/>
+                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"/>
+                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
                           </svg>
                         </Button>
                       </template>
