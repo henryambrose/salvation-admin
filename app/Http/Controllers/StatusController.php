@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreStatusRequest;
 use App\Http\Requests\UpdateStatusRequest;
 use App\Models\Status;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class StatusController extends Controller
@@ -107,4 +107,4 @@ class StatusController extends Controller
 
         return redirect()->route('status.index')->with('success', 'Status restored successfully.');
     }
-} 
+}

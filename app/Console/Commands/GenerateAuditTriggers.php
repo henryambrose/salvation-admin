@@ -25,8 +25,9 @@ class GenerateAuditTriggers extends Command
     {
         $tableName = $this->argument('table');
 
-        if (!Schema::hasTable($tableName)) {
+        if (! Schema::hasTable($tableName)) {
             $this->error("Table '{$tableName}' does not exist!");
+
             return 1;
         }
 
@@ -35,9 +36,11 @@ class GenerateAuditTriggers extends Command
         try {
             $this->createTriggers($tableName);
             $this->info("✅ Audit triggers created successfully for table: {$tableName}");
+
             return 0;
         } catch (\Exception $e) {
-            $this->error("❌ Failed to create triggers: " . $e->getMessage());
+            $this->error('❌ Failed to create triggers: '.$e->getMessage());
+
             return 1;
         }
     }
@@ -50,12 +53,12 @@ class GenerateAuditTriggers extends Command
         // Get table columns for JSON_OBJECT
         $columns = Schema::getColumnListing($tableName);
         $jsonColumns = [];
-        
+
         foreach ($columns as $column) {
             $jsonColumns[] = "'{$column}', NEW.{$column}";
         }
-        
-        $jsonObject = 'JSON_OBJECT(' . implode(', ', $jsonColumns) . ')';
+
+        $jsonObject = 'JSON_OBJECT('.implode(', ', $jsonColumns).')';
         $oldJsonObject = str_replace('NEW.', 'OLD.', $jsonObject);
 
         // Create INSERT trigger
@@ -122,4 +125,4 @@ class GenerateAuditTriggers extends Command
             END;
         ");
     }
-} 
+}

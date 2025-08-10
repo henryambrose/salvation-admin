@@ -16,7 +16,7 @@ class ExternalMemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        
+
         return $user->can('list-external-member');
     }
 
@@ -29,22 +29,23 @@ class ExternalMemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        
-        if (!$user->can('read-external-member')) {
+
+        if (! $user->can('read-external-member')) {
             return false;
         }
         // Community-scoped access for head roles; otherwise allow
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
         // Prefer direct column
-        if (!is_null($externalMember->community_id)) {
+        if (! is_null($externalMember->community_id)) {
             return in_array($externalMember->community_id, $allowed, true);
         }
         // Fallback: check via family_no -> members community
         $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+
         return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
@@ -57,7 +58,7 @@ class ExternalMemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        
+
         return $user->can('create-external-member');
     }
 
@@ -70,19 +71,20 @@ class ExternalMemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        
-        if (!$user->can('update-external-member')) {
+
+        if (! $user->can('update-external-member')) {
             return false;
         }
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
-        if (!is_null($externalMember->community_id)) {
+        if (! is_null($externalMember->community_id)) {
             return in_array($externalMember->community_id, $allowed, true);
         }
         $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+
         return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
@@ -95,19 +97,20 @@ class ExternalMemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        
-        if (!$user->can('delete-external-member')) {
+
+        if (! $user->can('delete-external-member')) {
             return false;
         }
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
-        if (!is_null($externalMember->community_id)) {
+        if (! is_null($externalMember->community_id)) {
             return in_array($externalMember->community_id, $allowed, true);
         }
         $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+
         return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
@@ -120,18 +123,19 @@ class ExternalMemberPolicy
             return true;
         }
 
-        if (!$user->can('restore-external-member')) {
+        if (! $user->can('restore-external-member')) {
             return false;
         }
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
-        if (!is_null($externalMember->community_id)) {
+        if (! is_null($externalMember->community_id)) {
             return in_array($externalMember->community_id, $allowed, true);
         }
         $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+
         return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 
@@ -144,18 +148,19 @@ class ExternalMemberPolicy
             return true;
         }
 
-        if (!$user->can('force-delete-external-member')) {
+        if (! $user->can('force-delete-external-member')) {
             return false;
         }
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
-        if (!is_null($externalMember->community_id)) {
+        if (! is_null($externalMember->community_id)) {
             return in_array($externalMember->community_id, $allowed, true);
         }
         $memberCommunityId = \App\Models\Member::where('family_no', $externalMember->family_no)->value('community_id');
+
         return $memberCommunityId ? in_array($memberCommunityId, $allowed, true) : false;
     }
 }

@@ -27,4 +27,4 @@ class StoreTownRequest extends FormRequest
             'city_id' => 'required|exists:cities,id',
         ];
     }
-} 
+}

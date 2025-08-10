@@ -45,5 +45,4 @@ class CommunityFund extends Model
     {
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
-
 }

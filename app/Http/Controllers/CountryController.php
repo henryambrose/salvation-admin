@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Country;
 use App\Http\Requests\StoreCountryRequest;
 use App\Http\Requests\UpdateCountryRequest;
+use App\Models\Country;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -120,6 +120,7 @@ class CountryController extends Controller
     {
         $country = Country::onlyTrashed()->findOrFail($id);
         $country->restore();
+
         return redirect()->route('country.index')->with('success', 'Country restored successfully.');
     }
 

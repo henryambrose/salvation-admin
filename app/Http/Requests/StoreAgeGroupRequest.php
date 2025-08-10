@@ -34,7 +34,7 @@ class StoreAgeGroupRequest extends FormRequest
                         $exists = \App\Models\AgeGroup::where('min_age', $value)
                             ->where('max_age', $maxAge)
                             ->exists();
-                        
+
                         if ($exists) {
                             $fail('An age group with this min age and max age combination already exists.');
                         }
@@ -51,7 +51,7 @@ class StoreAgeGroupRequest extends FormRequest
                         $exists = \App\Models\AgeGroup::where('min_age', $minAge)
                             ->where('max_age', $value)
                             ->exists();
-                        
+
                         if ($exists) {
                             $fail('An age group with this min age and max age combination already exists.');
                         }

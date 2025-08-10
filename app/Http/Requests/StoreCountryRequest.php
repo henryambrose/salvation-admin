@@ -25,4 +25,4 @@ class StoreCountryRequest extends FormRequest
             'name' => 'required|string|max:255|unique:countries,name',
         ];
     }
-} 
+}

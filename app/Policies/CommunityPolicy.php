@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Community;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class CommunityPolicy
 {
@@ -16,6 +15,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('read-community');
     }
 
@@ -27,6 +27,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('read-community');
     }
 
@@ -38,6 +39,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('create-community');
     }
 
@@ -49,6 +51,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('update-community');
     }
 
@@ -60,6 +63,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-community');
     }
 
@@ -71,6 +75,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('restore-community');
     }
 
@@ -82,6 +87,7 @@ class CommunityPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-community');
     }
 }

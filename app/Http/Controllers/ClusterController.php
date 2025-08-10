@@ -37,6 +37,7 @@ class ClusterController extends Controller
         }
 
         $perPage = $request->input('perPage', 10);
+
         return Inertia::render('clusters/Index', [
             'fetchUrl' => route('clusters.index'),
             'clusters' => $query->paginate($perPage)->appends($request->query()),
@@ -60,7 +61,7 @@ class ClusterController extends Controller
         Cluster::create($request->validated());
 
         return redirect()->route('clusters.index')
-                        ->with('success', 'Cluster created successfully.');
+            ->with('success', 'Cluster created successfully.');
     }
 
     /**
@@ -69,7 +70,7 @@ class ClusterController extends Controller
     public function show(Cluster $cluster): Response
     {
         $cluster->load(['communityClusters.community', 'communityClusterHeads.member']);
-        
+
         return Inertia::render('clusters/Show', [
             'cluster' => $cluster,
         ]);
@@ -93,7 +94,7 @@ class ClusterController extends Controller
         $cluster->update($request->validated());
 
         return redirect()->route('clusters.index')
-                        ->with('success', 'Cluster updated successfully.');
+            ->with('success', 'Cluster updated successfully.');
     }
 
     /**
@@ -104,12 +105,14 @@ class ClusterController extends Controller
         $cluster->delete();
 
         return redirect()->route('clusters.index')
-                        ->with('success', 'Cluster deleted successfully.');
+            ->with('success', 'Cluster deleted successfully.');
     }
+
     public function restore($id)
     {
         $cluster = Cluster::onlyTrashed()->findOrFail($id);
         $cluster->restore();
+
         return redirect()->route('clusters.index')->with('success', 'Cluster restored successfully.');
     }
 }

@@ -29,11 +29,11 @@ class UpdatePPCHeadRequest extends FormRequest
                 'exists:communities,id',
             ],
         ];
-    
+
         if ($this->isMethod('post')) { // create
             $rules['community_id'][] = 'unique:p_p_c_heads,community_id';
         }
-    
+
         return $rules;
     }
 

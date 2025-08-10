@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreDesignationRequest;
 use App\Http\Requests\UpdateDesignationRequest;
 use App\Models\Designation;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class DesignationController extends Controller
@@ -112,13 +112,13 @@ class DesignationController extends Controller
     {
         try {
             $query = Designation::query();
-            
+
             if ($request->input('isArchived') === 'true') {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
-            
+
             if ($search = $request->input('search')) {
                 $query->where('name', 'like', "%$search%");
             }
@@ -127,7 +127,7 @@ class DesignationController extends Controller
             $allowedSortColumns = ['id', 'name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 $query->orderBy($sort, $direction);
             } else {
@@ -146,14 +146,14 @@ class DesignationController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
             $headers = array_keys($exportData[0] ?? []);
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
+                $sheet->setCellValue($col.'1', $header);
                 $sheet->getColumnDimension($col)->setAutoSize(true);
                 $col++;
             }
@@ -163,30 +163,31 @@ class DesignationController extends Controller
             foreach ($exportData as $rowData) {
                 $col = 'A';
                 foreach ($rowData as $value) {
-                    $sheet->setCellValue($col . $row, $value);
+                    $sheet->setCellValue($col.$row, $value);
                     $col++;
                 }
                 $row++;
             }
 
             // Style header row
-            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
 
             // Create writer and output
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'designations_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'designations_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('Designation Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('Designation Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
-} 
+}

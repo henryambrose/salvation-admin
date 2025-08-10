@@ -15,7 +15,7 @@ class Town extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-    ];      
+    ];
 
     public function getCreatedAtAttribute($value)
     {
@@ -30,5 +30,5 @@ class Town extends Model
     public function city()
     {
         return $this->belongsTo(City::class);
-    }   
+    }
 }

@@ -22,7 +22,7 @@ class UpdateRelationshipRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|unique:relationships,name,' . $this->route('relationship')->id,
+            'name' => 'required|string|unique:relationships,name,'.$this->route('relationship')->id,
         ];
     }
 }

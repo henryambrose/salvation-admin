@@ -14,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register the ApiResponseService as a singleton
         $this->app->singleton('apiresponse', function () {
-            return new ApiResponseService();
+            return new ApiResponseService;
         });
     }
 

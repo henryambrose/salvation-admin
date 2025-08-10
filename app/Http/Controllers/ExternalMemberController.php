@@ -3,12 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\ExternalMember;
+use App\Models\Gender;
 use App\Models\Member;
 use App\Models\Relationship;
-use App\Models\Gender;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class ExternalMemberController extends Controller
 {
@@ -23,113 +22,112 @@ class ExternalMemberController extends Controller
             'user_id' => auth()->id(),
             'user_roles' => auth()->user()->roles->pluck('name'),
             'family_no' => auth()->user()->family_no,
-            'user_email' => auth()->user()->email
+            'user_email' => auth()->user()->email,
         ]);
-        
+
         // Start with base query - make sure to load relationship
         $query = ExternalMember::query()->with(['relationship', 'gender']);
-        
+
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
         }
-        
 
         $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
         if ($allowedCommunityIds !== null) {
             // Use whereExists to check if any member with this family_no is in allowed communities
             $query->whereExists(function ($subquery) use ($allowedCommunityIds) {
                 $subquery->select(\DB::raw(1))
-                        ->from('members')
-                        ->whereColumn('members.family_no', 'external_members.family_no')
-                        ->whereIn('members.community_id', $allowedCommunityIds);
+                    ->from('members')
+                    ->whereColumn('members.family_no', 'external_members.family_no')
+                    ->whereIn('members.community_id', $allowedCommunityIds);
             });
         }
-        
+
         // Handle search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
-                  ->orWhere('last_name', 'like', "%$search%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                  ->orWhere('family_no', 'like', "%$search%");
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                    ->orWhere('family_no', 'like', "%$search%");
             });
         }
-        
+
         // Handle family search
         if ($familySearch = $request->input('familySearch')) {
             $query->where('family_no', 'like', "%$familySearch%");
         }
-        
+
         // Handle relationship filter
         if ($relationship = $request->input('relationship')) {
             $query->where('relationship_id', $relationship);
         }
-        
+
         // Handle sorting
         $sort = $request->input('sort', 'first_name');
         $direction = $request->input('direction', 'asc');
         $query->orderBy($sort, $direction);
-        
+
         // Handle pagination
         $perPage = $request->input('perPage', 15);
         $externalMembers = $query->paginate($perPage);
-        
+
         // Manually load relationship data for each external member
         $externalMembers->getCollection()->transform(function ($externalMember) {
             // Load father data
             if ($externalMember->father_id) {
                 $father = \App\Models\Member::find($externalMember->father_id);
-                if (!$father) {
+                if (! $father) {
                     $father = ExternalMember::find($externalMember->father_id);
                 }
                 $externalMember->father_data = $father ? [
                     'id' => $father->id,
-                    'name' => trim($father->first_name . ' ' . $father->last_name),
-                    'type' => $father instanceof \App\Models\Member ? 'Member' : 'External'
+                    'name' => trim($father->first_name.' '.$father->last_name),
+                    'type' => $father instanceof \App\Models\Member ? 'Member' : 'External',
                 ] : null;
             }
-            
+
             // Load mother data
             if ($externalMember->mother_id) {
                 $mother = \App\Models\Member::find($externalMember->mother_id);
-                if (!$mother) {
+                if (! $mother) {
                     $mother = ExternalMember::find($externalMember->mother_id);
                 }
                 $externalMember->mother_data = $mother ? [
                     'id' => $mother->id,
-                    'name' => trim($mother->first_name . ' ' . $mother->last_name),
-                    'type' => $mother instanceof \App\Models\Member ? 'Member' : 'External'
+                    'name' => trim($mother->first_name.' '.$mother->last_name),
+                    'type' => $mother instanceof \App\Models\Member ? 'Member' : 'External',
                 ] : null;
             }
-            
+
             // Load spouse data
             if ($externalMember->spouse_id) {
                 $spouse = \App\Models\Member::find($externalMember->spouse_id);
-                if (!$spouse) {
+                if (! $spouse) {
                     $spouse = ExternalMember::find($externalMember->spouse_id);
                 }
                 $externalMember->spouse_data = $spouse ? [
                     'id' => $spouse->id,
-                    'name' => trim($spouse->first_name . ' ' . $spouse->last_name),
-                    'type' => $spouse instanceof \App\Models\Member ? 'Member' : 'External'
+                    'name' => trim($spouse->first_name.' '.$spouse->last_name),
+                    'type' => $spouse instanceof \App\Models\Member ? 'Member' : 'External',
                 ] : null;
             }
-            
+
             return $externalMember;
         });
-        
+
         // Get relationships for filter dropdown
         $relationships = Relationship::all();
-        
+
         \Log::info('ExternalMemberController::index - Results', [
             'total_count' => $externalMembers->total(),
             'current_page' => $externalMembers->currentPage(),
             'per_page' => $externalMembers->perPage(),
-            'has_data' => $externalMembers->count() > 0
+            'has_data' => $externalMembers->count() > 0,
         ]);
-        
+
         return Inertia::render('ExternalMembers/Index', [
             'externalMembers' => $externalMembers,
             'relationships' => $relationships,
@@ -154,10 +152,10 @@ class ExternalMemberController extends Controller
     public function create()
     {
         $this->authorize('create', ExternalMember::class);
-        
+
         $genders = Gender::all();
         $relationships = Relationship::all();
-        
+
         return Inertia::render('ExternalMembers/Create', [
             'genders' => $genders,
             'relationships' => $relationships,
@@ -183,10 +181,10 @@ class ExternalMemberController extends Controller
             'spouse_source' => 'nullable|string|max:255',
             'relationship_id' => 'required|exists:relationships,id',
         ]);
-        
+
         // Use the provided family_no if user doesn't have one set
         $validated['family_no'] = auth()->user()->family_no ?? $validated['family_no'];
-        
+
         $externalMember = ExternalMember::create($validated);
 
         return redirect()->route('external-members.index')
@@ -211,7 +209,7 @@ class ExternalMemberController extends Controller
     public function edit(ExternalMember $externalMember)
     {
         $this->authorize('update', $externalMember);
-        
+
         // Debug logging
         \Log::info('ExternalMemberController::edit called', [
             'external_member_id' => $externalMember->id,
@@ -219,51 +217,50 @@ class ExternalMemberController extends Controller
             'mother_id' => $externalMember->mother_id,
             'spouse_id' => $externalMember->spouse_id,
         ]);
-        
+
         // Load relationship data for the external member
         $externalMember->load(['relationship', 'gender']);
-        $type='External';
+        $type = 'External';
         // Manually load father, mother, and spouse data with type information
         if ($externalMember->father_id && $externalMember->father_source == 'Member') {
             $father = \App\Models\Member::find($externalMember->father_id);
-            $type='Member';
+            $type = 'Member';
         } else {
             $father = ExternalMember::find($externalMember->father_id);
-            $type='External';
+            $type = 'External';
         }
         $externalMember->father_data = $father ? [
             'id' => $father->id,
-            'name' => $father->first_name . ' ' . $father->last_name,
-            'type' => $type
+            'name' => $father->first_name.' '.$father->last_name,
+            'type' => $type,
         ] : null;
-            
-        
+
         if ($externalMember->mother_id && $externalMember->mother_source == 'Member') {
             $mother = \App\Models\Member::find($externalMember->mother_id);
-            $type='Member';
+            $type = 'Member';
         } else {
             $mother = ExternalMember::find($externalMember->mother_id);
-            $type='External';
+            $type = 'External';
         }
         $externalMember->mother_data = $mother ? [
             'id' => $mother->id,
-            'name' => $mother->first_name . ' ' . $mother->last_name,
-            'type' => $type
+            'name' => $mother->first_name.' '.$mother->last_name,
+            'type' => $type,
         ] : null;
-        
+
         if ($externalMember->spouse_id && $externalMember->spouse_source == 'Member') {
             $spouse = \App\Models\Member::find($externalMember->spouse_id);
-            $type='Member';
+            $type = 'Member';
         } else {
             $spouse = ExternalMember::find($externalMember->spouse_id);
-            $type='External';
+            $type = 'External';
         }
         $externalMember->spouse_data = $spouse ? [
             'id' => $spouse->id,
-            'name' => $spouse->first_name . ' ' . $spouse->last_name,
-            'type' => $type
+            'name' => $spouse->first_name.' '.$spouse->last_name,
+            'type' => $type,
         ] : null;
-        
+
         $genders = Gender::all();
         $relationships = Relationship::all();
 
@@ -283,7 +280,7 @@ class ExternalMemberController extends Controller
         if ($externalMember->family_no !== (auth()->user()->family_no ?? $externalMember->family_no)) {
             abort(403, 'Unauthorized access to external member.');
         }
-        
+
         $validated = $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
@@ -298,7 +295,7 @@ class ExternalMemberController extends Controller
             'spouse_source' => 'nullable|string|max:255',
             'relationship_id' => 'required|exists:relationships,id',
         ]);
-        
+
         $externalMember->update($validated);
 
         return redirect()->route('external-members.index')
@@ -311,12 +308,12 @@ class ExternalMemberController extends Controller
     public function destroy(ExternalMember $externalMember)
     {
         $this->authorize('delete', $externalMember);
-        
+
         try {
             $externalMember->delete(); // This will now be a soft delete
 
-        return redirect()->route('external-members.index')
-            ->with('success', 'External member deleted successfully.');
+            return redirect()->route('external-members.index')
+                ->with('success', 'External member deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('external-members.index')
                 ->with('error', 'Failed to delete external member.');
@@ -330,10 +327,10 @@ class ExternalMemberController extends Controller
     {
         $externalMember = ExternalMember::withTrashed()->findOrFail($id);
         $this->authorize('restore', $externalMember);
-        
+
         try {
             $externalMember->restore();
-            
+
             return redirect()->route('external-members.index')
                 ->with('success', 'External member restored successfully.');
         } catch (\Exception $e) {
@@ -349,10 +346,10 @@ class ExternalMemberController extends Controller
     {
         $externalMember = ExternalMember::withTrashed()->findOrFail($id);
         $this->authorize('forceDelete', $externalMember);
-        
+
         try {
             $externalMember->forceDelete();
-            
+
             return redirect()->route('external-members.index')
                 ->with('success', 'External member permanently deleted.');
         } catch (\Exception $e) {
@@ -372,14 +369,14 @@ class ExternalMemberController extends Controller
         $externalMembers = ExternalMember::where('family_no', $familyNo)
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('family_no', 'like', "%{$query}%")
-                  ->orWhere('member_no', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('family_no', 'like', "%{$query}%")
+                    ->orWhere('member_no', 'like', "%{$query}%");
             })
             ->with(['relationship'])
             ->limit(10)
             ->get();
-        
+
         return response()->json($externalMembers->map(function ($member) {
             return [
                 'id' => $member->id,
@@ -389,7 +386,7 @@ class ExternalMemberController extends Controller
                 'family_no' => $member->family_no,
                 'address' => $member->address,
                 'relationship' => $member->relationship?->name,
-                'type' => 'external'
+                'type' => 'external',
             ];
         }));
     }
@@ -401,20 +398,20 @@ class ExternalMemberController extends Controller
     {
         try {
             $query = $request->get('query', '');
-            
+
             if (strlen($query) < 2) {
                 return response()->json([]);
             }
-            
+
             $externalMembers = ExternalMember::where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('family_no', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('family_no', 'like', "%{$query}%");
             })
-            ->with(['relationship'])
-            ->limit(10)
-            ->get();
-            
+                ->with(['relationship'])
+                ->limit(10)
+                ->get();
+
             return response()->json($externalMembers->map(function ($member) {
                 return [
                     'id' => $member->id,
@@ -424,12 +421,13 @@ class ExternalMemberController extends Controller
                     'family_no' => $member->family_no,
                     'address' => $member->address,
                     'relationship' => $member->relationship?->name,
-                    'type' => 'external'
+                    'type' => 'external',
                 ];
             }));
-            
+
         } catch (\Exception $e) {
-            \Log::error('External members search error: ' . $e->getMessage());
+            \Log::error('External members search error: '.$e->getMessage());
+
             return response()->json(['error' => 'Search failed'], 500);
         }
     }
@@ -438,39 +436,40 @@ class ExternalMemberController extends Controller
     {
         try {
             $query = $request->get('query', '');
-            
+
             if (strlen($query) < 2) {
                 return response()->json([]);
             }
-            
+
             // Simple search for family numbers
             $familyNumbers = Member::select('family_no')
                 ->where('family_no', 'like', "%{$query}%")
                 ->groupBy('family_no')
                 ->limit(10)
                 ->get()
-                ->map(function($family) {
+                ->map(function ($family) {
                     // Count members in this family
                     $memberCount = Member::where('family_no', $family->family_no)->count();
-                    
+
                     // Get sample member names for display
                     $sampleMembers = Member::where('family_no', $family->family_no)
                         ->limit(3)
                         ->get()
-                        ->map(fn($member) => $member->first_name . ' ' . $member->last_name)
+                        ->map(fn ($member) => $member->first_name.' '.$member->last_name)
                         ->join(', ');
-                    
+
                     return [
                         'family_no' => $family->family_no,
                         'member_count' => $memberCount,
-                        'sample_members' => $sampleMembers
-                ];
-            });
+                        'sample_members' => $sampleMembers,
+                    ];
+                });
 
             return response()->json($familyNumbers);
-            
+
         } catch (\Exception $e) {
-            \Log::error('Family numbers search error: ' . $e->getMessage());
+            \Log::error('Family numbers search error: '.$e->getMessage());
+
             return response()->json(['error' => 'Search failed'], 500);
         }
     }
@@ -481,14 +480,14 @@ class ExternalMemberController extends Controller
     public function getDetails($id)
     {
         $externalMember = ExternalMember::findOrFail($id);
-        
+
         return response()->json([
             'id' => $externalMember->id,
             'first_name' => $externalMember->first_name,
             'last_name' => $externalMember->last_name,
             'family_no' => $externalMember->family_no,
             'address' => $externalMember->address,
-            'type' => 'external'
+            'type' => 'external',
         ]);
     }
 }

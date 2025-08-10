@@ -30,4 +30,4 @@ class UpdateStatusRequest extends FormRequest
             ],
         ];
     }
-} 
+}

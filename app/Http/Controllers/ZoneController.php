@@ -3,14 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreZoneRequest;
-use App\Http\Requests\UpdateZoneRequest;
-use Illuminate\Http\Request;
 use App\Models\Zone;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-
 
 class ZoneController extends Controller
 {
@@ -19,7 +15,7 @@ class ZoneController extends Controller
      */
     public function index(Request $request): Response
     {
- 
+
         $query = Zone::query();
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -48,6 +44,7 @@ class ZoneController extends Controller
     {
         $zone = Zone::onlyTrashed()->findOrFail($id);
         $zone->restore();
+
         return redirect()->route('zone.index')->with('success', 'Zone restored successfully.');
     }
 
@@ -79,6 +76,7 @@ class ZoneController extends Controller
         // return to_route('zone.index')->with('success', 'Zone created successfully.');
         return redirect()->route('zone.index')->with('success', 'Zone created successfully.');
     }
+
     /**
      * Display the specified resource.
      */
@@ -103,7 +101,7 @@ class ZoneController extends Controller
     public function update(Request $request, Zone $zone)
     {
         $validated = $request->validate([
-            'name' => 'required|string|unique:zones,name,' . $zone->id,
+            'name' => 'required|string|unique:zones,name,'.$zone->id,
             'description' => 'nullable|string',
         ]);
 

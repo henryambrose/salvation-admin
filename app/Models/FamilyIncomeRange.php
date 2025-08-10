@@ -18,5 +18,4 @@ class IncomeRange extends Model
     ];
 
     public $timestamps = false;
-
 }

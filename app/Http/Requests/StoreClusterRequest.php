@@ -48,4 +48,4 @@ class StoreClusterRequest extends FormRequest
             'name.unique' => 'A cluster with this name already exists.',
         ];
     }
-} 
+}

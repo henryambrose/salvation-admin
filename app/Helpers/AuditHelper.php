@@ -2,8 +2,8 @@
 
 namespace App\Helpers;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AuditHelper
 {
@@ -13,24 +13,24 @@ class AuditHelper
     public static function setCurrentUserId(): void
     {
         $userId = Auth::id();
-        
+
         if ($userId) {
             // Store user ID in sessions table for triggers to access
             // Use CONNECTION_ID() for older MySQL versions
             $connectionId = DB::select('SELECT CONNECTION_ID() as id')[0]->id;
-            
+
             // Create a temporary table to store the user ID for this connection
-            DB::statement("CREATE TEMPORARY TABLE IF NOT EXISTS temp_user_sessions (
+            DB::statement('CREATE TEMPORARY TABLE IF NOT EXISTS temp_user_sessions (
                 connection_id INT PRIMARY KEY,
                 user_id BIGINT UNSIGNED,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )");
-            
+            )');
+
             // Insert or update the user ID for this connection
-            DB::statement("INSERT INTO temp_user_sessions (connection_id, user_id) 
+            DB::statement('INSERT INTO temp_user_sessions (connection_id, user_id) 
                           VALUES (?, ?) 
-                          ON DUPLICATE KEY UPDATE user_id = ?, created_at = CURRENT_TIMESTAMP", 
-                          [$connectionId, $userId, $userId]);
+                          ON DUPLICATE KEY UPDATE user_id = ?, created_at = CURRENT_TIMESTAMP',
+                [$connectionId, $userId, $userId]);
         }
     }
 
@@ -45,7 +45,7 @@ class AuditHelper
     /**
      * Get audit logs for a specific table and record
      */
-    public static function getAuditLogs(string $tableName, int $recordId = null): \Illuminate\Database\Eloquent\Collection
+    public static function getAuditLogs(string $tableName, ?int $recordId = null): \Illuminate\Database\Eloquent\Collection
     {
         $query = DB::table('audit_logs')
             ->where('table_name', $tableName)
@@ -69,4 +69,4 @@ class AuditHelper
             ->limit($limit)
             ->get();
     }
-} 
+}

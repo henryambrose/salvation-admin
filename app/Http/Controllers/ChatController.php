@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
@@ -31,11 +31,12 @@ class ChatController extends Controller
 
         try {
             $apiKey = config('services.categpt.key');
-            
-            if (!$apiKey) {
+
+            if (! $apiKey) {
                 Log::error('CatéGPT API key not configured');
+
                 return response()->json([
-                    'error' => 'CatéGPT API key not configured. Please add CATEGPT_API_KEY to your .env file.'
+                    'error' => 'CatéGPT API key not configured. Please add CATEGPT_API_KEY to your .env file.',
                 ], 500);
             }
 
@@ -48,7 +49,7 @@ class ChatController extends Controller
 
             // Add conversation context if available
             $conversationHistory = $request->input('conversation_history', []);
-            if (!empty($conversationHistory) && is_array($conversationHistory)) {
+            if (! empty($conversationHistory) && is_array($conversationHistory)) {
                 $lastMessage = end($conversationHistory);
                 if (isset($lastMessage['uniqueID'])) {
                     $requestData['reply_to_message_id'] = $lastMessage['uniqueID'];
@@ -58,7 +59,7 @@ class ChatController extends Controller
             Log::info('Sending request to CatéGPT', [
                 'question' => $request->message,
                 'lang' => $requestData['lang'],
-                'modechat' => $requestData['modechat']
+                'modechat' => $requestData['modechat'],
             ]);
 
             $response = Http::withHeaders([
@@ -68,16 +69,16 @@ class ChatController extends Controller
 
             Log::info('CatéGPT API Response', [
                 'status' => $response->status(),
-                'successful' => $response->successful()
+                'successful' => $response->successful(),
             ]);
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if ($data['stat'] === 'ok') {
                     // Format the response based on modechat setting
                     $responseContent = '';
-                    
+
                     if ($requestData['modechat'] == 1) {
                         // Conversational mode - single string response
                         $responseContent = $data['reponse'];
@@ -98,8 +99,9 @@ class ChatController extends Controller
                     ]);
                 } else {
                     Log::error('CatéGPT API returned error status', ['data' => $data]);
+
                     return response()->json([
-                        'error' => 'Failed to get response from CatéGPT service'
+                        'error' => 'Failed to get response from CatéGPT service',
                     ], 500);
                 }
             } else {
@@ -116,7 +118,7 @@ class ChatController extends Controller
                 }
 
                 return response()->json([
-                    'error' => $errorMessage
+                    'error' => $errorMessage,
                 ], 500);
             }
 
@@ -129,7 +131,7 @@ class ChatController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'An error occurred while processing your request: ' . $e->getMessage()
+                'error' => 'An error occurred while processing your request: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -139,12 +141,12 @@ class ChatController extends Controller
      */
     private function formatStructuredResponse($response): string
     {
-        if (!is_array($response)) {
+        if (! is_array($response)) {
             return $response;
         }
 
         $formattedResponse = '';
-        
+
         foreach ($response as $section) {
             if (isset($section['type']) && isset($section['text'])) {
                 $type = ucfirst($section['type']);
@@ -162,7 +164,7 @@ class ChatController extends Controller
     {
         // This could be implemented to store/retrieve chat history from database
         return response()->json([
-            'history' => []
+            'history' => [],
         ]);
     }
 
@@ -177,10 +179,10 @@ class ChatController extends Controller
 
         try {
             $apiKey = config('services.categpt.key');
-            
-            if (!$apiKey) {
+
+            if (! $apiKey) {
                 return response()->json([
-                    'error' => 'CatéGPT API key not configured'
+                    'error' => 'CatéGPT API key not configured',
                 ], 500);
             }
 
@@ -191,7 +193,7 @@ class ChatController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 if ($data['stat'] === 'ok') {
                     return response()->json([
                         'success' => true,
@@ -199,12 +201,12 @@ class ChatController extends Controller
                     ]);
                 } else {
                     return response()->json([
-                        'error' => 'Failed to retrieve the specific answer'
+                        'error' => 'Failed to retrieve the specific answer',
                     ], 500);
                 }
             } else {
                 return response()->json([
-                    'error' => 'Failed to retrieve the specific answer'
+                    'error' => 'Failed to retrieve the specific answer',
                 ], 500);
             }
 
@@ -215,8 +217,8 @@ class ChatController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'An error occurred while retrieving the answer'
+                'error' => 'An error occurred while retrieving the answer',
             ], 500);
         }
     }
-} 
+}

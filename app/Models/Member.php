@@ -79,7 +79,7 @@ class Member extends Model
         'date_of_birth' => 'date',
         'baptism_date' => 'date',
         'confirmation_date' => 'date',
-        'death_date' => 'date'
+        'death_date' => 'date',
     ];
 
     /**
@@ -88,7 +88,7 @@ class Member extends Model
      */
     public function scopeForUserCommunities($query, $user)
     {
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return $query; // unrestricted
@@ -96,6 +96,7 @@ class Member extends Model
         if (empty($allowed)) {
             return $query->whereRaw('1=0');
         }
+
         return $query->whereIn('community_id', $allowed);
     }
 
@@ -104,13 +105,14 @@ class Member extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . ($this->last_name ?? ''));
+        return trim($this->first_name.' '.($this->middle_name ? $this->middle_name.' ' : '').($this->last_name ?? ''));
     }
 
     public function community()
     {
         return $this->belongsTo(Community::class);
     }
+
     public function communityCluster()
     {
         return $this->belongsTo(CommunityCluster::class);
@@ -126,14 +128,17 @@ class Member extends Model
     {
         return $this->hasMany(FamilyLink::class);
     }
+
     public function status()
     {
         return $this->belongsTo(Status::class);
     }
+
     public function gender()
     {
         return $this->belongsTo(Gender::class);
     }
+
     public function bloodGroup()
     {
         return $this->belongsTo(BloodGroup::class);
@@ -142,36 +147,36 @@ class Member extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($member) {
             $churchCode = config('app.church_code', 'SAL');
             $numberingService = new \App\Services\FamilyNumberingService($churchCode);
-            
+
             // Set default values
             $member->registration_year = $member->registration_year ?? date('Y');
-            
+
             // Generate independent member number if not set
-            if (!$member->member_no) {
+            if (! $member->member_no) {
                 $member->member_no = $numberingService->generateMemberNumber(
                     $member->registration_year,
                     $churchCode
                 );
             }
-            
+
             // Generate family number if not set
-            if (!$member->family_no) {
+            if (! $member->family_no) {
                 $member->family_no = $numberingService->generateFamilyGroupNumber(
                     $churchCode
                 );
             }
-            
+
             // Parse member number to extract components
             if ($member->member_no) {
                 $memberInfo = $numberingService->parseMemberNumber($member->member_no);
                 $member->registration_year = $memberInfo['year'];
                 $member->member_sequence = $memberInfo['member_sequence'];
             }
-            
+
             // Parse family number to extract components
             if ($member->family_no) {
                 $familyInfo = $numberingService->parseFamilyNumber($member->family_no);
@@ -179,43 +184,45 @@ class Member extends Model
             }
         });
     }
-    
+
     public function getEffectiveFamilyNumberAttribute()
     {
         $churchCode = config('app.church_code', 'SAL');
         $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+
         return $numberingService->getEffectiveFamilyNumber($this);
     }
-    
+
     public function getDisplayFamilyNumberAttribute()
     {
         $display = $this->effective_family_number;
-        
+
         if ($this->family_no !== $this->effective_family_number) {
-            $display .= " (née " . $this->family_no . ")";
+            $display .= ' (née '.$this->family_no.')';
         }
-        
+
         return $display;
     }
-    
+
     public function getChurchNameAttribute()
     {
         $churchCode = config('app.church_code', 'SAL');
         $numberingService = new \App\Services\FamilyNumberingService($churchCode);
         $familyInfo = $numberingService->getFamilyInfo($this->family_no);
+
         return $familyInfo['church_name'];
     }
-    
+
     public function birthFamily()
     {
         return $this->belongsTo(Member::class, 'family_no', 'family_no');
     }
-    
+
     public function currentFamily()
     {
         return $this->belongsTo(Member::class, 'current_family_no', 'family_no');
     }
-    
+
     /**
      * Get the member's mother
      */
@@ -239,11 +246,12 @@ class Member extends Model
     {
         return $this->belongsTo(Member::class, 'spouse_id');
     }
-    
+
     public function familyMembers()
     {
         $churchCode = config('app.church_code', 'SAL');
         $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+
         return $numberingService->getFamilyMembers($this->effective_family_number);
     }
 
@@ -322,7 +330,7 @@ class Member extends Model
     public function relatedMembers()
     {
         return $this->belongsToMany(Member::class, 'familylinks', 'member_id', 'related_member_id')
-                    ->withPivot('relationship_id');
+            ->withPivot('relationship_id');
     }
 
     public function cellsAndAssociations()
@@ -347,6 +355,6 @@ class Member extends Model
 
     public function getUidAttribute(): string
     {
-        return 'M-' . $this->id;
+        return 'M-'.$this->id;
     }
 }

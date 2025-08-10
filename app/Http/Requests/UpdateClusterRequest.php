@@ -22,13 +22,13 @@ class UpdateClusterRequest extends FormRequest
     public function rules(): array
     {
         $clusterId = $this->route('cluster')->id;
-        
+
         return [
             'name' => [
                 'required',
                 'string',
                 'max:255',
-                'unique:clusters,name,' . $clusterId,
+                'unique:clusters,name,'.$clusterId,
                 function ($attribute, $value, $fail) {
                     if (empty(trim($value))) {
                         $fail('The cluster name cannot be empty.');
@@ -50,4 +50,4 @@ class UpdateClusterRequest extends FormRequest
             'name.unique' => 'A cluster with this name already exists.',
         ];
     }
-} 
+}

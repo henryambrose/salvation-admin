@@ -11,17 +11,19 @@ class Designation extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = ['name'];
+
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
     public function getCreatedAtAttribute($value)
     {
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
+
     public function getUpdatedAtAttribute($value)
     {
         return \Carbon\Carbon::parse($value)->diffForHumans();
     }
-
 }

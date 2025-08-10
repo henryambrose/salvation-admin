@@ -8,9 +8,9 @@ use App\Models\Community;
 use App\Models\Member;
 use App\Models\PPCHead;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\DB;
 
 class PPCHeadController extends Controller
 {
@@ -20,7 +20,7 @@ class PPCHeadController extends Controller
     public function index(Request $request): Response
     {
         $query = PPCHead::query();
-        if ($request->input('isArchived')  === 'true') {
+        if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
@@ -28,10 +28,10 @@ class PPCHeadController extends Controller
         $query->select('p_p_c_heads.*');
         $query->join('members', 'p_p_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
-        $query->select('p_p_c_heads.*','members.first_name as member_first_name','members.last_name as member_last_name',
-    DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
-    'communities.name as community_name'
-);
+        $query->select('p_p_c_heads.*', 'members.first_name as member_first_name', 'members.last_name as member_last_name',
+            DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
+            'communities.name as community_name'
+        );
         // Apply filters
         if ($communityId = $request->input('community_id')) {
             $query->where('p_p_c_heads.community_id', $communityId);
@@ -40,11 +40,11 @@ class PPCHeadController extends Controller
             $query->where('p_p_c_heads.member_id', $memberId);
         }
         if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('members.first_name', 'like', "%$search%")
-                  ->orWhere('members.middle_name', 'like', "%$search%")
-                  ->orWhere('members.last_name', 'like', "%$search%")
-                  ->orWhere('communities.name', 'like', "%$search%");
+                    ->orWhere('members.middle_name', 'like', "%$search%")
+                    ->orWhere('members.last_name', 'like', "%$search%")
+                    ->orWhere('communities.name', 'like', "%$search%");
             });
         }
 
@@ -89,6 +89,7 @@ class PPCHeadController extends Controller
         $perPage = $request->input('perPage', 10);
         $total = PPCHead::count();
         $lastPage = (int) ceil($total / $perPage);
+
         return redirect()->route('ppc-head.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -131,6 +132,7 @@ class PPCHeadController extends Controller
         ]);
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
+
         return redirect()->route('ppc-head.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -147,6 +149,7 @@ class PPCHeadController extends Controller
     {
         $ppcHead = PPCHead::findOrFail($id);
         $ppcHead->delete();
+
         return redirect()->route('ppc-head.index')->with('success', 'PPC Head deleted successfully.');
     }
 
@@ -154,6 +157,7 @@ class PPCHeadController extends Controller
     {
         $ppcHead = PPCHead::withTrashed()->findOrFail($id);
         $ppcHead->restore();
+
         return redirect()->route('ppc-head.index')->with('success', 'PPC Head restored successfully.');
     }
 
@@ -169,6 +173,7 @@ class PPCHeadController extends Controller
                     'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
                 ];
             });
+
         return response()->json($members);
     }
 
@@ -176,13 +181,13 @@ class PPCHeadController extends Controller
     {
         try {
             $query = PPCHead::with(['member', 'community']);
-            
+
             if ($request->input('isArchived') === 'true') {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
-            
+
             $query->select('p_p_c_heads.*');
             $query->join('members', 'p_p_c_heads.member_id', '=', 'members.id');
             $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
@@ -196,11 +201,11 @@ class PPCHeadController extends Controller
                 $query->where('p_p_c_heads.member_id', $memberId);
             }
             if ($search = $request->input('search')) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('members.first_name', 'like', "%$search%")
-                      ->orWhere('members.middle_name', 'like', "%$search%")
-                      ->orWhere('members.last_name', 'like', "%$search%")
-                      ->orWhere('communities.name', 'like', "%$search%");
+                        ->orWhere('members.middle_name', 'like', "%$search%")
+                        ->orWhere('members.last_name', 'like', "%$search%")
+                        ->orWhere('communities.name', 'like', "%$search%");
                 });
             }
 
@@ -208,11 +213,11 @@ class PPCHeadController extends Controller
             $allowedSortColumns = ['id', 'member_first_name', 'community_name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 if ($sort === 'member_first_name') {
                     $query->orderBy('members.first_name', $direction)
-                          ->orderBy('members.last_name', $direction);
+                        ->orderBy('members.last_name', $direction);
                 } elseif ($sort === 'community_name') {
                     $query->orderBy('communities.name', $direction);
                 } else {
@@ -227,8 +232,8 @@ class PPCHeadController extends Controller
             // Transform data for export
             $exportData = [];
             foreach ($data as $item) {
-                $memberName = trim($item->member_first_name . ' ' . ($item->member_middle_name ? $item->member_middle_name . ' ' : '') . $item->member_last_name);
-                
+                $memberName = trim($item->member_first_name.' '.($item->member_middle_name ? $item->member_middle_name.' ' : '').$item->member_last_name);
+
                 $exportData[] = [
                     'ID' => $item->id,
                     'Member Name' => $memberName,
@@ -237,14 +242,14 @@ class PPCHeadController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
             $headers = array_keys($exportData[0] ?? []);
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
+                $sheet->setCellValue($col.'1', $header);
                 $sheet->getColumnDimension($col)->setAutoSize(true);
                 $col++;
             }
@@ -254,30 +259,31 @@ class PPCHeadController extends Controller
             foreach ($exportData as $rowData) {
                 $col = 'A';
                 foreach ($rowData as $value) {
-                    $sheet->setCellValue($col . $row, $value);
+                    $sheet->setCellValue($col.$row, $value);
                     $col++;
                 }
                 $row++;
             }
 
             // Style header row
-            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
 
             // Create writer and output
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'ppc_heads_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'ppc_heads_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('PPC Head Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('PPC Head Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 }

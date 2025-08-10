@@ -4,11 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCellsAndAssociationMemberRequest;
 use App\Http\Requests\UpdateCellsAndAssociationMemberRequest;
+use App\Models\CellsAndAssociation;
 use App\Models\CellsAndAssociationMember;
 use App\Models\Member;
-use App\Models\CellsAndAssociation;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
@@ -30,11 +30,11 @@ class CellsAndAssociationMemberController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->whereHas('member', function($q) use ($search) {
+            $query->whereHas('member', function ($q) use ($search) {
                 $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                  ->orWhere('first_name', 'like', "%$search%")
-                  ->orWhere('last_name', 'like', "%$search%");
-            })->orWhereHas('cellsAndAssociation', function($q) use ($search) {
+                    ->orWhere('first_name', 'like', "%$search%")
+                    ->orWhere('last_name', 'like', "%$search%");
+            })->orWhereHas('cellsAndAssociation', function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%");
             });
         }
@@ -55,20 +55,21 @@ class CellsAndAssociationMemberController extends Controller
 
         // Transform data to include related names
         $cellsAndAssociationMembers->getCollection()->transform(function ($item) {
-            $memberName = $item->member ? trim($item->member->first_name . ' ' . $item->member->last_name) : '';
+            $memberName = $item->member ? trim($item->member->first_name.' '.$item->member->last_name) : '';
             $communityName = $item->member && $item->member->community ? $item->member->community->name : 'N/A';
             $memberNo = $item->member ? $item->member->member_no : 'N/A';
-            $item->member_name = $memberName . ' - ' . $communityName . ' - ' . $memberNo;
+            $item->member_name = $memberName.' - '.$communityName.' - '.$memberNo;
             $item->cells_and_association_name = $item->cellsAndAssociation->name ?? '';
+
             return $item;
         });
 
-                        return Inertia::render('cells-and-association-members/Index', [
-                    'fetchUrl' => route('cells-and-association-members.index'),
-                    'cellsAndAssociationMembers' => $cellsAndAssociationMembers,
-                    'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived', 'cellAssociation']),
-                    'cellsAndAssociations' => CellsAndAssociation::select('id', 'name')->get(),
-                ]);
+        return Inertia::render('cells-and-association-members/Index', [
+            'fetchUrl' => route('cells-and-association-members.index'),
+            'cellsAndAssociationMembers' => $cellsAndAssociationMembers,
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived', 'cellAssociation']),
+            'cellsAndAssociations' => CellsAndAssociation::select('id', 'name')->get(),
+        ]);
     }
 
     /**
@@ -135,7 +136,7 @@ class CellsAndAssociationMemberController extends Controller
         return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member restored successfully.');
     }
 
-        public function searchMembers(Request $request)
+    public function searchMembers(Request $request)
     {
         $search = $request->input('search');
 
@@ -153,7 +154,7 @@ class CellsAndAssociationMemberController extends Controller
             ->map(function ($member) {
                 return [
                     'id' => $member->id,
-                    'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A')
+                    'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
                 ];
             });
 
@@ -166,13 +167,13 @@ class CellsAndAssociationMemberController extends Controller
             ->select('id', 'first_name', 'last_name', 'member_no', 'community_id')
             ->find($id);
 
-        if (!$member) {
+        if (! $member) {
             return response()->json(null, 404);
         }
 
         return response()->json([
             'id' => $member->id,
-            'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A')
+            'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
         ]);
     }
 
@@ -189,11 +190,11 @@ class CellsAndAssociationMemberController extends Controller
             }
 
             if ($search = $request->input('search')) {
-                $query->whereHas('member', function($q) use ($search) {
+                $query->whereHas('member', function ($q) use ($search) {
                     $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                      ->orWhere('first_name', 'like', "%$search%")
-                      ->orWhere('last_name', 'like', "%$search%");
-                })->orWhereHas('cellsAndAssociation', function($q) use ($search) {
+                        ->orWhere('first_name', 'like', "%$search%")
+                        ->orWhere('last_name', 'like', "%$search%");
+                })->orWhereHas('cellsAndAssociation', function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%");
                 });
             }
@@ -206,15 +207,15 @@ class CellsAndAssociationMemberController extends Controller
             $allowedSortColumns = ['id', 'cells_and_association_name', 'member_name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 if ($sort === 'cells_and_association_name') {
                     $query->join('cells_and_associations', 'cells_and_association_members.cells_and_association_id', '=', 'cells_and_associations.id')
-                          ->orderBy('cells_and_associations.name', $direction);
+                        ->orderBy('cells_and_associations.name', $direction);
                 } elseif ($sort === 'member_name') {
                     $query->join('members', 'cells_and_association_members.member_id', '=', 'members.id')
-                          ->orderBy('members.first_name', $direction)
-                          ->orderBy('members.last_name', $direction);
+                        ->orderBy('members.first_name', $direction)
+                        ->orderBy('members.last_name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -227,11 +228,11 @@ class CellsAndAssociationMemberController extends Controller
             // Transform data for export
             $exportData = [];
             foreach ($data as $item) {
-                $memberName = $item->member ? trim($item->member->first_name . ' ' . $item->member->last_name) : '';
+                $memberName = $item->member ? trim($item->member->first_name.' '.$item->member->last_name) : '';
                 $communityName = $item->member && $item->member->community ? $item->member->community->name : 'N/A';
                 $memberNo = $item->member ? $item->member->member_no : 'N/A';
-                $memberDisplayName = $memberName . ' - ' . $communityName . ' - ' . $memberNo;
-                
+                $memberDisplayName = $memberName.' - '.$communityName.' - '.$memberNo;
+
                 $exportData[] = [
                     'ID' => $item->id,
                     'Cell Association Name' => $item->cellsAndAssociation->name ?? '',
@@ -240,14 +241,14 @@ class CellsAndAssociationMemberController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new Spreadsheet();
+            $spreadsheet = new Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
             $headers = array_keys($exportData[0] ?? []);
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
+                $sheet->setCellValue($col.'1', $header);
                 $sheet->getColumnDimension($col)->setAutoSize(true);
                 $col++;
             }
@@ -257,30 +258,31 @@ class CellsAndAssociationMemberController extends Controller
             foreach ($exportData as $rowData) {
                 $col = 'A';
                 foreach ($rowData as $value) {
-                    $sheet->setCellValue($col . $row, $value);
+                    $sheet->setCellValue($col.$row, $value);
                     $col++;
                 }
                 $row++;
             }
 
             // Style header row
-            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
 
             // Create writer and output
             $writer = new Xlsx($spreadsheet);
-            $filename = 'cells_association_members_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'cells_association_members_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 }

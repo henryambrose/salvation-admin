@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\CellsAndAssociation;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class CellsAndAssociationSeeder extends Seeder
@@ -49,7 +48,7 @@ class CellsAndAssociationSeeder extends Seeder
             ['name' => 'SVP - St. Vincent de Paul'],
             ['name' => 'Ushers'],
             ['name' => 'Womens Cell '],
-            ];
+        ];
         CellsAndAssociation::insert($cellsAndAssociations);
     }
 }

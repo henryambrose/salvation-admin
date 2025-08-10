@@ -26,5 +26,5 @@ class SCCHead extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
-    }   
+    }
 }

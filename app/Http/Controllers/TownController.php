@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Town;
-use App\Models\City;
 use App\Http\Requests\StoreTownRequest;
 use App\Http\Requests\UpdateTownRequest;
+use App\Models\City;
+use App\Models\Town;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,7 +18,7 @@ class TownController extends Controller
     public function index(Request $request): Response
     {
         $query = Town::query()->with('city');
-        if ($request->input('isArchived')==='true') {
+        if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
@@ -127,6 +127,7 @@ class TownController extends Controller
     {
         $town = Town::onlyTrashed()->findOrFail($id);
         $town->restore();
+
         return redirect()->route('town.index')->with('success', 'Town restored successfully.');
     }
 }

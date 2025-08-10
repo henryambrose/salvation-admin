@@ -33,6 +33,7 @@ class ProfileDetailsController extends Controller
 
         Log::debug($validated);
         Log::debug($request->all());
+
         return redirect()->route('member.index')->with('success', 'Member created successfully.');
     }
 
@@ -42,7 +43,7 @@ class ProfileDetailsController extends Controller
     public function edit(Member $member)
     {
         return Inertia::render('member/Details', [
-            'member' => $member
+            'member' => $member,
         ]);
     }
 
@@ -57,7 +58,7 @@ class ProfileDetailsController extends Controller
 
         Log::debug($validated);
         Log::debug($request->all());
+
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
-
 }

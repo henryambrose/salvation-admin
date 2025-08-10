@@ -120,22 +120,15 @@ const selectedMember = ref(null)
 
 // Debug logging
 onMounted(() => {
-  console.log('MemberTypeSearchDropdown mounted with modelValue:', props.modelValue)
-  console.log('Existing data:', props.existingData)
-  
   if (props.existingData) {
-    console.log('Using existing data from props:', props.existingData)
     selectedMember.value = {
       id: props.existingData.id,
       name: props.existingData.name,
-      family_no: props.existingData.family_no || '',
       type: props.existingData.type
     }
     memberType.value = props.existingData.type
     searchQuery.value = props.existingData.name
-    console.log('Initialized with existing data:', selectedMember.value)
   } else if (props.modelValue) {
-    console.log('Fetching member details for ID:', props.modelValue)
     fetchMemberDetails(props.modelValue)
   }
 })
@@ -183,69 +176,58 @@ const performSearch = async () => {
 };
 
 const selectResult = (result) => {
-  console.log('Selecting result:', result)
   selectedMember.value = result
   emit('update:modelValue', result.id)
-  emit('update:sourceType', result.type)
+  emit('memberSelected', result)
   searchQuery.value = result.name
   showDropdown.value = false
 }
 
 const clearSelection = () => {
-  console.log('Clearing selection')
   selectedMember.value = null
   emit('update:modelValue', null)
+  emit('memberSelected', null)
   searchQuery.value = ''
 }
 
 // Watch for external changes to modelValue
 watch(() => props.modelValue, (newValue) => {
-  console.log('modelValue changed to:', newValue)
   if (!newValue) {
     clearSelection()
+  } else if (newValue && !selectedMember.value) {
+    fetchMemberDetails(newValue)
   }
 })
 
 const fetchMemberDetails = async (memberId) => {
-  console.log('fetchMemberDetails called with ID:', memberId)
   try {
     // Try internal members first
-    console.log('Trying internal members API...')
     let response = await fetch(`/api/members/${memberId}`)
-    console.log('Internal members response status:', response.status)
     
     if (response.ok) {
       const data = await response.json()
-      console.log('Internal member data:', data)
       selectedMember.value = {
         id: data.id,
-        name: data.first_name + ' ' + (data.last_name || ''),
-        family_no: data.family_no,
+        name: data.name,
         type: 'Member'
       }
       memberType.value = 'Member'
       searchQuery.value = selectedMember.value.name
-      console.log('Set internal member:', selectedMember.value)
       return
     }
     
     // Try external members
-    console.log('Trying external members API...')
     response = await fetch(`/api/external-members/${memberId}`)
-    console.log('External members response status:', response.status)
     
     if (response.ok) {
       const data = await response.json()
-      console.log('External member data:', data)
       selectedMember.value = {
         id: data.id,
-        name: data.first_name + ' ' + (data.last_name || ''),
-        family_no: data.family_no,
+        name: data.name,
         type: 'external'
       }
       memberType.value = 'external'
       searchQuery.value = selectedMember.value.name
-      console.log('Set external member:', selectedMember.value)
     } else {
       console.error('Failed to fetch member details from both APIs')
     }
@@ -254,19 +236,15 @@ const fetchMemberDetails = async (memberId) => {
   }
 }
 
-// Add this new function to handle initialization with existing data
 const initializeWithExistingData = (memberId, memberData) => {
   if (memberId && memberData) {
-    console.log('Initializing with existing data:', memberData)
     selectedMember.value = {
       id: memberData.id,
       name: memberData.name,
-      family_no: memberData.family_no || '',
       type: memberData.type
     }
     memberType.value = memberData.type
     searchQuery.value = memberData.name
-    console.log('Initialized member:', selectedMember.value)
   }
 }
 </script>

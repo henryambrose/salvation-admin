@@ -22,13 +22,13 @@ class CommunityAccessService
         }
 
         $hasHeadRole = $user->hasAnyRole(['ppc_head', 'scc_head']);
-        if (!$hasHeadRole) {
+        if (! $hasHeadRole) {
             return null; // unrestricted for non-head roles; permissions still apply
         }
 
         // Map user to a Member record via email
         $member = Member::where('email', $user->email)->first();
-        if (!$member) {
+        if (! $member) {
             return []; // head role but no linked member -> no access
         }
 
@@ -40,5 +40,3 @@ class CommunityAccessService
         return $merged;
     }
 }
-
-

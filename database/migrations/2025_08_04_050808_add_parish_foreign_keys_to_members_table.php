@@ -30,12 +30,12 @@ return new class extends Migration
             $table->dropForeign(['confirmation_parish_id']);
             $table->dropForeign(['marriage_parish_id']);
             $table->dropForeign(['death_parish_id']);
-            
+
             $table->dropColumn([
                 'baptism_parish_id',
-                'confirmation_parish_id', 
+                'confirmation_parish_id',
                 'marriage_parish_id',
-                'death_parish_id'
+                'death_parish_id',
             ]);
         });
     }

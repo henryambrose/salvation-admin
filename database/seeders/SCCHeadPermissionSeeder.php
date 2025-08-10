@@ -13,16 +13,19 @@ class SCCHeadPermissionSeeder extends Seeder
         // Create the role if it doesn't exist (using hyphen)
         $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']);
         
-        // Same permissions as PPC Head
+        // IDENTICAL permissions as PPC Head
         $permissions = [
             // Member permissions
             'create-member', 'read-member', 'update-member', 'delete-member', 'list-member', 'restore-member',
             // External Member permissions  
             'create-external-member', 'read-external-member', 'update-external-member', 'delete-external-member', 'list-external-member', 'restore-external-member',
-            // Basic read permissions for related data
-            'read-community', 'read-parish', 'read-zone', 'read-relationship', 'read-designation', 
-            'read-age-group', 'read-blood-group', 'read-gender', 'read-status', 'read-income-range',
-            'read-country', 'read-state', 'read-city', 'read-town'
+            // Basic read AND list permissions for related data (same as PPC Head)
+            'read-community', 'list-community', 'read-parish', 'list-parish', 'read-zone', 'list-zone', 
+            'read-relationship', 'list-relationship', 'read-designation', 'list-designation', 
+            'read-age-group', 'list-age-group', 'read-blood-group', 'list-blood-group', 
+            'read-gender', 'list-gender', 'read-status', 'list-status', 
+            'read-income-range', 'list-income-range', 'read-country', 'list-country', 
+            'read-state', 'list-state', 'read-city', 'list-city', 'read-town', 'list-town'
         ];
 
         // Create permissions if they don't exist
@@ -35,5 +38,6 @@ class SCCHeadPermissionSeeder extends Seeder
         
         $this->command->info('SCC Head permissions assigned successfully!');
         $this->command->info('Total permissions assigned: ' . count($permissions));
+        $this->command->info('SCC Head now has IDENTICAL permissions as PPC Head');
     }
 }

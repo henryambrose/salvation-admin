@@ -25,4 +25,4 @@ class StoreGenderRequest extends FormRequest
             'name' => 'required|string|unique:genders,name',
         ];
     }
-} 
+}

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
 class CatholicCalendarController extends Controller
@@ -16,14 +16,14 @@ class CatholicCalendarController extends Controller
     {
         $date = $request->get('date', now());
         $carbonDate = Carbon::parse($date);
-        
+
         // Try to fetch from external API first
         $externalData = $this->fetchExternalCalendarData($carbonDate);
-        
+
         if ($externalData) {
             return response()->json($externalData);
         }
-        
+
         // Fallback to internal calculation if external API fails
         $calendarData = [
             'date' => $carbonDate->format('Y-m-d'),
@@ -34,12 +34,12 @@ class CatholicCalendarController extends Controller
             'reading' => $this->getDailyReading($carbonDate),
             'weekday' => $carbonDate->format('l'),
             'seasonWeek' => null,
-            'celebrations' => []
+            'celebrations' => [],
         ];
-        
+
         return response()->json($calendarData);
     }
-    
+
     /**
      * Fetch calendar data from external API
      */
@@ -48,10 +48,10 @@ class CatholicCalendarController extends Controller
         try {
             $dateString = $date->format('Y-m-d');
             $response = Http::timeout(5)->get("http://calapi.inadiutorium.cz/api/v0/en/calendars/general-en/{$dateString}");
-            
+
             if ($response->successful()) {
                 $data = $response->json();
-                
+
                 // Transform external API data to our format
                 return [
                     'date' => $data['date'],
@@ -63,16 +63,16 @@ class CatholicCalendarController extends Controller
                     'weekday' => ucfirst($data['weekday']),
                     'seasonWeek' => $data['season_week'] ?? null,
                     'celebrations' => $data['celebrations'] ?? [],
-                    'source' => 'external_api'
+                    'source' => 'external_api',
                 ];
             }
         } catch (\Exception $e) {
-            \Log::warning('Failed to fetch external calendar data: ' . $e->getMessage());
+            \Log::warning('Failed to fetch external calendar data: '.$e->getMessage());
         }
-        
+
         return null;
     }
-    
+
     /**
      * Format season from external API
      */
@@ -83,12 +83,12 @@ class CatholicCalendarController extends Controller
             'christmas' => 'Christmas Season',
             'lent' => 'Lent',
             'easter' => 'Easter Season',
-            'ordinary' => 'Ordinary Time'
+            'ordinary' => 'Ordinary Time',
         ];
-        
+
         return $seasonMap[$season] ?? ucfirst($season);
     }
-    
+
     /**
      * Get feast day from celebrations array
      */
@@ -97,13 +97,13 @@ class CatholicCalendarController extends Controller
         if (empty($celebrations)) {
             return 'No special feast today';
         }
-        
+
         // Get the highest rank celebration (lowest rank_num)
         $highestRank = collect($celebrations)->sortBy('rank_num')->first();
-        
+
         return $highestRank['title'] ?? 'No special feast today';
     }
-    
+
     /**
      * Get saint from celebrations array
      */
@@ -112,7 +112,7 @@ class CatholicCalendarController extends Controller
         if (empty($celebrations)) {
             return 'No saint feast today';
         }
-        
+
         // Look for saint celebrations
         foreach ($celebrations as $celebration) {
             $title = $celebration['title'] ?? '';
@@ -120,11 +120,11 @@ class CatholicCalendarController extends Controller
                 return $title;
             }
         }
-        
+
         // If no saint found, return the first celebration
         return $celebrations[0]['title'] ?? 'No saint feast today';
     }
-    
+
     /**
      * Get liturgical color from celebrations array
      */
@@ -133,23 +133,24 @@ class CatholicCalendarController extends Controller
         if (empty($celebrations)) {
             return 'Green'; // Default for Ordinary Time
         }
-        
+
         // Get color from the highest rank celebration
         $highestRank = collect($celebrations)->sortBy('rank_num')->first();
-        
+
         $colorMap = [
             'white' => 'White',
             'red' => 'Red',
             'green' => 'Green',
             'purple' => 'Purple',
             'pink' => 'Pink',
-            'gold' => 'Gold'
+            'gold' => 'Gold',
         ];
-        
+
         $color = $highestRank['colour'] ?? 'green';
+
         return $colorMap[$color] ?? ucfirst($color);
     }
-    
+
     /**
      * Get liturgical season for the given date (fallback method)
      */
@@ -157,14 +158,14 @@ class CatholicCalendarController extends Controller
     {
         $month = $date->month;
         $day = $date->day;
-        
+
         // Advent (4 weeks before Christmas)
         $christmas = Carbon::create($date->year, 12, 25);
         $adventStart = $christmas->copy()->subWeeks(4);
         if ($date->between($adventStart, $christmas->copy()->subDay())) {
             return 'Advent';
         }
-        
+
         // Christmas Season (Dec 25 - Jan 6)
         if ($month === 12 && $day >= 25) {
             return 'Christmas Season';
@@ -172,7 +173,7 @@ class CatholicCalendarController extends Controller
         if ($month === 1 && $day <= 6) {
             return 'Christmas Season';
         }
-        
+
         // Lent (Ash Wednesday to Holy Thursday)
         $easter = $this->getEasterDate($date->year);
         $ashWednesday = $easter->copy()->subDays(46);
@@ -180,23 +181,23 @@ class CatholicCalendarController extends Controller
         if ($date->between($ashWednesday, $holyThursday)) {
             return 'Lent';
         }
-        
+
         // Easter Triduum (Holy Thursday to Easter Sunday)
         $easterSunday = $easter->copy()->addDays(1);
         if ($date->between($holyThursday, $easterSunday)) {
             return 'Easter Triduum';
         }
-        
+
         // Easter Season (Easter Sunday to Pentecost)
         $pentecost = $easter->copy()->addDays(49);
         if ($date->between($easterSunday, $pentecost)) {
             return 'Easter Season';
         }
-        
+
         // Ordinary Time
         return 'Ordinary Time';
     }
-    
+
     /**
      * Get feast day for the given date (fallback method)
      */
@@ -204,7 +205,7 @@ class CatholicCalendarController extends Controller
     {
         $month = $date->month;
         $day = $date->day;
-        
+
         $feasts = [
             '1-1' => 'Solemnity of Mary, Mother of God',
             '1-6' => 'Epiphany of the Lord',
@@ -219,11 +220,12 @@ class CatholicCalendarController extends Controller
             '12-8' => 'Immaculate Conception',
             '12-25' => 'Christmas',
         ];
-        
-        $key = $month . '-' . $day;
+
+        $key = $month.'-'.$day;
+
         return $feasts[$key] ?? 'No special feast today';
     }
-    
+
     /**
      * Get saint of the day for the given date (fallback method)
      */
@@ -231,7 +233,7 @@ class CatholicCalendarController extends Controller
     {
         $month = $date->month;
         $day = $date->day;
-        
+
         $saints = [
             '1-1' => 'St. Mary, Mother of God',
             '1-2' => 'St. Basil the Great',
@@ -294,18 +296,19 @@ class CatholicCalendarController extends Controller
             '2-28' => 'St. Hilary of Poitiers',
             '2-29' => 'St. Oswald of Worcester',
         ];
-        
-        $key = $month . '-' . $day;
+
+        $key = $month.'-'.$day;
+
         return $saints[$key] ?? 'No saint feast today';
     }
-    
+
     /**
      * Get liturgical color for the given date (fallback method)
      */
     private function getLiturgicalColor(Carbon $date): string
     {
         $season = $this->getLiturgicalSeason($date);
-        
+
         switch ($season) {
             case 'Advent':
                 return 'Purple';
@@ -321,7 +324,7 @@ class CatholicCalendarController extends Controller
                 return 'Green';
         }
     }
-    
+
     /**
      * Get daily reading reference
      */
@@ -329,9 +332,9 @@ class CatholicCalendarController extends Controller
     {
         // This would typically connect to a lectionary database
         // For now, return a simple reference
-        return 'Daily Mass Readings - ' . $date->format('F j, Y');
+        return 'Daily Mass Readings - '.$date->format('F j, Y');
     }
-    
+
     /**
      * Calculate Easter date using Meeus/Jones/Butcher algorithm
      */
@@ -351,7 +354,7 @@ class CatholicCalendarController extends Controller
         $m = floor(($a + 11 * $h + 22 * $l) / 451);
         $month = floor(($h + $l - 7 * $m + 114) / 31);
         $day = (($h + $l - 7 * $m + 114) % 31) + 1;
-        
+
         return Carbon::create($year, $month, $day);
     }
-} 
+}

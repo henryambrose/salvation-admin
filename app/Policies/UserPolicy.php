@@ -17,6 +17,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('read-user');
     }
 
@@ -28,6 +29,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('read-user');
     }
 
@@ -39,6 +41,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('create-user');
     }
 
@@ -50,6 +53,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('update-user');
     }
 
@@ -61,6 +65,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-user');
     }
 
@@ -72,6 +77,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('restore-users');
     }
 
@@ -83,6 +89,7 @@ class UserPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-user');
     }
-} 
+}

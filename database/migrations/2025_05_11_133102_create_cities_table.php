@@ -17,7 +17,7 @@ return new class extends Migration
             $table->foreignId('state_id')->nullable()->constrained()->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
-            
+
             $table->unique(['name', 'state_id']);
         });
     }

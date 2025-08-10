@@ -20,7 +20,7 @@ class RefreshSession
         if (Session::isStarted()) {
             Session::migrate();
         }
-        
+
         return $next($request);
     }
-} 
+}

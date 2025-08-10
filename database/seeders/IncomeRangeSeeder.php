@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class IncomeRangeSeeder extends Seeder
@@ -20,7 +19,7 @@ class IncomeRangeSeeder extends Seeder
             ['name' => '>100000', 'starting_range' => 100001, 'ending_range' => PHP_INT_MAX],
         ];
         // Only insert name field, as only name is fillable
-        \App\Models\IncomeRange::insert(array_map(function($item) {
+        \App\Models\IncomeRange::insert(array_map(function ($item) {
             return ['name' => $item['name']];
         }, $incomeRanges));
     }

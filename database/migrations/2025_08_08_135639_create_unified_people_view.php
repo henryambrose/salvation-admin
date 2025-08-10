@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     private function indexNamedExists(string $table, string $name): bool
     {
         return DB::table('information_schema.statistics')
@@ -26,7 +25,7 @@ return new class extends Migration {
 
     public function up(): void
     {
-        DB::statement("DROP VIEW IF EXISTS unified_people");
+        DB::statement('DROP VIEW IF EXISTS unified_people');
         DB::statement("
             CREATE OR REPLACE VIEW unified_people AS
 
@@ -109,7 +108,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        DB::statement("DROP VIEW IF EXISTS unified_people");
+        DB::statement('DROP VIEW IF EXISTS unified_people');
     }
 };
-

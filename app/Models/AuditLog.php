@@ -93,4 +93,4 @@ class AuditLog extends Model
     {
         return $query->where('record_id', $recordId);
     }
-} 
+}

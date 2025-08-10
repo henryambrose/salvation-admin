@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreGenderRequest;
 use App\Http\Requests\UpdateGenderRequest;
 use App\Models\Gender;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class GenderController extends Controller
@@ -107,4 +107,4 @@ class GenderController extends Controller
 
         return redirect()->route('gender.index')->with('success', 'Gender restored successfully.');
     }
-} 
+}

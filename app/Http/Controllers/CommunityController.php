@@ -6,9 +6,9 @@ use App\Http\Requests\StoreCommunityRequest;
 use App\Http\Requests\UpdateCommunityRequest;
 use App\Models\Community;
 use App\Models\Zone;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Http\Request;
 
 class CommunityController extends Controller
 {
@@ -18,7 +18,7 @@ class CommunityController extends Controller
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Community::class);
-        
+
         $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member')->with('members');
 
         if ($request->input('isArchived') === 'true') {
@@ -28,17 +28,17 @@ class CommunityController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhereHas('zone', function($zoneQuery) use ($search) {
-                      $zoneQuery->where('name', 'like', "%$search%");
-                  })
-                  ->orWhereHas('ppchead.member', function($memberQuery) use ($search) {
-                      $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
-                  })
-                  ->orWhereHas('scchead.member', function($memberQuery) use ($search) {
-                      $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
-                  });
+                    ->orWhereHas('zone', function ($zoneQuery) use ($search) {
+                        $zoneQuery->where('name', 'like', "%$search%");
+                    })
+                    ->orWhereHas('ppchead.member', function ($memberQuery) use ($search) {
+                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                    })
+                    ->orWhereHas('scchead.member', function ($memberQuery) use ($search) {
+                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                    });
             });
         }
 
@@ -50,6 +50,7 @@ class CommunityController extends Controller
 
         $perPage = $request->input('perPage', 10);
         $data = $query->paginate($perPage)->appends($request->query());
+
         return Inertia::render('community/Index', [
             'communities' => $data,
             'filters' => request()->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
@@ -68,7 +69,7 @@ class CommunityController extends Controller
     public function create(): Response
     {
         $this->authorize('create', Community::class);
-        
+
         return Inertia::render('community/Community', [
             'zones' => Zone::all(),
         ]);
@@ -80,11 +81,12 @@ class CommunityController extends Controller
     public function store(StoreCommunityRequest $request)
     {
         $this->authorize('create', Community::class);
-        
+
         Community::create($request->validated());
         $perPage = $request->input('perPage', 10);
         $total = Community::count();
         $lastPage = (int) ceil($total / $perPage);
+
         return redirect()->route('community.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -100,7 +102,7 @@ class CommunityController extends Controller
     public function show(Community $community): Response
     {
         $this->authorize('view', $community);
-        
+
         return Inertia::render('community/Community', [
             'community' => $community,
         ]);
@@ -112,7 +114,7 @@ class CommunityController extends Controller
     public function edit(Community $community): Response
     {
         $this->authorize('update', $community);
-        
+
         return Inertia::render('community/Community', [
             'community' => $community,
             'zones' => Zone::all(),
@@ -125,10 +127,11 @@ class CommunityController extends Controller
     public function update(UpdateCommunityRequest $request, Community $community)
     {
         $this->authorize('update', $community);
-        
+
         $community->update($request->validated());
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
+
         return redirect()->route('community.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -144,7 +147,7 @@ class CommunityController extends Controller
     public function destroy(Community $community)
     {
         $this->authorize('delete', $community);
-        
+
         $community->delete();
 
         return redirect()->route('community.index')->with('success', 'Community deleted successfully.');
@@ -157,36 +160,37 @@ class CommunityController extends Controller
     {
         $community = Community::onlyTrashed()->findOrFail($id);
         $this->authorize('restore', $community);
-        
+
         $community->restore();
+
         return redirect()->route('community.index')->with('success', 'Community restored successfully.');
     }
 
     public function export(Request $request)
     {
         $this->authorize('viewAny', Community::class);
-        
+
         try {
             $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member');
-            
+
             if ($request->input('isArchived') === 'true') {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
-            
+
             if ($search = $request->input('search')) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                      ->orWhereHas('zone', function($zoneQuery) use ($search) {
-                          $zoneQuery->where('name', 'like', "%$search%");
-                      })
-                      ->orWhereHas('ppchead.member', function($memberQuery) use ($search) {
-                          $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
-                      })
-                      ->orWhereHas('scchead.member', function($memberQuery) use ($search) {
-                          $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
-                      });
+                        ->orWhereHas('zone', function ($zoneQuery) use ($search) {
+                            $zoneQuery->where('name', 'like', "%$search%");
+                        })
+                        ->orWhereHas('ppchead.member', function ($memberQuery) use ($search) {
+                            $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                        })
+                        ->orWhereHas('scchead.member', function ($memberQuery) use ($search) {
+                            $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                        });
                 });
             }
 
@@ -194,19 +198,19 @@ class CommunityController extends Controller
             $allowedSortColumns = ['id', 'name', 'zone.name', 'ppchead.member.first_name', 'scchead.member.first_name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 if ($sort === 'zone.name') {
                     $query->join('zones', 'communities.zone_id', '=', 'zones.id')
-                          ->orderBy('zones.name', $direction);
+                        ->orderBy('zones.name', $direction);
                 } elseif ($sort === 'ppchead.member.first_name') {
                     $query->join('p_p_c_heads', 'communities.id', '=', 'p_p_c_heads.community_id')
-                          ->join('members', 'p_p_c_heads.member_id', '=', 'members.id')
-                          ->orderBy('members.first_name', $direction);
+                        ->join('members', 'p_p_c_heads.member_id', '=', 'members.id')
+                        ->orderBy('members.first_name', $direction);
                 } elseif ($sort === 'scchead.member.first_name') {
                     $query->join('s_c_c_heads', 'communities.id', '=', 's_c_c_heads.community_id')
-                          ->join('members', 's_c_c_heads.member_id', '=', 'members.id')
-                          ->orderBy('members.first_name', $direction);
+                        ->join('members', 's_c_c_heads.member_id', '=', 'members.id')
+                        ->orderBy('members.first_name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -219,14 +223,14 @@ class CommunityController extends Controller
             // Transform data for export
             $exportData = [];
             foreach ($data as $item) {
-                $ppcHeadName = $item->ppchead && $item->ppchead->member 
-                    ? trim($item->ppchead->member->first_name . ' ' . $item->ppchead->member->last_name)
+                $ppcHeadName = $item->ppchead && $item->ppchead->member
+                    ? trim($item->ppchead->member->first_name.' '.$item->ppchead->member->last_name)
                     : '';
-                
-                $sccHeadName = $item->scchead && $item->scchead->member 
-                    ? trim($item->scchead->member->first_name . ' ' . $item->scchead->member->last_name)
+
+                $sccHeadName = $item->scchead && $item->scchead->member
+                    ? trim($item->scchead->member->first_name.' '.$item->scchead->member->last_name)
                     : '';
-                
+
                 $exportData[] = [
                     'ID' => $item->id,
                     'Community Name' => $item->name ?? '',
@@ -237,14 +241,14 @@ class CommunityController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
             $headers = array_keys($exportData[0] ?? []);
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
+                $sheet->setCellValue($col.'1', $header);
                 $sheet->getColumnDimension($col)->setAutoSize(true);
                 $col++;
             }
@@ -254,30 +258,31 @@ class CommunityController extends Controller
             foreach ($exportData as $rowData) {
                 $col = 'A';
                 foreach ($rowData as $value) {
-                    $sheet->setCellValue($col . $row, $value);
+                    $sheet->setCellValue($col.$row, $value);
                     $col++;
                 }
                 $row++;
             }
 
             // Style header row
-            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
 
             // Create writer and output
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'communities_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'communities_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('Community Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('Community Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 }

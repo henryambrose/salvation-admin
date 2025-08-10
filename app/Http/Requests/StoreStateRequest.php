@@ -27,4 +27,4 @@ class StoreStateRequest extends FormRequest
             'country_id' => 'required|exists:countries,id',
         ];
     }
-} 
+}

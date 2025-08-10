@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\City;
-use App\Models\State;
 use App\Http\Requests\StoreCityRequest;
 use App\Http\Requests\UpdateCityRequest;
+use App\Models\City;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Log;
 
 class CityController extends Controller
 {
@@ -29,9 +28,9 @@ class CityController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhereHas('state', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%$search%");
-                  });
+                    ->orWhereHas('state', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%$search%");
+                    });
             });
         }
 
@@ -132,9 +131,9 @@ class CityController extends Controller
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%$search%")
-                  ->orWhereHas('state', function ($q2) use ($search) {
-                      $q2->where('name', 'like', "%$search%");
-                  });
+                    ->orWhereHas('state', function ($q2) use ($search) {
+                        $q2->where('name', 'like', "%$search%");
+                    });
             });
         }
 
@@ -171,14 +170,14 @@ class CityController extends Controller
     {
         try {
             $query = City::query();
-            
+
             // Handle archived records
             if ($request->input('isArchived') === 'true') {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
-            
+
             // Load relationships
             $query->with('state');
 
@@ -186,9 +185,9 @@ class CityController extends Controller
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                      ->orWhereHas('state', function ($q2) use ($search) {
-                          $q2->where('name', 'like', "%$search%");
-                      });
+                        ->orWhereHas('state', function ($q2) use ($search) {
+                            $q2->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
@@ -201,11 +200,11 @@ class CityController extends Controller
             $allowedSortColumns = ['id', 'name', 'state.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 if ($sort === 'state.name') {
                     $query->join('states', 'cities.state_id', '=', 'states.id')
-                          ->orderBy('states.name', $direction);
+                        ->orderBy('states.name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -226,7 +225,7 @@ class CityController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
@@ -234,7 +233,7 @@ class CityController extends Controller
                 $headers = array_keys($exportData[0]);
                 $col = 'A';
                 foreach ($headers as $header) {
-                    $sheet->setCellValue($col . '1', $header);
+                    $sheet->setCellValue($col.'1', $header);
                     $sheet->getColumnDimension($col)->setAutoSize(true);
                     $col++;
                 }
@@ -244,31 +243,32 @@ class CityController extends Controller
                 foreach ($exportData as $rowData) {
                     $col = 'A';
                     foreach ($rowData as $value) {
-                        $sheet->setCellValue($col . $row, $value);
+                        $sheet->setCellValue($col.$row, $value);
                         $col++;
                     }
                     $row++;
                 }
 
                 // Style header row
-                $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+                $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
             }
 
             // Create writer and output
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'cities_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'cities_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('City Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('City Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 }

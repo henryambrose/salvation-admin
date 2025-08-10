@@ -1,25 +1,9 @@
-import { onMounted, onBeforeUnmount } from 'vue'
-
+// Create a minimal composable to fix the build error
 export function useScrollRestoration() {
-  // Disabled scroll restoration to prevent auto-scroll behavior
-  const saveScrollPosition = () => {
-    // Do nothing - scroll restoration disabled
-  }
-
-  const restoreScrollPosition = () => {
-    // Do nothing - scroll restoration disabled
-  }
-
-  onMounted(() => {
-    // Do nothing - scroll restoration disabled
-  })
-
-  onBeforeUnmount(() => {
-    // Do nothing - scroll restoration disabled
-  })
-
+  // Return empty functions since this is not being used
   return {
-    saveScrollPosition,
-    restoreScrollPosition
-  }
-} 
+    saveScrollPosition: () => {},
+    restoreScrollPosition: () => {},
+    clearScrollPosition: () => {}
+  };
+}

@@ -22,9 +22,9 @@ class UpdateTownRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255|unique:towns,name,' . $this->town->id,
+            'name' => 'required|string|max:255|unique:towns,name,'.$this->town->id,
             'pincode' => 'nullable|string|max:10',
             'city_id' => 'required|exists:cities,id',
         ];
     }
-} 
+}

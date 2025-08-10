@@ -7,18 +7,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class AgeGroup extends Model
 {
-  use SoftDeletes;
+    use SoftDeletes;
 
-  protected $fillable = [
-    'name',
-    'description',
-    'min_age',
-    'max_age',
-  ];
+    protected $fillable = [
+        'name',
+        'description',
+        'min_age',
+        'max_age',
+    ];
 
-  protected $casts = [
-    'min_age' => 'integer',
-    'max_age' => 'integer',
-  ];
-
+    protected $casts = [
+        'min_age' => 'integer',
+        'max_age' => 'integer',
+    ];
 }

@@ -27,17 +27,17 @@ class SetupExternalMemberPermissions extends Command
     public function handle()
     {
         $this->info('Setting up external member permissions...');
-        
+
         // Run the migration
         $this->info('Running migration...');
         Artisan::call('migrate', ['--path' => 'database/migrations/2025_01_XX_XXXXXX_add_external_member_permissions.php']);
-        
+
         // Run the seeder
         $this->info('Running seeder...');
         Artisan::call('db:seed', ['--class' => 'ExternalMemberPermissionSeeder']);
-        
+
         $this->info('External member permissions setup completed successfully!');
-        
+
         return 0;
     }
 }

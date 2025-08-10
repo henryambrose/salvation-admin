@@ -25,4 +25,4 @@ class StoreStatusRequest extends FormRequest
             'name' => 'required|string|unique:statuses,name',
         ];
     }
-} 
+}

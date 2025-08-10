@@ -3,19 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreIncomeRangeRequest;
-use App\Http\Requests\UpdateIncomeRangeRequest;
 use App\Models\IncomeRange;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-
 
 class IncomeRangeController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) :Response
+    public function index(Request $request): Response
     {
 
         $query = IncomeRange::query();
@@ -89,7 +87,7 @@ class IncomeRangeController extends Controller
     public function update(Request $request, IncomeRange $incomeRange)
     {
         $validated = $request->validate([
-            'name' => 'required|string|unique:income_ranges,name,' . $incomeRange->id,
+            'name' => 'required|string|unique:income_ranges,name,'.$incomeRange->id,
             // Add other fields as needed
         ]);
 
@@ -112,6 +110,7 @@ class IncomeRangeController extends Controller
     {
         $range = IncomeRange::onlyTrashed()->findOrFail($id);
         $range->restore();
+
         return redirect()->route('income-range.index')->with('success', 'Income Range restored successfully.');
     }
 }

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCellsAndAssociationRequest;
 use App\Http\Requests\UpdateCellsAndAssociationRequest;
 use App\Models\CellsAndAssociation;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class CellsAndAssociationController extends Controller

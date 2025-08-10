@@ -25,4 +25,4 @@ class StoreDesignationRequest extends FormRequest
             'name' => 'required|string|unique:designations,name',
         ];
     }
-} 
+}

@@ -7,23 +7,21 @@ use App\Http\Requests\UpdateSCCHeadRequest;
 use App\Models\Community;
 use App\Models\Member;
 use App\Models\SCCHead;
-use Inertia\Inertia;
-use Inertia\Response;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-
-
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SCCHeadController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) :Response
+    public function index(Request $request): Response
     {
         $query = SCCHead::query();
         if ($request->input('isArchived') === 'true') {
-              $query->onlyTrashed();
+            $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
         }
@@ -31,9 +29,9 @@ class SCCHeadController extends Controller
         $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
         $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'members.last_name as member_last_name',
-    DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
-    'communities.name as community_name'
-);
+            DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
+            'communities.name as community_name'
+        );
         // Apply filters
         if ($communityId = $request->input('community_id')) {
             $query->where('s_c_c_heads.community_id', $communityId);
@@ -42,11 +40,11 @@ class SCCHeadController extends Controller
             $query->where('s_c_c_heads.member_id', $memberId);
         }
         if ($search = $request->input('search')) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('members.first_name', 'like', "%$search%")
-                  ->orWhere('members.middle_name', 'like', "%$search%")
-                  ->orWhere('members.last_name', 'like', "%$search%")
-                  ->orWhere('communities.name', 'like', "%$search%");
+                    ->orWhere('members.middle_name', 'like', "%$search%")
+                    ->orWhere('members.last_name', 'like', "%$search%")
+                    ->orWhere('communities.name', 'like', "%$search%");
             });
         }
 
@@ -92,6 +90,7 @@ class SCCHeadController extends Controller
         $perPage = $request->input('perPage', 10);
         $total = SCCHead::count();
         $lastPage = (int) ceil($total / $perPage);
+
         return redirect()->route('scc-head.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -136,6 +135,7 @@ class SCCHeadController extends Controller
         ]);
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
+
         return redirect()->route('scc-head.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -153,6 +153,7 @@ class SCCHeadController extends Controller
     {
         $sCCHead = SCCHead::findOrFail($id);
         $sCCHead->delete();
+
         return redirect()->route('scc-head.index')->with('success', 'SCC Head deleted successfully.');
     }
 
@@ -163,6 +164,7 @@ class SCCHeadController extends Controller
     {
         $sccHead = SCCHead::withTrashed()->findOrFail($id);
         $sccHead->restore();
+
         return redirect()->route('scc-head.index')->with('success', 'SCC Head restored successfully.');
     }
 
@@ -178,6 +180,7 @@ class SCCHeadController extends Controller
                     'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
                 ];
             });
+
         return response()->json($members);
     }
 
@@ -185,13 +188,13 @@ class SCCHeadController extends Controller
     {
         try {
             $query = SCCHead::with(['member', 'community']);
-            
+
             if ($request->input('isArchived') === 'true') {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
-            
+
             $query->select('s_c_c_heads.*');
             $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
             $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
@@ -205,11 +208,11 @@ class SCCHeadController extends Controller
                 $query->where('s_c_c_heads.member_id', $memberId);
             }
             if ($search = $request->input('search')) {
-                $query->where(function($q) use ($search) {
+                $query->where(function ($q) use ($search) {
                     $q->where('members.first_name', 'like', "%$search%")
-                      ->orWhere('members.middle_name', 'like', "%$search%")
-                      ->orWhere('members.last_name', 'like', "%$search%")
-                      ->orWhere('communities.name', 'like', "%$search%");
+                        ->orWhere('members.middle_name', 'like', "%$search%")
+                        ->orWhere('members.last_name', 'like', "%$search%")
+                        ->orWhere('communities.name', 'like', "%$search%");
                 });
             }
 
@@ -217,11 +220,11 @@ class SCCHeadController extends Controller
             $allowedSortColumns = ['id', 'member_first_name', 'community_name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
-            
+
             if (in_array($sort, $allowedSortColumns)) {
                 if ($sort === 'member_first_name') {
                     $query->orderBy('members.first_name', $direction)
-                          ->orderBy('members.last_name', $direction);
+                        ->orderBy('members.last_name', $direction);
                 } elseif ($sort === 'community_name') {
                     $query->orderBy('communities.name', $direction);
                 } else {
@@ -236,8 +239,8 @@ class SCCHeadController extends Controller
             // Transform data for export
             $exportData = [];
             foreach ($data as $item) {
-                $memberName = trim($item->member_first_name . ' ' . ($item->member_middle_name ? $item->member_middle_name . ' ' : '') . $item->member_last_name);
-                
+                $memberName = trim($item->member_first_name.' '.($item->member_middle_name ? $item->member_middle_name.' ' : '').$item->member_last_name);
+
                 $exportData[] = [
                     'ID' => $item->id,
                     'Member Name' => $memberName,
@@ -246,14 +249,14 @@ class SCCHeadController extends Controller
             }
 
             // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
             $sheet = $spreadsheet->getActiveSheet();
 
             // Set headers
             $headers = array_keys($exportData[0] ?? []);
             $col = 'A';
             foreach ($headers as $header) {
-                $sheet->setCellValue($col . '1', $header);
+                $sheet->setCellValue($col.'1', $header);
                 $sheet->getColumnDimension($col)->setAutoSize(true);
                 $col++;
             }
@@ -263,30 +266,31 @@ class SCCHeadController extends Controller
             foreach ($exportData as $rowData) {
                 $col = 'A';
                 foreach ($rowData as $value) {
-                    $sheet->setCellValue($col . $row, $value);
+                    $sheet->setCellValue($col.$row, $value);
                     $col++;
                 }
                 $row++;
             }
 
             // Style header row
-            $sheet->getStyle('A1:' . $sheet->getHighestColumn() . '1')->getFont()->setBold(true);
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
 
             // Create writer and output
             $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'scc_heads_' . date('Y-m-d_H-i-s') . '.xlsx';
+            $filename = 'scc_heads_'.date('Y-m-d_H-i-s').'.xlsx';
 
             // Save to temporary file and return as download
             $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
             $writer->save($tempFile);
-            
+
             return response()->download($tempFile, $filename, [
                 'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             ])->deleteFileAfterSend();
 
         } catch (\Exception $e) {
-            \Log::error('SCC Head Export failed: ' . $e->getMessage());
-            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
+            \Log::error('SCC Head Export failed: '.$e->getMessage());
+
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 }

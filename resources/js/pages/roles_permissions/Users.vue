@@ -76,12 +76,23 @@ function removeRole(userId: number) {
   });
 }
 
-function openPermissionModal(user: any) {
+// Remove debug console.log statements and improve type safety
+function openPermissionModal(user: {
+  id: number;
+  name: string;
+  email: string;
+  roles: Array<{ id: number; name: string; }>;
+  permissions?: string[];
+  effectivePermissions?: string[];
+}) {
   editingUser.value = user;
-  // Initialize permissions for this user
-  if (!userPermissions.value[user.id]) {
-    userPermissions.value[user.id] = [];
-  }
+  
+  // Get the user's effective permissions (role + custom)
+  const currentPermissions = user.effectivePermissions || user.permissions || [];
+  
+  // Initialize user permissions with their current permissions
+  userPermissions.value[user.id] = [...currentPermissions];
+  
   showPermissionModal.value = true;
 }
 
@@ -133,7 +144,7 @@ function getPermissionIcon(permission: string) {
     'create': '➕',
     'read': '🔍',
     'update': '✏️',
-    'delete': '��️',
+    'delete': '🗑️',
     'list': '📋',
     'restore': '↩️',
     'manage': '⚙️',
@@ -145,6 +156,19 @@ function onRoleChange(userId: number, event: Event) {
   const target = event.target as HTMLSelectElement;
   const roleId = target.value ? Number(target.value) : 0;
   assignRole(userId, roleId);
+}
+
+// Remove unused variables and improve type safety
+const isPermissionFromRole = (permissionSlug: string): boolean => {
+  return editingUser.value?.permissions?.includes(permissionSlug) || false;
+}
+
+const isPermissionCustom = (permissionSlug: string): boolean => {
+  return false; // Current backend doesn't distinguish custom vs role permissions
+}
+
+const getCustomPermissionsCount = (): number => {
+  return 0; // Current backend doesn't distinguish custom vs role permissions
 }
 </script>
 
@@ -316,6 +340,22 @@ function onRoleChange(userId: number, event: Event) {
 
           <!-- Modal Content -->
           <div class="p-6">
+            <!-- Permission Summary -->
+            <div class="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                  <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                    <span class="text-sm font-medium text-gray-700">
+                      User Permissions: {{ editingUser?.permissions?.length || 0 }}
+                    </span>
+                  </div>
+                </div>
+                <div class="text-sm text-gray-500">
+                  Total: {{ userPermissions[editingUser?.id]?.length || 0 }}
+                </div>
+              </div>
+            </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div v-for="module in modules" :key="module.id" 
                    class="bg-gray-50 rounded-xl p-4 border border-gray-200">
@@ -329,7 +369,7 @@ function onRoleChange(userId: number, event: Event) {
                          class="flex items-center p-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
                     <input 
                       type="checkbox"
-                      :checked="userPermissions[editingUser?.id]?.includes(action.slug)"
+                      :checked="(userPermissions[editingUser?.id] || []).includes(action.slug)"
                       @change="togglePermission(action.slug)"
                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />

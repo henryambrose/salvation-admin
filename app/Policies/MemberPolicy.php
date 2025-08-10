@@ -4,7 +4,6 @@ namespace App\Policies;
 
 use App\Models\Member;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
 
 class MemberPolicy
 {
@@ -16,6 +15,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('list-member');
     }
 
@@ -27,15 +27,16 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
-        if (!$user->can('read-member')) {
+        if (! $user->can('read-member')) {
             return false;
         }
         // Optional: enforce community scope at policy level
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return true;
         }
+
         return in_array($member->community_id, $allowed ?? [], true);
     }
 
@@ -47,6 +48,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('create-member');
     }
 
@@ -58,6 +60,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('update-member');
     }
 
@@ -69,6 +72,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-member');
     }
 
@@ -80,6 +84,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('restore-member');
     }
 
@@ -91,6 +96,7 @@ class MemberPolicy
         if ($user->hasRole('superadmin')) {
             return true;
         }
+
         return $user->can('delete-member');
     }
 }

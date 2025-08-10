@@ -15,6 +15,7 @@ class Zone extends Model
         'name',
         'description',
     ];
+
     public function communities()
     {
         return $this->hasMany(Community::class);

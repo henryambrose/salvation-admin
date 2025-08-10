@@ -3,19 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreBloodGroupRequest;
-use App\Http\Requests\UpdateBloodGroupRequest;
 use App\Models\BloodGroup;
-use Inertia\Inertia;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
-
 
 class BloodGroupController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request) :Response
+    public function index(Request $request): Response
     {
 
         $query = BloodGroup::query();
@@ -65,6 +63,7 @@ class BloodGroupController extends Controller
         $perPage = $request->input('perPage', 10);
         $total = BloodGroup::count();
         $lastPage = (int) ceil($total / $perPage);
+
         return redirect()->route('blood-group.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -98,12 +97,13 @@ class BloodGroupController extends Controller
     public function update(Request $request, BloodGroup $bloodGroup)
     {
         $validated = $request->validate([
-            'name' => 'required|string|unique:blood_groups,name,' . $bloodGroup->id,
+            'name' => 'required|string|unique:blood_groups,name,'.$bloodGroup->id,
         ]);
 
         $bloodGroup->update($validated);
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
+
         return redirect()->route('blood-group.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
@@ -127,6 +127,7 @@ class BloodGroupController extends Controller
     {
         $bloodGroup = BloodGroup::onlyTrashed()->findOrFail($id);
         $bloodGroup->restore();
+
         return redirect()->route('blood-group.index')->with('success', 'Blood Group restored successfully.');
     }
 }

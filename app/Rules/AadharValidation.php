@@ -24,12 +24,14 @@ class AadharValidation implements ValidationRule
         // Check if it's exactly 12 digits
         if (strlen($cleanAadhar) !== 12) {
             $fail('The :attribute must be exactly 12 digits.');
+
             return;
         }
 
         // Check if it's all zeros (invalid Aadhar)
         if ($cleanAadhar === '000000000000') {
             $fail('The :attribute cannot be all zeros.');
+
             return;
         }
 
@@ -39,9 +41,8 @@ class AadharValidation implements ValidationRule
         // Basic pattern check (12 digits, not all same)
         if (preg_match('/^(\d)\1{11}$/', $cleanAadhar)) {
             $fail('The :attribute cannot be all repeated digits.');
+
             return;
         }
     }
-
-
-} 
+}

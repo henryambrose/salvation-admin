@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Helpers\AuditHelper;
 use Closure;
 use Illuminate\Http\Request;
-use App\Helpers\AuditHelper;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuditMiddleware
@@ -24,4 +24,4 @@ class AuditMiddleware
 
         return $response;
     }
-} 
+}

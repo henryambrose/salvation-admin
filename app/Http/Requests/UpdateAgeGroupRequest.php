@@ -22,9 +22,9 @@ class UpdateAgeGroupRequest extends FormRequest
     public function rules(): array
     {
         $ageGroupId = $this->route('age_group')->id;
-        
+
         return [
-            'name' => 'required|string|unique:age_groups,name,' . $ageGroupId,
+            'name' => 'required|string|unique:age_groups,name,'.$ageGroupId,
             'description' => 'nullable|string',
             'min_age' => [
                 'required',
@@ -37,7 +37,7 @@ class UpdateAgeGroupRequest extends FormRequest
                             ->where('max_age', $maxAge)
                             ->where('id', '!=', $ageGroupId)
                             ->exists();
-                        
+
                         if ($exists) {
                             $fail('An age group with this min age and max age combination already exists.');
                         }
@@ -55,7 +55,7 @@ class UpdateAgeGroupRequest extends FormRequest
                             ->where('max_age', $value)
                             ->where('id', '!=', $ageGroupId)
                             ->exists();
-                        
+
                         if ($exists) {
                             $fail('An age group with this min age and max age combination already exists.');
                         }

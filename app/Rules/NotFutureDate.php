@@ -2,9 +2,9 @@
 
 namespace App\Rules;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use Carbon\Carbon;
 
 class NotFutureDate implements ValidationRule
 {
@@ -25,4 +25,4 @@ class NotFutureDate implements ValidationRule
             $fail('The :attribute must be a valid date.');
         }
     }
-} 
+}

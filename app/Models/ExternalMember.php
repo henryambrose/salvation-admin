@@ -28,26 +28,26 @@ class ExternalMember extends Model
         'external_member_no',
         'uid',
     ];
-    
+
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($externalMember) {
-            if (!$externalMember->external_member_no) {
+            if (! $externalMember->external_member_no) {
                 $currentYear = date('Y');
-                $lastMember = static::where('external_member_no', 'like', $currentYear . '-EXT-%')
+                $lastMember = static::where('external_member_no', 'like', $currentYear.'-EXT-%')
                     ->orderBy('external_member_no', 'desc')
                     ->first();
-                
+
                 if ($lastMember) {
                     $lastNumber = (int) substr($lastMember->external_member_no, -6);
                     $newNumber = $lastNumber + 1;
                 } else {
                     $newNumber = 1;
                 }
-                
-                $externalMember->external_member_no = $currentYear . '-EXT-' . str_pad($newNumber, 6, '0', STR_PAD_LEFT);
+
+                $externalMember->external_member_no = $currentYear.'-EXT-'.str_pad($newNumber, 6, '0', STR_PAD_LEFT);
             }
         });
 
@@ -73,7 +73,7 @@ class ExternalMember extends Model
         'relationship_id' => 'integer',
         'gender_id' => 'integer',
         'community_id' => 'integer',
-        'deleted_at' => 'datetime'
+        'deleted_at' => 'datetime',
     ];
 
     /**
@@ -83,7 +83,7 @@ class ExternalMember extends Model
      */
     public function scopeForUserCommunities($query, $user)
     {
-        $service = new \App\Services\CommunityAccessService();
+        $service = new \App\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {
             return $query; // unrestricted
@@ -99,8 +99,8 @@ class ExternalMember extends Model
 
         // Fallback: join members on family_no to derive community_id
         return $query->join('members as _m_on_family', '_m_on_family.family_no', '=', $this->getTable().'.family_no')
-                     ->whereIn('_m_on_family.community_id', $allowed)
-                     ->select($this->getTable().'.*');
+            ->whereIn('_m_on_family.community_id', $allowed)
+            ->select($this->getTable().'.*');
     }
 
     /**
@@ -108,7 +108,7 @@ class ExternalMember extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . ($this->last_name ?? ''));
+        return trim($this->first_name.' '.($this->last_name ?? ''));
     }
 
     /**
@@ -197,7 +197,7 @@ class ExternalMember extends Model
     public function children()
     {
         return $this->hasMany(ExternalMember::class, 'father_id')
-                    ->orWhere('mother_id', $this->id);
+            ->orWhere('mother_id', $this->id);
     }
 
     /**
@@ -206,17 +206,17 @@ class ExternalMember extends Model
     public function siblings()
     {
         $parentIds = collect([$this->father_id, $this->mother_id])->filter();
-        
+
         if ($parentIds->isEmpty()) {
             return collect();
         }
-        
+
         return ExternalMember::where(function ($query) use ($parentIds) {
             $query->whereIn('father_id', $parentIds)
-                  ->orWhereIn('mother_id', $parentIds);
+                ->orWhereIn('mother_id', $parentIds);
         })
-        ->where('id', '!=', $this->id)
-        ->get();
+            ->where('id', '!=', $this->id)
+            ->get();
     }
 
     /**
@@ -245,6 +245,6 @@ class ExternalMember extends Model
 
     public function getUidAttribute(): string
     {
-        return 'E-' . $this->id;
+        return 'E-'.$this->id;
     }
 }

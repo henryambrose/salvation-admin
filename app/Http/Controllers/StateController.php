@@ -2,14 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\State;
-use App\Models\Country;
 use App\Http\Requests\StoreStateRequest;
 use App\Http\Requests\UpdateStateRequest;
+use App\Models\Country;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\DB;
 
 class StateController extends Controller
 {
@@ -128,6 +127,7 @@ class StateController extends Controller
     {
         $state = State::onlyTrashed()->findOrFail($id);
         $state->restore();
+
         return redirect()->route('state.index')->with('success', 'State restored successfully.');
     }
 

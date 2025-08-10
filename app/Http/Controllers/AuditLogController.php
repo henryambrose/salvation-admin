@@ -58,13 +58,13 @@ class AuditLogController extends Controller
 
         // Get available tables for filter dropdown
         $tables = AuditLog::distinct()->pluck('table_name')->sort()->values();
-        
+
         // Get available actions for filter dropdown
         $actions = AuditLog::distinct()->pluck('action')->sort()->values();
-        
+
         // Get available users for filter dropdown
         $userIds = AuditLog::distinct()->pluck('user_id')->filter()->values();
-        $users = $userIds->isNotEmpty() 
+        $users = $userIds->isNotEmpty()
             ? User::whereIn('id', $userIds)->select('id', 'name', 'email')->get()
             : collect();
 
@@ -93,7 +93,7 @@ class AuditLogController extends Controller
     public function show(AuditLog $auditLog): Response
     {
         $auditLog->load('user');
-        
+
         return Inertia::render('audit/Show', [
             'log' => $auditLog,
         ]);
@@ -155,7 +155,7 @@ class AuditLogController extends Controller
     public function user(int $userId, Request $request): Response
     {
         $user = User::findOrFail($userId);
-        
+
         $query = AuditLog::with('user')
             ->where('user_id', $userId)
             ->orderBy('created_at', 'desc');
@@ -214,20 +214,20 @@ class AuditLogController extends Controller
 
         $logs = $query->get();
 
-        $filename = 'audit_logs_' . now()->format('Y-m-d_H-i-s') . '.csv';
-        
+        $filename = 'audit_logs_'.now()->format('Y-m-d_H-i-s').'.csv';
+
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
-        $callback = function() use ($logs) {
+        $callback = function () use ($logs) {
             $file = fopen('php://output', 'w');
-            
+
             // CSV headers
             fputcsv($file, [
-                'ID', 'Table', 'Action', 'Record ID', 'User', 'IP Address', 
-                'User Agent', 'Created At', 'Updated At'
+                'ID', 'Table', 'Action', 'Record ID', 'User', 'IP Address',
+                'User Agent', 'Created At', 'Updated At',
             ]);
 
             // CSV data
@@ -250,4 +250,4 @@ class AuditLogController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
-} 
+}

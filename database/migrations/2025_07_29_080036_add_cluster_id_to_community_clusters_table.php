@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Cluster;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use App\Models\Cluster;
 
 return new class extends Migration
 {
@@ -23,7 +23,7 @@ return new class extends Migration
         $defaultCluster = Cluster::first();
 
         // Check if cluster_id column already exists
-        if (!Schema::hasColumn('community_clusters', 'cluster_id')) {
+        if (! Schema::hasColumn('community_clusters', 'cluster_id')) {
             Schema::table('community_clusters', function (Blueprint $table) {
                 $table->foreignId('cluster_id')->after('name')->nullable()->constrained('clusters');
             });

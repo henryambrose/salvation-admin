@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('permission_group_id')->constrained('permission_groups')->onDelete('cascade');
             $table->foreignId('module_action_id')->constrained('module_actions')->onDelete('cascade');
             $table->timestamps();
-            
+
             // Ensure unique combinations
             $table->unique(['permission_group_id', 'module_action_id'], 'pg_permissions_unique');
         });

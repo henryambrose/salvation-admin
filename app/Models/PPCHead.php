@@ -10,11 +10,14 @@ class PPCHead extends Model
 {
     /** @use HasFactory<\Database\Factories\PPCHeadFactory> */
     use HasFactory, SoftDeletes;
+
     protected $table = 'p_p_c_heads';
+
     protected $fillable = [
         'member_id',
         'community_id',
     ];
+
     public function member()
     {
         return $this->belongsTo(Member::class);
@@ -23,6 +26,5 @@ class PPCHead extends Model
     public function community()
     {
         return $this->belongsTo(Community::class);
-    }   
-    
+    }
 }
