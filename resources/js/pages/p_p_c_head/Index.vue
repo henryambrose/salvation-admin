@@ -199,8 +199,9 @@ function submitCreate() {
   if (!createForm.member_id || !createForm.community_id) return;
   
   // Check for duplicate community
-  const existingCommunity = enhancedPPCHeads.value.data.find(
-    head => head.community_id === createForm.community_id?.id
+  const existingCommunity = enhancedPPCHeads.value.data.some(
+    (head: { community_id: number }) =>
+      head.community_id === Number(createForm.community_id)
   );
   
   if (existingCommunity) {
@@ -277,6 +278,12 @@ const canUpdateAnyPPCHead = can('update-p-p-c-head');
 const canDeleteAnyPPCHead = can('delete-p-p-c-head');
 const canExportPPCHead = can('read-p-p-c-head');
 
+function onPageChange(e: Event) {
+  const target = e.target as HTMLSelectElement | null;
+  if (!target) return;
+  fetch(Number(target.value));
+}
+
 </script>
 
 <template>
@@ -339,7 +346,7 @@ const canExportPPCHead = can('read-p-p-c-head');
                   </Button>
                 </template>
                 <template v-else>
-                  <Button v-if="canRestorePPCHead" @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                  <Button  @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                     Restore
                   </Button>
                 </template>
@@ -384,7 +391,7 @@ const canExportPPCHead = can('read-p-p-c-head');
           <select 
             v-if="enhancedPPCHeads.last_page && enhancedPPCHeads.last_page > 1"
             :value="enhancedPPCHeads.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="onPageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedPPCHeads.last_page" :key="page" :value="page">
@@ -470,7 +477,7 @@ const canExportPPCHead = can('read-p-p-c-head');
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <select v-model="createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
+              <select v-model.number="createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
                 <option value="" disabled>Select Community</option>
                 <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
               </select>

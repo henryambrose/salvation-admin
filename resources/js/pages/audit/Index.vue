@@ -1,7 +1,21 @@
 <template>
   <div class="p-6">
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Audit Logs</h1>
+    <div class="mb-6 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button
+          type="button"
+          class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          @click="goBack"
+          aria-label="Go back"
+        >
+          <svg class="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+            <line x1="9" y1="12" x2="21" y2="12"></line>
+          </svg>
+          Back
+        </button>
+        <h1 class="text-2xl font-bold text-gray-900">Audit Logs</h1>
+      </div>
       <p class="text-gray-600">Track all system changes and user activities</p>
     </div>
 
@@ -260,7 +274,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, router } from '@inertiajs/vue3'
 
 const props = defineProps({
   logs: Object,
@@ -338,5 +352,13 @@ function hasValueChanged(oldValue, newValue) {
 
 function viewLogDetails(log) {
   selectedLog.value = log
+}
+
+function goBack() {
+  if (window.history.length > 1) {
+    window.history.back()
+  } else {
+    router.visit(route('dashboard'))
+  }
 }
 </script> 

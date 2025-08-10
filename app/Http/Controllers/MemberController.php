@@ -172,6 +172,12 @@ class MemberController extends Controller
             $query->orderBy('id', 'asc');
         }
 
+        // Apply PPC/SCC community scoping
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+        if ($allowedCommunityIds !== null) {
+            $query->whereIn('community_id', $allowedCommunityIds);
+        }
+
         $perPage = $request->input('perPage', 10);
 
         // Normal pagination
@@ -213,6 +219,11 @@ class MemberController extends Controller
             $totalStatsQuery->onlyTrashed();
         } else {
             $totalStatsQuery->withoutTrashed();
+        }
+
+        // Apply PPC/SCC community scoping to stats query
+        if ($allowedCommunityIds !== null) {
+            $totalStatsQuery->whereIn('community_id', $allowedCommunityIds);
         }
         
         if ($search = $request->input('search')) {

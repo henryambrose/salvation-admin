@@ -34,9 +34,16 @@ class ExternalMemberController extends Controller
             $query->withoutTrashed();
         }
         
-        // If user is not superadmin and has family_no, scope by family
-        if (!auth()->user()->hasRole('superadmin') && auth()->user()->family_no) {
-            $query->where('family_no', auth()->user()->family_no);
+        // Apply PPC/SCC community scoping
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+        if ($allowedCommunityIds !== null) {
+            // Use whereExists to check if any member with this family_no is in allowed communities
+            $query->whereExists(function ($subquery) use ($allowedCommunityIds) {
+                $subquery->select(\DB::raw(1))
+                        ->from('members')
+                        ->whereColumn('members.family_no', 'external_members.family_no')
+                        ->whereIn('members.community_id', $allowedCommunityIds);
+            });
         }
         
         // Handle search

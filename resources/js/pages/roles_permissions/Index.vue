@@ -121,7 +121,15 @@ function savePermissions() {
   <AppLayout>
     <Head title="Role Permissions" />
     <div v-if="canViewRoles" class="mx-auto max-w-4xl py-8">
-      <h2 class="mb-6 text-2xl font-bold">Role Permissions</h2>
+      <div class="mb-6 flex items-center justify-between">
+        <h2 class="text-2xl font-bold">Role Permissions</h2>
+        <button 
+          @click="router.visit('/roles-permissions/users')"
+          class="text-blue-600 hover:text-blue-800 transition px-4 py-2 rounded-lg hover:bg-blue-50"
+        >
+          Manage User Roles →
+        </button>
+      </div>
       <div class="mb-4">
         <label class="mb-1 block font-semibold">Select Role</label>
         <select v-model="selectedRoleId" class="w-full rounded-full border border-gray-200 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200">

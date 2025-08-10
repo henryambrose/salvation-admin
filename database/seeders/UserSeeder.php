@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 
 class UserSeeder extends Seeder
 {
@@ -39,8 +40,8 @@ class UserSeeder extends Seeder
         $this->command->info('You can now login with the superadmin role and manage permissions.');
 
         // Create SCC Head and PPC Head roles
-        $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']);
-        $ppcHeadRole = Role::firstOrCreate(['name' => 'ppc-head']);
+        $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']); // hyphen
+        $ppcHeadRole = Role::firstOrCreate(['name' => 'ppc-head']); // hyphen
 
         // Create sample users for SCC Head and PPC Head roles
         $sccHeadUser = User::firstOrCreate(
@@ -86,5 +87,142 @@ class UserSeeder extends Seeder
         if (!$adminUser->hasRole($adminRole)) {
             $adminUser->assignRole($adminRole);
         }
+
+        // Rename the existing role from ppc_head to ppc-head
+        $oldRole = Role::where('name', 'ppc_head')->first();
+        if ($oldRole) {
+            $oldRole->update(['name' => 'ppc-head']);
+        }
+
+        // Create and assign permissions
+        $ppcHeadRole = Role::where('name', 'ppc-head')->first();
+        $permissions = [
+            'create-member', 'read-member', 'update-member', 'delete-member', 'list-member',
+            'create-external-member', 'read-external-member', 'update-external-member', 
+            'delete-external-member', 'list-external-member'
+        ];
+
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        $ppcHeadRole->syncPermissions($permissions);
+
+        // Check what roles exist
+        Role::all()->pluck('name');
+
+        // Remove the underscore version and keep the hyphen version
+        $underscoreRole = Role::where('name', 'ppc_head')->first();
+        if ($underscoreRole) {
+            // Reassign any users from ppc_head to ppc-head
+            $usersWithUnderscoreRole = $underscoreRole->users;
+            $hyphenRole = Role::firstOrCreate(['name' => 'ppc-head']);
+            
+            foreach ($usersWithUnderscoreRole as $user) {
+                $user->removeRole('ppc_head');
+                $user->assignRole('ppc-head');
+            }
+            
+            // Delete the underscore role
+            $underscoreRole->delete();
+        }
+
+        // Verify cleanup
+        Role::all()->pluck('name');
+
+        // First, let's see what roles exist
+        Role::all()->pluck('name');
+
+        // Clean up PPC Head duplicates
+        $ppcUnderscore = Role::where('name', 'ppc_head')->first();
+        $ppcHyphen = Role::where('name', 'ppc-head')->first();
+
+        if ($ppcUnderscore && $ppcHyphen) {
+            // Move users from underscore to hyphen role
+            $usersWithUnderscore = $ppcUnderscore->users;
+            foreach ($usersWithUnderscore as $user) {
+                $user->removeRole('ppc_head');
+                $user->assignRole('ppc-head');
+            }
+            // Delete the underscore role
+            $ppcUnderscore->delete();
+        }
+
+        // Clean up SCC Head duplicates
+        $sccUnderscore = Role::where('name', 'scc_head')->first();
+        $sccHyphen = Role::where('name', 'scc-head')->first();
+
+        if ($sccUnderscore && $sccHyphen) {
+            // Move users from underscore to hyphen role
+            $usersWithUnderscore = $sccUnderscore->users;
+            foreach ($usersWithUnderscore as $user) {
+                $user->removeRole('scc_head');
+                $user->assignRole('scc-head');
+            }
+            // Delete the underscore role
+            $sccUnderscore->delete();
+        }
+
+        // Verify cleanup
+        Role::all()->pluck('name');
+
+        // Now assign permissions to the hyphen roles
+        $ppcHeadRole = Role::where('name', 'ppc-head')->first();
+        $sccHeadRole = Role::where('name', 'scc-head')->first();
+
+        // PPC Head permissions
+        $ppcPermissions = [
+            'create-member', 'read-member', 'update-member', 'delete-member', 'list-member',
+            'create-external-member', 'read-external-member', 'update-external-member', 
+            'delete-external-member', 'list-external-member'
+        ];
+
+        // SCC Head permissions (same as PPC for now)
+        $sccPermissions = $ppcPermissions;
+
+        // Create and assign permissions
+        foreach ($ppcPermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        $ppcHeadRole->syncPermissions($ppcPermissions);
+        $sccHeadRole->syncPermissions($sccPermissions);
+
+        echo "Cleanup completed!";
+
+        // Create the PPC Head and SCC Head roles with hyphenated names
+        $ppcHeadRole = Role::firstOrCreate(['name' => 'ppc-head']);
+        $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']);
+
+        echo "Roles created:\n";
+        echo "- ppc-head\n";
+        echo "- scc-head\n";
+
+        // Create and assign permissions for PPC Head and SCC Head
+        $permissions = [
+            'create-member', 'read-member', 'update-member', 'delete-member', 'list-member',
+            'create-external-member', 'read-external-member', 'update-external-member', 
+            'delete-external-member', 'list-external-member'
+        ];
+
+        // Create permissions if they don't exist
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        // Assign permissions to both roles
+        $ppcHeadRole->syncPermissions($permissions);
+        $sccHeadRole->syncPermissions($permissions);
+
+        echo "Permissions assigned to both roles\n";
+
+        // Verify
+        echo "\nCurrent roles:\n";
+        Role::all()->pluck('name')->each(function($name) { echo "- $name\n"; });
+
+        echo "\nPPC Head permissions:\n";
+        $ppcHeadRole->permissions->pluck('name')->each(function($name) { echo "- $name\n"; });
+
+        echo "Setup completed!\n";
     }
 }
