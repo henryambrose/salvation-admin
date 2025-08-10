@@ -94,7 +94,7 @@ class FamilyNumberingService
     {
         // Parse: SAL-XXX (3 digits) or SAL-XXXX (4 digits)
         if (! preg_match('/^([A-Z]{3})-(\d{3,4})$/', $familyNo, $matches)) {
-            throw new \InvalidArgumentException('Invalid family number format. Expected: SAL-XXX or SAL-XXXX');
+            throw new \InvalidArgumentException('Invalid family number format. Expected: ' . $this->churchCode . '-XXX or ' . $this->churchCode . '-XXXX');
         }
 
         return [
@@ -152,7 +152,7 @@ class FamilyNumberingService
             'family_group' => $parsed['family_group'],
             'member_sequence' => $parsed['member_sequence'],
             'year' => date('Y'), // Current year for new members
-            'church_name' => $this->getChurchName($parsed['church_code']),
+            'church_name' => $this->churchCode,
         ];
     }
 
@@ -164,21 +164,11 @@ class FamilyNumberingService
             'year' => $parsed['year'],
             'church_code' => $parsed['church_code'],
             'member_sequence' => $parsed['member_sequence'],
-            'church_name' => $this->getChurchName($parsed['church_code']),
+            'church_name' => $this->churchCode,
         ];
     }
 
-    private function getChurchName($churchCode)
-    {
-        // You can extend this to fetch from a churches table
-        $churchNames = [
-            'SAL' => 'Salvation Church',
-            'ABC' => 'Another Church',
-            'XYZ' => 'Example Church',
-        ];
-
-        return $churchNames[$churchCode] ?? 'Unknown Church';
-    }
+    
 
     public function handleFamilyMove($familyNo, $newCommunityId, $newChurchCode = null)
     {
