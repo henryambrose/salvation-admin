@@ -112,14 +112,12 @@ class RolePermissionController extends Controller
     {
         $users = User::with('roles')->get();
         $roles = Role::select(['id', 'name'])->whereNotIn('name', ['superadmin'])->get();
-        $permissionGroups = PermissionGroup::all();
-        $modules = Module::with('actions')->get(); // Add this line
+        $modules = Module::with('actions')->get();
         
         return inertia('roles_permissions/Users', [
             'users' => $users,
             'roles' => $roles,
-            'permissionGroups' => $permissionGroups,
-            'modules' => $modules, // Add this line
+            'modules' => $modules,
         ]);
     }
 
@@ -149,42 +147,6 @@ class RolePermissionController extends Controller
         $user->syncRoles([]);
         
         return redirect()->back()->with('success', "All roles removed from {$user->name}");
-    }
-
-    public function assignRoleFromGroup(Request $request)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'permission_group_id' => 'required|exists:permission_groups,id',
-        ]);
-
-        $user = User::findOrFail($request->user_id);
-        $permissionGroup = PermissionGroup::with('permissions')->findOrFail($request->permission_group_id);
-        
-        // Get the role that best matches this permission group
-        $role = $this->findBestMatchingRole($permissionGroup);
-        
-        if ($role) {
-            $user->syncRoles([$role]);
-            return redirect()->back()->with('success', "User {$user->name} assigned to role {$role->name} based on {$permissionGroup->name} group");
-        }
-        
-        return redirect()->back()->with('error', "No suitable role found for {$permissionGroup->name} group");
-    }
-
-    private function findBestMatchingRole(PermissionGroup $group): ?Role
-    {
-        // Map permission groups to roles based on your business logic
-        $groupToRoleMap = [
-            'Full Access' => 'super admin',
-            'Administrator' => 'admin', 
-            'Read Only' => 'viewer',
-            'Data Entry' => 'admin',
-            'Moderator' => 'admin',
-        ];
-        
-        $roleName = $groupToRoleMap[$group->name] ?? 'viewer';
-        return Role::where('name', $roleName)->first();
     }
 
     // Add this debug method temporarily

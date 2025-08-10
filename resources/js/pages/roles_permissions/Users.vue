@@ -14,12 +14,6 @@ const props = defineProps<{
     roles: Array<{ id: number; name: string; }>;
   }>;
   roles: Array<{ id: number; name: string; }>;
-  permissionGroups: Array<{
-    id: number;
-    name: string;
-    description: string;
-    is_default: boolean;
-  }>;
   modules: Array<{
     id: number;
     name: string;
@@ -123,13 +117,6 @@ function saveUserPermissions() {
   closePermissionModal();
 }
 
-function assignRoleFromGroup(userId: number, groupId: number) {
-  router.post('/roles-permissions/assign-role-from-group', {
-    user_id: userId,
-    permission_group_id: groupId,
-  });
-}
-
 function getRoleBadgeColor(roleName: string) {
   const colors: {[key: string]: string} = {
     'super admin': 'bg-purple-100 text-purple-800',
@@ -187,28 +174,6 @@ function onRoleChange(userId: number, event: Event) {
       </div>
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Quick Actions -->
-        <div class="mb-8">
-          <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl p-6 text-white">
-            <h3 class="text-lg font-semibold mb-3">🚀 Quick Permission Groups</h3>
-            <p class="text-blue-100 mb-4">Apply predefined permission sets to users instantly</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div v-for="group in permissionGroups" :key="group.id" 
-                   class="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
-                <h4 class="font-semibold mb-2">{{ group.name }}</h4>
-                <p class="text-sm text-blue-100 mb-3">{{ group.description }}</p>
-                <button 
-                  @click="assignRoleFromGroup(0, group.id)"
-                  class="w-full bg-white/20 hover:bg-white/30 text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:scale-105"
-                >
-                  Apply to All
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <!-- Filters and Search -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div class="flex flex-col sm:flex-row gap-4">
