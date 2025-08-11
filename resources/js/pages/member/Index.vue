@@ -86,7 +86,7 @@ const columns: Column[] = [
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
 
-function editMember(member: Member) {
+function editMember(member: any) {
   router.get(route('member.edit', member.id));
 }
 

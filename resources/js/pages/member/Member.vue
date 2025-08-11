@@ -993,7 +993,7 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <Label for="relation_member_id">Spouse Member {{ form.spouse_id }}</Label>
               <SpouseSearchDropdown 
                 :model-value="form.spouse_id"
-                @update:model-value="(value) => form.spouse_id = value";
+                @update:model-value="(value) => form.spouse_id = value"
                 :exclude-id="member?.id"
                 placeholder="Search for spouse by name, member number, or family number..."
               />
@@ -1003,7 +1003,7 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <Label for="relation_member_id">Father Member {{ form.father_id }}</Label>
               <SpouseSearchDropdown 
                 :model-value="form.father_id"
-                @update:model-value="(value) => { form.father_id = value; }"
+                @update:model-value="(value) => form.father_id = value"
                 :exclude-id="member?.id"
                 placeholder="Search for spouse by name, member number, or family number..."
               />
@@ -1013,7 +1013,7 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <Label for="relation_member_id">Mother Member {{ form.mother_id }}</Label>
               <SpouseSearchDropdown 
                 :model-value="form.mother_id"
-                @update:model-value="(value) => { form.mother_id = value; }"
+                @update:model-value="(value) => form.mother_id = value"
                 :exclude-id="member?.id"
                 placeholder="Search for spouse by name, member number, or family number..."
               />
