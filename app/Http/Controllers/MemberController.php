@@ -227,6 +227,9 @@ class MemberController extends Controller
             $totalStatsQuery->withoutTrashed();
         }
 
+        // Get allowed community IDs for PPC/SCC head scoping
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+
         // Apply PPC/SCC community scoping to stats query
         if ($allowedCommunityIds !== null) {
             $totalStatsQuery->whereIn('community_id', $allowedCommunityIds);

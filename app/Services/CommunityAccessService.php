@@ -21,21 +21,57 @@ class CommunityAccessService
             return null; // unrestricted
         }
 
-        $hasHeadRole = $user->hasAnyRole(['ppc_head', 'scc_head']);
+        $hasHeadRole = $user->hasAnyRole(['ppc-head', 'scc-head']);
         if (! $hasHeadRole) {
-            return null; // unrestricted for non-head roles; permissions still apply
+            return null; // unrestricted for non-head roles
         }
 
-        // Map user to a Member record via email
+        \Log::info('CommunityAccessService debug', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'user_roles' => $user->getRoleNames()->toArray(),
+        ]);
+
+        // Initialize variables
+        $ppcCommunityIds = [];
+        $sccCommunityIds = [];
+
+        // First try to find member record by email
         $member = Member::where('email', $user->email)->first();
-        if (! $member) {
-            return []; // head role but no linked member -> no access
+        
+        if ($member) {
+            // Found member record, get communities from PPC/SCC head tables
+            $ppcCommunityIds = PPCHead::where('member_id', $member->id)->pluck('community_id')->all();
+            $sccCommunityIds = SCCHead::where('member_id', $member->id)->pluck('community_id')->all();
+            
+            \Log::info('CommunityAccessService - member record found', [
+                'member_id' => $member->id,
+                'ppc_community_ids' => $ppcCommunityIds,
+                'scc_community_ids' => $sccCommunityIds,
+            ]);
+        } else {
+            // No member record found, try to find communities directly
+            // Look for PPCHead records where the member has this email
+            $ppcCommunityIds = PPCHead::whereHas('member', function($query) use ($user) {
+                $query->where('email', $user->email);
+            })->pluck('community_id')->all();
+            
+            // Look for SCCHead records where the member has this email
+            $sccCommunityIds = SCCHead::whereHas('member', function($query) use ($user) {
+                $query->where('email', $user->email);
+            })->pluck('community_id')->all();
+            
+            \Log::info('CommunityAccessService - no member record, checking head tables directly', [
+                'ppc_community_ids' => $ppcCommunityIds,
+                'scc_community_ids' => $sccCommunityIds,
+            ]);
         }
-
-        $ppcCommunityIds = PPCHead::where('member_id', $member->id)->pluck('community_id')->all();
-        $sccCommunityIds = SCCHead::where('member_id', $member->id)->pluck('community_id')->all();
 
         $merged = array_values(array_unique(array_filter(array_merge($ppcCommunityIds, $sccCommunityIds))));
+        
+        \Log::info('CommunityAccessService - final result', [
+            'merged_community_ids' => $merged,
+        ]);
 
         return $merged;
     }
