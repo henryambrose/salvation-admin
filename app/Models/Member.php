@@ -74,6 +74,10 @@ class Member extends Model
         'spouse_source',
         'relationship_id',
         'uid',
+        'gender_id',
+        'parish_id',
+        'designation_id',
+        'status_id',
     ];
 
     protected $casts = [
