@@ -25,6 +25,7 @@ const canReadAnyCluster = can('read-cluster');
 const canUpdateAnyCluster = can('update-cluster');
 const canDeleteAnyCluster = can('delete-cluster');
 const canExportCluster = can('read-cluster');
+const canRestoreCluster = can('restore-cluster');
 
 const columns: Column[] = [
   { key: 'id', label: 'Id', sortable: true },
@@ -92,7 +93,6 @@ function clearSearch() {
 
 
 function restoreCluster(id: number) {
-  console.log(id)
   router.post(`/clusters/${id}/restore`, {}, {
     preserveScroll: true,
     onSuccess: () => {
@@ -205,7 +205,6 @@ function submit() {
 }
 
 function openEditModal(row: any) {
-  console.log(row.name);
   editingCluster.value = row;
   editForm.name = row.name;
   showEditModal.value = true;
@@ -245,6 +244,12 @@ function confirmDelete() {
       deletingCluster.value = undefined;
     },
   });
+}
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
 }
 const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
 </script>
@@ -341,7 +346,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
               <select 
                 v-if="clusters?.last_page && clusters.last_page > 1"
                 :value="clusters.current_page" 
-                @change="fetch(Number($event.target.value))"
+                @change="handlePageChange"
                 class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option v-for="page in clusters.last_page" :key="page" :value="page">

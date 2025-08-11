@@ -76,7 +76,6 @@ function removeRole(userId: number) {
   });
 }
 
-// Remove debug console.log statements and improve type safety
 function openPermissionModal(user: {
   id: number;
   name: string;

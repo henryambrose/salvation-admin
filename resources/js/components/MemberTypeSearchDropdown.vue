@@ -50,12 +50,12 @@
             <div>
               <div class="font-medium">{{ result.name }}</div>
               <div class="text-sm text-gray-500">
-                {{ result.family_no }} • {{ result.type === 'external' ? 'External' : 'Member' }}
+                {{ result.family_no }} • {{ result.type === 'External' ? 'External' : 'Member' }}
               </div>
             </div>
             <div class="text-xs px-2 py-1 rounded-full"
-                 :class="result.type === 'external' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
-              {{ result.type === 'external' ? 'External' : 'Member' }}
+                 :class="result.type === 'External' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
+              {{ result.type === 'External' ? 'External' : 'Member' }}
             </div>
           </div>
         </div>
@@ -71,8 +71,8 @@
         </div>
         <div class="flex items-center space-x-2">
           <span class="text-xs px-2 py-1 rounded-full"
-                :class="selectedMember.type === 'external' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
-            {{ selectedMember.type === 'external' ? 'External' : 'Member' }}
+                :class="selectedMember.type === 'External' ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'">
+            {{ selectedMember.type === 'External' ? 'External' : 'Member' }}
           </span>
           <button
             @click="clearSelection"
@@ -128,6 +128,7 @@ onMounted(() => {
     }
     memberType.value = props.existingData.type
     searchQuery.value = props.existingData.name
+    emit('update:sourceType', props.existingData.type)
   } else if (props.modelValue) {
     fetchMemberDetails(props.modelValue)
   }
@@ -148,8 +149,9 @@ const handleSearch = () => {
 }
 
 // Re-run search when memberType toggles
-watch(memberType, () => {
+watch(memberType, (newType) => {
   searchResults.value = [];
+  emit('update:sourceType', newType)
   if (searchQuery.value.length >= 2) performSearch();
 });
 
@@ -162,7 +164,6 @@ const performSearch = async () => {
 
     const response = await fetch(`${endpoint}?query=${encodeURIComponent(searchQuery.value)}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
     const data = await response.json();
     searchResults.value = data.map((item) => ({
       id: item.id,
@@ -178,7 +179,7 @@ const performSearch = async () => {
 const selectResult = (result) => {
   selectedMember.value = result
   emit('update:modelValue', result.id)
-  emit('memberSelected', result)
+  emit('update:sourceType', result.type)
   searchQuery.value = result.name
   showDropdown.value = false
 }
@@ -186,7 +187,7 @@ const selectResult = (result) => {
 const clearSelection = () => {
   selectedMember.value = null
   emit('update:modelValue', null)
-  emit('memberSelected', null)
+  emit('update:sourceType', '')
   searchQuery.value = ''
 }
 
@@ -213,6 +214,7 @@ const fetchMemberDetails = async (memberId) => {
       }
       memberType.value = 'Member'
       searchQuery.value = selectedMember.value.name
+      emit('update:sourceType', 'Member')
       return
     }
     
@@ -224,10 +226,11 @@ const fetchMemberDetails = async (memberId) => {
       selectedMember.value = {
         id: data.id,
         name: data.name,
-        type: 'external'
+        type: 'External'
       }
-      memberType.value = 'external'
+      memberType.value = 'External'
       searchQuery.value = selectedMember.value.name
+      emit('update:sourceType', 'External')
     } else {
       console.error('Failed to fetch member details from both APIs')
     }
@@ -245,6 +248,7 @@ const initializeWithExistingData = (memberId, memberData) => {
     }
     memberType.value = memberData.type
     searchQuery.value = memberData.name
+    emit('update:sourceType', memberData.type)
   }
 }
 </script>

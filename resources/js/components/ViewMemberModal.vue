@@ -12,8 +12,6 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue']);
 
 const page = usePage();
-console.log('Page props in ViewMemberModal:', page.props);
-
 const modalRef = ref<HTMLElement | null>(null);
 const currentTab = ref('personal');
 const familyMembers = ref<any[]>([]);

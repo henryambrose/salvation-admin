@@ -20,7 +20,6 @@ const props = defineProps({
   filters: Object,
   fetchUrl: String,
 });
-console.log(props.ppcHeads);
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },

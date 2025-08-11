@@ -169,6 +169,13 @@ function fetch(page = 1) {
   }
 }
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
@@ -181,6 +188,7 @@ const enhancedUsers = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 </script>
@@ -214,7 +222,7 @@ const enhancedUsers = computed(() => {
               ✕
             </button>
           </div>
-          <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+          <select v-model="perPage" @change="handlePageChange" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>
             <option :value="50">50</option>
@@ -290,7 +298,7 @@ const enhancedUsers = computed(() => {
           <select 
             v-if="enhancedUsers.last_page && enhancedUsers.last_page > 1"
             :value="enhancedUsers.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedUsers.last_page" :key="page" :value="page">

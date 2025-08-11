@@ -189,6 +189,13 @@ function clearSearch() {
   }
 }
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
@@ -196,6 +203,7 @@ const canCreateGender = can('create-gender');
 const canReadAnyGender = can('read-gender');
 const canUpdateAnyGender = can('update-gender');
 const canDeleteAnyGender = can('delete-gender');
+const canRestoreGender = can('restore-gender');
 
 watch(() => enhancedGenders.value.data, (rows) => {
   if (highlightedRowId.value) {
@@ -325,7 +333,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
           <select 
             v-if="enhancedGenders.last_page && enhancedGenders.last_page > 1"
             :value="enhancedGenders.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedGenders.last_page" :key="page" :value="page">

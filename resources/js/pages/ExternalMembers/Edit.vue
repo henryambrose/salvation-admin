@@ -113,7 +113,8 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useForm, router } from '@inertiajs/vue3'
+import { useForm, router, Head } from '@inertiajs/vue3'
+import InputError from '@/components/InputError.vue' 
 import AppLayout from '@/layouts/AppLayout.vue'
 import FormHeader from '@/components/FormHeader.vue'
 import FormBody from '@/components/FormBody.vue'

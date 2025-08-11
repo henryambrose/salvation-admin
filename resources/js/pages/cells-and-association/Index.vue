@@ -54,6 +54,7 @@ const enhancedCellsAndAssociations = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 
@@ -187,6 +188,13 @@ function clearSearch() {
   }
 }
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
@@ -194,6 +202,7 @@ const canCreateCellsAndAssociation = can('create-cells-and-association');
 const canReadAnyCellsAndAssociation = can('read-cells-and-association');
 const canUpdateAnyCellsAndAssociation = can('update-cells-and-association');
 const canDeleteAnyCellsAndAssociation = can('delete-cells-and-association');
+const canRestoreCellsAndAssociation = can('restore-cells-and-association'); 
 
 watch(() => enhancedCellsAndAssociations.value.data, (rows) => {
   if (highlightedRowId.value) {
@@ -323,7 +332,7 @@ watch(() => enhancedCellsAndAssociations.value.data, (rows) => {
           <select 
             v-if="enhancedCellsAndAssociations.last_page && enhancedCellsAndAssociations.last_page > 1"
             :value="enhancedCellsAndAssociations.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedCellsAndAssociations.last_page" :key="page" :value="page">

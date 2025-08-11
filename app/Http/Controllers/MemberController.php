@@ -13,7 +13,6 @@ use App\Models\CommunityCluster;
 use App\Models\Country;
 use App\Models\Designation;
 use App\Models\ExternalMember;
-use App\Models\FamilyLink;
 use App\Models\Gender;
 use App\Models\IncomeRange;
 use App\Models\Member;
@@ -611,7 +610,7 @@ class MemberController extends Controller
     public function showFamilyTree($id, $type)
     {
         if ($type == 'internal') {
-            $member = Member::with(['gender', 'community', 'relationship', 'relationships.relatedMember.gender', 'relationships.relatedMember.community', 'relationships.relationship'])->findOrFail($id);
+            $member = Member::with(['gender', 'community', 'relationship'])->findOrFail($id);
             $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
         } else {
             $member = ExternalMember::with(['gender', 'relationship'])->findOrFail($id);

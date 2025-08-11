@@ -67,6 +67,13 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 const enhancedCommunityClusters = computed(() => {
   const c = props.communityClusters || {};
   return {
@@ -75,6 +82,7 @@ const enhancedCommunityClusters = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 
@@ -193,8 +201,6 @@ function openEditModal(row: any) {
     axios.get(`/api/community/${row.community_id}/members`)
       .then(response => {
         modalMember.value = response.data;
-        console.log('modalMember.value:', modalMember.value);
-        // Set the selected member if it exists
         if (row.member_id) {
           editForm.member_id = response.data.find((m: any) => m.id === row.member_id) || null;
         }
@@ -267,15 +273,11 @@ function submitCreate() {
       });
     },
     onError: () => {
-      console.log(page.props.errors);
-      // Form errors will be automatically displayed
-      // Flash message will be shown via Inertia's error handling
     },
   });
 }
 
 function openDeleteModal(row: any) {
-  console.log('row', row);
   deletingItem.value = row;
   showDeleteModal.value = true;
 }
@@ -464,7 +466,7 @@ const canExportCommunityCluster = can('read-community-cluster');
           <select 
             v-if="enhancedCommunityClusters.last_page && enhancedCommunityClusters.last_page > 1"
             :value="enhancedCommunityClusters.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedCommunityClusters.last_page" :key="page" :value="page">
