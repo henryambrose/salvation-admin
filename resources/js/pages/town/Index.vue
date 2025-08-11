@@ -25,6 +25,7 @@ const canReadAnyTown = can('read-town');
 const canUpdateAnyTown = can('update-town');
 const canDeleteAnyTown = can('delete-town');
 const canExportTown = can('read-town');
+const canRestoreTown = can('restore-town');
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
@@ -93,6 +94,7 @@ const enhancedTowns = computed(() => {
     next_page_url: meta.next_page_url,
     current_page: meta.current_page,
     last_page: meta.last_page,
+    total: meta.total, // Add total property
   };
 });
 
@@ -124,18 +126,14 @@ function submit() {
 }
 
 function openCreateModal() {
-  console.log('Opening create modal...');
-  console.log('Cities in create modal:', props.cities?.length || 0);
   showModal.value = true;
 }
 
 function openEditModal(row: any) {
-  console.log('Opening edit modal...');
   editingTown.value = row;
   editForm.name = row.name;
   editForm.pincode = row.pincode;
   editForm.city_id = row.city_id;
-  console.log('Cities in edit modal:', props.cities?.length || 0);
   showEditModal.value = true;
 }
 
@@ -330,7 +328,7 @@ onMounted(() => {
           <select 
             v-if="enhancedTowns.last_page && enhancedTowns.last_page > 1"
             :value="enhancedTowns.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedTowns.last_page" :key="page" :value="page">

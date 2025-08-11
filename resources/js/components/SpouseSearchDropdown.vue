@@ -156,7 +156,7 @@ const fetchMemberDetails = async (memberId: number) => {
     isLoading.value = true;
     // First try to get member details from the search API
     const response = await axios.get(`/api/members/search-spouse?q=${memberId}&limit=1`);
-    console.log(response.data);
+    
     if (response.data.length > 0) {
       selectedMember.value = response.data[0];
       searchQuery.value = selectedMember.value?.full_name || '';
@@ -230,9 +230,7 @@ const handleMemberNumberInput = async () => {
 
 // Update the watch for modelValue to properly handle initial loading:
 watch(() => props.modelValue, (newValue) => {
-  console.log('SpouseSearchDropdown modelValue changed:', newValue);
   if (newValue && !selectedMember.value) {
-    console.log('Fetching member details for ID:', newValue);
     fetchMemberDetails(newValue);
   } else if (!newValue) {
     selectedMember.value = null;

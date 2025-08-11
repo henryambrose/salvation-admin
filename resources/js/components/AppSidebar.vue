@@ -254,7 +254,7 @@ const filteredNavigationGroups = navigationGroups.map(group => ({
   ...group,
   items: group.items.filter(item => item.show)
 })).filter(group => group.items.length > 0);
-console.log(page.props.auth)
+
 </script>
 
 <template>

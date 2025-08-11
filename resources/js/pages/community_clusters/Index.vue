@@ -75,6 +75,7 @@ const enhancedCommunityClusters = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add total property
   };
 });
 
@@ -193,11 +194,6 @@ function openEditModal(row: any) {
     axios.get(`/api/community/${row.community_id}/members`)
       .then(response => {
         modalMember.value = response.data;
-        console.log('modalMember.value:', modalMember.value);
-        // Set the selected member if it exists
-        if (row.member_id) {
-          editForm.member_id = response.data.find((m: any) => m.id === row.member_id) || null;
-        }
       })
       .catch(error => {
         console.error('Error fetching members:', error);
@@ -267,7 +263,6 @@ function submitCreate() {
       });
     },
     onError: () => {
-      console.log(page.props.errors);
       // Form errors will be automatically displayed
       // Flash message will be shown via Inertia's error handling
     },
@@ -275,7 +270,6 @@ function submitCreate() {
 }
 
 function openDeleteModal(row: any) {
-  console.log('row', row);
   deletingItem.value = row;
   showDeleteModal.value = true;
 }
@@ -380,7 +374,7 @@ const canExportCommunityCluster = can('read-community-cluster');
               ✕
             </button>
           </div>
-          <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+          <select v-model="perPage" @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>
             <option :value="50">50</option>
@@ -464,7 +458,7 @@ const canExportCommunityCluster = can('read-community-cluster');
           <select 
             v-if="enhancedCommunityClusters.last_page && enhancedCommunityClusters.last_page > 1"
             :value="enhancedCommunityClusters.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedCommunityClusters.last_page" :key="page" :value="page">

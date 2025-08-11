@@ -175,21 +175,6 @@ class ExternalMember extends Model
         return $this->belongsTo(ExternalMember::class, 'spouse_id');
     }
 
-    /**
-     * Get the family links where this external member is the primary member
-     */
-    public function familyLinks(): HasMany
-    {
-        return $this->hasMany(FamilyLink::class, 'external_member_id');
-    }
-
-    /**
-     * Get the family links where this external member is the related member
-     */
-    public function relatedFamilyLinks(): HasMany
-    {
-        return $this->hasMany(FamilyLink::class, 'related_external_member_id');
-    }
 
     /**
      * Get children (external members who have this member as parent)

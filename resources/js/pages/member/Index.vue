@@ -167,12 +167,6 @@ watch(
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-      console.log('Search values changed:', {
-        search: search.value,
-        familySearch: familySearch.value,
-        newValues,
-        oldValues
-      });
       fetch();
     }, 300); // 300ms debounce
   },
@@ -197,8 +191,6 @@ function fetch(page = 1) {
       isArchived: isArchived.value ? 'true' : 'false', // send as string
       page,
     };
-
-    console.log('Fetching with params:', params);
 
     router.get(
       props.fetchUrl,
@@ -316,10 +308,8 @@ function downloadExcel() {
 const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
-  console.log('scrollToRow', rowId);
   nextTick(() => {
     const el = document.getElementById(`member-row-${rowId}`);
-    console.log('el', el);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlight-row');

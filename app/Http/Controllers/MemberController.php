@@ -13,7 +13,6 @@ use App\Models\CommunityCluster;
 use App\Models\Country;
 use App\Models\Designation;
 use App\Models\ExternalMember;
-use App\Models\FamilyLink;
 use App\Models\Gender;
 use App\Models\IncomeRange;
 use App\Models\Member;
@@ -472,37 +471,37 @@ class MemberController extends Controller
     {
         $this->authorize('update', $member);
 
-        $incomeRanges = IncomeRange::all()->map(function ($item) {
+        $incomeRanges = IncomeRange::select('id', 'name')->get()->map(function ($item) {
             return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
 
         return Inertia::render('member/Member', [
             'member' => $member,
-            'members' => Member::with('spouse')->get(), // Add this line to pass all members
-            'communities' => Community::all(),
-            'parishes' => Parish::all()->map(function ($item) {
+            'members' => Member::select('id', 'first_name', 'last_name', 'family_no')->with('spouse')->get(), // Only select needed columns
+            'communities' => Community::select('id', 'name')->get(), // Only select needed columns
+            'parishes' => Parish::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             }),
             'incomeRanges' => $incomeRanges,
-            'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
+            'communityClusters' => CommunityCluster::select('id', 'community_id')->with('cluster')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
-            'bloodGroups' => BloodGroup::all()->map(function ($item) {
+            'bloodGroups' => BloodGroup::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
             'relationships' => Relationship::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'countries' => Country::all()->map(function ($item) {
+            'countries' => Country::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'states' => State::all()->map(function ($item) {
+            'states' => State::select('id', 'name', 'country_id')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
-            'cities' => City::all()->map(function ($item) {
+            'cities' => City::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'towns' => Town::with('city.state.country')->get()->map(function ($item) {
+            'towns' => Town::select('id', 'name', 'pincode', 'city_id')->with('city.state.country')->get()->map(function ($item) {
                 return [
                     'id' => $item->id,
                     'name' => $item->name,
@@ -512,18 +511,18 @@ class MemberController extends Controller
                     'country_id' => $item->city->state->country_id ?? null,
                 ];
             })->toArray(),
-            'designations' => Designation::all()->map(function ($item) {
+            'designations' => Designation::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'genders' => Gender::all()->map(function ($item) {
+            'genders' => Gender::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'statuses' => Status::all()->map(function ($item) {
+            'statuses' => Status::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'parishes' => Parish::all()->map(function ($item) {
+            'parishes' => Parish::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
+            }),
         ]);
     }
 
@@ -1204,229 +1203,6 @@ class MemberController extends Controller
             });
 
         return response()->json($members);
-    }
-
-    /**
-     * Debug method to check family links
-     */
-    public function debugFamilyLinks($id)
-    {
-        $member = Member::findOrFail($id);
-
-        $familyLinks = FamilyLink::where('member_id', $member->id)
-            ->orWhere('related_member_id', $member->id)
-            ->with(['member', 'relatedMember', 'relationship'])
-            ->get();
-
-        $familyMembers = Member::where('family_no', $member->family_no)->get();
-
-        return response()->json([
-            'member' => [
-                'id' => $member->id,
-                'name' => $member->full_name,
-                'family_no' => $member->family_no,
-                'gender' => $member->gender?->name ?? 'Unknown',
-                'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown',
-            ],
-            'familyLinks' => $familyLinks->map(function ($link) {
-                return [
-                    'id' => $link->id,
-                    'member_id' => $link->member_id,
-                    'related_member_id' => $link->related_member_id,
-                    'relationship' => $link->relationship ? $link->relationship->name : 'Unknown',
-                    'member_name' => $link->member ? $link->member->full_name : 'Unknown',
-                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'Unknown',
-                ];
-            }),
-            'familyMembers' => $familyMembers->map(function ($member) {
-                return [
-                    'id' => $member->id,
-                    'name' => $member->full_name,
-                    'family_no' => $member->family_no,
-                    'gender' => $member->gender?->name ?? 'Unknown',
-                    'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown',
-                ];
-            }),
-        ]);
-    }
-
-    /**
-     * Debug method to test relationship suggestions
-     */
-    public function debugRelationshipSuggestions($id)
-    {
-        $member = Member::findOrFail($id);
-        $familyTreeService = new FamilyTreeService;
-
-        $familyMembers = Member::where('family_no', $member->family_no)
-            ->where('id', '!=', $member->id)
-            ->with(['gender'])
-            ->get();
-
-        $suggestions = [];
-
-        foreach ($familyMembers as $familyMember) {
-            // Test the suggestion logic
-            $suggestion = $familyTreeService->suggestRelationship($member, $familyMember);
-            $confidence = $familyTreeService->getSuggestionConfidence($member, $familyMember);
-
-            $suggestions[] = [
-                'member' => [
-                    'id' => $familyMember->id,
-                    'name' => $familyMember->full_name,
-                    'gender' => $familyMember->gender?->name ?? 'Unknown',
-                    'age' => $familyMember->date_of_birth ? \Carbon\Carbon::parse($familyMember->date_of_birth)->age : 'Unknown',
-                ],
-                'suggestedRelationship' => $suggestion,
-                'confidence' => $confidence,
-                'isGenderAppropriate' => $suggestion ? $familyTreeService->isGenderAppropriate($suggestion, $familyMember->gender?->name ?? '') : false,
-            ];
-        }
-
-        return response()->json([
-            'currentMember' => [
-                'id' => $member->id,
-                'name' => $member->full_name,
-                'gender' => $member->gender?->name ?? 'Unknown',
-                'age' => $member->date_of_birth ? \Carbon\Carbon::parse($member->date_of_birth)->age : 'Unknown',
-            ],
-            'suggestions' => $suggestions,
-        ]);
-    }
-
-    /**
-     * Debug method to check specific member relationships
-     */
-    public function debugSpecificMember($memberNo)
-    {
-        $member = Member::where('member_no', $memberNo)->first();
-
-        if (! $member) {
-            return response()->json(['error' => 'Member not found'], 404);
-        }
-
-        // Get all family links for this member
-        $familyLinks = FamilyLink::where('member_id', $member->id)
-            ->orWhere('related_member_id', $member->id)
-            ->with(['member', 'relatedMember', 'relationship'])
-            ->get();
-
-        // Get all family members
-        $familyMembers = Member::where('family_no', $member->family_no)
-            ->with(['gender', 'relationship'])
-            ->get();
-
-        // Get all relationships from the relationships table
-        $allRelationships = \App\Models\Relationship::all();
-
-        return response()->json([
-            'member' => [
-                'id' => $member->id,
-                'name' => $member->full_name,
-                'member_no' => $member->member_no,
-                'family_no' => $member->family_no,
-                'gender' => $member->gender?->name ?? 'Unknown',
-                'relationship' => $member->relationship?->name ?? 'Unknown',
-            ],
-            'familyLinks' => $familyLinks->map(function ($link) {
-                return [
-                    'id' => $link->id,
-                    'member_id' => $link->member_id,
-                    'related_member_id' => $link->related_member_id,
-                    'member_name' => $link->member->full_name,
-                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'null',
-                    'relationship_name' => $link->relationship->name,
-                    'relationship_id' => $link->relationship_id,
-                ];
-            }),
-            'familyMembers' => $familyMembers->map(function ($member) {
-                return [
-                    'id' => $member->id,
-                    'name' => $member->full_name,
-                    'member_no' => $member->member_no,
-                    'gender' => $member->gender?->name ?? 'Unknown',
-                    'relationship' => $member->relationship?->name ?? 'Unknown',
-                ];
-            }),
-            'allRelationships' => $allRelationships->map(function ($rel) {
-                return [
-                    'id' => $rel->id,
-                    'name' => $rel->name,
-                ];
-            }),
-        ]);
-    }
-
-    /**
-     * Debug method to check member by ID
-     */
-    public function debugMemberById($id)
-    {
-        $member = Member::find($id);
-
-        if (! $member) {
-            return response()->json(['error' => 'Member not found'], 404);
-        }
-
-        // Get all family links for this member
-        $familyLinks = FamilyLink::where('member_id', $member->id)
-            ->orWhere('related_member_id', $member->id)
-            ->with(['member', 'relatedMember', 'relationship'])
-            ->get();
-
-        // Get all family members
-        $familyMembers = Member::where('family_no', $member->family_no)
-            ->with(['gender', 'relationship'])
-            ->get();
-
-        // Test suggestion logic
-        $familyTreeService = new FamilyTreeService;
-        $suggestions = [];
-
-        foreach ($familyMembers as $familyMember) {
-            if ($familyMember->id !== $member->id) {
-                $suggestion = $familyTreeService->suggestRelationship($member, $familyMember);
-                $suggestions[] = [
-                    'family_member_id' => $familyMember->id,
-                    'family_member_name' => $familyMember->full_name,
-                    'family_member_gender' => $familyMember->gender?->name ?? 'Unknown',
-                    'suggestion' => $suggestion,
-                    'is_appropriate' => $suggestion ? $familyTreeService->isGenderAppropriate($suggestion, $familyMember->gender?->name ?? '') : false,
-                ];
-            }
-        }
-
-        return response()->json([
-            'member' => [
-                'id' => $member->id,
-                'name' => $member->full_name,
-                'member_no' => $member->member_no,
-                'family_no' => $member->family_no,
-                'gender' => $member->gender?->name ?? 'Unknown',
-                'relationship' => $member->relationship?->name ?? 'Unknown',
-            ],
-            'familyLinks' => $familyLinks->map(function ($link) {
-                return [
-                    'id' => $link->id,
-                    'member_id' => $link->member_id,
-                    'related_member_id' => $link->related_member_id,
-                    'member_name' => $link->member->full_name,
-                    'related_member_name' => $link->relatedMember ? $link->relatedMember->full_name : 'null',
-                    'relationship_name' => $link->relationship->name,
-                    'relationship_id' => $link->relationship_id,
-                ];
-            }),
-            'familyMembers' => $familyMembers->map(function ($member) {
-                return [
-                    'id' => $member->id,
-                    'name' => $member->full_name,
-                    'member_no' => $member->member_no,
-                    'gender' => $member->gender?->name ?? 'Unknown',
-                    'relationship' => $member->relationship?->name ?? 'Unknown',
-                ];
-            }),
-            'suggestions' => $suggestions,
-        ]);
     }
 
     public function getMemberDetails($id)

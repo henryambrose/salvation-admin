@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Relationship;
 
 class Member extends Model
 {
@@ -71,6 +72,7 @@ class Member extends Model
         'father_source',
         'mother_source',
         'spouse_source',
+        'relationship_id',
         'uid',
     ];
 
@@ -118,16 +120,6 @@ class Member extends Model
         return $this->belongsTo(CommunityCluster::class);
     }
 
-    // relationship
-    public function relationship()
-    {
-        return $this->belongsTo(Relationship::class);
-    }
-
-    public function relationships()
-    {
-        return $this->hasMany(FamilyLink::class);
-    }
 
     public function status()
     {
@@ -265,7 +257,12 @@ class Member extends Model
         return $this->belongsTo(IncomeRange::class);
     }
 
-    // Parish relationships
+    public function relationship()
+    {
+        return $this->belongsTo(Relationship::class);
+    }
+
+
     public function baptismParish()
     {
         return $this->belongsTo(Parish::class, 'baptism_parish_id');
@@ -286,7 +283,6 @@ class Member extends Model
         return $this->belongsTo(Parish::class, 'death_parish_id');
     }
 
-    // Address relationships
     public function permanentTown()
     {
         return $this->belongsTo(Town::class, 'permanent_town_id');
@@ -327,11 +323,6 @@ class Member extends Model
         return $this->belongsTo(Country::class, 'current_country_id');
     }
 
-    public function relatedMembers()
-    {
-        return $this->belongsToMany(Member::class, 'familylinks', 'member_id', 'related_member_id')
-            ->withPivot('relationship_id');
-    }
 
     public function cellsAndAssociations()
     {
@@ -356,5 +347,91 @@ class Member extends Model
     public function getUidAttribute(): string
     {
         return 'M-'.$this->id;
+    }
+
+    // Add these query scopes
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('first_name', 'like', "%{$search}%")
+              ->orWhere('last_name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('contact_no_1', 'like', "%{$search}%");
+        });
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status_id', function ($q) {
+            $q->select('id')->from('statuses')->where('name', 'Active');
+        });
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('status_id', function ($q) {
+            $q->select('id')->from('statuses')->where('name', 'Inactive');
+        });
+    }
+
+    // Add these missing scopes
+    public function scopeByCommunity($query, $communityId)
+    {
+        return $query->where('community_id', $communityId);
+    }
+
+    public function scopeByZone($query, $zoneId)
+    {
+        return $query->where('current_zone_id', $zoneId);
+    }
+
+    public function scopeByCity($query, $cityId)
+    {
+        return $query->where('current_city_id', $cityId);
+    }
+
+    public function scopeByState($query, $stateId)
+    {
+        return $query->where('current_state_id', $stateId);
+    }
+
+    public function scopeByCountry($query, $countryId)
+    {
+        return $query->where('current_country_id', $countryId);
+    }
+
+    public function scopeByParish($query, $parishId)
+    {
+        return $query->where('parish_id', $parishId);
+    }
+
+    public function scopeByDesignation($query, $designationId)
+    {
+        return $query->where('designation_id', $designationId);
+    }
+
+    public function scopeByGender($query, $genderId)
+    {
+        return $query->where('gender_id', $genderId);
+    }
+
+    public function scopeByAgeGroup($query, $ageGroupId)
+    {
+        return $query->where('age_group_id', $ageGroupId);
+    }
+
+    public function scopeByBloodGroup($query, $bloodGroupId)
+    {
+        return $query->where('blood_group_id', $bloodGroupId);
+    }
+
+    public function scopeByIncomeRange($query, $incomeRangeId)
+    {
+        return $query->where('income_range_id', $incomeRangeId);
+    }
+
+    public function scopeByStatus($query, $statusId)
+    {
+        return $query->where('status_id', $statusId);
     }
 }

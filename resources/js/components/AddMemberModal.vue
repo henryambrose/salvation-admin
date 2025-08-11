@@ -365,7 +365,7 @@ watch(existingFamilyNo, async (newFamilyNo) => {
 // Function to fetch family details (extracted from selectFamily)
 const fetchFamilyDetails = async (familyNo: string) => {
   try {
-    const response = await fetch(`/api/families/${encodeURIComponent(familyNo)}/details`);
+    const response = await fetch(`/api/families/${familyNo}/details`);
     if (response.ok) {
       const familyDetails = await response.json();
       
@@ -382,7 +382,6 @@ const fetchFamilyDetails = async (familyNo: string) => {
       // Set pre-populated flag
       isPrePopulated.value = true;
       
-      console.log('Auto-pre-populated family details:', familyDetails);
     } else {
       console.error('Failed to fetch family details');
       isPrePopulated.value = false;
@@ -396,14 +395,11 @@ const fetchFamilyDetails = async (familyNo: string) => {
 // Fetch next available numbers
 const fetchNextNumbers = async () => {
   try {
-    console.log('Fetching next numbers...');
     const response = await fetch('/api/members/next-numbers');
     if (response.ok) {
       const data = await response.json();
-      console.log('Received data:', data);
       previewFamilyNo.value = data.next_family_no;
       previewMemberNo.value = data.next_member_no;
-      console.log('Updated preview - Family:', previewFamilyNo.value, 'Member:', previewMemberNo.value);
     } else {
       console.error('API response not ok:', response.status);
       previewFamilyNo.value = 'Error loading';
@@ -432,13 +428,10 @@ const performFamilySearch = async () => {
   
   isSearching.value = true;
   try {
-    console.log('Searching for:', familySearchQuery.value);
     const response = await fetch(`/api/families/search?q=${encodeURIComponent(familySearchQuery.value)}`);
-    console.log('Response status:', response.status);
     
     if (response.ok) {
       const data = await response.json();
-      console.log('Search results:', data);
       familySearchResults.value = data;
     } else {
       console.error('Search failed with status:', response.status);

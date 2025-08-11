@@ -32,8 +32,10 @@ Route::prefix('families')->group(function () {
     Route::get('/{familyNo}/members', [MemberController::class, 'getMembersByFamily']);
     Route::get('/search', [MemberController::class, 'searchFamilies']);
     Route::get('/{familyNo}/details', [MemberController::class, 'getFamilyDetails']);
-    Route::get('/{familyNo}/numbers/search', [ExternalMemberController::class, 'searchFamilyNumbers']);
 });
+
+// Family Numbers Search API
+Route::get('/family-numbers/search', [ExternalMemberController::class, 'searchFamilyNumbers']);
 
 // Family Tree API
 Route::prefix('family-tree')->group(function () {
