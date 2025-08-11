@@ -245,6 +245,12 @@ function confirmDelete() {
     },
   });
 }
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
 const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
 </script>
 
@@ -340,7 +346,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
               <select 
                 v-if="clusters?.last_page && clusters.last_page > 1"
                 :value="clusters.current_page" 
-                @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+                @change="handlePageChange"
                 class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               >
                 <option v-for="page in clusters.last_page" :key="page" :value="page">

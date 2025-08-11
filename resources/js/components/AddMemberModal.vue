@@ -429,17 +429,13 @@ const performFamilySearch = async () => {
   isSearching.value = true;
   try {
     const response = await fetch(`/api/families/search?q=${encodeURIComponent(familySearchQuery.value)}`);
-    
     if (response.ok) {
       const data = await response.json();
       familySearchResults.value = data;
     } else {
-      console.error('Search failed with status:', response.status);
       const errorText = await response.text();
-      console.error('Error response:', errorText);
     }
   } catch (error) {
-    console.error('Error searching families:', error);
     familySearchResults.value = [];
   } finally {
     isSearching.value = false;

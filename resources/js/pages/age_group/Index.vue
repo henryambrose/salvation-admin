@@ -80,6 +80,7 @@ const enhancedAgeGroups = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 
@@ -249,6 +250,7 @@ const canCreateAgeGroup = can('create-age-group');
 const canReadAnyAgeGroup = can('read-age-group');
 const canUpdateAnyAgeGroup = can('update-age-group');
 const canDeleteAnyAgeGroup = can('delete-age-group');
+const canRestoreAgeGroup = can('restore-age-group'); 
 
 watch(
   () => enhancedAgeGroups.value.data,
@@ -263,6 +265,14 @@ watch(
     }
   },
 );
+
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 </script>
 
 <template>
@@ -344,8 +354,7 @@ watch(
               v-for="row in enhancedAgeGroups.data"
               :key="row.id"
               :id="`agegroup-row-${row.id}`"
-              :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
-            >
+              :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
                 <div class="flex gap-2">
                   <template v-if="!isArchived">
@@ -406,7 +415,7 @@ watch(
           <select 
             v-if="enhancedAgeGroups.last_page && enhancedAgeGroups.last_page > 1"
             :value="enhancedAgeGroups.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedAgeGroups.last_page" :key="page" :value="page">

@@ -454,7 +454,6 @@ const fetchCommunityCluster = async () => {
 
 // Debug watcher for communityClusters ref
 watch(communityClusters, (newValue) => {
-  // console.log('communityClusters ref changed to:', newValue);
 });
 
 watch(
@@ -468,7 +467,6 @@ watch(
 watch(
   () => form.community_cluster_id,
   () => {
-    console.log('form.community_cluster_id changed to:', form.community_cluster_id);
   },
 );
 
@@ -795,7 +793,6 @@ function formatDate(dateStr: string) {
 
 // Add this watcher after the existing watchers (around line 600)
 watch(() => form.mother_id, (newValue, oldValue) => {
-  console.log('form.relation_member_id changed:', { oldValue, newValue });
 });
 </script>
 
@@ -996,7 +993,7 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <Label for="relation_member_id">Spouse Member {{ form.spouse_id }}</Label>
               <SpouseSearchDropdown 
                 :model-value="form.spouse_id"
-                @update:model-value="(value) => { form.spouse_id = value; }"
+                @update:model-value="(value) => form.spouse_id = value";
                 :exclude-id="member?.id"
                 placeholder="Search for spouse by name, member number, or family number..."
               />

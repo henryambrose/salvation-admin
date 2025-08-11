@@ -166,6 +166,7 @@ function fetch(page = 1) {
       page,
     };
     
+    
     router.get(
       props.fetchUrl,
       params,

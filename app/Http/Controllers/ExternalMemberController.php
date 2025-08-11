@@ -386,7 +386,7 @@ class ExternalMemberController extends Controller
                 'family_no' => $member->family_no,
                 'address' => $member->address,
                 'relationship' => $member->relationship?->name,
-                'type' => 'external',
+                'type' => 'External',
             ];
         }));
     }
@@ -421,7 +421,7 @@ class ExternalMemberController extends Controller
                     'family_no' => $member->family_no,
                     'address' => $member->address,
                     'relationship' => $member->relationship?->name,
-                    'type' => 'external',
+                    'type' => 'External',
                 ];
             }));
 
@@ -487,7 +487,7 @@ class ExternalMemberController extends Controller
             'last_name' => $externalMember->last_name,
             'family_no' => $externalMember->family_no,
             'address' => $externalMember->address,
-            'type' => 'external',
+            'type' => 'External',
         ]);
     }
 }

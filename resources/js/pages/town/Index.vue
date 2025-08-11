@@ -85,6 +85,13 @@ watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 const enhancedTowns = computed(() => {
   const c = props.towns || {};
   const meta = c.meta || {};
@@ -94,7 +101,7 @@ const enhancedTowns = computed(() => {
     next_page_url: meta.next_page_url,
     current_page: meta.current_page,
     last_page: meta.last_page,
-    total: meta.total, // Add total property
+    total: meta.total, // Add this line
   };
 });
 
@@ -126,6 +133,7 @@ function submit() {
 }
 
 function openCreateModal() {
+  
   showModal.value = true;
 }
 
@@ -249,7 +257,7 @@ onMounted(() => {
               ✕
             </button>
           </div>
-          <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+          <select v-model="perPage" @change="handlePageChange" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>
             <option :value="50">50</option>
@@ -328,7 +336,7 @@ onMounted(() => {
           <select 
             v-if="enhancedTowns.last_page && enhancedTowns.last_page > 1"
             :value="enhancedTowns.current_page" 
-            @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedTowns.last_page" :key="page" :value="page">

@@ -27,6 +27,7 @@ const canReadAnyIncomeRange = can('read-income-range');
 const canUpdateAnyIncomeRange = can('update-income-range');
 const canDeleteAnyIncomeRange = can('delete-income-range');
 const canExportIncomeRange = can('read-income-range');
+const canRestoreIncomeRange = can('restore-income-range');
 
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);

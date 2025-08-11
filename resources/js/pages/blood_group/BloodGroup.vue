@@ -126,6 +126,7 @@ const enhancedBloodGroups = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 
@@ -204,6 +205,12 @@ watch(() => enhancedBloodGroups.value.data, (rows) => {
     highlightedRowId.value = null;
   }
 });
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
 const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
 </script>
 
@@ -314,7 +321,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
           <select 
             v-if="enhancedBloodGroups.last_page && enhancedBloodGroups.last_page > 1"
             :value="enhancedBloodGroups.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedBloodGroups.last_page" :key="page" :value="page">

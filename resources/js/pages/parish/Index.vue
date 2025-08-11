@@ -54,6 +54,13 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 const enhancedParishes = computed(() => {
   const c = props.parishes || {};
   return {
@@ -62,6 +69,7 @@ const enhancedParishes = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
   };
 });
 
@@ -219,6 +227,7 @@ const canReadAnyParish = can('read-parish');
 const canUpdateAnyParish = can('update-parish');
 const canDeleteAnyParish = can('delete-parish');
 const canExportParish = can('read-parish');
+const canRestoreParish = can('restore-parish');
 
 watch(
   () => enhancedParishes.value.data,
@@ -387,7 +396,7 @@ watch(
           <select 
             v-if="enhancedParishes.last_page && enhancedParishes.last_page > 1"
             :value="enhancedParishes.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedParishes.last_page" :key="page" :value="page">

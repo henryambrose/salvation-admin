@@ -319,6 +319,7 @@ const canReadAnyCellsAndAssociationMember = can('read-cells-and-association-memb
 const canUpdateAnyCellsAndAssociationMember = can('update-cells-and-association-member');
 const canDeleteAnyCellsAndAssociationMember = can('delete-cells-and-association-member');
 const canExportCellsAndAssociationMember = can('read-cells-and-association-member');
+const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-member');
 </script>
 
 <template>

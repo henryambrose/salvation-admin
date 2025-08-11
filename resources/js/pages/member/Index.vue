@@ -167,6 +167,7 @@ watch(
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
+   
       fetch();
     }, 300); // 300ms debounce
   },

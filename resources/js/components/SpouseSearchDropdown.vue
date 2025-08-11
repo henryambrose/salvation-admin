@@ -156,7 +156,6 @@ const fetchMemberDetails = async (memberId: number) => {
     isLoading.value = true;
     // First try to get member details from the search API
     const response = await axios.get(`/api/members/search-spouse?q=${memberId}&limit=1`);
-    
     if (response.data.length > 0) {
       selectedMember.value = response.data[0];
       searchQuery.value = selectedMember.value?.full_name || '';

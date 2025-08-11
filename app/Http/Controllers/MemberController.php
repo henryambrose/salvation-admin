@@ -618,7 +618,6 @@ class MemberController extends Controller
     public function showFamilyTree($id, $type)
     {
         if ($type == 'internal') {
-            // Remove the non-existent 'relationships' relationship
             $member = Member::with(['gender', 'community', 'relationship'])->findOrFail($id);
             $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
         } else {

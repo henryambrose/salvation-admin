@@ -202,6 +202,13 @@ function downloadExcel() {
   window.location.href = `${window.location.origin}/designation/export?${params.toString()}`;
 }
 
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
@@ -210,6 +217,7 @@ const canReadAnyDesignation = can('read-designation');
 const canUpdateAnyDesignation = can('update-designation');
 const canDeleteAnyDesignation = can('delete-designation');
 const canExportDesignation = can('read-designation');
+const canRestoreDesignation = can('restore-designation');
 
 watch(() => enhancedDesignations.value.data, (rows) => {
   if (highlightedRowId.value) {
@@ -345,7 +353,7 @@ watch(() => enhancedDesignations.value.data, (rows) => {
           <select 
             v-if="enhancedDesignations.last_page && enhancedDesignations.last_page > 1"
             :value="enhancedDesignations.current_page" 
-            @change="fetch(Number($event.target.value))"
+            @change="handlePageChange"
             class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           >
             <option v-for="page in enhancedDesignations.last_page" :key="page" :value="page">
