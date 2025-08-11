@@ -36,7 +36,8 @@ class PPCHeadPermissionSeeder extends Seeder
         // Assign all permissions to PPC Head role
         $ppcHeadRole->syncPermissions($permissions);
         
-        $this->command->info('PPC Head permissions assigned successfully!');
-        $this->command->info('Total permissions assigned: ' . count($permissions));
+        // Remove command calls for test compatibility
+        // $this->command->info('PPC Head permissions assigned successfully!');
+        // $this->command->info('Total permissions assigned: ' . count($permissions));
     }
 }

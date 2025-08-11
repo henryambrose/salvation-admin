@@ -88,11 +88,6 @@ class UserSeeder extends Seeder
             $adminUser->assignRole($adminRole);
         }
 
-        // Rename the existing role from ppc_head to ppc-head
-        $oldRole = Role::where('name', 'ppc_head')->first();
-        if ($oldRole) {
-            $oldRole->update(['name' => 'ppc-head']);
-        }
 
         // Create and assign permissions
         $ppcHeadRole = Role::where('name', 'ppc-head')->first();
@@ -108,30 +103,6 @@ class UserSeeder extends Seeder
 
         $ppcHeadRole->syncPermissions($permissions);
 
-        // Check what roles exist
-        Role::all()->pluck('name');
-
-        // Remove the underscore version and keep the hyphen version
-        $underscoreRole = Role::where('name', 'ppc_head')->first();
-        if ($underscoreRole) {
-            // Reassign any users from ppc_head to ppc-head
-            $usersWithUnderscoreRole = $underscoreRole->users;
-            $hyphenRole = Role::firstOrCreate(['name' => 'ppc-head']);
-            
-            foreach ($usersWithUnderscoreRole as $user) {
-                $user->removeRole('ppc_head');
-                $user->assignRole('ppc-head');
-            }
-            
-            // Delete the underscore role
-            $underscoreRole->delete();
-        }
-
-        // Verify cleanup
-        Role::all()->pluck('name');
-
-        // First, let's see what roles exist
-        Role::all()->pluck('name');
 
         // Clean up PPC Head duplicates
         $ppcUnderscore = Role::where('name', 'ppc_head')->first();

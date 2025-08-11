@@ -94,6 +94,15 @@ class MemberController extends Controller
 
         // Restrict by allowed communities for PPC/SCC heads
         $query->forUserCommunities(auth()->user());
+        
+        // Add debugging to see what the scope is doing
+        \Log::info('Community scoping debug', [
+            'user_id' => auth()->id(),
+            'user_email' => auth()->user()->email,
+            'user_roles' => auth()->user()->getRoleNames()->toArray(),
+            'sql_after_scope' => $query->toSql(),
+            'bindings_after_scope' => $query->getBindings()
+        ]);
 
         // Enhanced search logic
         if ($search = $request->input('search')) {
@@ -172,11 +181,7 @@ class MemberController extends Controller
             $query->orderBy('id', 'asc');
         }
 
-        // Apply PPC/SCC community scoping
-        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
-        if ($allowedCommunityIds !== null) {
-            $query->whereIn('community_id', $allowedCommunityIds);
-        }
+        // Community scoping already applied via forUserCommunities scope above
 
         $perPage = $request->input('perPage', 10);
 
