@@ -237,12 +237,9 @@ const initials = (m) => {
 const displayNameWithNo = (m) => {
   const name = displayName(m)
   return name;
-  // const no = m?.member_no || m?.uid || ''
-  // return no ? `${name} - ${no}` : name
-}
-// const isExternal = (m) => m?.source === 'External' || m?.source === true
 
-// person from props
+}
+
 const person = computed(() => props.person || null)
 
 // flat list from props.familyTree

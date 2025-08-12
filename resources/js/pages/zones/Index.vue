@@ -97,7 +97,7 @@ const enhancedZones = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
-    total: c.total ?? c.meta?.total, // Add this line
+    total: c.total ?? c.meta?.total, 
   };
 });
 

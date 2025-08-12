@@ -6,7 +6,6 @@ use App\Http\Controllers\ChatController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-// Public routes
 Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');

@@ -1,7 +1,7 @@
 export default {
-    install(app) {
+    install(app: any) {
       // Access permissions from Inertia page props
-      const can = (permission) => {
+      const can = (permission: string) => {
         if (!app.config.globalProperties.$page.props.auth || !app.config.globalProperties.$page.props.auth.permissions) {
             return false
         }
@@ -9,7 +9,7 @@ export default {
         return permissions.includes(permission)
       }
 
-      const formatDate = (dateStr) => {
+      const formatDate = (dateStr: string) => {
         const date = new Date(dateStr)
         return date.toLocaleDateString('en-IN', {
           day: '2-digit',

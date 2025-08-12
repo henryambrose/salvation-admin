@@ -36,9 +36,6 @@ class SCCHeadPermissionSeeder extends Seeder
         // Assign all permissions to SCC Head role
         $sccHeadRole->syncPermissions($permissions);
         
-        // Remove command calls for test compatibility
-        // $this->command->info('SCC Head permissions assigned successfully!');
-        // $this->command->info('Total permissions assigned: ' . count($permissions));
-        // $this->command->info('SCC Head now has IDENTICAL permissions as PPC Head');
+  
     }
 }

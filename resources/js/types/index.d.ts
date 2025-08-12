@@ -62,7 +62,7 @@ export interface Member {
   last_name?: string | null;
   first_name?: string;
   middle_name?: string | null;
-  date_of_birth?: string | null; // ISO 8601 date string
+  date_of_birth?: string | null; 
   permanent_add1?: string | null;
   permanent_add2?: string | null;
   permanent_add3?: string | null;
@@ -93,19 +93,19 @@ export interface Member {
   company_name?: string | null;
   designation_id?: number | null;
   income_range_id?: number | null;
-  baptism_date?: string | null; // ISO 8601 date string
+  baptism_date?: string | null; 
   baptism_reg_no?: string | null;
   baptism_parish?: string | null;
   baptism_parish_id?: number | null;
-  confirmation_date?: string | null; // ISO 8601 date string
+  confirmation_date?: string | null; 
   confirmation_reg_no?: string | null;
   confirmation_parish?: string | null;
   confirmation_parish_id?: number | null;
-  marriage_date?: string | null; // ISO 8601 date string
+  marriage_date?: string | null; 
   marriage_reg_no?: string | null;
   marriage_parish?: string | null;
   marriage_parish_id?: number | null;
-  death_date?: string | null; // ISO 8601 date string
+  death_date?: string | null; 
   deaths_reg_no?: string | null;
   death_parish?: string | null;
   death_parish_id?: number | null;
@@ -113,9 +113,9 @@ export interface Member {
   scc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
   ppc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
   cluster_heads?: Array<{ id: number; community?: { id: number; name: string }; cluster?: { id: number; name: string } }> | null;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at: string; 
+  updated_at: string; 
+  deleted_at?: string | null; 
 }
 
 export interface ExternalMember {
@@ -192,10 +192,10 @@ export interface CommunityFund {
   member_id: number;
   member: Member;
   amount: number;
-  fund_date: string; // ISO 8601 date string
+  fund_date: string; 
   description?: string | null;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
+  created_at: string; 
+  updated_at: string; 
 }
 
 export type CommunityFunds = CommunityFund[];
@@ -203,9 +203,9 @@ export type CommunityFunds = CommunityFund[];
 export interface Country {
   id: number;
   name: string;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at: string; 
+  updated_at: string; 
+  deleted_at?: string | null; 
 }
 
 export type Countries = Country[];
@@ -215,9 +215,9 @@ export interface State {
   name: string;
   abbr?: string | null;
   country_id?: number | null;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at: string; 
+  updated_at: string; 
+  deleted_at?: string | null; 
 }
 
 export type States = State[];
@@ -227,8 +227,8 @@ export interface City {
   id: number;
   state_id?: number | null;
   name: string;
-  created_at?: string | null; // ISO 8601 date string
-  updated_at?: string | null; // ISO 8601 date string
+  created_at?: string | null; 
+  updated_at?: string | null; 
   deleted_at?: string | null;
 }
 export type Cities = City[];
@@ -238,9 +238,9 @@ export interface Town {
   name: string;
   pincode?: string | null;
   city_id?: number | null;
-  created_at?: string | null; // ISO 8601 date string
-  updated_at?: string | null; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at?: string | null; 
+  updated_at?: string | null; 
+  deleted_at?: string | null; 
 }
 
 export type Towns = Town[];
@@ -281,8 +281,8 @@ export type States = State[];
 export interface Designation {
   id: number;
   name: string;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
+  created_at: string; 
+  updated_at: string; 
 }
 
 export type Designations = Designation[];
@@ -318,9 +318,9 @@ export interface AgeGroup {
   description?: string | null;
   min_age: number;
   max_age: number;
-  created_at?: string | null; // ISO 8601 date string
-  updated_at?: string | null; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string
+  created_at?: string | null; 
+  updated_at?: string | null; 
+  deleted_at?: string | null; 
 }
 
 export type AgeGroups = AgeGroup[];
@@ -331,9 +331,9 @@ export interface Parish {
   name: string;
   code?: string | null;
   address?: string | null;
-  created_at: string; // ISO 8601 date string
-  updated_at: string; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at: string; 
+  updated_at: string; 
+  deleted_at?: string | null;  
 }
 
 export type Parishes = Parish[];
@@ -343,11 +343,10 @@ export interface Relationship {
   id: number;
   name: string;
   description?: string | null;
-  created_at?: string | null; // ISO 8601 date string
-  updated_at?: string | null; // ISO 8601 date string
-  deleted_at?: string | null; // ISO 8601 date string for soft deletes
+  created_at?: string | null; 
+  updated_at?: string | null; 
+  deleted_at?: string | null;  
 }
-
 export type Relationships = Relationship[];
 
 export interface CellsAndAssociation {

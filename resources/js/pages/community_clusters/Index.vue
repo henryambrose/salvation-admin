@@ -148,32 +148,7 @@ function fetch(page = 1) {
   }
 }
 
-// watch(
-//   () => editForm.community_id,
-//   async (newVal: any, oldVal) => {
-//     if (newVal) {
-//       const { data } = await axios.get(`/api/community/${newVal.id}/clusters`);
-//       modalMember.value = data;
-//       editForm.cluster_id = null;
-//     } else {
-//       modalMember.value = [];
-//       editForm.cluster_id = null;
-//     }
-//   },
-// );
-// watch(
-//   () => createForm.community_id,
-//   async (newVal:any) => {
-//     if (newVal) {
-//       const { data } = await axios.get(`/api/community/${newVal.id}/clusters`);
-//       modalMember.value = data;
-//       createForm.cluster_id = null;
-//     } else {
-//       modalMember.value = [];
-//       createForm.cluster_id = null;
-//     }
-//   }
-// );
+
 
 watch(() => enhancedCommunityClusters.value.data, (rows) => {
   if (highlightedRowId.value) {
