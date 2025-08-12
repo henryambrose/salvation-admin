@@ -97,14 +97,6 @@ class MemberController extends Controller
         // Restrict by allowed communities for PPC/SCC heads
         $query->forUserCommunities(auth()->user());
         
-        // Add debugging to see what the scope is doing
-        \Log::info('Community scoping debug', [
-            'user_id' => auth()->id(),
-            'user_email' => auth()->user()->email,
-            'user_roles' => auth()->user()->getRoleNames()->toArray(),
-            'sql_after_scope' => $query->toSql(),
-            'bindings_after_scope' => $query->getBindings()
-        ]);
 
         // Enhanced search logic
         if ($search = $request->input('search')) {
@@ -208,10 +200,6 @@ class MemberController extends Controller
                 if ($found) {
                     $item->$key = $currentRelation->{$relation['column']} ?? '';
                 } else {
-                    // For debugging, let's see what's happening with community_cluster_id
-                    if ($key === 'community_cluster_id' && $item->community_cluster_id) {
-                        \Log::info("Member {$item->id} has community_cluster_id: {$item->community_cluster_id} but no relationship loaded");
-                    }
                     $item->$key = '';
                 }
             }
@@ -861,9 +849,7 @@ class MemberController extends Controller
     
             // Sanity: check the first 4 bytes are a ZIP magic (PK\x03\x04)
             $sig = bin2hex(file_get_contents($tmp, false, null, 0, 4));
-            \Log::info("Export file {$filename} size=".filesize($tmp)." bytes, sig={$sig}");
             if ($sig !== '504b0304') {
-                // If not a valid ZIP, bail out early with a readable error
                 @unlink($tmp);
                 return back()->with('error','Export file corrupted before download (not a valid XLSX). Check middleware / output injection.');
             }

@@ -188,7 +188,6 @@ class CommunityClusterController extends Controller
 
     public function export(Request $request)
     {
-        \Log::info('Export method called');
 
         // Simple test response
         if ($request->has('test')) {

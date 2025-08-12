@@ -30,10 +30,6 @@ class ProfileDetailsController extends Controller
         $validated = $request->validated();
 
         Member::create($validated);
-
-        Log::debug($validated);
-        Log::debug($request->all());
-
         return redirect()->route('member.index')->with('success', 'Member created successfully.');
     }
 
@@ -53,12 +49,6 @@ class ProfileDetailsController extends Controller
     public function update(UpdateMemberProfileDetailsRequest $request, Member $member)
     {
         $validated = $request->validated();
-
-        // $member->update($validated);
-
-        Log::debug($validated);
-        Log::debug($request->all());
-
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');
     }
 }

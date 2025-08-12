@@ -112,8 +112,6 @@ class DashboardController extends Controller
                 return $stats['members'] > 0 || $stats['families'] > 0; // Only show communities with data
             });
 
-        // \Log::debug('Community Wise Stats:', $communityWiseStats->toArray());
-
         // ZONE WISE STATISTICS (MEMBERS AND FAMILIES)
         $zoneWiseStats = Zone::with('communities.members')
             ->get()
@@ -137,8 +135,6 @@ class DashboardController extends Controller
                 return $stats['members'] > 0 || $stats['families'] > 0; // Only show zones with data
             });
 
-        // Debug zone-wise data
-        \Log::debug('Zone Wise Stats:', $zoneWiseStats->toArray());
 
         // STATUS WISE
         $statuses = Status::all()->pluck('name', 'id')->map(function ($status) {
@@ -151,7 +147,6 @@ class DashboardController extends Controller
                 return [$statuses[$item->status_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
-        // \Log::debug('Status Wise Members:', $statusWiseMembers);
 
         // designation wise members
         $designations = Designation::all()->pluck('name', 'id')->map(function ($status) {
@@ -164,7 +159,6 @@ class DashboardController extends Controller
                 return [$designations[$item->designation_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
-        // \Log::debug('Designation Wise Members:', $designationWiseMembers);
 
         // latest_qualifications wise members
         $latestQualificationsWiseMembers = Member::select(['latest_qualifications', DB::raw("count('latest_qualifications') AS total")])
@@ -174,8 +168,7 @@ class DashboardController extends Controller
                 return [$item->latest_qualifications => $item->total];
             })
             ->toArray();
-        // \Log::debug('Latest Qualifications Wise Members:', $latestQualificationsWiseMembers);
-
+       
         // relationship wise members
         $relationships = Relationship::all()->pluck('name', 'id')->map(function ($relationship) {
             return ucfirst($relationship);
@@ -187,8 +180,7 @@ class DashboardController extends Controller
                 return [$relationships[$item->relationship_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
-        // \Log::debug('Relationship Wise Members:', $relationshipWiseMembers);
-
+      
         $statCards = [
             [
                 'title' => 'Communities',

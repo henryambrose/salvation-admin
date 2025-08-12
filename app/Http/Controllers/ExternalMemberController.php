@@ -17,15 +17,6 @@ class ExternalMemberController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', ExternalMember::class);
-        // Add debugging
-        \Log::info('ExternalMemberController::index', [
-            'user_id' => auth()->id(),
-            'user_roles' => auth()->user()->roles->pluck('name'),
-            'family_no' => auth()->user()->family_no,
-            'user_email' => auth()->user()->email,
-        ]);
-
-        // Start with base query - make sure to load relationship
         $query = ExternalMember::query()->with(['relationship', 'gender']);
 
         if ($request->input('isArchived') === 'true') {
@@ -121,13 +112,6 @@ class ExternalMemberController extends Controller
         // Get relationships for filter dropdown
         $relationships = Relationship::all();
 
-        \Log::info('ExternalMemberController::index - Results', [
-            'total_count' => $externalMembers->total(),
-            'current_page' => $externalMembers->currentPage(),
-            'per_page' => $externalMembers->perPage(),
-            'has_data' => $externalMembers->count() > 0,
-        ]);
-
         return Inertia::render('ExternalMembers/Index', [
             'externalMembers' => $externalMembers,
             'relationships' => $relationships,
@@ -210,13 +194,6 @@ class ExternalMemberController extends Controller
     {
         $this->authorize('update', $externalMember);
 
-        // Debug logging
-        \Log::info('ExternalMemberController::edit called', [
-            'external_member_id' => $externalMember->id,
-            'father_id' => $externalMember->father_id,
-            'mother_id' => $externalMember->mother_id,
-            'spouse_id' => $externalMember->spouse_id,
-        ]);
 
         // Load relationship data for the external member
         $externalMember->load(['relationship', 'gender']);
