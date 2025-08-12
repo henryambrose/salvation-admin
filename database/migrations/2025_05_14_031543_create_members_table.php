@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('community_id')->nullable()->constrained('communities');
             $table->foreignId('community_cluster_id')->nullable()->constrained('community_clusters');
             $table->string('old_family_no')->nullable();
+            $table->string('old_sal_id')->nullable();
             $table->string('aadhar')->nullable();
             $table->string('current_family_no')->nullable();
             $table->string('family_no')->nullable();

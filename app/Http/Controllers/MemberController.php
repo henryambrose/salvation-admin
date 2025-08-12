@@ -825,6 +825,7 @@ class MemberController extends Controller
                     'ID'           => $item->id,
                     'First Name'   => $item->first_name ?? '',
                     'Last Name'    => $item->last_name ?? '',
+                    'Old SAL ID'   => $item->old_sal_id ?? '',
                     'Family No'    => $item->family_no ?? '',
                     'Member No'    => $item->member_no ?? '',
                     'Contact No'   => $item->contact_no_1 ?? '',
