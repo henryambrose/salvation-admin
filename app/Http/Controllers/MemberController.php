@@ -28,6 +28,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MemberController extends Controller
 {
@@ -759,187 +761,129 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
+    
     public function export(Request $request)
     {
         $this->authorize('viewAny', Member::class);
-
+    
+        // If you use Debugbar, disable it for this binary response
+        // if (class_exists(\Barryvdh\Debugbar\Facade::class)) { \Debugbar::disable(); }
+    
+        // Make sure nothing is already in the output buffer
+        while (ob_get_level()) { ob_end_clean(); }
+        @ini_set('zlib.output_compression', '0');
+    
         try {
             $query = Member::query();
-
-            // Handle archived records
-            if ($request->input('isArchived') === 'true') {
-                $query->onlyTrashed();
-            } else {
-                $query->withoutTrashed();
-            }
-
-            // Load relationships
-            $query->with([
-                'community',
-                'communityCluster',
-                'relationship',
-                'bloodGroup',
-                'designation',
-                'incomeRange',
-                'status',
-                'gender',
-            ]);
-
-            // Enhanced search logic
+    
+            // archived filter
+            $request->boolean('isArchived') ? $query->onlyTrashed() : $query->withoutTrashed();
+    
+            $query->with(['community','communityCluster','relationship','bloodGroup','designation','incomeRange','status','gender']);
+    
+            // search & filters (unchanged)
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%$search%")
-                        ->orWhere('last_name', 'like', "%$search%")
-                        ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                        ->orWhere('family_no', 'like', "%$search%")
-                        ->orWhereHas('community', function ($q2) use ($search) {
-                            $q2->where('name', 'like', "%$search%");
-                        });
+                      ->orWhere('last_name', 'like', "%$search%")
+                      ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                      ->orWhere('family_no', 'like', "%$search%")
+                      ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
                 });
             }
-
-            // Family-specific search logic
-            if ($familySearch = $request->input('familySearch')) {
-                $query->where('family_no', 'like', "%$familySearch%");
-            }
-
-            // Community filter
-            if ($communityId = $request->input('communityId')) {
-                $query->where('community_id', $communityId);
-            }
-
-            // Relationship filter
-            if ($relationship = $request->input('relationship')) {
-                $query->where('relationship_id', $relationship);
-            }
-
-            // Age group filter
-            if ($ageGroup = $request->input('ageGroup')) {
-                $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
-                if ($ageGroupModel) {
-                    $minAge = $ageGroupModel->min_age;
-                    $maxAge = $ageGroupModel->max_age;
-                    $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$minAge, $maxAge]);
+    
+            if ($v = $request->input('familySearch'))  { $query->where('family_no', 'like', "%$v%"); }
+            if ($v = $request->input('communityId'))   { $query->where('community_id', $v); }
+            if ($v = $request->input('relationship'))  { $query->where('relationship_id', $v); }
+            if ($v = $request->input('bloodGroup'))    { $query->where('blood_group_id', $v); }
+            if ($v = $request->input('gender'))        { $query->where('gender_id', $v); }
+    
+            if ($v = $request->input('ageGroup')) {
+                if ($ag = \App\Models\AgeGroup::find($v)) {
+                    $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$ag->min_age, $ag->max_age]);
                 }
             }
-
-            // Blood group filter
-            if ($bloodGroup = $request->input('bloodGroup')) {
-                $query->where('blood_group_id', $bloodGroup);
-            }
-
-            // Gender filter
-            if ($gender = $request->input('gender')) {
-                $query->where('gender_id', $gender);
-            }
-
-            // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'first_name', 'last_name', 'family_no', 'member_no', 'date_of_birth'];
-            $sort = $request->input('sort', 'id');
-            $direction = $request->input('direction', 'asc');
-
-            if (in_array($sort, $allowedSortColumns)) {
-                $query->orderBy($sort, $direction);
-            } else {
-                $query->orderBy('id', 'asc');
-            }
-
+    
+            $allowed = ['id','first_name','last_name','family_no','member_no','date_of_birth'];
+            $sort = in_array($request->input('sort','id'), $allowed) ? $request->input('sort','id') : 'id';
+            $direction = $request->input('direction','asc');
+            $query->orderBy($sort, $direction);
+    
             $data = $query->get();
-
-            // Debug logging
-            \Log::info('Member Export - Data count: '.$data->count());
-            \Log::info('Member Export - Query SQL: '.$query->toSql());
-            \Log::info('Member Export - Query bindings: '.json_encode($query->getBindings()));
-
-            // Transform data for export
-            $exportData = [];
+    
+            if ($data->isEmpty()) {
+                // Don’t send JSON with .xlsx extension—return a normal message/page instead
+                return back()->with('warning','No data found to export.');
+            }
+    
+            // Build export array
+            $rows = [];
             foreach ($data as $item) {
-                // Calculate age
                 $age = '';
                 if ($item->date_of_birth) {
-                    $birthDate = new \DateTime($item->date_of_birth);
-                    $today = new \DateTime;
-                    $age = $today->diff($birthDate)->y;
+                    $birth = new \DateTime($item->date_of_birth);
+                    $age = (new \DateTime)->diff($birth)->y;
                 }
-
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'First Name' => $item->first_name ?? '',
-                    'Last Name' => $item->last_name ?? '',
-                    'Family No' => $item->family_no ?? '',
-                    'Member No' => $item->member_no ?? '',
-                    'Contact No' => $item->contact_no_1 ?? '',
-                    'Email' => $item->email ?? '',
-                    'Date of Birth' => $item->date_of_birth ?? '',
-                    'Age' => $age,
-                    'Community' => $item->community ? $item->community->name : '',
-                    'Cluster' => $item->communityCluster ? $item->communityCluster->name : '',
-                    'Relationship' => $item->relationship ? $item->relationship->name : '',
-                    'Blood Group' => $item->bloodGroup ? $item->bloodGroup->name : '',
-                    'Gender' => $item->gender ? $item->gender->name : '',
-                    'Status' => $item->status ? $item->status->name : '',
+                $rows[] = [
+                    'ID'           => $item->id,
+                    'First Name'   => $item->first_name ?? '',
+                    'Last Name'    => $item->last_name ?? '',
+                    'Family No'    => $item->family_no ?? '',
+                    'Member No'    => $item->member_no ?? '',
+                    'Contact No'   => $item->contact_no_1 ?? '',
+                    'Email'        => $item->email ?? '',
+                    'Date of Birth'=> $item->date_of_birth ?? '',
+                    'Age'          => $age,
+                    'Community'    => optional($item->community)->name ?? '',
+                    'Cluster'      => optional($item->communityCluster)->name ?? '',
+                    'Relationship' => optional($item->relationship)->name ?? '',
+                    'Blood Group'  => optional($item->bloodGroup)->name ?? '',
+                    'Gender'       => optional($item->gender)->name ?? '',
+                    'Status'       => optional($item->status)->name ?? '',
                 ];
             }
-
-            // Debug logging
-            \Log::info('Member Export - Export data count: '.count($exportData));
-            if (count($exportData) > 0) {
-                \Log::info('Member Export - First row sample: '.json_encode($exportData[0]));
-            } else {
-                \Log::warning('Member Export - No data to export!');
-
-                return response()->json(['error' => 'No data found to export'], 404);
-            }
-
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
+    
+            // Spreadsheet
+            $spreadsheet = new Spreadsheet();
             $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            if (count($exportData) > 0) {
-                $headers = array_keys($exportData[0]);
-                $col = 'A';
-                foreach ($headers as $header) {
-                    $sheet->setCellValue($col.'1', $header);
-                    $sheet->getColumnDimension($col)->setAutoSize(true);
-                    $col++;
-                }
-
-                // Set data
-                $row = 2;
-                foreach ($exportData as $rowData) {
-                    $col = 'A';
-                    foreach ($rowData as $value) {
-                        $sheet->setCellValue($col.$row, $value);
-                        $col++;
-                    }
-                    $row++;
-                }
-
-                // Style header row
-                $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
+    
+            // Header + data (faster and simpler)
+            $sheet->fromArray(array_keys($rows[0]), null, 'A1');
+            $sheet->fromArray($rows, null, 'A2');
+            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
+    
+            $writer = new Xlsx($spreadsheet);
+            $filename = 'members_'.now()->format('Y-m-d_H-i-s').'.xlsx';
+    
+            // Save to a temp file
+            $tmp = tempnam(sys_get_temp_dir(), 'xlsx_');
+            $writer->save($tmp);
+    
+            // Sanity: check the first 4 bytes are a ZIP magic (PK\x03\x04)
+            $sig = bin2hex(file_get_contents($tmp, false, null, 0, 4));
+            \Log::info("Export file {$filename} size=".filesize($tmp)." bytes, sig={$sig}");
+            if ($sig !== '504b0304') {
+                // If not a valid ZIP, bail out early with a readable error
+                @unlink($tmp);
+                return back()->with('error','Export file corrupted before download (not a valid XLSX). Check middleware / output injection.');
             }
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'members_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            \Log::info('Member Export - File created: '.$tempFile.', Size: '.filesize($tempFile));
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
-
-        } catch (\Exception $e) {
-            \Log::error('Member Export failed: '.$e->getMessage());
-
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+    
+            // Send the file
+            return response()
+                ->download($tmp, $filename, [
+                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                    'Cache-Control' => 'max-age=0, must-revalidate',
+                    'Pragma' => 'public',
+                    'Content-Transfer-Encoding' => 'binary',
+                ])
+                ->deleteFileAfterSend(true);
+    
+        } catch (\Throwable $e) {
+            \Log::error('Member Export failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Export failed: '.$e->getMessage());
         }
     }
+    
 
     public function getMembersByCommunity($communityId)
     {
@@ -1166,6 +1110,7 @@ class MemberController extends Controller
     {
         $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
         $limit = $request->input('limit', 10);
+        $familyNo = $request->input('familyNo'); // Add this parameter
 
         if (empty($query)) {
             return response()->json([]);
@@ -1190,6 +1135,11 @@ class MemberController extends Controller
                     ->orWhere('member_no', 'like', "%{$query}%")
                     ->orWhere('family_no', 'like', "%{$query}%");
             });
+        }
+
+        // Apply family number filter if provided
+        if ($familyNo) {
+            $members = $members->where('family_no', $familyNo);
         }
 
         $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
