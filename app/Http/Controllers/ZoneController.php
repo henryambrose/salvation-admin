@@ -113,10 +113,19 @@ class ZoneController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Zone $zone)
+    public function destroy(Request $request, Zone $zone)
     {
         $zone->delete();
 
-        return redirect()->route('zone.index')->with('success', 'Zone deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('zone.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Zone deleted successfully.');
     }
 }

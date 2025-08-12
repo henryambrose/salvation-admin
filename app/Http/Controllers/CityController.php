@@ -113,11 +113,20 @@ class CityController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(City $city)
+    public function destroy(Request $request, City $city)
     {
         $city->delete();
 
-        return redirect()->route('city.index')->with('success', 'City deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('city.index', array_merge(
+            $request->only(['search', 'stateId', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'City deleted successfully.');
     }
 
     /**

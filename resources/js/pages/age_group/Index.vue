@@ -203,11 +203,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/age-group/${deletingAgeGroup.value?.id || ''}`, {
+  const deletedId = deletingAgeGroup.value?.id;
+  router.delete(`/age-group/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedAgeGroups.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingAgeGroup.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

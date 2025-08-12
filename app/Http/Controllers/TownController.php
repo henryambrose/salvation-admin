@@ -93,11 +93,20 @@ class TownController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Town $town)
+    public function destroy(Request $request, Town $town)
     {
         $town->delete();
 
-        return redirect()->route('town.index')->with('success', 'Town deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('town.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Town deleted successfully.');
     }
 
     /**

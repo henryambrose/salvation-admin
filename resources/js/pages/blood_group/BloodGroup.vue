@@ -187,11 +187,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/blood-group/${deletingBloodGroup.value?.id || ''}`, {
+  const deletedId = deletingBloodGroup.value?.id;
+  router.delete(`/blood-group/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedBloodGroups.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingBloodGroup.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

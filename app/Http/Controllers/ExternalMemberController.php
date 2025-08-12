@@ -282,15 +282,23 @@ class ExternalMemberController extends Controller
     /**
      * Remove the specified external member from storage.
      */
-    public function destroy(ExternalMember $externalMember)
+    public function destroy(Request $request, ExternalMember $externalMember)
     {
         $this->authorize('delete', $externalMember);
 
         try {
             $externalMember->delete(); // This will now be a soft delete
 
-            return redirect()->route('external-members.index')
-                ->with('success', 'External member deleted successfully.');
+            // Preserve current state after deletion
+            $page = $request->input('page', 1);
+            $perPage = $request->input('perPage', 15);
+            return redirect()->route('external-members.index', array_merge(
+                $request->only(['search', 'familySearch', 'relationship', 'sort', 'direction', 'isArchived']),
+                [
+                    'page' => $page,
+                    'perPage' => $perPage,
+                ]
+            ))->with('success', 'External member deleted successfully.');
         } catch (\Exception $e) {
             return redirect()->route('external-members.index')
                 ->with('error', 'Failed to delete external member.');

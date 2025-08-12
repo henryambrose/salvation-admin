@@ -93,11 +93,20 @@ class GenderController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Gender $gender)
+    public function destroy(Request $request, Gender $gender)
     {
         $gender->delete();
 
-        return redirect()->route('gender.index')->with('success', 'Gender deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('gender.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Gender deleted successfully.');
     }
 
     public function restore($id)

@@ -93,11 +93,20 @@ class DesignationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Designation $designation)
+    public function destroy(Request $request, Designation $designation)
     {
         $designation->delete();
 
-        return redirect()->route('designation.index')->with('success', 'Designation deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('designation.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Designation deleted successfully.');
     }
 
     public function restore($id)

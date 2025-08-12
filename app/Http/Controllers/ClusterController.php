@@ -100,12 +100,20 @@ class ClusterController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Cluster $cluster)
+    public function destroy(Request $request, Cluster $cluster)
     {
         $cluster->delete();
 
-        return redirect()->route('clusters.index')
-            ->with('success', 'Cluster deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('clusters.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Cluster deleted successfully.');
     }
 
     public function restore($id)

@@ -78,7 +78,7 @@ class UserPolicy
             return true;
         }
 
-        return $user->can('restore-users');
+        return $user->can('restore-user');
     }
 
     /**

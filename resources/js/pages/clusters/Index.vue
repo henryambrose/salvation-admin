@@ -237,11 +237,22 @@ function openDeleteModal(row: any) {
   showDeleteModal.value = true;
 }
 function confirmDelete() {
-  router.delete(`/clusters/${deletingCluster.value?.id || ''}`, {
+  const deletedId = deletingCluster.value?.id;
+  router.delete(`/clusters/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedCluster.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCluster.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

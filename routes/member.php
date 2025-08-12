@@ -11,7 +11,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('member', MemberController::class)->except(['index']);
     Route::get('member/search-options', [MemberController::class, 'searchOptions'])
         ->name('member.search-options');
-    
+        Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
     // Family numbering system routes
     Route::post('member/move-family/{familyNo}', [MemberController::class, 'moveFamily'])
         ->name('member.move-family');

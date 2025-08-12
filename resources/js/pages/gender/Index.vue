@@ -8,6 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 
 const props = defineProps({
   genders: {
@@ -149,11 +150,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/gender/${deletingGender.value?.id || ''}`, {
+  const deletedId = deletingGender.value?.id;
+  router.delete(`/gender/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedGenders.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingGender.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
@@ -196,7 +208,8 @@ function handlePageChange(event: Event) {
   }
 }
 
-import { permissionHelpers } from '@/composables/permissionHelpers';
+
+
 const { can } = permissionHelpers();
 
 const canCreateGender = can('create-gender');

@@ -156,11 +156,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/status/${deletingStatus.value?.id || ''}`, {
+  const deletedId = deletingStatus.value?.id;
+  router.delete(`/status/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedStatuses.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingStatus.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

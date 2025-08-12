@@ -140,11 +140,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/zone/${deletingZone.value?.id || ''}`, {
+  const deletedId = deletingZone.value?.id;
+  router.delete(`/zone/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedZones.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingZone.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
@@ -340,7 +351,7 @@ onMounted(() => {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td class="p-2">
+                <td v-if="!isArchived" class="p-2">
                   <template v-if="canDeleteAnyZone">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete

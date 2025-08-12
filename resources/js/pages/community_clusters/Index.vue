@@ -258,12 +258,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/community-clusters/${deletingItem.value?.id || ''}`, {
+  const deletedId = deletingItem.value?.id;
+  router.delete(`/community-clusters/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedCommunityClusters.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
-      fetch();
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
@@ -437,7 +447,7 @@ const canExportCommunityCluster = can('read-community-cluster');
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCommunityClusters.data" :key="row.id" :id="`scc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr v-for="row in enhancedCommunityClusters.data" :key="row.id" :id="`community-cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
                   <template v-if="!isArchived">
                     <Button v-if="canUpdateAnyCommunityCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">

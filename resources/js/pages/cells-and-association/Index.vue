@@ -148,11 +148,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/cells-and-association/${deletingCellsAndAssociation.value?.id || ''}`, {
+  const deletedId = deletingCellsAndAssociation.value?.id;
+  router.delete(`/cells-and-association/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedCellsAndAssociations.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCellsAndAssociation.value = undefined;
+      highlightedRowId.value = deletedId;
+      nextTick(() => scrollToRow(deletedId));
     },
   });
 }

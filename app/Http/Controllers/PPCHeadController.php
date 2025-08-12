@@ -145,12 +145,20 @@ class PPCHeadController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Request $request, PPCHead $ppcHead)
     {
-        $ppcHead = PPCHead::findOrFail($id);
         $ppcHead->delete();
 
-        return redirect()->route('ppc-head.index')->with('success', 'PPC Head deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('ppc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'PPC Head deleted successfully.');
     }
 
     public function restore($id)

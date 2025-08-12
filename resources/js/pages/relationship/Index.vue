@@ -149,11 +149,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/relationship/${deletingRelationship.value?.id || ''}`, {
+  const deletedId = deletingRelationship.value?.id;
+  router.delete(`/relationship/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedRelationships.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingRelationship.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

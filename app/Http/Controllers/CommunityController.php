@@ -144,13 +144,22 @@ class CommunityController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Community $community)
+    public function destroy(Request $request, Community $community)
     {
         $this->authorize('delete', $community);
 
         $community->delete();
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('community.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Community deleted successfully.');
 
-        return redirect()->route('community.index')->with('success', 'Community deleted successfully.');
+        // return redirect()->route('community.index')->with('success', 'Community deleted successfully.');
     }
 
     /**

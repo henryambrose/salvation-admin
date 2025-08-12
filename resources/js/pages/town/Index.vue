@@ -164,12 +164,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/town/${deletingTown.value?.id || ''}`, {
+  const deletedId = deletingTown.value?.id;
+  router.delete(`/town/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedTowns.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingTown.value = undefined;
-      fetch();
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
@@ -354,7 +364,7 @@ onMounted(() => {
                     {{ col.key === 'city' ? (row.city?.name || '') : row[col.key] }}
                   </span>
                 </td>
-                <td class="p-2">
+                <td v-if="!isArchived" class="p-2">
                   <template v-if="canDeleteAnyTown">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete

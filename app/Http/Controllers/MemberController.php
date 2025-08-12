@@ -572,7 +572,7 @@ class MemberController extends Controller
         ))->with('success', 'Member updated successfully.');
     }
 
-    public function destroy(Member $member)
+    public function destroy(Request $request, Member $member)
     {
         $this->authorize('delete', $member);
 
@@ -592,7 +592,16 @@ class MemberController extends Controller
             'user_agent' => request()->userAgent(),
         ]);
 
-        return redirect()->route('member.index')->with('success', 'Member deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('member.index', array_merge(
+            $request->only(['search', 'familySearch', 'sort', 'direction', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Member deleted successfully.');
     }
 
     public function restore($id)

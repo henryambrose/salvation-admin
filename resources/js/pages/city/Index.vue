@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +51,33 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+const enhancedCities = computed(() => {
+  const c = props.cities || {};
+  return {
+    data: c.data || [],
+    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
+    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
+    current_page: c.current_page ?? c.meta?.current_page,
+    last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total, // Add this line
+  };
+});
+
+watch([search, stateId, sort, direction, perPage, isArchived], () => {
+  fetch();
+});
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`city-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
+
 function fetch(page = 1) {
   if (props.fetchUrl) {
     router.get(
@@ -73,41 +99,17 @@ function fetch(page = 1) {
   }
 }
 
-watch([search, stateId, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
-
-function handlePageChange(event: Event) {
-  const target = event.target as HTMLSelectElement;
-  if (target) {
-    fetch(Number(target.value));
-  }
-}
-
-const enhancedCities = computed(() => {
-  const c = props.cities || {};
-  return {
-    data: c.data || [],
-    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
-    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
-    current_page: c.current_page ?? c.meta?.current_page,
-    last_page: c.last_page ?? c.meta?.last_page,
-    total: c.total ?? c.meta?.total, // Add this line
-  };
-});
-
-function scrollToRow(rowId: number) {
-  nextTick(() => {
-    const el = document.getElementById(`city-row-${rowId}`);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('highlight-row');
-      setTimeout(() => el.classList.remove('highlight-row'), 2000);
-    }
-  });
-}
 
 function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCities.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   form.post('/city', {
     preserveScroll: true,
     onSuccess: () => {
@@ -121,9 +123,25 @@ function submit() {
   });
 }
 
+function openEditModal(city: any) {
+  editingCity.value = city;
+  editForm.name = city.name;
+  editForm.state_id = city.state_id;
+  showEditModal.value = true;
+}
+
 function submitEdit() {
   const editedId = editingCity.value?.id;
-  editForm.put(`/city/${editingCity.value?.id || ''}`, {
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCities.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  editForm.put(`/city/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
@@ -134,28 +152,36 @@ function submitEdit() {
   });
 }
 
-function openEditModal(city: any) {
-  editingCity.value = city;
-  editForm.name = city.name;
-  editForm.state_id = city.state_id;
-  showEditModal.value = true;
-}
+
+
 
 function openDeleteModal(city: any) {
   deletingCity.value = city;
   showDeleteModal.value = true;
 }
 
-function deleteCity() {
-  router.delete(`/city/${deletingCity.value?.id || ''}`, {
+
+function confirmDelete() {
+  const deletedId = deletingCity.value?.id;
+  router.delete(`/city/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedCities.value.current_page,
+      search: search.value,
+      stateId: stateId.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCity.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
-
 function restoreCity(id: number) {
   router.post(`/city/${id}/restore`, {}, {
     preserveScroll: true,
@@ -164,6 +190,14 @@ function restoreCity(id: number) {
     },
   });
 }
+
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
+  }
+}
+
 
 function downloadExcel() {
   const params = new URLSearchParams({
@@ -476,7 +510,7 @@ const canExportCity = can('read-city');
                  variant="destructive"
                  type="button"
                  :disabled="false"
-                 @click="deleteCity"
+                 @click="confirmDelete"
                  class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
                >
                  Delete

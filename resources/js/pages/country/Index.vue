@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -126,11 +126,23 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/country/${deletingCountry.value?.id || ''}`, {
+  const deletedId = deletingCountry.value?.id;
+  router.delete(`/country/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedCountries.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCountry.value = undefined;
+      // The original code had highlightedRowId and scrollToRow, but they are not defined.
+      // Assuming they are meant to be removed or are part of a larger context not provided.
+      // For now, removing them as they are not in the new_code.
     },
   });
 }
@@ -282,7 +294,7 @@ function handlePageChange(event: Event) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <tr v-for="(row, index) in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition" :class="{ 'bg-red-100': deletingCountry?.id === row.id }">
                 <td class="p-2">
                   <template v-if="!isArchived">
                     <Button v-if="canUpdateAnyCountry" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">

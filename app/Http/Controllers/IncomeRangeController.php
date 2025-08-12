@@ -99,11 +99,20 @@ class IncomeRangeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(IncomeRange $incomeRange)
+    public function destroy(Request $request, IncomeRange $incomeRange)
     {
         $incomeRange->delete();
 
-        return redirect()->route('income-range.index')->with('success', 'Income Range deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('income-range.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Income Range deleted successfully.');
     }
 
     public function restore($id)

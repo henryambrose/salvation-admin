@@ -245,12 +245,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/scc-head/${deletingItem.value?.id || ''}`, {
+  const deletedId = deletingItem.value?.id;
+  router.delete(`/scc-head/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedSCCHeads.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
-      fetch();
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }

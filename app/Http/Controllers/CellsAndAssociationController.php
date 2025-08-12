@@ -93,11 +93,20 @@ class CellsAndAssociationController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CellsAndAssociation $cellsAndAssociation)
+    public function destroy(Request $request, CellsAndAssociation $cellsAndAssociation)
     {
         $cellsAndAssociation->delete();
 
-        return redirect()->route('cells-and-association.index')->with('success', 'Cells and Association deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('cells-and-associations.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Cells and Association deleted successfully.');
     }
 
     public function restore($id)

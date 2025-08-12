@@ -94,11 +94,20 @@ class AgeGroupController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(AgeGroup $ageGroup)
+    public function destroy(Request $request, AgeGroup $ageGroup)
     {
         $ageGroup->delete();
 
-        return redirect()->route('age-group.index')->with('success', 'Age Group deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('age-group.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Age Group deleted successfully.');
     }
 
     public function restore($id)

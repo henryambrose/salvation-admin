@@ -6,7 +6,7 @@ import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
@@ -45,6 +45,7 @@ const showDeleteModal = ref(false);
 const editingItem = ref<Record<string, any>>();
 const deletingItem = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
+const highlightedRowId = ref<number|null>(null);
 
 const form = useForm({
   name: '',
@@ -127,6 +128,10 @@ function submit() {
     onSuccess: () => {
       form.reset();
       showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedIncomeRanges.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -138,26 +143,51 @@ function openEditModal(row: any) {
 }
 
 function submitEdit() {
-  editForm.put(`/income-range/${editingItem.value?.id || ''}`, {
+  const editedId = editingItem.value?.id;
+  editForm.put(`/income-range/${editedId|| ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
       editingItem.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
   });
 }
 
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`income-range-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
+}
 function openDeleteModal(row: any) {
   deletingItem.value = row;
   showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  router.delete(`/income-range/${deletingItem.value?.id || ''}`, {
+  const deletedId = deletingItem.value?.id;
+  router.delete(`/income-range/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedIncomeRanges.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
+
     },
   });
 }
@@ -271,7 +301,7 @@ const breadcrumbs = [{ title: 'Income Range', href: '/income-range' }];
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedIncomeRanges.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+              <tr v-for="row in enhancedIncomeRanges.data" :id="`income-range-row-${row.id}`"  class="even:bg-gray-50 hover:bg-blue-50 transition">
                 <td class="p-2">
                   <template v-if="!isArchived">
                     <Button v-if="canUpdateAnyIncomeRange" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">

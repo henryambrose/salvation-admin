@@ -169,12 +169,20 @@ class CommunityClusterController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CommunityCluster $communityCluster)
+    public function destroy(Request $request, CommunityCluster $communityCluster)
     {
         $communityCluster->delete();
 
-        return redirect()->route('community-clusters.index')
-            ->with('success', 'Community Cluster deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('community-clusters.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Community Cluster deleted successfully.');
     }
 
     public function restore($id)

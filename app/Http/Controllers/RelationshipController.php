@@ -93,11 +93,20 @@ class RelationshipController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Relationship $relationship)
+    public function destroy(Request $request, Relationship $relationship)
     {
         $relationship->delete();
 
-        return redirect()->route('relationship.index')->with('success', 'Relationship deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('relationship.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Relationship deleted successfully.');
     }
 
     public function restore($id)

@@ -103,11 +103,20 @@ class ParishController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Parish $parish)
+    public function destroy(Request $request, Parish $parish)
     {
         $parish->delete();
 
-        return redirect()->route('parish.index')->with('success', 'Parish deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('parish.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Parish deleted successfully.');
     }
 
     public function restore($id)

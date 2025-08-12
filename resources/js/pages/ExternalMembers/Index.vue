@@ -259,11 +259,24 @@ onMounted(() => {
 });
 function confirmDelete() {
   if (deletingMember.value) {
-    router.delete(route('external-members.destroy', deletingMember.value.id), {
+    const deletedId = deletingMember.value.id;
+    router.delete(route('external-members.destroy', deletedId), {
+      data: {
+        perPage: perPage.value,
+        page: enhancedExternalMembers.value.current_page,
+        search: search.value,
+        familySearch: familySearch.value,
+        relationship: relationship.value,
+        sort: sort.value,
+        direction: direction.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+      },
       preserveScroll: true,
       onSuccess: () => {
         showDeleteModal.value = false;
         deletingMember.value = null;
+        highlightedRowId.value = deletedId+1;
+        nextTick(() => scrollToRow(deletedId+1));
       },
     });
   }

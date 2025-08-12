@@ -149,12 +149,20 @@ class SCCHeadController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy($id)
+    public function destroy(Request $request, SCCHead $sccHead)
     {
-        $sCCHead = SCCHead::findOrFail($id);
-        $sCCHead->delete();
+        $sccHead->delete();
 
-        return redirect()->route('scc-head.index')->with('success', 'SCC Head deleted successfully.');
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('scc-head.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'SCC Head deleted successfully.');
     }
 
     /**

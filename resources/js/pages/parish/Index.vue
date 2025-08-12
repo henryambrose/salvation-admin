@@ -166,11 +166,22 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  router.delete(`/parish/${deletingParish.value?.id || ''}`, {
+  const deletedId = deletingParish.value?.id;
+  router.delete(`/parish/${deletedId || ''}`, {
+    data: {
+      perPage: perPage.value,
+      page: enhancedParishes.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     preserveScroll: true,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingParish.value = undefined;
+      highlightedRowId.value = deletedId+1;
+      nextTick(() => scrollToRow(deletedId+1));
     },
   });
 }
