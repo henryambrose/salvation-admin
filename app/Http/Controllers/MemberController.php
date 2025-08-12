@@ -344,7 +344,7 @@ class MemberController extends Controller
                 return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
             'cities' => City::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id];
             })->toArray(),
             'towns' => Town::with('city.state.country')->get()->map(function ($item) {
                 return [
@@ -508,8 +508,8 @@ class MemberController extends Controller
             'states' => State::select('id', 'name', 'country_id')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
             })->toArray(),
-            'cities' => City::select('id', 'name')->get()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
+            'cities' => City::select('id', 'name', 'state_id')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id];
             })->toArray(),
             'towns' => Town::select('id', 'name', 'pincode', 'city_id')->with('city.state.country')->get()->map(function ($item) {
                 return [

@@ -222,16 +222,14 @@ export interface State {
 
 export type States = State[];
 
-export interface Column {
-  key: string;
-  label: string;
-  sortable: boolean;
-  filterable?: boolean; // optional
-}
 
 export interface City {
   id: number;
+  state_id?: number | null;
   name: string;
+  created_at?: string | null; // ISO 8601 date string
+  updated_at?: string | null; // ISO 8601 date string
+  deleted_at?: string | null;
 }
 export type Cities = City[];
 
@@ -240,14 +238,19 @@ export interface Town {
   name: string;
   pincode?: string | null;
   city_id?: number | null;
-  state_id?: number | null;
-  country_id?: number | null;
   created_at?: string | null; // ISO 8601 date string
   updated_at?: string | null; // ISO 8601 date string
   deleted_at?: string | null; // ISO 8601 date string for soft deletes
 }
 
 export type Towns = Town[];
+
+export interface Column {
+  key: string;
+  label: string;
+  sortable: boolean;
+  filterable?: boolean; // optional
+}
 
 export interface BloodGroup {
   id: string; // Assuming id is a string, adjust if necessary

@@ -17,7 +17,7 @@ class TownSeeder extends Seeder
             ['name' => 'Other', 'pincode' => '000000', 'city_id' => '2' ],
             ['name' => 'Dadar', 'pincode' => '400028', 'city_id' => '2' ],
             ['name' => 'Prabhadevi', 'pincode' => '400025', 'city_id' => '2' ],
-            ['name' => 'Lower Parel', 'pincode' => '400013', 'city_id' => '3' ]
+            ['name' => 'Lower Parel', 'pincode' => '400013', 'city_id' => '2' ]
         ];
 
         Town::insert($towns);

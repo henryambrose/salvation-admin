@@ -646,19 +646,6 @@ watch(
   { immediate: true }
 );
 
-const filteredTownPermanent = ref<Town[]>([]);
-
-const fetchfilteredTownPermanent = async () => {
-  if (!form.permanent_state_id) return;
-  filteredTownPermanent.value = props.towns.filter((town) => town.state_id === Number(form.permanent_state_id));
-};
-
-watch(
-  () => form.permanent_state_id,
-  () => {
-    fetchfilteredTownPermanent();
-  },
-);
 
 const filteredStatesPermanent = ref<State[]>([]);
 
@@ -674,24 +661,39 @@ watch(
   },
 );
 
-const filteredTownCurrent = ref<Town[]>([]);
+const filteredCitiesPermanent = ref<City[]>([]);
 
-const fetchfilteredTownCurrent = async () => {
-  if (!form.current_state_id) return;
-  filteredTownCurrent.value = props.towns.filter((town) => town.state_id === Number(form.current_state_id));
+const fetchfilteredCitiesPermanent = async () => {
+  if (!form.permanent_state_id) return;
+  filteredCitiesPermanent.value = props.cities.filter((city) => city.state_id === Number(form.permanent_state_id));
+  console.log(props.cities);
 };
 
 watch(
-  () => form.current_state_id,
+  () => form.permanent_state_id,
   () => {
-    fetchfilteredTownCurrent();
+    fetchfilteredCitiesPermanent();
+  },
+);
+
+const filteredTownPermanent = ref<Town[]>([]);
+
+const fetchfilteredTownPermanent = async () => {
+  if (!form.permanent_city_id) return;
+  filteredTownPermanent.value = props.towns.filter((town) => town.city_id === Number(form.permanent_city_id));
+};
+
+watch(
+  () => form.permanent_city_id,
+  () => {
+    fetchfilteredTownPermanent();
   },
 );
 
 const filteredStatesCurrent = ref<State[]>([]);
 
 const fetchfilteredStatesCurrent = async () => {
-  const countryId = form.current_country_id || 95; // Default to India if not set
+  const countryId = form.current_country_id || 96; // Default to India if not set
   filteredStatesCurrent.value = props.states.filter((state) => state.country_id === Number(countryId));
 };
 
@@ -702,25 +704,12 @@ watch(
   },
 );
 
-const filteredCitiesPermanent = ref<City[]>([]);
-
-const fetchfilteredCitiesPermanent = async () => {
-  // Use all cities since City interface doesn't have state_id
-  filteredCitiesPermanent.value = props.cities;
-};
-
-watch(
-  () => form.permanent_state_id,
-  () => {
-    fetchfilteredCitiesPermanent();
-  },
-);
 
 const filteredCitiesCurrent = ref<City[]>([]);
 
 const fetchfilteredCitiesCurrent = async () => {
-  // Use all cities since City interface doesn't have state_id
-  filteredCitiesCurrent.value = props.cities;
+    if (!form.current_state_id) return;
+    filteredCitiesCurrent.value = props.cities.filter((city) => city.state_id === Number(form.current_state_id));
 };
 
 watch(
@@ -729,6 +718,25 @@ watch(
     fetchfilteredCitiesCurrent();
   },
 );
+
+const filteredTownCurrent = ref<Town[]>([]);
+
+const fetchfilteredTownCurrent = async () => {
+  if (!form.current_city_id) return;
+  filteredTownCurrent.value = props.towns.filter((town) => town.city_id === Number(form.current_city_id));
+};
+
+watch(
+  () => form.current_city_id,
+  () => {
+    fetchfilteredTownCurrent();
+  },
+);
+
+
+
+
+
 
 // Initialize filtered arrays on component mount
 nextTick(() => {
