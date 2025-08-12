@@ -340,6 +340,59 @@ onMounted(() => {
     scrollToRow(Number(highlightId));
   }
 });
+
+// Add these reactive variables
+const copiedItem = ref<{ id: string; type: string } | null>(null);
+
+// Enhanced copy function with visual feedback
+function copyToClipboard(text: string, type: string, memberId: number) {
+  if (!text || text === '—') return;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    // Set copied state for visual feedback
+    copiedItem.value = { id: `${type}-${memberId}`, type };
+    
+    // Show success toast
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 flex items-center gap-2';
+    toast.innerHTML = `
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      ${type} copied to clipboard!
+    `;
+    document.body.appendChild(toast);
+    
+    // Remove toast after 2 seconds
+    setTimeout(() => {
+      toast.remove();
+    }, 2000);
+    
+    // Clear copied state after animation
+    setTimeout(() => {
+      copiedItem.value = null;
+    }, 1000);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textArea);
+    
+    // Show success feedback
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+    toast.textContent = `${type} copied to clipboard!`;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+      toast.remove();
+    }, 2000);
+  });
+}
 </script>
 
 <template>
@@ -532,13 +585,45 @@ onMounted(() => {
                       </span>
                     </template>
                     <template v-else-if="col.key === 'family_no'">
-                      <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium font-mono">
-                        {{ member[col.key] || '—' }}
+                      <span 
+                        v-if="member[col.key]"
+                        @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
+                        :class="[
+                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                          copiedItem?.id === `Family Number-${member.id}` 
+                            ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
+                            : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
+                        ]"
+                        :title="`Click to copy: ${member[col.key]}`"
+                      >
+                        {{ member[col.key] }}
+                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                      </span>
+                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                        —
                       </span>
                     </template>
                     <template v-else-if="col.key === 'member_no'">
-                      <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-medium font-mono">
-                        {{ member[col.key] || '—' }}
+                      <span 
+                        v-if="member[col.key]"
+                        @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
+                        :class="[
+                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                          copiedItem?.id === `Member Number-${member.id}` 
+                            ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
+                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
+                        ]"
+                        :title="`Click to copy: ${member[col.key]}`"
+                      >
+                        {{ member[col.key] }}
+                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                      </span>
+                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                        —
                       </span>
                     </template>
                     <template v-else>
