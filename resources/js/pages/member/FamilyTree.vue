@@ -2,8 +2,25 @@
   <div class="p-4 md:p-6">
     <div v-if="loading" class="text-center py-10 text-gray-500">Loading family tree...</div>
 
-    <div v-else-if="!familyTree || !hasAnyMembers" class="text-center py-10 text-gray-500">
-      There are no members assigned for Family Tree
+    <div v-else-if="!familyTree || !hasAnyMembers" class="text-center py-16">
+      <div class="max-w-sm mx-auto">
+        <div class="mb-4">
+          <svg class="mx-auto h-16 w-16 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">No Family Tree Available</h3>
+        <p class="text-gray-500 mb-4">This family doesn't have any members assigned yet.</p>
+        <button
+          @click="goBack"
+          class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+        >
+          <svg class="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          Go Back
+        </button>
+      </div>
     </div>
 
     <div v-else class="space-y-8">

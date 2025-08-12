@@ -493,7 +493,7 @@ class MemberController extends Controller
                 return ['id' => $item->id, 'name' => $item->name];
             }),
             'incomeRanges' => $incomeRanges,
-            'communityClusters' => CommunityCluster::select('id', 'community_id')->with('cluster')->get()->map(function ($item) {
+            'communityClusters' => CommunityCluster::select('id', 'community_id', 'cluster_id')->with('cluster')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
             'bloodGroups' => BloodGroup::select('id', 'name')->get()->map(function ($item) {
