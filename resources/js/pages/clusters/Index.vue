@@ -285,7 +285,59 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
         </div>
       </div>
     </DatatableHeader>
-    <div v-if="canReadAnyCluster" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+    <div v-if="canReadAnyCluster">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ clusters?.total || 0 }}</span> total clusters
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+        </div>
+        
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="clusters?.prev_page_url" 
+            @click="fetch(clusters.current_page - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="clusters?.last_page && clusters.last_page > 1"
+              :value="clusters?.current_page" 
+              @change="handlePageChange"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in clusters.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ clusters?.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="clusters?.next_page_url" 
+            @click="fetch(clusters.current_page + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">
+            Clusters
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
             <thead>
@@ -325,56 +377,9 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
           </tbody>
           </table>
         </div>
-
-        <!-- Enhanced Pagination -->
-        <div class="mt-6 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-2">
-            <button 
-              v-if="clusters?.prev_page_url" 
-              @click="fetch(clusters.current_page - 1)" 
-              class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-              </svg>
-              Prev
-            </button>
-            
-            <!-- Page Number Dropdown -->
-            <div class="flex items-center gap-2">
-              <span class="text-sm text-gray-600">Page</span>
-              <select 
-                v-if="clusters?.last_page && clusters.last_page > 1"
-                :value="clusters.current_page" 
-                @change="handlePageChange"
-                class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option v-for="page in clusters.last_page" :key="page" :value="page">
-                  {{ page }}
-                </option>
-              </select>
-              <span v-if="clusters?.last_page" class="text-sm text-gray-600">of {{ clusters.last_page }}</span>
-            </div>
-            
-            <button 
-              v-if="clusters?.next_page_url" 
-              @click="fetch(clusters.current_page + 1)" 
-              class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-            >
-              Next
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-              </svg>
-            </button>
-          </div>
-          
-          <!-- Total Records Info -->
-          <div class="text-sm text-gray-500">
-            <span v-if="clusters?.total">Total: {{ clusters.total }} records</span>
-          </div>
-        </div>
       </div>
-      <div v-else class="py-10 text-center text-gray-500">You do not have permission to view clusters.</div>
+    </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view clusters.</div>
 
     <!-- Create Modal -->
     <transition name="fade">

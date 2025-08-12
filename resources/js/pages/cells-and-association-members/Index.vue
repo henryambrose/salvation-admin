@@ -70,6 +70,7 @@ const enhancedCellsAndAssociationMembers = computed(() => {
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
+    total: c.total ?? c.meta?.total,
   };
 });
 
@@ -378,67 +379,107 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyCellsAndAssociationMember" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
-                  @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
-                {{ col.label }}
-                <span v-if="col.sortable && sort === col.key">
-                  {{ direction === 'asc' ? '▲' : '▼' }}
-                </span>
-              </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in enhancedCellsAndAssociationMembers.data" :key="row.id" :id="`cells-association-member-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
-              <td class="p-2">
-                <div class="flex gap-2">
-                  <template v-if="!isArchived">
-                    <Button v-if="canUpdateAnyCellsAndAssociationMember" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                      <component :is="Pencil" />
-                      <span>Edit</span>
-                    </Button>
-                  </template>
-                  <template v-else>
-                    <Button v-if="canRestoreCellsAndAssociationMember" @click="restoreItem(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                      Restore
-                    </Button>
-                  </template>
-                </div>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-              <td v-if="!isArchived" class="p-2">
-                <template v-if="canDeleteAnyCellsAndAssociationMember">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="canReadAnyCellsAndAssociationMember">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ enhancedCellsAndAssociationMembers.total || 0 }}</span> total members
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+        </div>
+        
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="enhancedCellsAndAssociationMembers.prev_page_url" 
+            @click="fetch(enhancedCellsAndAssociationMembers.current_page - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="enhancedCellsAndAssociationMembers.last_page && enhancedCellsAndAssociationMembers.last_page > 1"
+              :value="enhancedCellsAndAssociationMembers.current_page" 
+              @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in enhancedCellsAndAssociationMembers.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ enhancedCellsAndAssociationMembers.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="enhancedCellsAndAssociationMembers.next_page_url" 
+            @click="fetch(enhancedCellsAndAssociationMembers.current_page + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-cyan-100 text-cyan-800 rounded-full text-xs font-medium">
+            Members
+          </span>
+        </div>
       </div>
-    </div>
 
-    <!-- Pagination Controls -->
-    <div class="mt-6 flex items-center gap-2">
-      <button v-if="enhancedCellsAndAssociationMembers.prev_page_url" @click="fetch(enhancedCellsAndAssociationMembers.current_page - 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Prev
-      </button>
-      <button v-if="enhancedCellsAndAssociationMembers.next_page_url" @click="fetch(enhancedCellsAndAssociationMembers.current_page + 1)" class="rounded-full border border-gray-300 bg-white px-4 py-1 text-gray-700 shadow hover:bg-blue-50 transition">
-        Next
-      </button>
-      <span v-if="enhancedCellsAndAssociationMembers.current_page && enhancedCellsAndAssociationMembers.last_page" class="ml-auto text-sm text-gray-500">
-        Page {{ enhancedCellsAndAssociationMembers.current_page }} of {{ enhancedCellsAndAssociationMembers.last_page }}
-      </span>
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <!-- Table content remains the same -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
+                    @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
+                  {{ col.label }}
+                  <span v-if="col.sortable && sort === col.key">
+                    {{ direction === 'asc' ? '▲' : '▼' }}
+                  </span>
+                </th>
+                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in enhancedCellsAndAssociationMembers.data" :key="row.id" :id="`cells-association-member-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+                <td class="p-2">
+                  <div class="flex gap-2">
+                    <template v-if="!isArchived">
+                      <Button v-if="canUpdateAnyCellsAndAssociationMember" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                        <component :is="Pencil" />
+                        <span>Edit</span>
+                      </Button>
+                    </template>
+                    <template v-else>
+                      <Button v-if="canRestoreCellsAndAssociationMember" @click="restoreItem(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                        Restore
+                      </Button>
+                    </template>
+                  </div>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  {{ row[col.key] }}
+                </td>
+                <td v-if="!isArchived" class="p-2">
+                  <template v-if="canDeleteAnyCellsAndAssociationMember">
+                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                      <component :is="Trash" />
+                      <span>Delete</span>
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <!-- Edit Modal -->

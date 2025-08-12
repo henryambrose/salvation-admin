@@ -217,96 +217,101 @@ function handlePageChange(event: Event) {
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyCountry" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                {{ col.label }}
-              </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
-              <td class="p-2">
-                <template v-if="!isArchived">
-                  <Button v-if="canUpdateAnyCountry" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    Edit
-                  </Button>
-                </template>
-                <template v-else>
-                  <Button v-if="canRestoreCountry" @click="restoreCountry(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                    Restore
-                  </Button>
-                </template>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-              <td v-if="!isArchived" class="p-2">
-                <template v-if="canDeleteAnyCountry">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    Delete
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div v-if="canReadAnyCountry">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ enhancedCountries.total || 0 }}</span> total countries
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+        </div>
+        
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="enhancedCountries.prev_page_url" 
+            @click="fetch(enhancedCountries.current_page - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="enhancedCountries.last_page && enhancedCountries.last_page > 1"
+              :value="enhancedCountries.current_page" 
+              @change="handlePageChange"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in enhancedCountries.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ enhancedCountries.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="enhancedCountries.next_page_url" 
+            @click="fetch(enhancedCountries.current_page + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+            Countries
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+        <!-- Table content remains the same -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                  {{ col.label }}
+                </th>
+                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
+                <td class="p-2">
+                  <template v-if="!isArchived">
+                    <Button v-if="canUpdateAnyCountry" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                      Edit
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <Button v-if="canRestoreCountry" @click="restoreCountry(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      Restore
+                    </Button>
+                  </template>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  {{ row[col.key] }}
+                </td>
+                <td v-if="!isArchived" class="p-2">
+                  <template v-if="canDeleteAnyCountry">
+                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                      Delete
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
     <div v-else class="py-10 text-center text-gray-500">You do not have permission to view countries.</div>
-
-    <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <button 
-          v-if="enhancedCountries.prev_page_url" 
-          @click="fetch(enhancedCountries.current_page - 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Prev
-        </button>
-        
-        <!-- Page Number Dropdown -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">Page</span>
-          <select 
-            v-if="enhancedCountries.last_page && enhancedCountries.last_page > 1"
-            :value="enhancedCountries.current_page" 
-            @change="handlePageChange"
-            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option v-for="page in enhancedCountries.last_page" :key="page" :value="page">
-              {{ page }}
-            </option>
-          </select>
-          <span v-if="enhancedCountries.last_page" class="text-sm text-gray-600">of {{ enhancedCountries.last_page }}</span>
-        </div>
-        
-        <button 
-          v-if="enhancedCountries.next_page_url" 
-          @click="fetch(enhancedCountries.current_page + 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          Next
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
-      </div>
-      
-      <!-- Total Records Info -->
-      <div class="text-sm text-gray-500">
-        <span v-if="enhancedCountries.total">Total: {{ enhancedCountries.total }} records</span>
-      </div>
-    </div>
 
     <!-- Create Modal -->
     <transition name="fade">

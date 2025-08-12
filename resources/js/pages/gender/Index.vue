@@ -263,101 +263,106 @@ watch(() => enhancedGenders.value.data, (rows) => {
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyGender" class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
-                  @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
-                {{ col.label }}
-                <span v-if="col.sortable && sort === col.key">
-                  {{ direction === 'asc' ? '▲' : '▼' }}
-                </span>
-              </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in enhancedGenders.data" :key="row.id" :id="`gender-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
-              <td class="p-2">
-                <div class="flex gap-2">
-                  <template v-if="!isArchived">
-                    <Button v-if="canUpdateAnyGender" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                      <component :is="Pencil" />
-                      <span>Edit</span>
-                    </Button>
-                  </template>
-                  <template v-else>
-                    <Button v-if="canRestoreGender" @click="restoreGender(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                      Restore
-                    </Button>
-                  </template>
-                </div>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-              <td v-if="!isArchived" class="p-2">
-                <template v-if="canDeleteAnyGender">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <button 
-          v-if="enhancedGenders.prev_page_url" 
-          @click="fetch(enhancedGenders.current_page! - 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Prev
-        </button>
-        
-        <!-- Page Number Dropdown -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">Page</span>
-          <select 
-            v-if="enhancedGenders.last_page && enhancedGenders.last_page > 1"
-            :value="enhancedGenders.current_page" 
-            @change="handlePageChange"
-            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option v-for="page in enhancedGenders.last_page" :key="page" :value="page">
-              {{ page }}
-            </option>
-          </select>
-          <span v-if="enhancedGenders.last_page" class="text-sm text-gray-600">of {{ enhancedGenders.last_page }}</span>
+    <div v-if="canReadAnyGender">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ enhancedGenders.total || 0 }}</span> total genders
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
         
-        <button 
-          v-if="enhancedGenders.next_page_url" 
-          @click="fetch(enhancedGenders.current_page! + 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          Next
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="enhancedGenders.prev_page_url" 
+            @click="fetch(enhancedGenders.current_page! - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="enhancedGenders.last_page && enhancedGenders.last_page > 1"
+              :value="enhancedGenders.current_page" 
+              @change="handlePageChange"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in enhancedGenders.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ enhancedGenders.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="enhancedGenders.next_page_url" 
+            @click="fetch(enhancedGenders.current_page! + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-sky-100 text-sky-800 rounded-full text-xs font-medium">
+            Genders
+          </span>
+        </div>
       </div>
-      
-      <!-- Total Records Info -->
-      <div class="text-sm text-gray-500">
-        <span v-if="enhancedGenders.total">Total: {{ enhancedGenders.total }} records</span>
+
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <!-- Table content remains the same -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
+                    @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
+                  {{ col.label }}
+                  <span v-if="col.sortable && sort === col.key">
+                    {{ direction === 'asc' ? '▲' : '▼' }}
+                  </span>
+                </th>
+                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in enhancedGenders.data" :key="row.id" :id="`gender-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+                <td class="p-2">
+                  <div class="flex gap-2">
+                    <template v-if="!isArchived">
+                      <Button v-if="canUpdateAnyGender" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                        <component :is="Pencil" />
+                        <span>Edit</span>
+                      </Button>
+                    </template>
+                    <template v-else>
+                      <Button v-if="canRestoreGender" @click="restoreGender(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                        Restore
+                      </Button>
+                    </template>
+                  </div>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  {{ row[col.key] }}
+                </td>
+                <td v-if="!isArchived" class="p-2">
+                  <template v-if="canDeleteAnyGender">
+                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                      <component :is="Trash" />
+                      <span>Delete</span>
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 

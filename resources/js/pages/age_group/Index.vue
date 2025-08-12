@@ -325,121 +325,126 @@ function handlePageChange(event: Event) {
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyAgeGroup" class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
-      <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th
-                v-for="col in columns"
-                :key="col.key"
-                class="cursor-pointer border-b p-3 font-semibold text-gray-700"
-                @click="
-                  col.sortable
-                    ? (sort === col.key ? (direction = direction === 'asc' ? 'desc' : 'asc') : ((sort = col.key), (direction = 'asc')), fetch())
-                    : null
-                "
-              >
-                {{ col.label }}
-                <span v-if="col.sortable && sort === col.key">
-                  {{ direction === 'asc' ? '▲' : '▼' }}
-                </span>
-              </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="row in enhancedAgeGroups.data"
-              :key="row.id"
-              :id="`agegroup-row-${row.id}`"
-              :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']">
-              <td class="p-2">
-                <div class="flex gap-2">
-                  <template v-if="!isArchived">
-                    <Button
-                      v-if="canUpdateAnyAgeGroup"
-                      @click="openEditModal(row)"
-                      class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
-                    >
-                      <component :is="Pencil" />
-                      <span>Edit</span>
-                    </Button>
-                  </template>
-                  <template v-else>
-                    <Button v-if="canRestoreAgeGroup" @click="restoreAgeGroup(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                      Restore
-                    </Button>
-                  </template>
-                </div>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-              <td v-if="!isArchived" class="p-2">
-                <template v-if="canDeleteAnyAgeGroup">
-                  <Button
-                    @click="openDeleteModal(row)"
-                    variant="destructive"
-                    class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
-                  >
-                    <component :is="Trash" />
-                    <span>Delete</span>
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- Enhanced Pagination -->
-    <div class="mt-6 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-2">
-        <button 
-          v-if="enhancedAgeGroups.prev_page_url" 
-          @click="fetch(enhancedAgeGroups.current_page! - 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-          </svg>
-          Prev
-        </button>
-        
-        <!-- Page Number Dropdown -->
-        <div class="flex items-center gap-2">
-          <span class="text-sm text-gray-600">Page</span>
-          <select 
-            v-if="enhancedAgeGroups.last_page && enhancedAgeGroups.last_page > 1"
-            :value="enhancedAgeGroups.current_page" 
-            @change="handlePageChange"
-            class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option v-for="page in enhancedAgeGroups.last_page" :key="page" :value="page">
-              {{ page }}
-            </option>
-          </select>
-          <span v-if="enhancedAgeGroups.last_page" class="text-sm text-gray-600">of {{ enhancedAgeGroups.last_page }}</span>
+    <div v-if="canReadAnyAgeGroup">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ enhancedAgeGroups.total || 0 }}</span> total age groups
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
         
-        <button 
-          v-if="enhancedAgeGroups.next_page_url" 
-          @click="fetch(enhancedAgeGroups.current_page! + 1)" 
-          class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1"
-        >
-          Next
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-          </svg>
-        </button>
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="enhancedAgeGroups.prev_page_url" 
+            @click="fetch(enhancedAgeGroups.current_page! - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="enhancedAgeGroups.last_page && enhancedAgeGroups.last_page > 1"
+              :value="enhancedAgeGroups.current_page" 
+              @change="handlePageChange"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in enhancedAgeGroups.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ enhancedAgeGroups.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="enhancedAgeGroups.next_page_url" 
+            @click="fetch(enhancedAgeGroups.current_page! + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-lime-100 text-lime-800 rounded-full text-xs font-medium">
+            Age Groups
+          </span>
+        </div>
       </div>
-      
-      <!-- Total Records Info -->
-      <div class="text-sm text-gray-500">
-        <span v-if="enhancedAgeGroups.total">Total: {{ enhancedAgeGroups.total }} records</span>
+
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <!-- Table content remains the same -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="cursor-pointer border-b p-3 font-semibold text-gray-700"
+                  @click="
+                    col.sortable
+                      ? (sort === col.key ? (direction = direction === 'asc' ? 'desc' : 'asc') : ((sort = col.key), (direction = 'asc')), fetch())
+                      : null
+                  "
+                >
+                  {{ col.label }}
+                  <span v-if="col.sortable && sort === col.key">
+                    {{ direction === 'asc' ? '▲' : '▼' }}
+                  </span>
+                </th>
+                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in enhancedAgeGroups.data"
+                :key="row.id"
+                :id="`agegroup-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']">
+                <td class="p-2">
+                  <div class="flex gap-2">
+                    <template v-if="!isArchived">
+                      <Button
+                        v-if="canUpdateAnyAgeGroup"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                      >
+                        <component :is="Pencil" />
+                        <span>Edit</span>
+                      </Button>
+                    </template>
+                    <template v-else>
+                      <Button v-if="canRestoreAgeGroup" @click="restoreAgeGroup(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                        Restore
+                      </Button>
+                    </template>
+                  </div>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  {{ row[col.key] }}
+                </td>
+                <td v-if="!isArchived" class="p-2">
+                  <template v-if="canDeleteAnyAgeGroup">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
+                      <component :is="Trash" />
+                      <span>Delete</span>
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
 
