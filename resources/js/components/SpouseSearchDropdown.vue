@@ -98,6 +98,7 @@ interface Props {
   modelValue?: number | null;
   placeholder?: string;
   excludeId?: number;
+  familyNo?: string; // Add this prop
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -124,8 +125,8 @@ let searchTimeout: number;
 const memberNumberPattern = /^[A-Z]{3}-\d{3}$/;
 
 // Methods
-const performSearch = async (query: string) => {
-  if (query.length < 2) return;
+const performSearch = async (query: string, isIdSearch: boolean = false) => {
+  if (!isIdSearch && query.length < 2) return;
   
   isLoading.value = true;
   showDropdown.value = true;
@@ -133,104 +134,45 @@ const performSearch = async (query: string) => {
   try {
     const params = new URLSearchParams({
       q: query,
-      limit: '10'
+      limit: isIdSearch ? '1' : '10'
     });
     
     if (props.excludeId) {
       params.append('exclude_id', props.excludeId.toString());
     }
     
-    const response = await axios.get(`/api/members/search-spouse?${params}`);
-    searchResults.value = response.data;
-    highlightedIndex.value = -1;
-  } catch (error) {
-    console.error('Error searching members:', error);
-    searchResults.value = [];
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const fetchMemberDetails = async (memberId: number) => {
-  try {
-    isLoading.value = true;
-    // First try to get member details from the search API
-    const response = await axios.get(`/api/members/search-spouse?q=${memberId}&limit=1`);
-    if (response.data.length > 0) {
-      selectedMember.value = response.data[0];
-      searchQuery.value = selectedMember.value?.full_name || '';
-    } else {
-      // If not found by search, try to get member details directly
-      try {
-        const memberResponse = await axios.get(`/api/members/${memberId}`);
-        if (memberResponse.data) {
-          const member = memberResponse.data;
-          // Create full name from individual name parts
-          const fullName = `${member.first_name || ''} ${member.middle_name || ''} ${member.last_name || ''}`.trim();
-          
-          selectedMember.value = {
-            id: member.id,
-            text: fullName,
-            member_no: member.member_no || '',
-            family_no: member.family_no || '',
-            full_name: fullName,
-            community: member.community?.name || '',
-            relationship: member.relationship?.name || '',
-            gender: member.gender?.name || ''
-          };
-          searchQuery.value = fullName;
-        }
-      } catch (directError) {
-        console.error('Error fetching member details directly:', directError);
-        // If direct fetch fails, try to construct from available data
-        const fullName = `Member ID: ${memberId}`;
-        selectedMember.value = {
-          id: memberId,
-          text: fullName,
-          member_no: '',
-          family_no: '',
-          full_name: fullName,
-          community: '',
-          relationship: '',
-          gender: ''
-        };
-        searchQuery.value = fullName;
-      }
+    // Add family number filter if provided
+    if (props.familyNo) {
+      params.append('familyNo', props.familyNo);
     }
-  } catch (error) {
-    console.error('Error fetching member details:', error);
-  } finally {
-    isLoading.value = false;
-  }
-};
-
-const handleMemberNumberInput = async () => {
-  // Check if the input looks like a member number (e.g., SAL-001)
-  if (memberNumberPattern.test(searchQuery.value)) {
-    try {
-      isLoading.value = true;
-      const response = await axios.get(`/api/members/search-spouse?q=${searchQuery.value}&limit=1`);
+    
+    const response = await axios.get(`/api/members/search-spouse?${params}`);
+    
+    if (isIdSearch) {
+      // For ID search, select the member directly
       if (response.data.length > 0) {
         selectMember(response.data[0]);
-      } else {
-        // Show error or clear if member not found
-        searchQuery.value = '';
-        showDropdown.value = false;
       }
-    } catch (error) {
-      console.error('Error searching by member number:', error);
-      searchQuery.value = '';
-      showDropdown.value = false;
-    } finally {
-      isLoading.value = false;
+    } else {
+      // For regular search, update results
+      searchResults.value = response.data;
+      highlightedIndex.value = -1;
     }
+  } catch (error) {
+    console.error('Error searching members:', error);
+    if (!isIdSearch) {
+      searchResults.value = [];
+    }
+  } finally {
+    isLoading.value = false;
   }
 };
 
-// Update the watch for modelValue to properly handle initial loading:
+// Update the watch for modelValue to use the consolidated function
 watch(() => props.modelValue, (newValue) => {
   if (newValue && !selectedMember.value) {
-    fetchMemberDetails(newValue);
+    // Use the same search function for loading existing data
+    performSearch(newValue.toString(), true);
   } else if (!newValue) {
     selectedMember.value = null;
     searchQuery.value = '';
@@ -306,6 +248,12 @@ const selectFirstResult = () => {
   } else if (memberNumberPattern.test(searchQuery.value)) {
     // If no results but input looks like member number, try to find it
     handleMemberNumberInput();
+  }
+};
+
+const handleMemberNumberInput = async () => {
+  if (memberNumberPattern.test(searchQuery.value)) {
+    performSearch(searchQuery.value, true);
   }
 };
 </script> 

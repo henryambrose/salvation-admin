@@ -995,6 +995,7 @@ watch(() => form.mother_id, (newValue, oldValue) => {
                 :model-value="form.spouse_id"
                 @update:model-value="(value) => form.spouse_id = value"
                 :exclude-id="member?.id"
+                :familyNo="form.family_no"
                 placeholder="Search for spouse by name, member number, or family number..."
               />
               <InputError class="mt-2" :message="form.errors.spouse_id" />
@@ -1005,7 +1006,8 @@ watch(() => form.mother_id, (newValue, oldValue) => {
                 :model-value="form.father_id"
                 @update:model-value="(value) => form.father_id = value"
                 :exclude-id="member?.id"
-                placeholder="Search for spouse by name, member number, or family number..."
+                :familyNo="form.family_no"
+                placeholder="Search for father by name, member number, or family number..."
               />
               <InputError class="mt-2" :message="form.errors.father_id" />
             </div>
@@ -1015,7 +1017,8 @@ watch(() => form.mother_id, (newValue, oldValue) => {
                 :model-value="form.mother_id"
                 @update:model-value="(value) => form.mother_id = value"
                 :exclude-id="member?.id"
-                placeholder="Search for spouse by name, member number, or family number..."
+                :familyNo="form.family_no"
+                placeholder="Search for mother by name, member number, or family number..."
               />
               <InputError class="mt-2" :message="form.errors.mother_id" />
             </div>

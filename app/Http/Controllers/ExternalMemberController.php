@@ -398,6 +398,7 @@ class ExternalMemberController extends Controller
     {
         try {
             $query = $request->get('query', '');
+            $familyNo = $request->get('familyNo'); // Add this parameter
 
             if (strlen($query) < 2) {
                 return response()->json([]);
@@ -407,8 +408,14 @@ class ExternalMemberController extends Controller
                 $q->where('first_name', 'like', "%{$query}%")
                     ->orWhere('last_name', 'like', "%{$query}%")
                     ->orWhere('family_no', 'like', "%{$query}%");
-            })
-                ->with(['relationship'])
+            });
+
+            // Apply family number filter if provided
+            if ($familyNo) {
+                $externalMembers = $externalMembers->where('family_no', $familyNo);
+            }
+
+            $externalMembers = $externalMembers->with(['relationship'])
                 ->limit(10)
                 ->get();
 

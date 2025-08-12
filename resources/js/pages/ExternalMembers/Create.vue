@@ -188,6 +188,7 @@ watch(() => form.errors, (errors) => {
                 v-model="form.father_id"
                 v-model:sourceType="form.father_source"
                 :memberType="form.father_source"
+                :familyNo="form.family_no"
                 placeholder="Search for father..."
                 class="mt-1"
               />
@@ -199,6 +200,7 @@ watch(() => form.errors, (errors) => {
               <MemberTypeSearchDropdown
                 v-model="form.mother_id"
                 v-model:sourceType="form.mother_source"
+                :familyNo="form.family_no"
                 placeholder="Search for mother..."
                 class="mt-1"
               />
@@ -211,6 +213,7 @@ watch(() => form.errors, (errors) => {
                 v-model="form.spouse_id"
                  v-model:sourceType="form.spouse_source"
                 :memberType="form.spouse_source"
+                :familyNo="form.family_no"
                 placeholder="Search for spouse..."
                 class="mt-1"
               />

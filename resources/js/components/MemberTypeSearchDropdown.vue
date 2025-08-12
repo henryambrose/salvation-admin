@@ -107,6 +107,10 @@ const props = defineProps({
   sourceType: {
     type: String,
     default: ''
+  },
+  familyNo: { // Add this prop
+    type: String,
+    default: ''
   }
 })
 
@@ -162,7 +166,12 @@ const performSearch = async () => {
       ? '/api/external-members/search-all'
       : '/api/members/search-spouse';
 
-    const response = await fetch(`${endpoint}?query=${encodeURIComponent(searchQuery.value)}`);
+    const params = new URLSearchParams({
+      query: searchQuery.value,
+      ...(props.familyNo && { familyNo: props.familyNo }) // Add familyNo if provided
+    });
+
+    const response = await fetch(`${endpoint}?${params}`);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     searchResults.value = data.map((item) => ({
