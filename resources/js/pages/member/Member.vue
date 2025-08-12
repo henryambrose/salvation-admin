@@ -16,7 +16,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import {
   BloodGroups,
   Communities,
-  Community,
   Countries,
   Designations,
   IncomeRanges,

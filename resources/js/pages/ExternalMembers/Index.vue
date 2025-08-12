@@ -682,9 +682,20 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   left: 1.375rem;
 }
 
+/* Update the highlight-row styles */
 .highlight-row {
   background-color: #fef3c7 !important;
-  box-shadow: 0 0 0 2px #f59e0b;
+  /* Remove the box-shadow border */
+  animation: highlight-fade 2s ease-out;
+}
+
+@keyframes highlight-fade {
+  0% { 
+    background-color: #fde047; /* Tailwind yellow-300 */
+  }
+  100% { 
+    background-color: #fef3c7; /* Tailwind yellow-200 */
+  }
 }
 
 /* Copy animation styles */

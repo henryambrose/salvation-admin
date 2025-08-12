@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
-
 import FormBody from '@/components/FormBody.vue';
 import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';

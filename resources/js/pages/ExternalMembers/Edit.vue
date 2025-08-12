@@ -173,7 +173,9 @@ const validationErrors = computed(() =>
 )
 
 const submit = () => {
+  // Use form.put for updates, not router.put
   form.put(`/external-members/${props.externalMember.id}`, {
+    preserveScroll: true,
     onError: () => {
       showValidationModal.value = true
     }
@@ -184,3 +186,20 @@ const cancel = () => {
   router.visit('/external-members')
 }
 </script>
+<style>
+.highlight-field {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+  border-color: #f59e0b !important; /* Tailwind amber-500 */
+}
+@keyframes highlight-fade {
+  0% { 
+    background-color: #fde047; /* Tailwind yellow-300 */
+    border-color: #f59e0b; /* Tailwind amber-500 */
+  }
+  100% { 
+    background-color: inherit;
+    border-color: inherit;
+  }
+}
+</style>

@@ -275,8 +275,50 @@ class ExternalMemberController extends Controller
 
         $externalMember->update($validated);
 
-        return redirect()->route('external-members.index')
-            ->with('success', 'External member updated successfully.');
+        // Calculate the page where the updated member will be displayed
+        $perPage = $request->input('perPage', 15);
+        $query = ExternalMember::query()->with(['relationship', 'gender']);
+        
+        // Apply the same filters as the index method
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+        
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                    ->orWhere('family_no', 'like', "%$search%");
+            });
+        }
+        
+        if ($familySearch = $request->input('familySearch')) {
+            $query->where('family_no', 'like', "%$familySearch%");
+        }
+        
+        if ($relationship = $request->input('relationship')) {
+            $query->where('relationship_id', $relationship);
+        }
+        
+        $sort = $request->input('sort', 'first_name');
+        $direction = $request->input('direction', 'asc');
+        $query->orderBy($sort, $direction);
+        
+        $allIds = $query->pluck('id')->toArray();
+        $position = array_search($externalMember->id, $allIds);
+        $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+
+        return redirect()->route('external-members.index', array_merge(
+            $request->only(['search', 'familySearch', 'relationship', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+                'highlightId' => $externalMember->id,
+            ]
+        ))->with('success', 'External member updated successfully.');
     }
 
     /**
