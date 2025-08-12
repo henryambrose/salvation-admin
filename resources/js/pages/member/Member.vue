@@ -872,7 +872,10 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <InputError class="mt-2" :message="form.errors.status_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="relationship_id">Relationship <span class="text-red-500">*</span></Label>
+              <Label for="relationship_id">
+                Relationship <span class="text-red-500">*</span>
+                <span class="text-xs text-gray-500 font-normal">(with the head of the family)</span>
+              </Label>
               <SearchDropdown
                 id="relationship_id"
                 v-model="form.relationship_id"

@@ -86,7 +86,10 @@
             />
           </div>
           <div class="grid gap-2">
-            <Label for="relationship_id">Relationship <span class="text-red-500">*</span></Label>
+            <Label for="relationship_id">
+              Relationship <span class="text-red-500">*</span>
+              <span class="text-sm text-gray-500 font-normal">(with the head of the family)</span>
+            </Label>
             <SelectInput
               id="relationship_id"
               v-model="form.relationship_id"
