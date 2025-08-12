@@ -471,225 +471,213 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </select>
         </div>
       </transition>
-      <div class="mb-2 flex items-center justify-between">
-        <div class="text-sm text-gray-600">
+    </DatatableHeader>
+
+    <div v-if="props.canViewAnyMember">
+      <!-- Compact pagination with inline stats -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total members info -->
+        <div class="text-gray-600">
           Showing <span class="font-semibold">{{ familyStats.totalMembers || 0 }}</span> total members
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        <div class="flex items-center gap-4 text-sm text-gray-600">
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-              {{ familyStats.totalFamilies }} Families
-            </span>
+        
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="enhancedMembers.prev_page_url" 
+            @click="fetch(enhancedMembers.current_page! - 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
+              :value="enhancedMembers.current_page" 
+              @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ enhancedMembers.last_page }}</span>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              {{ familyStats.averageMembersPerFamily }} Avg/Family
-            </span>
-          </div>
+          
+          <button 
+            v-if="enhancedMembers.next_page_url" 
+            @click="fetch(enhancedMembers.current_page! + 1)" 
+            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Family stats -->
+        <div class="flex items-center gap-2 text-gray-600">
+          <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+            {{ familyStats.totalFamilies }} Families
+          </span>
+          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+            {{ familyStats.averageMembersPerFamily }} Avg/Family
+          </span>
         </div>
       </div>
-    </DatatableHeader>
 
-    <div class="overflow-x-auto">
-      <div v-if="props.canViewAnyMember">
-        <div class="datatable2 mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-          <!-- Enhanced Search & Filters -->
-
-
-          <!-- Table -->
-          <div class="overflow-x-auto rounded-xl border border-gray-100">
-            <table class="w-full border-collapse text-left">
-              <thead>
-                <tr class="bg-blue-50">
-                  <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
-                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
-                    class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
-                    {{ col.label }}
-                    <span v-if="col.sortable && sort === col.key">
-                      {{ direction === 'asc' ? '▲' : '▼' }}
-                    </span>
-                  </th>
-                  <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
-                  'even:bg-gray-50 hover:bg-blue-50 transition',
-                  highlightedRowId === member.id ? 'highlight-row' : ''
-                ]">
-                  <!-- View + Edit or Restore -->
-                  <td class="p-2 whitespace-nowrap">
-                    <div class="flex gap-2">
-                      <template v-if="!isArchived">
-                        <Button @click="openViewModal(member)"
-                          class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
-                          <component :is="ZapIcon" />
-                          <!-- <span>View</span> -->
-                        </Button>
-                        <Button v-if="canEditMember && !member.deleted_at" @click="editMember(member)"
-                          class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                          <component :is="Pencil" />
-                          <!-- <span>Edit</span> -->
-                        </Button>
-                        <Button @click="viewFamilyTree(member)"
-                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
-                          title="View Family Tree">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
-                          </svg>
-                        </Button>
-                      </template>
-                      <template v-else>
-                        <Button v-if="canRestoreMember" @click="restoreMember(member.id)"
-                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                          Restore
-                        </Button>
-                      </template>
-                    </div>
-                  </td>
-                  <!-- Main table data -->
-                  <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
-
-                    <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
-                      {{ formatDate(member[col.key]) }}
-                    </template>
-                    <template v-else-if="col.key === 'community_cluster_id'">
-                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{
-                        member.community_cluster_id || '—' }}</span>
-                    </template>
-                    <template v-else-if="col.key === 'community_id'">
-                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
-                        }}</span>
-                    </template>
-                    <template v-else-if="col.key === 'age'">
-                      {{ calculateAge(member.date_of_birth) }}
-                    </template>
-                    <template v-else-if="col.key === 'relationship_id'">
-                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
-                        '—' }}</span>
-                    </template>
-                    <template v-else-if="col.key === 'blood_group_id'">
-                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
-                        }}</span>
-                    </template>
-                    <template v-else-if="col.key === 'gender_id'">
-                      <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
-                    </template>
-                    <template v-else-if="col.key === 'church_code'">
-                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                        {{ member[col.key] || page.props.church_code }}
-                      </span>
-                    </template>
-                    <template v-else-if="col.key === 'family_no'">
-                      <span 
-                        v-if="member[col.key]"
-                        @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
-                        :class="[
-                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                          copiedItem?.id === `Family Number-${member.id}` 
-                            ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
-                            : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
-                        ]"
-                        :title="`Click to copy: ${member[col.key]}`"
-                      >
-                        {{ member[col.key] }}
-                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+      <div class="datatable2 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+        <!-- Table content -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
+                <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
+                  class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
+                  {{ col.label }}
+                  <span v-if="col.sortable && sort === col.key">
+                    {{ direction === 'asc' ? '▲' : '▼' }}
+                  </span>
+                </th>
+                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
+                'even:bg-gray-50 hover:bg-blue-50 transition',
+                highlightedRowId === member.id ? 'highlight-row' : ''
+              ]">
+                <!-- View + Edit or Restore -->
+                <td class="p-2 whitespace-nowrap">
+                  <div class="flex gap-2">
+                    <template v-if="!isArchived">
+                      <Button @click="openViewModal(member)"
+                        class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                        <component :is="ZapIcon" />
+                        <!-- <span>View</span> -->
+                      </Button>
+                      <Button v-if="canEditMember && !member.deleted_at" @click="editMember(member)"
+                        class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                        <component :is="Pencil" />
+                        <!-- <span>Edit</span> -->
+                      </Button>
+                      <Button @click="viewFamilyTree(member)"
+                        class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
+                        title="View Family Tree">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
                         </svg>
-                      </span>
-                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                        —
-                      </span>
-                    </template>
-                    <template v-else-if="col.key === 'member_no'">
-                      <span 
-                        v-if="member[col.key]"
-                        @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
-                        :class="[
-                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                          copiedItem?.id === `Member Number-${member.id}` 
-                            ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
-                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
-                        ]"
-                        :title="`Click to copy: ${member[col.key]}`"
-                      >
-                        {{ member[col.key] }}
-                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                        </svg>
-                      </span>
-                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                        —
-                      </span>
-                    </template>
-                    <template v-else>
-                      <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
-                    </template>
-                  </td>
-                  <!-- Delete -->
-                  <td v-if="!isArchived" class="p-2 whitespace-nowrap">
-                    <template v-if="canDeleteMember && !member.deleted_at">
-                      <Button variant="destructive" @click="openDeleteModal(member)"
-                        class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                        <component :is="Trash" />
-                        <!-- <span>Delete</span> -->
                       </Button>
                     </template>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+                    <template v-else>
+                      <Button v-if="canRestoreMember" @click="restoreMember(member.id)"
+                        class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                        Restore
+                      </Button>
+                    </template>
+                  </div>
+                </td>
+                <!-- Main table data -->
+                <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
 
-          <!-- Pagination -->
-          <!-- Enhanced Pagination -->
-          <div class="mt-6 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-2">
-              <button v-if="enhancedMembers.prev_page_url" @click="fetch(enhancedMembers.current_page - 1)"
-                class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                </svg>
-                Prev
-              </button>
-
-              <!-- Page Number Dropdown -->
-              <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600">Page</span>
-                <select v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
-                  :value="enhancedMembers.current_page"
-                  @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-                  class="rounded-full border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 shadow hover:bg-blue-50 transition focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                  <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
-                    {{ page }}
-                  </option>
-                </select>
-                <span v-if="enhancedMembers.last_page" class="text-sm text-gray-600">of {{ enhancedMembers.last_page
-                  }}</span>
-              </div>
-
-              <button v-if="enhancedMembers.next_page_url" @click="fetch(enhancedMembers.current_page + 1)"
-                class="rounded-full border border-gray-300 bg-white px-4 py-2 text-gray-700 shadow hover:bg-blue-50 transition flex items-center gap-1">
-                Next
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                </svg>
-              </button>
-            </div>
-
-            <!-- Total Records Info -->
-            <div class="text-sm text-gray-500">
-              <span v-if="enhancedMembers.total">Total: {{ enhancedMembers.total }} records</span>
-            </div>
-          </div>
+                  <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
+                    {{ formatDate(member[col.key]) }}
+                  </template>
+                  <template v-else-if="col.key === 'community_cluster_id'">
+                    <span class="block truncate" :title="member.community_cluster_id || '—'">{{
+                      member.community_cluster_id || '—' }}</span>
+                  </template>
+                  <template v-else-if="col.key === 'community_id'">
+                    <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
+                      }}</span>
+                  </template>
+                  <template v-else-if="col.key === 'age'">
+                    {{ calculateAge(member.date_of_birth) }}
+                  </template>
+                  <template v-else-if="col.key === 'relationship_id'">
+                    <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
+                      '—' }}</span>
+                  </template>
+                  <template v-else-if="col.key === 'blood_group_id'">
+                    <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
+                      }}</span>
+                  </template>
+                  <template v-else-if="col.key === 'gender_id'">
+                    <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
+                  </template>
+                  <template v-else-if="col.key === 'church_code'">
+                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      {{ member[col.key] || page.props.church_code }}
+                    </span>
+                  </template>
+                  <template v-else-if="col.key === 'family_no'">
+                    <span 
+                      v-if="member[col.key]"
+                      @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
+                      :class="[
+                        'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                        copiedItem?.id === `Family Number-${member.id}` 
+                          ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
+                          : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
+                      ]"
+                      :title="`Click to copy: ${member[col.key]}`"
+                    >
+                      {{ member[col.key] }}
+                      <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                    </span>
+                    <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                      —
+                    </span>
+                  </template>
+                  <template v-else-if="col.key === 'member_no'">
+                    <span 
+                      v-if="member[col.key]"
+                      @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
+                      :class="[
+                        'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                        copiedItem?.id === `Member Number-${member.id}` 
+                          ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
+                          : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
+                      ]"
+                      :title="`Click to copy: ${member[col.key]}`"
+                    >
+                      {{ member[col.key] }}
+                      <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                      </svg>
+                    </span>
+                    <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                      —
+                    </span>
+                  </template>
+                  <template v-else>
+                    <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
+                  </template>
+                </td>
+                <!-- Delete -->
+                <td v-if="!isArchived" class="p-2 whitespace-nowrap">
+                  <template v-if="canDeleteMember && !member.deleted_at">
+                    <Button variant="destructive" @click="openDeleteModal(member)"
+                      class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                      <component :is="Trash" />
+                      <!-- <span>Delete</span> -->
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-      <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
     </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
   </AppLayout>
 
   <!-- Member Details Modal -->
