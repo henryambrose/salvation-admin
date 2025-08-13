@@ -108,6 +108,46 @@ class UnifiedPerson extends Model
     }
 
     // ─────────────────────────────────────────────────────────────
+    // Extended Generation Methods
+    // ─────────────────────────────────────────────────────────────
+    
+    public function getGrandchildren()
+    {
+        $grandchildren = collect();
+        foreach ($this->getChildren() as $child) {
+            $childChildren = $child->getChildren();
+            if ($childChildren->isNotEmpty()) {
+                $grandchildren = $grandchildren->merge($childChildren);
+            }
+        }
+        return $grandchildren;
+    }
+
+    public function getGreatGrandchildren()
+    {
+        $greatGrandchildren = collect();
+        foreach ($this->getGrandchildren() as $grandchild) {
+            $grandchildChildren = $grandchild->getChildren();
+            if ($grandchildChildren->isNotEmpty()) {
+                $greatGrandchildren = $greatGrandchildren->merge($grandchildChildren);
+            }
+        }
+        return $greatGrandchildren;
+    }
+
+    public function getGreatGreatGrandchildren()
+    {
+        $greatGreatGrandchildren = collect();
+        foreach ($this->getGreatGrandchildren() as $greatGrandchild) {
+            $greatGrandchildChildren = $greatGrandchild->getChildren();
+            if ($greatGrandchildChildren->isNotEmpty()) {
+                $greatGreatGrandchildren = $greatGreatGrandchildren->merge($greatGrandchildChildren);
+            }
+        }
+        return $greatGreatGrandchildren;
+    }
+
+    // ─────────────────────────────────────────────────────────────
     // Helpers
     // ─────────────────────────────────────────────────────────────
 

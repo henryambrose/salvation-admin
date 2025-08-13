@@ -63,6 +63,42 @@
         </div>
       </section>
 
+      <section v-if="greatGrandparents.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Grandparents</h3>
+        <div class="grid-autofit">
+          <div v-for="p in greatGrandparents" :key="p.member.id" class="card-neo tone-amber">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(p.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
+                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
+              </div>
+            </div>
+            <span class="badge badge-amber">{{ p.member.source }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="greatGreatGrandparents.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Great Grandparents</h3>
+        <div class="grid-autofit">
+          <div v-for="p in greatGreatGrandparents" :key="p.member.id" class="card-neo tone-amber">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(p.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
+                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
+              </div>
+            </div>
+            <span class="badge badge-amber">{{ p.member.source }}</span>
+          </div>
+        </div>
+      </section>
+
       <section v-if="parents.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Parents</h3>
         <div class="grid-autofit">
@@ -173,6 +209,42 @@
         </div>
       </section>
 
+      <section v-if="greatGrandchildren.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Grandchildren</h3>
+        <div class="grid-autofit">
+          <div v-for="gc in greatGrandchildren" :key="gc.member.id" class="card-neo tone-teal">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(gc.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(gc.member) }}</div>
+                <div class="text-xs text-gray-500">{{ gc.relationship }}</div>
+              </div>
+            </div>
+            <span class="badge badge-teal">{{ gc.member.source }}</span>
+          </div>
+        </div>
+      </section>
+
+      <section v-if="greatGreatGrandchildren.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Great Grandchildren</h3>
+        <div class="grid-autofit">
+          <div v-for="gc in greatGreatGrandchildren" :key="gc.member.id" class="card-neo tone-teal">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(gc.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(gc.member) }}</div>
+                <div class="text-xs text-gray-500">{{ gc.relationship }}</div>
+              </div>
+            </div>
+            <span class="badge badge-teal">{{ gc.member.source }}</span>
+          </div>
+        </div>
+      </section>
+
       <section v-if="familyMembers.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Other Family Members</h3>
         <div class="grid-autofit">
@@ -248,23 +320,36 @@ const raw = computed(() => Array.isArray(props.familyTree) ? props.familyTree : 
 // relation groups
 const REL = {
   grandparents: ['Grand Father', 'Grand Mother'],
+  greatGrandparents: ['Great Grand Father', 'Great Grand Mother'],
+  greatGreatGrandparents: ['Great Great Grand Father', 'Great Great Grand Mother'],
   parents: ['Father', 'Mother'],
   spouse: ['Husband', 'Wife'],
   siblings: ['Brother', 'Sister'],
   children: ['Son', 'Daughter'],
   grandchildren: ['Grandson', 'Granddaughter'],
+  greatGrandchildren: ['Great Grandson', 'Great Granddaughter'],
+  greatGreatGrandchildren: ['Great Great Grandson', 'Great Great Granddaughter'],
   others: [
     'Uncle', 'Aunt', 'Nephew', 'Niece',
     'Cousin Brother', 'Cousin Sister',
     'Brother-in-Law', 'Sister-in-Law',
     'Father-in-Law', 'Mother-in-Law',
-    'Son-in-Law', 'Daughter-in-Law'
+    'Son-in-Law', 'Daughter-in-Law',
+    'Grandfather-in-Law', 'Grandmother-in-Law',
+    'Great Grandfather-in-Law', 'Great Grandmother-in-Law',
+    'Grandson-in-Law', 'Granddaughter-in-Law',
+    'Great Grandson-in-Law', 'Great Granddaughter-in-Law',
+    'Great Great Grandson-in-Law', 'Great Great Granddaughter-in-Law',
+    'Great Nephew', 'Great Niece',
+    'Great Great Nephew', 'Great Great Niece'
   ]
 }
 const wrap = (arr) => arr.map(m => ({ member: m, relationship: m.relation }))
 
 // sections from relation
 const grandparents = computed(() => wrap(raw.value.filter(m => REL.grandparents.includes(m.relation))))
+const greatGrandparents = computed(() => wrap(raw.value.filter(m => REL.greatGrandparents.includes(m.relation))))
+const greatGreatGrandparents = computed(() => wrap(raw.value.filter(m => REL.greatGreatGrandparents.includes(m.relation))))
 
 const parents = computed(() => wrap(raw.value.filter(m => REL.parents.includes(m.relation))))
 const spouse = computed(() => {
@@ -275,6 +360,8 @@ const spouse = computed(() => {
 const siblings = computed(() => wrap(raw.value.filter(m => REL.siblings.includes(m.relation))))
 const children = computed(() => wrap(raw.value.filter(m => REL.children.includes(m.relation))))
 const grandchildren = computed(() => wrap(raw.value.filter(m => REL.grandchildren.includes(m.relation))))
+const greatGrandchildren = computed(() => wrap(raw.value.filter(m => REL.greatGrandchildren.includes(m.relation))))
+const greatGreatGrandchildren = computed(() => wrap(raw.value.filter(m => REL.greatGreatGrandchildren.includes(m.relation))))
 const familyMembers = computed(() => wrap(raw.value.filter(m => REL.others.includes(m.relation))))
 
 // optional: no separate external list (external are shown with badges within each section)
@@ -286,7 +373,11 @@ const hasAnyMembers = computed(() => {
     siblings.value.length ||
     children.value.length ||
     grandparents.value.length ||
+    greatGrandparents.value.length ||
+    greatGreatGrandparents.value.length ||
     grandchildren.value.length ||
+    greatGrandchildren.value.length ||
+    greatGreatGrandchildren.value.length ||
     familyMembers.value.length ||
     externalMembers.value.length ||
     spouse.value)
