@@ -647,14 +647,14 @@ class MemberController extends Controller
     /**
      * Get family tree data via API
      */
-    public function getFamilyTreeData($id)
-    {
-        $member = Member::findOrFail($id);
-        $service = new FamilyTreeService;
-        $person = UnifiedPerson::where('uid', 'M-'.$member->id)->first();
+    // public function getFamilyTreeData($id)
+    // {
+    //     $member = Member::findOrFail($id);
+    //     $service = new FamilyTreeService;
+    //     $person = UnifiedPerson::where('uid', 'M-'.$member->id)->first();
 
-        return response()->json($person ? $service->getFamilyTree($person) : []);
-    }
+    //     return response()->json($person ? $service->getFamilyTree($person) : []);
+    // }
 
     /**
      * Search members for family tree
@@ -677,96 +677,91 @@ class MemberController extends Controller
     /**
      * Add relationship between members
      */
-    public function addFamilyRelationship(Request $request)
-    {
-        $request->validate([
-            'member_id' => 'required|exists:members,id',
-            'related_member_id' => 'nullable|exists:members,id',
-            'related_external_member_id' => 'nullable|exists:external_members,id',
-            'relationship_id' => 'required|exists:relationships,id',
-        ]);
+    // public function addFamilyRelationship(Request $request)
+    // {
+    //     $request->validate([
+    //         'member_id' => 'required|exists:members,id',
+    //         'related_member_id' => 'nullable|exists:members,id',
+    //         'related_external_member_id' => 'nullable|exists:external_members,id',
+    //         'relationship_id' => 'required|exists:relationships,id',
+    //     ]);
 
-        $familyTreeService = new FamilyTreeService;
+    //     $familyTreeService = new FamilyTreeService;
 
-        // Check if we're adding a relationship with an external member
-        if ($request->has('related_external_member_id') && $request->related_external_member_id) {
-            $success = $familyTreeService->addExternalRelationship(
-                $request->member_id,
-                $request->related_external_member_id,
-                $request->relationship_id
-            );
-        } else {
-            $success = $familyTreeService->addRelationship(
-                $request->member_id,
-                $request->related_member_id,
-                $request->relationship_id
-            );
-        }
+    //     // Check if we're adding a relationship with an external member
+    //     if ($request->has('related_external_member_id') && $request->related_external_member_id) {
+    //         $success = $familyTreeService->addExternalRelationship(
+    //             $request->member_id,
+    //             $request->related_external_member_id,
+    //             $request->relationship_id
+    //         );
+    //     } else {
+    //         $success = $familyTreeService->addRelationship(
+    //             $request->member_id,
+    //             $request->related_member_id,
+    //             $request->relationship_id
+    //         );
+    //     }
 
-        if (! $success) {
-            return response()->json(['error' => 'Relationship already exists'], 400);
-        }
+    //     if (! $success) {
+    //         return response()->json(['error' => 'Relationship already exists'], 400);
+    //     }
 
-        return response()->json(['message' => 'Relationship added successfully']);
-    }
+    //     return response()->json(['message' => 'Relationship added successfully']);
+    // }
 
     /**
      * Remove relationship between members
      */
-    public function removeFamilyRelationship(Request $request)
-    {
-        $request->validate([
-            'member_id' => 'required|exists:members,id',
-            'related_member_id' => 'required|exists:members,id',
-        ]);
+    // public function removeFamilyRelationship(Request $request)
+    // {
+    //     $request->validate([
+    //         'member_id' => 'required|exists:members,id',
+    //         'related_member_id' => 'required|exists:members,id',
+    //     ]);
 
-        $familyTreeService = new FamilyTreeService;
-        $success = $familyTreeService->removeRelationship(
-            $request->member_id,
-            $request->related_member_id
-        );
+    //     $familyTreeService = new FamilyTreeService;
+    //     $success = $familyTreeService->removeRelationship(
+    //         $request->member_id,
+    //         $request->related_member_id
+    //     );
 
-        if (! $success) {
-            return response()->json(['error' => 'Relationship not found'], 404);
-        }
+    //     if (! $success) {
+    //         return response()->json(['error' => 'Relationship not found'], 404);
+    //     }
 
-        return response()->json(['message' => 'Relationship removed successfully']);
-    }
+    //     return response()->json(['message' => 'Relationship removed successfully']);
+    // }
 
-    public function searchOptions(Request $request)
-    {
-        $search = $request->input('search', '');
+    // public function searchOptions(Request $request)
+    // {
+    //     $search = $request->input('search', '');
 
-        $members = Member::query()
-            ->select('id', 'first_name', 'last_name')
-            ->when($search, function ($query, $search) {
-                $query->where('first_name', 'like', "%$search%")
-                    ->orWhere('last_name', 'like', "%$search%");
-            })
+    //     $members = Member::query()
+    //         ->select('id', 'first_name', 'last_name')
+    //         ->when($search, function ($query, $search) {
+    //             $query->where('first_name', 'like', "%$search%")
+    //                 ->orWhere('last_name', 'like', "%$search%");
+    //         })
 
-            ->orderBy('first_name', 'asc')
-            ->limit(10)
-            ->get();
+    //         ->orderBy('first_name', 'asc')
+    //         ->limit(10)
+    //         ->get();
 
-        $members = $members->map(function ($member) {
-            return [
-                'id' => $member->id,
-                'name' => $member->first_name.' '.$member->last_name,
-            ];
-        });
+    //     $members = $members->map(function ($member) {
+    //         return [
+    //             'id' => $member->id,
+    //             'name' => $member->first_name.' '.$member->last_name,
+    //         ];
+    //     });
 
-        return response()->json($members);
-    }
+    //     return response()->json($members);
+    // }
 
     
     public function export(Request $request)
     {
         $this->authorize('viewAny', Member::class);
-    
-        // If you use Debugbar, disable it for this binary response
-        // if (class_exists(\Barryvdh\Debugbar\Facade::class)) { \Debugbar::disable(); }
-    
-        // Make sure nothing is already in the output buffer
         while (ob_get_level()) { ob_end_clean(); }
         @ini_set('zlib.output_compression', '0');
     
@@ -901,55 +896,55 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
-    public function moveFamily(Request $request, $familyNo)
-    {
-        $request->validate([
-            'new_community_id' => 'required|exists:communities,id',
-            'move_date' => 'required|date',
-            'reason' => 'nullable|string',
-        ]);
+    // public function moveFamily(Request $request, $familyNo)
+    // {
+    //     $request->validate([
+    //         'new_community_id' => 'required|exists:communities,id',
+    //         'move_date' => 'required|date',
+    //         'reason' => 'nullable|string',
+    //     ]);
 
-        $numberingService = new \App\Services\FamilyNumberingService;
+    //     $numberingService = new \App\Services\FamilyNumberingService;
 
-        DB::beginTransaction();
+    //     DB::beginTransaction();
 
-        try {
-            // Move family to new community
-            $members = $numberingService->handleFamilyMove(
-                $familyNo,
-                $request->new_community_id
-            );
+    //     try {
+    //         // Move family to new community
+    //         $members = $numberingService->handleFamilyMove(
+    //             $familyNo,
+    //             $request->new_community_id
+    //         );
 
-            // Log the move
-            DB::table('family_move_logs')->insert([
-                'family_no' => $familyNo,
-                'old_community_id' => $members->first()->community_id,
-                'new_community_id' => $request->new_community_id,
-                'move_date' => $request->move_date,
-                'reason' => $request->reason,
-                'moved_by' => auth()->id(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+    //         // Log the move
+    //         DB::table('family_move_logs')->insert([
+    //             'family_no' => $familyNo,
+    //             'old_community_id' => $members->first()->community_id,
+    //             'new_community_id' => $request->new_community_id,
+    //             'move_date' => $request->move_date,
+    //             'reason' => $request->reason,
+    //             'moved_by' => auth()->id(),
+    //             'created_at' => now(),
+    //             'updated_at' => now(),
+    //         ]);
 
-            DB::commit();
+    //         DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Family moved successfully',
-                'family_no' => $familyNo,
-                'new_community' => \App\Models\Community::find($request->new_community_id)->name,
-            ]);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Family moved successfully',
+    //             'family_no' => $familyNo,
+    //             'new_community' => \App\Models\Community::find($request->new_community_id)->name,
+    //         ]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to move family: '.$e->getMessage(),
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to move family: '.$e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     public function handleMarriage(Request $request)
     {

@@ -9,12 +9,12 @@ Route::middleware('auth')->group(function () {
     Route::get('member/index', [MemberController::class, 'index'])->name('member.index');
     Route::get('member/export', [MemberController::class, 'export'])->name('member.export');
     Route::resource('member', MemberController::class)->except(['index']);
-    Route::get('member/search-options', [MemberController::class, 'searchOptions'])
-        ->name('member.search-options');
+    // Route::get('member/search-options', [MemberController::class, 'searchOptions'])
+    //     ->name('member.search-options');
         Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
     // Family numbering system routes
-    Route::post('member/move-family/{familyNo}', [MemberController::class, 'moveFamily'])
-        ->name('member.move-family');
+    // Route::post('member/move-family/{familyNo}', [MemberController::class, 'moveFamily'])
+    //     ->name('member.move-family');
     Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
         ->name('member.handle-marriage');
     Route::get('member/search-families', [MemberController::class, 'searchFamilies'])
