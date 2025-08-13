@@ -11,7 +11,7 @@ Route::get('/', function () {
 })->name('home');
 
 // Protected routes
-Route::middleware(['auth', 'verified', 'no-cache'])->group(function () {
+Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
     
