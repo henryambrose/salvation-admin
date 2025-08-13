@@ -9,6 +9,7 @@ import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 
 const { can } = permissionHelpers();
 
@@ -398,10 +399,12 @@ onMounted(() => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">City</label>
-                <select v-model="form.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select City ({{ props.cities?.length || 0 }} cities loaded)</option>
-                  <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
+                <SearchDropdown
+                  v-model="form.city_id"
+                  :options="props.cities"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Search city..."
+                />
                 <div v-if="form.errors.city_id" class="mt-1 text-sm text-red-500">{{ form.errors.city_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">
@@ -446,10 +449,12 @@ onMounted(() => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">City</label>
-                <select v-model="editForm.city_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                  <option value="" disabled>Select City ({{ props.cities?.length || 0 }} cities loaded)</option>
-                  <option v-for="c in props.cities" :key="c.id" :value="c.id">{{ c.name }}</option>
-                </select>
+                <SearchDropdown
+                  v-model="editForm.city_id"
+                  :options="props.cities"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                  placeholder="Search city..."
+                />
                 <div v-if="editForm.errors.city_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.city_id }}</div>
               </div>
               <div class="flex justify-end space-x-2">

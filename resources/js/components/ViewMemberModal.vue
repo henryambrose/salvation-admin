@@ -310,7 +310,12 @@ async function fetchFamilyMembers() {
   
   loadingFamilyMembers.value = true;
   try {
-    const response = await axios.get(`/api/family/${props.member.family_no}/members`);
+    // Pass the current member ID to exclude them from the list
+    const response = await axios.get(`/api/families/${props.member.family_no}/members`, {
+      params: {
+        exclude_member_id: props.member.id
+      }
+    });
     familyMembers.value = response.data;
   } catch (error) {
     console.error('Error fetching family members:', error);
@@ -459,7 +464,6 @@ watch(() => currentTab.value, (newTab) => {
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Last Name</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date of Birth</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Age</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Relationship</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
@@ -471,9 +475,6 @@ watch(() => currentTab.value, (newTab) => {
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
                           {{ calculateAge(familyMember.date_of_birth) || '—' }}
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ familyMember.relationship?.name || '—' }}
                         </td>
                       </tr>
                     </tbody>

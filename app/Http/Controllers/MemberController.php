@@ -886,12 +886,19 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
-    public function getMembersByFamily($familyNo)
+    public function getMembersByFamily($familyNo, Request $request)
     {
-        $members = Member::where('family_no', $familyNo)
-            ->with('relationship')
-            ->select('id', 'first_name', 'last_name', 'date_of_birth', 'relationship_id')
-            ->get();
+        $excludeMemberId = $request->query('exclude_member_id');
+        
+        $query = Member::where('family_no', $familyNo)
+            ->select('id', 'first_name', 'last_name', 'date_of_birth');
+        
+        // Exclude the current member if exclude_member_id is provided
+        if ($excludeMemberId) {
+            $query->where('id', '!=', $excludeMemberId);
+        }
+        
+        $members = $query->get();
 
         return response()->json($members);
     }
