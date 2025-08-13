@@ -44,43 +44,6 @@
           {{ displayNameWithNo(person) || 'Unknown' }}
         </div>
       </div>
-
-      <section v-if="grandparents.length" class="space-y-3">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Grandparents</h3>
-        <div class="grid-autofit">
-          <div v-for="p in grandparents" :key="p.member.id" class="card-neo tone-amber">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
-                {{ initials(p.member) }}
-              </div>
-              <div>
-                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
-                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
-              </div>
-            </div>
-            <span class="badge badge-amber">{{ p.member.source }}</span>
-          </div>
-        </div>
-      </section>
-
-      <section v-if="greatGrandparents.length" class="space-y-3">
-        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Grandparents</h3>
-        <div class="grid-autofit">
-          <div v-for="p in greatGrandparents" :key="p.member.id" class="card-neo tone-amber">
-            <div class="flex items-center space-x-3">
-              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
-                {{ initials(p.member) }}
-              </div>
-              <div>
-                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
-                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
-              </div>
-            </div>
-            <span class="badge badge-amber">{{ p.member.source }}</span>
-          </div>
-        </div>
-      </section>
-
       <section v-if="greatGreatGrandparents.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Great Grandparents</h3>
         <div class="grid-autofit">
@@ -98,7 +61,40 @@
           </div>
         </div>
       </section>
-
+      <section v-if="greatGrandparents.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Grandparents</h3>
+        <div class="grid-autofit">
+          <div v-for="p in greatGrandparents" :key="p.member.id" class="card-neo tone-amber">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(p.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
+                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
+              </div>
+            </div>
+            <span class="badge badge-amber">{{ p.member.source }}</span>
+          </div>
+        </div>
+      </section>
+      <section v-if="grandparents.length" class="space-y-3">
+        <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Grandparents</h3>
+        <div class="grid-autofit">
+          <div v-for="p in grandparents" :key="p.member.id" class="card-neo tone-amber">
+            <div class="flex items-center space-x-3">
+              <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold">
+                {{ initials(p.member) }}
+              </div>
+              <div>
+                <div class="name font-medium">{{ displayNameWithNo(p.member) }}</div>
+                <div class="text-xs text-gray-500">{{ p.relationship }} </div>
+              </div>
+            </div>
+            <span class="badge badge-amber">{{ p.member.source }}</span>
+          </div>
+        </div>
+      </section>
       <section v-if="parents.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Parents</h3>
         <div class="grid-autofit">
@@ -116,7 +112,6 @@
           </div>
         </div>
       </section>
-
       <section class="space-y-3">
         <h3 class="section-title">
           Primary — {{ displayNameWithNo(person) || 'Unknown' }} <span v-if="person?.family_no"
@@ -154,7 +149,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="siblings.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Siblings</h3>
         <div class="grid-autofit">
@@ -172,7 +166,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="children.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Children</h3>
         <div class="grid-autofit">
@@ -190,7 +183,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="grandchildren.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Grandchildren</h3>
         <div class="grid-autofit">
@@ -208,7 +200,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="greatGrandchildren.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Grandchildren</h3>
         <div class="grid-autofit">
@@ -226,7 +217,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="greatGreatGrandchildren.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Great Great Grandchildren</h3>
         <div class="grid-autofit">
@@ -244,7 +234,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="familyMembers.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Other Family Members</h3>
         <div class="grid-autofit">
@@ -262,7 +251,6 @@
           </div>
         </div>
       </section>
-
       <section v-if="externalMembers.length" class="space-y-3">
         <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">External Members</h3>
         <div class="grid-autofit">
@@ -319,29 +307,27 @@ const raw = computed(() => Array.isArray(props.familyTree) ? props.familyTree : 
 
 // relation groups
 const REL = {
-  grandparents: ['Grand Father', 'Grand Mother'],
-  greatGrandparents: ['Great Grand Father', 'Great Grand Mother'],
   greatGreatGrandparents: ['Great Great Grand Father', 'Great Great Grand Mother'],
-  parents: ['Father', 'Mother'],
+  greatGrandparents: ['Great Grand Father', 'Great Grand Mother','Great Grandfather-in-Law', 'Great Grandmother-in-Law'],
+  grandparents: ['Grand Father', 'Grand Mother','Grandfather-in-Law', 'Grandmother-in-Law' ],
+  parents: ['Father', 'Mother', 'Father-in-Law', 'Mother-in-Law'],
   spouse: ['Husband', 'Wife'],
-  siblings: ['Brother', 'Sister'],
-  children: ['Son', 'Daughter'],
-  grandchildren: ['Grandson', 'Granddaughter'],
-  greatGrandchildren: ['Great Grandson', 'Great Granddaughter'],
-  greatGreatGrandchildren: ['Great Great Grandson', 'Great Great Granddaughter'],
+  siblings: ['Brother', 'Sister','Brother-in-Law', 'Sister-in-Law'],
+  children: ['Son', 'Daughter','Son-in-Law', 'Daughter-in-Law'],
+  grandchildren: ['Grandson', 'Granddaughter','Grandson-in-Law', 'Granddaughter-in-Law'],
+  greatGrandchildren: ['Great Grandson', 'Great Granddaughter','Great Grandson-in-Law', 'Great Granddaughter-in-Law'],
+  greatGreatGrandchildren: ['Great Great Grandson', 'Great Great Granddaughter','Great Great Grandson-in-Law', 'Great Great Granddaughter-in-Law'],
   others: [
-    'Uncle', 'Aunt', 'Nephew', 'Niece',
-    'Cousin Brother', 'Cousin Sister',
-    'Brother-in-Law', 'Sister-in-Law',
-    'Father-in-Law', 'Mother-in-Law',
-    'Son-in-Law', 'Daughter-in-Law',
-    'Grandfather-in-Law', 'Grandmother-in-Law',
-    'Great Grandfather-in-Law', 'Great Grandmother-in-Law',
-    'Grandson-in-Law', 'Granddaughter-in-Law',
-    'Great Grandson-in-Law', 'Great Granddaughter-in-Law',
-    'Great Great Grandson-in-Law', 'Great Great Granddaughter-in-Law',
+    
+    'Uncle', 'Aunt', 
+    'Nephew', 'Niece',
     'Great Nephew', 'Great Niece',
-    'Great Great Nephew', 'Great Great Niece'
+    'Great Great Nephew', 'Great Great Niece',
+    'Nephew-in-law', 'Niece-in-law',
+    'Uncle-in-Law', 'Aunt-in-Law',
+    'Cousin Brother', 'Cousin Sister',
+    'Cousin Brother-in-Law', 'Cousin Sister-in-Law',
+
   ]
 }
 const wrap = (arr) => arr.map(m => ({ member: m, relationship: m.relation }))

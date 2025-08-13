@@ -11,8 +11,8 @@ class FamilyTreeService
     public function getFamilyTree(UnifiedPerson $person): array
     {
         $familyMembers = $this->getFamilyMembers($person);
-        // $externalMembers = $this->getExternalMembers($person);
-
+        $externalMembers = $this->getExternalMembers($person);
+        
         return [
             'person' => $this->formatUnifiedPerson($person),
             'parents' => $this->getParents($person),
@@ -83,13 +83,6 @@ class FamilyTreeService
 
     public function getSpouse(UnifiedPerson $person): ?array
     {
-        \Log::info('Getting spouse for person', [
-            'person_uid' => $person->uid,
-            'person_name' => $person->full_name,
-            'spouse_uid' => $person->spouse_uid,
-            'has_spouse' => $person->spouse ? 'yes' : 'no'
-        ]);
-        
         return $person->spouse ? [
             'member' => $this->formatUnifiedPerson($person->spouse),
             'relationship' => $person->spouse->gender_id == 1 ? 'Husband' : 'Wife',
@@ -257,17 +250,24 @@ class FamilyTreeService
             }
         }
 
+        // ✅ Great Grandchild's spouse has higher priority than any sister/brother-in-law logic
+        foreach ($p1->getChildren() as $child) {
+            foreach ($child->getChildren() as $grandchild) {
+                foreach ($grandchild->getChildren() as $greatGrandchild) {
+                    if ($greatGrandchild->spouse_uid === $p2->uid || $p2->spouse_uid === $greatGrandchild->uid) {
+                        return $p2->gender_id == 1 ? 'Great Grandson-in-Law' : 'Great Granddaughter-in-Law';
+                    }
+                }
+            }
+        }
+
         // NEW LOGIC: Handle females who married into the family
         if ($p1->gender_id == 2 && // Female
             $p1->spouse_uid && // Has spouse
             !$p1->father_uid && // No father (not born into family)
             !$p1->mother_uid) { // No mother (not born into family)
             
-            \Log::info('Female married into family - checking in-law relationships', [
-                'p1' => $p1->uid,
-                'p2' => $p2->uid,
-                'p1_spouse_uid' => $p1->spouse_uid
-            ]);
+
             
             // Check if p2 is her spouse
             if ($p1->spouse_uid === $p2->uid) {
@@ -310,7 +310,517 @@ class FamilyTreeService
             }
         }
 
-        // ALSO CHECK: Handle when p2 is a female who married into the family
+        // MOVED: Female married into family logic will be placed AFTER male logic
+
+        // NEW LOGIC: Handle males who married into the family
+        if ($p1->gender_id == 1 && // Male
+            $p1->spouse_uid && // Has spouse
+            !$p1->father_uid && // No father (not born into family)
+            !$p1->mother_uid) { // No mother (not born into family)
+            
+            \Log::info('Male married into family - checking in-law relationships', [
+                'p1' => $p1->uid,
+                'p2' => $p2->uid,
+                'p1_spouse_uid' => $p1->spouse_uid
+            ]);
+            
+            // Check if p2 is his spouse
+            if ($p1->spouse_uid === $p2->uid) {
+                return $p2->gender_id == 1 ? 'Husband' : 'Wife';
+            }
+            
+            // Check if p2 is his spouse's parent (Father-in-Law/Mother-in-Law)
+            if ($p1->spouse) {
+                \Log::info('Checking parent-in-law relationships', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid,
+                    'spouse_father_uid' => $p1->spouse->father_uid,
+                    'spouse_mother_uid' => $p1->spouse->mother_uid,
+                    'p2_is_spouse_father' => $p1->spouse->father_uid === $p2->uid,
+                    'p2_is_spouse_mother' => $p1->spouse->mother_uid === $p2->uid
+                ]);
+                
+                if ($p1->spouse->father_uid === $p2->uid) {
+                    \Log::info('Found Father-in-Law', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                    return 'Father-in-Law';
+                }
+                if ($p1->spouse->mother_uid === $p2->uid) {
+                    \Log::info('Found Mother-in-Law', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                    return 'Mother-in-Law';
+                }
+                
+                \Log::info('Parent-in-Law check completed - no match found', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid
+                ]);
+            }
+            
+            // Check if p2 is his spouse's grandparent (Grandfather-in-Law/Grandmother-in-Law)
+            if ($p1->spouse) {
+                \Log::info('Checking grandparent-in-law relationships', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid,
+                    'spouse_father_uid' => $p1->spouse->father_uid,
+                    'spouse_mother_uid' => $p1->spouse->mother_uid,
+                    'spouse_father_father_uid' => $p1->spouse->father ? $p1->spouse->father->father_uid : 'null',
+                    'spouse_father_mother_uid' => $p1->spouse->father ? $p1->spouse->father->mother_uid : 'null',
+                    'spouse_mother_father_uid' => $p1->spouse->mother ? $p1->spouse->mother->father_uid : 'null',
+                    'spouse_mother_mother_uid' => $p1->spouse->mother ? $p1->spouse->mother->mother_uid : 'null'
+                ]);
+                
+                // ADDITIONAL DEBUG: Check the actual objects
+                if ($p1->spouse->father) {
+                    \Log::info('Spouse father details', [
+                        'father_uid' => $p1->spouse->father->uid,
+                        'father_father_uid' => $p1->spouse->father->father_uid,
+                        'father_mother_uid' => $p1->spouse->father->mother_uid,
+                        'father_name' => $p1->spouse->father->name ?? 'Unknown'
+                    ]);
+                }
+                if ($p1->spouse->mother) {
+                    \Log::info('Spouse mother details', [
+                        'mother_uid' => $p1->spouse->mother->uid,
+                        'mother_father_uid' => $p1->spouse->mother->father_uid,
+                        'mother_mother_uid' => $p1->spouse->mother->mother_uid,
+                        'mother_name' => $p1->spouse->mother->name ?? 'Unknown'
+                    ]);
+                }
+                
+                // Check if p2 is spouse's father's father (Grandfather-in-Law)
+                if ($p1->spouse->father && $p1->spouse->father->father_uid === $p2->uid) {
+                    \Log::info('Found Grandfather-in-Law through spouse father', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                    return 'Grandfather-in-Law';
+                }
+                // Check if p2 is spouse's father's mother (Grandmother-in-Law)
+                if ($p1->spouse->father && $p1->spouse->father->mother_uid === $p2->uid) {
+                    \Log::info('Found Grandmother-in-Law through spouse father', [
+                        'p1' => $p1->uid, 
+                        'p2' => $p2->uid,
+                        'spouse_father_uid' => $p1->spouse->father->uid,
+                        'spouse_father_mother_uid' => $p1->spouse->father->mother_uid,
+                        'p2_uid' => $p2->uid,
+                        'match' => $p1->spouse->father->mother_uid === $p2->uid
+                    ]);
+                    return 'Grandmother-in-Law';
+                }
+                
+                // ADDITIONAL DEBUG: Check the exact comparison for Monica
+                if ($p1->spouse->father && $p1->spouse->father->mother_uid) {
+                    \Log::info('Checking Monica (M-3) comparison', [
+                        'p1_uid' => $p1->uid,
+                        'p2_uid' => $p2->uid,
+                        'spouse_father_mother_uid' => $p1->spouse->father->mother_uid,
+                        'p2_uid_type' => gettype($p2->uid),
+                        'mother_uid_type' => gettype($p1->spouse->father->mother_uid),
+                        'exact_match' => $p1->spouse->father->mother_uid === $p2->uid,
+                        'loose_match' => $p1->spouse->father->mother_uid == $p2->uid,
+                        'string_comparison' => (string)$p1->spouse->father->mother_uid === (string)$p2->uid
+                    ]);
+                }
+                // Check if p2 is spouse's mother's father (Grandfather-in-Law)
+                if ($p1->spouse->mother && $p1->spouse->mother->father_uid === $p2->uid) {
+                    \Log::info('Found Grandfather-in-Law through spouse mother', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                    return 'Grandfather-in-Law';
+                }
+                // Check if p2 is spouse's mother's mother (Grandmother-in-Law)
+                if ($p1->spouse->mother && $p1->spouse->mother->mother_uid === $p2->uid) {
+                    \Log::info('Found Grandmother-in-Law through spouse mother', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                    return 'Grandmother-in-Law';
+                }
+                
+                // ADDITIONAL DEBUG: Check if p2 is actually a grandparent
+                \Log::info('Grandparent check completed - no match found', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid,
+                    'p2_is_spouse_father' => $p1->spouse->father_uid === $p2->uid,
+                    'p2_is_spouse_mother' => $p1->spouse->mother_uid === $p2->uid,
+                    'p2_is_spouse_father_father' => $p1->spouse->father ? ($p1->spouse->father->father_uid === $p2->uid) : false,
+                    'p2_is_spouse_father_mother' => $p1->spouse->father ? ($p1->spouse->father->mother_uid === $p2->uid) : false,
+                    'p2_is_spouse_mother_father' => $p1->spouse->mother ? ($p1->spouse->mother->father_uid === $p2->uid) : false,
+                    'p2_is_spouse_mother_mother' => $p1->spouse->mother ? ($p1->spouse->mother->mother_uid === $p2->uid) : false
+                ]);
+                
+                // ADDITIONAL DEBUG: Check if Monica (M-3) is being processed
+                if ($p2->uid === 'M-3' || $p2->uid === 'E-3') {
+                    \Log::info('Monica check - grandparent logic details', [
+                        'p1_uid' => $p1->uid,
+                        'p2_uid' => $p2->uid,
+                        'spouse_father_uid' => $p1->spouse->father_uid,
+                        'spouse_father_mother_uid' => $p1->spouse->father ? $p1->spouse->father->mother_uid : 'null',
+                        'comparison_result' => $p1->spouse->father ? ($p1->spouse->father->mother_uid === $p2->uid) : false,
+                        'exact_values' => [
+                            'p2_uid' => $p2->uid,
+                            'mother_uid' => $p1->spouse->father ? $p1->spouse->father->mother_uid : 'null'
+                        ]
+                    ]);
+                }
+            }
+            
+            // Check if p2 is his spouse's great grandparent (Great Grandfather-in-Law/Great Grandmother-in-Law)
+            if ($p1->spouse) {
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->father_uid === $p2->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->mother_uid === $p2->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->father_uid === $p2->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->mother_uid === $p2->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->father_uid === $p2->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->mother_uid === $p2->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->father_uid === $p2->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->mother_uid === $p2->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+            }
+            
+            // Check if p2 is his spouse's great great grandparent (Great Great Grandfather-in-Law/Great Great Grandmother-in-Law)
+            if ($p1->spouse) {
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->father && $p1->spouse->father->father->father->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->father && $p1->spouse->father->father->father->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->mother && $p1->spouse->father->father->mother->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->father && $p1->spouse->father->father->mother && $p1->spouse->father->father->mother->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->father && $p1->spouse->father->mother->father->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->father && $p1->spouse->father->mother->father->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->mother && $p1->spouse->father->mother->mother->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->father && $p1->spouse->father->mother && $p1->spouse->father->mother->mother && $p1->spouse->father->mother->mother->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->father && $p1->spouse->mother->father->father->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->father && $p1->spouse->mother->father->father->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->mother && $p1->spouse->mother->father->mother->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->father && $p1->spouse->mother->father->mother && $p1->spouse->mother->father->mother->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->father && $p1->spouse->mother->mother->father->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->father && $p1->spouse->mother->mother->father->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->mother && $p1->spouse->mother->mother->mother->father_uid === $p2->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p1->spouse->mother && $p1->spouse->mother->mother && $p1->spouse->mother->mother->mother && $p1->spouse->mother->mother->mother->mother_uid === $p2->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+            }
+            
+            // Check if p2 is his spouse's sibling (Brother-in-Law/Sister-in-Law)
+            if ($p1->spouse) {
+                foreach ($p1->spouse->getSiblings() as $spouseSibling) {
+                    if ($spouseSibling->uid === $p2->uid) {
+                        return $p2->gender_id == 1 ? 'Brother-in-Law' : 'Sister-in-Law';
+                    }
+                }
+            }
+            
+            // Check if p2 is his spouse's uncle/aunt (Uncle-in-Law/Aunt-in-Law)
+            if ($p1->spouse) {
+                \Log::info('Checking uncle/aunt-in-law relationships', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid,
+                    'spouse_father_uid' => $p1->spouse->father_uid,
+                    'spouse_mother_uid' => $p1->spouse->mother_uid
+                ]);
+                
+                if ($p1->spouse->father) {
+                    \Log::info('Checking spouse father siblings', [
+                        'spouse_father_uid' => $p1->spouse->father->uid,
+                        'spouse_father_name' => $p1->spouse->father->name ?? 'Unknown'
+                    ]);
+                    foreach ($p1->spouse->father->getSiblings() as $uncleAunt) {
+                        \Log::info('Checking spouse father sibling', [
+                            'uncle_aunt_uid' => $uncleAunt->uid,
+                            'uncle_aunt_name' => $uncleAunt->name ?? 'Unknown',
+                            'p2_uid' => $p2->uid,
+                            'p2_name' => $p2->name ?? 'Unknown',
+                            'match' => $uncleAunt->uid === $p2->uid
+                        ]);
+                        if ($uncleAunt->uid === $p2->uid) {
+                            \Log::info('Found Uncle/Aunt-in-Law through spouse father', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                            return $p2->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
+                        }
+                    }
+                }
+                if ($p1->spouse->mother) {
+                    \Log::info('Checking spouse mother siblings', [
+                        'spouse_mother_uid' => $p1->spouse->mother->uid,
+                        'spouse_mother_name' => $p1->spouse->mother->name ?? 'Unknown'
+                    ]);
+                    foreach ($p1->spouse->mother->getSiblings() as $uncleAunt) {
+                        \Log::info('Checking spouse mother sibling', [
+                            'uncle_aunt_uid' => $uncleAunt->uid,
+                            'uncle_aunt_name' => $uncleAunt->name ?? 'Unknown',
+                            'p2_uid' => $p2->uid,
+                            'p2_name' => $p2->name ?? 'Unknown',
+                            'match' => $uncleAunt->uid === $p2->uid
+                        ]);
+                        if ($uncleAunt->uid === $p2->uid) {
+                            \Log::info('Found Uncle/Aunt-in-Law through spouse mother', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                            return $p2->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
+                        }
+                    }
+                }
+                
+                \Log::info('Uncle/Aunt-in-Law check completed - no match found', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid
+                ]);
+            }
+            
+            // NEW: Check if p2 is his spouse's cousin (Cousin-in-Law)
+            if ($p1->spouse) {
+                \Log::info('Checking cousin-in-law relationships', [
+                    'p1_uid' => $p1->uid,
+                    'p2_uid' => $p2->uid,
+                    'spouse_father_uid' => $p1->spouse->father_uid,
+                    'spouse_mother_uid' => $p1->spouse->mother_uid
+                ]);
+                
+                // Check cousins through spouse's father's side
+                if ($p1->spouse->father) {
+                    foreach ($p1->spouse->father->getSiblings() as $uncleAunt) {
+                        foreach ($uncleAunt->getChildren() as $cousin) {
+                            \Log::info('Checking cousin through spouse father side', [
+                                'uncle_aunt_uid' => $uncleAunt->uid,
+                                'cousin_uid' => $cousin->uid,
+                                'p2_uid' => $p2->uid,
+                                'match' => $cousin->uid === $p2->uid
+                            ]);
+                            if ($cousin->uid === $p2->uid) {
+                                \Log::info('Found Cousin-in-Law through spouse father side', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                                return $p2->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
+                            }
+                        }
+                    }
+                }
+                // Check cousins through spouse's mother's side
+                if ($p1->spouse->mother) {
+                    foreach ($p1->spouse->mother->getSiblings() as $uncleAunt) {
+                        foreach ($uncleAunt->getChildren() as $cousin) {
+                            \Log::info('Checking cousin through spouse mother side', [
+                                'uncle_aunt_uid' => $uncleAunt->uid,
+                                'cousin_uid' => $cousin->uid,
+                                'p2_uid' => $p2->uid,
+                                'match' => $cousin->uid === $p2->uid
+                            ]);
+                            if ($cousin->uid === $p2->uid) {
+                                \Log::info('Found Cousin-in-Law through spouse mother side', ['p1' => $p1->uid, 'p2' => $p2->uid]);
+                                return $p2->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ALSO CHECK: Handle when p2 is a male who married into the family
+        if ($p2->gender_id == 1 && // Male
+            $p2->spouse_uid && // Has spouse
+            !$p2->father_uid && // No father (not born into family)
+            !$p2->mother_uid) { // No mother (not born into family)
+            
+            \Log::info('p2 is male married into family - checking reverse in-law relationships', [
+                'p1' => $p1->uid,
+                'p2' => $p2->uid,
+                'p2_spouse_uid' => $p2->spouse_uid
+            ]);
+            
+            // Check if p1 is his spouse
+            if ($p2->spouse_uid === $p1->uid) {
+                return $p1->gender_id == 1 ? 'Husband' : 'Wife';
+            }
+            
+            // Check if p1 is his spouse's parent (Father-in-Law/Mother-in-Law)
+            if ($p2->spouse) {
+                if ($p2->spouse->father_uid === $p1->uid) {
+                    return 'Father-in-Law';
+                }
+                if ($p2->spouse->mother_uid === $p1->uid) {
+                    return 'Mother-in-Law';
+                }
+            }
+            
+            // Check if p1 is his spouse's grandparent (Grandfather-in-Law/Grandmother-in-Law)
+            if ($p2->spouse) {
+                if ($p2->spouse->father && $p2->spouse->father->father_uid === $p1->uid) {
+                    return 'Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother_uid === $p1->uid) {
+                    return 'Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father_uid === $p1->uid) {
+                    return 'Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother_uid === $p1->uid) {
+                    return 'Grandmother-in-Law';
+                }
+            }
+            
+            // Check if p1 is his spouse's great grandparent (Great Grandfather-in-Law/Great Grandmother-in-Law)
+            if ($p2->spouse) {
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->father_uid === $p1->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->mother_uid === $p1->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->father_uid === $p1->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->mother_uid === $p1->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->father_uid === $p1->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->mother_uid === $p1->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->father_uid === $p1->uid) {
+                    return 'Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->mother_uid === $p1->uid) {
+                    return 'Great Grandmother-in-Law';
+                }
+            }
+            
+            // Check if p1 is his spouse's great great grandparent (Great Great Grandfather-in-Law/Great Great Grandmother-in-Law)
+            if ($p2->spouse) {
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->father && $p2->spouse->father->father->father->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->father && $p2->spouse->father->father->father->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->mother && $p2->spouse->father->father->mother->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->father && $p2->spouse->father->father->mother && $p2->spouse->father->father->mother->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->father && $p2->spouse->father->mother->father->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->father && $p2->spouse->father->mother->father->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->mother && $p2->spouse->father->mother->mother->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->father && $p2->spouse->father->mother && $p2->spouse->father->mother->mother && $p2->spouse->father->mother->mother->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->father && $p2->spouse->mother->father->father->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->father && $p2->spouse->mother->father->father->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->mother && $p2->spouse->mother->father->mother->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->father && $p2->spouse->mother->father->mother && $p2->spouse->mother->father->mother->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->father && $p2->spouse->mother->mother->father->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->father && $p2->spouse->mother->mother->father->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->mother && $p2->spouse->mother->mother->mother->father_uid === $p1->uid) {
+                    return 'Great Great Grandfather-in-Law';
+                }
+                if ($p2->spouse->mother && $p2->spouse->mother->mother && $p2->spouse->mother->mother->mother && $p2->spouse->mother->mother->mother->mother_uid === $p1->uid) {
+                    return 'Great Great Grandmother-in-Law';
+                }
+            }
+            
+            // Check if p1 is his spouse's sibling (Brother-in-Law/Sister-in-Law)
+            if ($p2->spouse) {
+                foreach ($p2->spouse->getSiblings() as $spouseSibling) {
+                    if ($spouseSibling->uid === $p1->uid) {
+                        return $p1->gender_id == 1 ? 'Brother-in-Law' : 'Sister-in-Law';
+                    }
+                }
+            }
+            
+            // Check if p1 is his spouse's uncle/aunt (Uncle-in-Law/Aunt-in-Law)
+            if ($p2->spouse) {
+                if ($p2->spouse->father) {
+                    foreach ($p2->spouse->father->getSiblings() as $uncleAunt) {
+                        if ($uncleAunt->uid === $p1->uid) {
+                            return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
+                        }
+                    }
+                }
+                if ($p2->spouse->mother) {
+                    foreach ($p2->spouse->mother->getSiblings() as $uncleAunt) {
+                        if ($uncleAunt->uid === $p1->uid) {
+                            return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
+                        }
+                    }
+                }
+            }
+            
+            // NEW: Check if p1 is his spouse's cousin (Cousin-in-Law)
+            if ($p2->spouse) {
+                // Check cousins through spouse's father's side
+                if ($p2->spouse->father) {
+                    foreach ($p2->spouse->father->getSiblings() as $uncleAunt) {
+                        foreach ($uncleAunt->getChildren() as $cousin) {
+                            if ($cousin->uid === $p1->uid) {
+                                return $p1->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
+                            }
+                        }
+                    }
+                }
+                // Check cousins through spouse's mother's side
+                if ($p2->spouse->mother) {
+                    foreach ($p2->spouse->mother->getSiblings() as $uncleAunt) {
+                        foreach ($uncleAunt->getChildren() as $cousin) {
+                            if ($cousin->uid === $p1->uid) {
+                                return $p1->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // MOVED: Handle when p2 is a female who married into the family (moved AFTER male logic)
         if ($p2->gender_id == 2 && // Female
             $p2->spouse_uid && // Has spouse
             !$p2->father_uid && // No father (not born into family)
@@ -954,7 +1464,7 @@ class FamilyTreeService
                 }
             }
         }
-
+        
         return array_unique($ids);
     }
 

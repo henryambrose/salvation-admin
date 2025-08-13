@@ -635,7 +635,7 @@ class MemberController extends Controller
             $relation = $service->calculateRelationship($person, $familyMember);
             $familyMember->relation = $relation;
         }
-
+        \Log::info($allFamilyMembers);
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
             'person' => $person,
