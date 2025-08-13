@@ -37,14 +37,14 @@ const deletingItem = ref<Record<string, any>>();
 const isArchived = ref(props.filters?.isArchived === 'true');
 const highlightedRowId = ref<number>(-1);
 
-const editForm = useForm<{ id: string | number; cells_and_association_id: any; member_id: any }>({
+const editForm = useForm<{ id: string | number; cells_and_association_id: any[]; member_id: any }>({
   id: '',
-  cells_and_association_id: null,
+  cells_and_association_id: [],
   member_id: null,
 });
 
-const createForm = useForm<{ cells_and_association_id: any; member_id: any }>({
-  cells_and_association_id: null,
+const createForm = useForm<{ cells_and_association_id: any[]; member_id: any }>({
+  cells_and_association_id: [],
   member_id: null,
 });
 
@@ -113,8 +113,12 @@ function fetch(pageNum = 1) {
 function openEditModal(row: any) {
   editingItem.value = row;
   editForm.id = row.id;
-  editForm.cells_and_association_id = props.cellsAndAssociations.find((ca: any) => ca.id === row.cells_and_association_id) || null;
-  // For edit, we need to fetch the member details
+  
+  // For edit, we need to find the cell association and convert to array format
+  const cellAssociation = props.cellsAndAssociations.find((ca: any) => ca.id === row.cells_and_association_id);
+  editForm.cells_and_association_id = cellAssociation ? [cellAssociation] : [];
+  
+  // For edit, we need to fetch the member details and convert to array format
   if (row.member_id) {
     fetchMemberById(Number(row.member_id)).then(member => {
       if (member) {
@@ -127,15 +131,18 @@ function openEditModal(row: any) {
         };
       }
     });
+  } else {
+    editForm.member_id = null;
   }
+  
   showEditModal.value = true;
 }
 
 function submitEdit() {
-  if (!editForm.cells_and_association_id || !editForm.member_id) return;
+  if (!editForm.cells_and_association_id.length || !editForm.member_id) return;
 
   const formData = {
-    cells_and_association_id: editForm.cells_and_association_id.id || editForm.cells_and_association_id,
+    cells_and_association_id: editForm.cells_and_association_id.map(ca => ca.id || ca),
     member_id: editForm.member_id.id || editForm.member_id,
     perPage: perPage.value,
     page: enhancedCellsAndAssociationMembers.value.current_page,
@@ -163,10 +170,10 @@ function openCreateModal() {
 }
 
 function submitCreate() {
-  if (!createForm.cells_and_association_id || !createForm.member_id) return;
+  if (!createForm.cells_and_association_id.length || !createForm.member_id) return;
 
   const formData = {
-    cells_and_association_id: createForm.cells_and_association_id.id || createForm.cells_and_association_id,
+    cells_and_association_id: createForm.cells_and_association_id.map(ca => ca.id || ca),
     member_id: createForm.member_id.id || createForm.member_id,
     perPage: perPage.value,
     page: enhancedCellsAndAssociationMembers.value.last_page,
@@ -502,22 +509,48 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                          <form @submit.prevent="submitEdit">
                <div class="mb-4">
                  <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
-                 <Multiselect v-model="editForm.cells_and_association_id" :options="props.cellsAndAssociations" label="name" track-by="id" placeholder="Select Cell Association" />
-                 <div v-if="!editForm.cells_and_association_id" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
+                 <Multiselect 
+                   v-model="editForm.cells_and_association_id" 
+                   :options="props.cellsAndAssociations || []" 
+                   label="name" 
+                   track-by="id" 
+                   placeholder="Select Cell Association(s)"
+                   :searchable="true"
+                   :allow-empty="false"
+                   :multiple="true"
+                   :close-on-select="false"
+                 />
+                 <div v-if="editForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.cells_and_association_id }}</div>
+                 <div v-if="!editForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
                </div>
 
                <div class="mb-4">
                  <label class="mb-2 block font-medium text-gray-700">Member</label>
-                 <Multiselect 
-                   v-model="editForm.member_id" 
-                   :options="searchResults" 
-                   label="name" 
-                   track-by="id" 
-                   placeholder="Type at least 3 characters to search members..." 
-                   :searchable="true"
-                   :loading="isSearching"
-                   @search-change="handleMemberSearch"
-                 />
+                 <div v-if="Multiselect">
+                   <Multiselect 
+                     v-model="editForm.member_id" 
+                     :options="searchResults" 
+                     label="name" 
+                     track-by="id" 
+                     placeholder="Type at least 3 characters to search members..." 
+                     :searchable="true"
+                     :loading="isSearching"
+                     @search-change="handleMemberSearch"
+                     :allow-empty="false"
+                     :multiple="false"
+                     :close-on-select="true"
+                   />
+                 </div>
+                 <div v-else>
+                   <input 
+                     v-model="editForm.member_id" 
+                     type="text" 
+                     placeholder="Type to search members..."
+                     class="w-full rounded-lg border border-gray-300 px-2 py-2 focus:ring-2 focus:ring-blue-200"
+                     @input="(event) => handleMemberSearch((event.target as HTMLSelectElement)?.value || '')"
+                   />
+                 </div>
+                 <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
                  <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
                </div>
 
@@ -553,8 +586,19 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                          <form @submit.prevent="submitCreate">
                <div class="mb-4">
                  <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
-                 <Multiselect v-model="createForm.cells_and_association_id" :options="props.cellsAndAssociations" label="name" track-by="id" placeholder="Select Cell Association" />
-                 <div v-if="!createForm.cells_and_association_id" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
+                 <Multiselect 
+                   v-model="createForm.cells_and_association_id" 
+                   :options="props.cellsAndAssociations || []" 
+                   label="name" 
+                   track-by="id" 
+                   placeholder="Select Cell Association(s)"
+                   :searchable="true"
+                   :allow-empty="false"
+                   :multiple="true"
+                   :close-on-select="false"
+                 />
+                 <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.cells_and_association_id }}</div>
+                 <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
                </div>
 
                <div class="mb-4">
@@ -568,7 +612,11 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                    :searchable="true"
                    :loading="isSearching"
                    @search-change="handleMemberSearch"
+                   :allow-empty="false"
+                   :multiple="false"
+                   :close-on-select="true"
                  />
+                 <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
                  <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
                </div>
 

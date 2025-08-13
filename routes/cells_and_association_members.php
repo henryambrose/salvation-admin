@@ -11,4 +11,5 @@ Route::middleware('auth')->group(function () {
     Route::post('cells-and-association-members/{id}/restore', [CellsAndAssociationMemberController::class, 'restore'])->name('cells-and-association-members.restore');
     Route::get('api/members/search', [CellsAndAssociationMemberController::class, 'searchMembers'])->name('api.members.search');
     Route::get('api/members/{id}', [CellsAndAssociationMemberController::class, 'getMemberById'])->name('api.members.getById');
+    Route::get('api/members/{id}/cell-associations', [CellsAndAssociationMemberController::class, 'getMemberCellAssociations'])->name('api.members.cellAssociations');
 }); 

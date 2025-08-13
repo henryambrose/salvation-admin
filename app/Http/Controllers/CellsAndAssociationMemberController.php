@@ -85,9 +85,46 @@ class CellsAndAssociationMemberController extends Controller
      */
     public function store(StoreCellsAndAssociationMemberRequest $request)
     {
-        CellsAndAssociationMember::create($request->validated());
+        $validated = $request->validated();
+        
+        // Handle multiple cell associations
+        if (is_array($validated['cells_and_association_id'])) {
+            // Remove duplicates from the array
+            $uniqueCellAssociationIds = array_unique($validated['cells_and_association_id']);
+            
+            // Check for existing associations to prevent duplicates
+            $existingAssociations = CellsAndAssociationMember::where('member_id', $validated['member_id'])
+                ->whereIn('cells_and_association_id', $uniqueCellAssociationIds)
+                ->pluck('cells_and_association_id')
+                ->toArray();
 
-        return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member created successfully.');
+            if (!empty($existingAssociations)) {
+                return back()->withErrors([
+                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations)
+                ])->withInput();
+            }
+            
+            // Use bulk insert for better performance
+            $records = [];
+            foreach ($uniqueCellAssociationIds as $cellAssociationId) {
+                $records[] = [
+                    'member_id' => $validated['member_id'],
+                    'cells_and_association_id' => $cellAssociationId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            
+            if (!empty($records)) {
+                CellsAndAssociationMember::insert($records);
+            }
+        } else {
+            // Single cell association (backward compatibility)
+            CellsAndAssociationMember::create($validated);
+        }
+
+        return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member(s) created successfully.');
     }
 
     /**
@@ -113,9 +150,50 @@ class CellsAndAssociationMemberController extends Controller
      */
     public function update(UpdateCellsAndAssociationMemberRequest $request, CellsAndAssociationMember $cellsAndAssociationMember)
     {
-        $cellsAndAssociationMember->update($request->validated());
+        $validated = $request->validated();
+        
+        // Handle multiple cell associations
+        if (is_array($validated['cells_and_association_id'])) {
+            // Remove duplicates from the array
+            $uniqueCellAssociationIds = array_unique($validated['cells_and_association_id']);
+            
+            // Check for existing associations to prevent duplicates (excluding current record)
+            $existingAssociations = CellsAndAssociationMember::where('member_id', $validated['member_id'])
+                ->whereIn('cells_and_association_id', $uniqueCellAssociationIds)
+                ->where('id', '!=', $cellsAndAssociationMember->id)
+                ->pluck('cells_and_association_id')
+                ->toArray();
 
-        return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member updated successfully.');
+            if (!empty($existingAssociations)) {
+                return back()->withErrors([
+                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations)
+                ])->withInput();
+            }
+            
+            // Delete existing record
+            $cellsAndAssociationMember->delete();
+            
+            // Use bulk insert for better performance
+            $records = [];
+            foreach ($uniqueCellAssociationIds as $cellAssociationId) {
+                $records[] = [
+                    'member_id' => $validated['member_id'],
+                    'cells_and_association_id' => $cellAssociationId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            
+            if (!empty($records)) {
+                CellsAndAssociationMember::insert($records);
+            }
+        } else {
+            // Single cell association (backward compatibility)
+            $cellsAndAssociationMember->update($validated);
+        }
+
+        return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member(s) updated successfully.');
     }
 
     /**
@@ -177,13 +255,26 @@ class CellsAndAssociationMemberController extends Controller
             ->find($id);
 
         if (! $member) {
-            return response()->json(null, 404);
+            return response()->json(null);
         }
 
         return response()->json([
             'id' => $member->id,
             'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
         ]);
+    }
+
+    /**
+     * Get all cell associations for a specific member
+     */
+    public function getMemberCellAssociations($memberId)
+    {
+        $cellAssociations = CellsAndAssociationMember::where('member_id', $memberId)
+            ->with('cellsAndAssociation:id,name')
+            ->get()
+            ->pluck('cellsAndAssociation');
+
+        return response()->json($cellAssociations);
     }
 
     public function export(Request $request)
