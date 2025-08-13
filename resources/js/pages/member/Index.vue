@@ -356,7 +356,6 @@ onMounted(() => {
   const highlightId = params.get('highlightId');
   if (highlightId) {
     highlightedRowId.value = Number(highlightId);
-    // Optionally, scroll immediately if data is already loaded
     scrollToRow(Number(highlightId));
   }
 });

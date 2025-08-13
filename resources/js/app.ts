@@ -8,48 +8,22 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import axios from 'axios';
 
-// CSRF Token Management
-const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-const token = getCsrfToken();
-if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-    axios.defaults.withCredentials = true;
-}
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
+axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
+axios.defaults.withCredentials = true;
 
-// Refresh CSRF token periodically to prevent expiration
-setInterval(() => {
-    const newToken = getCsrfToken();
-    if (newToken && newToken !== token) {
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = newToken;
-    }
-}, 300000); // Check every 5 minutes
+// optional one-time auto-heal on 419
+axios.interceptors.response.use(r => r, async (err) => {
+  if (err.response?.status === 419 && !err.config.__retried) {
+    err.config.__retried = true;
+    try { await axios.get('/sanctum/csrf-cookie').catch(() => {}); } catch {}
+    return axios(err.config);
+  }
+  return Promise.reject(err);
+});
 
-// Handle 419 errors globally
-axios.interceptors.response.use(
-    (response) => response,
-    (error) => {
-        if (error.response?.status === 419) {
-            // CSRF token expired - refresh the page
-            console.warn('CSRF token expired, refreshing page...');
-            window.location.reload();
-        }
-        return Promise.reject(error);
-    }
-);
-
-// Extend ImportMeta interface for Vite...
-// declare module 'vite/client' {
-//     interface ImportMetaEnv {
-//         readonly VITE_APP_NAME: string;
-//         [key: string]: string | boolean | undefined;
-//     }
-
-//     interface ImportMeta {
-//         readonly env: ImportMetaEnv;
-//         readonly glob: <T>(pattern: string) => Record<string, () => Promise<T>>;
-//     }
-// }
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 

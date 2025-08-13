@@ -132,17 +132,21 @@ watch(() => form.errors, (errors) => {
             </div>
           </div>
 
-          <div class="mt-6">
-            <Label for="address">Address</Label>
+          <!-- Address field - increase height -->
+          <div class="col-span-2">
+            <Label for="address" class="text-sm font-medium text-gray-700">
+              Address <span class="text-red-500">*</span>
+            </Label>
             <TextareaInput
               id="address"
-              name="address"
               v-model="form.address"
-              :rows="3"
-              class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-              placeholder="Enter the external member's address..."
               :error="form.errors.address"
+              placeholder="Enter address"
+              class="min-h-[120px] resize-none"
             />
+            <p v-if="form.errors.address" class="mt-1 text-sm text-red-600">
+              {{ form.errors.address }}
+            </p>
           </div>
         </div>
 

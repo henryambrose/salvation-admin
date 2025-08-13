@@ -9,104 +9,166 @@
         </Button>
       </template>
     </FormHeader>
+    
     <FormBody>
-      <form @submit.prevent="submit">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- First Name -->
-          <div>
-            <Label for="first_name">First Name *</Label>
-            <Input id="first_name" v-model="form.first_name" :error="form.errors.first_name" required />
+      <form @submit.prevent="submit" class="space-y-8">
+        <!-- Personal Information Section -->
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
+          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Personal Information</h3>
+          
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div class="grid gap-2">
+              <Label for="first_name">First Name <span class="text-red-500">*</span></Label>
+              <Input 
+                id="first_name" 
+                v-model="form.first_name" 
+                :error="form.errors.first_name" 
+                required 
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                placeholder="First name"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="last_name">Last Name</Label>
+              <Input 
+                id="last_name" 
+                v-model="form.last_name" 
+                :error="form.errors.last_name" 
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                placeholder="Last name"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="gender_id">Gender <span class="text-red-500">*</span></Label>
+              <SelectInput
+                id="gender_id"
+                v-model="form.gender_id"
+                :options="genderOptions"
+                :error="form.errors.gender_id"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                placeholder="Select gender"
+                required
+              />
+            </div>
           </div>
-          <!-- Last Name -->
-          <div>
-            <Label for="last_name">Last Name</Label>
-            <Input id="last_name" v-model="form.last_name" :error="form.errors.last_name" />
-          </div>
-          <!-- Gender -->
-          <div>
-            <Label for="gender_id">Gender <span class="text-red-500">*</span></Label>
-            <SelectInput
-              id="gender_id"
-              v-model="form.gender_id"
-              :options="genderOptions"
-              :error="form.errors.gender_id"
-              placeholder="Select gender"
-              required
-            />
-            <InputError :message="form.errors.gender_id" class="mt-2" />
-          </div>
-          <!-- Family Number -->
-          <div>
-            <Label for="family_no">Family Number *</Label>
-            <FamilyNumberSearchDropdown v-model="form.family_no" :error="form.errors.family_no" required />
-          </div>
-          <!-- Father -->
-          <div>
-            <Label for="father_id">Father</Label>
-            <MemberTypeSearchDropdown 
-              v-model="form.father_id" 
-              v-model:sourceType="form.father_source"
-              :error="form.errors.father_id" 
-              placeholder="Search for father"
-              :existing-data="externalMember.father_data || undefined"
-            />
-          </div>
-          <!-- Mother -->
-          <div>
-            <Label for="mother_id">Mother</Label>
-            <MemberTypeSearchDropdown 
-              v-model="form.mother_id" 
-              v-model:sourceType="form.mother_source"
-              :error="form.errors.mother_id" 
-              placeholder="Search for mother"
-              :existing-data="externalMember.mother_data || undefined"
-            />
-          </div>
-          <!-- Spouse -->
-          <div>
-            <Label for="spouse_id">Spouse</Label>
-            <MemberTypeSearchDropdown 
-              v-model="form.spouse_id" 
-              v-model:sourceType="form.spouse_source"
-              :error="form.errors.spouse_id" 
-              placeholder="Search for spouse"
-              :existing-data="externalMember.spouse_data || undefined"
-            />
-          </div>
-          <!-- Address -->
-          <div class="md:col-span-2">
-            <Label for="address">Address</Label>
-            <TextareaInput 
-              name="address"
-              id="address" 
-              v-model="form.address" 
-              :error="form.errors.address" 
-              :rows="3" 
-              placeholder="Enter address" 
-            />
-          </div>
-          <div class="grid gap-2">
-            <Label for="relationship_id">
-              Relationship <span class="text-red-500">*</span>
-              <span class="text-sm text-gray-500 font-normal">(with the head of the family)</span>
+
+          <!-- Address field - increase height -->
+          <div class="col-span-2">
+            <Label for="address" class="text-sm font-medium text-gray-700">
+              Address <span class="text-red-500">*</span>
             </Label>
-            <SelectInput
-              id="relationship_id"
-              v-model="form.relationship_id"
-              :options="relationships"
-              class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-              placeholder="Select relationship"
-              required
+            <TextareaInput
+              id="address"
+              v-model="form.address"
+              :error="form.errors.address"
+              placeholder="Enter address"
+              class="min-h-[120px] resize-none"
             />
-            <InputError :message="form.errors.relationship_id" class="mt-2" />
+            <p v-if="form.errors.address" class="mt-1 text-sm text-red-600">
+              {{ form.errors.address }}
+            </p>
           </div>
         </div>
-        <div class="flex justify-end gap-4 mt-6">
-          <Button type="button" variant="outline" @click="cancel">Cancel</Button>
-          <Button type="submit" :disabled="form.processing">Update External Member</Button>
+
+        <!-- Family Information Section -->
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
+          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Information</h3>
+          
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div class="grid gap-2">
+              <Label for="family_no">Family Number <span class="text-red-500">*</span></Label>
+              <FamilyNumberSearchDropdown 
+                v-model="form.family_no" 
+                :error="form.errors.family_no" 
+                required 
+                class="mt-1"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <Label for="relationship_id">
+                Relationship <span class="text-red-500">*</span>
+                <span class="text-xs text-gray-500 font-normal">(with the head of the family)</span>
+              </Label>
+              <SelectInput
+                id="relationship_id"
+                v-model="form.relationship_id"
+                :options="relationships"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                placeholder="Select relationship"
+                required
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Family Relationships Section -->
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
+          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Relationships</h3>
+          
+          <div class="space-y-6">
+            <div class="grid gap-2">
+              <Label>Father</Label>
+              <MemberTypeSearchDropdown 
+                v-model="form.father_id" 
+                v-model:sourceType="form.father_source"
+                :error="form.errors.father_id" 
+                placeholder="Search for father..."
+                :existing-data="externalMember.father_data || undefined"
+                class="mt-1"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <Label>Mother</Label>
+              <MemberTypeSearchDropdown 
+                v-model="form.mother_id" 
+                v-model:sourceType="form.mother_source"
+                :error="form.errors.mother_id" 
+                placeholder="Search for father..."
+                :existing-data="externalMember.mother_data || undefined"
+                class="mt-1"
+              />
+            </div>
+
+            <div class="grid gap-2">
+              <Label>Spouse</Label>
+              <MemberTypeSearchDropdown 
+                v-model="form.spouse_id" 
+                v-model:sourceType="form.spouse_source"
+                :error="form.errors.spouse_id" 
+                placeholder="Search for spouse..."
+                :existing-data="externalMember.spouse_data || undefined"
+                class="mt-1"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-4 bg-gray-50 p-4 rounded-b-2xl shadow-inner">
+          <Button :disabled="form.processing" class="bg-blue-600 text-white px-6 py-2 rounded-full shadow hover:bg-blue-700 transition flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+            Update External Member
+          </Button>
+          <Button type="button" @click="cancel" variant="outline" class="rounded-full px-6 py-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            Cancel
+          </Button>
+          <Transition
+            enter-active-class="transition ease-in-out"
+            enter-from-class="opacity-0"
+            leave-active-class="transition ease-in-out"
+            leave-to-class="opacity-0"
+          >
+            <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Updated.</p>
+          </Transition>
         </div>
       </form>
     </FormBody>
+    
     <ValidationErrorModal 
       v-model="showValidationModal" 
       :errors="validationErrors" 

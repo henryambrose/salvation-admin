@@ -196,12 +196,12 @@
             >
               Close
             </button>
-            <button 
+            <!-- <button 
               @click="submitAnyway"
               class="px-4 py-2 text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition"
             >
               Submit Anyway
-            </button>
+            </button> -->
           </div>
         </div>
       </div>
