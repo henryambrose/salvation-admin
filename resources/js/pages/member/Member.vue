@@ -1533,11 +1533,25 @@ watch(() => form.mother_id, (newValue, oldValue) => {
         <!-- Family Numbering Details -->
 
 
-        <!-- Action Bar -->
-        <div class="flex justify-end gap-4 mt-6">
-          <Button type="button" variant="outline" @click="cancel">Cancel</Button>
-          <Button type="submit" :disabled="form.processing">Create External Member</Button>
-        </div>
+                  <!-- Action Bar -->
+          <div class="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-4 bg-gray-50 p-4 rounded-b-2xl shadow-inner">
+            <Button :disabled="form.processing" class="bg-blue-600 text-white px-6 py-2 rounded-full shadow hover:bg-blue-700 transition flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+              {{ member ? 'Update Member' : 'Create Member' }}
+            </Button>
+            <Button type="button" @click="cancel" variant="outline" class="rounded-full px-6 py-2 flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              Cancel
+            </Button>
+            <Transition
+              enter-active-class="transition ease-in-out"
+              enter-from-class="opacity-0"
+              leave-active-class="transition ease-in-out"
+              leave-to-class="opacity-0"
+            >
+              <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
+            </Transition>
+          </div>
       </form>
     </FormBody>
   </AppLayout>
