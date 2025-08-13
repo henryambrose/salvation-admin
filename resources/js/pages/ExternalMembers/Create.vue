@@ -139,6 +139,7 @@ watch(() => form.errors, (errors) => {
             </Label>
             <TextareaInput
               id="address"
+              name="address"
               v-model="form.address"
               :error="form.errors.address"
               placeholder="Enter address"
