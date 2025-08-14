@@ -88,15 +88,34 @@ class UnifiedPerson extends Model
 
     public function getSiblings()
     {
+        // Treat blank/whitespace as missing
+        $father = blank($this->father_uid) ? null : $this->father_uid;
+        $mother = blank($this->mother_uid) ? null : $this->mother_uid;
+    
+        // If both unknown, we cannot infer siblings
+        if (is_null($father) && is_null($mother)) {
+            return collect();
+        }
+    
         return UnifiedPerson::where('family_no', $this->family_no)
-            ->where(function ($query) {
-                $query->where('father_uid', $this->father_uid)
-                    ->orWhere('mother_uid', $this->mother_uid);
+            ->where(function ($q) use ($father, $mother) {
+                $added = false;
+    
+                if (!is_null($father)) {
+                    $q->where('father_uid', $father);
+                    $added = true;
+                }
+    
+                if (!is_null($mother)) {
+                    // OR if father condition already added; otherwise just WHERE
+                    $added ? $q->orWhere('mother_uid', $mother)
+                           : $q->where('mother_uid', $mother);
+                }
             })
             ->where('uid', '!=', $this->uid)
             ->get();
     }
-
+    
     public function getBrothers()
     {
         return $this->getSiblings()->where('gender_id', 1);
