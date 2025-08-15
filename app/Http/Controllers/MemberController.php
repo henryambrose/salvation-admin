@@ -891,7 +891,7 @@ class MemberController extends Controller
         $excludeMemberId = $request->query('exclude_member_id');
         
         $query = Member::where('family_no', $familyNo)
-            ->select('id', 'first_name', 'last_name', 'date_of_birth');
+            ->select('id', 'first_name', 'last_name', 'date_of_birth', 'gender_id');
         
         // Exclude the current member if exclude_member_id is provided
         if ($excludeMemberId) {
@@ -900,7 +900,140 @@ class MemberController extends Controller
         
         $members = $query->get();
 
-        return response()->json($members);
+        // First, get all UnifiedPerson records for this family to build the complete family tree
+        $unifiedPersons = \App\Models\UnifiedPerson::where('family_no', $familyNo)->get();
+        
+        // Build a map of uid to UnifiedPerson for quick lookup
+        $unifiedPersonMap = $unifiedPersons->keyBy('uid');
+        
+        // Find the root generation (people with no parents)
+        $rootGeneration = $unifiedPersons->filter(function ($person) use ($unifiedPersonMap) {
+            return !$person->father_uid && !$person->mother_uid;
+        });
+        
+        // Calculate generation levels for all family members
+        $generationMap = [];
+        $visited = [];
+        
+        // Function to calculate generation level recursively
+        $calculateGeneration = function ($personUid, $currentGen = 0) use (&$calculateGeneration, &$generationMap, &$visited, $unifiedPersonMap) {
+            if (isset($generationMap[$personUid]) || in_array($personUid, $visited)) {
+                return $generationMap[$personUid] ?? 0;
+            }
+            
+            $visited[] = $personUid;
+            $person = $unifiedPersonMap->get($personUid);
+            
+            if (!$person) {
+                return $currentGen;
+            }
+            
+            // If this person has no parents, they're at generation 0
+            if (!$person->father_uid && !$person->mother_uid) {
+                $generationMap[$personUid] = 0;
+                return 0;
+            }
+            
+            // Find the highest generation of this person's parents
+            $parentGen = 0;
+            if ($person->father_uid) {
+                $parentGen = max($parentGen, $calculateGeneration($person->father_uid, $currentGen + 1));
+            }
+            if ($person->mother_uid) {
+                $parentGen = max($parentGen, $calculateGeneration($person->mother_uid, $currentGen + 1));
+            }
+            
+            // This person's generation is one more than their highest parent
+            $generationMap[$personUid] = $parentGen + 1;
+            return $generationMap[$personUid];
+        };
+        
+        // Calculate generations for all family members
+        foreach ($unifiedPersons as $person) {
+            $calculateGeneration($person->uid);
+        }
+        
+        // Enhance with UnifiedPerson information for family relationships
+        $enhancedMembers = $members->map(function ($member) use ($unifiedPersonMap, $generationMap) {
+            $unifiedPerson = $unifiedPersonMap->get('M-' . $member->id);
+            
+            $memberData = $member->toArray();
+            
+            if ($unifiedPerson) {
+                // Get father, mother, and spouse information
+                $father = null;
+                $mother = null;
+                $spouse = null;
+                
+                if ($unifiedPerson->father_uid) {
+                    $fatherUnified = $unifiedPersonMap->get($unifiedPerson->father_uid);
+                    if ($fatherUnified) {
+                        $fatherMember = Member::find(str_replace('M-', '', $fatherUnified->uid));
+                        if ($fatherMember) {
+                            $father = [
+                                'id' => $fatherMember->id,
+                                'name' => $fatherMember->first_name . ' ' . $fatherMember->last_name,
+                                'member_no' => $fatherMember->member_no
+                            ];
+                        }
+                    }
+                }
+                
+                if ($unifiedPerson->mother_uid) {
+                    $motherUnified = $unifiedPersonMap->get($unifiedPerson->mother_uid);
+                    if ($motherUnified) {
+                        $motherMember = Member::find(str_replace('M-', '', $motherUnified->uid));
+                        if ($motherMember) {
+                            $mother = [
+                                'id' => $motherMember->id,
+                                'name' => $motherMember->first_name . ' ' . $motherMember->last_name,
+                                'member_no' => $motherMember->member_no
+                            ];
+                        }
+                    }
+                }
+                
+                if ($unifiedPerson->spouse_uid) {
+                    $spouseUnified = $unifiedPersonMap->get($unifiedPerson->spouse_uid);
+                    if ($spouseUnified) {
+                        $spouseMember = Member::find(str_replace('M-', '', $spouseUnified->uid));
+                        if ($spouseMember) {
+                            $spouse = [
+                                'id' => $spouseMember->id,
+                                'name' => $spouseMember->first_name . ' ' . $spouseMember->last_name,
+                                'member_no' => $spouseMember->member_no
+                            ];
+                        }
+                    }
+                }
+                
+                $memberData['father'] = $father;
+                $memberData['mother'] = $mother;
+                $memberData['spouse'] = $spouse;
+                
+                // Get the calculated generation level
+                $memberData['generation'] = $generationMap[$unifiedPerson->uid] ?? 0;
+            }
+            
+            return $memberData;
+        });
+        
+        // Sort by generation (ascending - oldest first) and then by date of birth
+        $enhancedMembers = $enhancedMembers->sortBy([
+            ['generation', 'asc'],
+            ['date_of_birth', 'asc']
+        ])->values();
+        
+        // Debug logging to verify generation calculation
+        \Log::info('Family members with generations:', $enhancedMembers->map(function ($member) {
+            return [
+                'name' => $member['first_name'] . ' ' . $member['last_name'],
+                'generation' => $member['generation'],
+                'date_of_birth' => $member['date_of_birth']
+            ];
+        })->toArray());
+
+        return response()->json($enhancedMembers);
     }
 
     // public function moveFamily(Request $request, $familyNo)

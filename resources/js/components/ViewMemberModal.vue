@@ -148,6 +148,16 @@ function calculateAge(dateStr: string) {
   return age.toString();
 }
 
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = date.getDate().toString().padStart(2, '0');
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 function formatFieldValue(fieldKey: string, value: any) {
   // Handle age calculation first (before early return)
   if (fieldKey === 'age') {
@@ -295,7 +305,8 @@ function formatFieldValue(fieldKey: string, value: any) {
   if (fieldKey.includes('date') && value) {
     const date = new Date(value);
     const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = monthNames[date.getMonth()];
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   }
@@ -446,6 +457,31 @@ watch(() => currentTab.value, (newTab) => {
             <div v-if="tab.key === 'community' && member.family_no" class="mt-8">
               <div class="border-t border-gray-200 pt-6">
                 <h4 class="mb-4 text-lg font-semibold text-gray-800">Family Members</h4>
+                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p class="text-sm text-blue-800">
+                    <strong>💡 Family Tree Help:</strong> This table shows family members ordered by generation (oldest first). 
+                    Father, Mother, and Spouse columns help identify missing relationships. 
+                    If the family tree isn't showing correctly, check these columns for missing data.
+                  </p>
+                </div>
+                
+                <!-- Relationship Summary -->
+                <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div class="grid grid-cols-3 gap-4 text-sm">
+                    <div>
+                      <span class="font-semibold text-gray-700">Total Members:</span>
+                      <span class="ml-2 text-gray-600">{{ familyMembers.length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">With Fathers:</span>
+                      <span class="ml-2 text-green-600">{{ familyMembers.filter(m => m.father).length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">With Mothers:</span>
+                      <span class="ml-2 text-green-600">{{ familyMembers.filter(m => m.mother).length }}</span>
+                    </div>
+                  </div>
+                </div>
                 <div class="max-h-96 overflow-y-auto">
                 
                 <div v-if="loadingFamilyMembers" class="flex justify-center py-8">
@@ -460,21 +496,43 @@ watch(() => currentTab.value, (newTab) => {
                   <table class="w-full">
                     <thead class="bg-gray-50">
                       <tr>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">First Name</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Last Name</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date of Birth</th>
                         <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Age</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Father</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mother</th>
+                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Spouse</th>
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
                       <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-white hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-800">{{ familyMember.first_name || '—' }}</td>
-                        <td class="px-4 py-3 text-sm text-gray-800">{{ familyMember.last_name || '—' }}</td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ familyMember.date_of_birth ? new Date(familyMember.date_of_birth).toLocaleDateString() : '—' }}
+                          <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
+                          <div class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                          {{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
                           {{ calculateAge(familyMember.date_of_birth) || '—' }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                          <div v-if="familyMember.father" class="text-blue-600">
+                            {{ familyMember.father.name }}
+                          </div>
+                          <div v-else class="text-gray-400">—</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                          <div v-if="familyMember.mother" class="text-green-600">
+                            {{ familyMember.mother.name }}
+                          </div>
+                          <div v-else class="text-gray-400">—</div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-800">
+                          <div v-if="familyMember.spouse" class="text-purple-600">
+                            {{ familyMember.spouse.name }}
+                          </div>
+                          <div v-else class="text-gray-400">—</div>
                         </td>
                       </tr>
                     </tbody>

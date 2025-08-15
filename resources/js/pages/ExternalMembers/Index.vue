@@ -41,7 +41,7 @@ const perPage = ref(props.filters?.perPage || 15);
 const relationship = ref(props.filters?.relationship || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(props.filters?.isArchived || false);
+const isArchived = ref(false); // Always start with false, don't inherit from URL
 
 // Debounced search to prevent too many API calls
 let searchTimeout: number;

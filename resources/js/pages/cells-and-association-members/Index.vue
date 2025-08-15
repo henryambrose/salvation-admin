@@ -34,7 +34,7 @@ const showDeleteModal = ref(false);
 const showCreateModal = ref(false);
 const editingItem = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
-const isArchived = ref(props.filters?.isArchived === 'true');
+const isArchived = ref(false); // Always start with false, don't inherit from URL
 const highlightedRowId = ref<number>(-1);
 
 const editForm = useForm<{ id: string | number; cells_and_association_id: any[]; member_id: any }>({

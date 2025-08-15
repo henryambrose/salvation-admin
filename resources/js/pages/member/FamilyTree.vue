@@ -126,8 +126,10 @@
               </div>
               <div>
                 <div class="name font-semibold">{{ displayNameWithNo(person) }}</div>
-                <div class="text-xs text-gray-500">
-                  Current Person<span v-if="personRelationLabel"> — {{ personRelationLabel }}</span>
+                <div class="px-3 py-2 bg-blue-50 border-l-4 border-blue-500 rounded-r-md">
+                  <div class="text-sm font-semibold text-blue-800">
+                    Current Person<span v-if="personRelationLabel"> — {{ personRelationLabel }}</span>
+                  </div>
                 </div>
               </div>
             </div>

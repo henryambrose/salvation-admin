@@ -177,8 +177,7 @@ const bloodGroup = ref(props.filters?.bloodGroup || '');
 const gender = ref(props.filters?.gender || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(props.filters?.isArchived || false);
-
+const isArchived = ref(false);
 // Debounced search to prevent too many API calls
 let searchTimeout: number;
 
