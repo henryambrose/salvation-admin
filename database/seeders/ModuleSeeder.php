@@ -180,6 +180,12 @@ class ModuleSeeder extends Seeder
                 'icon' => 'LayoutDashboard',
                 'actions' => ['read'], // Dashboard only needs read permission
             ],
+            [
+                'name' => 'Data Verification',
+                'slug' => 'data-verification',
+                'icon' => 'CheckSquare',
+                'actions' => ['read', 'update'], // Data verification needs read and update permissions
+            ],
         ];
 
         foreach ($modules as $index => $module) {

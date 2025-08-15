@@ -40,7 +40,8 @@ const moduleOrder = [
   'relationship', 'designation', 'age-group', 'blood-group', 'gender', 'status', 'income-range', // Member Attributes
   'country', 'state', 'city', 'town', // Geographic Data
   'users', 'role', // System Management
-  'dashboard' // Special Pages
+  'dashboard', // Special Pages
+  'data-verification' // Data Management
 ];
 
 // Sort modules to match sidebar order

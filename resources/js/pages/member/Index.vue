@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
+import { Head, usePage, Link } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
@@ -464,6 +464,17 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <component :is="Download" />
             <span>Export Excel</span>
           </Button>
+          
+          <Link
+            v-if="can('read-data-verification') || can('update-data-verification')"
+            :href="route('member.data-verification')"
+            class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Data Verification</span>
+          </Link>
 
           <label class="flex items-center gap-2 cursor-pointer select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />

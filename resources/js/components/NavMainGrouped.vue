@@ -14,13 +14,24 @@ defineProps<{
 
 const page = usePage<SharedData>();
 
+// Get current URL path from window.location for more reliable path detection
+const getCurrentPath = () => {
+  return window.location.pathname;
+};
+
 const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   // Handle clashing URLs first - use exact match for URLs that might clash with others
   if (itemHref === '/cells-and-association' || itemHref === '/cells-and-association-members') {
     return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
   }
   
-  if (itemHref === '/community' || itemHref === '/community-clusters') {
+  // Handle community and community-clusters with better nested route detection
+  if (itemHref === '/community') {
+    return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
+  }
+  
+  if (itemHref === '/community-clusters') {
+    // This should match: /community-clusters, /community-clusters/create, /community-clusters/123/edit, etc.
     return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
   }
   
@@ -89,7 +100,7 @@ const handleNavigation = (href: string) => {
       </SidebarGroupLabel>
       <SidebarMenu class="space-y-1">
         <SidebarMenuItem v-for="item in group.items" :key="item.title">
-          <SidebarMenuButton :is-active="isActivePage(item.href, page.url)" :tooltip="item.title" class="gap-1" @click="handleNavigation(item.href)">
+          <SidebarMenuButton :is-active="isActivePage(item.href, getCurrentPath())" :tooltip="item.title" class="gap-1" @click="handleNavigation(item.href)">
             <component :is="item.icon" />
             <span>{{ item.title }}</span>
           </SidebarMenuButton>

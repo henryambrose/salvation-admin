@@ -19,6 +19,8 @@ class SCCHeadPermissionSeeder extends Seeder
             'create-member', 'read-member', 'update-member', 'delete-member', 'list-member', 'restore-member',
             // External Member permissions  
             'create-external-member', 'read-external-member', 'update-external-member', 'delete-external-member', 'list-external-member', 'restore-external-member',
+            // Data verification permissions
+            'read-data-verification', 'update-data-verification',
             // Basic read AND list permissions for related data (same as PPC Head)
             'read-community', 'list-community', 'read-parish', 'list-parish', 'read-zone', 'list-zone', 
             'read-relationship', 'list-relationship', 'read-designation', 'list-designation', 

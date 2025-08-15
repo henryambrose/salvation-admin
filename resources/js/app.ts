@@ -14,6 +14,12 @@ axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
 axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 axios.defaults.withCredentials = true;
 
+// Add CSRF token to all requests
+const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+if (token) {
+  axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+}
+
 // optional one-time auto-heal on 419
 axios.interceptors.response.use(r => r, async (err) => {
   if (err.response?.status === 419 && !err.config.__retried) {

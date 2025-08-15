@@ -503,11 +503,7 @@ const hasAnyMembers = computed(() => {
 
 // Navigation
 function goBack() {
-  if (window.history.length > 1) {
-    window.history.back()
-  } else {
-    router.visit('/member/index')
-  }
+  router.visit('/member/index')
 }
 </script>
 

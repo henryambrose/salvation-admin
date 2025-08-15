@@ -658,17 +658,6 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Get family tree data via API
-     */
-    // public function getFamilyTreeData($id)
-    // {
-    //     $member = Member::findOrFail($id);
-    //     $service = new FamilyTreeService;
-    //     $person = UnifiedPerson::where('uid', 'M-'.$member->id)->first();
-
-    //     return response()->json($person ? $service->getFamilyTree($person) : []);
-    // }
 
     /**
      * Search members for family tree
@@ -687,91 +676,6 @@ class MemberController extends Controller
 
         return response()->json($members);
     }
-
-    /**
-     * Add relationship between members
-     */
-    // public function addFamilyRelationship(Request $request)
-    // {
-    //     $request->validate([
-    //         'member_id' => 'required|exists:members,id',
-    //         'related_member_id' => 'nullable|exists:members,id',
-    //         'related_external_member_id' => 'nullable|exists:external_members,id',
-    //         'relationship_id' => 'required|exists:relationships,id',
-    //     ]);
-
-    //     $familyTreeService = new FamilyTreeService;
-
-    //     // Check if we're adding a relationship with an external member
-    //     if ($request->has('related_external_member_id') && $request->related_external_member_id) {
-    //         $success = $familyTreeService->addExternalRelationship(
-    //             $request->member_id,
-    //             $request->related_external_member_id,
-    //             $request->relationship_id
-    //         );
-    //     } else {
-    //         $success = $familyTreeService->addRelationship(
-    //             $request->member_id,
-    //             $request->related_member_id,
-    //             $request->relationship_id
-    //         );
-    //     }
-
-    //     if (! $success) {
-    //         return response()->json(['error' => 'Relationship already exists'], 400);
-    //     }
-
-    //     return response()->json(['message' => 'Relationship added successfully']);
-    // }
-
-    /**
-     * Remove relationship between members
-     */
-    // public function removeFamilyRelationship(Request $request)
-    // {
-    //     $request->validate([
-    //         'member_id' => 'required|exists:members,id',
-    //         'related_member_id' => 'required|exists:members,id',
-    //     ]);
-
-    //     $familyTreeService = new FamilyTreeService;
-    //     $success = $familyTreeService->removeRelationship(
-    //         $request->member_id,
-    //         $request->related_member_id
-    //     );
-
-    //     if (! $success) {
-    //         return response()->json(['error' => 'Relationship not found'], 404);
-    //     }
-
-    //     return response()->json(['message' => 'Relationship removed successfully']);
-    // }
-
-    // public function searchOptions(Request $request)
-    // {
-    //     $search = $request->input('search', '');
-
-    //     $members = Member::query()
-    //         ->select('id', 'first_name', 'last_name')
-    //         ->when($search, function ($query, $search) {
-    //             $query->where('first_name', 'like', "%$search%")
-    //                 ->orWhere('last_name', 'like', "%$search%");
-    //         })
-
-    //         ->orderBy('first_name', 'asc')
-    //         ->limit(10)
-    //         ->get();
-
-    //     $members = $members->map(function ($member) {
-    //         return [
-    //             'id' => $member->id,
-    //             'name' => $member->first_name.' '.$member->last_name,
-    //         ];
-    //     });
-
-    //     return response()->json($members);
-    // }
-
     
     public function export(Request $request)
     {
@@ -1049,57 +953,6 @@ class MemberController extends Controller
 
         return response()->json($enhancedMembers);
     }
-
-    // public function moveFamily(Request $request, $familyNo)
-    // {
-    //     $request->validate([
-    //         'new_community_id' => 'required|exists:communities,id',
-    //         'move_date' => 'required|date',
-    //         'reason' => 'nullable|string',
-    //     ]);
-
-    //     $numberingService = new \App\Services\FamilyNumberingService;
-
-    //     DB::beginTransaction();
-
-    //     try {
-    //         // Move family to new community
-    //         $members = $numberingService->handleFamilyMove(
-    //             $familyNo,
-    //             $request->new_community_id
-    //         );
-
-    //         // Log the move
-    //         DB::table('family_move_logs')->insert([
-    //             'family_no' => $familyNo,
-    //             'old_community_id' => $members->first()->community_id,
-    //             'new_community_id' => $request->new_community_id,
-    //             'move_date' => $request->move_date,
-    //             'reason' => $request->reason,
-    //             'moved_by' => auth()->id(),
-    //             'created_at' => now(),
-    //             'updated_at' => now(),
-    //         ]);
-
-    //         DB::commit();
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Family moved successfully',
-    //             'family_no' => $familyNo,
-    //             'new_community' => \App\Models\Community::find($request->new_community_id)->name,
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to move family: '.$e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
     public function handleMarriage(Request $request)
     {
         $request->validate([
@@ -1323,6 +1176,145 @@ class MemberController extends Controller
             'community' => $member->community,
             'relationship' => $member->relationship,
             'gender' => $member->gender,
+        ]);
+    }
+
+    /**
+     * Show data verification page
+     */
+    public function dataVerification()
+    {
+        // Debug authentication
+        if (!auth()->check()) {
+            \Log::error('User not authenticated for data verification page');
+            abort(401, 'Unauthenticated');
+        }
+        
+        $user = auth()->user();
+        
+        // Check permission to access data verification
+        if (!$user->can('read-data-verification')) {
+            \Log::warning('User denied access to data verification page', [
+                'user_id' => $user->id, 
+                'email' => $user->email,
+                'permissions' => $user->getAllPermissionsAttribute()
+            ]);
+            abort(403, 'Access denied. You do not have permission to view data verification.');
+        }
+        
+        \Log::info('User accessing data verification page', ['user_id' => $user->id, 'email' => $user->email]);
+        
+        // Load data directly instead of via AJAX
+        $members = Member::with([
+            'community:id,name',
+            'status:id,name',
+            'relationship:id,name'
+        ])
+        ->select([
+            'id', 'first_name', 'middle_name', 'last_name', 'date_of_birth',
+            'old_sal_id', 'community_id', 'status_id', 'contact_no_1', 'contact_no_2', 'relationship_id'
+        ])
+        ->orderBy('first_name')
+        ->orderBy('last_name')
+        ->get()
+        ->map(function ($member) {
+            return [
+                'id' => $member->id,
+                'first_name' => $member->first_name,
+                'middle_name' => $member->middle_name,
+                'last_name' => $member->last_name,
+                'date_of_birth' => $member->date_of_birth,
+                'old_sal_id' => $member->old_sal_id,
+                'community_id' => $member->community_id,
+                'community_name' => $member->community->name ?? null,
+                'status_id' => $member->status_id,
+                'status_name' => $member->status ? $member->status->name : null,
+                'contact_no_1' => $member->contact_no_1,
+                'contact_no_2' => $member->contact_no_2,
+                'relationship_id' => $member->relationship_id,
+                'relationship_name' => $member->relationship ? $member->relationship->name : null,
+            ];
+        });
+        
+        $communities = \App\Models\Community::select('id', 'name')->orderBy('name')->get();
+        $statuses = \App\Models\Status::select('id', 'name')->orderBy('name')->get();
+        $relationships = \App\Models\Relationship::select('id', 'name')->orderBy('name')->get();
+        
+        return Inertia::render('member/DataVerification', [
+            'members' => $members,
+            'communities' => $communities,
+            'statuses' => $statuses,
+            'relationships' => $relationships
+        ]);
+    }
+
+
+
+    /**
+     * Bulk update members
+     */
+    public function bulkUpdate(Request $request)
+    {
+        // Debug authentication
+        if (!auth()->check()) {
+            return response()->json(['error' => 'User not authenticated'], 401);
+        }
+        
+        $user = auth()->user();
+        
+        // Check permission to update data verification
+        if (!$user->can('update-data-verification')) {
+            \Log::warning('User denied access to bulk update', [
+                'user_id' => $user->id, 
+                'email' => $user->email,
+                'permissions' => $user->getAllPermissionsAttribute()
+            ]);
+            return response()->json(['error' => 'Access denied. You do not have permission to update data verification.'], 403);
+        }
+        
+        \Log::info('User authenticated for bulk update', ['user_id' => $user->id, 'email' => $user->email]);
+        
+        $request->validate([
+            'changes' => 'required|array',
+            'changes.*.id' => 'required|exists:members,id',
+            'changes.*.data' => 'required|array'
+        ]);
+
+        $updatedCount = 0;
+        $errors = [];
+
+        foreach ($request->changes as $change) {
+            try {
+                $member = Member::find($change['id']);
+                if (!$member) {
+                    $errors[] = "Member ID {$change['id']} not found";
+                    continue;
+                }
+
+                // Update only allowed fields
+                $allowedFields = [
+                    'first_name', 'middle_name', 'last_name', 'date_of_birth',
+                    'old_sal_id', 'community_id', 'status_id', 'contact_no_1', 'contact_no_2', 'relationship_id'
+                ];
+
+                $updateData = array_intersect_key($change['data'], array_flip($allowedFields));
+                
+                if (!empty($updateData)) {
+                    $member->update($updateData);
+                    $updatedCount++;
+                }
+
+            } catch (\Exception $e) {
+                $errors[] = "Error updating member {$change['id']}: " . $e->getMessage();
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'updated_count' => $updatedCount,
+            'total_changes' => count($request->changes),
+            'errors' => $errors,
+            'message' => "Successfully updated {$updatedCount} out of " . count($request->changes) . " records"
         ]);
     }
 }
