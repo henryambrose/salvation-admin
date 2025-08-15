@@ -178,7 +178,8 @@ const gender = ref(props.filters?.gender || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(false);
-// Debounced search to prevent too many API calls
+// Performance optimization: Increased debounce delay to reduce API calls
+const DEBOUNCE_DELAY = 500; // Increased from 300ms to 500ms for better performance
 let searchTimeout: number;
 
 watch(
@@ -186,15 +187,16 @@ watch(
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-   
       fetch();
-    }, 300); // 300ms debounce
+    }, DEBOUNCE_DELAY);
   },
   { immediate: false, deep: false },
 );
 
 function fetch(page = 1) {
   if (props.fetchUrl) {
+    const startTime = performance.now();
+    
     const params = {
       search: search.value,
       familySearch: familySearch.value,
@@ -218,6 +220,16 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        onFinish: () => {
+          const endTime = performance.now();
+          const loadTime = Math.round(endTime - startTime);
+          console.log(`🚀 Page load completed in ${loadTime}ms`);
+          
+          // Log performance metrics for monitoring
+          if (loadTime > 1000) {
+            console.warn(`⚠️ Slow page load detected: ${loadTime}ms`);
+          }
+        },
       },
     );
   }
