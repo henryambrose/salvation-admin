@@ -111,7 +111,7 @@ function confirmDelete() {
   if (deletingMember.value) {
     const deletedId = deletingMember.value.id;
     router.delete(route('member.destroy', deletedId), {
-      data: {
+      data:       {
         perPage: perPage.value,
         page: enhancedMembers.value.current_page,
         search: search.value,
@@ -327,8 +327,8 @@ function downloadExcel() {
     ageGroup: ageGroup.value || '',
     bloodGroup: bloodGroup.value || '',
     gender: gender.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+          sort: String(sort.value || 'id'),
+      direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
@@ -459,10 +459,10 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <component :is="Plus" />
             <span>Add New Member</span>
           </Button>
-          <Button  @click="downloadExcel"
+          <Button v-if="can('read-member')" @click="downloadExcel"
             class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
             <component :is="Download" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </Button>
           
           <Link

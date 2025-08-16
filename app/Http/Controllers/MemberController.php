@@ -677,120 +677,98 @@ class MemberController extends Controller
         return response()->json($members);
     }
     
+    
     public function export(Request $request)
     {
         $this->authorize('viewAny', Member::class);
-        while (ob_get_level()) { ob_end_clean(); }
-        @ini_set('zlib.output_compression', '0');
     
-        try {
-            $query = Member::query();
-    
-            // archived filter
-            $request->boolean('isArchived') ? $query->onlyTrashed() : $query->withoutTrashed();
-    
-            $query->with(['community','communityCluster','relationship','bloodGroup','designation','incomeRange','status','gender']);
-    
-            // search & filters (unchanged)
+        // Streamed CSV keeps memory flat
+        return response()->streamDownload(function () use ($request) {
+            $out = fopen('php://output', 'w');
+        
+            fputcsv($out, [
+                'ID','First Name','Last Name','Old SAL ID','Family No','Member No',
+                'Contact No','Email','Date of Birth','Age',
+                'Community','Cluster','Relationship','Blood Group','Gender','Status',
+            ]);
+        
+            // Get allowed community IDs for PPC/SCC head scoping
+            $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+
+            $q = Member::query()
+                ->when($request->boolean('isArchived'), fn($qq) => $qq->onlyTrashed(), fn($qq) => $qq->withoutTrashed())
+                ->leftJoin('communities as c', 'c.id', '=', 'members.community_id')
+                ->leftJoin('community_clusters as cc', 'cc.id', '=', 'members.community_cluster_id')
+                ->leftJoin('clusters as cl', 'cl.id', '=', 'cc.cluster_id')
+                ->leftJoin('relationships as r', 'r.id', '=', 'members.relationship_id')
+                ->leftJoin('blood_groups as bg', 'bg.id', '=', 'members.blood_group_id')
+                ->leftJoin('genders as g', 'g.id', '=', 'members.gender_id')
+                ->leftJoin('statuses as s', 's.id', '=', 'members.status_id')
+                ->select([
+                    'members.id','members.first_name','members.last_name','members.old_sal_id',
+                    'members.family_no','members.member_no','members.contact_no_1','members.email',
+                    'members.date_of_birth',
+                    \DB::raw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) as age'),
+                    'c.name as community_name','cl.name as cluster_name','r.name as relationship_name',
+                    'bg.name as blood_group_name','g.name as gender_name','s.name as status_name',
+                ]);
+
+            // Apply PPC/SCC community scoping
+            if ($allowedCommunityIds !== null) {
+                $q->whereIn('members.community_id', $allowedCommunityIds);
+            }
+        
             if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%$search%")
-                      ->orWhere('last_name', 'like', "%$search%")
-                      ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                      ->orWhere('family_no', 'like', "%$search%")
-                      ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
+                $q->where(function ($w) use ($search) {
+                    $w->where('members.first_name', 'like', "%$search%")
+                      ->orWhere('members.last_name', 'like', "%$search%")
+                      ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%$search%"])
+                      ->orWhere('members.family_no', 'like', "%$search%")
+                      ->orWhere('c.name', 'like', "%$search%");
                 });
             }
-    
-            if ($v = $request->input('familySearch'))  { $query->where('family_no', 'like', "%$v%"); }
-            if ($v = $request->input('communityId'))   { $query->where('community_id', $v); }
-            if ($v = $request->input('relationship'))  { $query->where('relationship_id', $v); }
-            if ($v = $request->input('bloodGroup'))    { $query->where('blood_group_id', $v); }
-            if ($v = $request->input('gender'))        { $query->where('gender_id', $v); }
-    
+            if ($v = $request->input('familySearch')) { $q->where('members.family_no', 'like', "%$v%"); }
+            if ($v = $request->input('communityId'))  { $q->where('members.community_id', $v); }
+            if ($v = $request->input('relationship')) { $q->where('members.relationship_id', $v); }
+            if ($v = $request->input('bloodGroup'))   { $q->where('members.blood_group_id', $v); }
+            if ($v = $request->input('gender'))       { $q->where('members.gender_id', $v); }
             if ($v = $request->input('ageGroup')) {
                 if ($ag = \App\Models\AgeGroup::find($v)) {
-                    $query->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$ag->min_age, $ag->max_age]);
+                    $q->whereRaw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) BETWEEN ? AND ?', [$ag->min_age, $ag->max_age]);
                 }
             }
-    
+        
             $allowed = ['id','first_name','last_name','family_no','member_no','date_of_birth'];
-            $sort = in_array($request->input('sort','id'), $allowed) ? $request->input('sort','id') : 'id';
-            $direction = $request->input('direction','asc');
-            $query->orderBy($sort, $direction);
-    
-            $data = $query->get();
-    
-            if ($data->isEmpty()) {
-                // Don’t send JSON with .xlsx extension—return a normal message/page instead
-                return back()->with('warning','No data found to export.');
+            $sort = in_array($request->input('sort','id'), $allowed, true) ? $request->input('sort','id') : 'id';
+            $direction = $request->input('direction','asc') === 'desc' ? 'desc' : 'asc';
+            $q->orderBy("members.$sort", $direction)->orderBy('members.id');
+        
+            foreach ($q->cursor() as $row) {
+                fputcsv($out, [
+                    $row->id,
+                    $row->first_name ?? '',
+                    $row->last_name ?? '',
+                    $row->old_sal_id ?? '',
+                    $row->family_no ?? '',
+                    $row->member_no ?? '',
+                    $row->contact_no_1 ?? '',
+                    $row->email ?? '',
+                    $row->date_of_birth ?? '',
+                    $row->age ?? '',
+                    $row->community_name ?? '',
+                    $row->cluster_name ?? '',
+                    $row->relationship_name ?? '',
+                    $row->blood_group_name ?? '',
+                    $row->gender_name ?? '',
+                    $row->status_name ?? '',
+                ]);
             }
-    
-            // Build export array
-            $rows = [];
-            foreach ($data as $item) {
-                $age = '';
-                if ($item->date_of_birth) {
-                    $birth = new \DateTime($item->date_of_birth);
-                    $age = (new \DateTime)->diff($birth)->y;
-                }
-                $rows[] = [
-                    'ID'           => $item->id,
-                    'First Name'   => $item->first_name ?? '',
-                    'Last Name'    => $item->last_name ?? '',
-                    'Old SAL ID'   => $item->old_sal_id ?? '',
-                    'Family No'    => $item->family_no ?? '',
-                    'Member No'    => $item->member_no ?? '',
-                    'Contact No'   => $item->contact_no_1 ?? '',
-                    'Email'        => $item->email ?? '',
-                    'Date of Birth'=> $item->date_of_birth ?? '',
-                    'Age'          => $age,
-                    'Community'    => optional($item->community)->name ?? '',
-                    'Cluster'      => optional($item->communityCluster)->name ?? '',
-                    'Relationship' => optional($item->relationship)->name ?? '',
-                    'Blood Group'  => optional($item->bloodGroup)->name ?? '',
-                    'Gender'       => optional($item->gender)->name ?? '',
-                    'Status'       => optional($item->status)->name ?? '',
-                ];
-            }
-    
-            // Spreadsheet
-            $spreadsheet = new Spreadsheet();
-            $sheet = $spreadsheet->getActiveSheet();
-    
-            // Header + data (faster and simpler)
-            $sheet->fromArray(array_keys($rows[0]), null, 'A1');
-            $sheet->fromArray($rows, null, 'A2');
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-    
-            $writer = new Xlsx($spreadsheet);
-            $filename = 'members_'.now()->format('Y-m-d_H-i-s').'.xlsx';
-    
-            // Save to a temp file
-            $tmp = tempnam(sys_get_temp_dir(), 'xlsx_');
-            $writer->save($tmp);
-    
-            // Sanity: check the first 4 bytes are a ZIP magic (PK\x03\x04)
-            $sig = bin2hex(file_get_contents($tmp, false, null, 0, 4));
-            if ($sig !== '504b0304') {
-                @unlink($tmp);
-                return back()->with('error','Export file corrupted before download (not a valid XLSX). Check middleware / output injection.');
-            }
-    
-            // Send the file
-            return response()
-                ->download($tmp, $filename, [
-                    'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'Cache-Control' => 'max-age=0, must-revalidate',
-                    'Pragma' => 'public',
-                    'Content-Transfer-Encoding' => 'binary',
-                ])
-                ->deleteFileAfterSend(true);
-    
-        } catch (\Throwable $e) {
-            \Log::error('Member Export failed: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Export failed: '.$e->getMessage());
-        }
+        
+            fclose($out);
+        }, 'members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            'Content-Type' => 'text/csv',
+            'Cache-Control' => 'no-store, no-cache',
+        ]);
     }
     
 
