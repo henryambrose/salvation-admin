@@ -472,10 +472,18 @@ watch(() => currentTab.value, (newTab) => {
                 
                 <!-- Relationship Summary -->
                 <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div class="grid grid-cols-3 gap-4 text-sm">
+                  <div class="grid grid-cols-5 gap-4 text-sm">
                     <div>
                       <span class="font-semibold text-gray-700">Total Members:</span>
                       <span class="ml-2 text-gray-600">{{ familyMembers.length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">Internal:</span>
+                      <span class="ml-2 text-blue-600">{{ familyMembers.filter(m => m.member_type === 'internal').length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">External:</span>
+                      <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.member_type === 'external').length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">With Fathers:</span>
@@ -513,13 +521,21 @@ watch(() => currentTab.value, (newTab) => {
                       <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-white hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm text-gray-800">
                           <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
-                          <div class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</div>
+                          <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</span>
+                            <span v-if="familyMember.member_type === 'external'" 
+                                  class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                              External
+                            </span>
+                          </div>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}
+                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-else>{{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ calculateAge(familyMember.date_of_birth) || '—' }}
+                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-else>{{ calculateAge(familyMember.date_of_birth) || '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
                           <div v-if="familyMember.father" class="text-blue-600">
