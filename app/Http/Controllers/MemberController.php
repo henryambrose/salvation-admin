@@ -26,7 +26,6 @@ use App\Services\FamilyTreeService;
 use DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -36,7 +35,6 @@ class MemberController extends Controller
 {
     public function index(Request $request): Response
     {
-        $startTime = microtime(true);
         $this->authorize('viewAny', Member::class);
 
         $dropdownColumns = [
@@ -67,12 +65,33 @@ class MemberController extends Controller
             $query->withoutTrashed();
         }
 
-        // Load only essential relationships for list view (performance optimization)
+        // Load relationships
         $query->with([
-            'community:id,name',
-            'relationship:id,name',
-            'gender:id,name',
-            'bloodGroup:id,name'
+            'community',
+            'communityCluster.cluster',
+            'relationship',
+            'bloodGroup',
+            'designation',
+            'incomeRange',
+            'status',
+            'gender',
+            'baptismParish',
+            'confirmationParish',
+            'marriageParish',
+            'deathParish',
+            'permanentTown',
+            'permanentCity',
+            'permanentState',
+            'permanentCountry',
+            'currentTown',
+            'currentCity',
+            'currentState',
+            'currentCountry',
+            'cellsAndAssociations',
+            'sccHeads.community',
+            'ppcHeads.community',
+            'clusterHeads.community',
+            'clusterHeads.cluster',
         ]);
 
         // Restrict by allowed communities for PPC/SCC heads
@@ -261,49 +280,16 @@ class MemberController extends Controller
             'averageMembersPerFamily' => $averageMembersPerFamily,
         ];
 
-        // Performance monitoring
-        $endTime = microtime(true);
-        $executionTime = round(($endTime - $startTime) * 1000, 2);
-        
-        // Log performance metrics
-        \Log::info('Member index performance', [
-            'execution_time_ms' => $executionTime,
-            'memory_usage_mb' => round(memory_get_usage(true) / 1024 / 1024, 2),
-            'peak_memory_mb' => round(memory_get_peak_usage(true) / 1024 / 1024, 2),
-            'filters_applied' => $request->only(['search', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender']),
-            'results_count' => $data->count(),
-            'total_count' => $totalCount
-        ]);
-        
-        // Log warning for slow queries
-        if ($executionTime > 1000) {
-            \Log::warning("Slow member index query detected: {$executionTime}ms");
-        }
-        
         return Inertia::render('member/Index', [
-            'communities' => Cache::remember('communities', 3600, function () {
-                return Community::select('id', 'name')->get();
-            }),
-            'relationships' => Cache::remember('relationships', 3600, function () {
-                return Relationship::select('id', 'name')->get();
-            }),
-            'ageGroups' => Cache::remember('ageGroups', 3600, function () {
-                return AgeGroup::select('id', 'name', 'min_age', 'max_age')->get();
-            }),
-            'bloodGroups' => Cache::remember('bloodGroups', 3600, function () {
-                return BloodGroup::select('id', 'name')->get();
-            }),
-            'genders' => Cache::remember('genders', 3600, function () {
-                return Gender::select('id', 'name')->get();
-            }),
-            'parishes' => Cache::remember('parishes', 3600, function () {
-                return Parish::select('id', 'name')->get();
-            }),
-            'communityClusters' => Cache::remember('communityClusters', 3600, function () {
-                return CommunityCluster::with('cluster:id,name')->get()->map(function ($item) {
-                    return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
-                })->toArray();
-            }),
+            'communities' => Community::all(),
+            'relationships' => Relationship::all(),
+            'ageGroups' => AgeGroup::all(),
+            'bloodGroups' => BloodGroup::all(),
+            'genders' => Gender::all(),
+            'parishes' => Parish::all(),
+            'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
+            })->toArray(),
             'fetchUrl' => route('member.index'),
             'members' => $data,
             'totalCount' => $totalCount,
