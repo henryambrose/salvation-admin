@@ -173,36 +173,28 @@ class CityController extends Controller
     }
 
     /**
-     * Export cities to Excel.
+     * Export cities to CSV.
      */
     public function export(Request $request)
     {
         try {
-            $query = City::query();
+            $this->authorize('viewAny', City::class);
 
-            // Handle archived records
-            if ($request->input('isArchived') === 'true') {
+            $query = City::with(['state']);
+
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
 
-            // Load relationships
-            $query->with('state');
-
-            // Search logic
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%$search%")
-                        ->orWhereHas('state', function ($q2) use ($search) {
-                            $q2->where('name', 'like', "%$search%");
+                        ->orWhereHas('state', function ($stateQuery) use ($search) {
+                            $stateQuery->where('name', 'like', "%$search%");
                         });
                 });
-            }
-
-            // State filter
-            if ($stateId = $request->input('stateId')) {
-                $query->where('state_id', $stateId);
             }
 
             // Validate sort column to prevent SQL injection
@@ -221,62 +213,30 @@ class CityController extends Controller
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'City Name' => $item->name ?? '',
-                    'State Name' => $item->state ? $item->state->name : '',
-                ];
-            }
+                fputcsv($out, [
+                    'ID', 'City Name', 'State'
+                ]);
 
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            if (count($exportData) > 0) {
-                $headers = array_keys($exportData[0]);
-                $col = 'A';
-                foreach ($headers as $header) {
-                    $sheet->setCellValue($col.'1', $header);
-                    $sheet->getColumnDimension($col)->setAutoSize(true);
-                    $col++;
+                foreach ($query->cursor() as $item) {
+                    fputcsv($out, [
+                        $item->id,
+                        $item->name ?? '',
+                        $item->state ? $item->state->name : '',
+                    ]);
                 }
 
-                // Set data
-                $row = 2;
-                foreach ($exportData as $rowData) {
-                    $col = 'A';
-                    foreach ($rowData as $value) {
-                        $sheet->setCellValue($col.$row, $value);
-                        $col++;
-                    }
-                    $row++;
-                }
-
-                // Style header row
-                $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-            }
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'cities_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'cities_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('City Export failed: '.$e->getMessage());
-
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

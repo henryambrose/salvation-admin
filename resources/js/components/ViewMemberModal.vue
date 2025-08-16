@@ -322,12 +322,17 @@ async function fetchFamilyMembers() {
   loadingFamilyMembers.value = true;
   try {
     // Pass the current member ID to exclude them from the list
-    const response = await axios.get(`/api/families/${props.member.family_no}/members`, {
+    const response = await axios.get(`/member/family-details/${props.member.family_no}`, {
       params: {
         exclude_member_id: props.member.id
       }
     });
-    familyMembers.value = response.data;
+    
+    if (response.data && response.data.members) {
+      familyMembers.value = response.data.members;
+    } else {
+      familyMembers.value = [];
+    }
   } catch (error) {
     console.error('Error fetching family members:', error);
     familyMembers.value = [];

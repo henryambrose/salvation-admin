@@ -12,7 +12,11 @@ class CommunityClusterPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('read-community');
     }
 
     /**
@@ -20,7 +24,11 @@ class CommunityClusterPolicy
      */
     public function view(User $user, CommunityCluster $communityCluster): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('read-community');
     }
 
     /**
@@ -28,7 +36,11 @@ class CommunityClusterPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('create-community');
     }
 
     /**
@@ -36,7 +48,11 @@ class CommunityClusterPolicy
      */
     public function update(User $user, CommunityCluster $communityCluster): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('update-community');
     }
 
     /**
@@ -44,7 +60,11 @@ class CommunityClusterPolicy
      */
     public function delete(User $user, CommunityCluster $communityCluster): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('delete-community');
     }
 
     /**
@@ -52,7 +72,11 @@ class CommunityClusterPolicy
      */
     public function restore(User $user, CommunityCluster $communityCluster): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('restore-community');
     }
 
     /**
@@ -60,6 +84,10 @@ class CommunityClusterPolicy
      */
     public function forceDelete(User $user, CommunityCluster $communityCluster): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('delete-community');
     }
 }

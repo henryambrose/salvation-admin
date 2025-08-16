@@ -205,20 +205,17 @@ function restoreExternalMember(member: any) {
   });
 }
 
-function downloadExcel() {
-  const params = {
-    search: search.value,
-    familySearch: familySearch.value,
-    sort: sort.value,
-    direction: direction.value,
-    relationship: relationship.value,
-    filterColumnKey: filterColumnKey.value,
-    filterColumnValue: filterColumnValue.value,
+function downloadCsv() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
+    perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
-  };
+  });
 
-  const queryString = new URLSearchParams(params).toString();
-  window.open(`/external-members/export?${queryString}`, '_blank');
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/external-members/export?${params.toString()}`;
 }
 
 function viewFamilyTree(member: any) {
@@ -369,10 +366,10 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <component :is="Plus" />
             <span>Add New Member</span>
           </Button>
-          <Button @click="downloadExcel"
+          <Button @click="downloadCsv"
             class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
             <component :is="Download" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </Button>
 
           <label class="flex items-center gap-2 cursor-pointer select-none">

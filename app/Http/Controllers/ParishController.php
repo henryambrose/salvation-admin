@@ -127,96 +127,71 @@ class ParishController extends Controller
         return redirect()->route('parish.index')->with('success', 'Parish restored successfully.');
     }
 
+    /**
+     * Export parishes to CSV.
+     */
     public function export(Request $request)
     {
         try {
-            $query = Parish::query();
+            $this->authorize('viewAny', Parish::class);
 
-            if ($request->input('isArchived') === 'true') {
+            $query = Parish::with(['zone']);
+
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
 
             if ($search = $request->input('search')) {
-                $query->whereRaw(
-                    "CONCAT(
-          COALESCE(deanery, ''),
-          COALESCE(name, ''),
-          COALESCE(code, ''),
-          COALESCE(address, '')
-          ) LIKE ?",
-                    ["%$search%"]
-                );
+                $query->where(function ($q) use ($search) {
+                    $q->where('name', 'like', "%$search%")
+                        ->orWhereHas('zone', function ($zoneQuery) use ($search) {
+                            $zoneQuery->where('name', 'like', "%$search%");
+                        });
+                });
             }
 
             // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'deanery', 'name'];
+            $allowedSortColumns = ['id', 'name', 'zone.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
 
             if (in_array($sort, $allowedSortColumns)) {
-                $query->orderBy($sort, $direction);
+                if ($sort === 'zone.name') {
+                    $query->join('zones', 'parishes.zone_id', '=', 'zones.id')
+                        ->orderBy('zones.name', $direction);
+                } else {
+                    $query->orderBy($sort, $direction);
+                }
             } else {
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'Deanery' => $item->deanery ?? '',
-                    'Parish Name' => $item->name ?? '',
-                    'Code' => $item->code ?? '',
-                    'Address' => $item->address ?? '',
-                ];
-            }
+                fputcsv($out, [
+                    'ID', 'Parish Name', 'Zone'
+                ]);
 
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            $headers = array_keys($exportData[0] ?? []);
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-                $col++;
-            }
-
-            // Set data
-            $row = 2;
-            foreach ($exportData as $rowData) {
-                $col = 'A';
-                foreach ($rowData as $value) {
-                    $sheet->setCellValue($col.$row, $value);
-                    $col++;
+                foreach ($query->cursor() as $item) {
+                    fputcsv($out, [
+                        $item->id,
+                        $item->name ?? '',
+                        $item->zone ? $item->zone->name : '',
+                    ]);
                 }
-                $row++;
-            }
 
-            // Style header row
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'parishes_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'parishes_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Parish Export failed: '.$e->getMessage());
-
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

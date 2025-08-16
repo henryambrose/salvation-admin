@@ -2,10 +2,10 @@
 
 namespace App\Policies;
 
-use App\Models\CellsAndAssociationMember;
+use App\Models\Parish;
 use App\Models\User;
 
-class CellsAndAssociationMemberPolicy
+class ParishPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -16,19 +16,19 @@ class CellsAndAssociationMemberPolicy
             return true;
         }
 
-        return $user->can('read-member');
+        return $user->can('read-parish');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, CellsAndAssociationMember $cellsAndAssociationMember): bool
+    public function view(User $user, Parish $parish): bool
     {
         if ($user->hasRole('superadmin')) {
             return true;
         }
 
-        return $user->can('read-member');
+        return $user->can('read-parish');
     }
 
     /**
@@ -40,54 +40,54 @@ class CellsAndAssociationMemberPolicy
             return true;
         }
 
-        return $user->can('create-member');
+        return $user->can('create-parish');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, CellsAndAssociationMember $cellsAndAssociationMember): bool
+    public function update(User $user, Parish $parish): bool
     {
         if ($user->hasRole('superadmin')) {
             return true;
         }
 
-        return $user->can('update-member');
+        return $user->can('update-parish');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, CellsAndAssociationMember $cellsAndAssociationMember): bool
+    public function delete(User $user, Parish $parish): bool
     {
         if ($user->hasRole('superadmin')) {
             return true;
         }
 
-        return $user->can('delete-member');
+        return $user->can('delete-parish');
     }
 
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, CellsAndAssociationMember $cellsAndAssociationMember): bool
+    public function restore(User $user, Parish $parish): bool
     {
         if ($user->hasRole('superadmin')) {
             return true;
         }
 
-        return $user->can('restore-member');
+        return $user->can('restore-parish');
     }
 
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, CellsAndAssociationMember $cellsAndAssociationMember): bool
+    public function forceDelete(User $user, Parish $parish): bool
     {
         if ($user->hasRole('superadmin')) {
             return true;
         }
 
-        return $user->can('delete-member');
+        return $user->can('delete-parish');
     }
 }

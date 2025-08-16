@@ -13,7 +13,7 @@ class SCCHeadPermissionSeeder extends Seeder
         // Create the role if it doesn't exist (using hyphen)
         $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']);
         
-        // IDENTICAL permissions as PPC Head
+        // Full CRUD permissions for Members and External Members
         $permissions = [
             // Member permissions
             'create-member', 'read-member', 'update-member', 'delete-member', 'list-member', 'restore-member',
@@ -21,7 +21,9 @@ class SCCHeadPermissionSeeder extends Seeder
             'create-external-member', 'read-external-member', 'update-external-member', 'delete-external-member', 'list-external-member', 'restore-external-member',
             // Data verification permissions
             'read-data-verification', 'update-data-verification',
-            // Basic read AND list permissions for related data (same as PPC Head)
+            // SCC Head specific permissions
+            'create-scc-head', 'read-scc-head', 'update-scc-head', 'delete-scc-head', 'list-scc-head', 'restore-scc-head',
+            // Basic read and list permissions for related data
             'read-community', 'list-community', 'read-parish', 'list-parish', 'read-zone', 'list-zone', 
             'read-relationship', 'list-relationship', 'read-designation', 'list-designation', 
             'read-age-group', 'list-age-group', 'read-blood-group', 'list-blood-group', 

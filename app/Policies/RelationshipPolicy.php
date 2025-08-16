@@ -12,7 +12,11 @@ class RelationshipPolicy
      */
     public function viewAny(User $user): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('read-relationship');
     }
 
     /**
@@ -20,7 +24,11 @@ class RelationshipPolicy
      */
     public function view(User $user, Relationship $relationship): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('read-relationship');
     }
 
     /**
@@ -28,7 +36,11 @@ class RelationshipPolicy
      */
     public function create(User $user): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('create-relationship');
     }
 
     /**
@@ -36,7 +48,11 @@ class RelationshipPolicy
      */
     public function update(User $user, Relationship $relationship): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('update-relationship');
     }
 
     /**
@@ -44,7 +60,11 @@ class RelationshipPolicy
      */
     public function delete(User $user, Relationship $relationship): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('delete-relationship');
     }
 
     /**
@@ -52,7 +72,11 @@ class RelationshipPolicy
      */
     public function restore(User $user, Relationship $relationship): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('restore-relationship');
     }
 
     /**
@@ -60,6 +84,10 @@ class RelationshipPolicy
      */
     public function forceDelete(User $user, Relationship $relationship): bool
     {
-        return false;
+        if ($user->hasRole('superadmin')) {
+            return true;
+        }
+
+        return $user->can('delete-relationship');
     }
 }

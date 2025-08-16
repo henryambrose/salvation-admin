@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
 use App\Models\AgeGroup;
-use App\Models\AuditLog;
 use App\Models\BloodGroup;
 use App\Models\City;
 use App\Models\Community;
@@ -17,20 +16,20 @@ use App\Models\Gender;
 use App\Models\IncomeRange;
 use App\Models\Member;
 use App\Models\Parish;
+use App\Models\PPCHead;
 use App\Models\Relationship;
+use App\Models\SCCHead;
 use App\Models\State;
 use App\Models\Status;
 use App\Models\Town;
-use App\Models\UnifiedPerson;
-use App\Services\FamilyTreeService;
-use DB;
+use App\Services\FamilyNumberingService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MemberController extends Controller
 {
@@ -1054,29 +1053,46 @@ class MemberController extends Controller
 
     public function getNextAvailableNumbers()
     {
-        $churchCode = config('app.church_code', 'SAL');
-        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+        try {
+            $churchCode = config('app.church_code', 'SAL');
+            $numberingService = new \App\Services\FamilyNumberingService($churchCode);
 
-        $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
-        $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
-        $nextMemberNo = $numberingService->generateMemberNumber();
+            $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
+            $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
+            $nextMemberNo = $numberingService->generateMemberNumber();
 
-        return response()->json([
-            'next_family_no' => $nextFamilyNo,
-            'next_member_no' => $nextMemberNo,
-            'family_group' => $nextFamilyGroup,
-            'timestamp' => now()->toISOString(),
-            'debug_info' => [
-                'highest_member_in_db' => DB::table('members')
-                    ->whereNotNull('member_no')
-                    ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
-                    ->value('member_no'),
-                'highest_family_in_db' => DB::table('members')
-                    ->whereNotNull('family_no')
-                    ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
-                    ->value('family_no'),
-            ],
-        ]);
+            \Log::info('Generated next available numbers', [
+                'church_code' => $churchCode,
+                'next_family_group' => $nextFamilyGroup,
+                'next_family_no' => $nextFamilyNo,
+                'next_member_no' => $nextMemberNo
+            ]);
+
+            return response()->json([
+                'next_family_no' => $nextFamilyNo,
+                'next_member_no' => $nextMemberNo,
+                'family_group' => $nextFamilyGroup,
+                'timestamp' => now()->toISOString(),
+                'debug_info' => [
+                    'highest_member_in_db' => DB::table('members')
+                        ->whereNotNull('member_no')
+                        ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
+                        ->value('member_no'),
+                    'highest_family_in_db' => DB::table('members')
+                        ->whereNotNull('family_no')
+                        ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
+                        ->value('family_no'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error generating next available numbers: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Failed to generate next available numbers',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

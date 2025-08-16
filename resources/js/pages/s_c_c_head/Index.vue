@@ -274,15 +274,15 @@ function restoreSCCHead(id: number) {
   });
 }
 
-function downloadExcel() {
+function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
-  
+
   // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/scc-head/export?${params.toString()}`;
 }
@@ -290,11 +290,11 @@ function downloadExcel() {
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
-const canCreateSCCHead = can('create-s-c-c-head');
-const canReadAnySCCHead = can('read-s-c-c-head');
-const canUpdateAnySCCHead = can('update-s-c-c-head');
-const canDeleteAnySCCHead = can('delete-s-c-c-head');
-const canExportSCCHead = can('read-s-c-c-head');
+const canCreateSCCHead = can('create-scc-head');
+const canReadAnySCCHead = can('read-scc-head');
+const canUpdateAnySCCHead = can('update-scc-head');
+const canDeleteAnySCCHead = can('delete-scc-head');
+const canExportSCCHead = can('read-scc-head');
 </script>
 
 <template>
@@ -304,9 +304,9 @@ const canExportSCCHead = can('read-s-c-c-head');
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold">SCC Head</h2>
         <div class="btn-group flex space-x-2">
-          <Button v-if="canExportSCCHead" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button v-if="canExportSCCHead" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
             <component :is="Download" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </Button>
           <Button v-if="canCreateSCCHead" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
             <component :is="Plus" />

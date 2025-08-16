@@ -163,8 +163,8 @@ watch(memberType, (newType) => {
 const performSearch = async () => {
   try {
     const endpoint = memberType.value === 'External'
-      ? '/api/external-members/search-all'
-      : '/api/members/search-spouse';
+      ? '/external-members/search'
+      : '/member/search-members';
 
     const params = new URLSearchParams({
       query: searchQuery.value,
@@ -212,7 +212,7 @@ watch(() => props.modelValue, (newValue) => {
 const fetchMemberDetails = async (memberId) => {
   try {
     // Try internal members first
-    let response = await fetch(`/api/members/${memberId}`)
+    let response = await fetch(`/member/${memberId}`)
     
     if (response.ok) {
       const data = await response.json()
@@ -228,7 +228,7 @@ const fetchMemberDetails = async (memberId) => {
     }
     
     // Try external members
-    response = await fetch(`/api/external-members/${memberId}`)
+    response = await fetch(`/external-members/${memberId}`)
     
     if (response.ok) {
       const data = await response.json()

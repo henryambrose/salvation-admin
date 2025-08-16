@@ -19,20 +19,28 @@ Route::middleware(['web', 'auth'])->group(function () {
         Route::post('member/bulk-update', [MemberController::class, 'bulkUpdate'])->name('member.bulk-update');
     });
     
-
+    // Family numbering system routes - MUST come BEFORE the resource route
+    Route::get('member/search-families', [MemberController::class, 'searchFamilies'])
+        ->name('member.search-families');
+    Route::get('member/next-available-numbers', [MemberController::class, 'getNextAvailableNumbers'])
+        ->name('member.next-available-numbers');
+    Route::get('member/family-details/{familyNo}', [MemberController::class, 'getFamilyDetails'])
+        ->name('member.family-details');
+    Route::get('member/church-statistics/{churchCode?}', [MemberController::class, 'getChurchStatistics'])
+        ->name('member.church-statistics');
+    Route::get('member/search-members', [MemberController::class, 'searchMembers'])
+        ->name('member.search-members');
+    Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
+        ->name('member.handle-marriage');
     
+    // Resource route must come LAST to avoid catching specific routes
     Route::resource('member', MemberController::class)->except(['index']);
+    
     // Route::get('member/search-options', [MemberController::class, 'searchOptions'])
     //     ->name('member.search-options');
-        Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
+    Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
     // Family numbering system routes
     // Route::post('member/move-family/{familyNo}', [MemberController::class, 'moveFamily'])
     //     ->name('member.move-family');
-    Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
-        ->name('member.handle-marriage');
-    Route::get('member/search-families', [MemberController::class, 'searchFamilies'])
-        ->name('member.search-families');
-    Route::get('member/church-statistics/{churchCode?}', [MemberController::class, 'getChurchStatistics'])
-        ->name('member.church-statistics');
 });
 

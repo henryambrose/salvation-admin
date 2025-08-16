@@ -255,18 +255,17 @@ function clearSearch() {
   }
 }
 
-function downloadExcel() {
+function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
-    cellAssociation: selectedCellAssociation.value || '',
   });
-  
+
   // Use window.location.href for direct download
-  window.location.href = `/cells-and-association-members/export?${params.toString()}`;
+  window.location.href = `${window.location.origin}/cells-and-association-members/export?${params.toString()}`;
 }
 
 // Member search functions
@@ -348,9 +347,9 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       <div class="mb-4 flex items-center justify-between">
                  <h2 class="text-2xl font-bold text-blue-700">Cells Association Members</h2>
                  <div class="flex gap-2">
-           <Button v-if="canExportCellsAndAssociationMember" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+           <Button v-if="canExportCellsAndAssociationMember" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
              <component :is="Download" />
-             <span>Export Excel</span>
+             <span>Export CSV</span>
            </Button>
            <Button v-if="canCreateCellsAndAssociationMember" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
              <component :is="Plus" />
