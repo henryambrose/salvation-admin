@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\CatholicCalendarController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -12,6 +13,10 @@ Route::get('/', function () {
 Route::get('/csrf-cookie', function () {
     return response()->noContent(); // sends fresh XSRF-TOKEN cookie
 });
+
+// Public API routes
+Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);
+
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard

@@ -6,6 +6,15 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 
 const { can } = permissionHelpers();
 
+// Debounce utility function
+function debounce<T extends (...args: any[]) => any>(func: T, wait: number): T {
+  let timeout: ReturnType<typeof setTimeout>;
+  return ((...args: any[]) => {
+    clearTimeout(timeout);
+    timeout = setTimeout(() => func.apply(null, args), wait);
+  }) as T;
+}
+
 const props = defineProps<{
   users: Array<{
     id: number;
@@ -36,6 +45,28 @@ const selectedRoleFilter = ref<string>('all');
 const showPermissionModal = ref(false);
 const editingUser = ref<any>(null);
 const userPermissions = ref<{[key: number]: string[]}>({});
+const isProcessingRole = ref<{[key: number]: boolean}>({});
+const failedRequests = ref<Set<string>>(new Set());
+const errorMessages = ref<{[key: number]: string}>({});
+
+// Prevent retrying failed requests for 5 minutes
+const addFailedRequest = (key: string) => {
+  failedRequests.value.add(key);
+  setTimeout(() => {
+    failedRequests.value.delete(key);
+  }, 5 * 60 * 1000); // 5 minutes
+};
+
+const isRequestFailed = (key: string) => failedRequests.value.has(key);
+
+const clearError = (userId: number) => {
+  delete errorMessages.value[userId];
+};
+
+const retryRoleAssignment = (userId: number, roleId: number | string) => {
+  clearError(userId);
+  assignRole(userId, Number(roleId));
+};
 
 // Computed properties
 const filteredUsers = computed(() => {
@@ -63,17 +94,58 @@ const roleOptions = computed(() => [
 ]);
 
 // Functions
-function assignRole(userId: number, roleId: number) {
-  router.post('/roles-permissions/assign-role', {
-    user_id: userId,
-    role_id: roleId,
-  });
+async function assignRole(userId: number, roleId: number) {
+  // Prevent multiple rapid requests
+  if (isProcessingRole.value[userId]) {
+    return;
+  }
+  
+  // Prevent retrying failed requests
+  const requestKey = `assign-role-${userId}-${roleId}`;
+  if (isRequestFailed(requestKey)) {
+    console.log('Skipping failed request to prevent continuous errors');
+    return;
+  }
+  
+  isProcessingRole.value[userId] = true;
+  
+  try {
+    await router.post('/roles-permissions/assign-role', {
+      user_id: userId,
+      role_id: roleId,
+    });
+    // Clear any previous error on success
+    clearError(userId);
+  } catch (error) {
+    console.error('Failed to assign role:', error);
+    // Mark this request as failed to prevent continuous retries
+    addFailedRequest(requestKey);
+    // Set user-friendly error message
+    errorMessages.value[userId] = 'Failed to assign role. Please try again.';
+    // Don't retry on error - let user try again manually
+  } finally {
+    isProcessingRole.value[userId] = false;
+  }
 }
 
-function removeRole(userId: number) {
-  router.post('/roles-permissions/remove-role', {
-    user_id: userId,
-  });
+async function removeRole(userId: number) {
+  // Prevent multiple rapid requests
+  if (isProcessingRole.value[userId]) {
+    return;
+  }
+  
+  isProcessingRole.value[userId] = true;
+  
+  try {
+    await router.post('/roles-permissions/remove-role', {
+      user_id: userId,
+    });
+  } catch (error) {
+    console.error('Failed to remove role:', error);
+    // Don't retry on error - let user try again manually
+  } finally {
+    isProcessingRole.value[userId] = false;
+  }
 }
 
 function openPermissionModal(user: {
@@ -113,18 +185,23 @@ function togglePermission(permissionSlug: string) {
   }
 }
 
-function saveUserPermissions() {
+async function saveUserPermissions() {
   if (!editingUser.value) return;
   
   const userId = editingUser.value.id;
   const permissions = userPermissions.value[userId] || [];
   
-  router.post('/roles-permissions/update-user-permissions', {
-    user_id: userId,
-    permissions: permissions,
-  });
-  
-  closePermissionModal();
+  try {
+    await router.post('/roles-permissions/update-user-permissions', {
+      user_id: userId,
+      permissions: permissions,
+    });
+    
+    closePermissionModal();
+  } catch (error) {
+    console.error('Failed to update user permissions:', error);
+    // Don't retry on error - let user try again manually
+  }
 }
 
 function getRoleBadgeColor(roleName: string) {
@@ -154,7 +231,10 @@ function getPermissionIcon(permission: string) {
 function onRoleChange(userId: number, event: Event) {
   const target = event.target as HTMLSelectElement;
   const roleId = target.value ? Number(target.value) : 0;
-  assignRole(userId, roleId);
+  
+  // Debounce the role assignment to prevent rapid requests
+  const debouncedAssignRole = debounce(assignRole, 500);
+  debouncedAssignRole(userId, roleId);
 }
 
 // Remove unused variables and improve type safety
@@ -270,13 +350,26 @@ const getCustomPermissionsCount = (): number => {
                 <select 
                   :value="user.roles[0]?.id || ''" 
                   @change="onRoleChange(user.id, $event)"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  :disabled="isProcessingRole[user.id]"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Role</option>
                   <option v-for="role in roles" :key="role.id" :value="role.id">
                     {{ role.name }}
                   </option>
                 </select>
+                <div v-if="isProcessingRole[user.id]" class="mt-1 text-xs text-blue-600">
+                  Updating role...
+                </div>
+                <div v-if="errorMessages[user.id]" class="mt-1 text-xs text-red-600 flex items-center gap-2">
+                  {{ errorMessages[user.id] }}
+                  <button 
+                    @click="() => retryRoleAssignment(user.id, user.roles[0]?.id || '')"
+                    class="text-blue-600 hover:text-blue-800 underline text-xs"
+                  >
+                    Retry
+                  </button>
+                </div>
               </div>
 
               <!-- Action Buttons -->
