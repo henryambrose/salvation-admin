@@ -177,12 +177,12 @@ class CommunityController extends Controller
 
     public function export(Request $request)
     {
-        $this->authorize('viewAny', Community::class);
-
         try {
-            $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member');
+            $this->authorize('viewAny', Community::class);
 
-            if ($request->input('isArchived') === 'true') {
+            $query = Community::with(['zone', 'ppchead.member', 'scchead.member']);
+
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
@@ -227,70 +227,40 @@ class CommunityController extends Controller
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $ppcHeadName = $item->ppchead && $item->ppchead->member
-                    ? trim($item->ppchead->member->first_name.' '.$item->ppchead->member->last_name)
-                    : '';
+                fputcsv($out, [
+                    'ID', 'Community Name', 'Zone', 'PPC Head', 'SCC Head'
+                ]);
 
-                $sccHeadName = $item->scchead && $item->scchead->member
-                    ? trim($item->scchead->member->first_name.' '.$item->scchead->member->last_name)
-                    : '';
+                foreach ($query->cursor() as $item) {
+                    $ppcHeadName = $item->ppchead && $item->ppchead->member
+                        ? trim($item->ppchead->member->first_name.' '.$item->ppchead->member->last_name)
+                        : '';
 
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'Community Name' => $item->name ?? '',
-                    'Zone' => $item->zone ? $item->zone->name : '',
-                    'PPC Head' => $ppcHeadName,
-                    'SCC Head' => $sccHeadName,
-                ];
-            }
+                    $sccHeadName = $item->scchead && $item->scchead->member
+                        ? trim($item->scchead->member->first_name.' '.$item->scchead->member->last_name)
+                        : '';
 
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            $headers = array_keys($exportData[0] ?? []);
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-                $col++;
-            }
-
-            // Set data
-            $row = 2;
-            foreach ($exportData as $rowData) {
-                $col = 'A';
-                foreach ($rowData as $value) {
-                    $sheet->setCellValue($col.$row, $value);
-                    $col++;
+                    fputcsv($out, [
+                        $item->id,
+                        $item->name ?? '',
+                        $item->zone ? $item->zone->name : '',
+                        $ppcHeadName,
+                        $sccHeadName,
+                    ]);
                 }
-                $row++;
-            }
 
-            // Style header row
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'communities_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'communities_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('Community Export failed: '.$e->getMessage());
-
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

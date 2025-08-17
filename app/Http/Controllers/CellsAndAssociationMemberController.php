@@ -8,10 +8,9 @@ use App\Models\CellsAndAssociation;
 use App\Models\CellsAndAssociationMember;
 use App\Models\Member;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
 use Inertia\Response;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class CellsAndAssociationMemberController extends Controller
 {
@@ -99,10 +98,14 @@ class CellsAndAssociationMemberController extends Controller
                 ->toArray();
 
             if (!empty($existingAssociations)) {
-                return back()->withErrors([
-                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
-                        implode(', ', $existingAssociations)
-                ])->withInput();
+                return response()->json([
+                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations),
+                    'errors' => [
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                            implode(', ', $existingAssociations)]
+                    ]
+                ], 422);
             }
             
             // Use bulk insert for better performance
@@ -165,10 +168,14 @@ class CellsAndAssociationMemberController extends Controller
                 ->toArray();
 
             if (!empty($existingAssociations)) {
-                return back()->withErrors([
-                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
-                        implode(', ', $existingAssociations)
-                ])->withInput();
+                return response()->json([
+                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations),
+                    'errors' => [
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                            implode(', ', $existingAssociations)]
+                    ]
+                ], 422);
             }
             
             // Delete existing record
@@ -233,15 +240,25 @@ class CellsAndAssociationMemberController extends Controller
 
         $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'community_id')
             ->with('community:id,name')
-            ->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-            ->orWhere('first_name', 'like', "%{$search}%")
-            ->orWhere('last_name', 'like', "%{$search}%")
-            ->limit(10)
+            ->where(function($query) use ($search) {
+                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('member_no', 'like', "%{$search}%")
+                    ->orWhereHas('community', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            })
+            ->limit(20)
             ->get()
             ->map(function ($member) {
                 return [
                     'id' => $member->id,
-                    'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
+                    'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'member_no' => $member->member_no,
+                    'community_name' => $member->community->name ?? 'N/A'
                 ];
             });
 
@@ -260,7 +277,11 @@ class CellsAndAssociationMemberController extends Controller
 
         return response()->json([
             'id' => $member->id,
-            'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
+            'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+            'first_name' => $member->first_name,
+            'last_name' => $member->last_name,
+            'member_no' => $member->member_no,
+            'community_name' => $member->community->name ?? 'N/A'
         ]);
     }
 
@@ -277,45 +298,45 @@ class CellsAndAssociationMemberController extends Controller
         return response()->json($cellAssociations);
     }
 
+    /**
+     * Export cells and association members to CSV.
+     */
     public function export(Request $request)
     {
         try {
-            $query = CellsAndAssociationMember::with(['member.community', 'cellsAndAssociation']);
+            $this->authorize('viewAny', CellsAndAssociationMember::class);
 
-            // Handle archived records
-            if ($request->input('isArchived') === 'true') {
+            $query = CellsAndAssociationMember::with(['member', 'cellsAndAssociation']);
+
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
 
             if ($search = $request->input('search')) {
-                $query->whereHas('member', function ($q) use ($search) {
-                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                        ->orWhere('first_name', 'like', "%$search%")
-                        ->orWhere('last_name', 'like', "%$search%");
-                })->orWhereHas('cellsAndAssociation', function ($q) use ($search) {
-                    $q->where('name', 'like', "%$search%");
+                $query->where(function ($q) use ($search) {
+                    $q->whereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                    })
+                    ->orWhereHas('cellsAndAssociation', function ($caQuery) use ($search) {
+                        $caQuery->where('name', 'like', "%$search%");
+                    });
                 });
             }
 
-            if ($cellAssociation = $request->input('cellAssociation')) {
-                $query->where('cells_and_association_id', $cellAssociation);
-            }
-
             // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'cells_and_association_name', 'member_name'];
+            $allowedSortColumns = ['id', 'member.first_name', 'cellsAndAssociation.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
 
             if (in_array($sort, $allowedSortColumns)) {
-                if ($sort === 'cells_and_association_name') {
+                if ($sort === 'member.first_name') {
+                    $query->join('members', 'cells_and_association_members.member_id', '=', 'members.id')
+                        ->orderBy('members.first_name', $direction);
+                } elseif ($sort === 'cellsAndAssociation.name') {
                     $query->join('cells_and_associations', 'cells_and_association_members.cells_and_association_id', '=', 'cells_and_associations.id')
                         ->orderBy('cells_and_associations.name', $direction);
-                } elseif ($sort === 'member_name') {
-                    $query->join('members', 'cells_and_association_members.member_id', '=', 'members.id')
-                        ->orderBy('members.first_name', $direction)
-                        ->orderBy('members.last_name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -323,65 +344,36 @@ class CellsAndAssociationMemberController extends Controller
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $memberName = $item->member ? trim($item->member->first_name.' '.$item->member->last_name) : '';
-                $communityName = $item->member && $item->member->community ? $item->member->community->name : 'N/A';
-                $memberNo = $item->member ? $item->member->member_no : 'N/A';
-                $memberDisplayName = $memberName.' - '.$communityName.' - '.$memberNo;
+                fputcsv($out, [
+                    'ID', 'Member Name', 'Cell/Association', 'Contact Number', 'Email'
+                ]);
 
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'Cell Association Name' => $item->cellsAndAssociation->name ?? '',
-                    'Member Name' => $memberDisplayName,
-                ];
-            }
+                foreach ($query->cursor() as $item) {
+                    $memberName = $item->member 
+                        ? trim($item->member->first_name.' '.$item->member->last_name)
+                        : '';
 
-            // Create Excel file
-            $spreadsheet = new Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            $headers = array_keys($exportData[0] ?? []);
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-                $col++;
-            }
-
-            // Set data
-            $row = 2;
-            foreach ($exportData as $rowData) {
-                $col = 'A';
-                foreach ($rowData as $value) {
-                    $sheet->setCellValue($col.$row, $value);
-                    $col++;
+                    fputcsv($out, [
+                        $item->id,
+                        $memberName,
+                        $item->cellsAndAssociation ? $item->cellsAndAssociation->name : '',
+                        $item->member ? $item->member->contact_no_1 : '',
+                        $item->member ? $item->member->email : '',
+                    ]);
                 }
-                $row++;
-            }
 
-            // Style header row
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-
-            // Create writer and output
-            $writer = new Xlsx($spreadsheet);
-            $filename = 'cells_association_members_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'cells_and_association_members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Export failed: '.$e->getMessage());
-
+            \Log::error('Cells and Association Member Export failed: '.$e->getMessage());
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

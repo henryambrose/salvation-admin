@@ -163,15 +163,23 @@ watch(memberType, (newType) => {
 const performSearch = async () => {
   try {
     const endpoint = memberType.value === 'External'
-      ? '/api/external-members/search-all'
-      : '/api/members/search-spouse';
+      ? '/external-members/search'
+      : `/member/family-details/${props.familyNo}`;
 
     const params = new URLSearchParams({
       query: searchQuery.value,
       ...(props.familyNo && { familyNo: props.familyNo }) // Add familyNo if provided
     });
 
-    const response = await fetch(`${endpoint}?${params}`);
+    const response =  await fetch(`${endpoint}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+      
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     searchResults.value = data.map((item) => ({
@@ -212,7 +220,7 @@ watch(() => props.modelValue, (newValue) => {
 const fetchMemberDetails = async (memberId) => {
   try {
     // Try internal members first
-    let response = await fetch(`/api/members/${memberId}`)
+    let response = await fetch(`/member/${memberId}`)
     
     if (response.ok) {
       const data = await response.json()
@@ -228,7 +236,7 @@ const fetchMemberDetails = async (memberId) => {
     }
     
     // Try external members
-    response = await fetch(`/api/external-members/${memberId}`)
+    response = await fetch(`/external-members/${memberId}`)
     
     if (response.ok) {
       const data = await response.json()

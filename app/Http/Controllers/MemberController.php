@@ -17,19 +17,21 @@ use App\Models\Gender;
 use App\Models\IncomeRange;
 use App\Models\Member;
 use App\Models\Parish;
+use App\Models\PPCHead;
 use App\Models\Relationship;
+use App\Models\SCCHead;
 use App\Models\State;
 use App\Models\Status;
 use App\Models\Town;
 use App\Models\UnifiedPerson;
+use App\Services\FamilyNumberingService;
 use App\Services\FamilyTreeService;
-use DB;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 class MemberController extends Controller
 {
@@ -362,9 +364,6 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreMemberRequest $request)
     {
         $this->authorize('create', Member::class);
@@ -644,10 +643,6 @@ class MemberController extends Controller
         ]);
     }
 
-
-    /**
-     * Search members for family tree
-     */
     public function searchFamilyMembers(Request $request)
     {
         $query = $request->input('q', '');
@@ -954,49 +949,198 @@ class MemberController extends Controller
         }
     }
 
-    public function getFamilyDetails($familyNo)
+    public function getFamilyDetails($familyNo, Request $request)
     {
         try {
-            $familyMembers = Member::where('family_no', $familyNo)
-                ->with(['community', 'communityCluster.cluster'])
-                ->get();
+            // Get internal members
+            $internalMembersQuery = Member::where('family_no', $familyNo)
+                ->with([
+                    'community', 
+                    'communityCluster.cluster',
+                    'father:id,first_name,last_name',
+                    'mother:id,first_name,last_name',
+                    'spouse:id,first_name,last_name'
+                ]);
 
-            if ($familyMembers->isEmpty()) {
+            // Exclude the current member if exclude_member_id is provided
+            if ($request->has('exclude_member_id')) {
+                $internalMembersQuery->where('id', '!=', $request->input('exclude_member_id'));
+            }
+
+            $internalMembers = $internalMembersQuery->get();
+
+            // Get external members
+            $externalMembersQuery = \App\Models\ExternalMember::where('family_no', $familyNo)
+                ->with([
+                    'relationship:id,name',
+                    'gender:id,name',
+                    'fatherInternal:id,first_name,last_name',
+                    'motherInternal:id,first_name,last_name',
+                    'spouseInternal:id,first_name,last_name',
+                    'fatherExternal:id,first_name,last_name',
+                    'motherExternal:id,first_name,last_name',
+                    'spouseExternal:id,first_name,last_name'
+                ]);
+
+            $externalMembers = $externalMembersQuery->get();
+
+            // Combine both types of members
+            $allFamilyMembers = $internalMembers->concat($externalMembers);
+
+            if ($allFamilyMembers->isEmpty()) {
                 return response()->json(['error' => 'Family not found'], 404);
             }
 
-            // Get the first member's community and cluster info
-            $firstMember = $familyMembers->first();
+            // Get the first member's community and cluster info (prefer internal member)
+            $firstMember = $internalMembers->first() ?? $externalMembers->first();
             $communityId = $firstMember->community_id;
 
             // Find the correct community cluster ID for this community
             // If the stored community_cluster_id doesn't match the community, find the first one for this community
-            $correctClusterId = $firstMember->community_cluster_id;
+            $correctClusterId = $firstMember->community_cluster_id ?? null;
 
-            // Check if the stored cluster belongs to the correct community
-            $storedCluster = \App\Models\CommunityCluster::find($firstMember->community_cluster_id);
-            if (! $storedCluster || $storedCluster->community_id != $communityId) {
-                // Find the first cluster for this community
-                $correctCluster = \App\Models\CommunityCluster::where('community_id', $communityId)->first();
-                if ($correctCluster) {
-                    $correctClusterId = $correctCluster->id;
+            // Check if the stored cluster belongs to the correct community (only for internal members)
+            if ($firstMember instanceof Member && $firstMember->community_cluster_id) {
+                $storedCluster = \App\Models\CommunityCluster::find($firstMember->community_cluster_id);
+                if (! $storedCluster || $storedCluster->community_id != $communityId) {
+                    // Find the first cluster for this community
+                    $correctCluster = \App\Models\CommunityCluster::where('community_id', $communityId)->first();
+                    if ($correctCluster) {
+                        $correctClusterId = $correctCluster->id;
+                    }
                 }
             }
+
+            // Calculate generation and format data for each member
+            $membersWithGeneration = $allFamilyMembers->map(function ($member) {
+                // Calculate generation based on family relationships
+                $generation = 0;
+                
+                // Handle both internal and external members
+                if ($member instanceof Member) {
+                    // Internal member
+                    if ($member->father_id) {
+                        $generation = 1;
+                        if ($member->father && $member->father->father_id) {
+                            $generation = 2;
+                        }
+                    }
+                    
+                    if ($member->mother_id && $generation === 0) {
+                        $generation = 1;
+                        if ($member->mother && $member->mother->mother_id) {
+                            $generation = 2;
+                        }
+                    }
+
+                    return [
+                        'id' => $member->id,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
+                        'member_no' => $member->member_no,
+                        'date_of_birth' => $member->date_of_birth,
+                        'generation' => $generation,
+                        'member_type' => 'internal',
+                        'father' => $member->father ? [
+                            'id' => $member->father->id,
+                            'name' => $member->father->first_name . ' ' . $member->father->last_name
+                        ] : null,
+                        'mother' => $member->mother ? [
+                            'id' => $member->mother->id,
+                            'name' => $member->mother->first_name . ' ' . $member->mother->last_name
+                        ] : null,
+                        'spouse' => $member->spouse ? [
+                            'id' => $member->spouse->id,
+                            'name' => $member->spouse->first_name . ' ' . $member->spouse->last_name
+                        ] : null,
+                    ];
+                } else {
+                    // External member
+                    if ($member->father_id) {
+                        $generation = 1;
+                        // Check both internal and external fathers
+                        if ($member->fatherInternal && $member->fatherInternal->father_id) {
+                            $generation = 2;
+                        } elseif ($member->fatherExternal && $member->fatherExternal->father_id) {
+                            $generation = 2;
+                        }
+                    }
+                    
+                    if ($member->mother_id && $generation === 0) {
+                        $generation = 1;
+                        // Check both internal and external mothers
+                        if ($member->motherInternal && $member->motherInternal->mother_id) {
+                            $generation = 2;
+                        } elseif ($member->motherExternal && $member->motherExternal->mother_id) {
+                            $generation = 2;
+                        }
+                    }
+
+                    // Determine father, mother, and spouse names
+                    $father = null;
+                    if ($member->fatherInternal) {
+                        $father = [
+                            'id' => $member->fatherInternal->id,
+                            'name' => $member->fatherInternal->first_name . ' ' . $member->fatherInternal->last_name
+                        ];
+                    } elseif ($member->fatherExternal) {
+                        $father = [
+                            'id' => $member->fatherExternal->id,
+                            'name' => $member->fatherExternal->first_name . ' ' . $member->fatherExternal->last_name
+                        ];
+                    }
+
+                    $mother = null;
+                    if ($member->motherInternal) {
+                        $mother = [
+                            'id' => $member->motherInternal->id,
+                            'name' => $member->motherInternal->first_name . ' ' . $member->motherInternal->last_name
+                        ];
+                    } elseif ($member->motherExternal) {
+                        $mother = [
+                            'id' => $member->motherExternal->id,
+                            'name' => $member->motherExternal->first_name . ' ' . $member->motherExternal->last_name
+                        ];
+                    }
+
+                    $spouse = null;
+                    if ($member->spouseInternal) {
+                        $spouse = [
+                            'id' => $member->spouseInternal->id,
+                            'name' => $member->spouseInternal->first_name . ' ' . $member->spouseInternal->last_name
+                        ];
+                    } elseif ($member->spouseExternal) {
+                        $spouse = [
+                            'id' => $member->spouseExternal->id,
+                            'name' => $member->spouseExternal->first_name . ' ' . $member->spouseExternal->last_name
+                        ];
+                    }
+
+                    return [
+                        'id' => $member->id,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
+                        'member_no' => $member->external_member_no,
+                        'date_of_birth' => null, // External members don't have date_of_birth
+                        'generation' => $generation,
+                        'member_type' => 'external',
+                        'father' => $father,
+                        'mother' => $mother,
+                        'spouse' => $spouse,
+                    ];
+                }
+            });
 
             return response()->json([
                 'family_no' => $familyNo,
                 'community_id' => $communityId,
                 'community_cluster_id' => $correctClusterId,
                 'community_name' => $firstMember->community?->name,
-                'cluster_name' => $firstMember->communityCluster?->cluster?->name,
-                'member_count' => $familyMembers->count(),
-                'members' => $familyMembers->map(function ($member) {
-                    return [
-                        'id' => $member->id,
-                        'name' => $member->first_name.' '.$member->last_name,
-                        'member_no' => $member->member_no,
-                    ];
-                }),
+                'cluster_name' => $firstMember instanceof Member ? ($firstMember->communityCluster?->cluster?->name ?? null) : null,
+                'member_count' => $allFamilyMembers->count(),
+                'internal_count' => $internalMembers->count(),
+                'external_count' => $externalMembers->count(),
+                'members' => $membersWithGeneration,
             ]);
         } catch (\Exception $e) {
             \Log::error('Error getting family details: '.$e->getMessage());
@@ -1040,34 +1184,48 @@ class MemberController extends Controller
 
     public function getNextAvailableNumbers()
     {
-        $churchCode = config('app.church_code', 'SAL');
-        $numberingService = new \App\Services\FamilyNumberingService($churchCode);
+        try {
+            $churchCode = config('app.church_code', 'SAL');
+            $numberingService = new \App\Services\FamilyNumberingService($churchCode);
 
-        $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
-        $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
-        $nextMemberNo = $numberingService->generateMemberNumber();
+            $nextFamilyGroup = $numberingService->generateFamilyGroupNumber();
+            $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
+            $nextMemberNo = $numberingService->generateMemberNumber();
 
-        return response()->json([
-            'next_family_no' => $nextFamilyNo,
-            'next_member_no' => $nextMemberNo,
-            'family_group' => $nextFamilyGroup,
-            'timestamp' => now()->toISOString(),
-            'debug_info' => [
-                'highest_member_in_db' => DB::table('members')
-                    ->whereNotNull('member_no')
-                    ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
-                    ->value('member_no'),
-                'highest_family_in_db' => DB::table('members')
-                    ->whereNotNull('family_no')
-                    ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
-                    ->value('family_no'),
-            ],
-        ]);
+            \Log::info('Generated next available numbers', [
+                'church_code' => $churchCode,
+                'next_family_group' => $nextFamilyGroup,
+                'next_family_no' => $nextFamilyNo,
+                'next_member_no' => $nextMemberNo
+            ]);
+
+            return response()->json([
+                'next_family_no' => $nextFamilyNo,
+                'next_member_no' => $nextMemberNo,
+                'family_group' => $nextFamilyGroup,
+                'timestamp' => now()->toISOString(),
+                'debug_info' => [
+                    'highest_member_in_db' => DB::table('members')
+                        ->whereNotNull('member_no')
+                        ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
+                        ->value('member_no'),
+                    'highest_family_in_db' => DB::table('members')
+                        ->whereNotNull('family_no')
+                        ->orderByRaw('CAST(SUBSTRING_INDEX(SUBSTRING_INDEX(family_no, "-", 2), "-", -1) AS UNSIGNED) DESC')
+                        ->value('family_no'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error generating next available numbers: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            
+            return response()->json([
+                'error' => 'Failed to generate next available numbers',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Search members for spouse selection
-     */
     public function searchMembers(Request $request)
     {
         $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
@@ -1125,27 +1283,46 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
+
     public function getMemberDetails($id)
     {
-        $member = Member::with(['gender', 'community', 'relationship'])
-            ->findOrFail($id);
+        try {
+            \Log::info('Fetching member details for ID: ' . $id);
+            
+            $member = Member::with([
+                'community:id,name',
+                'relationship:id,name',
+                'gender:id,name',
+                'bloodGroup:id,name',
+                'designation:id,name',
+                'incomeRange:id,name',
+                'sccHeads.community:id,name',
+                'ppcHeads.community:id,name',
+                'clusterHeads.cluster:id,name',
+                'clusterHeads.community:id,name',
+                'cellsAndAssociations:id,name'
+            ])->findOrFail($id);
 
-        return response()->json([
-            'id' => $member->id,
-            'first_name' => $member->first_name,
-            'last_name' => $member->last_name,
-            'full_name' => $member->full_name,
-            'member_no' => $member->member_no,
-            'family_no' => $member->family_no,
-            'community' => $member->community,
-            'relationship' => $member->relationship,
-            'gender' => $member->gender,
-        ]);
+            \Log::info('Member found: ' . $member->first_name . ' ' . $member->last_name);
+            \Log::info('SCC Heads count: ' . $member->sccHeads->count());
+            \Log::info('PPC Heads count: ' . $member->ppcHeads->count());
+            \Log::info('Cluster Heads count: ' . $member->clusterHeads->count());
+            \Log::info('Cells count: ' . $member->cellsAndAssociations->count());
+
+            // Transform the data to match frontend expectations
+            $transformedMember = $member->toArray();
+            $transformedMember['scc_heads'] = $member->sccHeads;
+            $transformedMember['ppc_heads'] = $member->ppcHeads;
+            $transformedMember['cluster_heads'] = $member->clusterHeads;
+            $transformedMember['cells_and_associations'] = $member->cellsAndAssociations;
+
+            return response()->json($transformedMember);
+        } catch (\Exception $e) {
+            \Log::error('Error getting member details: '.$e->getMessage());
+            return response()->json(['error' => 'Member not found'], 404);
+        }
     }
 
-    /**
-     * Show data verification page
-     */
     public function dataVerification()
     {
         // Debug authentication
@@ -1212,11 +1389,6 @@ class MemberController extends Controller
         ]);
     }
 
-
-
-    /**
-     * Bulk update members
-     */
     public function bulkUpdate(Request $request)
     {
         // Debug authentication

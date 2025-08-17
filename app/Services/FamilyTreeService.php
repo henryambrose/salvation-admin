@@ -803,7 +803,7 @@ class FamilyTreeService
                 if ($this->isUncleOrAunt($p2->spouse, $p1)) {
                     return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                 }
-                if ($this->isSpouseOfUncleOrAunt($p1->spouse, $p2)) {
+                if ($p1->spouse && $this->isSpouseOfUncleOrAunt($p1->spouse, $p2)) {
                     return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                 }
             }

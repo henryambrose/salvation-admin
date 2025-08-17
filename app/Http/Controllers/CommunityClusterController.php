@@ -194,56 +194,45 @@ class CommunityClusterController extends Controller
             ->with('success', 'Community Cluster restored successfully.');
     }
 
+    /**
+     * Export community clusters to CSV.
+     */
     public function export(Request $request)
     {
-
-        // Simple test response
-        if ($request->has('test')) {
-            return response()->json(['message' => 'Export method is working']);
-        }
-
         try {
-            $query = CommunityCluster::with(['cluster', 'community', 'member']);
+            $this->authorize('viewAny', CommunityCluster::class);
 
-            if ($request->input('isArchived') === 'true') {
+            $query = CommunityCluster::with(['community', 'cluster']);
+
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
 
-            $query->select('community_clusters.*');
-            $query->join('communities', 'community_clusters.community_id', '=', 'communities.id');
-            $query->join('clusters', 'community_clusters.cluster_id', '=', 'clusters.id');
-            $query->leftJoin('members', 'community_clusters.member_id', '=', 'members.id');
-            $query->select('community_clusters.*', 'communities.name as community_name', 'clusters.name as cluster_name', 'members.first_name', 'members.last_name');
-            $query->selectRaw('CONCAT(members.first_name, " ", members.last_name) as member_name');
-
-            if ($communityId = $request->input('community_id')) {
-                $query->where('community_clusters.community_id', $communityId);
-            }
-            if ($clusterId = $request->input('cluster_id')) {
-                $query->where('community_clusters.cluster_id', $clusterId);
-            }
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('clusters.name', 'like', "%$search%")
-                        ->orWhere('communities.name', 'like', "%$search%");
+                    $q->whereHas('community', function ($communityQuery) use ($search) {
+                        $communityQuery->where('name', 'like', "%$search%");
+                    })
+                    ->orWhereHas('cluster', function ($clusterQuery) use ($search) {
+                        $clusterQuery->where('name', 'like', "%$search%");
+                    });
                 });
             }
 
             // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'community_name', 'cluster_name', 'member_name'];
+            $allowedSortColumns = ['id', 'community.name', 'cluster.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
 
             if (in_array($sort, $allowedSortColumns)) {
-                if ($sort === 'community_name') {
-                    $query->orderBy('communities.name', $direction);
-                } elseif ($sort === 'cluster_name') {
-                    $query->orderBy('clusters.name', $direction);
-                } elseif ($sort === 'member_name') {
-                    $query->orderBy('members.first_name', $direction)
-                        ->orderBy('members.last_name', $direction);
+                if ($sort === 'community.name') {
+                    $query->join('communities', 'community_clusters.community_id', '=', 'communities.id')
+                        ->orderBy('communities.name', $direction);
+                } elseif ($sort === 'cluster.name') {
+                    $query->join('clusters', 'community_clusters.cluster_id', '=', 'clusters.id')
+                        ->orderBy('clusters.name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -251,63 +240,30 @@ class CommunityClusterController extends Controller
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $memberName = $item->member ? trim($item->member->first_name.' '.$item->member->last_name) : 'N/A';
+                fputcsv($out, [
+                    'ID', 'Community', 'Cluster'
+                ]);
 
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'Community Name' => $item->community_name ?? '',
-                    'Cluster Name' => $item->cluster_name ?? '',
-                    'Member Name' => $memberName,
-                ];
-            }
-
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            $headers = array_keys($exportData[0] ?? []);
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-                $col++;
-            }
-
-            // Set data
-            $row = 2;
-            foreach ($exportData as $rowData) {
-                $col = 'A';
-                foreach ($rowData as $value) {
-                    $sheet->setCellValue($col.$row, $value);
-                    $col++;
+                foreach ($query->cursor() as $item) {
+                    fputcsv($out, [
+                        $item->id,
+                        $item->community ? $item->community->name : '',
+                        $item->cluster ? $item->cluster->name : '',
+                    ]);
                 }
-                $row++;
-            }
 
-            // Style header row
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'community_clusters_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'community_clusters_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
-            \Log::error('Export failed: '.$e->getMessage());
-
+            \Log::error('Community Cluster Export failed: '.$e->getMessage());
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

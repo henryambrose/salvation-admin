@@ -118,7 +118,7 @@ watch(
   () => createForm.community_id,
   async (newVal) => {
     if (newVal) {
-      const { data } = await axios.get(`/api/community/${newVal}/members`);
+      const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
       modalMembers.value = data;
       createForm.member_id = '';
     } else {
@@ -265,15 +265,15 @@ function restorePPCHead(id: number) {
   });
 }
 
-function downloadExcel() {
+function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
-  
+
   // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/ppc-head/export?${params.toString()}`;
 }
@@ -281,11 +281,11 @@ function downloadExcel() {
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
-const canCreatePPCHead = can('create-p-p-c-head');
-const canReadAnyPPCHead = can('read-p-p-c-head');
-const canUpdateAnyPPCHead = can('update-p-p-c-head');
-const canDeleteAnyPPCHead = can('delete-p-p-c-head');
-const canExportPPCHead = can('read-p-p-c-head');
+const canCreatePPCHead = can('create-ppc-head');
+const canReadAnyPPCHead = can('read-ppc-head');
+const canUpdateAnyPPCHead = can('update-ppc-head');
+const canDeleteAnyPPCHead = can('delete-ppc-head');
+const canExportPPCHead = can('read-ppc-head');
 
 function onPageChange(e: Event) {
   const target = e.target as HTMLSelectElement | null;
@@ -302,9 +302,9 @@ function onPageChange(e: Event) {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">PPC Heads</h2>
         <div class="btn-group flex space-x-2">
-          <Button v-if="canExportPPCHead" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button v-if="canExportPPCHead" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
             <component :is="Download" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </Button>
           <Button v-if="canCreatePPCHead" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
             <component :is="Plus" />

@@ -19,29 +19,43 @@ class FamilyNumberingService
      */
     public function generateFamilyGroupNumber($churchCode = null)
     {
-        $churchCode = $churchCode ?? $this->churchCode;
-        $churchCode = strtoupper($churchCode);
+        try {
+            $churchCode = $churchCode ?? $this->churchCode;
+            $churchCode = strtoupper($churchCode);
 
-        // Find the highest family group number for this church
-        $highestFamily = DB::table('members')
-            ->whereNotNull('family_no')
-            ->where('family_no', 'like', $churchCode.'-%')
-            ->orderByRaw('CAST(SUBSTRING_INDEX(family_no, "-", -1) AS UNSIGNED) DESC')
-            ->first();
+            // Find the highest family group number for this church
+            $highestFamily = DB::table('members')
+                ->whereNotNull('family_no')
+                ->where('family_no', 'like', $churchCode.'-%')
+                ->orderByRaw('CAST(SUBSTRING_INDEX(family_no, "-", -1) AS UNSIGNED) DESC')
+                ->first();
 
-        if ($highestFamily) {
-            // Parse the highest family number to get the group sequence
-            $parsed = $this->parseFamilyNumber($highestFamily->family_no);
-            $nextSequence = $parsed['family_group'] + 1;
-        } else {
-            // No existing families for this church, start with 1
-            $nextSequence = 1;
+            if ($highestFamily) {
+                // Parse the highest family number to get the group sequence
+                $parsed = $this->parseFamilyNumber($highestFamily->family_no);
+                $nextSequence = $parsed['family_group'] + 1;
+            } else {
+                // No existing families for this church, start with 1
+                $nextSequence = 1;
+            }
+
+            // Format: SAL-XXX (3 digits)
+            $familyGroupSequence = str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
+            $result = "{$churchCode}-{$familyGroupSequence}";
+
+            \Log::info('Generated family group number', [
+                'church_code' => $churchCode,
+                'highest_family' => $highestFamily ? $highestFamily->family_no : 'none',
+                'next_sequence' => $nextSequence,
+                'result' => $result
+            ]);
+
+            return $result;
+        } catch (\Exception $e) {
+            \Log::error('Error generating family group number: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
-
-        // Format: SAL-XXX (3 digits)
-        $familyGroupSequence = str_pad($nextSequence, 4, '0', STR_PAD_LEFT);
-
-        return "{$churchCode}-{$familyGroupSequence}";
     }
 
     /**
@@ -60,31 +74,46 @@ class FamilyNumberingService
      */
     public function generateMemberNumber($year = null, $churchCode = null)
     {
-        $year = $year ?? date('Y');
-        $churchCode = $churchCode ?? $this->churchCode;
-        $churchCode = strtoupper($churchCode);
+        try {
+            $year = $year ?? date('Y');
+            $churchCode = $churchCode ?? $this->churchCode;
+            $churchCode = strtoupper($churchCode);
 
-        // Find the highest member sequence for this year and church
-        $highestMember = DB::table('members')
-            ->where('registration_year', $year)
-            ->where('member_no', 'like', '%'.$churchCode.'-M%')
-            ->whereNotNull('member_no')
-            ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
-            ->first();
+            // Find the highest member sequence for this year and church
+            $highestMember = DB::table('members')
+                ->where('registration_year', $year)
+                ->where('member_no', 'like', '%'.$churchCode.'-M%')
+                ->whereNotNull('member_no')
+                ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
+                ->first();
 
-        if ($highestMember) {
-            // Parse the highest member number to get the sequence
-            $parsed = $this->parseMemberNumber($highestMember->member_no);
-            $nextSequence = $parsed['member_sequence'] + 1;
-        } else {
-            // No existing members for this year/church, start with 1
-            $nextSequence = 1;
+            if ($highestMember) {
+                // Parse the highest member number to get the sequence
+                $parsed = $this->parseMemberNumber($highestMember->member_no);
+                $nextSequence = $parsed['member_sequence'] + 1;
+            } else {
+                // No existing members for this year/church, start with 1
+                $nextSequence = 1;
+            }
+
+            // Format: YYYY-SAL-MNNNNN
+            $memberSequence = str_pad($nextSequence, 6, '0', STR_PAD_LEFT);
+            $result = "{$year}-{$churchCode}-M{$memberSequence}";
+
+            \Log::info('Generated member number', [
+                'year' => $year,
+                'church_code' => $churchCode,
+                'highest_member' => $highestMember ? $highestMember->member_no : 'none',
+                'next_sequence' => $nextSequence,
+                'result' => $result
+            ]);
+
+            return $result;
+        } catch (\Exception $e) {
+            \Log::error('Error generating member number: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
         }
-
-        // Format: YYYY-SAL-MNNNNN
-        $memberSequence = str_pad($nextSequence, 6, '0', STR_PAD_LEFT);
-
-        return "{$year}-{$churchCode}-M{$memberSequence}";
     }
 
     /**

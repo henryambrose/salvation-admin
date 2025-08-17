@@ -100,7 +100,7 @@ class CellsAndAssociationController extends Controller
         // Preserve current state after deletion
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
-        return redirect()->route('cells-and-associations.index', array_merge(
+        return redirect()->route('cells-and-association.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived']),
             [
                 'page' => $page,

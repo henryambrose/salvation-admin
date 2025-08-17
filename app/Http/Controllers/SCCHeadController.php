@@ -192,49 +192,45 @@ class SCCHeadController extends Controller
         return response()->json($members);
     }
 
+    /**
+     * Export SCC heads to CSV.
+     */
     public function export(Request $request)
     {
         try {
+            $this->authorize('viewAny', SCCHead::class);
+
             $query = SCCHead::with(['member', 'community']);
 
-            if ($request->input('isArchived') === 'true') {
+            if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();
             } else {
                 $query->withoutTrashed();
             }
 
-            $query->select('s_c_c_heads.*');
-            $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
-            $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
-            $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'members.middle_name as member_middle_name', 'members.last_name as member_last_name', 'communities.name as community_name');
-
-            // Apply filters
-            if ($communityId = $request->input('community_id')) {
-                $query->where('s_c_c_heads.community_id', $communityId);
-            }
-            if ($memberId = $request->input('member_id')) {
-                $query->where('s_c_c_heads.member_id', $memberId);
-            }
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
-                    $q->where('members.first_name', 'like', "%$search%")
-                        ->orWhere('members.middle_name', 'like', "%$search%")
-                        ->orWhere('members.last_name', 'like', "%$search%")
-                        ->orWhere('communities.name', 'like', "%$search%");
+                    $q->whereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                    })
+                    ->orWhereHas('community', function ($communityQuery) use ($search) {
+                        $communityQuery->where('name', 'like', "%$search%");
+                    });
                 });
             }
 
             // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'member_first_name', 'community_name'];
+            $allowedSortColumns = ['id', 'member.first_name', 'community.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
 
             if (in_array($sort, $allowedSortColumns)) {
-                if ($sort === 'member_first_name') {
-                    $query->orderBy('members.first_name', $direction)
-                        ->orderBy('members.last_name', $direction);
-                } elseif ($sort === 'community_name') {
-                    $query->orderBy('communities.name', $direction);
+                if ($sort === 'member.first_name') {
+                    $query->join('members', 's_c_c_heads.member_id', '=', 'members.id')
+                        ->orderBy('members.first_name', $direction);
+                } elseif ($sort === 'community.name') {
+                    $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id')
+                        ->orderBy('communities.name', $direction);
                 } else {
                     $query->orderBy($sort, $direction);
                 }
@@ -242,62 +238,36 @@ class SCCHeadController extends Controller
                 $query->orderBy('id', 'asc');
             }
 
-            $data = $query->get();
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
 
-            // Transform data for export
-            $exportData = [];
-            foreach ($data as $item) {
-                $memberName = trim($item->member_first_name.' '.($item->member_middle_name ? $item->member_middle_name.' ' : '').$item->member_last_name);
+                fputcsv($out, [
+                    'ID', 'Member Name', 'Community', 'Contact Number', 'Email'
+                ]);
 
-                $exportData[] = [
-                    'ID' => $item->id,
-                    'Member Name' => $memberName,
-                    'Community Name' => $item->community_name ?? '',
-                ];
-            }
+                foreach ($query->cursor() as $item) {
+                    $memberName = $item->member 
+                        ? trim($item->member->first_name.' '.$item->member->last_name)
+                        : '';
 
-            // Create Excel file
-            $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet;
-            $sheet = $spreadsheet->getActiveSheet();
-
-            // Set headers
-            $headers = array_keys($exportData[0] ?? []);
-            $col = 'A';
-            foreach ($headers as $header) {
-                $sheet->setCellValue($col.'1', $header);
-                $sheet->getColumnDimension($col)->setAutoSize(true);
-                $col++;
-            }
-
-            // Set data
-            $row = 2;
-            foreach ($exportData as $rowData) {
-                $col = 'A';
-                foreach ($rowData as $value) {
-                    $sheet->setCellValue($col.$row, $value);
-                    $col++;
+                    fputcsv($out, [
+                        $item->id,
+                        $memberName,
+                        $item->community ? $item->community->name : '',
+                        $item->member ? $item->member->contact_no_1 : '',
+                        $item->member ? $item->member->email : '',
+                    ]);
                 }
-                $row++;
-            }
 
-            // Style header row
-            $sheet->getStyle('A1:'.$sheet->getHighestColumn().'1')->getFont()->setBold(true);
-
-            // Create writer and output
-            $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-            $filename = 'scc_heads_'.date('Y-m-d_H-i-s').'.xlsx';
-
-            // Save to temporary file and return as download
-            $tempFile = tempnam(sys_get_temp_dir(), 'excel_');
-            $writer->save($tempFile);
-
-            return response()->download($tempFile, $filename, [
-                'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            ])->deleteFileAfterSend();
+                fclose($out);
+            }, 'scc_heads_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
 
         } catch (\Exception $e) {
             \Log::error('SCC Head Export failed: '.$e->getMessage());
-
             return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }

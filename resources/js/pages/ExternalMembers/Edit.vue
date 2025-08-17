@@ -112,38 +112,101 @@
           <div class="space-y-6">
             <div class="grid gap-2">
               <Label>Father</Label>
-              <MemberTypeSearchDropdown 
-                v-model="form.father_id" 
-                v-model:sourceType="form.father_source"
-                :error="form.errors.father_id" 
-                placeholder="Search for father..."
-                :existing-data="externalMember.father_data || undefined"
-                class="mt-1"
+              <div class="flex gap-4 mb-2">
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.father_source" 
+                    value="member" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">Member</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.father_source" 
+                    value="external" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">External</span>
+                </label>
+              </div>
+              <SearchDropdown 
+                :model-value="form.father_id || undefined"
+                @update:model-value="(value) => form.father_id = Number(value)"
+                :options="form.father_source === 'member' ? familyMembers : externalFamilyMembers"
+                :fetch-url="form.father_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
+                class="mt-1 block w-full rounded-full"
+                :placeholder="form.father_source === 'member' ? 'Search for father (member)...' : 'Search for father (external)...'"
               />
+              <InputError class="mt-2" :message="form.errors.father_id" />
             </div>
 
             <div class="grid gap-2">
               <Label>Mother</Label>
-              <MemberTypeSearchDropdown 
-                v-model="form.mother_id" 
-                v-model:sourceType="form.mother_source"
-                :error="form.errors.mother_id" 
-                placeholder="Search for father..."
-                :existing-data="externalMember.mother_data || undefined"
-                class="mt-1"
+              <div class="flex gap-4 mb-2">
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.mother_source" 
+                    value="member" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">Member</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.mother_source" 
+                    value="external" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">External</span>
+                </label>
+              </div>
+              <SearchDropdown 
+                :model-value="form.mother_id || undefined"
+                @update:model-value="(value) => form.mother_id = Number(value)"
+                :options="form.mother_source === 'member' ? familyMembers : externalFamilyMembers"
+                :fetch-url="form.mother_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
+                class="mt-1 block w-full rounded-full"
+                :placeholder="form.mother_source === 'member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
               />
+              <InputError class="mt-2" :message="form.errors.mother_id" />
             </div>
 
             <div class="grid gap-2">
               <Label>Spouse</Label>
-              <MemberTypeSearchDropdown 
-                v-model="form.spouse_id" 
-                v-model:sourceType="form.spouse_source"
-                :error="form.errors.spouse_id" 
-                placeholder="Search for spouse..."
-                :existing-data="externalMember.spouse_data || undefined"
-                class="mt-1"
+              <div class="flex gap-4 mb-2">
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.spouse_source" 
+                    value="member" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">Member</span>
+                </label>
+                <label class="flex items-center gap-2">
+                  <input 
+                    type="radio" 
+                    v-model="form.spouse_source" 
+                    value="external" 
+                    class="text-blue-600"
+                  />
+                  <span class="text-sm">External</span>
+                </label>
+              </div>
+              <SearchDropdown 
+                :model-value="form.spouse_id || undefined"
+                @update:model-value="(value) => form.spouse_id = Number(value)"
+                :options="form.spouse_source === 'member' ? familyMembers : externalFamilyMembers"
+                :fetch-url="form.spouse_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
+                class="mt-1 block w-full rounded-full"
+                :placeholder="form.spouse_source === 'member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
               />
+              <InputError class="mt-2" :message="form.errors.spouse_id" />
             </div>
           </div>
         </div>
@@ -178,7 +241,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useForm, router, Head } from '@inertiajs/vue3'
 import InputError from '@/components/InputError.vue' 
 import AppLayout from '@/layouts/AppLayout.vue'
@@ -190,7 +253,7 @@ import Label from '@/components/ui/label/Label.vue'
 import SelectInput from '@/components/ui/select/SelectInput.vue'
 import TextareaInput from '@/components/ui/textarea/TextareaInput.vue'
 import FamilyNumberSearchDropdown from '@/components/FamilyNumberSearchDropdown.vue'
-import MemberTypeSearchDropdown from '@/components/MemberTypeSearchDropdown.vue'
+import { SearchDropdown } from '@/components/ui/searchDropdown'
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue'
 import { ExternalMember } from '@/types';
 
@@ -222,6 +285,108 @@ const form = useForm({
   address: props.externalMember.address || '',
   relationship_id: props.externalMember.relationship_id
 })
+
+// Reactive variables to store family members
+const familyMembers = ref<Array<{ id: number; name: string }>>([]);
+const externalFamilyMembers = ref<Array<{ id: number; name: string }>>([]);
+
+// Function to fetch family members
+const fetchFamilyMembers = async () => {
+  if (form.family_no) {
+    try {
+      const response = await fetch(`/member/family-details/${form.family_no}`, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        credentials: 'same-origin'
+      });
+      
+      const data = await response.json();
+      
+      // Filter members from the same family and exclude current member
+      const currentMemberId = props.externalMember.id;
+      familyMembers.value = data.members
+        .filter((member: any) => member.id !== currentMemberId)
+        .map((member: any) => ({
+          id: member.id,
+          name: member.first_name + ' ' + member.last_name
+        }));
+    } catch (error) {
+      console.error('Error fetching family members:', error);
+      familyMembers.value = [];
+    }
+  } else {
+    familyMembers.value = [];
+  }
+};
+
+// Function to fetch external family members
+const fetchExternalFamilyMembers = async () => {
+  if (form.family_no) {
+    try {
+      const response = await fetch(`/external-member/family-details/${form.family_no}`, {
+        headers: {
+          'Accept': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        },
+        credentials: 'same-origin'
+      });
+      
+      const data = await response.json();
+      
+      // Filter members from the same family and exclude current member
+      const currentMemberId = props.externalMember.id;
+      externalFamilyMembers.value = data.members
+        .filter((member: any) => member.id !== currentMemberId)
+        .map((member: any) => ({
+          id: member.id,
+          name: member.first_name + ' ' + member.last_name
+        }));
+    } catch (error) {
+      console.error('Error fetching external family members:', error);
+      externalFamilyMembers.value = [];
+    }
+  } else {
+    externalFamilyMembers.value = [];
+  }
+};
+
+// Watch for family_no changes to refetch family members
+watch(() => form.family_no, () => {
+  fetchFamilyMembers();
+  fetchExternalFamilyMembers();
+});
+
+// Watch for source changes to clear IDs when switching between member/external
+watch(() => form.father_source, (newSource) => {
+  if (form.father_id) {
+    // Clear the ID when switching source types to avoid confusion
+    form.father_id = undefined;
+  }
+});
+
+watch(() => form.mother_source, (newSource) => {
+  if (form.mother_id) {
+    // Clear the ID when switching source types to avoid confusion
+    form.mother_id = undefined;
+  }
+});
+
+watch(() => form.spouse_source, (newSource) => {
+  if (form.spouse_id) {
+    // Clear the ID when switching source types to avoid confusion
+    form.spouse_id = undefined;
+  }
+});
+
+// Fetch family members on mount
+onMounted(() => {
+  fetchFamilyMembers();
+  fetchExternalFamilyMembers();
+});
 
 const genderOptions = computed(() => 
   props.genders.map(gender => ({

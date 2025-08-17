@@ -16,6 +16,8 @@ const modalRef = ref<HTMLElement | null>(null);
 const currentTab = ref('personal');
 const familyMembers = ref<any[]>([]);
 const loadingFamilyMembers = ref(false);
+const memberDetails = ref<any>(null);
+const loadingMemberDetails = ref(false);
 
 // Tab definitions with categories and fields
 const tabs = [
@@ -190,30 +192,39 @@ function formatFieldValue(fieldKey: string, value: any) {
   // Handle cells and associations relationship
   if (fieldKey === 'cells_and_associations') {
     if (Array.isArray(value) && value.length > 0) {
-      return value.map(item => `• ${item.name}`).join('\n');
+      return value.map((item, index) => `${index + 1}. ${item.name}`).join('\n');
     }
     return '—';
   }
 
   // Handle leadership roles
   if (fieldKey === 'scc_heads') {
-    if (Array.isArray(value) && value.length > 0) {
-      return value.map(item => `• ${item.community?.name || 'Unknown Community'}`).join('\n');
+    console.log('Formatting scc_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
+    if (memberDetails.value?.scc_heads && Array.isArray(memberDetails.value.scc_heads) && memberDetails.value.scc_heads.length > 0) {
+      console.log('SCC Heads found:', memberDetails.value.scc_heads);
+      return memberDetails.value.scc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
+    console.log('No SCC Heads found or empty array');
     return '—';
   }
 
   if (fieldKey === 'ppc_heads') {
-    if (Array.isArray(value) && value.length > 0) {
-      return value.map(item => `• ${item.community?.name || 'Unknown Community'}`).join('\n');
+    console.log('Formatting ppc_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
+    if (memberDetails.value?.ppc_heads && Array.isArray(memberDetails.value.ppc_heads) && memberDetails.value.ppc_heads.length > 0) {
+      console.log('PPC Heads found:', memberDetails.value.ppc_heads);
+      return memberDetails.value.ppc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
+    console.log('No PPC Heads found or empty array');
     return '—';
   }
 
   if (fieldKey === 'cluster_heads') {
-    if (Array.isArray(value) && value.length > 0) {
-      return value.map(item => `• ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`).join('\n');
+    console.log('Formatting cluster_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
+    if (memberDetails.value?.cluster_heads && Array.isArray(memberDetails.value.cluster_heads) && memberDetails.value.cluster_heads.length > 0) {
+      console.log('Cluster Heads found:', memberDetails.value.cluster_heads);
+      return memberDetails.value.cluster_heads.map((item: any, index: number) => `${index + 1}. ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
+    console.log('No Cluster Heads found or empty array');
     return '—';
   }
   
@@ -322,17 +333,46 @@ async function fetchFamilyMembers() {
   loadingFamilyMembers.value = true;
   try {
     // Pass the current member ID to exclude them from the list
-    const response = await axios.get(`/api/families/${props.member.family_no}/members`, {
+    const response = await axios.get(`/member/family-details/${props.member.family_no}`, {
       params: {
         exclude_member_id: props.member.id
       }
     });
-    familyMembers.value = response.data;
+    
+    if (response.data && response.data.members) {
+      familyMembers.value = response.data.members;
+    } else {
+      familyMembers.value = [];
+    }
   } catch (error) {
     console.error('Error fetching family members:', error);
     familyMembers.value = [];
   } finally {
     loadingFamilyMembers.value = false;
+  }
+}
+
+async function fetchMemberDetails() {
+  if (!props.member?.id) return;
+  
+  loadingMemberDetails.value = true;
+  try {
+    console.log('Fetching member details for ID:', props.member.id);
+    const response = await axios.get(`/api/member/${props.member.id}/details`);
+    console.log('Member details response:', response.data);
+    if (response.data) {
+      memberDetails.value = response.data;
+      console.log('Member details set:', memberDetails.value);
+      console.log('SCC Heads:', memberDetails.value.scc_heads);
+      console.log('PPC Heads:', memberDetails.value.ppc_heads);
+      console.log('Cluster Heads:', memberDetails.value.cluster_heads);
+      console.log('Cells:', memberDetails.value.cells_and_associations);
+    }
+  } catch (error) {
+    console.error('Error fetching member details:', error);
+    memberDetails.value = null;
+  } finally {
+    loadingMemberDetails.value = false;
   }
 }
 
@@ -377,8 +417,11 @@ onBeforeUnmount(() => {
 // Watch for member changes to fetch family members
 import { watch } from 'vue';
 watch(() => props.member, (newMember) => {
-  if (newMember && currentTab.value === 'community') {
-    fetchFamilyMembers();
+  if (newMember) {
+    fetchMemberDetails();
+    if (currentTab.value === 'community') {
+      fetchFamilyMembers();
+    }
   }
 }, { immediate: true });
 
@@ -421,6 +464,13 @@ watch(() => currentTab.value, (newTab) => {
           </button>
         </div>
 
+        <!-- Loading indicator for member details -->
+        <div v-if="loadingMemberDetails" class="bg-white px-6 py-4">
+          <div class="flex items-center justify-center py-8">
+            <div class="text-gray-500">Loading member details...</div>
+          </div>
+        </div>
+
         <!-- Tab Content -->
         <div v-if="member" class="bg-white px-6 py-6 flex-1 overflow-y-auto">
           <div
@@ -431,15 +481,35 @@ watch(() => currentTab.value, (newTab) => {
           >
             <!-- Regular fields grid -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              <!-- Loading indicator for leadership tab -->
+              <div v-if="tab.key === 'leadership' && loadingMemberDetails" class="col-span-full flex justify-center py-8">
+                <div class="text-gray-500">Loading leadership roles...</div>
+              </div>
+              
               <div
                 v-for="field in tab.fields"
                 :key="field.key"
+                v-show="tab.key !== 'leadership' || !loadingMemberDetails"
                 class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 shadow-sm min-h-[80px]"
+                :class="{ 
+                  'bg-blue-50 border-blue-200': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
+                  'min-h-[120px]': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key)
+                }"
               >
-                <div class="text-xs font-semibold text-gray-500 mb-2">{{ field.label }}</div>
+                <div class="text-xs font-semibold text-gray-500 mb-2">
+                  {{ field.label }}
+                  <span v-if="['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key) && memberDetails?.[field.key]?.length" 
+                        class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                    {{ memberDetails[field.key].length }} {{ memberDetails[field.key].length === 1 ? 'item' : 'items' }}
+                  </span>
+                </div>
                 <div 
-                  class="text-base font-medium text-gray-800 break-words line-clamp-3"
-                  :class="{ 'whitespace-pre-line': field.key === 'cells_and_associations' || field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' }"
+                  class="text-base font-medium text-gray-800 break-words"
+                  :class="{ 
+                    'line-clamp-3': !['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
+                    'whitespace-pre-line': field.key === 'cells_and_associations' || field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads',
+                    'max-h-32 overflow-y-auto': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key)
+                  }"
                 >
                   <template v-if="field.key === 'church_code'">
                     <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
@@ -447,11 +517,28 @@ watch(() => currentTab.value, (newTab) => {
                     </span>
                   </template>
                   <template v-else>
-                    {{ formatFieldValue(field.key, member[field.key]) }}
+                    {{ formatFieldValue(field.key, 
+                      field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' || field.key === 'cells_and_associations' 
+                        ? memberDetails?.[field.key] 
+                        : member[field.key]
+                    ) }}
                   </template>
                 </div>
               </div>
             </div>
+
+            <!-- Debug section for leadership tab (development only) -->
+            <!-- <div v-if="tab.key === 'leadership' && memberDetails && import.meta.env.DEV" class="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h5 class="text-sm font-semibold text-yellow-800 mb-2">🔍 Debug Info (Development Only)</h5>
+              <div class="text-xs text-yellow-700 space-y-1">
+                <div><strong>memberDetails loaded:</strong> {{ !!memberDetails }}</div>
+                <div><strong>SCC Heads:</strong> {{ memberDetails.scc_heads?.length || 0 }} items</div>
+                <div><strong>PPC Heads:</strong> {{ memberDetails.ppc_heads?.length || 0 }} items</div>
+                <div><strong>Cluster Heads:</strong> {{ memberDetails.cluster_heads?.length || 0 }} items</div>
+                <div><strong>Cells:</strong> {{ memberDetails.cells_and_associations?.length || 0 }} items</div>
+                <div><strong>Raw SCC Heads:</strong> {{ JSON.stringify(memberDetails.scc_heads) }}</div>
+              </div>
+            </div> -->
 
             <!-- Family Members Table for Community tab -->
             <div v-if="tab.key === 'community' && member.family_no" class="mt-8">
@@ -467,10 +554,18 @@ watch(() => currentTab.value, (newTab) => {
                 
                 <!-- Relationship Summary -->
                 <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                  <div class="grid grid-cols-3 gap-4 text-sm">
+                  <div class="grid grid-cols-5 gap-4 text-sm">
                     <div>
                       <span class="font-semibold text-gray-700">Total Members:</span>
                       <span class="ml-2 text-gray-600">{{ familyMembers.length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">Internal:</span>
+                      <span class="ml-2 text-blue-600">{{ familyMembers.filter(m => m.member_type === 'internal').length }}</span>
+                    </div>
+                    <div>
+                      <span class="font-semibold text-gray-700">External:</span>
+                      <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.member_type === 'external').length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">With Fathers:</span>
@@ -508,13 +603,21 @@ watch(() => currentTab.value, (newTab) => {
                       <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-white hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm text-gray-800">
                           <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
-                          <div class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</div>
+                          <div class="flex items-center gap-2 mt-1">
+                            <span class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</span>
+                            <span v-if="familyMember.member_type === 'external'" 
+                                  class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
+                              External
+                            </span>
+                          </div>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}
+                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-else>{{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          {{ calculateAge(familyMember.date_of_birth) || '—' }}
+                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-else>{{ calculateAge(familyMember.date_of_birth) || '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
                           <div v-if="familyMember.father" class="text-blue-600">

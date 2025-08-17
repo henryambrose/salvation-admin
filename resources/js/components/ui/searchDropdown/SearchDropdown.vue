@@ -34,9 +34,11 @@ const open = ref(false)
 const dropdownRef = ref(null)
 
 const displayOptions = computed(() => {
-  const source = props.fetchUrl ? fetchedOptions.value : props.options
-  if (!search.value) return source
-  return source.filter(opt => opt.name.toLowerCase().includes(search.value.toLowerCase()))
+  // Combine static options with fetched options
+  const allOptions = [...props.options, ...fetchedOptions.value];
+  
+  if (!search.value) return allOptions;
+  return allOptions.filter(opt => opt.name.toLowerCase().includes(search.value.toLowerCase()));
 })
 
 watch(search, async (val) => {
@@ -81,7 +83,8 @@ function fetchOption(page = 1) {
     >
       <span class="text-foreground flex-1">
         {{
-          props.options.find(opt => opt.id === modelValue)?.name ||
+          (props.options.find(opt => opt.id === modelValue)?.name ||
+           fetchedOptions.find(opt => opt.id === modelValue)?.name) ||
           'Select Option'
         }}
       </span>
@@ -91,7 +94,7 @@ function fetchOption(page = 1) {
     </div>
     <div
       v-if="open"
-      class="absolute left-0 right-0 z-10 bg-background border border-input rounded-md shadow-lg mt-1 max-h-60 overflow-auto"
+      class="absolute left-0 right-0 z-50 bg-background border border-input rounded-md shadow-lg mt-1 max-h-60 overflow-auto"
     >
       <input
         type="text"

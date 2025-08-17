@@ -199,16 +199,15 @@ function handlePageChange(event: Event) {
 }
 
 
-function downloadExcel() {
+function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    stateId: stateId.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
-  
+
   // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/city/export?${params.toString()}`;
 }
@@ -291,9 +290,9 @@ const canExportCity = can('read-city');
             <span>Add New City</span>
           </Button>
           
-          <Button v-if="canExportCity" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button v-if="canExportCity" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
             <component :is="Download" />
-            <span>Export Excel</span>
+            <span>Export CSV</span>
           </Button>
           
           <label class="flex items-center gap-2 cursor-pointer select-none">

@@ -146,7 +146,7 @@ const performSearch = async (query: string, isIdSearch: boolean = false) => {
       params.append('familyNo', props.familyNo);
     }
     
-    const response = await axios.get(`/api/members/search-spouse?${params}`);
+    const response = await axios.get(`/member/search-members?${params}`);
     
     if (isIdSearch) {
       // For ID search, select the member directly

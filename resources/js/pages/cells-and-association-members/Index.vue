@@ -54,6 +54,9 @@ const searchResults = ref([]);
 const isSearching = ref(false);
 const searchTimeout = ref<number | null>(null);
 
+// Initialize search results with empty array
+searchResults.value = [];
+
 // Filter functionality
 const selectedCellAssociation = ref(props.filters?.cellAssociation || '');
 
@@ -135,7 +138,17 @@ function openEditModal(row: any) {
     editForm.member_id = null;
   }
   
+  // Clear search results when opening modal
+  searchResults.value = [];
   showEditModal.value = true;
+}
+
+function closeEditModal() {
+  showEditModal.value = false;
+  editingItem.value = null;
+  editForm.reset();
+  editForm.clearErrors();
+  searchResults.value = [];
 }
 
 function submitEdit() {
@@ -157,15 +170,20 @@ function submitEdit() {
   editForm.put(`/cells-and-association-members/${editForm.id}`, {
     preserveScroll: true,
     onSuccess: () => {
-      showEditModal.value = false;
-      editingItem.value = null;
+      closeEditModal();
       highlightedRowId.value = Number(editForm.id);
       nextTick(() => scrollToRow(Number(editForm.id)));
+    },
+    onError: () => {
+      // Keep modal open to show errors
+      console.log('Edit form errors:', editForm.errors);
     },
   });
 }
 
 function openCreateModal() {
+  // Clear search results when opening modal
+  searchResults.value = [];
   showCreateModal.value = true;
 }
 
@@ -188,12 +206,15 @@ function submitCreate() {
   createForm.post('/cells-and-association-members', {
     preserveScroll: true,
     onSuccess: () => {
-      createForm.reset();
-      showCreateModal.value = false;
+      closeCreateModal();
       nextTick(() => {
         fetch(enhancedCellsAndAssociationMembers.value.last_page);
         highlightedRowId.value = -1;
       });
+    },
+    onError: () => {
+      // Keep modal open to show errors
+      console.log('Create form errors:', createForm.errors);
     },
   });
 }
@@ -216,8 +237,7 @@ function confirmDelete() {
     },
     preserveScroll: true,
     onSuccess: () => {
-      showDeleteModal.value = false;
-      deletingItem.value = undefined;
+      closeDeleteModal();
       highlightedRowId.value = deletedId+1;
       nextTick(() => scrollToRow(deletedId+1));
     },
@@ -255,18 +275,17 @@ function clearSearch() {
   }
 }
 
-function downloadExcel() {
+function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    sort: sort.value || 'id',
-    direction: direction.value || 'asc',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
-    cellAssociation: selectedCellAssociation.value || '',
   });
-  
+
   // Use window.location.href for direct download
-  window.location.href = `/cells-and-association-members/export?${params.toString()}`;
+  window.location.href = `${window.location.origin}/cells-and-association-members/export?${params.toString()}`;
 }
 
 // Member search functions
@@ -281,7 +300,8 @@ async function searchMembersByName(searchTerm: string) {
     const response = await axios.get('/api/members/search', {
       params: { search: searchTerm }
     });
-    searchResults.value = response.data;
+    searchResults.value = response.data || [];
+    console.log('Search results:', searchResults.value);
   } catch (error) {
     console.error('Error searching members:', error);
     searchResults.value = [];
@@ -310,13 +330,33 @@ async function fetchMemberById(memberId: number) {
 }
 
 function handleMemberSearch(searchTerm: string) {
+  // Clear previous timeout
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);
   }
   
+  // Clear results if search term is too short
+  if (searchTerm.length < 3) {
+    searchResults.value = [];
+    return;
+  }
+  
+  // Set timeout for search
   searchTimeout.value = setTimeout(() => {
     searchMembersByName(searchTerm);
   }, 300);
+}
+
+function closeCreateModal() {
+  showCreateModal.value = false;
+  createForm.reset();
+  createForm.clearErrors();
+  searchResults.value = [];
+}
+
+function closeDeleteModal() {
+  showDeleteModal.value = false;
+  deletingItem.value = undefined;
 }
 
 watch(() => enhancedCellsAndAssociationMembers.value.data, (rows) => {
@@ -348,9 +388,9 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       <div class="mb-4 flex items-center justify-between">
                  <h2 class="text-2xl font-bold text-blue-700">Cells Association Members</h2>
                  <div class="flex gap-2">
-           <Button v-if="canExportCellsAndAssociationMember" @click="downloadExcel" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+           <Button v-if="canExportCellsAndAssociationMember" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
              <component :is="Download" />
-             <span>Export Excel</span>
+             <span>Export CSV</span>
            </Button>
            <Button v-if="canCreateCellsAndAssociationMember" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
              <component :is="Plus" />
@@ -526,30 +566,19 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
 
                <div class="mb-4">
                  <label class="mb-2 block font-medium text-gray-700">Member</label>
-                 <div v-if="Multiselect">
-                   <Multiselect 
-                     v-model="editForm.member_id" 
-                     :options="searchResults" 
-                     label="name" 
-                     track-by="id" 
-                     placeholder="Type at least 3 characters to search members..." 
-                     :searchable="true"
-                     :loading="isSearching"
-                     @search-change="handleMemberSearch"
-                     :allow-empty="false"
-                     :multiple="false"
-                     :close-on-select="true"
-                   />
-                 </div>
-                 <div v-else>
-                   <input 
-                     v-model="editForm.member_id" 
-                     type="text" 
-                     placeholder="Type to search members..."
-                     class="w-full rounded-lg border border-gray-300 px-2 py-2 focus:ring-2 focus:ring-blue-200"
-                     @input="(event) => handleMemberSearch((event.target as HTMLSelectElement)?.value || '')"
-                   />
-                 </div>
+                 <Multiselect 
+                   v-model="editForm.member_id" 
+                   :options="searchResults" 
+                   label="name" 
+                   track-by="id" 
+                   placeholder="Type at least 3 characters to search members..." 
+                   :searchable="true"
+                   :loading="isSearching"
+                   @search-change="handleMemberSearch"
+                   :allow-empty="false"
+                   :multiple="false"
+                   :close-on-select="true"
+                 />
                  <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
                  <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
                </div>
@@ -558,7 +587,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <Button
                   variant="destructive"
                   type="button"
-                  @click="showEditModal = false"
+                  @click="closeEditModal"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel
@@ -615,6 +644,9 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                    :allow-empty="false"
                    :multiple="false"
                    :close-on-select="true"
+                   :filter-results="false"
+                   :resolve-on-load="false"
+                   :delay="300"
                  />
                  <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
                  <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
@@ -624,7 +656,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <Button
                   variant="destructive"
                   type="button"
-                  @click="showCreateModal = false"
+                  @click="closeCreateModal"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel
@@ -660,7 +692,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
               <Button
                 variant="secondary"
                 type="button"
-                @click="showDeleteModal = false"
+                @click="closeDeleteModal"
                 class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
               >
                 Cancel

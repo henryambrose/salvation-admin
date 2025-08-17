@@ -487,15 +487,16 @@ class ExternalMemberController extends Controller
 
                     // Get sample member names for display
                     $sampleMembers = Member::where('family_no', $family->family_no)
+                        ->select('first_name', 'last_name')
                         ->limit(3)
-                        ->get()
-                        ->map(fn ($member) => $member->first_name.' '.$member->last_name)
-                        ->join(', ');
+                        ->get();
 
                     return [
                         'family_no' => $family->family_no,
                         'member_count' => $memberCount,
-                        'sample_members' => $sampleMembers,
+                        'sample_members' => $sampleMembers->map(function ($member) {
+                            return trim($member->first_name.' '.$member->last_name);
+                        })->join(', '),
                     ];
                 });
 
@@ -505,6 +506,117 @@ class ExternalMemberController extends Controller
             \Log::error('Family numbers search error: '.$e->getMessage());
 
             return response()->json(['error' => 'Search failed'], 500);
+        }
+    }
+
+    /**
+     * Get external members by family number
+     */
+    public function getFamilyDetails($familyNo)
+    {
+        try {
+            $externalMembers = ExternalMember::where('family_no', $familyNo)
+                ->with(['relationship', 'gender'])
+                ->get()
+                ->map(function ($member) {
+                    return [
+                        'id' => $member->id,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
+                        'full_name' => trim($member->first_name.' '.$member->last_name),
+                        'family_no' => $member->family_no,
+                        'relationship' => $member->relationship?->name,
+                        'gender' => $member->gender?->name,
+                        'type' => 'External',
+                    ];
+                });
+
+            return response()->json([
+                'family_no' => $familyNo,
+                'members' => $externalMembers
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('External member family details error: '.$e->getMessage());
+            return response()->json(['error' => 'Failed to fetch family details'], 500);
+        }
+    }
+
+    /**
+     * Export external members to CSV.
+     */
+    public function export(Request $request)
+    {
+        try {
+            $this->authorize('viewAny', ExternalMember::class);
+
+            $query = ExternalMember::with(['community', 'relationship']);
+
+            if ($request->boolean('isArchived')) {
+                $query->onlyTrashed();
+            } else {
+                $query->withoutTrashed();
+            }
+
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                        ->orWhere('first_name', 'like', "%$search%")
+                        ->orWhere('last_name', 'like', "%$search%")
+                        ->orWhere('family_no', 'like', "%$search%")
+                        ->orWhereHas('community', function ($communityQuery) use ($search) {
+                            $communityQuery->where('name', 'like', "%$search%");
+                        });
+                });
+            }
+
+            // Validate sort column to prevent SQL injection
+            $allowedSortColumns = ['id', 'first_name', 'last_name', 'family_no', 'community.name'];
+            $sort = $request->input('sort', 'id');
+            $direction = $request->input('direction', 'asc');
+
+            if (in_array($sort, $allowedSortColumns)) {
+                if ($sort === 'community.name') {
+                    $query->join('communities', 'external_members.community_id', '=', 'communities.id')
+                        ->orderBy('communities.name', $direction);
+                } else {
+                    $query->orderBy($sort, $direction);
+                }
+            } else {
+                $query->orderBy('id', 'asc');
+            }
+
+            // Streamed CSV keeps memory flat
+            return response()->streamDownload(function () use ($query) {
+                $out = fopen('php://output', 'w');
+
+                fputcsv($out, [
+                    'ID', 'First Name', 'Last Name', 'Family No', 'Community', 'Relationship', 'Contact Number', 'Email', 'Date of Birth'
+                ]);
+
+                foreach ($query->cursor() as $item) {
+                    fputcsv($out, [
+                        $item->id,
+                        $item->first_name ?? '',
+                        $item->last_name ?? '',
+                        $item->family_no ?? '',
+                        $item->community ? $item->community->name : '',
+                        $item->relationship ? $item->relationship->name : '',
+                        $item->contact_no_1 ?? '',
+                        $item->email ?? '',
+                        $item->date_of_birth ?? '',
+                    ]);
+                }
+
+                fclose($out);
+            }, 'external_members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+                'Content-Type' => 'text/csv',
+                'Cache-Control' => 'no-store, no-cache',
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('External Member Export failed: '.$e->getMessage());
+            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
         }
     }
 

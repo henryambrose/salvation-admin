@@ -368,7 +368,15 @@ watch(existingFamilyNo, async (newFamilyNo) => {
 // Function to fetch family details (extracted from selectFamily)
 const fetchFamilyDetails = async (familyNo: string) => {
   try {
-    const response = await fetch(`/api/families/${familyNo}/details`);
+    const response = await fetch(`/member/family-details/${familyNo}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+    
     if (response.ok) {
       const familyDetails = await response.json();
       
@@ -385,6 +393,10 @@ const fetchFamilyDetails = async (familyNo: string) => {
       // Set pre-populated flag
       isPrePopulated.value = true;
       
+    } else if (response.status === 401) {
+      // Unauthorized - redirect to login
+      window.location.href = '/login';
+      return;
     } else {
       console.error('Failed to fetch family details');
       isPrePopulated.value = false;
@@ -395,16 +407,80 @@ const fetchFamilyDetails = async (familyNo: string) => {
   }
 };
 
+// Test authentication by trying to access a simple member route
+const testAuthentication = async () => {
+  try {
+    console.log('Testing authentication...');
+    const response = await fetch('/member/index', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+    
+    console.log('Auth test response status:', response.status);
+    return response.ok;
+  } catch (error) {
+    console.error('Auth test error:', error);
+    return false;
+  }
+};
+
 // Fetch next available numbers
 const fetchNextNumbers = async () => {
   try {
-    const response = await fetch('/api/members/next-numbers');
+    console.log('Fetching next available numbers...');
+    
+    // Check if user is authenticated
+    if (!document.querySelector('meta[name="csrf-token"]')) {
+      console.error('No CSRF token found - user may not be authenticated');
+      previewFamilyNo.value = 'Authentication required';
+      previewMemberNo.value = 'Authentication required';
+      return;
+    }
+    
+    // Test authentication first
+    const isAuthenticated = await testAuthentication();
+    if (!isAuthenticated) {
+      console.error('User not authenticated');
+      previewFamilyNo.value = 'Authentication required';
+      previewMemberNo.value = 'Authentication required';
+      return;
+    }
+    
+    const response = await fetch('/member/next-available-numbers', {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+    
+    console.log('Response status:', response.status);
+    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+    
     if (response.ok) {
       const data = await response.json();
+      console.log('Response data:', data);
       previewFamilyNo.value = data.next_family_no;
       previewMemberNo.value = data.next_member_no;
+    } else if (response.status === 401) {
+      // Unauthorized - redirect to login
+      console.error('User not authenticated, redirecting to login');
+      window.location.href = '/login';
+      return;
+    } else if (response.status === 419) {
+      // CSRF token mismatch - refresh page
+      console.error('CSRF token mismatch, refreshing page');
+      window.location.reload();
+      return;
     } else {
       console.error('API response not ok:', response.status);
+      const errorText = await response.text();
+      console.error('Error response:', errorText);
       previewFamilyNo.value = 'Error loading';
       previewMemberNo.value = 'Error loading';
     }
@@ -431,14 +507,42 @@ const performFamilySearch = async () => {
   
   isSearching.value = true;
   try {
-    const response = await fetch(`/api/families/search?q=${encodeURIComponent(familySearchQuery.value)}`);
+    const response = await fetch(`/member/search-families?q=${encodeURIComponent(familySearchQuery.value)}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+    
     if (response.ok) {
       const data = await response.json();
-      familySearchResults.value = data;
+      if (Array.isArray(data)) {
+        familySearchResults.value = data.map(item => ({
+          family_no: item.family_no || '',
+          member_count: item.member_count || 0,
+          community_name: item.community_name || 'Unknown Community',
+          members: item.members || []
+        }));
+      } else {
+        familySearchResults.value = [];
+      }
+    } else if (response.status === 401) {
+      // Unauthorized - redirect to login
+      window.location.href = '/login';
+      return;
+    } else if (response.status === 419) {
+      // CSRF token mismatch - refresh page
+      window.location.reload();
+      return;
     } else {
       const errorText = await response.text();
+      console.error('Family search failed:', response.status, errorText);
+      familySearchResults.value = [];
     }
   } catch (error) {
+    console.error('Family search error:', error);
     familySearchResults.value = [];
   } finally {
     isSearching.value = false;

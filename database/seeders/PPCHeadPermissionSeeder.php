@@ -21,6 +21,8 @@ class PPCHeadPermissionSeeder extends Seeder
             'create-external-member', 'read-external-member', 'update-external-member', 'delete-external-member', 'list-external-member', 'restore-external-member',
             // Data verification permissions
             'read-data-verification', 'update-data-verification',
+            // PPC Head specific permissions
+            'create-ppc-head', 'read-ppc-head', 'update-ppc-head', 'delete-ppc-head', 'list-ppc-head', 'restore-ppc-head',
             // Basic read and list permissions for related data
             'read-community', 'list-community', 'read-parish', 'list-parish', 'read-zone', 'list-zone', 
             'read-relationship', 'list-relationship', 'read-designation', 'list-designation', 

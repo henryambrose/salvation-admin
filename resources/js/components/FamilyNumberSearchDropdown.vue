@@ -89,14 +89,18 @@ const handleSearch = () => {
 
 const performSearch = async () => {
   try {
-    const response = await fetch(`/api/family-numbers/search?query=${encodeURIComponent(searchQuery.value)}`)
+    const response = await fetch(`/member/search-families?q=${encodeURIComponent(searchQuery.value)}`)
     const data = await response.json()
     
-    searchResults.value = data.map(item => ({
-      family_no: item.family_no,
-      member_count: item.member_count,
-      sample_members: item.sample_members
-    }))
+    if (Array.isArray(data)) {
+      searchResults.value = data.map(item => ({
+        family_no: item.family_no || '',
+        member_count: item.member_count || 0,
+        sample_members: Array.isArray(item.members) ? item.members.join(', ') : 'No members'
+      }))
+    } else {
+      searchResults.value = []
+    }
   } catch (error) {
     console.error('Search error:', error)
     searchResults.value = []
