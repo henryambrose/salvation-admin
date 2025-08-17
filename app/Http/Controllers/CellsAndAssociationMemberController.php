@@ -98,10 +98,14 @@ class CellsAndAssociationMemberController extends Controller
                 ->toArray();
 
             if (!empty($existingAssociations)) {
-                return back()->withErrors([
-                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
-                        implode(', ', $existingAssociations)
-                ])->withInput();
+                return response()->json([
+                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations),
+                    'errors' => [
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                            implode(', ', $existingAssociations)]
+                    ]
+                ], 422);
             }
             
             // Use bulk insert for better performance
@@ -164,10 +168,14 @@ class CellsAndAssociationMemberController extends Controller
                 ->toArray();
 
             if (!empty($existingAssociations)) {
-                return back()->withErrors([
-                    'cells_and_association_id' => 'Member is already associated with some of the selected cell associations: ' . 
-                        implode(', ', $existingAssociations)
-                ])->withInput();
+                return response()->json([
+                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                        implode(', ', $existingAssociations),
+                    'errors' => [
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                            implode(', ', $existingAssociations)]
+                    ]
+                ], 422);
             }
             
             // Delete existing record
@@ -232,15 +240,27 @@ class CellsAndAssociationMemberController extends Controller
 
         $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'community_id')
             ->with('community:id,name')
-            ->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-            ->orWhere('first_name', 'like', "%{$search}%")
-            ->orWhere('last_name', 'like', "%{$search}%")
-            ->orWhere('member_no', 'like', "%{$search}%")
-            ->orWhereHas('community', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+            ->where(function($query) use ($search) {
+                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+                    ->orWhere('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('member_no', 'like', "%{$search}%")
+                    ->orWhereHas('community', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
             })
-            ->limit(10)
-            ->get();
+            ->limit(20)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'member_no' => $member->member_no,
+                    'community_name' => $member->community->name ?? 'N/A'
+                ];
+            });
 
         return response()->json($members);
     }
@@ -257,7 +277,11 @@ class CellsAndAssociationMemberController extends Controller
 
         return response()->json([
             'id' => $member->id,
-            'name' => trim($member->first_name.' '.$member->last_name).' - '.($member->community->name ?? 'N/A').' - '.($member->member_no ?? 'N/A'),
+            'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+            'first_name' => $member->first_name,
+            'last_name' => $member->last_name,
+            'member_no' => $member->member_no,
+            'community_name' => $member->community->name ?? 'N/A'
         ]);
     }
 

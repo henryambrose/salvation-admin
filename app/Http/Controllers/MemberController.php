@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreMemberRequest;
 use App\Http\Requests\UpdateMemberRequest;
 use App\Models\AgeGroup;
+use App\Models\AuditLog;
 use App\Models\BloodGroup;
 use App\Models\City;
 use App\Models\Community;
@@ -377,9 +378,6 @@ class MemberController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(StoreMemberRequest $request)
     {
         $this->authorize('create', Member::class);
@@ -659,10 +657,6 @@ class MemberController extends Controller
         ]);
     }
 
-
-    /**
-     * Search members for family tree
-     */
     public function searchFamilyMembers(Request $request)
     {
         $query = $request->input('q', '');
@@ -1246,9 +1240,6 @@ class MemberController extends Controller
         }
     }
 
-    /**
-     * Search members for spouse selection
-     */
     public function searchMembers(Request $request)
     {
         $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
@@ -1306,27 +1297,46 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
+
     public function getMemberDetails($id)
     {
-        $member = Member::with(['gender', 'community', 'relationship'])
-            ->findOrFail($id);
+        try {
+            \Log::info('Fetching member details for ID: ' . $id);
+            
+            $member = Member::with([
+                'community:id,name',
+                'relationship:id,name',
+                'gender:id,name',
+                'bloodGroup:id,name',
+                'designation:id,name',
+                'incomeRange:id,name',
+                'sccHeads.community:id,name',
+                'ppcHeads.community:id,name',
+                'clusterHeads.cluster:id,name',
+                'clusterHeads.community:id,name',
+                'cellsAndAssociations:id,name'
+            ])->findOrFail($id);
 
-        return response()->json([
-            'id' => $member->id,
-            'first_name' => $member->first_name,
-            'last_name' => $member->last_name,
-            'full_name' => $member->full_name,
-            'member_no' => $member->member_no,
-            'family_no' => $member->family_no,
-            'community' => $member->community,
-            'relationship' => $member->relationship,
-            'gender' => $member->gender,
-        ]);
+            \Log::info('Member found: ' . $member->first_name . ' ' . $member->last_name);
+            \Log::info('SCC Heads count: ' . $member->sccHeads->count());
+            \Log::info('PPC Heads count: ' . $member->ppcHeads->count());
+            \Log::info('Cluster Heads count: ' . $member->clusterHeads->count());
+            \Log::info('Cells count: ' . $member->cellsAndAssociations->count());
+
+            // Transform the data to match frontend expectations
+            $transformedMember = $member->toArray();
+            $transformedMember['scc_heads'] = $member->sccHeads;
+            $transformedMember['ppc_heads'] = $member->ppcHeads;
+            $transformedMember['cluster_heads'] = $member->clusterHeads;
+            $transformedMember['cells_and_associations'] = $member->cellsAndAssociations;
+
+            return response()->json($transformedMember);
+        } catch (\Exception $e) {
+            \Log::error('Error getting member details: '.$e->getMessage());
+            return response()->json(['error' => 'Member not found'], 404);
+        }
     }
 
-    /**
-     * Show data verification page
-     */
     public function dataVerification()
     {
         // Debug authentication
@@ -1393,11 +1403,6 @@ class MemberController extends Controller
         ]);
     }
 
-
-
-    /**
-     * Bulk update members
-     */
     public function bulkUpdate(Request $request)
     {
         // Debug authentication

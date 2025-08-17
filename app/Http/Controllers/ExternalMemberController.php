@@ -487,15 +487,16 @@ class ExternalMemberController extends Controller
 
                     // Get sample member names for display
                     $sampleMembers = Member::where('family_no', $family->family_no)
+                        ->select('first_name', 'last_name')
                         ->limit(3)
-                        ->get()
-                        ->map(fn ($member) => $member->first_name.' '.$member->last_name)
-                        ->join(', ');
+                        ->get();
 
                     return [
                         'family_no' => $family->family_no,
                         'member_count' => $memberCount,
-                        'sample_members' => $sampleMembers,
+                        'sample_members' => $sampleMembers->map(function ($member) {
+                            return trim($member->first_name.' '.$member->last_name);
+                        })->join(', '),
                     ];
                 });
 
@@ -505,6 +506,39 @@ class ExternalMemberController extends Controller
             \Log::error('Family numbers search error: '.$e->getMessage());
 
             return response()->json(['error' => 'Search failed'], 500);
+        }
+    }
+
+    /**
+     * Get external members by family number
+     */
+    public function getFamilyDetails($familyNo)
+    {
+        try {
+            $externalMembers = ExternalMember::where('family_no', $familyNo)
+                ->with(['relationship', 'gender'])
+                ->get()
+                ->map(function ($member) {
+                    return [
+                        'id' => $member->id,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
+                        'full_name' => trim($member->first_name.' '.$member->last_name),
+                        'family_no' => $member->family_no,
+                        'relationship' => $member->relationship?->name,
+                        'gender' => $member->gender?->name,
+                        'type' => 'External',
+                    ];
+                });
+
+            return response()->json([
+                'family_no' => $familyNo,
+                'members' => $externalMembers
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('External member family details error: '.$e->getMessage());
+            return response()->json(['error' => 'Failed to fetch family details'], 500);
         }
     }
 

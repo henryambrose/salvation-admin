@@ -164,14 +164,22 @@ const performSearch = async () => {
   try {
     const endpoint = memberType.value === 'External'
       ? '/external-members/search'
-      : '/member/search-members';
+      : `/member/family-details/${props.familyNo}`;
 
     const params = new URLSearchParams({
       query: searchQuery.value,
       ...(props.familyNo && { familyNo: props.familyNo }) // Add familyNo if provided
     });
 
-    const response = await fetch(`${endpoint}?${params}`);
+    const response =  await fetch(`${endpoint}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+      
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
     searchResults.value = data.map((item) => ({

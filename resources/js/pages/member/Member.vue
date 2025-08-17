@@ -4,7 +4,6 @@ import { Head, useForm, usePage } from '@inertiajs/vue3';
 import FormBody from '@/components/FormBody.vue';
 import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';
-import SpouseSearchDropdown from '@/components/SpouseSearchDropdown.vue';
 import ParishSelection from '@/components/ParishSelection.vue';
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
 import { Button } from '@/components/ui/button';
@@ -800,6 +799,66 @@ function formatDate(dateStr: string) {
 // Add this watcher after the existing watchers (around line 600)
 watch(() => form.mother_id, (newValue, oldValue) => {
 });
+
+
+
+// Function to fetch member details for display
+const fetchMemberDetails = async (memberId: number) => {
+  try {
+    const response = await fetch(`/api/members/search?search=${memberId}`);
+    const data = await response.json();
+    return data.find((member: any) => member.id === memberId);
+  } catch (error) {
+    console.error('Error fetching member details:', error);
+    return null;
+  }
+};
+
+// Reactive variables to store family members
+const familyMembers = ref<Array<{ id: number; name: string }>>([]);
+
+// Function to fetch family members
+const fetchFamilyMembers = async () => {
+  
+  if (form.family_no) {
+    try {
+      const response = await fetch(`/member/family-details/${form.family_no}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+      
+      const data = await response.json();
+      
+      // Filter members from the same family and exclude current member
+      const currentMemberId = member?.id;
+      familyMembers.value = data.members
+        .filter((member: any) => member.id !== currentMemberId)
+        .map((member: any) => ({
+          id: member.id,
+          name: member.first_name + ' ' + member.last_name
+        }));
+    } catch (error) {
+      console.error('Error fetching family members:', error);
+      familyMembers.value = [];
+    }
+  } else {
+    familyMembers.value = [];
+  }
+};
+
+// Watch for family_no changes to refetch family members
+watch(() => form.family_no, () => {
+  fetchFamilyMembers();
+});
+
+// Fetch family members on mount
+onMounted(() => {
+  fetchFamilyMembers();
+});
 </script>
 
 <template>
@@ -999,35 +1058,38 @@ watch(() => form.mother_id, (newValue, oldValue) => {
               <!-- <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p> -->
             </div>
             <div class="grid gap-2">
-              <Label for="relation_member_id">Spouse Member {{ form.spouse_id }}</Label>
-              <SpouseSearchDropdown 
-                :model-value="form.spouse_id"
-                @update:model-value="(value) => form.spouse_id = value"
-                :exclude-id="member?.id"
-                :familyNo="form.family_no"
-                placeholder="Search for spouse by name, member number, or family number..."
+              <Label for="relation_member_id">Spouse Member</Label>
+              <SearchDropdown 
+                :model-value="form.spouse_id || undefined"
+                @update:model-value="(value) => form.spouse_id = Number(value)"
+                :options="familyMembers"
+                fetch-url="/api/members/search"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Search for spouse by name, member number, or community..."
               />
               <InputError class="mt-2" :message="form.errors.spouse_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="relation_member_id">Father Member {{ form.father_id }}</Label>
-              <SpouseSearchDropdown 
-                :model-value="form.father_id"
-                @update:model-value="(value) => form.father_id = value"
-                :exclude-id="member?.id"
-                :familyNo="form.family_no"
-                placeholder="Search for father by name, member number, or family number..."
+              <Label for="relation_member_id">Father Member</Label>
+              <SearchDropdown 
+                :model-value="form.father_id || undefined"
+                @update:model-value="(value) => form.father_id = Number(value)"
+                :options="familyMembers"
+                fetch-url="/api/members/search"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Search for father by name, member number, or community..."
               />
               <InputError class="mt-2" :message="form.errors.father_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="relation_member_id">Mother Member {{ form.mother_id }}</Label>
-              <SpouseSearchDropdown 
-                :model-value="form.mother_id"
-                @update:model-value="(value) => form.mother_id = value"
-                :exclude-id="member?.id"
-                :familyNo="form.family_no"
-                placeholder="Search for mother by name, member number, or family number..."
+              <Label for="relation_member_id">Mother Member</Label>
+              <SearchDropdown 
+                :model-value="form.mother_id || undefined"
+                @update:model-value="(value) => form.mother_id = Number(value)"
+                :options="familyMembers"
+                fetch-url="/api/members/search"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Search for mother by name, member number, or community..."
               />
               <InputError class="mt-2" :message="form.errors.mother_id" />
             </div>

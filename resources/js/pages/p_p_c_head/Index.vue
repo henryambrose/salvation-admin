@@ -118,7 +118,7 @@ watch(
   () => createForm.community_id,
   async (newVal) => {
     if (newVal) {
-      const { data } = await axios.get(`/api/community/${newVal}/members`);
+      const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
       modalMembers.value = data;
       createForm.member_id = '';
     } else {
