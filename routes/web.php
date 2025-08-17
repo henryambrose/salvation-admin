@@ -14,9 +14,6 @@ Route::get('/csrf-cookie', function () {
     return response()->noContent(); // sends fresh XSRF-TOKEN cookie
 });
 
-// Public API routes
-Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);
-
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard
@@ -82,3 +79,6 @@ require __DIR__.'/clusters.php';
 require __DIR__.'/community_clusters.php';
 require __DIR__.'/audit.php';
 require __DIR__.'/external_members.php';
+
+// Public API routes (after all other routes to avoid conflicts)
+Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);
