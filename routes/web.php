@@ -9,7 +9,9 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
-
+Route::get('/csrf-cookie', function () {
+    return response()->noContent(); // sends fresh XSRF-TOKEN cookie
+});
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard

@@ -21,14 +21,21 @@ if (token) {
 }
 
 // optional one-time auto-heal on 419
-axios.interceptors.response.use(r => r, async (err) => {
-  if (err.response?.status === 419 && !err.config.__retried) {
-    err.config.__retried = true;
-    try { await axios.get('/sanctum/csrf-cookie').catch(() => {}); } catch {}
-    return axios(err.config);
+axios.interceptors.response.use(
+  r => r,
+  async (error) => {
+    if (error.response?.status === 419) {
+      try {
+        // Use '/sanctum/csrf-cookie' if Sanctum; else '/csrf-cookie'
+        await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
+        return axios.request(error.config); // retry once
+      } catch {
+        window.location.reload(); // fallback: full reload
+      }
+    }
+    return Promise.reject(error);
   }
-  return Promise.reject(err);
-});
+);
 
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
