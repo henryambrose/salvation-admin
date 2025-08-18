@@ -81,3 +81,16 @@ require __DIR__.'/external_members.php';
 
 // Public API routes (after all other routes to avoid conflicts)
 Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);
+
+// Temporary test routes (remove in production)
+Route::get('/test-419', function() {
+    abort(419);
+});
+
+Route::get('/test-404', function() {
+    abort(404);
+});
+
+Route::get('/test-500', function() {
+    abort(500);
+});
