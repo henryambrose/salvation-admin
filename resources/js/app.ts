@@ -14,60 +14,7 @@ axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
 axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 axios.defaults.withCredentials = true;
 
-// Function to refresh CSRF token
-const refreshCsrfToken = async () => {
-  try {
-    await axios.get('/csrf-cookie', { withCredentials: true });
-    const newToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-    if (newToken) {
-      axios.defaults.headers.common['X-CSRF-TOKEN'] = newToken;
-    }
-    return true;
-  } catch (error) {
-    console.error('Failed to refresh CSRF token:', error);
-    return false;
-  }
-};
-
-// Enhanced CSRF error handling
-axios.interceptors.response.use(
-  response => response,
-  async (error) => {
-    if (error.response?.status === 419) {
-      console.log('CSRF token mismatch detected, attempting to refresh...');
-      
-      // Try to refresh the CSRF token
-      const refreshed = await refreshCsrfToken();
-      
-      if (refreshed) {
-        // Retry the original request with new token
-        console.log('CSRF token refreshed, retrying request...');
-        const newToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-        if (newToken && error.config) {
-          error.config.headers['X-CSRF-TOKEN'] = newToken;
-          return axios.request(error.config);
-        }
-      } else {
-        // If refresh fails, redirect to login or reload page
-        console.log('CSRF token refresh failed, redirecting to login...');
-        window.location.href = '/login';
-        return Promise.reject(error);
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Initialize CSRF token on page load
-const initializeCsrfToken = () => {
-  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-  if (token) {
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-  }
-};
-
-// Call initialization
-initializeCsrfToken();
+await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
