@@ -474,10 +474,6 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   <td class="p-2 whitespace-nowrap">
                     <div class="flex gap-2">
                       <template v-if="!isArchived">
-                        <Button v-if="canViewAnyExternalMember" @click="viewExternalMember(member)"
-                          class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
-                          <component :is="ZapIcon" />
-                        </Button>
                         <Button v-if="canEditExternalMember && !member.deleted_at" @click="editExternalMember(member)"
                           class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                           <component :is="Pencil" />
