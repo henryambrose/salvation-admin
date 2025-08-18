@@ -83,7 +83,7 @@ interface Props {
   id: string;
   label: string;
   modelValue: { parishId?: number | null; parishName?: string | null };
-  parishes: Array<{ id: number; name: string }>;
+  parishes: Array<{ id: number; name: string; code?: string }>;
 }
 
 const props = defineProps<Props>();
@@ -97,13 +97,13 @@ const customParishName = ref<string>('');
 const validationMessage = ref<{ type: 'error' | 'warning'; text: string } | null>(null);
 const similarParishes = ref<string[]>([]);
 
-// Create options for dropdown
+// Create options for dropdown with code concatenated to name
 const parishOptions = computed(() => {
   return [
     { id: '', name: 'Select a parish...' },
     ...props.parishes.map(parish => ({
       id: parish.id,
-      name: parish.name
+      name: parish.code ? `${parish.code} - ${parish.name}` : parish.name
     }))
   ];
 });
@@ -145,7 +145,9 @@ const onParishSelected = (parishId: number | string | null) => {
   }
   
   selectedParishId.value = parishId as number;
-  const parishName = props.parishes.find(p => p.id === parishId)?.name || null;
+  // Get the original parish name (without code) for the model value
+  const parish = props.parishes.find(p => p.id === parishId);
+  const parishName = parish?.name || null;
   
   emit('update:modelValue', {
     parishId: parishId as number,

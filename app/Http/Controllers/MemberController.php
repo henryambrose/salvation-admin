@@ -476,8 +476,8 @@ class MemberController extends Controller
             'member' => $member,
             'members' => Member::select('id', 'first_name', 'last_name', 'family_no')->with('spouse')->get(), // Only select needed columns
             'communities' => Community::select('id', 'name')->get(), // Only select needed columns
-            'parishes' => Parish::select('id', 'name')->get()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
+            'parishes' => Parish::select('id', 'name', 'code')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'code' => $item->code];
             }),
             'incomeRanges' => $incomeRanges,
             'communityClusters' => CommunityCluster::select('id', 'community_id', 'cluster_id')->with('cluster')->get()->map(function ($item) {
@@ -517,9 +517,6 @@ class MemberController extends Controller
             'statuses' => Status::select('id', 'name')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'parishes' => Parish::select('id', 'name')->get()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            }),
         ]);
     }
 
@@ -1003,46 +1000,46 @@ class MemberController extends Controller
                 $generation = 0;
                 
                 if ($member->father_uid) {
-                    $generation = 1;
+                        $generation = 1;
                     $father = UnifiedPerson::find($member->father_uid);
                     if ($father && $father->father_uid) {
-                        $generation = 2;
+                            $generation = 2;
+                        }
                     }
-                }
-                
+                    
                 if ($member->mother_uid && $generation === 0) {
-                    $generation = 1;
+                        $generation = 1;
                     $mother = UnifiedPerson::find($member->mother_uid);
                     if ($mother && $mother->mother_uid) {
-                        $generation = 2;
+                            $generation = 2;
+                        }
                     }
-                }
 
-                return [
+                    return [
                     'id' => $member->original_id,
                     'uid' => $member->uid,
-                    'first_name' => $member->first_name,
-                    'last_name' => $member->last_name,
-                    'member_no' => $member->member_no,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
+                        'member_no' => $member->member_no,
                     'date_of_birth' => null, // Will be populated for internal members if needed
-                    'generation' => $generation,
+                        'generation' => $generation,
                     'member_type' => strtolower($member->source),
-                    'father' => $member->father ? [
+                        'father' => $member->father ? [
                         'id' => $member->father->original_id,
                         'uid' => $member->father->uid,
-                        'name' => $member->father->first_name . ' ' . $member->father->last_name
-                    ] : null,
-                    'mother' => $member->mother ? [
+                            'name' => $member->father->first_name . ' ' . $member->father->last_name
+                        ] : null,
+                        'mother' => $member->mother ? [
                         'id' => $member->mother->original_id,
                         'uid' => $member->mother->uid,
-                        'name' => $member->mother->first_name . ' ' . $member->mother->last_name
-                    ] : null,
-                    'spouse' => $member->spouse ? [
+                            'name' => $member->mother->first_name . ' ' . $member->mother->last_name
+                        ] : null,
+                        'spouse' => $member->spouse ? [
                         'id' => $member->spouse->original_id,
                         'uid' => $member->spouse->uid,
-                        'name' => $member->spouse->first_name . ' ' . $member->spouse->last_name
-                    ] : null,
-                ];
+                            'name' => $member->spouse->first_name . ' ' . $member->spouse->last_name
+                        ] : null,
+                    ];
             });
 
             // For internal members, populate date_of_birth

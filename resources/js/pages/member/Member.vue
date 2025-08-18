@@ -50,7 +50,7 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-
+console.log(props.parishes);
 const breadcrumbs: BreadcrumbItem[] = [
   {
     title: 'Member Details',
