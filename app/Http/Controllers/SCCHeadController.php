@@ -177,20 +177,20 @@ class SCCHeadController extends Controller
     }
 
     // Add API endpoint for fetching members by community
-    public function membersByCommunity($communityId)
-    {
-        $members = Member::where('community_id', $communityId)
-            ->select('id', 'first_name', 'middle_name', 'last_name')
-            ->get()
-            ->map(function ($m) {
-                return [
-                    'id' => $m->id,
-                    'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
-                ];
-            });
+    // public function membersByCommunity($communityId)
+    // {
+    //     $members = Member::where('community_id', $communityId)
+    //         ->select('id', 'first_name', 'middle_name', 'last_name')
+    //         ->get()
+    //         ->map(function ($m) {
+    //             return [
+    //                 'id' => $m->id,
+    //                 'name' => trim("{$m->first_name} {$m->middle_name} {$m->last_name}"),
+    //             ];
+    //         });
 
-        return response()->json($members);
-    }
+    //     return response()->json($members);
+    // }
 
     /**
      * Export SCC heads to CSV.

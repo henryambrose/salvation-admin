@@ -112,22 +112,22 @@ class StateController extends Controller
     /**
      * Display a listing of the deleted states.
      */
-    public function deleted(Request $request): Response
-    {
-        $query = State::onlyTrashed();
+    // public function deleted(Request $request): Response
+    // {
+    //     $query = State::onlyTrashed();
 
-        if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%$search%");
-        }
+    //     if ($search = $request->input('search')) {
+    //         $query->where('name', 'like', "%$search%");
+    //     }
 
-        $perPage = $request->input('perPage', 10);
+    //     $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('state/Deleted', [
-            'states' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'perPage'),
-            'fetchUrl' => route('state.deleted'),
-        ]);
-    }
+    //     return Inertia::render('state/Deleted', [
+    //         'states' => $query->paginate($perPage)->appends($request->query()),
+    //         'filters' => $request->only('search', 'perPage'),
+    //         'fetchUrl' => route('state.deleted'),
+    //     ]);
+    // }
 
     /**
      * Restore a deleted state.

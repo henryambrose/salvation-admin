@@ -132,34 +132,34 @@ class CityController extends Controller
     /**
      * Display archived cities.
      */
-    public function deleted(Request $request): Response
-    {
-        $query = City::query()->with('state')->onlyTrashed();
+    // public function deleted(Request $request): Response
+    // {
+    //     $query = City::query()->with('state')->onlyTrashed();
 
-        // Apply filters
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
-                    ->orWhereHas('state', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%$search%");
-                    });
-            });
-        }
+    //     // Apply filters
+    //     if ($search = $request->input('search')) {
+    //         $query->where(function ($q) use ($search) {
+    //             $q->where('name', 'like', "%$search%")
+    //                 ->orWhereHas('state', function ($q2) use ($search) {
+    //                     $q2->where('name', 'like', "%$search%");
+    //                 });
+    //         });
+    //     }
 
-        if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
-        } else {
-            $query->orderBy('id', 'asc');
-        }
+    //     if ($sort = $request->input('sort')) {
+    //         $query->orderBy($sort, $request->input('direction', 'asc'));
+    //     } else {
+    //         $query->orderBy('id', 'asc');
+    //     }
 
-        $perPage = $request->input('perPage', 10);
+    //     $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('city/Deleted', [
-            'cities' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
-            'fetchUrl' => route('city.deleted'),
-        ]);
-    }
+    //     return Inertia::render('city/Deleted', [
+    //         'cities' => $query->paginate($perPage)->appends($request->query()),
+    //         'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
+    //         'fetchUrl' => route('city.deleted'),
+    //     ]);
+    // }
 
     /**
      * Restore the specified resource.

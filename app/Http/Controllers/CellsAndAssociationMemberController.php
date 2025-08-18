@@ -288,15 +288,15 @@ class CellsAndAssociationMemberController extends Controller
     /**
      * Get all cell associations for a specific member
      */
-    public function getMemberCellAssociations($memberId)
-    {
-        $cellAssociations = CellsAndAssociationMember::where('member_id', $memberId)
-            ->with('cellsAndAssociation:id,name')
-            ->get()
-            ->pluck('cellsAndAssociation');
+    // public function getMemberCellAssociations($memberId)
+    // {
+    //     $cellAssociations = CellsAndAssociationMember::where('member_id', $memberId)
+    //         ->with('cellsAndAssociation:id,name')
+    //         ->get()
+    //         ->pluck('cellsAndAssociation');
 
-        return response()->json($cellAssociations);
-    }
+    //     return response()->json($cellAssociations);
+    // }
 
     /**
      * Export cells and association members to CSV.

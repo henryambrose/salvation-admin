@@ -105,22 +105,6 @@ class CountryController extends Controller
     /**
      * Display a listing of the deleted countries.
      */
-    public function deleted(Request $request): Response
-    {
-        $query = Country::onlyTrashed();
-
-        if ($search = $request->input('search')) {
-            $query->where('name', 'like', "%$search%");
-        }
-
-        $perPage = $request->input('perPage', 10);
-
-        return Inertia::render('country/Deleted', [
-            'countries' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'perPage'),
-            'fetchUrl' => route('country.deleted'),
-        ]);
-    }
 
     /**
      * Restore a deleted country.

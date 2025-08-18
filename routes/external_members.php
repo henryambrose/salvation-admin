@@ -9,5 +9,5 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('external-member/family-details/{familyNo}', [ExternalMemberController::class, 'getFamilyDetails'])->name('external-member.family-details');
     Route::get('external-members/export', [ExternalMemberController::class, 'export'])->name('external-members.export');
     Route::post('/external-members/{id}/restore', [ExternalMemberController::class, 'restore'])->name('external-members.restore');
-    Route::delete('/external-members/{id}/force-delete', [ExternalMemberController::class, 'forceDelete'])->name('external-members.force-delete');
+    // Route::delete('/external-members/{id}/force-delete', [ExternalMemberController::class, 'forceDelete'])->name('external-members.force-delete');
 });

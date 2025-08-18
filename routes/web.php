@@ -56,7 +56,6 @@ require __DIR__.'/settings.php';
 require __DIR__.'/member.php';
 require __DIR__.'/family_tree.php';
 require __DIR__.'/community.php';
-require __DIR__.'/community_fund.php';
 require __DIR__.'/zones.php';
 require __DIR__.'/blood_group.php';
 require __DIR__.'/income_range.php';
