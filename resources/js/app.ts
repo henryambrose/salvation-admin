@@ -8,35 +8,66 @@ import { ZiggyVue } from 'ziggy-js';
 import { initializeTheme } from './composables/useAppearance';
 import axios from 'axios';
 
-
+// Configure axios defaults
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 axios.defaults.xsrfCookieName = 'XSRF-TOKEN';
 axios.defaults.xsrfHeaderName = 'X-XSRF-TOKEN';
 axios.defaults.withCredentials = true;
 
-// Add CSRF token to all requests
-const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-if (token) {
-  axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
-}
+// Function to refresh CSRF token
+const refreshCsrfToken = async () => {
+  try {
+    await axios.get('/csrf-cookie', { withCredentials: true });
+    const newToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    if (newToken) {
+      axios.defaults.headers.common['X-CSRF-TOKEN'] = newToken;
+    }
+    return true;
+  } catch (error) {
+    console.error('Failed to refresh CSRF token:', error);
+    return false;
+  }
+};
 
-// optional one-time auto-heal on 419
+// Enhanced CSRF error handling
 axios.interceptors.response.use(
-  r => r,
+  response => response,
   async (error) => {
     if (error.response?.status === 419) {
-      try {
-        // Use '/sanctum/csrf-cookie' if Sanctum; else '/csrf-cookie'
-        await axios.get('/sanctum/csrf-cookie', { withCredentials: true });
-        return axios.request(error.config); // retry once
-      } catch {
-        window.location.reload(); // fallback: full reload
+      console.log('CSRF token mismatch detected, attempting to refresh...');
+      
+      // Try to refresh the CSRF token
+      const refreshed = await refreshCsrfToken();
+      
+      if (refreshed) {
+        // Retry the original request with new token
+        console.log('CSRF token refreshed, retrying request...');
+        const newToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        if (newToken && error.config) {
+          error.config.headers['X-CSRF-TOKEN'] = newToken;
+          return axios.request(error.config);
+        }
+      } else {
+        // If refresh fails, redirect to login or reload page
+        console.log('CSRF token refresh failed, redirecting to login...');
+        window.location.href = '/login';
+        return Promise.reject(error);
       }
     }
     return Promise.reject(error);
   }
 );
 
+// Initialize CSRF token on page load
+const initializeCsrfToken = () => {
+  const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  if (token) {
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+  }
+};
+
+// Call initialization
+initializeCsrfToken();
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
@@ -54,10 +85,10 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on page load...
+// Initialize theme
 initializeTheme();
 
-// Disable browser scroll restoration to prevent auto-scroll to top
+// Disable browser scroll restoration
 if ('scrollRestoration' in history) {
     history.scrollRestoration = 'manual';
 }

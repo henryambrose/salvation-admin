@@ -10,9 +10,11 @@ use Inertia\Inertia;
 Route::get('/', function () {
     return redirect()->route('dashboard');
 })->name('home');
+
+// CSRF token refresh route - MUST be before other routes
 Route::get('/csrf-cookie', function () {
-    return response()->noContent(); // sends fresh XSRF-TOKEN cookie
-});
+    return response()->json(['message' => 'CSRF token refreshed'], 200);
+})->middleware('web');
 
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
