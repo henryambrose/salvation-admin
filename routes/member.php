@@ -35,6 +35,6 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('member.handle-marriage');
     Route::resource('member', MemberController::class)->except(['index']);
     Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
-
+    Route::get('/member/{id}/details', [MemberController::class, 'getMemberDetails'])->name('member.details');
 });
 

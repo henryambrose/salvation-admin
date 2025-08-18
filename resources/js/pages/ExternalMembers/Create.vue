@@ -72,8 +72,9 @@ const fetchFamilyMembers = async () => {
       
       const data = await response.json();
       
-      // Filter members from the same family
+      // Filter only internal members from the same family
       familyMembers.value = data.members
+        .filter((member: any) => member.member_type === 'member')
         .map((member: any) => ({
           id: member.id,
           name: member.first_name + ' ' + member.last_name
@@ -91,7 +92,7 @@ const fetchFamilyMembers = async () => {
 const fetchExternalFamilyMembers = async () => {
   if (form.family_no) {
     try {
-      const response = await fetch(`/external-member/family-details/${form.family_no}`, {
+      const response = await fetch(`/member/family-details/${form.family_no}`, {
         headers: {
           'Accept': 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
@@ -102,8 +103,9 @@ const fetchExternalFamilyMembers = async () => {
       
       const data = await response.json();
       
-      // Filter members from the same family
+      // Filter only external members from the same family
       externalFamilyMembers.value = data.members
+        .filter((member: any) => member.member_type === 'external')
         .map((member: any) => ({
           id: member.id,
           name: member.first_name + ' ' + member.last_name

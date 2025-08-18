@@ -358,16 +358,16 @@ async function fetchMemberDetails() {
   loadingMemberDetails.value = true;
   try {
     console.log('Fetching member details for ID:', props.member.id);
-    const response = await axios.get(`/api/member/${props.member.id}/details`);
+    const response = await axios.get(`/member/${props.member.id}/details`);
     console.log('Member details response:', response.data);
-    if (response.data) {
-      memberDetails.value = response.data;
-      console.log('Member details set:', memberDetails.value);
-      console.log('SCC Heads:', memberDetails.value.scc_heads);
-      console.log('PPC Heads:', memberDetails.value.ppc_heads);
-      console.log('Cluster Heads:', memberDetails.value.cluster_heads);
-      console.log('Cells:', memberDetails.value.cells_and_associations);
-    }
+    // if (response.data) {
+    //   memberDetails.value = response.data;
+    //   console.log('Member details set:', memberDetails.value);
+    //   console.log('SCC Heads:', memberDetails.value.scc_heads);
+    //   console.log('PPC Heads:', memberDetails.value.ppc_heads);
+    //   console.log('Cluster Heads:', memberDetails.value.cluster_heads);
+    //   console.log('Cells:', memberDetails.value.cells_and_associations);
+    // }
   } catch (error) {
     console.error('Error fetching member details:', error);
     memberDetails.value = null;
