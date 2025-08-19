@@ -352,13 +352,23 @@ const cancel = () => {
               </div>
               <div class="grid gap-2">
                 <Label for="spouse_id">Spouse</Label>
-                <SearchDropdown
-                  :model-value="form.spouse_id || undefined"
-                  @update:model-value="(value) => (form.spouse_id = Number(value))"
-                  :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
-                  class="mt-1 block w-full rounded-full"
-                  :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
-                />
+                <div class="flex gap-2">
+                  <SearchDropdown
+                    :model-value="form.spouse_id || undefined"
+                    @update:model-value="(value) => (form.spouse_id = Number(value))"
+                    :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    class="mt-1 block w-full rounded-full"
+                    :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
+                  />
+                  <Button 
+                    type="button" 
+                    @click="form.spouse_id = null"
+                    variant="outline" 
+                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
+                  >
+                    Clear
+                  </Button>
+                </div>
                 <InputError class="mt-2" :message="form.errors.spouse_id" />
               </div>
             </div>
@@ -395,13 +405,23 @@ const cancel = () => {
               </div>
               <div class="grid gap-2">
                 <Label for="father_id">Father</Label>
-                <SearchDropdown
-                  :model-value="form.father_id || undefined"
-                  @update:model-value="(value) => (form.father_id = Number(value))"
-                  :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
-                  class="mt-1 block w-full rounded-full"
-                  :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
-                />
+                <div class="flex gap-2">
+                  <SearchDropdown
+                    :model-value="form.father_id || undefined"
+                    @update:model-value="(value) => (form.father_id = Number(value))"
+                    :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    class="mt-1 block w-full rounded-full"
+                    :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
+                  />
+                  <Button 
+                    type="button" 
+                    @click="form.father_id = null"
+                    variant="outline" 
+                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
+                  >
+                    Clear
+                  </Button>
+                </div>
                 <InputError class="mt-2" :message="form.errors.father_id" />
               </div>
             </div>
@@ -438,13 +458,23 @@ const cancel = () => {
               </div>
               <div class="grid gap-2">
                 <Label for="mother_id">Mother</Label>
-                <SearchDropdown
-                  :model-value="form.mother_id || undefined"
-                  @update:model-value="(value) => (form.mother_id = Number(value))"
-                  :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
-                  class="mt-1 block w-full rounded-full"
-                  :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
-                />
+                <div class="flex gap-2">
+                  <SearchDropdown
+                    :model-value="form.mother_id || undefined"
+                    @update:model-value="(value) => (form.mother_id = Number(value))"
+                    :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    class="mt-1 block w-full rounded-full"
+                    :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
+                  />
+                  <Button 
+                    type="button" 
+                    @click="form.mother_id = null"
+                    variant="outline" 
+                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
+                  >
+                    Clear
+                  </Button>
+                </div>
                 <InputError class="mt-2" :message="form.errors.mother_id" />
               </div>
             </div>
