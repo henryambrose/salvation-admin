@@ -78,6 +78,9 @@ class Member extends Model
         'parish_id',
         'designation_id',
         'status_id',
+        'father_source',
+        'mother_source',
+        'spouse_source',
     ];
 
     protected $casts = [

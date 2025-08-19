@@ -91,6 +91,9 @@ class UpdateMemberRequest extends FormRequest
             'relationship_id' => 'required|exists:relationships,id',
             'parish_id' => 'nullable|exists:parishes,id',
             'designation_id' => 'nullable|exists:designations,id',
+            'father_source' => 'nullable|string|max:255',
+            'mother_source' => 'nullable|string|max:255',
+            'spouse_source' => 'nullable|string|max:255',
         ];
     }
 }
