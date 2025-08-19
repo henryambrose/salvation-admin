@@ -38,6 +38,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 
+// Update the form initialization to use proper default values
 const form = useForm({
   first_name: '',
   last_name: '',
@@ -48,9 +49,9 @@ const form = useForm({
   mother_id: undefined as number | undefined,
   spouse_id: undefined as number | undefined,
   relationship_id: '',
-  father_source: 'member',
-  mother_source: 'member',
-  spouse_source: 'member',
+  father_source: 'Member',
+  mother_source: 'Member',
+  spouse_source: 'Member',
 });
 
 // Reactive variables to store family members
@@ -119,33 +120,51 @@ const fetchExternalFamilyMembers = async () => {
   }
 };
 
-// Watch for family_no changes to refetch family members
-watch(() => form.family_no, () => {
-  fetchFamilyMembers();
-  fetchExternalFamilyMembers();
-});
-
-// Watch for source changes to clear IDs when switching between member/external
-watch(() => form.father_source, (newSource) => {
-  if (form.father_id) {
+// Update the watchers to handle the new logic
+watch(
+  () => form.father_source,
+  (newValue) => {
+    if (newValue === 'External') {
+      fetchExternalFamilyMembers();
+    } else {
+      fetchFamilyMembers();
+    }
     // Clear the ID when switching source types to avoid confusion
-    form.father_id = undefined;
-  }
-});
+    if (form.father_id) {
+      form.father_id = undefined;
+    }
+  },
+);
 
-watch(() => form.mother_source, (newSource) => {
-  if (form.mother_id) {
+watch(
+  () => form.mother_source,
+  (newValue) => {
+    if (newValue === 'External') {
+      fetchExternalFamilyMembers();
+    } else {
+      fetchFamilyMembers();
+    }
     // Clear the ID when switching source types to avoid confusion
-    form.mother_id = undefined;
-  }
-});
+    if (form.mother_id) {
+      form.mother_id = undefined;
+    }
+  },
+);
 
-watch(() => form.spouse_source, (newSource) => {
-  if (form.spouse_id) {
+watch(
+  () => form.spouse_source,
+  (newValue) => {
+    if (newValue === 'External') {
+      fetchExternalFamilyMembers();
+    } else {
+      fetchFamilyMembers();
+    }
     // Clear the ID when switching source types to avoid confusion
-    form.spouse_id = undefined;
-  }
-});
+    if (form.spouse_id) {
+      form.spouse_id = undefined;
+    }
+  },
+);
 
 // Fetch family members on mount
 onMounted(() => {
@@ -284,108 +303,141 @@ watch(() => form.errors, (errors) => {
           </div>
         </div>
 
-        <!-- Family Relationships Section -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Relationships</h3>
-          
-          <div class="space-y-6">
-            <div class="grid gap-2">
-              <Label>Father</Label>
-              <div class="flex gap-4 mb-2">
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.father_source" 
-                    value="member" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">Member</span>
-                </label>
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.father_source" 
-                    value="external" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">External</span>
-                </label>
-              </div>
-              <SearchDropdown 
-                :model-value="form.father_id || undefined"
-                @update:model-value="(value) => form.father_id = value ? Number(value) : undefined"
-                :options="form.father_source === 'member' ? familyMembers : externalFamilyMembers"
-                :fetch-url="form.father_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
-                class="mt-1 block w-full rounded-full"
-                :placeholder="form.father_source === 'member' ? 'Search for father (member)...' : 'Search for father (external)...'"
-              />
-              <InputError :message="form.errors.father_id" class="mt-2" />
-            </div>
+        <!-- Family Tree Relationships Section - Updated to match Member.vue -->
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">
+            Family Tree Relationships
+          </h3>
+          <p class="mb-4 text-sm text-gray-600">
+            Define family relationships for building the family tree. Select whether each relationship is with a member or external person.
+          </p>
 
-            <div class="grid gap-2">
-              <Label>Mother</Label>
-              <div class="flex gap-4 mb-2">
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.mother_source" 
-                    value="member" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">Member</span>
-                </label>
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.mother_source" 
-                    value="external" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">External</span>
-                </label>
+          <!-- Spouse Relationship -->
+          <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 class="text-md mb-3 font-semibold text-gray-800">Spouse</h4>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="grid gap-2">
+                <Label>Source Type</Label>
+                <div class="flex gap-4">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.spouse_source"
+                      value="Member"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.spouse_source === 'Member'"
+                    />
+                    <span class="text-sm">Member</span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.spouse_source"
+                      value="External"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.spouse_source === 'External'"
+                    />
+                    <span class="text-sm">External</span>
+                  </label>
+                </div>
               </div>
-              <SearchDropdown 
-                :model-value="form.mother_id || undefined"
-                @update:model-value="(value) => form.mother_id = value ? Number(value) : undefined"
-                :options="form.mother_source === 'member' ? familyMembers : externalFamilyMembers"
-                :fetch-url="form.mother_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
-                class="mt-1 block w-full rounded-full"
-                :placeholder="form.mother_source === 'member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
-              />
-              <InputError :message="form.errors.mother_id" class="mt-2" />
+              <div class="grid gap-2">
+                <Label for="spouse_id">Spouse</Label>
+                <SearchDropdown
+                  :model-value="form.spouse_id || undefined"
+                  @update:model-value="(value) => (form.spouse_id = Number(value))"
+                  :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
+                  class="mt-1 block w-full rounded-full"
+                  :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
+                />
+                <InputError class="mt-2" :message="form.errors.spouse_id" />
+              </div>
             </div>
+          </div>
 
-            <div class="grid gap-2">
-              <Label>Spouse</Label>
-              <div class="flex gap-4 mb-2">
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.spouse_source" 
-                    value="member" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">Member</span>
-                </label>
-                <label class="flex items-center gap-2">
-                  <input 
-                    type="radio" 
-                    v-model="form.spouse_source" 
-                    value="external" 
-                    class="text-blue-600"
-                  />
-                  <span class="text-sm">External</span>
-                </label>
+          <!-- Father Relationship -->
+          <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 class="text-md mb-3 font-semibold text-gray-800">Father</h4>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="grid gap-2">
+                <Label>Source Type</Label>
+                <div class="flex gap-4">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.father_source"
+                      value="Member"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.father_source === 'Member'"
+                    />
+                    <span class="text-sm">Member</span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.father_source"
+                      value="External"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.father_source === 'External'"
+                    />
+                    <span class="text-sm">External</span>
+                  </label>
+                </div>
               </div>
-              <SearchDropdown 
-                :model-value="form.spouse_id || undefined"
-                @update:model-value="(value) => form.spouse_id = value ? Number(value) : undefined"
-                :options="form.spouse_source === 'member' ? familyMembers : externalFamilyMembers"
-                :fetch-url="form.spouse_source === 'member' ? '/api/members/search' : '/api/external-members/search'"
-                class="mt-1 block w-full rounded-full"
-                :placeholder="form.spouse_source === 'member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
-              />
-              <InputError :message="form.errors.spouse_id" class="mt-2" />
+              <div class="grid gap-2">
+                <Label for="father_id">Father</Label>
+                <SearchDropdown
+                  :model-value="form.father_id || undefined"
+                  @update:model-value="(value) => (form.father_id = Number(value))"
+                  :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
+                  class="mt-1 block w-full rounded-full"
+                  :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
+                />
+                <InputError class="mt-2" :message="form.errors.father_id" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Mother Relationship -->
+          <div class="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h4 class="text-md mb-3 font-semibold text-gray-800">Mother</h4>
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div class="grid gap-2">
+                <Label>Source Type</Label>
+                <div class="flex gap-4">
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.mother_source"
+                      value="Member"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.mother_source === 'Member'"
+                    />
+                    <span class="text-sm">Member</span>
+                  </label>
+                  <label class="flex cursor-pointer items-center gap-2">
+                    <input
+                      type="radio"
+                      v-model="form.mother_source"
+                      value="External"
+                      class="text-blue-600 focus:ring-blue-500"
+                      :checked="form.mother_source === 'External'"
+                    />
+                    <span class="text-sm">External</span>
+                  </label>
+                </div>
+              </div>
+              <div class="grid gap-2">
+                <Label for="mother_id">Mother</Label>
+                <SearchDropdown
+                  :model-value="form.mother_id || undefined"
+                  @update:model-value="(value) => (form.mother_id = Number(value))"
+                  :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
+                  class="mt-1 block w-full rounded-full"
+                  :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
+                />
+                <InputError class="mt-2" :message="form.errors.mother_id" />
+              </div>
             </div>
           </div>
         </div>

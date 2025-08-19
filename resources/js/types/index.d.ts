@@ -116,6 +116,9 @@ export interface Member {
   created_at: string; 
   updated_at: string; 
   deleted_at?: string | null; 
+  spouse_source?: string;
+  father_source?: string;
+  mother_source?: string;
 }
 
 export interface ExternalMember {

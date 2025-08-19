@@ -950,7 +950,9 @@ class MemberController extends Controller
     {
         try {
             // Get all family members from the UnifiedPerson view
-            $familyMembersQuery = UnifiedPerson::where('family_no', $familyNo);
+            $familyMembersQuery = UnifiedPerson::where('family_no', $familyNo)->where('source','Member')
+            ->select('original_id', 'uid', 'first_name', 'last_name', 'member_no', 'source',
+                    'father_uid', 'mother_uid', 'spouse_uid');
 
             // Exclude the current member if exclude_member_id is provided
             if ($request->has('exclude_member_id')) {

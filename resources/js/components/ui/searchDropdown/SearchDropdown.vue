@@ -41,19 +41,19 @@ const displayOptions = computed(() => {
   return allOptions.filter(opt => opt.name.toLowerCase().includes(search.value.toLowerCase()));
 })
 
-watch(search, async (val) => {
-  if (props.fetchUrl) {
-    loading.value = true
-    try {
-      const res = await fetch(`${props.fetchUrl}?search=${encodeURIComponent(val)}`)
-      const data = await res.json()
-      fetchedOptions.value = data.options || []
-    } catch (e) {
-      fetchedOptions.value = []
-    }
-    loading.value = false
-  }
-}, { immediate: !!props.fetchUrl })
+// watch(search, async (val) => {
+//   if (props.fetchUrl) {
+//     loading.value = true
+//     try {
+//       const res = await fetch(`${props.fetchUrl}?search=${encodeURIComponent(val)}`)
+//       const data = await res.json()
+//       fetchedOptions.value = data.options || []
+//     } catch (e) {
+//       fetchedOptions.value = []
+//     }
+//     loading.value = false
+//   }
+// }, { immediate: !!props.fetchUrl })
 
 onClickOutside(dropdownRef, () => open.value = false)
 
