@@ -38,16 +38,16 @@ const breadcrumbs: BreadcrumbItem[] = [
 const page = usePage<SharedData>();
 const user = page.props.auth.user as User;
 
-// Update the form initialization to use proper default values
+// Update the form initialization to allow null values
 const form = useForm({
   first_name: '',
   last_name: '',
   gender_id: '',
   address: '',
   family_no: props.familyNo || '',
-  father_id: undefined as number | undefined,
-  mother_id: undefined as number | undefined,
-  spouse_id: undefined as number | undefined,
+  father_id: undefined as number | undefined | null,
+  mother_id: undefined as number | undefined | null,
+  spouse_id: undefined as number | undefined | null,
   relationship_id: '',
   father_source: 'Member',
   mother_source: 'Member',

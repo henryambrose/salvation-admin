@@ -29,15 +29,15 @@ const breadcrumbs = [
   { title: 'Edit', href: '#' },
 ];
 
-// Update the form initialization to use proper default values
+// Update the form initialization to allow null values
 const form = useForm({
   first_name: props.externalMember.first_name,
   last_name: props.externalMember.last_name || '',
   gender_id: props.externalMember.gender_id || undefined,
   family_no: props.externalMember.family_no,
-  father_id: props.externalMember.father_id,
-  mother_id: props.externalMember.mother_id,
-  spouse_id: props.externalMember.spouse_id,
+  father_id: props.externalMember.father_id as number | undefined | null,
+  mother_id: props.externalMember.mother_id as number | undefined | null,
+  spouse_id: props.externalMember.spouse_id as number | undefined | null,
   father_source: props.externalMember.father_source || 'Member',
   mother_source: props.externalMember.mother_source || 'Member',
   spouse_source: props.externalMember.spouse_source || 'Member',
