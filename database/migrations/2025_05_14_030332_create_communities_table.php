@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
         });
+
     }
 
     /**
@@ -26,5 +27,17 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('communities');
+        Schema::table('p_p_c_heads', function (Blueprint $table) {
+            $table->dropIndex(['community_id', 'deleted_at']);
+        });
+        
+        Schema::table('s_c_c_heads', function (Blueprint $table) {
+            $table->dropIndex(['community_id', 'deleted_at']);
+        });
+        
+        Schema::table('members', function (Blueprint $table) {
+            $table->dropIndex(['first_name', 'last_name']);
+            $table->dropIndex(['community_id', 'deleted_at']);
+        });
     }
 };

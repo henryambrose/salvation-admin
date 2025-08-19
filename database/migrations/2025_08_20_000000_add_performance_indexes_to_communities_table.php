@@ -8,15 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('communities', function (Blueprint $table) {
-            // Add indexes for frequently searched fields
-            $table->index('name');
-            $table->index('zone_id');
-            $table->index(['deleted_at', 'created_at']);
+        // Schema::table('communities', function (Blueprint $table) {
+        //     // Add indexes for frequently searched fields
+        //     $table->index('name');
+        //     $table->index('zone_id');
+        //     $table->index(['deleted_at', 'created_at']);
             
-            // Composite index for common queries
-            $table->index(['deleted_at', 'zone_id']);
-        });
+        //     // Composite index for common queries
+        //     $table->index(['deleted_at', 'zone_id']);
+        // });
         
         // Add indexes to related tables
         Schema::table('p_p_c_heads', function (Blueprint $table) {
