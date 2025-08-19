@@ -108,45 +108,43 @@ function openDeleteModal(member: any) {
 }
 
 function confirmDelete() {
-  if (deletingMember.value) {
-    const deletedId = deletingMember.value.id;
-    router.delete(route('member.destroy', deletedId), {
-      data:       {
-        perPage: perPage.value,
-        page: enhancedMembers.value.current_page,
-        search: search.value,
-        familySearch: familySearch.value,
-        sort: sort.value,
-        direction: direction.value,
-        communityId: communityId.value,
-        relationship: relationship.value,
-        ageGroup: ageGroup.value,
-        bloodGroup: bloodGroup.value,
-        gender: gender.value,
-        filterColumnKey: filterColumnKey.value,
-        filterColumnValue: filterColumnValue.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-      },
-      preserveScroll: true,
-      onSuccess: () => {
-        showDeleteModal.value = false;
-        deletingMember.value = null;
-        highlightedRowId.value = deletedId+1;
-        nextTick(() => scrollToRow(deletedId+1));
-      },
-    });
-  }
+  if (!deletingMember.value) return;
+  const deletedId = deletingMember.value.id;
+
+  router.delete(route('member.destroy', deletedId), {
+    data: {
+      perPage: perPage.value,
+      page: enhancedMembers.value.current_page,
+      search: search.value,
+      familySearch: familySearch.value,
+      sort: sort.value,
+      direction: direction.value,
+      communityId: communityId.value,
+      relationship: relationship.value,
+      ageGroup: ageGroup.value,
+      bloodGroup: bloodGroup.value,
+      gender: gender.value,
+      filterColumnKey: filterColumnKey.value,
+      filterColumnValue: filterColumnValue.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
+    preserveScroll: true,
+    only: partialOnly,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      deletingMember.value = null;
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
+    },
+  });
 }
 
 function restoreMember(id: number) {
   router.post(route('member.restore', id), {}, {
     preserveScroll: true,
-    onSuccess: () => {
-      fetch();
-    },
+    only: partialOnly,
   });
 }
-
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
   const date = new Date(dateStr);
@@ -177,7 +175,9 @@ const bloodGroup = ref(props.filters?.bloodGroup || '');
 const gender = ref(props.filters?.gender || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(false);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+const partialOnly = ['members', 'familyStats', 'filters', 'totalCount'];
 // Debounced search to prevent too many API calls
 let searchTimeout: number;
 
@@ -194,8 +194,10 @@ watch(
 );
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
-    const params = {
+  if (!props.fetchUrl) return;
+  router.get(
+    props.fetchUrl,
+    {
       search: search.value,
       familySearch: familySearch.value,
       sort: sort.value,
@@ -208,19 +210,11 @@ function fetch(page = 1) {
       gender: gender.value,
       filterColumnKey: filterColumnKey.value,
       filterColumnValue: filterColumnValue.value,
-      isArchived: isArchived.value ? 'true' : 'false', // send as string
+      isArchived: isArchived.value ? 'true' : 'false',
       page,
-    };
-
-    router.get(
-      props.fetchUrl,
-      params,
-      {
-        preserveState: true,
-        replace: true,
-      },
-    );
-  }
+    },
+    { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
+  );
 }
 
 function changeSort(field: string) {
@@ -570,7 +564,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                     {{ direction === 'asc' ? '▲' : '▼' }}
                   </span>
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -581,7 +575,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 <!-- View + Edit or Restore -->
                 <td class="p-2 whitespace-nowrap">
                   <div class="flex gap-2">
-                    <template v-if="!isArchived">
+                    <template v-if="!serverArchived">
                       <Button @click="openViewModal(member)"
                         class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
                         <component :is="ZapIcon" />
@@ -691,7 +685,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   </template>
                 </td>
                 <!-- Delete -->
-                <td v-if="!isArchived" class="p-2 whitespace-nowrap">
+                <td v-if="!serverArchived" class="p-2 whitespace-nowrap">
                   <template v-if="canDeleteMember && !member.deleted_at">
                     <Button variant="destructive" @click="openDeleteModal(member)"
                       class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
