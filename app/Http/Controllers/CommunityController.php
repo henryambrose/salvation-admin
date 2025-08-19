@@ -19,7 +19,22 @@ class CommunityController extends Controller
     {
         $this->authorize('viewAny', Community::class);
 
-        $query = Community::query()->with('zone')->with('ppchead.member')->with('scchead.member')->with('members');
+        $query = Community::query()
+            ->select([
+                'communities.id',
+                'communities.name',
+                'communities.zone_id',
+                'communities.created_at',
+                'communities.updated_at',
+                'communities.deleted_at'
+            ])
+            ->with([
+                'zone:id,name',
+                'ppchead:id,community_id,member_id',
+                'ppchead.member:id,first_name,last_name',
+                'scchead:id,community_id,member_id',
+                'scchead.member:id,first_name,last_name'
+            ]);
 
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -27,38 +42,48 @@ class CommunityController extends Controller
             $query->withoutTrashed();
         }
 
+        // Optimize search with proper indexing
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%")
+                $q->where('communities.name', 'like', "%$search%")
                     ->orWhereHas('zone', function ($zoneQuery) use ($search) {
-                        $zoneQuery->where('name', 'like', "%$search%");
+                        $zoneQuery->select('id', 'name')
+                            ->where('name', 'like', "%$search%");
                     })
                     ->orWhereHas('ppchead.member', function ($memberQuery) use ($search) {
-                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                        $memberQuery->select('id', 'first_name', 'last_name')
+                            ->whereRaw("CONCAT(first_name, ' ', COALESCE(last_name, '')) LIKE ?", ["%$search%"]);
                     })
                     ->orWhereHas('scchead.member', function ($memberQuery) use ($search) {
-                        $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
+                        $memberQuery->select('id', 'first_name', 'last_name')
+                            ->whereRaw("CONCAT(first_name, ' ', COALESCE(last_name, '')) LIKE ?", ["%$search%"]);
                     });
             });
         }
 
         if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
+            // Ensure sort field is valid to prevent SQL injection
+            $allowedSorts = ['id', 'name', 'created_at', 'updated_at'];
+            if (in_array($sort, $allowedSorts)) {
+                $query->orderBy($sort, $request->input('direction', 'asc'));
+            } else {
+                $query->orderBy('id', 'asc');
+            }
         } else {
             $query->orderBy('id', 'asc');
         }
 
-        $perPage = $request->input('perPage', 10);
+        $perPage = min($request->input('perPage', 10), 100); // Limit max perPage
         $data = $query->paginate($perPage)->appends($request->query());
 
         return Inertia::render('community/Index', [
             'communities' => $data,
             'filters' => request()->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('community.index'),
-            'zones' => Zone::all(),
+            'zones' => Zone::select('id', 'name')->get(), // Only select needed fields
             'pagination' => [
-                'currentPage' => $query->paginate($perPage)->currentPage(),
-                'lastPage' => $query->paginate($perPage)->lastPage(),
+                'currentPage' => $data->currentPage(),
+                'lastPage' => $data->lastPage(),
             ],
         ]);
     }

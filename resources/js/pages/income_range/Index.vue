@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-
-
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,7 +26,8 @@ const canUpdateAnyIncomeRange = can('update-income-range');
 const canDeleteAnyIncomeRange = can('delete-income-range');
 const canExportIncomeRange = can('read-income-range');
 const canRestoreIncomeRange = can('restore-income-range');
-
+const partialOnly = ['incomeRange', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
@@ -44,8 +43,9 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingItem = ref<Record<string, any>>();
 const deletingItem = ref<Record<string, any>>();
-const isArchived = ref(false); // Always start with false, don't inherit from URL
 const highlightedRowId = ref<number|null>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 const form = useForm({
   name: '',
@@ -70,8 +70,9 @@ const enhancedIncomeRanges = computed(() => {
 function restoreIncomeRange(id: number) {
       router.post(`/income-range/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -79,6 +80,9 @@ function restoreIncomeRange(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -99,7 +103,7 @@ function clearSearch() {
 }
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
     router.get(
       props.fetchUrl,
       {
@@ -113,13 +117,23 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
-  }
 }
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 
 function submit() {
@@ -171,6 +185,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingItem.value) return;
   const deletedId = deletingItem.value?.id;
   router.delete(`/income-range/${deletedId || ''}`, {
     data: {
@@ -182,6 +197,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
@@ -297,13 +313,13 @@ const breadcrumbs = [{ title: 'Income Range', href: '/income-range' }];
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedIncomeRanges.data" :id="`income-range-row-${row.id}`"  class="even:bg-gray-50 hover:bg-blue-50 transition">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyIncomeRange" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -317,7 +333,7 @@ const breadcrumbs = [{ title: 'Income Range', href: '/income-range' }];
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyIncomeRange">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete

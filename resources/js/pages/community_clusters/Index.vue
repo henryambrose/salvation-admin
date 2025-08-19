@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { nextTick, ref, watch, computed } from 'vue';
-import { Head, router, useForm, usePage} from '@inertiajs/vue3';
+import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Plus, Download } from 'lucide-vue-next';
 import Multiselect from 'vue-multiselect';
@@ -44,10 +44,12 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
-const deletingItem = ref<Record<string, any>>();
+const deletingCluster = ref<Record<string, any> | null>(null);
 const modalMember = ref<any[]>([]);
-const isArchived = ref(props.filters?.isArchived === 'true');
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null)
+
 
 
 const editForm = useForm<{ id: string | number; cluster_id: any; community_id: any; member_id: any }>({
@@ -143,6 +145,7 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
   }
@@ -253,12 +256,13 @@ function submitCreate() {
 }
 
 function openDeleteModal(row: any) {
-  deletingItem.value = row;
+  deletingCluster.value = row;
   showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  const deletedId = deletingItem.value?.id;
+  const deletedId = deletingCluster.value?.id;
+  if (!deletingCluster.value) return;
   router.delete(`/community-clusters/${deletedId || ''}`, {
     data: {
       perPage: perPage.value,
@@ -269,11 +273,12 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingItem.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      deletingCluster.value = null;
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
@@ -281,15 +286,18 @@ function confirmDelete() {
 function restoreSCCHead(id: number) {
   router.post(`/community-clusters/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false  ;
     },
   });
 }
 
 function clearSearch() {
   search.value = '';
-  // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -301,10 +309,7 @@ function clearSearch() {
         isArchived: isArchived.value ? 'true' : 'false',
         page: 1,
       },
-      {
-        preserveState: false,
-        replace: true,
-      },
+      { preserveState: false, replace: true },
     );
   }
 }
@@ -330,6 +335,9 @@ const canReadAnyCommunityCluster = can('read-community-cluster');
 const canUpdateAnyCommunityCluster = can('update-community-cluster');
 const canDeleteAnyCommunityCluster = can('delete-community-cluster');
 const canExportCommunityCluster = can('read-community-cluster');
+
+const partialOnly = ['communityClusters', 'filters'];
+const searchTimeout = ref<number | null>(null);
 </script>
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
@@ -443,18 +451,18 @@ const canExportCommunityCluster = can('read-community-cluster');
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedCommunityClusters.data" :key="row.id" :id="`community-cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyCommunityCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
                   </template>
-                  <template v-if="isArchived">
+                  <template v-if="serverArchived">
                     <Button v-if="canUpdateAnyCommunityCluster" @click="restoreSCCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
                       Restore
                     </Button>
@@ -466,7 +474,7 @@ const canExportCommunityCluster = can('read-community-cluster');
                   </span>
                 </td>
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                   <Button
                     v-if="canDeleteAnyCommunityCluster"
                     @click="openDeleteModal(row)"

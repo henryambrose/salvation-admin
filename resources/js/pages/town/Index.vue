@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import {router, Head, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
-import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
@@ -42,8 +40,11 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingTown = ref<Record<string, any>>();
 const deletingTown = ref<Record<string, any>>();
-const isArchived = ref(false);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null);
+const partialOnly = ['towns', 'filters'];
+const searchTimeout = ref<number | null>(null);
 
 const form = useForm({
   name: '',
@@ -63,7 +64,8 @@ const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
+
     router.get(
       props.fetchUrl,
       {
@@ -77,14 +79,24 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
-  }
+  
 }
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
@@ -120,6 +132,15 @@ function scrollToRow(rowId: number) {
 
 
 function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedTowns.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   form.post('/town', {
     preserveScroll: true,
     onSuccess: () => {
@@ -148,6 +169,15 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingTown.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedTowns.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   editForm.put(`/town/${editingTown.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
@@ -165,6 +195,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingTown.value) return;
   const deletedId = deletingTown.value?.id;
   router.delete(`/town/${deletedId || ''}`, {
     data: {
@@ -176,6 +207,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingTown.value = undefined;
@@ -188,8 +220,9 @@ function confirmDelete() {
 function restoreTown(id: number) {
   router.post(`/town/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -197,6 +230,9 @@ function restoreTown(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -343,13 +379,13 @@ onMounted(() => {
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedTowns.data" :key="row.id" :id="`town-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyTown" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -365,7 +401,7 @@ onMounted(() => {
                     {{ col.key === 'city' ? (row.city?.name || '') : row[col.key] }}
                   </span>
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyTown">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete

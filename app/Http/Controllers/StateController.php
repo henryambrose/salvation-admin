@@ -39,7 +39,7 @@ class StateController extends Controller
 
         return Inertia::render('state/Index', [
             'states' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
+            'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('state.index'),
             'countries' => Country::all(),
         ]);

@@ -26,14 +26,16 @@ const columns = [
 ];
 
 const breadcrumbs = [{ title: 'Age Groups', href: '/age-group/index' }];
-
+const partialOnly = ['ageGroups', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingAgeGroup = ref<Record<string, any>>();
 const deletingAgeGroup = ref<Record<string, any>>();
 const highlightedRowId = ref<number | null>(null);
-const isArchived = ref(false); // Always start with false, don't inherit from URL
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 const form = useForm({
   name: '',
@@ -84,9 +86,18 @@ const enhancedAgeGroups = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 // Watch for changes in min_age and max_age to validate duplicates
 watch([() => form.min_age, () => form.max_age], () => {
@@ -126,6 +137,7 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
+  if (!props.fetchUrl) return;
   router.get(
     props.fetchUrl || '',
     {
@@ -139,6 +151,7 @@ function fetch(page = 1) {
     {
       preserveState: true,
       replace: true,
+      only: partialOnly,
     },
   );
 }
@@ -203,6 +216,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingAgeGroup.value) return;
   const deletedId = deletingAgeGroup.value?.id;
   router.delete(`/age-group/${deletedId || ''}`, {
     data: {
@@ -214,6 +228,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingAgeGroup.value = undefined;
@@ -226,8 +241,9 @@ function confirmDelete() {
 function restoreAgeGroup(id: number) {
   router.post(`/age-group/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -235,6 +251,9 @@ function restoreAgeGroup(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -409,7 +428,7 @@ function handlePageChange(event: Event) {
                     {{ direction === 'asc' ? '▲' : '▼' }}
                   </span>
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -420,7 +439,7 @@ function handlePageChange(event: Event) {
                 :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
                   <div class="flex gap-2">
-                    <template v-if="!isArchived">
+                    <template v-if="!serverArchived">
                       <Button
                         v-if="canUpdateAnyAgeGroup"
                         @click="openEditModal(row)"
@@ -440,7 +459,7 @@ function handlePageChange(event: Event) {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyAgeGroup">
                     <Button
                       @click="openDeleteModal(row)"

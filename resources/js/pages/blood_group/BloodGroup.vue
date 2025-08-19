@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -23,13 +22,17 @@ const columns = [
   { key: 'name', label: 'Name', sortable: true },
 ];
 
+const partialOnly = ['bloodGroups', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingBloodGroup = ref<Record<string, any>>();
 const deletingBloodGroup = ref<Record<string, any>>();
-const isArchived = ref(props.filters?.isArchived === 'true');
 const highlightedRowId = ref<number|null>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -66,8 +69,9 @@ const canExportBloodGroup = can('read-blood-group');
 function restoreBloodGroup(id: number) {
   router.post(`/blood-group/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -95,7 +99,7 @@ function clearSearch() {
 }
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
     router.get(
       props.fetchUrl,
       {
@@ -109,14 +113,23 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
-  }
 }
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 const enhancedBloodGroups = computed(() => {
   const c = props.bloodGroups || {};
@@ -187,6 +200,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingBloodGroup.value) return;
   const deletedId = deletingBloodGroup.value?.id;
   router.delete(`/blood-group/${deletedId || ''}`, {
     data: {
@@ -198,6 +212,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingBloodGroup.value = undefined;
@@ -330,13 +345,13 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedBloodGroups.data" :key="row.id" :id="`blood-group-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyBloodGroup" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -350,8 +365,8 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
-                  <template v-if="!isArchived">
+                <td v-if="!serverArchived" class="p-2">
+                  <template v-if="!serverArchived">
                     <Button v-if="canDeleteAnyBloodGroup" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete
                     </Button>

@@ -49,7 +49,7 @@ class CityController extends Controller
 
         return Inertia::render('city/Index', [
             'cities' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'stateId'),
+            'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'stateId', 'isArchived'),
             'fetchUrl' => route('city.index'),
             'states' => State::all(),
         ]);

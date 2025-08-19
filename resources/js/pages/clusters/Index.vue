@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { router } from '@inertiajs/vue3';
 import { Input } from '@/components/ui/input';
 import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick } from 'vue';
@@ -43,8 +42,9 @@ function openCreateModal() {
   showModal.value = true;
 }
 const editingCluster = ref<Record<string, any>>();
-const deletingCluster = ref<Record<string, any>>();
-const isArchived = ref(props.filters?.isArchived === 'true');
+const deletingCluster = ref<Record<string, any> | null>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null);
 
 function scrollToRow(rowId: number) {
@@ -86,44 +86,69 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+const partialOnly = ['clusters', 'filters'];
+const searchTimeout = ref<number | null>(null);
+
 function clearSearch() {
   search.value = '';
-  fetch();
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      { preserveState: false, replace: true },
+    );
+  }
 }
 
 
 function restoreCluster(id: number) {
-  router.post(`/clusters/${id}/restore`, {}, {
+  router.post(route('cluster.restore', id), {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
-    router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-      },
-    );
-  }
+  if (!props.fetchUrl) return;
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
+  );
 }
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 // Watch for modal state changes to reset form when closed
 watch(showModal, (newValue) => {
@@ -237,8 +262,10 @@ function openDeleteModal(row: any) {
   showDeleteModal.value = true;
 }
 function confirmDelete() {
-  const deletedId = deletingCluster.value?.id;
-  router.delete(`/clusters/${deletedId || ''}`, {
+  if (!deletingCluster.value) return;
+  const deletedId = deletingCluster.value.id;
+
+  router.delete(route('clusters.destroy', deletedId), {
     data: {
       perPage: perPage.value,
       page: enhancedCluster.value.current_page,
@@ -248,11 +275,12 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingCluster.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      deletingCluster.value = null;
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
@@ -357,13 +385,13 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
+              <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
             </tr>
             </thead>
             <tbody>
             <tr v-for="row in enhancedCluster.data" :key="row.id" :id="`cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
-                <template v-if="!isArchived">
+                <template v-if="!serverArchived">
                   <Button v-if="canUpdateAnyCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
@@ -377,7 +405,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
               <td v-for="col in columns" :key="col.key" class="p-2">
                 {{ row[col.key] }}
               </td>
-              <td v-if="!isArchived" class="p-2">
+              <td v-if="!serverArchived" class="p-2">
                 <template v-if="canDeleteAnyCluster">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete

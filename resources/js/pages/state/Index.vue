@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import DataTable from '@/components/DataTable2.vue';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
-import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
@@ -36,13 +33,15 @@ const columns = [
 ];
 
 const breadcrumbs = [{ title: 'States', href: '/state/index' }];
-
+const partialOnly = ['states', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingState = ref<Record<string, any>>();
 const deletingState = ref<Record<string, any>>();
-const isArchived = ref(false);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null);
 
 const form = useForm({
@@ -63,7 +62,7 @@ const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
     router.get(
       props.fetchUrl,
       {
@@ -71,21 +70,30 @@ function fetch(page = 1) {
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
-        isArchived: isArchived.value,
+        isArchived: isArchived.value ? 'true' : 'false',
         page,
       },
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
 }
-}
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
 
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
   if (target) {
@@ -117,6 +125,15 @@ function scrollToRow(rowId: number) {
 }
 
 function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedStates.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   form.post('/state', {
     preserveScroll: true,
     onSuccess: () => {
@@ -157,6 +174,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingState.value) return;
   const deletedId = deletingState.value?.id;
   router.delete(`/state/${deletedId || ''}`, {
     data: {
@@ -168,6 +186,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingState.value = undefined;
@@ -180,16 +199,18 @@ function confirmDelete() {
 function restoreState(id: number) {
   router.post(`/state/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
 
 function clearSearch() {
   search.value = '';
-  // Force immediate fetch to clear results
-  if (props.fetchUrl) {
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
     router.get(
       props.fetchUrl,
       {
@@ -203,9 +224,9 @@ function clearSearch() {
       {
         preserveState: false,
         replace: true,
+        only: partialOnly,
       },
     );
-  }
 }
 
 watch(() => enhancedStates.value.data, (rows) => {
@@ -334,13 +355,13 @@ onMounted(() => {
               <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                 {{ col.label }}
               </th>
-              <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="row in enhancedStates.data" :key="row.id" :id="`state-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
               <td class="p-2">
-                <template v-if="!isArchived">
+                <template v-if="!serverArchived">
                   <Button v-if="canUpdateAnyState" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit 
                   </Button>
@@ -356,7 +377,7 @@ onMounted(() => {
                   {{ col.key === 'country' ? (row.country?.name || '') : row[col.key] }}
                 </span>
               </td>
-              <td v-if="!isArchived" class="p-2">
+              <td v-if="!serverArchived" class="p-2">
                 <template v-if="canDeleteAnyState">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete

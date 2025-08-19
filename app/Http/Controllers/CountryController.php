@@ -40,7 +40,7 @@ class CountryController extends Controller
 
         return Inertia::render('country/Index', [
             'countries' => $query->paginate($perPage)->appends($request->query()),
-            'filters' => $request->only('search', 'sort', 'direction', 'perPage'),
+            'filters' => $request->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'fetchUrl' => route('country.index'),
         ]);
     }

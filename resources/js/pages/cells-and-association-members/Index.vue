@@ -20,7 +20,8 @@ const props = defineProps({
   fetchUrl: String,
 });
 
-const page = usePage();
+const partialOnly = ['cellsAndAssociationMembers', 'filters'];
+
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
@@ -34,7 +35,9 @@ const showDeleteModal = ref(false);
 const showCreateModal = ref(false);
 const editingItem = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
-const isArchived = ref(false); // Always start with false, don't inherit from URL
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+// Always start with false, don't inherit from URL
 const highlightedRowId = ref<number>(-1);
 
 const editForm = useForm<{ id: string | number; cells_and_association_id: any[]; member_id: any }>({
@@ -79,9 +82,18 @@ const enhancedCellsAndAssociationMembers = computed(() => {
 
 
 
-watch([search, sort, direction, perPage, isArchived, selectedCellAssociation], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -95,8 +107,9 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(pageNum = 1) {
+  if (!props.fetchUrl) return;
   router.get(
-    props.fetchUrl || '',
+    props.fetchUrl,
     {
       search: search.value,
       sort: sort.value,
@@ -109,6 +122,7 @@ function fetch(pageNum = 1) {
     {
       preserveState: true,
       replace: true,
+      only: partialOnly,
     },
   );
 }
@@ -225,7 +239,8 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  const deletedId = deletingItem.value?.id;
+  if (!deletingItem.value) return;
+  const deletedId = deletingItem.value.id;
   router.delete(`/cells-and-association-members/${deletedId || ''}`, {
     data: {
       perPage: perPage.value,
@@ -236,6 +251,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       closeDeleteModal();
       highlightedRowId.value = deletedId+1;
@@ -247,8 +263,12 @@ function confirmDelete() {
 function restoreItem(id: number) {
   router.post(`/cells-and-association-members/${id}/restore`, {}, {
     preserveScroll: true,
+    // onSuccess: () => {
+    //   fetch();
+    // },
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -256,6 +276,9 @@ function restoreItem(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -502,14 +525,14 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                     {{ direction === 'asc' ? '▲' : '▼' }}
                   </span>
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedCellsAndAssociationMembers.data" :key="row.id" :id="`cells-association-member-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
                   <div class="flex gap-2">
-                    <template v-if="!isArchived">
+                    <template v-if="!serverArchived">
                       <Button v-if="canUpdateAnyCellsAndAssociationMember" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                         <component :is="Pencil" />
                         <span>Edit</span>
@@ -525,7 +548,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCellsAndAssociationMember">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       <component :is="Trash" />

@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 
@@ -18,6 +17,9 @@ const props = defineProps({
   fetchUrl: String,
 });
 
+const partialOnly = ['cellsAndAssociations', 'filters'];
+const searchTimeout = ref<number | null>(null);
+
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
@@ -29,9 +31,10 @@ const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingCellsAndAssociation = ref<Record<string, any>>();
-const deletingCellsAndAssociation = ref<Record<string, any>>();
+const deletingCellsAndAssociation = ref<Record<string, any> | null>(null);
 const highlightedRowId = ref<number|null>(null);
-const isArchived = ref(props.filters?.isArchived === 'true');
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 const form = useForm({
   name: '',
@@ -58,9 +61,18 @@ const enhancedCellsAndAssociations = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -74,8 +86,9 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
+  if (!props.fetchUrl) return;
   router.get(
-    props.fetchUrl || '',
+    props.fetchUrl,
     {
       search: search.value,
       sort: sort.value,
@@ -84,10 +97,7 @@ function fetch(page = 1) {
       isArchived: isArchived.value ? 'true' : 'false',
       page,
     },
-    {
-      preserveState: true,
-      replace: true,
-    },
+    { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
   );
 }
 
@@ -148,7 +158,9 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  const deletedId = deletingCellsAndAssociation.value?.id;
+  if (!deletingCellsAndAssociation.value) return;
+  const deletedId = deletingCellsAndAssociation.value.id;
+
   router.delete(`/cells-and-association/${deletedId || ''}`, {
     data: {
       perPage: perPage.value,
@@ -159,9 +171,10 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingCellsAndAssociation.value = undefined;
+      deletingCellsAndAssociation.value = null;
       highlightedRowId.value = deletedId;
       nextTick(() => scrollToRow(deletedId));
     },
@@ -172,14 +185,17 @@ function restoreCellsAndAssociation(id: number) {
   router.post(`/cells-and-association/${id}/restore`, {}, {
     preserveScroll: true,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
+    only: partialOnly,
   });
 }
 
 function clearSearch() {
   search.value = '';
-  // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -191,10 +207,7 @@ function clearSearch() {
         isArchived: isArchived.value ? 'true' : 'false',
         page: 1,
       },
-      {
-        preserveState: false,
-        replace: true,
-      },
+      { preserveState: false, replace: true },
     );
   }
 }
@@ -338,14 +351,14 @@ watch(() => enhancedCellsAndAssociations.value.data, (rows) => {
                     {{ direction === 'asc' ? '▲' : '▼' }}
                   </span>
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedCellsAndAssociations.data" :key="row.id" :id="`cells-and-association-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
                   <div class="flex gap-2">
-                    <template v-if="!isArchived">
+                    <template v-if="!serverArchived">
                       <Button v-if="canUpdateAnyCellsAndAssociation" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                         <component :is="Pencil" />
                         <span>Edit</span>
@@ -361,7 +374,7 @@ watch(() => enhancedCellsAndAssociations.value.data, (rows) => {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCellsAndAssociation">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       <component :is="Trash" />

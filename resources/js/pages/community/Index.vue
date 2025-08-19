@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Plus, Download } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -38,9 +37,10 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingCommunity = ref<Record<string, any>>();
 const deletingCommunity = ref<Record<string, any>>();
-const isArchived = ref(props.filters?.isArchived === 'true');
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null);
-
+const partialOnly = ['communities', 'filters'];
 const form = useForm({
   name: '',
   zone_id: '',
@@ -55,6 +55,7 @@ const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
+const searchTimeout = ref<number | null>(null);
 
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
@@ -75,9 +76,15 @@ const enhancedCommunities = computed(() => {
   };
 });
 
+// Add debouncing to search
 watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  searchTimeout.value = window.setTimeout(() => {
+    fetch();
+  }, 300); // 300ms debounce
+}, { immediate: false, deep: false });
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -91,6 +98,12 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
+   if (!props.fetchUrl) return;
+  
+  // Show loading state
+  const loadingElement = document.getElementById('loading-indicator');
+  if (loadingElement) loadingElement.style.display = 'block';
+  
   router.get(
     props.fetchUrl || '',
     {
@@ -104,6 +117,11 @@ function fetch(page = 1) {
     {
       preserveState: true,
       replace: true,
+      only: partialOnly,
+      onFinish: () => {
+        // Hide loading state
+        if (loadingElement) loadingElement.style.display = 'none';
+      }
     },
   );
 }
@@ -177,6 +195,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCommunity.value = undefined;
@@ -189,8 +208,9 @@ function confirmDelete() {
 function restoreCommunity(id: number) {
   router.post(`/community/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -212,6 +232,7 @@ function clearSearch() {
       {
         preserveState: false,
         replace: true,
+        only: partialOnly,
       },
     );
   }
@@ -254,6 +275,12 @@ watch(() => enhancedCommunities.value.data, (rows) => {
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Communities" />
+    
+    <!-- Add loading indicator -->
+    <div id="loading-indicator" class="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50" style="display: none;">
+      Loading...
+    </div>
+
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Communities</h2>
@@ -368,13 +395,13 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedCommunities.data" :key="row.id" :id="`community-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyCommunity" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -399,8 +426,8 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                     {{ row[col.key] }}
                   </template>
                 </td>
-                <td v-if="!isArchived" class="p-2">
-                  <template v-if="!isArchived">
+                <td v-if="!serverArchived" class="p-2">
+                  <template v-if="!serverArchived">
                     <Button v-if="canDeleteAnyCommunity" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete
                     </Button>

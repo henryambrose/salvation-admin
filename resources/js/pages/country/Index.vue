@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
-import DataTable from '@/components/DataTable2.vue';
+import { Head, useForm,router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
-import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
@@ -43,15 +40,18 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingCountry = ref<Record<string, any>>();
 const deletingCountry = ref<Record<string, any>>();
-const isArchived = ref(false);
-
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+const partialOnly = ['countries', 'filters'];
+const searchTimeout = ref<number | null>(null);
+const highlightedRowId = ref<number|null>(null);
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
     router.get(
       props.fetchUrl,
       {
@@ -59,20 +59,30 @@ function fetch(page = 1) {
         sort: sort.value,
         direction: direction.value,
         perPage: perPage.value,
-        isArchived: isArchived.value,
+        isArchived: isArchived.value ? 'true' : 'false',
         page,
       },
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
 }
-}
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 const enhancedCountries = computed(() => {
   const c = props.countries || {};
@@ -85,7 +95,16 @@ const enhancedCountries = computed(() => {
     total: c.total ?? c.meta?.total, // Add this line
   };
 });
-
+watch(() => enhancedCountries.value.data, (rows) => {
+  if (highlightedRowId.value) {
+    let rowId = highlightedRowId.value;
+    if (rowId === -1 && rows.length) {
+      rowId = rows[rows.length - 1].id;
+    }
+    scrollToRow(rowId);
+    highlightedRowId.value = null;
+  }
+});
 const form = useForm({
   name: '',
 });
@@ -95,11 +114,24 @@ const editForm = useForm({
 });
 
 function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCountries.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   form.post('/country', {
     preserveScroll: true,
     onSuccess: () => {
       form.reset();
       showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedCountries.value.last_page);
+        highlightedRowId.value = -1;
+      });
     },
   });
 }
@@ -111,12 +143,35 @@ function openEditModal(row: any) {
 }
 
 function submitEdit() {
+  const editedId = editingCountry.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedCountries.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
   editForm.put(`/country/${editingCountry.value?.id || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
       editingCountry.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
     },
+  });
+}
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+      const el = document.getElementById(`country-row-${rowId}`);
+      if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
   });
 }
 
@@ -126,6 +181,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingCountry.value) return;
   const deletedId = deletingCountry.value?.id;
   router.delete(`/country/${deletedId || ''}`, {
     data: {
@@ -137,12 +193,12 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCountry.value = undefined;
-      // The original code had highlightedRowId and scrollToRow, but they are not defined.
-      // Assuming they are meant to be removed or are part of a larger context not provided.
-      // For now, removing them as they are not in the new_code.
+      highlightedRowId.value = deletedId;
+      nextTick(() => scrollToRow(deletedId));
     },
   });
 }
@@ -150,8 +206,10 @@ function confirmDelete() {
 function restoreCountry(id: number) {
   router.post(`/country/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
+      
     },
   });
 }
@@ -159,6 +217,9 @@ function restoreCountry(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -290,13 +351,13 @@ function handlePageChange(event: Event) {
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(row, index) in enhancedCountries.data" :key="row.id" class="even:bg-gray-50 hover:bg-blue-50 transition" :class="{ 'bg-red-100': deletingCountry?.id === row.id }">
+              <tr v-for="(row, index) in enhancedCountries.data" :key="row.id" :id="`country-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button v-if="canUpdateAnyCountry" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -310,7 +371,7 @@ function handlePageChange(event: Event) {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCountry">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       Delete
@@ -473,5 +534,13 @@ function handlePageChange(event: Event) {
 }
 .switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
   left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
 }
 </style>

@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { Head, usePage, Link } from '@inertiajs/vue3';
+import { router, Head, usePage, Link } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, Member, FamilyStats } from '@/types';
-import { router } from '@inertiajs/vue3';
+import { } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon, Download } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -143,6 +144,9 @@ function restoreMember(id: number) {
   router.post(route('member.restore', id), {}, {
     preserveScroll: true,
     only: partialOnly,
+    onSuccess: () => {
+      isArchived.value = false;
+    },
   });
 }
 function formatDate(dateStr: string) {
@@ -263,6 +267,7 @@ function clearSearch() {
       {
         preserveState: false,
         replace: true,
+        only: partialOnly,
       },
     );
   }
@@ -295,6 +300,7 @@ function clearFamilySearch() {
       {
         preserveState: false,
         replace: true,
+        only: partialOnly,
       },
     );
   }
@@ -411,330 +417,457 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   <AppLayout :breadcrumbs="breadcrumbs">
 
     <Head title="Members" />
-    <DatatableHeader>
-      <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
-        <div class="flex flex-1 items-center gap-2">
-          <div class="flex-1 relative">
-            <input v-model="search" type="text" class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
-              placeholder="Search name or family no..." @input="handleSearchInput" @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              ✕
-            </button>
+    
+    <!-- Wrap everything in TooltipProvider -->
+    <TooltipProvider>
+      <DatatableHeader>
+        <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+          <div class="flex flex-1 items-center gap-2">
+            <div class="flex-1 relative">
+              <input v-model="search" type="text" class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
+                placeholder="Search name or family no..." @input="handleSearchInput" @keydown.escape="clearSearch" />
+              <button v-if="search" @click="clearSearch"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+            <div class="relative">
+              <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8"
+                placeholder="Search by family no..." @input="handleFamilySearchInput"
+                @keydown.escape="clearFamilySearch" />
+              <button v-if="familySearch" @click="clearFamilySearch"
+                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                ✕
+              </button>
+            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
+                  {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Toggle advanced filters</p>
+              </TooltipContent>
+            </Tooltip>
           </div>
-          <div class="relative">
-            <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8"
-              placeholder="Search by family no..." @input="handleFamilySearchInput"
-              @keydown.escape="clearFamilySearch" />
-            <button v-if="familySearch" @click="clearFamilySearch"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
-              ✕
-            </button>
+          <div class="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button v-if="props.canCreateMember" @click="addNewMember"
+                  class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
+                  <component :is="Plus" />
+                  <span>Add New Member</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Create a new member record</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button v-if="can('read-member')" @click="downloadExcel"
+                  class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+                  <component :is="Download" />
+                  <span>Export CSV</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Download member data as CSV file</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  v-if="can('read-data-verification') || can('update-data-verification')"
+                  :href="route('member.data-verification')"
+                  class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  <span>Data Verification</span>
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Verify and validate member data</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <label class="flex items-center gap-2 cursor-pointer select-none">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Checkbox v-model="isArchived" class="switch-checkbox" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Show archived members in the list</p>
+                </TooltipContent>
+              </Tooltip>
+              <span class="text-sm font-medium">Show Archived</span>
+            </label>
           </div>
-          <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-            {{ showFilters ? 'Hide Filters' : 'More Filters' }}
-          </button>
         </div>
-        <div class="flex items-center gap-2">
-          <Button v-if="props.canCreateMember" @click="addNewMember"
-            class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
-            <component :is="Plus" />
-            <span>Add New Member</span>
-          </Button>
-          <Button v-if="can('read-member')" @click="downloadExcel"
-            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
-            <component :is="Download" />
-            <span>Export CSV</span>
-          </Button>
-          
-          <Link
-            v-if="can('read-data-verification') || can('update-data-verification')"
-            :href="route('member.data-verification')"
-            class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <span>Data Verification</span>
-          </Link>
-
-          <label class="flex items-center gap-2 cursor-pointer select-none">
-            <Checkbox v-model="isArchived" class="switch-checkbox" />
-            <span class="text-sm font-medium">Show Archived</span>
-          </label>
-        </div>
-      </div>
-      <transition name="fade">
-        <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
-          <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
-            <option value="">All Communities</option>
-            <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-          <select v-model="relationship" class="rounded border px-2 py-1 text-sm">
-            <option value="">All Relationships</option>
-            <option v-for="r in props.relationships" :key="r.id" :value="r.id">{{ r.name }}</option>
-          </select>
-          <select v-model="ageGroup" class="rounded border px-2 py-1 text-sm">
-            <option value="">All Age Groups</option>
-            <option v-for="a in props.ageGroups" :key="a.id" :value="a.id">{{ a.name }}</option>
-          </select>
-          <select v-model="bloodGroup" class="rounded border px-2 py-1 text-sm">
-            <option value="">All Blood Groups</option>
-            <option v-for="b in props.bloodGroups" :key="b.id" :value="b.id">{{ b.name }}</option>
-          </select>
-          <select v-model="gender" class="rounded border px-2 py-1 text-sm">
-            <option value="">All Genders</option>
-            <option v-for="g in props.genders" :key="g.id" :value="g.id">{{ g.name }}</option>
-          </select>
-          <select v-model="perPage" class="rounded border px-2 py-1 text-sm">
-            <option :value="10">10 per page</option>
-            <option :value="25">25 per page</option>
-            <option :value="50">50 per page</option>
-            <option :value="100">100 per page</option>
-          </select>
-        </div>
-      </transition>
-    </DatatableHeader>
-
-    <div v-if="props.canViewAnyMember">
-      <!-- Compact pagination with inline stats -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
-        <!-- Left side: Total members info -->
-        <div class="text-gray-600">
-          Showing <span class="font-semibold">{{ familyStats.totalMembers || 0 }}</span> total members
-          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
-        </div>
-        
-        <!-- Center: Pagination controls -->
-        <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedMembers.prev_page_url" 
-            @click="fetch(enhancedMembers.current_page! - 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
-          >
-            ← Prev
-          </button>
-          
-          <div class="flex items-center gap-1 text-gray-600">
-            <span>Page</span>
-            <select 
-              v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
-              :value="enhancedMembers.current_page" 
-              @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
-                {{ page }}
-              </option>
+        <transition name="fade">
+          <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
+            <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Communities</option>
+              <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
             </select>
-            <span>of {{ enhancedMembers.last_page }}</span>
+            <select v-model="relationship" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Relationships</option>
+              <option v-for="r in props.relationships" :key="r.id" :value="r.id">{{ r.name }}</option>
+            </select>
+            <select v-model="ageGroup" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Age Groups</option>
+              <option v-for="a in props.ageGroups" :key="a.id" :value="a.id">{{ a.name }}</option>
+            </select>
+            <select v-model="bloodGroup" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Blood Groups</option>
+              <option v-for="b in props.bloodGroups" :key="b.id" :value="b.id">{{ b.name }}</option>
+            </select>
+            <select v-model="gender" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Genders</option>
+              <option v-for="g in props.genders" :key="g.id" :value="g.id">{{ g.name }}</option>
+            </select>
+            <select v-model="perPage" class="rounded border px-2 py-1 text-sm">
+              <option :value="10">10 per page</option>
+              <option :value="25">25 per page</option>
+              <option :value="50">50 per page</option>
+              <option :value="100">100 per page</option>
+            </select>
+          </div>
+        </transition>
+      </DatatableHeader>
+
+      <div v-if="props.canViewAnyMember">
+        <!-- Compact pagination with inline stats -->
+        <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+          <!-- Left side: Total members info -->
+          <div class="text-gray-600">
+            Showing <span class="font-semibold">{{ familyStats.totalMembers || 0 }}</span> total members
+            <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
           </div>
           
-          <button 
-            v-if="enhancedMembers.next_page_url" 
-            @click="fetch(enhancedMembers.current_page! + 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
-          >
-            Next →
-          </button>
+          <!-- Center: Pagination controls -->
+          <div class="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  v-if="enhancedMembers.prev_page_url" 
+                  @click="fetch(enhancedMembers.current_page! - 1)" 
+                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+                >
+                  ← Prev
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Go to the previous page</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <div class="flex items-center gap-1 text-gray-600">
+              <span>Page</span>
+              <select 
+                v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
+                :value="enhancedMembers.current_page" 
+                @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
+                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
+                  {{ page }}
+                </option>
+              </select>
+              <span>of {{ enhancedMembers.last_page }}</span>
+            </div>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button 
+                  v-if="enhancedMembers.next_page_url" 
+                  @click="fetch(enhancedMembers.current_page! + 1)" 
+                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+                >
+                  Next →
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Go to the next page</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+          
+          <!-- Right side: Family stats -->
+          <div class="flex items-center gap-2 text-gray-600">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
+                  {{ familyStats.totalFamilies }} Families
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Total number of families in the database</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                  {{ familyStats.averageMembersPerFamily }} Avg/Family
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Average number of members per family</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-        
-        <!-- Right side: Family stats -->
-        <div class="flex items-center gap-2 text-gray-600">
-          <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-            {{ familyStats.totalFamilies }} Families
-          </span>
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            {{ familyStats.averageMembersPerFamily }} Avg/Family
-          </span>
-        </div>
-      </div>
 
-      <div class="datatable2 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-        <!-- Table content -->
-        <div class="overflow-x-auto rounded-xl border border-gray-100">
-          <table class="w-full border-collapse text-left">
-            <thead>
-              <tr class="bg-blue-50">
-                <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
-                <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
-                  class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
-                  {{ col.label }}
-                  <span v-if="col.sortable && sort === col.key">
-                    {{ direction === 'asc' ? '▲' : '▼' }}
-                  </span>
-                </th>
-                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
-                'even:bg-gray-50 hover:bg-blue-50 transition',
-                highlightedRowId === member.id ? 'highlight-row' : ''
-              ]">
-                <!-- View + Edit or Restore -->
-                <td class="p-2 whitespace-nowrap">
-                  <div class="flex gap-2">
-                    <template v-if="!serverArchived">
-                      <Button @click="openViewModal(member)"
-                        class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
-                        <component :is="ZapIcon" />
-                        <!-- <span>View</span> -->
-                      </Button>
-                      <Button v-if="canEditMember && !member.deleted_at" @click="editMember(member)"
-                        class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                        <component :is="Pencil" />
-                        <!-- <span>Edit</span> -->
-                      </Button>
-                      <Button @click="viewFamilyTree(member)"
-                        class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
-                        title="View Family Tree">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+        <div class="datatable2 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+          <!-- Table content -->
+          <div class="overflow-x-auto rounded-xl border border-gray-100">
+            <table class="w-full border-collapse text-left">
+              <thead>
+                <tr class="bg-blue-50">
+                  <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
+                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
+                    class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
+                    {{ col.label }}
+                    <span v-if="col.sortable && sort === col.key">
+                      {{ direction === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </th>
+                  <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
+                  'even:bg-gray-50 hover:bg-blue-50 transition',
+                  highlightedRowId === member.id ? 'highlight-row' : ''
+                ]">
+                  <!-- View + Edit or Restore -->
+                  <td class="p-2 whitespace-nowrap">
+                    <div class="flex gap-2">
+                      <template v-if="!serverArchived">
+                        <!-- View More Details Button -->
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button @click="openViewModal(member)"
+                              class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                              <component :is="ZapIcon" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View more details about this member</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <!-- Edit Button -->
+                        <Tooltip v-if="canEditMember && !member.deleted_at">
+                          <TooltipTrigger asChild>
+                            <Button @click="editMember(member)"
+                              class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                              <component :is="Pencil" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Edit this member's information</p>
+                          </TooltipContent>
+                        </Tooltip>
+
+                        <!-- Family Tree Button -->
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button @click="viewFamilyTree(member)"
+                              class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                              </svg>
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>View family tree and relationships</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </template>
+                      
+                      <!-- Restore Button -->
+                      <template v-else>
+                        <Tooltip v-if="canRestoreMember">
+                          <TooltipTrigger asChild>
+                            <Button @click="restoreMember(member.id)"
+                              class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                              Restore
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Restore this deleted member</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </template>
+                    </div>
+                  </td>
+                  <!-- Main table data -->
+                  <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
+
+                    <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
+                      {{ formatDate(member[col.key]) }}
+                    </template>
+                    <template v-else-if="col.key === 'community_cluster_id'">
+                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{
+                        member.community_cluster_id || '—' }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'community_id'">
+                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
+                        }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'age'">
+                      {{ calculateAge(member.date_of_birth) }}
+                    </template>
+                    <template v-else-if="col.key === 'relationship_id'">
+                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
+                        '—' }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'blood_group_id'">
+                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
+                        }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'gender_id'">
+                      <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
+                    </template>
+                    <template v-else-if="col.key === 'church_code'">
+                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                        {{ member[col.key] || page.props.church_code }}
+                      </span>
+                    </template>
+                    <template v-else-if="col.key === 'family_no'">
+                      <span 
+                        v-if="member[col.key]"
+                        @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
+                        :class="[
+                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                          copiedItem?.id === `Family Number-${member.id}` 
+                            ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
+                            : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
+                        ]"
+                        :title="`Click to copy: ${member[col.key]}`"
+                      >
+                        {{ member[col.key] }}
+                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
                         </svg>
-                      </Button>
+                      </span>
+                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                        —
+                      </span>
+                    </template>
+                    <template v-else-if="col.key === 'member_no'">
+                      <span 
+                        v-if="member[col.key]"
+                        @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
+                        :class="[
+                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
+                          copiedItem?.id === `Member Number-${member.id}` 
+                            ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
+                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
+                        ]"
+                        :title="`Click to copy: ${member[col.key]}`"
+                      >
+                        {{ member[col.key] }}
+                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                      </span>
+                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
+                        —
+                      </span>
                     </template>
                     <template v-else>
-                      <Button v-if="canRestoreMember" @click="restoreMember(member.id)"
-                        class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                        Restore
-                      </Button>
+                      <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
                     </template>
-                  </div>
-                </td>
-                <!-- Main table data -->
-                <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
-
-                  <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
-                    {{ formatDate(member[col.key]) }}
-                  </template>
-                  <template v-else-if="col.key === 'community_cluster_id'">
-                    <span class="block truncate" :title="member.community_cluster_id || '—'">{{
-                      member.community_cluster_id || '—' }}</span>
-                  </template>
-                  <template v-else-if="col.key === 'community_id'">
-                    <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
-                      }}</span>
-                  </template>
-                  <template v-else-if="col.key === 'age'">
-                    {{ calculateAge(member.date_of_birth) }}
-                  </template>
-                  <template v-else-if="col.key === 'relationship_id'">
-                    <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
-                      '—' }}</span>
-                  </template>
-                  <template v-else-if="col.key === 'blood_group_id'">
-                    <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
-                      }}</span>
-                  </template>
-                  <template v-else-if="col.key === 'gender_id'">
-                    <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
-                  </template>
-                  <template v-else-if="col.key === 'church_code'">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-                      {{ member[col.key] || page.props.church_code }}
-                    </span>
-                  </template>
-                  <template v-else-if="col.key === 'family_no'">
-                    <span 
-                      v-if="member[col.key]"
-                      @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
-                      :class="[
-                        'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                        copiedItem?.id === `Family Number-${member.id}` 
-                          ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
-                          : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
-                      ]"
-                      :title="`Click to copy: ${member[col.key]}`"
-                    >
-                      {{ member[col.key] }}
-                      <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                      </svg>
-                    </span>
-                    <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                      —
-                    </span>
-                  </template>
-                  <template v-else-if="col.key === 'member_no'">
-                    <span 
-                      v-if="member[col.key]"
-                      @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
-                      :class="[
-                        'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                        copiedItem?.id === `Member Number-${member.id}` 
-                          ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
-                          : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
-                      ]"
-                      :title="`Click to copy: ${member[col.key]}`"
-                    >
-                      {{ member[col.key] }}
-                      <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                      </svg>
-                    </span>
-                    <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                      —
-                    </span>
-                  </template>
-                  <template v-else>
-                    <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
-                  </template>
-                </td>
-                <!-- Delete -->
-                <td v-if="!serverArchived" class="p-2 whitespace-nowrap">
-                  <template v-if="canDeleteMember && !member.deleted_at">
-                    <Button variant="destructive" @click="openDeleteModal(member)"
-                      class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                      <component :is="Trash" />
-                      <!-- <span>Delete</span> -->
-                    </Button>
-                  </template>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
-  </AppLayout>
-
-  <!-- Member Details Modal -->
-  <ViewMemberModal v-model="showViewModal" :member="selectedMember" :incomeRange="null" />
-
-  <!-- Add Member Modal -->
-  <AddMemberModal v-model="showAddModal" :communities="props.communities || []"
-    :relationships="props.relationships || []" :communityClusters="props.communityClusters || []" :towns="[]" />
-
-  <!-- Delete Modal -->
-  <transition name="fade">
-    <div v-if="showDeleteModal"
-      class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-      <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-        <div class="rounded-lg bg-white p-6">
-          <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
-          <p>
-            Are you sure you want to delete <span class="font-bold">{{ deletingMember?.first_name }} {{
-              deletingMember?.last_name }}</span>?
-          </p>
-          <div class="mt-6 flex justify-end space-x-2">
-            <Button variant="secondary" type="button" @click="showDeleteModal = false"
-              class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
-              Cancel
-            </Button>
-            <Button variant="destructive" type="button" :disabled="false" @click="confirmDelete"
-              class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">
-              Delete
-            </Button>
+                  </td>
+                  <!-- Delete -->
+                  <td v-if="!serverArchived" class="p-2 whitespace-nowrap">
+                    <Tooltip v-if="canDeleteMember && !member.deleted_at">
+                      <TooltipTrigger asChild>
+                        <Button variant="destructive" @click="openDeleteModal(member)"
+                          class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                          <component :is="Trash" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Permanently delete this member</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </div>
-  </transition>
+      <div v-else class="py-10 text-center text-gray-500">You do not have permission to view members.</div>
+    </TooltipProvider>
+
+    <!-- Member Details Modal -->
+    <ViewMemberModal v-model="showViewModal" :member="selectedMember" :incomeRange="null" />
+
+    <!-- Add Member Modal -->
+    <AddMemberModal v-model="showAddModal" :communities="props.communities || []"
+      :relationships="props.relationships || []" :communityClusters="props.communityClusters || []" :towns="[]" />
+
+    <!-- Delete Modal with tooltip -->
+    <transition name="fade">
+      <div v-if="showDeleteModal" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
+          <p class="mb-2">
+            Are you sure you want to delete this member?
+          </p>
+          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+            <p class="text-sm text-gray-600"><strong>Name:</strong> {{ deletingMember?.first_name }} {{ deletingMember?.last_name }}</p>
+            <p class="text-sm text-gray-600"><strong>Member No:</strong> {{ deletingMember?.member_no }}</p>
+          </div>
+          <div class="mt-6 flex justify-end space-x-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  @click="showDeleteModal = false"
+                  class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
+                  Cancel
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cancel the deletion</p>
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="destructive"
+                  type="button"
+                  :disabled="false"
+                  @click="confirmDelete"
+                  class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">
+                  <component :is="Trash" />
+                  Delete
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Permanently delete this member</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </AppLayout>
 </template>
 
 <style>

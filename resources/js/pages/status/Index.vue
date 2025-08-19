@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick } from 'vue';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
 
@@ -25,14 +24,16 @@ const columns = [
 ];
 
 const breadcrumbs = [{ title: 'Statuses', href: '/status/index' }];
-
+const partialOnly = ['statuses', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingStatus = ref<Record<string, any>>();
 const deletingStatus = ref<Record<string, any>>();
 const highlightedRowId = ref<number|null>(null);
-const isArchived = ref(props.filters?.isArchived === 'true');
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 const form = useForm({
   name: '',
@@ -66,9 +67,18 @@ const enhancedStatuses = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -82,6 +92,7 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
+  if (!props.fetchUrl) return;
   router.get(
     props.fetchUrl || '',
     {
@@ -95,6 +106,7 @@ function fetch(page = 1) {
     {
       preserveState: true,
       replace: true,
+      only: partialOnly,
     },
   );
 }
@@ -156,6 +168,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingStatus.value) return;
   const deletedId = deletingStatus.value?.id;
   router.delete(`/status/${deletedId || ''}`, {
     data: {
@@ -167,6 +180,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingStatus.value = undefined;
@@ -179,8 +193,9 @@ function confirmDelete() {
 function restoreStatus(id: number) {
   router.post(`/status/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
@@ -188,6 +203,9 @@ function restoreStatus(id: number) {
 function clearSearch() {
   search.value = '';
   // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -339,14 +357,14 @@ watch(() => enhancedStatuses.value.data, (rows) => {
                     {{ direction === 'asc' ? '▲' : '▼' }}
                   </span>
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedStatuses.data" :key="row.id" :id="`status-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
                   <div class="flex gap-2">
-                    <template v-if="!isArchived">
+                    <template v-if="!serverArchived">
                       <Button v-if="canUpdateAnyStatus" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                         <component :is="Pencil" />
                         <span>Edit</span>
@@ -362,7 +380,7 @@ watch(() => enhancedStatuses.value.data, (rows) => {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyStatus">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                       <component :is="Trash" />

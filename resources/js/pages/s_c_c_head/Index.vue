@@ -30,6 +30,8 @@ const columns = [
 
 ];
 
+const partialOnly = ['s_c_c_heads', 'filters'];
+const searchTimeout = ref<number | null>(null);
 const breadcrumbs = [{ title: 'SCC Heads', href: '/scc-head/index' }];
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
@@ -37,9 +39,9 @@ const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
 const modalMembers = ref<any[]>([]);
-const isArchived = ref(props.filters?.isArchived === 'true');
 const highlightedRowId = ref<number|null>(null);
-
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const editForm = useForm<{ id: string | number; member_id: any; community_id: any }>({
   id: '',
   member_id: null,
@@ -58,7 +60,23 @@ const direction = ref(props.filters?.direction || 'asc');
 
 function clearSearch() {
   search.value = '';
-  fetch();
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      { preserveState: false, replace: true },
+    );
+  }
 }
 
 const enhancedSCCHeads = computed(() => {
@@ -73,9 +91,18 @@ const enhancedSCCHeads = computed(() => {
   };
 });
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -89,7 +116,7 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
-  if (props.fetchUrl) {
+  if (!props.fetchUrl) return;
     router.get(
       props.fetchUrl,
       {
@@ -103,10 +130,11 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
   }
-}
+
 
 
 watch(
@@ -245,6 +273,7 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
+  if (!deletingItem.value) return;
   const deletedId = deletingItem.value?.id;
   router.delete(`/scc-head/${deletedId || ''}`, {
     data: {
@@ -256,6 +285,7 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
@@ -268,10 +298,12 @@ function confirmDelete() {
 function restoreSCCHead(id: number) {
   router.post(`/scc-head/${id}/restore`, {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
+  isArchived.value = false;
 }
 
 function downloadCsv() {
@@ -397,13 +429,13 @@ const canExportSCCHead = can('read-scc-head');
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedSCCHeads.data" :key="row.id" :id="`scc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                     <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                       Edit
                     </Button>
@@ -420,7 +452,7 @@ const canExportSCCHead = can('read-scc-head');
                   </span>
                 </td>
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                   <Button
                     @click="openDeleteModal(row)"
                     variant="destructive"

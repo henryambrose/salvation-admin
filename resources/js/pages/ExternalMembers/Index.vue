@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { Head, usePage } from '@inertiajs/vue3';
+import { router, Head, usePage } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { router } from '@inertiajs/vue3';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon, Download } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,7 +40,9 @@ const perPage = ref(props.filters?.perPage || 15);
 const relationship = ref(props.filters?.relationship || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(false); // Always start with false, don't inherit from URL
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+const partialOnly = ['members', 'filters'];
 
 // Debounced search to prevent too many API calls
 let searchTimeout: number;
@@ -78,6 +79,7 @@ function fetch(page = 1) {
       {
         preserveState: true,
         replace: true,
+        only: partialOnly,
       },
     );
   }
@@ -176,17 +178,11 @@ function editExternalMember(member: any) {
   router.get(route('external-members.edit', member.id));
 }
 
-function viewExternalMember(member: any) {
-  router.get(route('external-members.show', member.id));
-}
 
 function addNewExternalMember() {
   router.get(route('external-members.create'));
 }
 
-function viewFamilyTreeForExternal(member: any) {
-    router.get(route('member.family-tree', {id: member.id, type: 'external'}));
-  }
 
 const showDeleteModal = ref(false);
 const deletingMember = ref<any>(null);
@@ -200,7 +196,7 @@ function openDeleteModal(member: any) {
 function restoreExternalMember(member: any) {
   router.post(route('external-members.restore', member.id), {}, {
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }

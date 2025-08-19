@@ -366,24 +366,6 @@ class ExternalMemberController extends Controller
         }
     }
 
-    /**
-     * Permanently delete a soft-deleted external member.
-     */
-    // public function forceDelete($id)
-    // {
-    //     $externalMember = ExternalMember::withTrashed()->findOrFail($id);
-    //     $this->authorize('forceDelete', $externalMember);
-
-    //     try {
-    //         $externalMember->forceDelete();
-
-    //         return redirect()->route('external-members.index')
-    //             ->with('success', 'External member permanently deleted.');
-    //     } catch (\Exception $e) {
-    //         return redirect()->route('external-members.index')
-    //             ->with('error', 'Failed to permanently delete external member.');
-    //     }
-    // }
 
     /**
      * Search external members (family-scoped)

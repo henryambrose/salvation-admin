@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { router } from '@inertiajs/vue3';
 import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Plus } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -41,8 +40,9 @@ const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingZone = ref<Record<string, any>>();
-const deletingZone = ref<Record<string, any>>();
-const isArchived = ref(props.filters?.isArchived === 'true');
+const deletingZone = ref<Record<string, any> | null>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number|null>(null);
 
 const form = useForm({
@@ -58,29 +58,37 @@ const perPage = ref(props.filters?.perPage || 10);
 const sort = ref(props.filters?.sort || '');
 const direction = ref(props.filters?.direction || 'asc');
 
+const partialOnly = ['zones', 'filters'];
+const searchTimeout = ref<number | null>(null);
+
 function fetch(page = 1) {
-  if (props.fetchUrl) {
-    router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-      },
-    );
-  }
+  if (!props.fetchUrl) return;
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
+  );
 }
 
-watch([search, sort, direction, perPage, isArchived], () => {
-  fetch();
-});
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
 
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
@@ -140,8 +148,10 @@ function openDeleteModal(row: any) {
 }
 
 function confirmDelete() {
-  const deletedId = deletingZone.value?.id;
-  router.delete(`/zone/${deletedId || ''}`, {
+  if (!deletingZone.value) return;
+  const deletedId = deletingZone.value.id;
+
+  router.delete(route('zone.destroy', deletedId), {
     data: {
       perPage: perPage.value,
       page: enhancedZones.value.current_page,
@@ -151,27 +161,31 @@ function confirmDelete() {
       isArchived: isArchived.value ? 'true' : 'false',
     },
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showDeleteModal.value = false;
-      deletingZone.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      deletingZone.value = null;
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreZone(id: number) {
-  router.post(`/zone/${id}/restore`, {}, {
+  router.post(route('zone.restore', id), {}, {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
-      fetch();
+      isArchived.value = false;
     },
   });
 }
 
 function clearSearch() {
   search.value = '';
-  // Force immediate fetch to clear results
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
   if (props.fetchUrl) {
     router.get(
       props.fetchUrl,
@@ -183,10 +197,7 @@ function clearSearch() {
         isArchived: isArchived.value ? 'true' : 'false',
         page: 1,
       },
-      {
-        preserveState: false,
-        replace: true,
-      },
+      { preserveState: false, replace: true },
     );
   }
 }
@@ -331,13 +342,13 @@ onMounted(() => {
                 <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
                   {{ col.label }}
                 </th>
-                <th v-if="!isArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="row in enhancedZones.data" :key="row.id" :id="`zone-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
                 <td class="p-2">
-                  <template v-if="!isArchived">
+                  <template v-if="!serverArchived">
                   <Button v-if="canUpdateAnyZone" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                     Edit
                   </Button>
@@ -351,7 +362,7 @@ onMounted(() => {
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   {{ row[col.key] }}
                 </td>
-                <td v-if="!isArchived" class="p-2">
+                <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyZone">
                   <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
                     Delete
