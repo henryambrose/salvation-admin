@@ -199,32 +199,23 @@ function formatFieldValue(fieldKey: string, value: any) {
 
   // Handle leadership roles
   if (fieldKey === 'scc_heads') {
-    console.log('Formatting scc_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
     if (memberDetails.value?.scc_heads && Array.isArray(memberDetails.value.scc_heads) && memberDetails.value.scc_heads.length > 0) {
-      console.log('SCC Heads found:', memberDetails.value.scc_heads);
       return memberDetails.value.scc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
-    console.log('No SCC Heads found or empty array');
     return '—';
   }
 
   if (fieldKey === 'ppc_heads') {
-    console.log('Formatting ppc_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
     if (memberDetails.value?.ppc_heads && Array.isArray(memberDetails.value.ppc_heads) && memberDetails.value.ppc_heads.length > 0) {
-      console.log('PPC Heads found:', memberDetails.value.ppc_heads);
       return memberDetails.value.ppc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
-    console.log('No PPC Heads found or empty array');
     return '—';
   }
 
   if (fieldKey === 'cluster_heads') {
-    console.log('Formatting cluster_heads field:', fieldKey, 'memberDetails:', memberDetails.value);
     if (memberDetails.value?.cluster_heads && Array.isArray(memberDetails.value.cluster_heads) && memberDetails.value.cluster_heads.length > 0) {
-      console.log('Cluster Heads found:', memberDetails.value.cluster_heads);
       return memberDetails.value.cluster_heads.map((item: any, index: number) => `${index + 1}. ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`).join('\n');
     }
-    console.log('No Cluster Heads found or empty array');
     return '—';
   }
   
@@ -363,11 +354,6 @@ async function fetchMemberDetails() {
     
     if (response.data) {
       memberDetails.value = response.data;
-      console.log('Member details set:', memberDetails.value);
-      console.log('SCC Heads:', memberDetails.value.scc_heads);
-      console.log('PPC Heads:', memberDetails.value.ppc_heads);
-      console.log('Cluster Heads:', memberDetails.value.cluster_heads);
-      console.log('Cells:', memberDetails.value.cells_and_associations);
     }
   } catch (error) {
     console.error('Error fetching member details:', error);
@@ -562,11 +548,11 @@ watch(() => currentTab.value, (newTab) => {
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">Internal:</span>
-                      <span class="ml-2 text-blue-600">{{ familyMembers.filter(m => m.member_type === 'internal').length }}</span>
+                      <span class="ml-2 text-blue-600">{{ familyMembers.filter(m => m.source === 'Member').length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">External:</span>
-                      <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.member_type === 'external').length }}</span>
+                      <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.source === 'External').length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">With Fathers:</span>
@@ -606,18 +592,18 @@ watch(() => currentTab.value, (newTab) => {
                           <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
                           <div class="flex items-center gap-2 mt-1">
                             <span class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</span>
-                            <span v-if="familyMember.member_type === 'external'" 
+                            <span v-if="familyMember.source === 'External'" 
                                   class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
                               External
                             </span>
                           </div>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
                           <span v-else>{{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">
-                          <span v-if="familyMember.member_type === 'external' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                          <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
                           <span v-else>{{ calculateAge(familyMember.date_of_birth) || '—' }}</span>
                         </td>
                         <td class="px-4 py-3 text-sm text-gray-800">

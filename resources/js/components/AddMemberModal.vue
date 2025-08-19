@@ -379,7 +379,7 @@ const fetchFamilyDetails = async (familyNo: string) => {
     
     if (response.ok) {
       const familyDetails = await response.json();
-      
+      console.log('familyDetails', familyDetails);
       // Store the cluster ID before setting community (which triggers the watcher)
       const clusterId = familyDetails.community_cluster_id?.toString() || '';
       
@@ -518,6 +518,7 @@ const performFamilySearch = async () => {
     
     if (response.ok) {
       const data = await response.json();
+      console.log('familySearchResults', data);
       if (Array.isArray(data)) {
         familySearchResults.value = data.map(item => ({
           family_no: item.family_no || '',

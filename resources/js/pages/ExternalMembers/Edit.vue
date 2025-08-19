@@ -38,9 +38,9 @@ const form = useForm({
   father_id: props.externalMember.father_id as number | undefined | null,
   mother_id: props.externalMember.mother_id as number | undefined | null,
   spouse_id: props.externalMember.spouse_id as number | undefined | null,
-  father_source: props.externalMember.father_source || 'Member',
-  mother_source: props.externalMember.mother_source || 'Member',
-  spouse_source: props.externalMember.spouse_source || 'Member',
+  father_source: props.externalMember.father_source || 'External',
+  mother_source: props.externalMember.mother_source || 'External',
+  spouse_source: props.externalMember.spouse_source || 'External',
   address: props.externalMember.address || '',
   relationship_id: props.externalMember.relationship_id,
 });
@@ -121,7 +121,18 @@ watch(
   },
 );
 
-// Update the watchers to handle the new logic
+watch(
+  () => form.spouse_source,
+  (newValue) => {
+    if (newValue === 'External') {
+      fetchExternalFamilyMembers();
+    } else {
+      fetchFamilyMembers();
+    }
+  },
+  
+);
+
 watch(
   () => form.father_source,
   (newValue) => {
@@ -130,11 +141,8 @@ watch(
     } else {
       fetchFamilyMembers();
     }
-    // Clear the ID when switching source types to avoid confusion
-    if (form.father_id) {
-      form.father_id = undefined;
-    }
   },
+  
 );
 
 watch(
@@ -145,28 +153,9 @@ watch(
     } else {
       fetchFamilyMembers();
     }
-    // Clear the ID when switching source types to avoid confusion
-    if (form.mother_id) {
-      form.mother_id = undefined;
-    }
   },
+  
 );
-
-watch(
-  () => form.spouse_source,
-  (newValue) => {
-    if (newValue === 'External') {
-      fetchExternalFamilyMembers();
-    } else {
-      fetchFamilyMembers();
-    }
-    // Clear the ID when switching source types to avoid confusion
-    if (form.spouse_id) {
-      form.spouse_id = undefined;
-    }
-  },
-);
-
 // Fetch family members on mount
 onMounted(() => {
   fetchFamilyMembers();
@@ -358,7 +347,6 @@ const cancel = () => {
                     @update:model-value="(value) => (form.spouse_id = Number(value))"
                     :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
                   />
                   <Button 
                     type="button" 
@@ -411,7 +399,6 @@ const cancel = () => {
                     @update:model-value="(value) => (form.father_id = Number(value))"
                     :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
                   />
                   <Button 
                     type="button" 

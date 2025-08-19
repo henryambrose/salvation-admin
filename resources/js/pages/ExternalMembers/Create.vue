@@ -49,9 +49,9 @@ const form = useForm({
   mother_id: undefined as number | undefined | null,
   spouse_id: undefined as number | undefined | null,
   relationship_id: '',
-  father_source: 'Member',
-  mother_source: 'Member',
-  spouse_source: 'Member',
+  father_source: null,
+  mother_source: null,
+  spouse_source: null,
 });
 
 // Reactive variables to store family members
@@ -72,10 +72,10 @@ const fetchFamilyMembers = async () => {
       });
       
       const data = await response.json();
-      
+      console.log('data', data);
       // Filter only internal members from the same family
       familyMembers.value = data.members
-        .filter((member: any) => member.member_type === 'member')
+        .filter((member: any) => member.source === 'Member')
         .map((member: any) => ({
           id: member.id,
           name: member.first_name + ' ' + member.last_name
@@ -103,10 +103,10 @@ const fetchExternalFamilyMembers = async () => {
       });
       
       const data = await response.json();
-      
+      console.log('data', data);
       // Filter only external members from the same family
       externalFamilyMembers.value = data.members
-        .filter((member: any) => member.member_type === 'external')
+        .filter((member: any) => member.source === 'External')
         .map((member: any) => ({
           id: member.id,
           name: member.first_name + ' ' + member.last_name
@@ -119,7 +119,20 @@ const fetchExternalFamilyMembers = async () => {
     externalFamilyMembers.value = [];
   }
 };
-
+watch(
+  () => form.family_no,
+  (newFamilyNo) => {
+    if (newFamilyNo) {
+      // Fetch both types of members when family number changes
+      fetchFamilyMembers();
+      fetchExternalFamilyMembers();
+    } else {
+      // Clear both arrays when no family number
+      familyMembers.value = [];
+      externalFamilyMembers.value = [];
+    }
+  }
+);
 // Update the watchers to handle the new logic
 watch(
   () => form.father_source,
@@ -133,7 +146,7 @@ watch(
     if (form.father_id) {
       form.father_id = undefined;
     }
-  },
+  }
 );
 
 watch(
@@ -148,7 +161,7 @@ watch(
     if (form.mother_id) {
       form.mother_id = undefined;
     }
-  },
+  }
 );
 
 watch(
@@ -163,14 +176,10 @@ watch(
     if (form.spouse_id) {
       form.spouse_id = undefined;
     }
-  },
+  }
 );
 
-// Fetch family members on mount
-onMounted(() => {
-  fetchFamilyMembers();
-  fetchExternalFamilyMembers();
-});
+
 
 const submit = () => {
   form.post(route('external-members.store'));
@@ -349,7 +358,6 @@ watch(() => form.errors, (errors) => {
                     @update:model-value="(value) => (form.spouse_id = Number(value))"
                     :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
                   />
                   <Button 
                     type="button" 
@@ -402,7 +410,6 @@ watch(() => form.errors, (errors) => {
                     @update:model-value="(value) => (form.father_id = Number(value))"
                     :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
                   />
                   <Button 
                     type="button" 

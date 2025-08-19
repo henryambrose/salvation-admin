@@ -762,15 +762,15 @@ class MemberController extends Controller
 
     public function getMembersByFamily($familyNo, Request $request)
     {
-        $excludeMemberId = $request->query('exclude_member_id');
+        // $excludeMemberId = $request->query('exclude_member_id');
         
         $query = Member::where('family_no', $familyNo)
             ->select('id', 'first_name', 'last_name', 'date_of_birth', 'gender_id');
         
         // Exclude the current member if exclude_member_id is provided
-        if ($excludeMemberId) {
-            $query->where('id', '!=', $excludeMemberId);
-        }
+        // if ($excludeMemberId) {
+        //     $query->where('id', '!=', $excludeMemberId);
+        // }
         
         $members = $query->get();
 
@@ -781,9 +781,9 @@ class MemberController extends Controller
         $unifiedPersonMap = $unifiedPersons->keyBy('uid');
         
         // Find the root generation (people with no parents)
-        $rootGeneration = $unifiedPersons->filter(function ($person) use ($unifiedPersonMap) {
-            return !$person->father_uid && !$person->mother_uid;
-        });
+        // $rootGeneration = $unifiedPersons->filter(function ($person) use ($unifiedPersonMap) {
+        //     return !$person->father_uid && !$person->mother_uid;
+        // });
         
         // Calculate generation levels for all family members
         $generationMap = [];
@@ -909,48 +909,48 @@ class MemberController extends Controller
 
         return response()->json($enhancedMembers);
     }
-    public function handleMarriage(Request $request)
-    {
-        $request->validate([
-            'member_id' => 'required|exists:members,id',
-            'spouse_id' => 'required|exists:members,id',
-            'marriage_date' => 'required|date',
-        ]);
+    // public function handleMarriage(Request $request)
+    // {
+    //     $request->validate([
+    //         'member_id' => 'required|exists:members,id',
+    //         'spouse_id' => 'required|exists:members,id',
+    //         'marriage_date' => 'required|date',
+    //     ]);
 
-        $numberingService = new \App\Services\FamilyNumberingService;
+    //     $numberingService = new \App\Services\FamilyNumberingService;
 
-        DB::beginTransaction();
+    //     DB::beginTransaction();
 
-        try {
-            $result = $numberingService->handleMarriage(
-                $request->member_id,
-                $request->spouse_id
-            );
+    //     try {
+    //         $result = $numberingService->handleMarriage(
+    //             $request->member_id,
+    //             $request->spouse_id
+    //         );
 
-            DB::commit();
+    //         DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Marriage recorded successfully',
-                'member' => $result['member'],
-                'spouse' => $result['spouse'],
-            ]);
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'Marriage recorded successfully',
+    //             'member' => $result['member'],
+    //             'spouse' => $result['spouse'],
+    //         ]);
 
-        } catch (\Exception $e) {
-            DB::rollBack();
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to record marriage: '.$e->getMessage(),
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to record marriage: '.$e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     public function getFamilyDetails($familyNo, Request $request)
     {
         try {
             // Get all family members from the UnifiedPerson view
-            $familyMembersQuery = UnifiedPerson::where('family_no', $familyNo)->where('source','Member')
+            $familyMembersQuery = UnifiedPerson::where('family_no', $familyNo)
             ->select('original_id', 'uid', 'first_name', 'last_name', 'member_no', 'source',
                     'father_uid', 'mother_uid', 'spouse_uid');
 
@@ -1025,7 +1025,7 @@ class MemberController extends Controller
                         'member_no' => $member->member_no,
                     'date_of_birth' => null, // Will be populated for internal members if needed
                         'generation' => $generation,
-                    'member_type' => strtolower($member->source),
+                    'source' => $member->source,
                         'father' => $member->father ? [
                         'id' => $member->father->original_id,
                         'uid' => $member->father->uid,
@@ -1046,7 +1046,7 @@ class MemberController extends Controller
 
             // For internal members, populate date_of_birth
             $membersWithGeneration = $membersWithGeneration->map(function ($member) {
-                if ($member['member_type'] === 'member') {
+                if ($member['source'] === 'Member') {
                     $memberModel = Member::find($member['id']);
                     if ($memberModel) {
                         $member['date_of_birth'] = $memberModel->date_of_birth;
@@ -1149,68 +1149,67 @@ class MemberController extends Controller
         }
     }
 
-    public function searchMembers(Request $request)
-    {
-        $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
-        $limit = $request->input('limit', 10);
-        $familyNo = $request->input('familyNo'); // Add this parameter
+    // public function searchMembers(Request $request)
+    // {
+    //     $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
+    //     $limit = $request->input('limit', 10);
+    //     $familyNo = $request->input('familyNo'); // Add this parameter
 
-        if (empty($query)) {
-            return response()->json([]);
-        }
+    //     if (empty($query)) {
+    //         return response()->json([]);
+    //     }
 
-        $members = Member::with(['community', 'relationship', 'gender']);
+    //     $members = Member::with(['community', 'relationship', 'gender']);
 
-        // Check if query is a numeric ID
-        if (is_numeric($query)) {
-            // Search by ID
-            $members = $members->where('id', $query);
-        } else {
-            // Search by name, member number, or family number (existing logic)
-            if (strlen($query) < 2) {
-                return response()->json([]);
-            }
+    //     // Check if query is a numeric ID
+    //     if (is_numeric($query)) {
+    //         // Search by ID
+    //         $members = $members->where('id', $query);
+    //     } else {
+    //         // Search by name, member number, or family number (existing logic)
+    //         if (strlen($query) < 2) {
+    //             return response()->json([]);
+    //         }
 
-            $members = $members->where(function ($q) use ($query) {
-                $q->where('first_name', 'like', "%{$query}%")
-                    ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
-                    ->orWhere('member_no', 'like', "%{$query}%")
-                    ->orWhere('family_no', 'like', "%{$query}%");
-            });
-        }
+    //         $members = $members->where(function ($q) use ($query) {
+    //             $q->where('first_name', 'like', "%{$query}%")
+    //                 ->orWhere('last_name', 'like', "%{$query}%")
+    //                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+    //                 ->orWhere('member_no', 'like', "%{$query}%")
+    //                 ->orWhere('family_no', 'like', "%{$query}%");
+    //         });
+    //     }
 
-        // Apply family number filter if provided
-        if ($familyNo) {
-            $members = $members->where('family_no', $familyNo);
-        }
+    //     // Apply family number filter if provided
+    //     if ($familyNo) {
+    //         $members = $members->where('family_no', $familyNo);
+    //     }
 
-        $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
-            ->limit($limit)
-            ->get()
-            ->map(function ($member) {
-                return [
-                    'id' => $member->id,
-                    'text' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$member->family_no}",
-                    'member_no' => $member->member_no,
-                    'family_no' => $member->family_no,
-                    'full_name' => "{$member->first_name} {$member->last_name}",
-                    'first_name' => $member->first_name,
-                    'last_name' => $member->last_name,
-                    'community' => $member->community->name ?? '',
-                    'relationship' => $member->relationship->name ?? '',
-                    'gender' => $member->gender->name ?? '',
-                ];
-            });
+    //     $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
+    //         ->limit($limit)
+    //         ->get()
+    //         ->map(function ($member) {
+    //             return [
+    //                 'id' => $member->id,
+    //                 'text' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$member->family_no}",
+    //                 'member_no' => $member->member_no,
+    //                 'family_no' => $member->family_no,
+    //                 'full_name' => "{$member->first_name} {$member->last_name}",
+    //                 'first_name' => $member->first_name,
+    //                 'last_name' => $member->last_name,
+    //                 'community' => $member->community->name ?? '',
+    //                 'relationship' => $member->relationship->name ?? '',
+    //                 'gender' => $member->gender->name ?? '',
+    //             ];
+    //         });
 
-        return response()->json($members);
-    }
+    //     return response()->json($members);
+    // }
 
-
+    //for viewmembermodal leadership roles tab
     public function getMemberDetails($id)
     {
         try {
-            \Log::info('Fetching member details for ID: ' . $id);
             
             $member = Member::with([
                 'community:id,name',
@@ -1226,11 +1225,6 @@ class MemberController extends Controller
                 'cellsAndAssociations:id,name'
             ])->findOrFail($id);
 
-            \Log::info('Member found: ' . $member->first_name . ' ' . $member->last_name);
-            \Log::info('SCC Heads count: ' . $member->sccHeads->count());
-            \Log::info('PPC Heads count: ' . $member->ppcHeads->count());
-            \Log::info('Cluster Heads count: ' . $member->clusterHeads->count());
-            \Log::info('Cells count: ' . $member->cellsAndAssociations->count());
 
             // Transform the data to match frontend expectations
             $transformedMember = $member->toArray();

@@ -415,37 +415,7 @@ const form = useForm({
 // Add external family members data
 const externalFamilyMembers = ref<Array<{ id: number; name: string }>>([]);
 
-// Function to fetch external family members
-const fetchExternalFamilyMembers = async () => {
-  try {
-    // If we have a family number, fetch external members from the same family
-    if (form.family_no) {
-      const response = await fetch(`/external-member/family-details/${form.family_no}`, {
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        credentials: 'same-origin',
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        // Filter only external members from the same family
-        externalFamilyMembers.value = (data.members || []).map((member: any) => ({
-          id: member.id,
-          name: member.first_name + ' ' + member.last_name,
-        }));
-      }
-    } else {
-      // If no family number, show empty array
-      externalFamilyMembers.value = [];
-    }
-  } catch (error) {
-    console.error('Error fetching external family members:', error);
-    externalFamilyMembers.value = [];
-  }
-};
 
 // Watch for family_no changes to refetch external family members
 watch(
@@ -702,9 +672,9 @@ watch(
       form.deaths_reg_no = props.member.deaths_reg_no || '';
       form.death_parish = props.member.death_parish || '';
       form.death_parish_id = props.member.death_parish_id || '';
-      form.spouse_source = props.member.spouse_source || 'member';
-      form.father_source = props.member.father_source || 'member';
-      form.mother_source = props.member.mother_source || 'member';
+      form.spouse_source = props.member.spouse_source || 'Member';
+      form.father_source = props.member.father_source || 'Member';
+      form.mother_source = props.member.mother_source || 'Member';
     }
   },
   { immediate: true },
@@ -906,16 +876,19 @@ const fetchFamilyMembers = async () => {
         },
         credentials: 'same-origin',
       });
+      if(response.ok){
+        const data = await response.json();
+        // Filter members from the same family and exclude current member
+        const currentMemberId = member?.id;
 
-      const data = await response.json();
-      // Filter members from the same family and exclude current member
-      const currentMemberId = member?.id;
-      familyMembers.value = data.members
-        .filter((member: any) => member.id !== currentMemberId)
-        .map((member: any) => ({
-          id: member.id,
-          name: member.first_name + ' ' + member.last_name,
-        }));
+        familyMembers.value = data.members
+          .filter((member: any) => member.id !== currentMemberId && member.source === 'Member')
+          
+          .map((member: any) => ({
+            id: member.id,
+            name: member.first_name + ' ' + member.last_name,
+          }));
+      }
     } catch (error) {
       console.error('Error fetching family members:', error);
       familyMembers.value = [];
@@ -925,6 +898,42 @@ const fetchFamilyMembers = async () => {
   }
 };
 
+// Function to fetch external family members
+const fetchExternalFamilyMembers = async () => {
+  if (form.family_no) {
+    try {
+      // If we have a family number, fetch external members from the same family
+        const response = await fetch(`/external-member/family-details/${form.family_no}`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // Filter only external members from the same family
+          const currentMemberId = member?.id;
+          externalFamilyMembers.value = data.members
+          .filter((member: any) => member.id !== currentMemberId && member.source === 'External')
+          .map((member: any) => ({
+            id: member.id,
+            name: member.first_name + ' ' + member.last_name,
+          }));
+          
+        }
+    
+      } catch (error) {
+        console.error('Error fetching external family members:', error);
+        externalFamilyMembers.value = [];
+      }
+  } else {
+      // If no family number, show empty array
+      externalFamilyMembers.value = [];
+    }
+};
 // Watch for family_no changes to refetch family members
 watch(
   () => form.family_no,

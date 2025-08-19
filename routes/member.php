@@ -27,6 +27,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('member.next-available-numbers');
     Route::get('member/family-details/{familyNo}', [MemberController::class, 'getFamilyDetails'])
         ->name('member.family-details');
+    Route::get('member/family-members/{familyNo}', [MemberController::class, 'getMembersByFamily'])
+    ->name('member.family-members');
     Route::get('member/church-statistics/{churchCode?}', [MemberController::class, 'getChurchStatistics'])
         ->name('member.church-statistics');
     Route::get('member/search-members', [MemberController::class, 'searchMembers'])
