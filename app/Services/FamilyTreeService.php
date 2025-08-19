@@ -371,8 +371,7 @@ class FamilyTreeService
                         if ($this->isUncleOrAunt($p2->spouse, $p1)) {
                             return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                         }
-                        \Log::info('p1->spouse374', [$p2]);
-                        \Log::info('p2->spouse374', [$p1->spouse]);
+
                         if ($this->isSpouseOfUncleOrAunt($p1->spouse, $p2)) {
                             return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                         }
@@ -700,6 +699,9 @@ class FamilyTreeService
     private function isSpouseOfUncleOrAunt(UnifiedPerson $p1, UnifiedPerson $p2): bool
     {
         // Get P1's uncles and aunts
+        if($p1===null || $p2===null){
+            return false;
+        }
         $unclesAndAunts = [];
         
         // Check father's siblings
