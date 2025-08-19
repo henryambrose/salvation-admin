@@ -371,9 +371,9 @@ class FamilyTreeService
                         if ($this->isUncleOrAunt($p2->spouse, $p1)) {
                             return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                         }
+                        \Log::info('p1->spouse374', [$p2]);
+                        \Log::info('p2->spouse374', [$p1->spouse]);
                         if ($this->isSpouseOfUncleOrAunt($p1->spouse, $p2)) {
-                            \Log::info('p1->spouse468', [$p2]);
-                            \Log::info('p2->spouse468', [$p1->spouse]);
                             return $p1->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                         }
                     }
