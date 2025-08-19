@@ -3,7 +3,7 @@ import AppLogoIcon from '@/components/AppLogoIcon.vue';
 </script>
 
 <template>
-  <div class="flex px-7 flex-col items-center justify-center">
+  <div class="flex px-8 flex-col items-center justify-center">
     <div class="mb-1 text-center text-sm">
       <span class="font-semibold leading-none">Our Lady of Salvation</span>
     </div>

@@ -8,6 +8,7 @@ import { Column } from '@/types';
 import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon, Download } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 const { can } = permissionHelpers();
 const page = usePage();
@@ -352,9 +353,18 @@ function copyToClipboard(text: string, type: string, memberId: number) {
               ✕
             </button>
           </div>
-          <button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-            {{ showFilters ? 'Hide Filters' : 'More Filters' }}
-          </button>
+          <!-- More Filters Button - Exact same styling as member index -->
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button @click="showFilters = !showFilters" 
+                class="px-3 py-2 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 hover:text-blue-900 text-sm font-medium border border-blue-200 hover:border-blue-300 transition-colors">
+                {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Toggle advanced filters</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div class="flex items-center gap-2">
           <Button v-if="props.canViewAnyExternalMember" @click="addNewExternalMember"
@@ -374,6 +384,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </label>
         </div>
       </div>
+      <!-- Dropdowns - Exact same styling as member index -->
       <transition name="fade">
         <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
           <select v-model="relationship" class="rounded border px-2 py-1 text-sm">
@@ -413,6 +424,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             
             <div class="flex items-center gap-1 text-gray-600">
               <span>Page</span>
+              <!-- Pagination dropdown - Exact same styling as member index -->
               <select 
                 v-if="enhancedExternalMembers.last_page && enhancedExternalMembers.last_page > 1"
                 :value="enhancedExternalMembers.current_page" 

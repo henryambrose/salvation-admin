@@ -440,62 +440,40 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 ✕
               </button>
             </div>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button @click="showFilters = !showFilters" class="px-3 py-2 rounded bg-gray-100 hover:bg-gray-200 text-sm">
-                  {{ showFilters ? 'Hide Filters' : 'More Filters' }}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Toggle advanced filters</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- More Filters Button - Removed tooltip -->
+            <Button @click="showFilters = !showFilters" 
+              class="px-3 py-2 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 hover:text-blue-900 text-sm font-medium border border-blue-200 hover:border-blue-300 transition-colors">
+              {{ showFilters ? 'Hide Filters' : 'More Filters' }}
+            </Button>
           </div>
           <div class="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button v-if="props.canCreateMember" @click="addNewMember"
-                  class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
-                  <component :is="Plus" />
-                  <span>Add New Member</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Create a new member record</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Add New Member Button - Removed tooltip -->
+            <Button v-if="props.canCreateMember" @click="addNewMember"
+              class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
+              <component :is="Plus" />
+              <span>Add New Member</span>
+            </Button>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button v-if="can('read-member')" @click="downloadExcel"
-                  class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
-                  <component :is="Download" />
-                  <span>Export CSV</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Download member data as CSV file</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Export CSV Button - Removed tooltip -->
+            <Button v-if="can('read-member')" @click="downloadExcel"
+              class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+              <component :is="Download" />
+              <span>Export CSV</span>
+            </Button>
             
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  v-if="can('read-data-verification') || can('update-data-verification')"
-                  :href="route('member.data-verification')"
-                  class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                  </svg>
-                  <span>Data Verification</span>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Verify and validate member data</p>
-              </TooltipContent>
-            </Tooltip>
+            <!-- Data Verification Button - Removed tooltip -->
+            <Link
+              v-if="can('read-data-verification') || can('update-data-verification')"
+              :href="route('member.data-verification')"
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <span>Data Verification</span>
+            </Link>
 
+            <!-- Show Archived Checkbox - Kept tooltip as it's useful for understanding the toggle -->
             <label class="flex items-center gap-2 cursor-pointer select-none">
               <Tooltip>
                 <TooltipTrigger asChild>
