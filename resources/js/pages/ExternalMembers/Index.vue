@@ -482,26 +482,53 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   <td class="p-2 whitespace-nowrap">
                     <div class="flex gap-2">
                       <template v-if="!isArchived">
-                        <Button v-if="canEditExternalMember && !member.deleted_at" @click="editExternalMember(member)"
-                          class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                          <component :is="Pencil" />
-                        </Button>
-                        <Button @click="viewFamilyTree(member)"
-                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
-                          title="View Family Tree">
-                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
-                          </svg>
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button v-if="canEditExternalMember && !member.deleted_at" @click="editExternalMember(member)"
+                                class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                                <component :is="Pencil" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Edit external member details</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button @click="viewFamilyTree(member)"
+                                class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition"
+                                title="View Family Tree">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                                </svg>
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>View family tree</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </template>
                       <template v-else>
-                        <Button v-if="canRestoreExternalMember" @click="restoreExternalMember(member)"
-                          class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                          Restore
-                        </Button>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button v-if="canRestoreExternalMember" @click="restoreExternalMember(member)"
+                                class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                                <component :is="ArchiveIcon" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Restore external member</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                       </template>
                     </div>
                   </td>
@@ -590,12 +617,19 @@ function copyToClipboard(text: string, type: string, memberId: number) {
 
                   <!-- Delete -->
                   <td v-if="!isArchived" class="p-2 whitespace-nowrap">
-                    <template v-if="canDeleteExternalMember && !member.deleted_at">
-                      <Button variant="destructive" @click="openDeleteModal(member)"
-                        class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                        <component :is="Trash" />
-                      </Button>
-                    </template>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="destructive" @click="openDeleteModal(member)"
+                            class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                            <component :is="Trash" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Delete external member</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </td>
                 </tr>
               </tbody>
