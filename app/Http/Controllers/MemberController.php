@@ -38,7 +38,8 @@ class MemberController extends Controller
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Member::class);
-
+    
+        // Map used for display-enrichment (kept as-is for UI compatibility)
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
             'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
@@ -57,18 +58,9 @@ class MemberController extends Controller
             'current_state_id' => ['relation' => 'currentState', 'column' => 'name'],
             'current_country_id' => ['relation' => 'currentCountry', 'column' => 'name'],
         ];
-
-        $query = Member::query();
-
-        // Handle archived records
-        if ($request->input('isArchived') === 'true') {
-            $query->onlyTrashed();
-        } else {
-            $query->withoutTrashed();
-        }
-
-        // Load relationships
-        $query->with([
+    
+        // Base query + eager loads
+        $query = Member::query()->with([
             'community',
             'communityCluster.cluster',
             'relationship',
@@ -95,107 +87,28 @@ class MemberController extends Controller
             'clusterHeads.community',
             'clusterHeads.cluster',
         ]);
-
-        // Restrict by allowed communities for PPC/SCC heads
+    
+        // Community scoping
         $query->forUserCommunities(auth()->user());
-        
-
-        // Enhanced search logic
-        if ($search = $request->input('search')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%$search%")
-                    ->orWhere('last_name', 'like', "%$search%")
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                    ->orWhere('family_no', 'like', "%$search%")
-                    ->orWhereHas('community', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%$search%");
-                    });
-
-            });
-        }
-
-        // Family-specific search logic (server-side)
-        if ($familySearch = $request->input('familySearch')) {
-            $query->where('family_no', 'like', "%$familySearch%");
-        }
-
-        // Community filter
-        if ($communityId = $request->input('communityId')) {
-            $query->where('community_id', $communityId);
-        }
-
-        // Relationship filter
-        if ($relationship = $request->input('relationship')) {
-            $query->where('relationship_id', $relationship);
-        }
-
-        // Status filter
-        if ($status = $request->input('status')) {
-            $query->where('status_id', $status);
-        }
-        
-
-        // Age group filter - filter by calculated age based on min and max age from age group
-        if ($ageGroup = $request->input('ageGroup')) {
-            $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
-
-            if ($ageGroupModel) {
-                $minAge = $ageGroupModel->min_age;
-                $maxAge = $ageGroupModel->max_age;
-
-                $query->whereRaw('
-                    TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?
-                ', [$minAge, $maxAge]);
-            }
-
-        }
-
-        // Blood group filter
-        if ($bloodGroup = $request->input('bloodGroup')) {
-            $query->where('blood_group_id', $bloodGroup);
-        }
-
-        // Gender filter
-        if ($gender = $request->input('gender')) {
-            $query->where('gender_id', $gender);
-        }
-
-        // Legacy filter support (keeping for backward compatibility)
-        if ($filterColumnKey = $request->input('filterColumnKey')) {
-            $filterColumnValue = $request->input('filterColumnValue');
-            if ($filterColumnKey && $filterColumnValue) {
-                if (in_array($filterColumnKey, array_keys($dropdownColumns))) {
-                    $relation = $dropdownColumns[$filterColumnKey]['relation'];
-                    $filterColumnKeyName = $dropdownColumns[$filterColumnKey]['column'];
-                    $query->whereHas($relation, function ($q) use ($filterColumnKeyName, $filterColumnValue) {
-                        $q->where($filterColumnKeyName, 'like', "%$filterColumnValue%");
-                    });
-                }
-            } elseif ($filterColumnValue) {
-                $query->where($filterColumnKey, 'like', "%$filterColumnValue%");
-            }
-        }
-
-        // Sorting
-        if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
-        } else {
-            $query->orderBy('id', 'asc');
-        }
-
-        // Community scoping already applied via forUserCommunities scope above
-
-        $perPage = $request->input('perPage', 10);
-
-        // Normal pagination
-        $totalCount = $query->count();
-        $data = $query->paginate($perPage)->appends($request->query());
-        $data->getCollection()->transform(function ($item) use ($dropdownColumns) {
+    
+        // Apply filters & sorting centrally
+        $this->applyFilters($query, $request);
+        $this->applySorting($query, $request);
+    
+        // Count BEFORE paginate (same filtered scope)
+        $totalCount = (clone $query)->count();
+    
+        // Single paginate call
+        $perPage   = (int) $request->input('perPage', 10);
+        $paginator = $query->paginate($perPage)->appends($request->query());
+    
+        // Enrich rows for dropdown display (kept for UI compatibility)
+        $paginator->getCollection()->transform(function ($item) use ($dropdownColumns) {
             foreach ($dropdownColumns as $key => $relation) {
                 $relationPath = explode('.', $relation['relation']);
                 $currentRelation = $item;
                 $found = true;
-
+    
                 foreach ($relationPath as $path) {
                     if (isset($currentRelation->{$path}) && $currentRelation->{$path}) {
                         $currentRelation = $currentRelation->{$path};
@@ -204,90 +117,30 @@ class MemberController extends Controller
                         break;
                     }
                 }
-
-                if ($found) {
-                    $item->$key = $currentRelation->{$relation['column']} ?? '';
-                } else {
-                    $item->$key = '';
-                }
+    
+                $item->$key = $found ? ($currentRelation->{$relation['column']} ?? '') : '';
             }
-
+    
             return $item;
         });
-
-        // Calculate total family statistics (for all data, not just current page)
+    
+        // -------- Family Statistics (reuse same filters without duplication) --------
         $totalStatsQuery = Member::query();
-
-        // Apply the same filters as the main query
-        if ($request->input('isArchived') === 'true') {
-            $totalStatsQuery->onlyTrashed();
-        } else {
-            $totalStatsQuery->withoutTrashed();
-        }
-
-        // Get allowed community IDs for PPC/SCC head scoping
-        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
-
-        // Apply PPC/SCC community scoping to stats query
-        if ($allowedCommunityIds !== null) {
-            $totalStatsQuery->whereIn('community_id', $allowedCommunityIds);
-        }
-
-        if ($search = $request->input('search')) {
-            $totalStatsQuery->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%$search%")
-                    ->orWhere('last_name', 'like', "%$search%")
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                    ->orWhere('family_no', 'like', "%$search%")
-                    ->orWhereHas('community', function ($q2) use ($search) {
-                        $q2->where('name', 'like', "%$search%");
-                    });
-            });
-        }
-
-        if ($familySearch = $request->input('familySearch')) {
-            $totalStatsQuery->where('family_no', 'like', "%$familySearch%");
-        }
-
-        if ($communityId = $request->input('communityId')) {
-            $totalStatsQuery->where('community_id', $communityId);
-        }
-
-        if ($relationship = $request->input('relationship')) {
-            $totalStatsQuery->where('relationship_id', $relationship);
-        }
-
-        if ($ageGroup = $request->input('ageGroup')) {
-            $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
-            if ($ageGroupModel) {
-                $minAge = $ageGroupModel->min_age;
-                $maxAge = $ageGroupModel->max_age;
-                $totalStatsQuery->whereRaw('TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?', [$minAge, $maxAge]);
-            }
-        }
-
-        if ($bloodGroup = $request->input('bloodGroup')) {
-            $totalStatsQuery->where('blood_group_id', $bloodGroup);
-        }
-
-        if ($gender = $request->input('gender')) {
-            $totalStatsQuery->where('gender_id', $gender);
-        }
-
-        // Apply community scope to totals as well
         $totalStatsQuery->forUserCommunities(auth()->user());
-
-        // Get total statistics
-        $totalMembers = $totalStatsQuery->count();
-        $totalFamilies = $totalStatsQuery->distinct()->whereNotNull('family_no')->count('family_no');
-        $averageMembersPerFamily = $totalFamilies > 0 ? round($totalMembers / $totalFamilies, 1) : 0;
-
+        $this->applyFilters($totalStatsQuery, $request);
+    
+        $totalMembers = (clone $totalStatsQuery)->count();
+        $totalFamilies = (clone $totalStatsQuery)
+            ->whereNotNull('family_no')
+            ->distinct()
+            ->count('family_no');
+    
         $familyStats = [
             'totalMembers' => $totalMembers,
             'totalFamilies' => $totalFamilies,
-            'averageMembersPerFamily' => $averageMembersPerFamily,
+            'averageMembersPerFamily' => $totalFamilies > 0 ? round($totalMembers / $totalFamilies, 1) : 0,
         ];
-
+    
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
             'relationships' => Relationship::all(),
@@ -300,21 +153,114 @@ class MemberController extends Controller
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
             'fetchUrl' => route('member.index'),
-            'members' => $data,
+            'members' => $paginator, // paginator (not just collection)
             'totalCount' => $totalCount,
             'familyStats' => $familyStats,
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
+            'filters' => $request->only([
+                'search','sort','direction','perPage','communityId','relationship','ageGroup',
+                'bloodGroup','gender','filterColumnKey','filterColumnValue','isArchived','familySearch','status'
+            ]),
             'canViewAnyMember' => auth()->user()->can('list-member'),
             'canCreateMember' => auth()->user()->can('create-member'),
             'canEditMember' => auth()->user()->can('update-member'),
             'canDeleteMember' => auth()->user()->can('delete-member'),
             'canRestoreMember' => auth()->user()->can('restore-member'),
             'pagination' => [
-                'currentPage' => $query->paginate($perPage)->currentPage(),
-                'lastPage' => $query->paginate($perPage)->lastPage(),
+                'currentPage' => $paginator->currentPage(),
+                'lastPage'    => $paginator->lastPage(),
             ],
         ]);
     }
+    
+    /**
+     * Centralized filters used by index() + totals.
+     */
+    private function applyFilters(\Illuminate\Database\Eloquent\Builder $query, Request $request): void
+    {
+        // Archived scope
+        $request->boolean('isArchived') ? $query->onlyTrashed() : $query->withoutTrashed();
+    
+        // Text search
+        if ($search = $request->input('search')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%$search%")
+                  ->orWhere('last_name', 'like', "%$search%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                  ->orWhere('family_no', 'like', "%$search%")
+                  ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
+            });
+        }
+    
+        // Individual filters
+        if ($v = $request->input('familySearch')) $query->where('family_no', 'like', "%$v%");
+        if ($v = $request->input('communityId'))  $query->where('community_id', $v);
+        if ($v = $request->input('relationship')) $query->where('relationship_id', $v);
+        if ($v = $request->input('status'))       $query->where('status_id', $v);
+        if ($v = $request->input('bloodGroup'))   $query->where('blood_group_id', $v);
+        if ($v = $request->input('gender'))       $query->where('gender_id', $v);
+    
+        // Age group filter
+        if ($ageGroup = $request->input('ageGroup')) {
+            if ($ag = AgeGroup::find($ageGroup)) {
+                $query->whereRaw(
+                    'TIMESTAMPDIFF(YEAR, date_of_birth, CURDATE()) BETWEEN ? AND ?',
+                    [$ag->min_age, $ag->max_age]
+                );
+            }
+        }
+    
+        // Legacy filter support (unchanged)
+        if (($filterColumnKey = $request->input('filterColumnKey')) !== null) {
+            $filterColumnValue = $request->input('filterColumnValue');
+    
+            $dropdownColumns = [
+                'community_id' => ['relation' => 'community', 'column' => 'name'],
+                'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
+                'relationship_id' => ['relation' => 'relationship', 'column' => 'name'],
+                'blood_group_id' => ['relation' => 'bloodGroup', 'column' => 'name'],
+                'income_range_id' => ['relation' => 'incomeRange', 'column' => 'name'],
+                'designation_id' => ['relation' => 'designation', 'column' => 'name'],
+                'gender_id' => ['relation' => 'gender', 'column' => 'name'],
+                'status_id' => ['relation' => 'status', 'column' => 'name'],
+                'permanent_town_id' => ['relation' => 'permanentTown', 'column' => 'name'],
+                'permanent_city_id' => ['relation' => 'permanentCity', 'column' => 'name'],
+                'permanent_state_id' => ['relation' => 'permanentState', 'column' => 'name'],
+                'permanent_country_id' => ['relation' => 'permanentCountry', 'column' => 'name'],
+                'current_town_id' => ['relation' => 'currentTown', 'column' => 'name'],
+                'current_city_id' => ['relation' => 'currentCity', 'column' => 'name'],
+                'current_state_id' => ['relation' => 'currentState', 'column' => 'name'],
+                'current_country_id' => ['relation' => 'currentCountry', 'column' => 'name'],
+            ];
+    
+            if ($filterColumnKey && $filterColumnValue) {
+                if (array_key_exists($filterColumnKey, $dropdownColumns)) {
+                    $relation = $dropdownColumns[$filterColumnKey]['relation'];
+                    $filterColumnKeyName = $dropdownColumns[$filterColumnKey]['column'];
+                    $query->whereHas($relation, function ($q) use ($filterColumnKeyName, $filterColumnValue) {
+                        $q->where($filterColumnKeyName, 'like', "%$filterColumnValue%");
+                    });
+                } else {
+                    $query->where($filterColumnKey, 'like', "%$filterColumnValue%");
+                }
+            }
+        }
+    }
+    
+    /**
+     * Sorting with sane defaults and whitelist if you want to restrict.
+     */
+    private function applySorting(\Illuminate\Database\Eloquent\Builder $query, Request $request): void
+    {
+        $sort = $request->input('sort');
+        $direction = $request->input('direction', 'asc');
+    
+        if ($sort) {
+            $query->orderBy($sort, $direction === 'desc' ? 'desc' : 'asc');
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+    }
+    
 
     public function create(Request $request): Response
     {
@@ -322,55 +268,86 @@ class MemberController extends Controller
 
         return Inertia::render('member/Member', [
             'communities' => Community::all(),
-            'incomeRanges' => IncomeRange::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            }),
-            'parishes' => Parish::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            }),
-            'bloodGroups' => BloodGroup::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
+            // 'incomeRanges' => IncomeRange::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // }),
+            // 'parishes' => Parish::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // }),
+            // 'bloodGroups' => BloodGroup::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // })->toArray(),
             'relationships' => Relationship::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'countries' => Country::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
-            'states' => State::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
-            })->toArray(),
-            'cities' => City::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id];
-            })->toArray(),
-            'towns' => Town::with('city.state.country')->get()->map(function ($item) {
-                return [
-                    'id' => $item->id,
-                    'name' => $item->name,
-                    'pincode' => $item->pincode,
-                    'city_id' => $item->city_id,
-                    'state_id' => $item->city->state_id ?? null,
-                    'country_id' => $item->city->state->country_id ?? null,
-                ];
-            })->toArray(),
-            'designations' => Designation::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
+            // 'countries' => Country::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // })->toArray(),
+            // 'states' => State::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
+            // })->toArray(),
+            // 'cities' => City::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id];
+            // })->toArray(),
+            // 'towns' => Town::with('city.state.country')->get()->map(function ($item) {
+            //     return [
+            //         'id' => $item->id,
+            //         'name' => $item->name,
+            //         'pincode' => $item->pincode,
+            //         'city_id' => $item->city_id,
+            //         'state_id' => $item->city->state_id ?? null,
+            //         'country_id' => $item->city->state->country_id ?? null,
+            //     ];
+            // })->toArray(),
+            // 'designations' => Designation::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // })->toArray(),
             'genders' => Gender::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            'statuses' => Status::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
-            'parishes' => Parish::all()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name];
-            })->toArray(),
+            // 'statuses' => Status::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // })->toArray(),
+            // 'parishes' => Parish::all()->map(function ($item) {
+            //     return ['id' => $item->id, 'name' => $item->name];
+            // })->toArray(),
             'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
         ]);
     }
 
+    private function resolvePageFor(Member $member, Request $request, int $perPage): int
+    {
+        // replicate the same sort (default id asc)
+        $sort = $request->input('sort','id');
+        $dir  = $request->input('direction','asc') === 'desc' ? 'desc' : 'asc';
+
+        $base = Member::query();
+
+        // If you have filter reuse:
+        $this->applyFilters($base, $request);
+
+        // Compute position by count of rows "before or equal" current row in the sorted order
+        // For generality, handle non-id sorts only when you need them; simplest for id sort:
+        if ($sort === 'id') {
+            $op = $dir === 'asc' ? '<=' : '>=';
+            $position = (clone $base)->where('id', $op, $member->id)->count();
+            return (int) ceil($position / $perPage);
+        }
+
+        // Fallback rough page if custom sort is in play
+        $rankQuery = (clone $base)
+            ->where(function($q) use ($sort, $dir, $member) {
+                $q->where($sort, $dir === 'asc' ? '<' : '>', $member->{$sort})
+                ->orWhere(function($qq) use ($sort, $member) {
+                    $qq->where($sort, $member->{$sort})->where('id','<=',$member->id);
+                });
+            })
+            ->count();
+
+        return (int) ceil(($rankQuery + 1) / $perPage);
+    }
     public function store(StoreMemberRequest $request)
     {
         $this->authorize('create', Member::class);
@@ -431,29 +408,34 @@ class MemberController extends Controller
             DB::commit();
 
             $perPage = $request->input('perPage', 10);
-            // Build the query as in index
-            $query = Member::query();
-            if ($search = $request->input('search')) {
-                $query->where('first_name', 'like', "%$search%");
-                // Add other filters as needed
-            }
-            if ($sort = $request->input('sort')) {
-                $query->orderBy($sort, $request->input('direction', 'asc'));
-            } else {
-                $query->orderBy('id', 'asc');
-            }
-            $allIds = $query->pluck('id')->toArray();
-            $position = array_search($member->id, $allIds);
-            $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+            // // Build the query as in index
+            // $query = Member::query();
+            // if ($search = $request->input('search')) {
+            //     $query->where('first_name', 'like', "%$search%");
+            //     // Add other filters as needed
+            // }
+            // if ($sort = $request->input('sort')) {
+            //     $query->orderBy($sort, $request->input('direction', 'asc'));
+            // } else {
+            //     $query->orderBy('id', 'asc');
+            // }
+            // $allIds = $query->pluck('id')->toArray();
+            // $position = array_search($member->id, $allIds);
+            // $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+            $page = $this->resolvePageFor($member, $request, $perPage);
 
             return redirect()->route('member.index', array_merge(
-                $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
-                [
-                    'page' => $page,
-                    'perPage' => $perPage,
-                    'highlightId' => $member->id,
-                ]
+                $request->only(['search','sort','direction','isArchived','communityId','filterColumnKey','filterColumnValue']),
+                ['page'=>$page,'perPage'=>$perPage,'highlightId'=>$member->id]
             ))->with('success', 'Member created successfully with Family No: '.$member->family_no);
+            // return redirect()->route('member.index', array_merge(
+            //     $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+            //     [
+            //         'page' => $page,
+            //         'perPage' => $perPage,
+            //         'highlightId' => $member->id,
+            //     ]
+            // ))->with('success', 'Member created successfully with Family No: '.$member->family_no);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -550,28 +532,12 @@ class MemberController extends Controller
         ]);
 
         $perPage = $request->input('perPage', 10);
-        // Build the query as in index
-        $query = Member::query();
-        if ($search = $request->input('search')) {
-            $query->where('first_name', 'like', "%$search%");
-            // Add other filters as needed
-        }
-        if ($sort = $request->input('sort')) {
-            $query->orderBy($sort, $request->input('direction', 'asc'));
-        } else {
-            $query->orderBy('id', 'asc');
-        }
-        $allIds = $query->pluck('id')->toArray();
-        $position = array_search($member->id, $allIds);
-        $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
+        $perPage = (int) $request->input('perPage', 10);
+        $page = $this->resolvePageFor($member, $request, $perPage);
 
         return redirect()->route('member.index', array_merge(
-            $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
-            [
-                'page' => $page,
-                'perPage' => $perPage,
-                'highlightId' => $member->id,
-            ]
+            $request->only(['search','sort','direction','isArchived','communityId','filterColumnKey','filterColumnValue']),
+            ['page'=>$page,'perPage'=>$perPage,'highlightId'=>$member->id]
         ))->with('success', 'Member updated successfully.');
     }
 
@@ -769,153 +735,75 @@ class MemberController extends Controller
 
     public function getMembersByFamily($familyNo, Request $request)
     {
-        // $excludeMemberId = $request->query('exclude_member_id');
-        
-        $query = Member::where('family_no', $familyNo)
-            ->select('id', 'first_name', 'last_name', 'date_of_birth', 'gender_id');
-        
-        // Exclude the current member if exclude_member_id is provided
-        // if ($excludeMemberId) {
-        //     $query->where('id', '!=', $excludeMemberId);
-        // }
-        
-        $members = $query->get();
-
-        // First, get all UnifiedPerson records for this family to build the complete family tree
-        $unifiedPersons = \App\Models\UnifiedPerson::where('family_no', $familyNo)->get();
-        
-        // Build a map of uid to UnifiedPerson for quick lookup
-        $unifiedPersonMap = $unifiedPersons->keyBy('uid');
-        
-        // Find the root generation (people with no parents)
-        // $rootGeneration = $unifiedPersons->filter(function ($person) use ($unifiedPersonMap) {
-        //     return !$person->father_uid && !$person->mother_uid;
-        // });
-        
-        // Calculate generation levels for all family members
-        $generationMap = [];
-        $visited = [];
-        
-        // Function to calculate generation level recursively
-        $calculateGeneration = function ($personUid, $currentGen = 0) use (&$calculateGeneration, &$generationMap, &$visited, $unifiedPersonMap) {
-            if (isset($generationMap[$personUid]) || in_array($personUid, $visited)) {
-                return $generationMap[$personUid] ?? 0;
+        $members = Member::where('family_no', $familyNo)
+            ->select('id','first_name','last_name','date_of_birth','gender_id','member_no')
+            ->get();
+    
+        $unified = UnifiedPerson::where('family_no', $familyNo)
+            ->select('uid','original_id','father_uid','mother_uid','spouse_uid','source','first_name','last_name')
+            ->get();
+    
+        $uByUid = $unified->keyBy('uid');
+        $mById  = $members->keyBy('id');
+    
+        // generation via DFS using the in-memory map
+        $gen = [];
+        $vis = [];
+        $calc = function($uid) use (&$calc, &$gen, &$vis, $uByUid) {
+            if (isset($gen[$uid])) return $gen[$uid];
+            if (isset($vis[$uid])) return 0;
+            $vis[$uid] = true;
+            $p = $uByUid[$uid] ?? null;
+            if (!$p) return $gen[$uid] = 0;
+            $best = 0;
+            foreach (['father_uid','mother_uid'] as $par) {
+                if ($pid = $p->{$par}) $best = max($best, $calc($pid)+1);
             }
-            
-            $visited[] = $personUid;
-            $person = $unifiedPersonMap->get($personUid);
-            
-            if (!$person) {
-                return $currentGen;
-            }
-            
-            // If this person has no parents, they're at generation 0
-            if (!$person->father_uid && !$person->mother_uid) {
-                $generationMap[$personUid] = 0;
-                return 0;
-            }
-            
-            // Find the highest generation of this person's parents
-            $parentGen = 0;
-            if ($person->father_uid) {
-                $parentGen = max($parentGen, $calculateGeneration($person->father_uid, $currentGen + 1));
-            }
-            if ($person->mother_uid) {
-                $parentGen = max($parentGen, $calculateGeneration($person->mother_uid, $currentGen + 1));
-            }
-            
-            // This person's generation is one more than their highest parent
-            $generationMap[$personUid] = $parentGen + 1;
-            return $generationMap[$personUid];
+            return $gen[$uid] = $best;
         };
-        
-        // Calculate generations for all family members
-        foreach ($unifiedPersons as $person) {
-            $calculateGeneration($person->uid);
-        }
-        
-        // Enhance with UnifiedPerson information for family relationships
-        $enhancedMembers = $members->map(function ($member) use ($unifiedPersonMap, $generationMap) {
-            $unifiedPerson = $unifiedPersonMap->get('M-' . $member->id);
-            
-            $memberData = $member->toArray();
-            
-            if ($unifiedPerson) {
-                // Get father, mother, and spouse information
-                $father = null;
-                $mother = null;
-                $spouse = null;
-                
-                if ($unifiedPerson->father_uid) {
-                    $fatherUnified = $unifiedPersonMap->get($unifiedPerson->father_uid);
-                    if ($fatherUnified) {
-                        $fatherMember = Member::find(str_replace('M-', '', $fatherUnified->uid));
-                        if ($fatherMember) {
-                            $father = [
-                                'id' => $fatherMember->id,
-                                'name' => $fatherMember->first_name . ' ' . $fatherMember->last_name,
-                                'member_no' => $fatherMember->member_no
-                            ];
-                        }
-                    }
+    
+        $enhanced = $members->map(function($m) use ($uByUid, $mById, &$calc) {
+            $uid = 'M-'.$m->id;
+            $up  = $uByUid->get($uid);
+    
+            $father = $mother = $spouse = null;
+            if ($up?->father_uid && ($fu = $uByUid->get($up->father_uid))) {
+                if (str_starts_with($fu->uid,'M-') && ($fm = $mById->get((int) substr($fu->uid,2)))) {
+                    $father = ['id'=>$fm->id,'name'=>$fm->first_name.' '.$fm->last_name,'member_no'=>$fm->member_no];
                 }
-                
-                if ($unifiedPerson->mother_uid) {
-                    $motherUnified = $unifiedPersonMap->get($unifiedPerson->mother_uid);
-                    if ($motherUnified) {
-                        $motherMember = Member::find(str_replace('M-', '', $motherUnified->uid));
-                        if ($motherMember) {
-                            $mother = [
-                                'id' => $motherMember->id,
-                                'name' => $motherMember->first_name . ' ' . $motherMember->last_name,
-                                'member_no' => $motherMember->member_no
-                            ];
-                        }
-                    }
-                }
-                
-                if ($unifiedPerson->spouse_uid) {
-                    $spouseUnified = $unifiedPersonMap->get($unifiedPerson->spouse_uid);
-                    if ($spouseUnified) {
-                        $spouseMember = Member::find(str_replace('M-', '', $spouseUnified->uid));
-                        if ($spouseMember) {
-                            $spouse = [
-                                'id' => $spouseMember->id,
-                                'name' => $spouseMember->first_name . ' ' . $spouseMember->last_name,
-                                'member_no' => $spouseMember->member_no
-                            ];
-                        }
-                    }
-                }
-                
-                $memberData['father'] = $father;
-                $memberData['mother'] = $mother;
-                $memberData['spouse'] = $spouse;
-                
-                // Get the calculated generation level
-                $memberData['generation'] = $generationMap[$unifiedPerson->uid] ?? 0;
             }
-            
-            return $memberData;
-        });
-        
-        // Sort by generation (ascending - oldest first) and then by date of birth
-        $enhancedMembers = $enhancedMembers->sortBy([
-            ['generation', 'asc'],
-            ['date_of_birth', 'asc']
-        ])->values();
-        
-        // Debug logging to verify generation calculation
-        \Log::info('Family members with generations:', $enhancedMembers->map(function ($member) {
+            if ($up?->mother_uid && ($mu = $uByUid->get($up->mother_uid))) {
+                if (str_starts_with($mu->uid,'M-') && ($mm = $mById->get((int) substr($mu->uid,2)))) {
+                    $mother = ['id'=>$mm->id,'name'=>$mm->first_name.' '.$mm->last_name,'member_no'=>$mm->member_no];
+                }
+            }
+            if ($up?->spouse_uid && ($su = $uByUid->get($up->spouse_uid))) {
+                if (str_starts_with($su->uid,'M-') && ($sm = $mById->get((int) substr($su->uid,2)))) {
+                    $spouse = ['id'=>$sm->id,'name'=>$sm->first_name.' '.$sm->last_name,'member_no'=>$sm->member_no];
+                }
+            }
+    
             return [
-                'name' => $member['first_name'] . ' ' . $member['last_name'],
-                'generation' => $member['generation'],
-                'date_of_birth' => $member['date_of_birth']
+                'id'=>$m->id,
+                'first_name'=>$m->first_name,
+                'last_name'=>$m->last_name,
+                'date_of_birth'=>$m->date_of_birth,
+                'gender_id'=>$m->gender_id,
+                'member_no'=>$m->member_no,
+                'father'=>$father,'mother'=>$mother,'spouse'=>$spouse,
+                'generation'=>$calc($uid),
             ];
-        })->toArray());
-
-        return response()->json($enhancedMembers);
+        })->sortBy([['generation','asc'],['date_of_birth','asc']])->values();
+    
+        \Log::info('Family members with generations:', $enhanced->map(fn($x)=>[
+            'name'=>$x['first_name'].' '.$x['last_name'],
+            'generation'=>$x['generation'],
+            'date_of_birth'=>$x['date_of_birth'],
+        ])->toArray());
+    
+        return response()->json($enhanced);
     }
+    
     // public function handleMarriage(Request $request)
     // {
     //     $request->validate([
@@ -956,128 +844,154 @@ class MemberController extends Controller
     public function getFamilyDetails($familyNo, Request $request)
     {
         try {
-            // Get all family members from the UnifiedPerson view
-            $familyMembersQuery = UnifiedPerson::where('family_no', $familyNo)
-            ->select('original_id', 'uid', 'first_name', 'last_name', 'member_no', 'source',
-                    'father_uid', 'mother_uid', 'spouse_uid');
-
-            // Exclude the current member if exclude_member_id is provided
-            if ($request->has('exclude_member_id')) {
-                $excludeId = $request->input('exclude_member_id');
-                
-                // Try to find the member in UnifiedPerson view to get the correct uid
-                $excludeMember = UnifiedPerson::where('original_id', $excludeId)->first();
-                
-                if ($excludeMember) {
-                    // Exclude by uid (which is unique across both member types)
-                    $familyMembersQuery->where('uid', '!=', $excludeMember->uid);
-                } else {
-                    // Fallback: exclude by original_id
-                    $familyMembersQuery->where('original_id', '!=', $excludeId);
-                }
-            }
-
-            $familyMembers = $familyMembersQuery->get();
-
-            if ($familyMembers->isEmpty()) {
+            // Load all unified people for this family (single query)
+            $family = UnifiedPerson::where('family_no', $familyNo)
+                ->select([
+                    'uid','original_id','first_name','last_name','member_no','source',
+                    'father_uid','mother_uid','spouse_uid'
+                ])
+                ->get();
+    
+            if ($family->isEmpty()) {
                 return response()->json(['error' => 'Family not found'], 404);
             }
-
-            // Get community info from the first member (prefer internal member)
-            $firstMember = $familyMembers->where('source', 'Member')->first() ?? $familyMembers->first();
-            
-            // For internal members, we need to get additional community/cluster info
-            $communityId = null;
-            $communityClusterId = null;
-            $communityName = null;
-            $clusterName = null;
-            
-            if ($firstMember->source === 'Member') {
-                // Get the actual Member model for community info
-                $member = Member::find($firstMember->original_id);
-                if ($member) {
-                    $communityId = $member->community_id;
-                    $communityClusterId = $member->community_cluster_id;
-                    $communityName = $member->community?->name;
-                    $clusterName = $member->communityCluster?->cluster?->name;
+    
+            // Optional exclusion by original_id (exclude both Member/External if same original_id appears)
+            if ($request->has('exclude_member_id')) {
+                $excludeId = (string) $request->input('exclude_member_id');
+                $excludeUids = $family->where('original_id', $excludeId)->pluck('uid')->all();
+                if (!empty($excludeUids)) {
+                    $family = $family->reject(fn ($p) => in_array($p->uid, $excludeUids, true))->values();
                 }
             }
-
-            // Calculate generation and format data for each member
-            $membersWithGeneration = $familyMembers->map(function ($member) {
-                // Calculate generation based on family relationships
-                $generation = 0;
-                
-                if ($member->father_uid) {
-                        $generation = 1;
-                    $father = UnifiedPerson::find($member->father_uid);
-                    if ($father && $father->father_uid) {
-                            $generation = 2;
-                        }
-                    }
-                    
-                if ($member->mother_uid && $generation === 0) {
-                        $generation = 1;
-                    $mother = UnifiedPerson::find($member->mother_uid);
-                    if ($mother && $mother->mother_uid) {
-                            $generation = 2;
-                        }
-                    }
-
-                    return [
-                    'id' => $member->original_id,
-                    'uid' => $member->uid,
-                        'first_name' => $member->first_name,
-                        'last_name' => $member->last_name,
-                        'member_no' => $member->member_no,
-                    'date_of_birth' => null, // Will be populated for internal members if needed
-                        'generation' => $generation,
-                    'source' => $member->source,
-                        'father' => $member->father ? [
-                        'id' => $member->father->original_id,
-                        'uid' => $member->father->uid,
-                            'name' => $member->father->first_name . ' ' . $member->father->last_name
-                        ] : null,
-                        'mother' => $member->mother ? [
-                        'id' => $member->mother->original_id,
-                        'uid' => $member->mother->uid,
-                            'name' => $member->mother->first_name . ' ' . $member->mother->last_name
-                        ] : null,
-                        'spouse' => $member->spouse ? [
-                        'id' => $member->spouse->original_id,
-                        'uid' => $member->spouse->uid,
-                            'name' => $member->spouse->first_name . ' ' . $member->spouse->last_name
-                        ] : null,
-                    ];
-            });
-
-            // For internal members, populate date_of_birth
-            $membersWithGeneration = $membersWithGeneration->map(function ($member) {
-                if ($member['source'] === 'Member') {
-                    $memberModel = Member::find($member['id']);
-                    if ($memberModel) {
-                        $member['date_of_birth'] = $memberModel->date_of_birth;
+    
+            if ($family->isEmpty()) {
+                return response()->json(['error' => 'Family has no members after exclusion'], 404);
+            }
+    
+            // Build quick lookup maps
+            $uByUid = $family->keyBy('uid');                                          // uid => UnifiedPerson
+            $internalIds = $family->where('source', 'Member')->pluck('original_id')->map(fn($v)=>(int)$v)->unique()->values();
+    
+            // Prefetch Members for internal entries (single query)
+            $members = Member::whereIn('id', $internalIds)
+                ->select([
+                    'id','first_name','last_name','member_no','date_of_birth',
+                    'community_id','community_cluster_id'
+                ])
+                ->with([
+                    'community:id,name',
+                    'communityCluster:id,cluster_id,community_id',
+                    'communityCluster.cluster:id,name'
+                ])
+                ->get()
+                ->keyBy('id');                                                        // id => Member
+    
+            // Compute generation levels (memoized DFS on in-memory graph)
+            $gen = []; $vis = [];
+            $calcGen = function (string $uid) use (&$calcGen, &$gen, &$vis, $uByUid): int {
+                if (isset($gen[$uid])) return $gen[$uid];
+                if (isset($vis[$uid])) return 0; // cycle guard
+                $vis[$uid] = true;
+    
+                $p = $uByUid->get($uid);
+                if (!$p) return $gen[$uid] = 0;
+    
+                $best = 0;
+                foreach (['father_uid','mother_uid'] as $k) {
+                    $pid = $p->{$k};
+                    if ($pid && $uByUid->has($pid)) {
+                        $best = max($best, $calcGen($pid) + 1);
                     }
                 }
-                return $member;
+                return $gen[$uid] = $best;
+            };
+    
+            // Community/cluster info (prefer internal member)
+            $communityId = null; $communityClusterId = null; $communityName = null; $clusterName = null;
+            if ($internalIds->isNotEmpty()) {
+                // Choose the first internal for community metadata
+                $firstInternal = $members->first();
+                if ($firstInternal) {
+                    $communityId        = $firstInternal->community_id;
+                    $communityClusterId = $firstInternal->community_cluster_id;
+                    $communityName      = optional($firstInternal->community)->name;
+                    $clusterName        = optional(optional($firstInternal->communityCluster)->cluster)->name;
+                }
+            }
+    
+            // Build response members array (no DB calls inside loop)
+            $membersResp = $family->map(function ($p) use ($members, $uByUid, $calcGen) {
+                $dateOfBirth = null;
+                if ($p->source === 'Member') {
+                    $mid = (int) $p->original_id;
+                    if ($m = $members->get($mid)) {
+                        $dateOfBirth = $m->date_of_birth;
+                    }
+                }
+    
+                $mapRelative = function (?string $relUid) use ($uByUid, $members) {
+                    if (!$relUid) return null;
+                    $rel = $uByUid->get($relUid);
+                    if (!$rel) return null;
+    
+                    // Prefer internal member details if available
+                    if (str_starts_with($rel->uid, 'M-')) {
+                        $rid = (int) substr($rel->uid, 2);
+                        if ($m = $members->get($rid)) {
+                            return [
+                                'id'   => $m->id,
+                                'uid'  => $rel->uid,
+                                'name' => trim(($m->first_name ?? '').' '.($m->last_name ?? '')),
+                            ];
+                        }
+                    }
+    
+                    // Fallback to unified names (external or missing internal)
+                    return [
+                        'id'   => (int) $rel->original_id,
+                        'uid'  => $rel->uid,
+                        'name' => trim(($rel->first_name ?? '').' '.($rel->last_name ?? '')),
+                    ];
+                };
+    
+                return [
+                    'id'          => (int) $p->original_id,
+                    'uid'         => $p->uid,
+                    'first_name'  => $p->first_name,
+                    'last_name'   => $p->last_name,
+                    'member_no'   => $p->member_no,
+                    'date_of_birth' => $dateOfBirth,
+                    'generation'  => $calcGen($p->uid),
+                    'source'      => $p->source,
+                    'father'      => $mapRelative($p->father_uid),
+                    'mother'      => $mapRelative($p->mother_uid),
+                    'spouse'      => $mapRelative($p->spouse_uid),
+                ];
             });
-
+    
+            // Counts
+            $memberCount   = $family->count();
+            $internalCount = $family->where('source', 'Member')->count();
+            $externalCount = $memberCount - $internalCount;
+    
             return response()->json([
-                'family_no' => $familyNo,
-                'community_id' => $communityId,
+                'family_no'            => $familyNo,
+                'community_id'         => $communityId,
                 'community_cluster_id' => $communityClusterId,
-                'community_name' => $communityName,
-                'cluster_name' => $clusterName,
-                'member_count' => $familyMembers->count(),
-                'internal_count' => $familyMembers->where('source', 'Member')->count(),
-                'external_count' => $familyMembers->count() - $familyMembers->where('source', 'Member')->count(),
-                'members' => $membersWithGeneration,
+                'community_name'       => $communityName,
+                'cluster_name'         => $clusterName,
+                'member_count'         => $memberCount,
+                'internal_count'       => $internalCount,
+                'external_count'       => $externalCount,
+                'members'              => $membersResp,
             ]);
-        } catch (\Exception $e) {
-            \Log::error('Error getting family details: '.$e->getMessage());
+        } catch (\Throwable $e) {
+            \Log::error('Error getting family details: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'An error occurred while fetching family details'], 500);
         }
     }
+    
 
     public function searchFamilies(Request $request)
     {
