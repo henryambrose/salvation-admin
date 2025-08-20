@@ -22,6 +22,7 @@ const props = defineProps({
   ageGroups: Array<{ id: string | number; name: string }>,
   bloodGroups: Array<{ id: string | number; name: string }>,
   genders: Array<{ id: string | number; name: string }>,
+  statuses: Array<{ id: string | number; name: string }>,
   communityClusters: Array<{ id: string | number; name: string; community_id: string | number }>,
   members: Object,
   totalCount: Number,
@@ -42,7 +43,7 @@ const props = defineProps({
 const showViewModal = ref(false);
 const selectedMember = ref(null);
 const showAddModal = ref(false);
-const showFilters = ref(false);
+const showFilters = ref(true);
 
 
 function openViewModal(member: any) {
@@ -83,7 +84,7 @@ const columns: Column[] = [
   { key: 'relationship_id', label: 'Relationship', sortable: true },
   { key: 'blood_group_id', label: 'Blood Group', sortable: true },
   { key: 'gender_id', label: 'Gender', sortable: true },
-
+  { key: 'status_id', label: 'Status', sortable: true },
 ];
 
 const breadcrumbs = [{ title: 'Members', href: '/member/index' }];
@@ -177,6 +178,7 @@ const relationship = ref(props.filters?.relationship || '');
 const ageGroup = ref(props.filters?.ageGroup || '');
 const bloodGroup = ref(props.filters?.bloodGroup || '');
 const gender = ref(props.filters?.gender || '');
+const status = ref(props.filters?.status || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
@@ -186,7 +188,7 @@ const partialOnly = ['members', 'familyStats', 'filters', 'totalCount'];
 let searchTimeout: number;
 
 watch(
-  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, filterColumnKey, filterColumnValue, isArchived],
+  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, status, filterColumnKey, filterColumnValue, isArchived],
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -212,6 +214,7 @@ function fetch(page = 1) {
       ageGroup: ageGroup.value,
       bloodGroup: bloodGroup.value,
       gender: gender.value,
+      status: status.value,
       filterColumnKey: filterColumnKey.value,
       filterColumnValue: filterColumnValue.value,
       isArchived: isArchived.value ? 'true' : 'false',
@@ -242,6 +245,7 @@ function handleFamilySearchInput() {
 
 function clearSearch() {
   search.value = '';
+  status.value = '';
   // Force immediate fetch to clear results
   clearTimeout(searchTimeout);
   // Force fresh request without preserving state
@@ -315,6 +319,7 @@ function downloadExcel() {
     ageGroup: ageGroup.value || '',
     bloodGroup: bloodGroup.value || '',
     gender: gender.value || '',
+    status: status.value || '',
           sort: String(sort.value || 'id'),
       direction: String(direction.value || 'asc'),
     perPage: 'all',
@@ -441,10 +446,10 @@ function copyToClipboard(text: string, type: string, memberId: number) {
               </button>
             </div>
             <!-- More Filters Button - Removed tooltip -->
-            <Button @click="showFilters = !showFilters" 
+            <!-- <Button @click="showFilters = !showFilters" 
               class="px-3 py-2 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 hover:text-blue-900 text-sm font-medium border border-blue-200 hover:border-blue-300 transition-colors">
               {{ showFilters ? 'Hide Filters' : 'More Filters' }}
-            </Button>
+            </Button> -->
           </div>
           <div class="flex items-center gap-2">
             <!-- Add New Member Button - Removed tooltip -->
@@ -508,6 +513,10 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <select v-model="gender" class="rounded border px-2 py-1 text-sm">
               <option value="">All Genders</option>
               <option v-for="g in props.genders" :key="g.id" :value="g.id">{{ g.name }}</option>
+            </select>
+            <select v-model="status" class="rounded border px-2 py-1 text-sm">
+              <option value="">All Statuses</option>
+              <option v-for="s in props.statuses" :key="s.id" :value="s.id">{{ s.name }}</option>
             </select>
             <select v-model="perPage" class="rounded border px-2 py-1 text-sm">
               <option :value="10">10 per page</option>

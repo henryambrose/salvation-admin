@@ -129,6 +129,12 @@ class MemberController extends Controller
             $query->where('relationship_id', $relationship);
         }
 
+        // Status filter
+        if ($status = $request->input('status')) {
+            $query->where('status_id', $status);
+        }
+        
+
         // Age group filter - filter by calculated age based on min and max age from age group
         if ($ageGroup = $request->input('ageGroup')) {
             $ageGroupModel = \App\Models\AgeGroup::find($ageGroup);
@@ -289,6 +295,7 @@ class MemberController extends Controller
             'bloodGroups' => BloodGroup::all(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
+            'statuses' => Status::all(),
             'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
