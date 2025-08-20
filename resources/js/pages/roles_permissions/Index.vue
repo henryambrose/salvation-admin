@@ -32,6 +32,14 @@ const selectedRoleId = ref(props.roles.length > 0 ? props.roles[0].id : 0);
 const selectedGroupId = ref('custom');
 const permissionState = ref(props.permissions[selectedRoleId.value] ? JSON.parse(JSON.stringify(props.permissions[selectedRoleId.value])) : {});
 
+// Add Role Modal State
+const showAddRoleModal = ref(false);
+const newRoleForm = ref({
+  name: '',
+  description: '',
+  is_default: false
+});
+
 // Define module order to match sidebar navigation
 const moduleOrder = [
   'member', 'community', 'parish', // Core Management
@@ -116,6 +124,48 @@ function savePermissions() {
     selected_group_id: selectedGroupId.value,
   });
 }
+
+// Add Role Functions
+function openAddRoleModal() {
+  showAddRoleModal.value = true;
+  newRoleForm.value = {
+    name: '',
+    description: '',
+    is_default: false
+  };
+}
+
+function closeAddRoleModal() {
+  showAddRoleModal.value = false;
+  newRoleForm.value = {
+    name: '',
+    description: '',
+    is_default: false
+  };
+}
+
+function createRole() {
+  if (!newRoleForm.value.name.trim()) {
+    alert('Role name is required');
+    return;
+  }
+
+  router.post('/roles-permissions/create-role', {
+    name: newRoleForm.value.name,
+  }, {
+    onSuccess: () => {
+      closeAddRoleModal();
+      router.reload();
+    },
+    onError: (errors) => {
+      if (errors.name) {
+        alert(errors.name);
+      } else {
+        alert('Failed to create role. Please try again.');
+      }
+    }
+  });
+}
 </script>
 
 <template>
@@ -131,11 +181,25 @@ function savePermissions() {
           Manage User Roles →
         </button>
       </div>
-      <div class="mb-4">
-        <label class="mb-1 block font-semibold">Select Role</label>
-        <select v-model="selectedRoleId" class="w-full rounded-full border border-gray-200 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200">
-          <option v-for="role in props.roles" :key="role.id" :value="role.id">{{ (role as { id: number; name: string }).name }}</option>
-        </select>
+      
+      <div class="mb-4 flex items-center gap-4">
+        <div class="flex-1">
+          <label class="mb-1 block font-semibold">Select Role</label>
+          <select v-model="selectedRoleId" class="w-full rounded-full border border-gray-200 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200">
+            <option v-for="role in props.roles" :key="role.id" :value="role.id">{{ (role as { id: number; name: string }).name }}</option>
+          </select>
+        </div>
+        
+        <!-- Add Role Button -->
+        <div class="pt-6">
+          <Button 
+            v-if="canManageRoles"
+            @click="openAddRoleModal"
+            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full shadow transition"
+          >
+            + Add Role
+          </Button>
+        </div>
       </div>
       
       <!-- Permission Groups Section -->
@@ -179,6 +243,7 @@ function savePermissions() {
           </div>
         </div>
       </div>
+      
       <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -204,14 +269,53 @@ function savePermissions() {
             </tr>
           </tbody>
         </table>
-      </div>
-      <div class="mt-6 flex justify-end">
-          <Button v-if="canManageRoles" class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2" @click="savePermissions">
-            Save Permissions
-          </Button>
+        </div>
+        <div class="mt-6 flex justify-end">
+            <Button v-if="canManageRoles" class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2" @click="savePermissions">
+              Save Permissions
+            </Button>
         </div>
       </div>
     </div>
     <div v-else class="py-10 text-center text-gray-500">You do not have permission to view role permissions.</div>
+
+    <!-- Add Role Modal -->
+    <div v-if="showAddRoleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Role</h3>
+          
+          <div class="space-y-4">
+            <!-- Role Name -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Role Name</label>
+              <input 
+                v-model="newRoleForm.name"
+                type="text"
+                required
+                placeholder="Enter role name"
+                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+
+          <div class="mt-6 flex justify-end space-x-3">
+            <Button 
+              @click="closeAddRoleModal"
+              variant="outline"
+              class="px-4 py-2"
+            >
+              Cancel
+            </Button>
+            <Button 
+              @click="createRole"
+              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
+            >
+              Create Role
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   </AppLayout>
 </template>

@@ -7,13 +7,14 @@ use App\Models\PermissionGroup;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\DB;
 
 class RolePermissionController extends Controller
 {
     public function index()
     {
         // Fetch roles, modules, and permissions from DB
-        $roles = Role::select(['id', 'name'])->whereNotIn('name', ['superadmin'])->get();
+        $roles = Role::select(['id', 'name'])->whereNotIn('name', ['super admin'])->get();
         $modules = Module::with('actions')->get();
         $permissions = [];
         $rolesPermissions = Role::with('permissions')->get()->pluck('permissions', 'id');
@@ -168,5 +169,25 @@ class RolePermissionController extends Controller
         $user->syncRoles([]);
 
         return redirect()->back()->with('success', "All roles removed from {$user->name}");
+    }
+
+    public function createRole(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:roles,name',
+        ]);
+
+        DB::transaction(function () use ($request) {
+
+            // Create the new role
+            $role = Role::create([
+                'name' => $request->name,
+
+            ]);
+
+
+        });
+
+        return redirect()->back()->with('success', 'Role created successfully.');
     }
 }

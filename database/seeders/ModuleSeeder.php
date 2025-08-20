@@ -217,20 +217,26 @@ class ModuleSeeder extends Seeder
             $this->command->info('Super Admin assigned all permissions: ' . count($allPermissions));
         }
 
-        // Assign permissions to admin (all except delete and restore)
+        // Assign permissions to admin (all except delete, restore, and role management)
         $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminPermissions = ModuleAction::whereNotIn('action', ['delete', 'restore'])
+                ->whereDoesntHave('module', function($query) {
+                    $query->where('slug', 'role');
+                })
                 ->pluck('slug')
                 ->toArray();
             $adminRole->syncPermissions($adminPermissions);
             $this->command->info('Admin assigned permissions: ' . count($adminPermissions));
         }
 
-        // Assign permissions to viewer (read and list only)
+        // Assign permissions to viewer (read and list only, excluding role management)
         $viewerRole = \Spatie\Permission\Models\Role::where('name', 'viewer')->first();
         if ($viewerRole) {
             $viewerPermissions = ModuleAction::whereIn('action', ['read', 'list'])
+                ->whereDoesntHave('module', function($query) {
+                    $query->where('slug', 'role');
+                })
                 ->pluck('slug')
                 ->toArray();
             $viewerRole->syncPermissions($viewerPermissions);

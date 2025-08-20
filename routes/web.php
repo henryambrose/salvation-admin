@@ -44,7 +44,9 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         ->name('roles.permissions.remove-role');
     Route::post('/roles-permissions/update-user-permissions', [RolePermissionController::class, 'updateUserPermissions'])
         ->name('roles.permissions.update-user-permissions');
-    
+    Route::post('/roles-permissions/create-role', [RolePermissionController::class, 'createRole'])
+        ->name('roles.permissions.create-role');
+        
     // API routes for PPC Head and SCC Head member filtering
     Route::middleware('auth')->group(function () {
         Route::get('api/ppc-community/{communityId}/members', [App\Http\Controllers\PPCHeadController::class, 'membersByCommunity']);

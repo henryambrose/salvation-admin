@@ -15,21 +15,20 @@ class PPCHeadPermissionSeeder extends Seeder
         
         // Full CRUD permissions for Members and External Members
         $permissions = [
-            // Member permissions
             'create-member', 'read-member', 'update-member', 'delete-member', 'list-member', 'restore-member',
-            // External Member permissions  
             'create-external-member', 'read-external-member', 'update-external-member', 'delete-external-member', 'list-external-member', 'restore-external-member',
-            // Data verification permissions
-            'read-data-verification', 'update-data-verification',
-            // PPC Head specific permissions
-            'create-ppc-head', 'read-ppc-head', 'update-ppc-head', 'delete-ppc-head', 'list-ppc-head', 'restore-ppc-head',
-            // Basic read and list permissions for related data
+            // 'read-data-verification', 'update-data-verification',
+            'read-ppc-head', 'list-ppc-head',
+            'read-community-cluster', 'list-community-cluster', 'read-cluster', 'list-cluster', 
+            'read-cells-and-association', 'list-cells-and-association', 'read-cells-and-association-member', 'list-cells-and-association-member',
+            'read-scc-head', 'list-scc-head',
             'read-community', 'list-community', 'read-parish', 'list-parish', 'read-zone', 'list-zone', 
             'read-relationship', 'list-relationship', 'read-designation', 'list-designation', 
             'read-age-group', 'list-age-group', 'read-blood-group', 'list-blood-group', 
             'read-gender', 'list-gender', 'read-status', 'list-status', 
             'read-income-range', 'list-income-range', 'read-country', 'list-country', 
-            'read-state', 'list-state', 'read-city', 'list-city', 'read-town', 'list-town'
+            'read-state', 'list-state', 'read-city', 'list-city', 'read-town', 'list-town',
+            'read-dashboard'
         ];
 
         // Create permissions if they don't exist
@@ -39,6 +38,5 @@ class PPCHeadPermissionSeeder extends Seeder
 
         // Assign all permissions to PPC Head role
         $ppcHeadRole->syncPermissions($permissions);
-
     }
 }
