@@ -554,14 +554,14 @@ watch(() => currentTab.value, (newTab) => {
                       <span class="font-semibold text-gray-700">External:</span>
                       <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.source === 'External').length }}</span>
                     </div>
-                    <div>
+                    <!-- <div>
                       <span class="font-semibold text-gray-700">With Fathers:</span>
                       <span class="ml-2 text-green-600">{{ familyMembers.filter(m => m.father).length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">With Mothers:</span>
                       <span class="ml-2 text-green-600">{{ familyMembers.filter(m => m.mother).length }}</span>
-                    </div>
+                    </div> -->
                   </div>
                 </div>
                 <div class="max-h-96 overflow-y-auto">

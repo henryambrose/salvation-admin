@@ -916,6 +916,7 @@ const fetchExternalFamilyMembers = async () => {
           const data = await response.json();
           // Filter only external members from the same family
           const currentMemberId = member?.id;
+
           externalFamilyMembers.value = data.members
           .filter((member: any) => member.id !== currentMemberId && member.source === 'External')
           .map((member: any) => ({

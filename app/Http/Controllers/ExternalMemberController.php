@@ -509,7 +509,7 @@ class ExternalMemberController extends Controller
                         'family_no' => $member->family_no,
                         'relationship' => $member->relationship?->name,
                         'gender' => $member->gender?->name,
-                        'type' => 'External',
+                        'source' => 'External',
                     ];
                 });
 

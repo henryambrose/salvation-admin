@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { TooltipProvider, type TooltipProviderProps } from 'reka-ui'
+import { provide, toRef } from 'vue'
+
+interface TooltipProviderProps {
+  delayDuration?: number
+}
 
 const props = withDefaults(defineProps<TooltipProviderProps>(), {
   delayDuration: 0,
 })
+
+const delayDuration = toRef(props, 'delayDuration')
+
+provide('tooltip', {
+  delayDuration,
+})
 </script>
 
 <template>
-  <TooltipProvider v-bind="props">
-    <slot />
-  </TooltipProvider>
+  <slot />
 </template>

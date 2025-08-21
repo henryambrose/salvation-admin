@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { router, Head, usePage, Link } from '@inertiajs/vue3';
+import AddMemberModal from '@/components/AddMemberModal.vue';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
-import AddMemberModal from '@/components/AddMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Column, Member, FamilyStats } from '@/types';
-import { } from '@inertiajs/vue3';
-import { ArchiveIcon, Pencil, Plus, Trash, ZapIcon, Download } from 'lucide-vue-next';
-import { computed, ref, watch, nextTick, onMounted } from 'vue';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Column, FamilyStats } from '@/types';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Download, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 const page = usePage();
@@ -40,11 +39,55 @@ const props = defineProps({
   },
 });
 
+const search = ref(props.filters?.search || '');
+const familySearch = ref('');
+const sort = ref(props.filters?.sort || '');
+const direction = ref(props.filters?.direction || 'asc');
+const perPage = ref(props.filters?.perPage || 10);
+const communityId = ref(props.filters?.communityId || '');
+const relationship = ref(props.filters?.relationship || '');
+const ageGroup = ref(props.filters?.ageGroup || '');
+const bloodGroup = ref(props.filters?.bloodGroup || '');
+const gender = ref(props.filters?.gender || '');
+const status = ref(props.filters?.status || '');
+const filterColumnKey = ref(props.filters?.filterColumnKey || '');
+const filterColumnValue = ref(props.filters?.filterColumnValue || '');
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+const partialOnly = ['members', 'familyStats', 'filters', 'totalCount'];
+// Debounced search to prevent too many API calls
+let searchTimeout: number;
+
+watch(
+  [
+    search,
+    familySearch,
+    sort,
+    direction,
+    perPage,
+    communityId,
+    relationship,
+    ageGroup,
+    bloodGroup,
+    gender,
+    status,
+    filterColumnKey,
+    filterColumnValue,
+    isArchived,
+  ],
+  (newValues, oldValues) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      fetch();
+    }, 300); // 300ms debounce
+  },
+  { immediate: false, deep: false },
+);
+
 const showViewModal = ref(false);
 const selectedMember = ref(null);
 const showAddModal = ref(false);
 const showFilters = ref(true);
-
 
 function openViewModal(member: any) {
   selectedMember.value = member;
@@ -64,7 +107,7 @@ const enhancedMembers = computed<Record<string, any>>(() => {
 
   return {
     ...props.members,
-    data: members
+    data: members,
   };
 });
 
@@ -140,15 +183,70 @@ function confirmDelete() {
     },
   });
 }
-
+function clearSearch() {
+  search.value = '';
+  status.value = '';
+  // Force immediate fetch to clear results
+  clearTimeout(searchTimeout);
+  // Force fresh request without preserving state
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        familySearch: familySearch.value,
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        communityId: communityId.value,
+        relationship: relationship.value,
+        ageGroup: ageGroup.value,
+        bloodGroup: bloodGroup.value,
+        gender: gender.value,
+        filterColumnKey: filterColumnKey.value,
+        filterColumnValue: filterColumnValue.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      {
+        preserveState: false,
+        replace: true,
+        only: partialOnly,
+      },
+    );
+  }
+}
 function restoreMember(id: number) {
-  router.post(route('member.restore', id), {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    route('member.restore', id),
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
+  );
+}
+function downloadExcel() {
+  const params = new URLSearchParams({
+    search: search.value || '',
+    familySearch: familySearch.value || '',
+    communityId: communityId.value || '',
+    relationship: relationship.value || '',
+    ageGroup: ageGroup.value || '',
+    bloodGroup: bloodGroup.value || '',
+    gender: gender.value || '',
+    status: status.value || '',
+    sort: String(sort.value || 'id'),
+    direction: String(direction.value || 'asc'),
+    perPage: 'all',
+    isArchived: isArchived.value ? 'true' : 'false',
   });
+
+  // Use window.location.href for direct download
+  window.location.href = `${window.location.origin}/member/export?${params.toString()}`;
 }
 function formatDate(dateStr: string) {
   if (!dateStr) return '';
@@ -167,37 +265,6 @@ function calculateAge(dateStr: string) {
   }
   return age;
 }
-
-const search = ref(props.filters?.search || '');
-const familySearch = ref('');
-const sort = ref(props.filters?.sort || '');
-const direction = ref(props.filters?.direction || 'asc');
-const perPage = ref(props.filters?.perPage || 10);
-const communityId = ref(props.filters?.communityId || '');
-const relationship = ref(props.filters?.relationship || '');
-const ageGroup = ref(props.filters?.ageGroup || '');
-const bloodGroup = ref(props.filters?.bloodGroup || '');
-const gender = ref(props.filters?.gender || '');
-const status = ref(props.filters?.status || '');
-const filterColumnKey = ref(props.filters?.filterColumnKey || '');
-const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(String(props.filters?.isArchived) === 'true');
-const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const partialOnly = ['members', 'familyStats', 'filters', 'totalCount'];
-// Debounced search to prevent too many API calls
-let searchTimeout: number;
-
-watch(
-  [search, familySearch, sort, direction, perPage, communityId, relationship, ageGroup, bloodGroup, gender, status, filterColumnKey, filterColumnValue, isArchived],
-  (newValues, oldValues) => {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
-   
-      fetch();
-    }, 300); // 300ms debounce
-  },
-  { immediate: false, deep: false },
-);
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
@@ -235,46 +302,11 @@ function changeSort(field: string) {
 }
 // Search handling functions
 function handleSearchInput() {
-
   // The watch will handle the debounced search
 }
 
 function handleFamilySearchInput() {
   // The watch will handle the debounced search
-}
-
-function clearSearch() {
-  search.value = '';
-  status.value = '';
-  // Force immediate fetch to clear results
-  clearTimeout(searchTimeout);
-  // Force fresh request without preserving state
-  if (props.fetchUrl) {
-    router.get(
-      props.fetchUrl,
-      {
-        search: '',
-        familySearch: familySearch.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        communityId: communityId.value,
-        relationship: relationship.value,
-        ageGroup: ageGroup.value,
-        bloodGroup: bloodGroup.value,
-        gender: gender.value,
-        filterColumnKey: filterColumnKey.value,
-        filterColumnValue: filterColumnValue.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page: 1,
-      },
-      {
-        preserveState: false,
-        replace: true,
-        only: partialOnly,
-      },
-    );
-  }
 }
 
 function clearFamilySearch() {
@@ -310,26 +342,6 @@ function clearFamilySearch() {
   }
 }
 
-function downloadExcel() {
-  const params = new URLSearchParams({
-    search: search.value || '',
-    familySearch: familySearch.value || '',
-    communityId: communityId.value || '',
-    relationship: relationship.value || '',
-    ageGroup: ageGroup.value || '',
-    bloodGroup: bloodGroup.value || '',
-    gender: gender.value || '',
-    status: status.value || '',
-          sort: String(sort.value || 'id'),
-      direction: String(direction.value || 'asc'),
-    perPage: 'all',
-    isArchived: isArchived.value ? 'true' : 'false',
-  });
-
-  // Use window.location.href for direct download
-  window.location.href = `${window.location.origin}/member/export?${params.toString()}`;
-}
-
 const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
@@ -343,16 +355,19 @@ function scrollToRow(rowId: number) {
   });
 }
 
-watch(() => enhancedMembers.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedMembers.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 onMounted(() => {
   // Check for highlightId in query string
@@ -370,78 +385,98 @@ const copiedItem = ref<{ id: string; type: string } | null>(null);
 // Enhanced copy function with visual feedback
 function copyToClipboard(text: string, type: string, memberId: number) {
   if (!text || text === '—') return;
-  
-  navigator.clipboard.writeText(text).then(() => {
-    // Set copied state for visual feedback
-    copiedItem.value = { id: `${type}-${memberId}`, type };
-    
-    // Show success toast
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 flex items-center gap-2';
-    toast.innerHTML = `
+
+  navigator.clipboard
+    .writeText(text)
+    .then(() => {
+      // Set copied state for visual feedback
+      copiedItem.value = { id: `${type}-${memberId}`, type };
+
+      // Show success toast
+      const toast = document.createElement('div');
+      toast.className =
+        'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300 flex items-center gap-2';
+      toast.innerHTML = `
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
       </svg>
       ${type} copied to clipboard!
     `;
-    document.body.appendChild(toast);
-    
-    // Remove toast after 2 seconds
-    setTimeout(() => {
-      toast.remove();
-    }, 2000);
-    
-    // Clear copied state after animation
-    setTimeout(() => {
-      copiedItem.value = null;
-    }, 1000);
-  }).catch(err => {
-    console.error('Failed to copy: ', err);
-    // Fallback for older browsers
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    document.body.appendChild(textArea);
-    textArea.select();
-    document.execCommand('copy');
-    document.body.removeChild(textArea);
-    
-    // Show success feedback
-    const toast = document.createElement('div');
-    toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300';
-    toast.textContent = `${type} copied to clipboard!`;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      toast.remove();
-    }, 2000);
-  });
+      document.body.appendChild(toast);
+
+      // Remove toast after 2 seconds
+      setTimeout(() => {
+        toast.remove();
+      }, 2000);
+
+      // Clear copied state after animation
+      setTimeout(() => {
+        copiedItem.value = null;
+      }, 1000);
+    })
+    .catch((err) => {
+      console.error('Failed to copy: ', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      // Show success feedback
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+      toast.textContent = `${type} copied to clipboard!`;
+      document.body.appendChild(toast);
+
+      setTimeout(() => {
+        toast.remove();
+      }, 2000);
+    });
 }
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-
     <Head title="Members" />
-    
+
     <!-- Wrap everything in TooltipProvider -->
     <TooltipProvider>
       <DatatableHeader>
-        <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+        <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
           <div class="flex flex-1 items-center gap-2">
-            <div class="flex-1 relative">
-              <input v-model="search" type="text" class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
-                placeholder="Search name or family no..." @input="handleSearchInput" @keydown.escape="clearSearch" />
-              <button v-if="search" @click="clearSearch"
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <div class="relative flex-1">
+              <input
+                v-model="search"
+                type="text"
+                class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
+                placeholder="Search name or family no..."
+                @input="handleSearchInput"
+                @keydown.escape="clearSearch"
+              />
+              <button
+                v-if="search"
+                @click="clearSearch"
+                class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600"
+              >
                 ✕
               </button>
             </div>
             <div class="relative">
-              <input v-model="familySearch" type="text" class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8"
-                placeholder="Search by family no..." @input="handleFamilySearchInput"
-                @keydown.escape="clearFamilySearch" />
-              <button v-if="familySearch" @click="clearFamilySearch"
-                class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <input
+                v-model="familySearch"
+                type="text"
+                class="w-48 rounded-full border border-gray-300 px-3 py-2 pr-8"
+                placeholder="Search by family no..."
+                @input="handleFamilySearchInput"
+                @keydown.escape="clearFamilySearch"
+              />
+              <button
+                v-if="familySearch"
+                @click="clearFamilySearch"
+                class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600"
+              >
                 ✕
               </button>
             </div>
@@ -453,33 +488,39 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </div>
           <div class="flex items-center gap-2">
             <!-- Add New Member Button - Removed tooltip -->
-            <Button v-if="props.canCreateMember" @click="addNewMember"
-              class="px-3 py-2 rounded-full bg-green-600 text-white hover:bg-green-700 transition flex items-center gap-2">
+            <Button
+              v-if="props.canCreateMember"
+              @click="addNewMember"
+              class="flex items-center gap-2 rounded-full bg-green-600 px-3 py-2 text-white transition hover:bg-green-700"
+            >
               <component :is="Plus" />
               <span>Add New Member</span>
             </Button>
 
             <!-- Export CSV Button - Removed tooltip -->
-            <Button v-if="can('read-member')" @click="downloadExcel"
-              class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <Button
+              v-if="can('read-member')"
+              @click="downloadExcel"
+              class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+            >
               <component :is="Download" />
               <span>Export CSV</span>
             </Button>
-            
+
             <!-- Data Verification Button - Removed tooltip -->
             <Link
               v-if="can('read-data-verification') || can('update-data-verification')"
               :href="route('member.data-verification')"
-              class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition"
+              class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
             >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span>Data Verification</span>
             </Link>
 
             <!-- Show Archived Checkbox - Kept tooltip as it's useful for understanding the toggle -->
-            <label class="flex items-center gap-2 cursor-pointer select-none">
+            <label class="flex cursor-pointer items-center gap-2 select-none">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Checkbox v-model="isArchived" class="switch-checkbox" />
@@ -493,7 +534,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </div>
         </div>
         <transition name="fade">
-          <div v-if="showFilters" class="flex flex-wrap gap-2 mb-2">
+          <div v-if="showFilters" class="mb-2 flex flex-wrap gap-2">
             <select v-model="communityId" class="rounded border px-2 py-1 text-sm">
               <option value="">All Communities</option>
               <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
@@ -530,21 +571,21 @@ function copyToClipboard(text: string, type: string, memberId: number) {
 
       <div v-if="props.canViewAnyMember">
         <!-- Compact pagination with inline stats -->
-        <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
           <!-- Left side: Total members info -->
           <div class="text-gray-600">
             Showing <span class="font-semibold">{{ familyStats.totalMembers || 0 }}</span> total members
             <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
           </div>
-          
+
           <!-- Center: Pagination controls -->
           <div class="flex items-center gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
-                  v-if="enhancedMembers.prev_page_url" 
-                  @click="fetch(enhancedMembers.current_page! - 1)" 
-                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+                <button
+                  v-if="enhancedMembers.prev_page_url"
+                  @click="fetch(enhancedMembers.current_page! - 1)"
+                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
                 >
                   ← Prev
                 </button>
@@ -553,14 +594,14 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 <p>Go to the previous page</p>
               </TooltipContent>
             </Tooltip>
-            
+
             <div class="flex items-center gap-1 text-gray-600">
               <span>Page</span>
-              <select 
+              <select
                 v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
-                :value="enhancedMembers.current_page" 
+                :value="enhancedMembers.current_page"
                 @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
               >
                 <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
                   {{ page }}
@@ -568,13 +609,13 @@ function copyToClipboard(text: string, type: string, memberId: number) {
               </select>
               <span>of {{ enhancedMembers.last_page }}</span>
             </div>
-            
+
             <Tooltip>
               <TooltipTrigger asChild>
-                <button 
-                  v-if="enhancedMembers.next_page_url" 
-                  @click="fetch(enhancedMembers.current_page! + 1)" 
-                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+                <button
+                  v-if="enhancedMembers.next_page_url"
+                  @click="fetch(enhancedMembers.current_page! + 1)"
+                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
                 >
                   Next →
                 </button>
@@ -584,14 +625,12 @@ function copyToClipboard(text: string, type: string, memberId: number) {
               </TooltipContent>
             </Tooltip>
           </div>
-          
+
           <!-- Right side: Family stats -->
           <div class="flex items-center gap-2 text-gray-600">
             <Tooltip>
               <TooltipTrigger asChild>
-                <span class="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
-                  {{ familyStats.totalFamilies }} Families
-                </span>
+                <span class="rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800"> {{ familyStats.totalFamilies }} Families </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Total number of families in the database</p>
@@ -599,7 +638,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                   {{ familyStats.averageMembersPerFamily }} Avg/Family
                 </span>
               </TooltipTrigger>
@@ -610,28 +649,34 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </div>
         </div>
 
-        <div class="datatable2 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+        <div class="datatable2 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
           <!-- Table content -->
           <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="w-full border-collapse text-left">
               <thead>
                 <tr class="bg-blue-50">
-                  <th class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Actions</th>
-                  <th v-for="col in columns" :key="col.key" @click="col.sortable ? changeSort(col.key) : null"
-                    class="cursor-pointer border-b p-3 font-semibold text-gray-700 hover:bg-blue-100 transition whitespace-nowrap">
+                  <th class="border-b p-3 font-semibold whitespace-nowrap text-gray-700">Actions</th>
+                  <th
+                    v-for="col in columns"
+                    :key="col.key"
+                    @click="col.sortable ? changeSort(col.key) : null"
+                    class="cursor-pointer border-b p-3 font-semibold whitespace-nowrap text-gray-700 transition hover:bg-blue-100"
+                  >
                     {{ col.label }}
                     <span v-if="col.sortable && sort === col.key">
                       {{ direction === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
-                  <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700 whitespace-nowrap">Delete</th>
+                  <th v-if="!serverArchived" class="border-b p-3 font-semibold whitespace-nowrap text-gray-700">Delete</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="member in enhancedMembers.data" :key="member.id" :id="`member-row-${member.id}`" :class="[
-                  'even:bg-gray-50 hover:bg-blue-50 transition',
-                  highlightedRowId === member.id ? 'highlight-row' : ''
-                ]">
+                <tr
+                  v-for="member in enhancedMembers.data"
+                  :key="member.id"
+                  :id="`member-row-${member.id}`"
+                  :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === member.id ? 'highlight-row' : '']"
+                >
                   <!-- View + Edit or Restore -->
                   <td class="p-2 whitespace-nowrap">
                     <div class="flex gap-2">
@@ -639,8 +684,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                         <!-- View More Details Button -->
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button @click="openViewModal(member)"
-                              class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                            <Button @click="openViewModal(member)" class="rounded-full bg-blue-100 text-blue-700 transition hover:bg-blue-200">
                               <component :is="ZapIcon" />
                             </Button>
                           </TooltipTrigger>
@@ -652,8 +696,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                         <!-- Edit Button -->
                         <Tooltip v-if="canEditMember && !member.deleted_at">
                           <TooltipTrigger asChild>
-                            <Button @click="editMember(member)"
-                              class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                            <Button @click="editMember(member)" class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200">
                               <component :is="Pencil" />
                             </Button>
                           </TooltipTrigger>
@@ -665,13 +708,20 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                         <!-- Family Tree Button -->
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Button @click="viewFamilyTree(member)"
-                              class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"></path>
+                            <Button @click="viewFamilyTree(member)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
+                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+                                ></path>
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z"
+                                ></path>
                               </svg>
                             </Button>
                           </TooltipTrigger>
@@ -680,13 +730,12 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                           </TooltipContent>
                         </Tooltip>
                       </template>
-                      
+
                       <!-- Restore Button -->
                       <template v-else>
                         <Tooltip v-if="canRestoreMember">
                           <TooltipTrigger asChild>
-                            <Button @click="restoreMember(member.id)"
-                              class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                            <Button @click="restoreMember(member.id)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
                               Restore
                             </Button>
                           </TooltipTrigger>
@@ -698,79 +747,80 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                     </div>
                   </td>
                   <!-- Main table data -->
-                  <td v-for="col in columns" :key="col.key" class="p-2 whitespace-nowrap overflow-hidden">
-
+                  <td v-for="col in columns" :key="col.key" class="overflow-hidden p-2 whitespace-nowrap">
                     <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
                       {{ formatDate(member[col.key]) }}
                     </template>
                     <template v-else-if="col.key === 'community_cluster_id'">
-                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{
-                        member.community_cluster_id || '—' }}</span>
+                      <span class="block truncate" :title="member.community_cluster_id || '—'">{{ member.community_cluster_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'community_id'">
-                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—'
-                        }}</span>
+                      <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'age'">
                       {{ calculateAge(member.date_of_birth) }}
                     </template>
                     <template v-else-if="col.key === 'relationship_id'">
-                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id ||
-                        '—' }}</span>
+                      <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'blood_group_id'">
-                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—'
-                        }}</span>
+                      <span class="block truncate" :title="member.blood_group_id || '—'">{{ member.blood_group_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'gender_id'">
                       <span class="block truncate" :title="member.gender_id || '—'">{{ member.gender_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'church_code'">
-                      <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                      <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                         {{ member[col.key] || page.props.church_code }}
                       </span>
                     </template>
                     <template v-else-if="col.key === 'family_no'">
-                      <span 
+                      <span
                         v-if="member[col.key]"
                         @click="copyToClipboard(member[col.key], 'Family Number', member.id)"
                         :class="[
-                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                          copiedItem?.id === `Family Number-${member.id}` 
-                            ? 'bg-green-200 text-green-900 scale-105 shadow-md' 
-                            : 'bg-green-100 text-green-800 hover:bg-green-200 hover:scale-105'
+                          'cursor-pointer rounded-full px-2 py-1 font-mono text-xs font-medium transition-all duration-200 select-none',
+                          copiedItem?.id === `Family Number-${member.id}`
+                            ? 'scale-105 bg-green-200 text-green-900 shadow-md'
+                            : 'bg-green-100 text-green-800 hover:scale-105 hover:bg-green-200',
                         ]"
                         :title="`Click to copy: ${member[col.key]}`"
                       >
                         {{ member[col.key] }}
-                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        <svg class="ml-1 inline h-3 w-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          ></path>
                         </svg>
                       </span>
-                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                        —
-                      </span>
+                      <span v-else class="rounded-full bg-gray-100 px-2 py-1 font-mono text-xs font-medium text-gray-500"> — </span>
                     </template>
                     <template v-else-if="col.key === 'member_no'">
-                      <span 
+                      <span
                         v-if="member[col.key]"
                         @click="copyToClipboard(member[col.key], 'Member Number', member.id)"
                         :class="[
-                          'px-2 py-1 rounded-full text-xs font-medium font-mono cursor-pointer transition-all duration-200 select-none',
-                          copiedItem?.id === `Member Number-${member.id}` 
-                            ? 'bg-purple-200 text-purple-900 scale-105 shadow-md' 
-                            : 'bg-purple-100 text-purple-800 hover:bg-purple-200 hover:scale-105'
+                          'cursor-pointer rounded-full px-2 py-1 font-mono text-xs font-medium transition-all duration-200 select-none',
+                          copiedItem?.id === `Member Number-${member.id}`
+                            ? 'scale-105 bg-purple-200 text-purple-900 shadow-md'
+                            : 'bg-purple-100 text-purple-800 hover:scale-105 hover:bg-purple-200',
                         ]"
                         :title="`Click to copy: ${member[col.key]}`"
                       >
                         {{ member[col.key] }}
-                        <svg class="inline w-3 h-3 ml-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        <svg class="ml-1 inline h-3 w-3 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                          ></path>
                         </svg>
                       </span>
-                      <span v-else class="px-2 py-1 bg-gray-100 text-gray-500 rounded-full text-xs font-medium font-mono">
-                        —
-                      </span>
+                      <span v-else class="rounded-full bg-gray-100 px-2 py-1 font-mono text-xs font-medium text-gray-500"> — </span>
                     </template>
                     <template v-else>
                       <span class="block truncate" :title="member[col.key]">{{ member[col.key] }}</span>
@@ -780,8 +830,11 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   <td v-if="!serverArchived" class="p-2 whitespace-nowrap">
                     <Tooltip v-if="canDeleteMember && !member.deleted_at">
                       <TooltipTrigger asChild>
-                        <Button variant="destructive" @click="openDeleteModal(member)"
-                          class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                        <Button
+                          variant="destructive"
+                          @click="openDeleteModal(member)"
+                          class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                        >
                           <component :is="Trash" />
                         </Button>
                       </TooltipTrigger>
@@ -803,18 +856,21 @@ function copyToClipboard(text: string, type: string, memberId: number) {
     <ViewMemberModal v-model="showViewModal" :member="selectedMember" :incomeRange="null" />
 
     <!-- Add Member Modal -->
-    <AddMemberModal v-model="showAddModal" :communities="props.communities || []"
-      :relationships="props.relationships || []" :communityClusters="props.communityClusters || []" :towns="[]" />
+    <AddMemberModal
+      v-model="showAddModal"
+      :communities="props.communities || []"
+      :relationships="props.relationships || []"
+      :communityClusters="props.communityClusters || []"
+      :towns="[]"
+    />
 
     <!-- Delete Modal with tooltip -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
         <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
           <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
-          <p class="mb-2">
-            Are you sure you want to delete this member?
-          </p>
-          <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+          <p class="mb-2">Are you sure you want to delete this member?</p>
+          <div class="mb-4 rounded-lg bg-gray-50 p-3">
             <p class="text-sm text-gray-600"><strong>Name:</strong> {{ deletingMember?.first_name }} {{ deletingMember?.last_name }}</p>
             <p class="text-sm text-gray-600"><strong>Member No:</strong> {{ deletingMember?.member_no }}</p>
           </div>
@@ -825,7 +881,8 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   variant="secondary"
                   type="button"
                   @click="showDeleteModal = false"
-                  class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
+                  class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
+                >
                   Cancel
                 </Button>
               </TooltipTrigger>
@@ -841,7 +898,8 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   type="button"
                   :disabled="false"
                   @click="confirmDelete"
-                  class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">
+                  class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
+                >
                   <component :is="Trash" />
                   Delete
                 </Button>
@@ -874,16 +932,20 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   border-radius: 9999px;
   background: #ef4444;
   /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
 
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -894,7 +956,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   cursor: pointer;
 }
 
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -905,7 +967,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   transition: left 0.2s;
 }
 
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 

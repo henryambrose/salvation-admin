@@ -86,7 +86,7 @@ class ModuleSeeder extends Seeder
                 'name' => 'PPC Heads',
                 'slug' => 'ppc-head',
                 'icon' => 'UserCheck',
-                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
             
             // Member Attributes

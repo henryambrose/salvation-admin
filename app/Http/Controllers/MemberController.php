@@ -610,6 +610,9 @@ class MemberController extends Controller
             'person' => $person,
             'familyTree' => $allFamilyMembers,
             'relationships' => $service->getAvailableRelationships(),
+            'print' => true,
+            'id' => $id,
+            'type' => $type,
         ]);
     }
 
@@ -857,17 +860,17 @@ class MemberController extends Controller
             }
     
             // Optional exclusion by original_id (exclude both Member/External if same original_id appears)
-            if ($request->has('exclude_member_id')) {
-                $excludeId = (string) $request->input('exclude_member_id');
-                $excludeUids = $family->where('original_id', $excludeId)->pluck('uid')->all();
-                if (!empty($excludeUids)) {
-                    $family = $family->reject(fn ($p) => in_array($p->uid, $excludeUids, true))->values();
-                }
-            }
+            // if ($request->has('exclude_member_id')) {
+            //     $excludeId = (string) $request->input('exclude_member_id');
+            //     $excludeUids = $family->where('original_id', $excludeId)->pluck('uid')->all();
+            //     if (!empty($excludeUids)) {
+            //         $family = $family->reject(fn ($p) => in_array($p->uid, $excludeUids, true))->values();
+            //     }
+            // }
     
-            if ($family->isEmpty()) {
-                return response()->json(['error' => 'Family has no members after exclusion'], 404);
-            }
+            // if ($family->isEmpty()) {
+            //     return response()->json(['error' => 'Family has no members after exclusion'], 404);
+            // }
     
             // Build quick lookup maps
             $uByUid = $family->keyBy('uid');                                          // uid => UnifiedPerson
