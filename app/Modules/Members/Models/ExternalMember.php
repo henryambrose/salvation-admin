@@ -51,7 +51,6 @@ class ExternalMember extends Model
             }
         });
 
-
     }
 
     protected $casts = [
@@ -64,33 +63,7 @@ class ExternalMember extends Model
         'deleted_at' => 'datetime',
     ];
 
-    /**
-     * Scope external members to allowed communities for the given user.
-     * Applies only for head roles; superadmin or non-head roles are unrestricted.
-     * If the model has community_id, use it; otherwise join to members via family_no.
-    //  */
-    // public function scopeForUserCommunities($query, $user)
-    // {
-    //     $service = new \Modules\Members\Services\CommunityAccessService;
-    //     $allowed = $service->getAllowedCommunityIds($user);
-    //     if ($allowed === null) {
-    //         return $query; // unrestricted
-    //     }
-    //     if (empty($allowed)) {
-    //         return $query->whereRaw('1=0');
-    //     }
-
-    //     // Prefer direct column when present
-    //     if (\Schema::hasColumn($this->getTable(), 'community_id')) {
-    //         return $query->whereIn($this->getTable().'.community_id', $allowed);
-    //     }
-
-    //     // Fallback: join members on family_no to derive community_id
-    //     return $query->join('members as _m_on_family', '_m_on_family.family_no', '=', $this->getTable().'.family_no')
-    //         ->whereIn('_m_on_family.community_id', $allowed)
-    //         ->select($this->getTable().'.*');
-    // }
-
+   
     /**
      * Get the full name of the external member
      */
