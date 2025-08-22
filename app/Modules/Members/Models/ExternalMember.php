@@ -51,19 +51,7 @@ class ExternalMember extends Model
             }
         });
 
-        // Keep denormalized community_id in sync when present
-        // static::saving(function ($externalMember) {
-        //     if (\Schema::hasColumn($externalMember->getTable(), 'community_id')) {
-        //         // Derive community_id via linked internal member in the same family
-        //         if ($externalMember->family_no) {
-        //             $communityId = Modules\Models\Member::where('family_no', $externalMember->family_no)
-        //                 ->value('community_id');
-        //             if ($communityId && $externalMember->community_id !== $communityId) {
-        //                 $externalMember->community_id = $communityId;
-        //             }
-        //         }
-        //     }
-        // });
+
     }
 
     protected $casts = [
