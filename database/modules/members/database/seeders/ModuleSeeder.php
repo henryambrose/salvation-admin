@@ -170,7 +170,27 @@ class ModuleSeeder extends Seeder
                 'name' => 'Role Management',
                 'slug' => 'role',
                 'icon' => 'Shield',
-                'actions' => ['read', 'manage'], // Role management has read and manage actions
+                'actions' => ['create', 'read', 'update', 'delete', 'list'], // Full CRUD for role management
+            ],
+            
+            // Fund App Management
+            [
+                'name' => 'Fund App',
+                'slug' => 'fund',
+                'icon' => 'DollarSign',
+                'actions' => ['read', 'manage'],
+            ],
+            [
+                'name' => 'Annual Contributions',
+                'slug' => 'annual-contribution',
+                'icon' => 'DollarSign',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Mass Intentions',
+                'slug' => 'mass-intention',
+                'icon' => 'Calendar',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
             
             // Special Pages

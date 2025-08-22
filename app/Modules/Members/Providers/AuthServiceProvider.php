@@ -36,6 +36,7 @@ use Modules\Members\Policies\RelationshipPolicy;
 use Modules\Members\Policies\SCCHeadPolicy;
 use Modules\Members\Policies\UserPolicy;
 use Modules\Members\Policies\ZonePolicy;
+use Modules\Members\Policies\RolePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -63,6 +64,7 @@ class AuthServiceProvider extends ServiceProvider
         SCCHead::class => SCCHeadPolicy::class,
         User::class => UserPolicy::class,
         Zone::class => ZonePolicy::class,
+        \Spatie\Permission\Models\Role::class => RolePolicy::class,
     ];
 
     /**

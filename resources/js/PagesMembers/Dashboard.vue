@@ -8,6 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
+import PermissionDenied from './errors/PermissionDenied.vue';
 import { Users, Calendar, Church, Heart, Gift, Cake, Mail, Phone, MapPin, Home } from 'lucide-vue-next';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
@@ -105,9 +106,17 @@ const getColumnHeader = (title: string): string => {
 <template>
     <Head title="Dashboard" />
 
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <!-- Show Permission Denied if user doesn't have access -->
+    <div v-if="!canViewDashboard">
+        <PermissionDenied 
+            message="You do not have permission to view the dashboard. Please contact your administrator to request access." 
+        />
+    </div>
+
+    <!-- Show Dashboard if user has access -->
+    <AppLayout v-else :breadcrumbs="breadcrumbs">
         <!-- Enhanced Dashboard Container -->
-        <div v-if="canViewDashboard" class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-6">
+        <div class="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900 p-6">
             <!-- Welcome Section -->
             <div class="mb-8">
                 <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
@@ -387,7 +396,6 @@ const getColumnHeader = (title: string): string => {
                 </div>
             </div>
         </div>
-        <div v-else class="py-10 text-center text-gray-500">You do not have permission to view the dashboard.</div>
     </AppLayout>
 </template>
 

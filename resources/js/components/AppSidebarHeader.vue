@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Breadcrumbs from '@/components/Breadcrumbs.vue';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import AppSwitcher from '@/components/AppSwitcher.vue';
 import type { BreadcrumbItemType } from '@/types';
 
 withDefaults(
@@ -22,6 +23,11 @@ withDefaults(
       <template v-if="breadcrumbs && breadcrumbs.length > 0">
         <Breadcrumbs :breadcrumbs="breadcrumbs" />
       </template>
+    </div>
+    
+    <!-- App Switcher on the right side -->
+    <div class="ml-auto">
+      <AppSwitcher />
     </div>
   </header>
 </template>

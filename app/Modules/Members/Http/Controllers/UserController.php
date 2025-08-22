@@ -35,11 +35,15 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->paginate($request->get('perPage', 10))
+        $users = $query->with(['roles.permissions'])->paginate($request->get('perPage', 10))
             ->withQueryString();
+
+        // Get all available roles for role assignment with permissions
+        $roles = \Spatie\Permission\Models\Role::with('permissions')->orderBy('name')->get();
 
         return Inertia::render('users/Index', [
             'users' => $users,
+            'roles' => $roles,
             'filters' => $request->only(['search', 'isArchived', 'perPage']),
             'fetchUrl' => '/users',
         ]);
@@ -87,6 +91,14 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
+        // Debug logging for role updates
+        if ($request->has('roles')) {
+            \Log::info('Role update request', [
+                'user_id' => $user->id,
+                'roles' => $request->input('roles')
+            ]);
+        }
+
         $data = [
             'name' => $request->name,
             'email' => $request->email,
@@ -98,6 +110,21 @@ class UserController extends Controller
 
         $user->update($data);
 
+        // Handle role updates if provided
+        if ($request->input('roles')) {
+            $user->syncRoles($request->input('roles'));
+            
+            \Log::info('Roles synced successfully', [
+                'user_id' => $user->id,
+                'new_roles' => $user->fresh()->roles->pluck('name')
+            ]);
+        }
+
+        // For Inertia requests, return a proper Inertia response
+        if (request()->header('X-Inertia')) {
+            return back()->with('success', 'User updated successfully');
+        }
+        
         return redirect()->route('users.index');
     }
 

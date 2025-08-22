@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { ref, watch, computed, nextTick } from 'vue';
-import { Pencil, Plus, Trash } from 'lucide-vue-next';
+import { Pencil, Plus, Trash, Shield } from 'lucide-vue-next';
 import { router } from '@inertiajs/vue3';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
@@ -17,6 +17,10 @@ const props = defineProps({
   users: {
     type: Object,
     default: () => ({ data: [] }),
+  },
+  roles: {
+    type: Array,
+    default: () => [],
   },
   filters: Object,
   fetchUrl: String,
@@ -42,8 +46,12 @@ const breadcrumbs = [{ title: 'Users', href: '/users' }];
 const showModal = ref(false);
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
+const showRoleModal = ref(false);
 const editingItem = ref<any>(null);
 const deletingItem = ref<any>(null);
+const selectedUser = ref<any>(null);
+const selectedRoles = ref<number[]>([]);
+const showSuccessMessage = ref(false);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(props.filters?.isArchived === 'true');
 
@@ -58,6 +66,12 @@ const editForm = useForm({
   name: '',
   email: '',
   password: '',
+});
+
+const roleForm = useForm({
+  name: '',
+  email: '',
+  roles: []
 });
 
 const search = ref(props.filters?.search || '');
@@ -76,6 +90,9 @@ const enhancedUsers = computed(() => {
     total: c.total ?? c.meta?.total, // Add this line
   };
 });
+
+// Available roles from backend
+const availableRoles = computed(() => props.roles || []);
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
@@ -174,6 +191,44 @@ function openDeleteModal(row: any) {
   showDeleteModal.value = true;
 }
 
+function openRoleModal(user: any) {
+  selectedUser.value = user;
+  selectedRoles.value = user.roles?.map((role: any) => role.id) || [];
+  showRoleModal.value = true;
+}
+
+function assignRoles() {
+  // Set all required user data, not just roles
+  roleForm.name = selectedUser.value.name;
+  roleForm.email = selectedUser.value.email;
+  roleForm.roles = selectedRoles.value;
+  
+  // Debug logging
+  console.log('Assigning roles for user:', selectedUser.value.name, 'Roles:', selectedRoles.value);
+  
+  roleForm.put(route('users.update', selectedUser.value.id), {
+    onSuccess: () => {
+      // Close the modal
+      showRoleModal.value = false;
+      selectedUser.value = null;
+      selectedRoles.value = [];
+      
+      // Show success message briefly
+      showSuccessMessage.value = true;
+      setTimeout(() => {
+        showSuccessMessage.value = false;
+      }, 3000);
+      
+      // Refresh the user data without page reload
+      fetch();
+    },
+    onError: () => {
+      // Keep modal open on error so user can fix and retry
+      // Error handling is already built into the form
+    }
+  });
+}
+
 function confirmDelete() {
   if (deletingItem.value) {
     const deletedId = deletingItem.value.id;
@@ -253,6 +308,21 @@ function handlePageChange(event: Event) {
 
     <Head title="Users" />
     <DatatableHeader>
+      <!-- Success Message -->
+      <div v-if="showSuccessMessage" class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          </svg>
+          <span class="font-medium">User roles updated successfully!</span>
+        </div>
+        <button @click="showSuccessMessage = false" class="text-green-500 hover:text-green-700">
+          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          </svg>
+        </button>
+      </div>
+      
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Users</h2>
         <Button v-if="canCreateUser" @click="openCreateModal"
@@ -350,6 +420,11 @@ function handlePageChange(event: Event) {
                         class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
                         <component :is="Pencil" />
                         Edit
+                      </Button>
+                      <Button @click="openRoleModal(row)"
+                        class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                        <component :is="Shield" />
+                        Roles
                       </Button>
                     </template>
                     <template v-else>
@@ -473,6 +548,63 @@ function handlePageChange(event: Event) {
               <Button type="button" variant="destructive" :disabled="false" @click="confirmDelete"
                 class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">Delete</Button>
             </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+    
+    <!-- Role Management Modal -->
+    <transition name="fade">
+      <div v-if="showRoleModal"
+        class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div
+          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-white p-6">
+            <h3 class="mb-4 text-xl font-semibold">Manage Roles for {{ selectedUser?.name }}</h3>
+            <p class="mb-4 text-sm text-gray-600">Assign or remove roles for this user</p>
+            
+            <!-- Current Roles Display -->
+            <div class="mb-4">
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Current Roles:</h4>
+              <div class="flex flex-wrap gap-2">
+                <span v-if="!selectedUser?.roles || selectedUser?.roles.length === 0" 
+                      class="text-gray-500 text-sm">No roles assigned</span>
+                <span v-for="role in selectedUser?.roles" :key="role.id"
+                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {{ role.name }}
+                    </span>
+              </div>
+            </div>
+            
+            <!-- Role Assignment Form -->
+            <form @submit.prevent="assignRoles">
+              <div class="mb-4">
+                <Label for="roles">Select Roles:</Label>
+                <div class="mt-2 space-y-2 max-h-40 overflow-y-auto">
+                  <label v-for="role in availableRoles" :key="role.id" 
+                         class="flex items-center space-x-3 p-2 rounded border border-gray-200 hover:bg-gray-50">
+                    <input type="checkbox" :value="role.id" v-model="selectedRoles" 
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                    <div>
+                      <span class="text-sm font-medium text-gray-900">{{ role.name }}</span>
+                      <p class="text-xs text-gray-500">{{ role.permissions?.length || 0 }} permissions</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="flex justify-end space-x-2">
+                <Button type="button" variant="secondary" @click="showRoleModal = false"
+                  :disabled="roleForm.processing"
+                  class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
+                  {{ roleForm.processing ? 'Processing...' : 'Cancel' }}
+                </Button>
+                <Button type="submit" :disabled="roleForm.processing"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2">
+                  {{ roleForm.processing ? 'Saving...' : 'Save Roles' }}
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

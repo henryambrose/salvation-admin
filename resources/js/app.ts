@@ -55,22 +55,43 @@ async function bootstrap() {
               'users'
           ]; // All member module components
           
+          // List of pages that are in PagesFund directory
+          const fundPages = [
+              'Dashboard',
+              'AnnualContributions',
+              'MassIntentions'
+          ]; // All fund module components
+          
           try {
+              // First, try to resolve based on explicit fund pages (higher priority for Fund app)
+              if (fundPages.some(page => name.startsWith(page))) {
+                  return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+              }
+              
+              // Then, try to resolve based on explicit member pages
               if (memberPages.some(page => name.startsWith(page))) {
                   return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
-              } else {
+              }
+              
+              // If not explicitly defined, try PagesFund first (for Fund app components)
+              try {
+                  return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+              } catch (fundError) {
+                  // If not found in PagesFund, try pages directory
                   return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
               }
           } catch (error) {
-              // Fallback: try the other directory
+              // Fallback: try the other directories
               try {
-                  if (memberPages.some(page => name.startsWith(page))) {
-                      return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
-                  } else {
-                      return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
-                  }
+                  // Try pages directory first
+                  return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
               } catch (fallbackError) {
-                  throw new Error(`Page not found: ${name}`);
+                  try {
+                      // Try PagesMembers as last resort
+                      return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
+                  } catch (finalError) {
+                      throw new Error(`Page not found: ${name}`);
+                  }
               }
           }
       },

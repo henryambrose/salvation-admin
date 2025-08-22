@@ -31,6 +31,7 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
+import FundSidebar from './FundSidebar.vue';
 
 const { can } = permissionHelpers();
 
@@ -224,10 +225,10 @@ const navigationGroups = [
         show: can('read-users') || (page.props.auth as any)?.roles?.includes('super admin'),
       },
       {
-        title: 'Roles & Permissions',
-        href: '/roles-permissions',
+        title: 'Role Management',
+        href: route('roles.index'),
         icon: Shield,
-        show: (page.props.auth as any)?.roles?.includes('super admin'),
+        show: can('read-role'),
       },
       {
         title: 'Audit Logs',
@@ -254,15 +255,36 @@ const filteredNavigationGroups = navigationGroups.map(group => ({
   ...group,
   items: group.items.filter(item => item.show)
 })).filter(group => group.items.length > 0);
+
+// Determine which app we're in based on current URL
+const currentApp = computed(() => {
+  const currentPath = page.url;
+  if (currentPath.startsWith('/fund')) {
+    return 'fund';
+  }
+  return 'members';
+});
+
+// Determine which logo link to use
+const logoLink = computed(() => {
+  if (currentApp.value === 'fund') {
+    return route('fund.dashboard');
+  }
+  return route('dashboard');
+});
 </script>
 
 <template>
-  <Sidebar collapsible="icon" variant="inset">
+  <!-- Render Fund Sidebar when in Fund app -->
+  <FundSidebar v-if="currentApp === 'fund'" />
+  
+  <!-- Render Members Sidebar when in Members app -->
+  <Sidebar v-else collapsible="icon" variant="inset">
     <SidebarHeader>
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <Link :href="route('dashboard')">
+            <Link :href="logoLink">
               <AppLogo />
             </Link>
           </SidebarMenuButton>

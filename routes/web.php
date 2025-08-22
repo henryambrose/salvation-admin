@@ -46,6 +46,13 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         ->name('roles.permissions.update-user-permissions');
     Route::post('/roles-permissions/create-role', [RolePermissionController::class, 'createRole'])
         ->name('roles.permissions.create-role');
+    
+    // Comprehensive Role Management Routes
+    Route::resource('roles', \Modules\Members\Http\Controllers\RoleController::class);
+    Route::put('/roles/{role}/permissions', [\Modules\Members\Http\Controllers\RoleController::class, 'updatePermissions'])
+        ->name('roles.permissions.update');
+    Route::get('/roles/{role}/users', [\Modules\Members\Http\Controllers\RoleController::class, 'getUsers'])
+        ->name('roles.users.get');
         
     // API routes for PPC Head and SCC Head member filtering
     Route::middleware('auth')->group(function () {
@@ -82,9 +89,25 @@ require __DIR__.'/clusters.php';
 require __DIR__.'/community_clusters.php';
 require __DIR__.'/audit.php';
 require __DIR__.'/external_members.php';
+require __DIR__.'/fund.php';
 
 // Public API routes (after all other routes to avoid conflicts)
 Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);
+
+// Error pages
+Route::get('/permission-denied', function () {
+    return Inertia::render('errors/PermissionDenied', [
+        'message' => request()->get('message', ''),
+        'user' => auth()->user()
+    ]);
+})->name('permission-denied');
+
+Route::get('/fund/permission-denied', function () {
+    return Inertia::render('errors/PermissionDenied', [
+        'message' => request()->get('message', ''),
+        'user' => auth()->user()
+    ]);
+})->name('fund.permission-denied');
 
 // Temporary test routes (remove in production)
 Route::get('/test-419', function() {
