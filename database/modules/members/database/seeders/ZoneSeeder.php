@@ -17,34 +17,28 @@ class ZoneSeeder extends Seeder
         $now = Carbon::now()->toDateTimeString();
         $zones = [
             [
-            'id' => 1,
             'name' => 'Matthew',
             'description' => 'Description for Matthew',
-            'created_at' => $now,
-            'updated_at' => $now,
             ],
             [
-            'id' => 2,
             'name' => 'Mark',
             'description' => 'Description for Mark',
-            'created_at' => $now,
-            'updated_at' => $now,
             ],
             [
-            'id' => 3,
             'name' => 'Luke',
             'description' => 'Description for Luke',
-            'created_at' => $now,
-            'updated_at' => $now,
             ],
             [
-            'id' => 4,
             'name' => 'John',
             'description' => 'Description for John',
-            'created_at' => $now,
-            'updated_at' => $now,
             ],
         ];
-        Zone::insert($zones);
+        
+        foreach ($zones as $zone) {
+            Zone::updateOrCreate(
+                ['name' => $zone['name']],
+                $zone
+            );
+        }
     }
 }

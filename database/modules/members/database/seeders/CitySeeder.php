@@ -6878,7 +6878,15 @@ class CitySeeder extends Seeder
             ['name' => 'Zuvvaladinne', 'state_id' => '3'],
         ];
 
-        City::insert($cities);
+        foreach ($cities as $city) {
+            City::updateOrCreate(
+                [
+                    'name' => $city['name'],
+                    'state_id' => $city['state_id']
+                ],
+                $city
+            );
+        }
 
     }
 }

@@ -16,6 +16,11 @@ class BloodGroupSeeder extends Seeder
             return ['name' => $group];
         }, ['O-', 'O+', 'A-', 'A+', 'B-', 'B+', 'AB-', 'AB+']);
 
-        BloodGroup::insert($bloodGroups);
+        foreach ($bloodGroups as $bloodGroup) {
+            BloodGroup::updateOrCreate(
+                ['name' => $bloodGroup['name']],
+                $bloodGroup
+            );
+        }
     }
 }

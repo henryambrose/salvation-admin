@@ -49,7 +49,13 @@ class PermissionGroupSeeder extends Seeder
         ];
 
         foreach ($groups as $groupData) {
-            $group = PermissionGroup::create($groupData);
+            $group = PermissionGroup::updateOrCreate(
+                ['name' => $groupData['name']],
+                $groupData
+            );
+            
+            // Clear existing permissions before assigning new ones
+            $group->permissions()->detach();
             
             // Assign permissions based on group type
             $this->assignPermissionsToGroup($group);

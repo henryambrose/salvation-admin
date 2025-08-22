@@ -117,6 +117,11 @@ class DesignationSeeder extends Seeder
             ['name' => 'Spl. Child'],
         ];
 
-        Designation::insert($designations);
+        foreach ($designations as $designation) {
+            Designation::updateOrCreate(
+                ['name' => $designation['name']],
+                $designation
+            );
+        }
     }
 }

@@ -49,6 +49,11 @@ class CellsAndAssociationSeeder extends Seeder
             ['name' => 'Ushers'],
             ['name' => 'Womens Cell '],
         ];
-        CellsAndAssociation::insert($cellsAndAssociations);
+        foreach ($cellsAndAssociations as $cellsAndAssociation) {
+            CellsAndAssociation::updateOrCreate(
+                ['name' => $cellsAndAssociation['name']],
+                $cellsAndAssociation
+            );
+        }
     }
 }

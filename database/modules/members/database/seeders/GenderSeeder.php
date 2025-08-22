@@ -18,6 +18,11 @@ class GenderSeeder extends Seeder
             ['name' => 'Other'],
         ];
 
-        Gender::insert($genders);
+        foreach ($genders as $gender) {
+            Gender::updateOrCreate(
+                ['name' => $gender['name']],
+                $gender
+            );
+        }
     }
 }

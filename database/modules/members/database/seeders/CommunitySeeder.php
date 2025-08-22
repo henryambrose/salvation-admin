@@ -16,30 +16,36 @@ class CommunitySeeder extends Seeder
         $now = Carbon::now()->toDateTimeString();
 
         $communities = [
-            ['name' => '01 - St. Augustine', 'id' => 1, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '02 - St. Anthony', 'id' => 2, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '03 - St. Faustina', 'id' => 3, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '04 - St. Theresa of the Child Jesus', 'id' => 4, 'zone_id' => 3, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '05 - St. Peter', 'id' => 5, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '06 - St. Christopher', 'id' => 6, 'zone_id' => 3, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '07 - St. Andrew', 'id' => 7, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '08 - St. Francis Xavier', 'id' => 8, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '09 - St. Blaise', 'id' => 9, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '10 - St. Lawrence', 'id' => 10, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '11 - St. Vincent de Paul', 'id' => 11, 'zone_id' => 4, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '12 - St. Maria Goretti', 'id' => 12, 'zone_id' => 4, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '13 - St. Anne', 'id' => 13, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '14 - St. Martin', 'id' => 14, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '15 - St. Jude', 'id' => 15, 'zone_id' => 4, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '16 - St. Gonsalo Garcia', 'id' => 16, 'zone_id' => 2, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '17 - St. Thomas', 'id' => 17, 'zone_id' => 3, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '18 - St. Paul', 'id' => 18, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '19 - St. Sebastian', 'id' => 19, 'zone_id' => 4, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '20 - St. John the Baptist', 'id' => 20, 'zone_id' => 3, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '21 - St. Domnic Savio', 'id' => 21, 'zone_id' => 1, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '22 - St. Michael', 'id' => 22, 'zone_id' => 4, 'created_at' => $now, 'updated_at' => $now],
-            ['name' => '23 - Holy Family', 'id' => 23, 'zone_id' => 3, 'created_at' => $now, 'updated_at' => $now],
+            ['name' => '01 - St. Augustine', 'zone_id' => 1],
+            ['name' => '02 - St. Anthony', 'zone_id' => 1],
+            ['name' => '03 - St. Faustina', 'zone_id' => 1],
+            ['name' => '04 - St. Theresa of the Child Jesus', 'zone_id' => 3],
+            ['name' => '05 - St. Peter', 'zone_id' => 2],
+            ['name' => '06 - St. Christopher', 'zone_id' => 3],
+            ['name' => '07 - St. Andrew', 'zone_id' => 2],
+            ['name' => '08 - St. Francis Xavier', 'zone_id' => 2],
+            ['name' => '09 - St. Blaise', 'zone_id' => 2],
+            ['name' => '10 - St. Lawrence', 'zone_id' => 2],
+            ['name' => '11 - St. Vincent de Paul', 'zone_id' => 4],
+            ['name' => '12 - St. Maria Goretti', 'zone_id' => 4],
+            ['name' => '13 - St. Anne', 'zone_id' => 2],
+            ['name' => '14 - St. Martin', 'zone_id' => 1],
+            ['name' => '15 - St. Jude', 'zone_id' => 4],
+            ['name' => '16 - St. Gonsalo Garcia', 'zone_id' => 2],
+            ['name' => '17 - St. Thomas', 'zone_id' => 3],
+            ['name' => '18 - St. Paul', 'zone_id' => 1],
+            ['name' => '19 - St. Sebastian', 'zone_id' => 4],
+            ['name' => '20 - St. John the Baptist', 'zone_id' => 3],
+            ['name' => '21 - St. Domnic Savio', 'zone_id' => 1],
+            ['name' => '22 - St. Michael', 'zone_id' => 4],
+            ['name' => '23 - Holy Family', 'zone_id' => 3],
         ];
-        Community::insert($communities);
+        
+        foreach ($communities as $community) {
+            Community::updateOrCreate(
+                ['name' => $community['name']],
+                $community
+            );
+        }
     }
 }

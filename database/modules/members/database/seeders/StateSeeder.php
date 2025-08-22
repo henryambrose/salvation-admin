@@ -53,6 +53,11 @@ class StateSeeder extends Seeder
             ['name' => 'West Bengal', 'abbr' => 'WB', 'country_id' => '96' ]
         ];
 
-        State::insert($states);
+        foreach ($states as $state) {
+            State::updateOrCreate(
+                ['name' => $state['name']],
+                $state
+            );
+        }
     }
 }

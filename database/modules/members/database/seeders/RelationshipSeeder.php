@@ -55,6 +55,11 @@ class RelationshipSeeder extends Seeder
             ['name' => 'Guest'],
             ];
 
-        Relationship::insert($relationships);
+        foreach ($relationships as $relationship) {
+            Relationship::updateOrCreate(
+                ['name' => $relationship['name']],
+                $relationship
+            );
+        }
     }
 }

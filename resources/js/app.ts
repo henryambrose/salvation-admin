@@ -28,7 +28,32 @@ async function bootstrap() {
       title: (title) => `${title} - ${appName}`,
       resolve: async (name) => {
           // List of pages that are in PagesMembers directory
-          const memberPages = ['Dashboard', 'member/Index', 'community/Index']; // Add more as needed
+          const memberPages = [
+              'Dashboard', 
+              'member', 
+              'community', 
+              'ExternalMembers',
+              'zones',
+              'town',
+              'status',
+              'state',
+              's_c_c_head',
+              'parish',
+              'relationship',
+              'p_p_c_head',
+              'income_range',
+              'designation',
+              'gender',
+              'country',
+              'community_clusters',
+              'city',
+              'clusters',
+              'cells-and-association',
+              'cells-and-association-members',
+              'blood_group',
+              'age_group',
+              'users'
+          ]; // All member module components
           
           try {
               if (memberPages.some(page => name.startsWith(page))) {

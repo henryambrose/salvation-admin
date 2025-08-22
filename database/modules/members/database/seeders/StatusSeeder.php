@@ -20,6 +20,11 @@ class StatusSeeder extends Seeder
             ['name' => 'Deceased']
             ];
 
-        Status::insert($statuses);
+        foreach ($statuses as $status) {
+            Status::updateOrCreate(
+                ['name' => $status['name']],
+                $status
+            );
+        }
     }
 }

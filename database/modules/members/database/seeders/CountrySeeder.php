@@ -256,6 +256,11 @@ class CountrySeeder extends Seeder
             ['name' => 'Zambia'],
             ['name' => 'Zimbabwe'],
         ];
-        Country::insert($countries);
+        foreach ($countries as $country) {
+            Country::updateOrCreate(
+                ['name' => $country['name']],
+                $country
+            );
+        }
     }
 }

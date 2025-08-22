@@ -24,6 +24,11 @@ class AgeGroupSeeder extends Seeder
             ['name' => 'Adult 26-59', 'description' => 'Ages 26-59', 'min_age' => 26, 'max_age' => 59],
             ['name' => 'Senior 60+', 'description' => 'Ages 60 and above', 'min_age' => 60, 'max_age' => 120], // Assuming max age is capped at 120
         ];
-        AgeGroup::insert($ageGroups);
+        foreach ($ageGroups as $ageGroup) {
+            AgeGroup::updateOrCreate(
+                ['name' => $ageGroup['name']],
+                $ageGroup
+            );
+        }
     }
 }

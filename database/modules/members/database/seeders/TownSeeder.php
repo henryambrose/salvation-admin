@@ -20,6 +20,11 @@ class TownSeeder extends Seeder
             ['name' => 'Lower Parel', 'pincode' => '400013', 'city_id' => '2' ]
         ];
 
-        Town::insert($towns);
+        foreach ($towns as $town) {
+            Town::updateOrCreate(
+                ['pincode' => $town['pincode']],
+                $town
+            );
+        }
     }
 }

@@ -20,8 +20,15 @@ class IncomeRangeSeeder extends Seeder
             ['name' => '>100000', 'starting_range' => 100001, 'ending_range' => 999999999],
         ];
         // Only insert name field, as only name is fillable
-        IncomeRange::insert(array_map(function ($item) {
-            return ['name' => $item['name'], 'starting_range' => $item['starting_range'], 'ending_range' => $item['ending_range']];
-        }, $incomeRanges));
+        foreach ($incomeRanges as $incomeRange) {
+            IncomeRange::updateOrCreate(
+                ['name' => $incomeRange['name']],
+                [
+                    'name' => $incomeRange['name'], 
+                    'starting_range' => $incomeRange['starting_range'], 
+                    'ending_range' => $incomeRange['ending_range']
+                ]
+            );
+        }
     }
 }
