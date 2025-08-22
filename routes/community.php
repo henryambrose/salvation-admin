@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CommunityController;
+use Modules\Members\Http\Controllers\CommunityController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

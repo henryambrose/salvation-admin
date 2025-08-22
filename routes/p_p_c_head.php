@@ -1,7 +1,7 @@
 <?php
 
+use Modules\Members\Http\Controllers\PPCHeadController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PPCHeadController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('ppc-head', '/ppc-head/index');

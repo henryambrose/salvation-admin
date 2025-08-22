@@ -1,13 +1,13 @@
 <?php
 
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\HandleInertiaRequests;
-use App\Http\Middleware\SuperAdminMiddleware;
+use Modules\Members\Http\Middleware\HandleAppearance;
+use Modules\Members\Http\Middleware\HandleInertiaRequests;
+use Modules\Members\Http\Middleware\SuperAdminMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
-use App\Http\Middleware\PreventBackHistory;
+use Modules\Members\Http\Middleware\PreventBackHistory;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -23,7 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            \App\Http\Middleware\RefreshSession::class,
+            \Modules\Members\Http\Middleware\RefreshSession::class,
             \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
         ]);
 

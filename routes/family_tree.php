@@ -1,7 +1,7 @@
 
 <?php
 
-use App\Http\Controllers\MemberController;
+use Modules\Members\Http\Controllers\MemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DesignationController;
+use Modules\Members\Http\Controllers\DesignationController;
 
 Route::middleware('auth')->group(function () {
     Route::get('designation/export', [DesignationController::class, 'export'])->name('designation.export');

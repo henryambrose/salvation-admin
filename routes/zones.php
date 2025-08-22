@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ZoneController;
+use Modules\Members\Http\Controllers\ZoneController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

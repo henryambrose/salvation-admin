@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ExternalMemberController;
+use Modules\Members\Http\Controllers\ExternalMemberController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {

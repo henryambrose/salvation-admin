@@ -2,18 +2,18 @@
 
 namespace Database\Factories;
 
-use App\Models\Member;
-use App\Models\Community;
-use App\Models\Gender;
-use App\Models\Status;
-use App\Models\Relationship;
-use App\Models\Country;
-use App\Models\State;
-use App\Models\City;
-use App\Models\Parish;
-use App\Models\Designation;
-use App\Models\BloodGroup;
-use App\Models\IncomeRange;
+use Modules\Members\Models\Member;
+use Modules\Members\Models\Community;
+use Modules\Members\Models\Gender;
+use Modules\Members\Models\Status;
+use Modules\Members\Models\Relationship;
+use Modules\Members\Models\Country;
+use Modules\Members\Models\State;
+use Modules\Members\Models\City;
+use Modules\Members\Models\Parish;
+use Modules\Members\Models\Designation;
+use Modules\Members\Models\BloodGroup;
+use Modules\Members\Models\IncomeRange;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class MemberFactory extends Factory

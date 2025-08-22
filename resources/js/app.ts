@@ -22,12 +22,33 @@ async function bootstrap() {
       console.debug('CSRF prefetch skipped:', e);
     }
 
-
   const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
   createInertiaApp({
       title: (title) => `${title} - ${appName}`,
-      resolve: (name) => resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue')),
+      resolve: async (name) => {
+          // List of pages that are in PagesMembers directory
+          const memberPages = ['Dashboard', 'member/Index', 'community/Index']; // Add more as needed
+          
+          try {
+              if (memberPages.some(page => name.startsWith(page))) {
+                  return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
+              } else {
+                  return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
+              }
+          } catch (error) {
+              // Fallback: try the other directory
+              try {
+                  if (memberPages.some(page => name.startsWith(page))) {
+                      return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
+                  } else {
+                      return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
+                  }
+              } catch (fallbackError) {
+                  throw new Error(`Page not found: ${name}`);
+              }
+          }
+      },
       setup({ el, App, props, plugin }) {
           createApp({ render: () => h(App, props) })
               .use(plugin)

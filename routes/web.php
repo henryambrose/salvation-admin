@@ -1,9 +1,9 @@
 <?php
 
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\RolePermissionController;
-use App\Http\Controllers\ChatController;
-use App\Http\Controllers\CatholicCalendarController;
+use Modules\Members\Http\Controllers\DashboardController;
+use Modules\Members\Http\Controllers\RolePermissionController;
+use Modules\Members\Http\Controllers\ChatController;
+use Modules\Members\Http\Controllers\CatholicCalendarController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -49,8 +49,8 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         
     // API routes for PPC Head and SCC Head member filtering
     Route::middleware('auth')->group(function () {
-        Route::get('api/ppc-community/{communityId}/members', [App\Http\Controllers\PPCHeadController::class, 'membersByCommunity']);
-        Route::get('api/community/{communityId}/members', [App\Http\Controllers\SCCHeadController::class, 'membersByCommunity']);
+        Route::get('api/ppc-community/{communityId}/members', [Modules\Members\Http\Controllers\PPCHeadController::class, 'membersByCommunity']);
+        Route::get('api/community/{communityId}/members', [Modules\Members\Http\Controllers\SCCHeadController::class, 'membersByCommunity']);
     });
 });
 

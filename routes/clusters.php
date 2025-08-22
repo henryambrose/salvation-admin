@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\ClusterController;
+use Modules\Members\Http\Controllers\ClusterController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

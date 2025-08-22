@@ -1,7 +1,7 @@
 <?php
 
+use Modules\Members\Http\Controllers\StatusController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StatusController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('status', '/status/index');

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CellsAndAssociationController;
+use Modules\Members\Http\Controllers\CellsAndAssociationController;
 
 Route::middleware('auth')->group(function () {
     Route::resource('cells-and-association', CellsAndAssociationController::class);

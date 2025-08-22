@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\GenderController;
+use Modules\Members\Http\Controllers\GenderController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('gender', '/gender/index');

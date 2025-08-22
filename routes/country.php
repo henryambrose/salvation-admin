@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\CountryController;
+use Modules\Members\Http\Controllers\CountryController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

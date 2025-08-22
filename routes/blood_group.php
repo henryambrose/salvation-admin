@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\BloodGroupController;
+use Modules\Members\Http\Controllers\BloodGroupController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

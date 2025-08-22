@@ -31,9 +31,14 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Modules\\Members\\": "app/Modules/Members/",
             "Database\\Factories\\": "database/factories/",
-            "Database\\Seeders\\": "database/seeders/"
-        }
+            "Database\\Seeders\\": "database/seeders/",
+            "Modules\\Members\\Database\\Seeders\\": "database/modules/members/database/seeders/"
+        },
+        "classmap": [
+            "database/modules/members/database/seeders/"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

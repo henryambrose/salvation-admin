@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\IncomeRangeController;
+use Modules\Members\Http\Controllers\IncomeRangeController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->group(function () {

@@ -1,7 +1,7 @@
 <?php
 
+use Modules\Members\Http\Controllers\SCCHeadController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SCCHeadController;
 
 Route::middleware('auth')->group(function () {
     Route::redirect('scc-head', '/scc-head/index');

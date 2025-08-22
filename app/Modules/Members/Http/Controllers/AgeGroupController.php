@@ -1,0 +1,121 @@
+<?php
+
+namespace Modules\Members\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Modules\Members\Http\Requests\StoreAgeGroupRequest;
+use Modules\Members\Http\Requests\UpdateAgeGroupRequest;
+use Modules\Members\Models\AgeGroup;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class AgeGroupController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index(Request $request): Response
+    {
+
+        $query = AgeGroup::query();
+
+        // Handle archived records
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        if ($search = $request->input('search')) {
+            $query->where('name', 'like', "%$search%");
+        }
+
+        if ($sort = $request->input('sort')) {
+            $query->orderBy($sort, $request->input('direction', 'asc'));
+        } else {
+            $query->orderBy('id', 'asc');
+        }
+
+        $perPage = $request->input('perPage', 10);
+
+        return Inertia::render('age_group/Index', [
+            'fetchUrl' => route('age-group.index'),
+            'ageGroups' => $query->paginate($perPage)->appends($request->query()),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        return Inertia::render('age_group/Create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(StoreAgeGroupRequest $request)
+    {
+        AgeGroup::create($request->validated());
+
+        return redirect()->route('age-group.index')->with('success', 'Age Group created successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(AgeGroup $ageGroup)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(AgeGroup $ageGroup)
+    {
+        return Inertia::render('age_group/Edit', [
+            'ageGroup' => $ageGroup,
+        ]);
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(UpdateAgeGroupRequest $request, AgeGroup $ageGroup)
+    {
+        $ageGroup->update($request->validated());
+
+        return redirect()->route('age-group.index')->with('success', 'Age Group updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(Request $request, AgeGroup $ageGroup)
+    {
+        $ageGroup->delete();
+
+        // Preserve current state after deletion
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        return redirect()->route('age-group.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Age Group deleted successfully.');
+    }
+
+    public function restore($id)
+    {
+        $ageGroup = AgeGroup::onlyTrashed()->findOrFail($id);
+        $ageGroup->restore();
+
+        return redirect()->route('age-group.index')->with('success', 'Age Group restored successfully.');
+    }
+}

@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\CellsAndAssociationMemberController;
+use Modules\Members\Http\Controllers\CellsAndAssociationMemberController;
 
 Route::middleware('auth')->group(function () {
     Route::get('cells-and-association-members/export', [CellsAndAssociationMemberController::class, 'export'])->name('cells-and-association-members.export');

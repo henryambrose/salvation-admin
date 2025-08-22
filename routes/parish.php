@@ -1,7 +1,7 @@
 <?php
 
+use Modules\Members\Http\Controllers\ParishController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ParishController;
 
 Route::middleware('auth')->group(function () {
   Route::redirect('parish', '/parish/index');
