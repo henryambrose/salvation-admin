@@ -20,14 +20,60 @@
             </div>
           </div>
           
-          <!-- User Info -->
+          <!-- App Switcher -->
           <div class="flex items-center space-x-4">
-            <div class="text-right">
-              <p class="text-sm font-medium text-gray-900">{{ user?.name || 'User' }}</p>
-              <p class="text-xs text-gray-500">{{ user?.roles?.[0]?.name || 'Guest' }}</p>
+            <div class="relative app-switcher">
+              <button
+                @click="toggleAppSwitcher"
+                class="flex items-center space-x-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+              >
+                <span class="text-sm font-medium text-gray-700">{{ currentApp === 'fund' ? 'Fund App' : 'Members App' }}</span>
+                <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </button>
+              
+              <!-- App Switcher Dropdown -->
+              <div v-if="showAppSwitcher" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                <div class="py-2">
+                  <button
+                    @click="switchToApp('members')"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                  >
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    <span>Members App</span>
+                  </button>
+                  <button
+                    @click="switchToApp('fund')"
+                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                  >
+                    <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+                    </svg>
+                    <span>Fund App</span>
+                  </button>
+                </div>
+              </div>
             </div>
-            <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-              <span class="text-sm font-medium text-gray-700">{{ user?.name?.charAt(0) || 'U' }}</span>
+            
+            <!-- User Info -->
+            <div class="flex items-center space-x-4">
+              <div class="text-right">
+                <p class="text-sm font-medium text-gray-900">{{ user?.name || 'Guest User' }}</p>
+                <p class="text-xs text-gray-500">{{ user?.roles?.[0]?.name || 'No Role Assigned' }}</p>
+              </div>
+              <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
+                <span class="text-sm font-medium text-gray-700">{{ user?.name?.charAt(0) || 'G' }}</span>
+              </div>
+              <!-- Logout Button -->
+              <button
+                @click="logout"
+                class="px-3 py-1 text-xs bg-red-100 hover:bg-red-200 text-red-700 rounded-md transition-colors duration-200"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -58,21 +104,10 @@
 
           <!-- Action Buttons -->
           <div class="space-y-3">
-            <!-- Go Back Button -->
+            <!-- Switch to Members App Button -->
             <button
-              @click="goBack"
-              class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-              </svg>
-              Go Back
-            </button>
-
-            <!-- Switch to Members Button -->
-            <button
-              @click="goToMembers"
-              class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+              @click="switchToApp('members')"
+              class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
@@ -113,31 +148,7 @@
           </ul>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
-          <h3 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            Alternative Actions:
-          </h3>
-          <div class="grid grid-cols-2 gap-3">
-            <button
-              @click="goToDashboard"
-              class="text-left p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors duration-200"
-            >
-              <div class="font-medium text-sm text-gray-900">Dashboard</div>
-              <div class="text-xs text-gray-500">Main dashboard</div>
-            </button>
-            <button
-              @click="goToUsers"
-              class="text-left p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-colors duration-200"
-            >
-              <div class="font-medium text-sm text-gray-900">User Management</div>
-              <div class="text-xs text-gray-500">Manage permissions</div>
-            </button>
-          </div>
-        </div>
+
       </div>
     </div>
   </div>
@@ -145,6 +156,7 @@
 
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
+import { ref, computed, onMounted } from 'vue';
 
 interface Props {
   message?: string;
@@ -156,16 +168,50 @@ const props = withDefaults(defineProps<Props>(), {
   user: null
 });
 
-const goBack = () => {
-  if (window.history.length > 1) {
-    window.history.back();
+// App switcher state
+const showAppSwitcher = ref(false);
+const currentApp = ref('fund');
+
+// Determine current app based on URL
+onMounted(() => {
+  const path = window.location.pathname;
+  if (path.startsWith('/fund')) {
+    currentApp.value = 'fund';
   } else {
-    router.visit('/');
+    currentApp.value = 'members';
+  }
+  
+  // Close app switcher when clicking outside
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    if (!target.closest('.app-switcher')) {
+      showAppSwitcher.value = false;
+    }
+  });
+});
+
+const toggleAppSwitcher = () => {
+  showAppSwitcher.value = !showAppSwitcher.value;
+};
+
+const switchToApp = (app: string) => {
+  showAppSwitcher.value = false;
+  currentApp.value = app;
+  
+  if (app === 'fund') {
+    router.visit('/fund');
+  } else {
+    router.visit('/dashboard');
   }
 };
 
 const goToDashboard = () => {
-  router.visit('/dashboard');
+  // Smart dashboard routing based on user permissions
+  if (currentApp.value === 'fund') {
+    router.visit('/fund');
+  } else {
+    router.visit('/dashboard');
+  }
 };
 
 const goToMembers = () => {
@@ -174,5 +220,9 @@ const goToMembers = () => {
 
 const goToUsers = () => {
   router.visit('/users');
+};
+
+const logout = () => {
+  router.get('/logout');
 };
 </script>

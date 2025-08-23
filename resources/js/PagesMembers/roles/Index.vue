@@ -6,7 +6,7 @@
           <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-semibold">Role Management</h1>
             <Button 
-              @click="openCreateModal"
+              @click="goToCreateRole"
               class="bg-blue-600 hover:bg-blue-700"
               :disabled="!canCreateRole"
             >
@@ -30,7 +30,7 @@
                 <div class="flex space-x-2">
                   <Button 
                     v-if="canUpdateRole"
-                    @click="openEditModal(role)"
+                    @click="goToEditRole(role)"
                     variant="outline"
                     size="sm"
                   >
@@ -100,7 +100,7 @@
               <p class="mt-1 text-sm text-gray-500">Get started by creating your first role.</p>
               <div class="mt-6">
                 <Button 
-                  @click="openCreateModal"
+                  @click="goToCreateRole"
                   class="bg-blue-600 hover:bg-blue-700"
                   :disabled="!canCreateRole"
                 >
@@ -114,14 +114,7 @@
       </div>
     </div>
 
-    <!-- Create/Edit Role Modal -->
-    <RoleModal 
-      v-if="showModal"
-      :role="editingRole"
-      :permissions="allPermissions"
-      @close="closeModal"
-      @saved="onRoleSaved"
-    />
+
 
     <!-- Permissions Modal -->
     <PermissionsModal 
@@ -158,7 +151,6 @@ import { Button } from '@/components/ui/button';
 import { Plus, Pencil, Trash } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
-import RoleModal from './RoleModal.vue';
 import PermissionsModal from './PermissionsModal.vue';
 import UsersModal from './UsersModal.vue';
 import DeleteModal from '@/components/DeleteModal.vue';
@@ -187,11 +179,9 @@ const props = defineProps({
 });
 
 // Reactive state
-const showModal = ref(false);
 const showPermissionsModal = ref(false);
 const showUsersModal = ref(false);
 const showDeleteModal = ref(false);
-const editingRole = ref(null);
 const selectedRole = ref(null);
 const deletingRole = ref(null);
 
@@ -200,14 +190,12 @@ const allPermissions = computed(() => props.permissions || []);
 const roles = computed(() => props.roles || []);
 
 // Methods
-function openCreateModal() {
-  editingRole.value = null;
-  showModal.value = true;
+function goToCreateRole() {
+  router.visit(route('roles.create'));
 }
 
-function openEditModal(role) {
-  editingRole.value = role;
-  showModal.value = true;
+function goToEditRole(role) {
+  router.visit(route('roles.edit', role.id));
 }
 
 function openPermissionsModal(role) {
@@ -225,11 +213,6 @@ function openDeleteModal(role) {
   showDeleteModal.value = true;
 }
 
-function closeModal() {
-  showModal.value = false;
-  editingRole.value = null;
-}
-
 function closePermissionsModal() {
   showPermissionsModal.value = false;
   selectedRole.value = null;
@@ -243,12 +226,6 @@ function closeUsersModal() {
 function closeDeleteModal() {
   showDeleteModal.value = false;
   deletingRole.value = null;
-}
-
-function onRoleSaved() {
-  closeModal();
-  // Refresh the page to get updated data
-  window.location.reload();
 }
 
 function onPermissionsSaved() {
