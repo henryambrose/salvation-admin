@@ -1027,62 +1027,62 @@ class MemberController extends Controller
         }
     }
 
-    // public function searchMembers(Request $request)
-    // {
-    //     $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
-    //     $limit = $request->input('limit', 10);
-    //     $familyNo = $request->input('familyNo'); // Add this parameter
+    public function searchMembers(Request $request)
+    {
+        $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
+        $limit = $request->input('limit', 10);
+        $familyNo = $request->input('familyNo'); // Add this parameter
 
-    //     if (empty($query)) {
-    //         return response()->json([]);
-    //     }
+        if (empty($query)) {
+            return response()->json([]);
+        }
 
-    //     $members = Member::with(['community', 'relationship', 'gender']);
+        $members = Member::with(['community', 'relationship', 'gender']);
 
-    //     // Check if query is a numeric ID
-    //     if (is_numeric($query)) {
-    //         // Search by ID
-    //         $members = $members->where('id', $query);
-    //     } else {
-    //         // Search by name, member number, or family number (existing logic)
-    //         if (strlen($query) < 2) {
-    //             return response()->json([]);
-    //         }
+        // Check if query is a numeric ID
+        if (is_numeric($query)) {
+            // Search by ID
+            $members = $members->where('id', $query);
+        } else {
+            // Search by name, member number, or family number (existing logic)
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
 
-    //         $members = $members->where(function ($q) use ($query) {
-    //             $q->where('first_name', 'like', "%{$query}%")
-    //                 ->orWhere('last_name', 'like', "%{$query}%")
-    //                 ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
-    //                 ->orWhere('member_no', 'like', "%{$query}%")
-    //                 ->orWhere('family_no', 'like', "%{$query}%");
-    //         });
-    //     }
+            $members = $members->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhere('member_no', 'like', "%{$query}%")
+                    ->orWhere('family_no', 'like', "%{$query}%");
+            });
+        }
 
-    //     // Apply family number filter if provided
-    //     if ($familyNo) {
-    //         $members = $members->where('family_no', $familyNo);
-    //     }
+        // Apply family number filter if provided
+        if ($familyNo) {
+            $members = $members->where('family_no', $familyNo);
+        }
 
-    //     $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
-    //         ->limit($limit)
-    //         ->get()
-    //         ->map(function ($member) {
-    //             return [
-    //                 'id' => $member->id,
-    //                 'text' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$member->family_no}",
-    //                 'member_no' => $member->member_no,
-    //                 'family_no' => $member->family_no,
-    //                 'full_name' => "{$member->first_name} {$member->last_name}",
-    //                 'first_name' => $member->first_name,
-    //                 'last_name' => $member->last_name,
-    //                 'community' => $member->community->name ?? '',
-    //                 'relationship' => $member->relationship->name ?? '',
-    //                 'gender' => $member->gender->name ?? '',
-    //             ];
-    //         });
+        $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
+            ->limit($limit)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'text' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$member->family_no}",
+                    'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
+                    'full_name' => "{$member->first_name} {$member->last_name}",
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'community' => $member->community->name ?? '',
+                    'relationship' => $member->relationship->name ?? '',
+                    'gender' => $member->gender->name ?? '',
+                ];
+            });
 
-    //     return response()->json($members);
-    // }
+        return response()->json($members);
+    }
 
     //for viewmembermodal leadership roles tab
     public function getMemberDetails($id)

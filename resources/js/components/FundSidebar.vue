@@ -4,7 +4,7 @@
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton size="lg" as-child>
-            <Link :href="route('fund.dashboard')">
+            <Link :href="'/fund'">
               <AppLogo />
             </Link>
           </SidebarMenuButton>
@@ -60,19 +60,19 @@ const fundNavigationGroups = [
     items: [
       {
         title: 'Dashboard',
-        href: route('fund.dashboard'),
+        href: '/fund',
         icon: Home,
         show: true,
       },
       {
         title: 'Annual Contributions',
-        href: route('fund.annual-contributions.index'),
+        href: '/fund/annual-contributions',
         icon: DollarSign,
         show: can('read-annual-contributions') || true, // Default to true for now
       },
       {
         title: 'Mass Intentions',
-        href: route('fund.mass-intentions.index'),
+        href: '/fund/mass-intentions',
         icon: Calendar,
         show: can('read-mass-intentions') || true, // Default to true for now
       },

@@ -65,7 +65,12 @@ async function bootstrap() {
           try {
               // First, try to resolve based on explicit fund pages (higher priority for Fund app)
               if (fundPages.some(page => name.startsWith(page))) {
-                  return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+                  // Check if the name contains a slash (nested structure like Dashboard/Index)
+                  if (name.includes('/')) {
+                      return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+                  } else {
+                      return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+                  }
               }
               
               // Then, try to resolve based on explicit member pages

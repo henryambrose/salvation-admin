@@ -16,10 +16,22 @@ const page = usePage<SharedData>();
 
 // Get current URL path from window.location for more reliable path detection
 const getCurrentPath = () => {
-  return window.location.pathname;
+  const path = window.location.pathname;
+  return path;
 };
 
 const isActivePage = (itemHref: string, currentUrl: string): boolean => {
+  // Handle Fund routes with more precise matching
+  if (itemHref.includes('/fund/') || itemHref === '/fund') {
+    // For exact matches like /fund, only match if current URL is exactly /fund
+    if (itemHref === '/fund') {
+      return currentUrl === '/fund';
+    }
+    // For other Fund routes, check if current URL starts with the item href
+    // This handles: /fund/annual-contributions, /fund/annual-contributions/create, etc.
+    return currentUrl.startsWith(itemHref);
+  }
+  
   // Handle clashing URLs first - use exact match for URLs that might clash with others
   if (itemHref === '/cells-and-association' || itemHref === '/cells-and-association-members') {
     return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
@@ -100,7 +112,12 @@ const handleNavigation = (href: string) => {
       </SidebarGroupLabel>
       <SidebarMenu class="space-y-1">
         <SidebarMenuItem v-for="item in group.items" :key="item.title">
-          <SidebarMenuButton :is-active="isActivePage(item.href, getCurrentPath())" :tooltip="item.title" class="gap-1" @click="handleNavigation(item.href)">
+          <SidebarMenuButton 
+            :is-active="isActivePage(item.href, getCurrentPath())" 
+            :tooltip="item.title" 
+            class="gap-1" 
+            @click="handleNavigation(item.href)"
+          >
             <component :is="item.icon" />
             <span>{{ item.title }}</span>
           </SidebarMenuButton>

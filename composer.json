@@ -35,10 +35,12 @@
             "Modules\\Fund\\": "app/Modules/Fund/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
-            "Modules\\Members\\Database\\Seeders\\": "database/modules/members/database/seeders/"
+            "Modules\\Members\\Database\\Seeders\\": "database/modules/members/database/seeders/",
+            "Modules\\Fund\\Database\\Seeders\\": "database/modules/fund/database/seeders/"
         },
         "classmap": [
-            "database/modules/members/database/seeders/"
+            "database/modules/members/database/seeders/",
+            "database/modules/fund/database/seeders/"
         ]
     },
     "autoload-dev": {

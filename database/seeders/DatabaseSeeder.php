@@ -12,5 +12,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             \Modules\Members\Database\Seeders\DatabaseSeeder::class,
         ]);
+
+        // Call the Fund module seeders
+        $this->call([
+            \Modules\Fund\Database\Seeders\DatabaseSeeder::class,
+        ]);
     }
 }

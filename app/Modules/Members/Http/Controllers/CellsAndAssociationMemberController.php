@@ -239,13 +239,14 @@ class CellsAndAssociationMemberController extends Controller
             return response()->json([]);
         }
 
-        $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'community_id')
+        $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
             ->with('community:id,name')
             ->where(function($query) use ($search) {
                 $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
                     ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
                     ->orWhere('member_no', 'like', "%{$search}%")
+                    ->orWhere('family_no', 'like', "%{$search}%")
                     ->orWhereHas('community', function ($q) use ($search) {
                         $q->where('name', 'like', "%{$search}%");
                     });
@@ -259,6 +260,7 @@ class CellsAndAssociationMemberController extends Controller
                     'first_name' => $member->first_name,
                     'last_name' => $member->last_name,
                     'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
                     'community_name' => $member->community->name ?? 'N/A'
                 ];
             });
@@ -269,7 +271,7 @@ class CellsAndAssociationMemberController extends Controller
     public function getMemberById($id)
     {
         $member = Member::with('community:id,name')
-            ->select('id', 'first_name', 'last_name', 'member_no', 'community_id')
+            ->select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
             ->find($id);
 
         if (! $member) {
@@ -282,6 +284,7 @@ class CellsAndAssociationMemberController extends Controller
             'first_name' => $member->first_name,
             'last_name' => $member->last_name,
             'member_no' => $member->member_no,
+            'family_no' => $member->family_no,
             'community_name' => $member->community->name ?? 'N/A'
         ]);
     }
