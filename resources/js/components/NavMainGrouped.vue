@@ -22,14 +22,19 @@ const getCurrentPath = () => {
 
 const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   // Handle Fund routes with more precise matching
-  if (itemHref.includes('/fund/') || itemHref === '/fund') {
-    // For exact matches like /fund, only match if current URL is exactly /fund
-    if (itemHref === '/fund') {
-      return currentUrl === '/fund';
-    }
-    // For other Fund routes, check if current URL starts with the item href
+  if (itemHref === '/fund') {
+    // Dashboard should only be active when exactly on /fund
+    const isActive = currentUrl === '/fund';
+    console.log(`Dashboard (${itemHref}): currentUrl=${currentUrl}, isActive=${isActive}`);
+    return isActive;
+  }
+  
+  if (itemHref.startsWith('/fund/')) {
+    // For Fund sub-routes, check if current URL starts with the item href
     // This handles: /fund/annual-contributions, /fund/annual-contributions/create, etc.
-    return currentUrl.startsWith(itemHref);
+    const isActive = currentUrl.startsWith(itemHref);
+    console.log(`Fund sub-route (${itemHref}): currentUrl=${currentUrl}, isActive=${isActive}`);
+    return isActive;
   }
   
   // Handle clashing URLs first - use exact match for URLs that might clash with others
