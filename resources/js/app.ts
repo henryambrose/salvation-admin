@@ -57,7 +57,7 @@ async function bootstrap() {
           
           // List of pages that are in PagesFund directory
           const fundPages = [
-              'Dashboard',
+              'FundDashboard',
               'AnnualContributions',
               'MassIntentions'
           ]; // All fund module components

@@ -10,6 +10,11 @@
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
+      
+      <!-- App Switcher on the right side -->
+      <div class="ml-auto">
+        <AppSwitcher />
+      </div>
     </SidebarHeader>
 
     <SidebarContent>
@@ -44,6 +49,7 @@ import {
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
+import AppSwitcher from '@/components/AppSwitcher.vue';
 
 const { can } = permissionHelpers();
 

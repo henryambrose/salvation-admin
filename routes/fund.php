@@ -17,7 +17,7 @@ use Modules\Fund\Http\Controllers\AnnualContributionController;
 Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     // Dashboard
     Route::get('/', function () {
-        return inertia('Dashboard');
+        return inertia('FundDashboard');
     })->name('dashboard');
 
     // Annual Contributions
