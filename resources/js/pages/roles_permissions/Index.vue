@@ -18,7 +18,16 @@ const props = defineProps<{
     name: string;
     description: string;
     is_default: boolean;
-    permissions: Array<{ id: number; slug: string; }>;
+    permissions: Array<{ id: number; slug: string }>;
+  }>;
+  permissionsByCategory: Record<string, any[]>;
+  categories: Array<{
+    id: number;
+    name: string;
+    slug: string;
+    color: string;
+    sort_order: number;
+    description: string;
   }>;
 }>();
 
@@ -26,103 +35,239 @@ const props = defineProps<{
 const canManageRoles = can('manage-roles');
 const canViewRoles = can('read-role');
 
-const actions = ['create', 'read', 'update', 'delete', 'list', 'restore'];
-
-const selectedRoleId = ref(props.roles.length > 0 ? props.roles[0].id : 0);
+const selectedRoleId = ref<number | null>(null);
 const selectedGroupId = ref('custom');
-const permissionState = ref(props.permissions[selectedRoleId.value] ? JSON.parse(JSON.stringify(props.permissions[selectedRoleId.value])) : {});
+const expandedCategories = ref<Set<string>>(new Set(['Core Management']));
+const isApplyingGroup = ref(false);
+
+
 
 // Add Role Modal State
 const showAddRoleModal = ref(false);
 const newRoleForm = ref({
   name: '',
   description: '',
-  is_default: false
+  is_default: false,
 });
 
-// Define module order to match sidebar navigation
-const moduleOrder = [
-  'member', 'community', 'parish', // Core Management
-  'zone', 'community-cluster', 'cluster', 'cells-and-association', 'cells-and-association-member', // Organizational Structure
-  'scc-head', 'ppc-head', // Leadership
-  'relationship', 'designation', 'age-group', 'blood-group', 'gender', 'status', 'income-range', // Member Attributes
-  'country', 'state', 'city', 'town', // Geographic Data
-  'users', 'role', // System Management
-  'dashboard', // Special Pages
-  'data-verification' // Data Management
-];
-
-// Sort modules to match sidebar order
-const sortedModules = computed(() => {
-  return [...props.modules].sort((a, b) => {
-    const aIndex = moduleOrder.indexOf(a.slug);
-    const bIndex = moduleOrder.indexOf(b.slug);
-    return aIndex - bIndex;
-  });
-});
-
-watch(selectedRoleId, (newRoleId) => {
-  if (newRoleId && props.permissions[newRoleId]) {
-    permissionState.value = JSON.parse(JSON.stringify(props.permissions[newRoleId]));
-  } else {
-    permissionState.value = {};
-  }
-  // Reset group selection when role changes
-  selectedGroupId.value = 'custom';
-});
-
-watch(selectedGroupId, (newGroupId) => {
-  applyPermissionGroup(newGroupId);
-});
-
-function getActionForModule(module: any, actionName: string) {
-  return module.actions.find((action: any) => action.action === actionName);
+// Helper function to get category name safely
+function getCategoryName(category: any): string {
+  return typeof category === 'object' ? category.name : category;
 }
 
-function togglePermission(moduleId: number, actionId: number) {
-  if (permissionState.value[moduleId] && typeof permissionState.value[moduleId][actionId] !== 'undefined') {
-    permissionState.value[moduleId][actionId] = permissionState.value[moduleId][actionId] ? 0 : 1;
+// Helper function to get clean permission display name
+function getPermissionDisplayName(permission: any): string {
+  // Extract the base permission name from the slug
+  // e.g., "create-member" -> "member", "read-community" -> "community"
+  const slug = permission.slug || '';
+  
+  // Remove action prefixes
+  const actions = ['create-', 'read-', 'update-', 'delete-', 'list-', 'restore-'];
+  let cleanName = slug;
+  
+  for (const action of actions) {
+    if (slug.startsWith(action)) {
+      cleanName = slug.replace(action, '');
+      break;
+    }
   }
+  
+  // Convert to title case and replace hyphens with spaces
+  return cleanName
+    .split('-')
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
-function applyPermissionGroup(groupId: string) {
-  if (groupId === 'custom') {
-    return; // Keep current manual selection
+// Helper function to get base permission name without action prefix
+function getPermissionBaseName(permission: any): string {
+  const slug = permission.slug || '';
+  
+  // Remove action prefixes
+  const actions = ['create-', 'read-', 'update-', 'delete-', 'list-', 'restore-'];
+  let baseName = slug;
+  
+  for (const action of actions) {
+    if (slug.startsWith(action)) {
+      baseName = slug.replace(action, '');
+      break;
+    }
   }
+  
+  return baseName;
+}
 
-  const group = props.permissionGroups.find(g => g.id.toString() === groupId);
-  if (!group) return;
-
-  // Reset all permissions to 0
-  const newPermissionState: Record<number, Record<number, number>> = {};
-  props.modules.forEach(module => {
-    newPermissionState[module.id] = {};
-    module.actions.forEach(action => {
-      newPermissionState[module.id][action.id] = 0;
-    });
+// Helper function to get unique models for a category
+function getUniqueModelsForCategory(categoryName: string): string[] {
+  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
+    return [];
+  }
+  
+  const models = new Set<string>();
+  const permissions = props.permissionsByCategory[categoryName];
+  
+  permissions.forEach((permission: any) => {
+    // Spatie permissions have a 'name' property like "create-member", "read-member"
+    const permissionName = permission.name || permission.slug || '';
+    const modelName = getPermissionBaseName({ slug: permissionName });
+    if (modelName) {
+      models.add(modelName);
+    }
   });
+  
+  return Array.from(models).sort();
+}
 
-  // Set permissions based on the selected group
-  group.permissions.forEach(permission => {
-    // Find the module action by slug and set it to 1
-    props.modules.forEach(module => {
-      module.actions.forEach(action => {
-        if (action.slug === permission.slug) {
-          newPermissionState[module.id][action.id] = 1;
+// Helper function to format model name for display
+function formatModelName(modelName: string): string {
+  return modelName
+    .split('-')
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+// Get the selected role
+const selectedRole = computed(() => {
+  if (!selectedRoleId.value) return null;
+  return props.roles.find(role => role.id === selectedRoleId.value);
+});
+
+// Get category headers for better organization
+const getCategoryHeaders = computed(() => {
+  if (props.categories && props.categories.length > 0) {
+    return props.categories
+      .filter(category => {
+        return Object.keys(props.permissionsByCategory || {}).some(key => 
+          key === category.name
+        );
+      })
+      .sort((a, b) => a.sort_order - b.sort_order);
+  }
+  
+  // Fallback to hardcoded categories
+  return [
+    'Core Management',
+    'Organizational Structure', 
+    'Leadership',
+    'Member Attributes',
+    'Geographic Data',
+    'System Management',
+    'Fund App Management',
+    'Data Management',
+    'AI Assistance',
+    'Dashboard'
+  ];
+});
+
+// Get all unique actions from permissions
+const allActions = computed(() => {
+  const actions = new Set<string>();
+  
+  if (props.permissionsByCategory) {
+    Object.values(props.permissionsByCategory).forEach(categoryPermissions => {
+      categoryPermissions.forEach(permission => {
+        if (permission.action) {
+          actions.add(permission.action);
         }
       });
     });
-  });
+  }
+  
+  // Fallback to common actions
+  if (actions.size === 0) {
+    ['create', 'read', 'update', 'delete', 'list', 'restore'].forEach(action => actions.add(action));
+  }
+  
+  return Array.from(actions).sort();
+});
 
-  permissionState.value = newPermissionState;
+// Check if a role has a specific permission
+function hasPermission(roleId: number, permissionSlug: string): boolean {
+  const role = props.roles.find((r) => r.id === roleId);
+  if (!role) return false;
+
+  // Check if the role has this permission based on the permissions state
+  for (const module of props.modules) {
+    for (const action of module.actions) {
+      if (action.slug === permissionSlug) {
+        // Check if this role has this permission
+        const rolePermissions = props.permissions[roleId];
+        if (rolePermissions && (rolePermissions as any)[module.id]) {
+          return (rolePermissions as any)[module.id][action.id] === 1;
+        }
+        return false;
+      }
+    }
+  }
+
+  return false;
 }
 
+// Toggle permission for a role
+function togglePermission(roleId: number, permissionSlug: string) {
+  // Find the module and action for this permission
+  for (const module of props.modules) {
+    for (const action of module.actions) {
+      if (action.slug === permissionSlug) {
+        // Toggle the permission state
+        if (!props.permissions[roleId]) {
+          props.permissions[roleId] = {};
+        }
+        if (!(props.permissions as any)[roleId][module.id]) {
+          (props.permissions as any)[roleId][module.id] = {};
+        }
+
+        const currentValue = (props.permissions as any)[roleId][module.id][action.id] || 0;
+        (props.permissions as any)[roleId][module.id][action.id] = currentValue === 1 ? 0 : 1;
+        return;
+      }
+    }
+  }
+}
+
+// Toggle category expansion
+function toggleCategory(categoryName: string) {
+  if (expandedCategories.value.has(categoryName)) {
+    expandedCategories.value.delete(categoryName);
+  } else {
+    expandedCategories.value.add(categoryName);
+  }
+}
+
+// Apply permission group to selected role
+async function applyPermissionGroup(groupId: string) {
+  if (groupId === 'custom' || !selectedRoleId.value) {
+    return;
+  }
+
+  isApplyingGroup.value = true;
+  
+  try {
+    const response = await router.post('/roles-permissions/apply-group', {
+      role_id: selectedRoleId.value,
+      group_id: groupId
+    }, {
+      preserveState: true,
+      onSuccess: () => {
+        // Reload the page to get updated permissions
+        router.reload();
+      },
+      onError: (errors) => {
+        console.error('Error applying permission group:', errors);
+        alert('Failed to apply permission group. Please try again.');
+      }
+    });
+  } catch (error) {
+    console.error('Error applying permission group:', error);
+        alert('Failed to apply permission group. Please try again.');
+  } finally {
+    isApplyingGroup.value = false;
+  }
+}
+
+// Save permissions
 function savePermissions() {
-  router.post('/roles-permissions/update', {
-    role_id: selectedRoleId.value,
-    permissions: permissionState.value,
-    selected_group_id: selectedGroupId.value,
-  });
+  console.log('Saving permissions...');
 }
 
 // Add Role Functions
@@ -131,7 +276,7 @@ function openAddRoleModal() {
   newRoleForm.value = {
     name: '',
     description: '',
-    is_default: false
+    is_default: false,
   };
 }
 
@@ -140,7 +285,7 @@ function closeAddRoleModal() {
   newRoleForm.value = {
     name: '',
     description: '',
-    is_default: false
+    is_default: false,
   };
 }
 
@@ -150,172 +295,318 @@ function createRole() {
     return;
   }
 
-  router.post('/roles-permissions/create-role', {
-    name: newRoleForm.value.name,
-  }, {
-    onSuccess: () => {
-      closeAddRoleModal();
-      router.reload();
+  router.post(
+    '/roles-permissions/create-role',
+    {
+      name: newRoleForm.value.name,
     },
-    onError: (errors) => {
-      if (errors.name) {
-        alert(errors.name);
-      } else {
-        alert('Failed to create role. Please try again.');
-      }
-    }
-  });
+    {
+      onSuccess: () => {
+        closeAddRoleModal();
+        router.reload();
+      },
+      onError: (errors) => {
+        if (errors.name) {
+          alert(errors.name);
+        } else {
+          alert('Failed to create role. Please try again.');
+        }
+      },
+    },
+  );
 }
 </script>
 
 <template>
   <AppLayout>
     <Head title="Role Permissions" />
-    <div v-if="canViewRoles" class="mx-auto max-w-4xl py-8">
+    <div v-if="canViewRoles" class="mx-auto max-w-7xl py-6 px-4">
+      <!-- Header Section -->
       <div class="mb-6 flex items-center justify-between">
-        <h2 class="text-2xl font-bold">Role Permissions</h2>
-        <button 
-          @click="router.visit('/roles-permissions/users')"
-          class="text-blue-600 hover:text-blue-800 transition px-4 py-2 rounded-lg hover:bg-blue-50"
-        >
-          Manage User Roles →
-        </button>
-      </div>
-      
-      <div class="mb-4 flex items-center gap-4">
-        <div class="flex-1">
-          <label class="mb-1 block font-semibold">Select Role</label>
-          <select v-model="selectedRoleId" class="w-full rounded-full border border-gray-200 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200">
-            <option v-for="role in props.roles" :key="role.id" :value="role.id">{{ (role as { id: number; name: string }).name }}</option>
-          </select>
+        <div>
+          <h1 class="text-3xl font-bold text-gray-900">Role Permissions</h1>
+          <p class="mt-2 text-gray-600">Manage permissions for different user roles</p>
         </div>
-        
-        <!-- Add Role Button -->
-        <div class="pt-6">
-          <Button 
+        <div class="flex items-center gap-3">
+          <Button
             v-if="canManageRoles"
             @click="openAddRoleModal"
-            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-full shadow transition"
+            class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700"
           >
-            + Add Role
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Role
           </Button>
         </div>
       </div>
-      
-      <!-- Permission Groups Section -->
-      <div class="mb-6 rounded-2xl bg-blue-50 p-6 border border-blue-200">
-        <h3 class="mb-4 text-lg font-semibold text-blue-800">Quick Permission Groups</h3>
-        <p class="mb-4 text-sm text-blue-600">Select a predefined permission group to quickly apply common permission sets, or choose "Custom" for manual selection.</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div v-for="group in props.permissionGroups" :key="group.id" 
-               class="relative">
-            <input 
-              type="radio" 
-              :id="`group-${group.id}`" 
-              :value="group.id.toString()" 
-              v-model="selectedGroupId"
-              class="sr-only"
-            />
-            <label 
-              :for="`group-${group.id}`" 
-              class="block p-4 rounded-xl border-2 cursor-pointer transition-all duration-200"
-              :class="selectedGroupId === group.id.toString() 
-                ? 'border-blue-500 bg-blue-100 shadow-md' 
-                : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-blue-50'"
+
+      <!-- Role Selection and Quick Actions -->
+      <div class="mb-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border border-blue-100">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <!-- Role Selection -->
+          <div class="lg:col-span-1">
+            <label class="block text-sm font-medium text-blue-900 mb-2">Select Role to Manage</label>
+            <select 
+              v-model="selectedRoleId" 
+              class="w-full rounded-lg border border-blue-200 px-4 py-3 bg-white text-blue-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <div class="flex items-start justify-between">
-                <div class="flex-1">
-                  <h4 class="font-semibold text-gray-900">{{ group.name }}</h4>
-                  <p class="text-sm text-gray-600 mt-1">{{ group.description }}</p>
-                  <div class="mt-2 text-xs text-gray-500">
-                    {{ group.permissions.length }} permissions
-                  </div>
-                </div>
-                <div v-if="selectedGroupId === group.id.toString()" 
-                     class="ml-3 text-blue-500">
-                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-            </label>
+              <option :value="null">Choose a role...</option>
+              <option v-for="role in props.roles" :key="role.id" :value="role.id">
+                {{ (role as { id: number; name: string }).name }}
+              </option>
+            </select>
+          </div>
+          
+          <!-- Quick Permission Groups -->
+          <div class="lg:col-span-2">
+            <label class="block text-sm font-medium text-blue-900 mb-2">Quick Permission Groups</label>
+            <div class="flex items-center gap-3">
+              <select 
+                v-model="selectedGroupId" 
+                class="flex-1 rounded-lg border border-blue-200 px-4 py-3 bg-white text-blue-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="custom">Custom Selection</option>
+                <option v-for="group in props.permissionGroups" :key="group.id" :value="group.id.toString()">
+                  {{ group.name }}
+                </option>
+              </select>
+              
+              <Button
+                @click="applyPermissionGroup(selectedGroupId)"
+                :disabled="selectedGroupId === 'custom' || !selectedRoleId"
+                class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-6 py-3"
+              >
+                <svg v-if="!isApplyingGroup" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <svg v-else class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {{ isApplyingGroup ? 'Applying...' : 'Apply Group' }}
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Info Text -->
+        <div class="mt-4 p-3 bg-blue-100 rounded-lg">
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div class="text-sm text-blue-800">
+              <strong>How it works:</strong> Select a role first, then choose a permission group (like "Read Only" or "Administrator") and click "Apply Group" to automatically assign all permissions for that group to the selected role. This will override any existing permissions for that role.
+            </div>
           </div>
         </div>
       </div>
-      
-      <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
-        <div class="overflow-x-auto rounded-xl border border-gray-100">
-          <table class="w-full border-collapse text-left">
-          <thead>
-              <tr class="bg-blue-50">
-                <th class="border-b p-3 font-semibold text-gray-700">Module</th>
-                <th v-for="action in actions" :key="action" class="border-b p-3 font-semibold text-gray-700 capitalize">{{ action }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="module in sortedModules" :key="module.id" class="even:bg-gray-50 hover:bg-blue-50 transition">
-              <td class="border-b p-3 font-semibold">{{ module.name }}</td>
-              <td v-for="actionName in actions" :key="actionName" class="border-b p-3 text-center">
-                <input 
-                  v-if="getActionForModule(module, actionName)"
-                  type="checkbox" 
-                  :checked="permissionState[module.id]?.[getActionForModule(module, actionName)?.id] === 1" 
-                  @change="togglePermission(module.id, getActionForModule(module, actionName)?.id)" 
-                  class="accent-blue-600 w-5 h-5 rounded-full border-gray-300 focus:ring-2 focus:ring-blue-200" 
-                />
-                <span v-else class="text-gray-300">-</span>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        </div>
-        <div class="mt-6 flex justify-end">
-            <Button v-if="canManageRoles" class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2" @click="savePermissions">
-              Save Permissions
-            </Button>
-        </div>
-      </div>
-    </div>
-    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view role permissions.</div>
 
-    <!-- Add Role Modal -->
-    <div v-if="showAddRoleModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Add New Role</h3>
-          
-          <div class="space-y-4">
-            <!-- Role Name -->
+      <!-- Role Title and Permissions Matrix -->
+      <div v-if="selectedRole" class="space-y-6">
+        <!-- Role Title -->
+        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+          <div class="flex items-center justify-between">
             <div>
-              <label class="block text-sm font-medium text-gray-700">Role Name</label>
-              <input 
-                v-model="newRoleForm.name"
-                type="text"
-                required
-                placeholder="Enter role name"
-                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
+              <h2 class="text-2xl font-bold text-gray-900">Role: {{ selectedRole.name }}</h2>
+              <p class="text-gray-600 mt-1">Manage permissions for this role</p>
+            </div>
+            <div class="flex gap-3">
+              <Button variant="outline" @click="router.reload()">
+                Reset Changes
+              </Button>
+              <Button
+                v-if="canManageRoles"
+                @click="savePermissions"
+                class="bg-blue-600 hover:bg-blue-700"
+              >
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Save Permissions
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Permission Matrix -->
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <!-- Table Header -->
+          <div class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+            <div class="grid gap-4 p-4" style="grid-template-columns: 300px repeat(6, 1fr);">
+              <div class="font-semibold text-gray-900">Permission</div>
+              <div class="text-center font-semibold text-gray-900">Create</div>
+              <div class="text-center font-semibold text-gray-900">Update</div>
+              <div class="text-center font-semibold text-gray-900">Delete</div>
+              <div class="text-center font-semibold text-gray-900">List</div>
+              <div class="text-center font-semibold text-gray-900">Read</div>
+              <div class="text-center font-semibold text-gray-900">Restore</div>
             </div>
           </div>
 
-          <div class="mt-6 flex justify-end space-x-3">
-            <Button 
-              @click="closeAddRoleModal"
-              variant="outline"
-              class="px-4 py-2"
+          <!-- Permission Categories -->
+          <div class="divide-y divide-gray-100">
+            <div 
+              v-for="category in getCategoryHeaders" 
+              :key="typeof category === 'object' ? category.id : category" 
+              class="bg-white"
             >
-              Cancel
-            </Button>
-            <Button 
-              @click="createRole"
-              class="bg-green-600 hover:bg-green-700 text-white px-4 py-2"
-            >
-              Create Role
-            </Button>
+              <!-- Category Header -->
+              <div 
+                @click="toggleCategory(getCategoryName(category))"
+                class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+              >
+                <div class="flex items-center gap-3">
+                  <div 
+                    class="w-3 h-3 rounded-full"
+                    :style="{ backgroundColor: typeof category === 'object' ? category.color : '#3B82F6' }"
+                  ></div>
+                  <h3 class="text-lg font-semibold text-gray-900">
+                    {{ getCategoryName(category) }}
+                  </h3>
+                  <span class="text-sm text-gray-500">
+                    ({{ (props.permissionsByCategory && props.permissionsByCategory[getCategoryName(category)]) ? props.permissionsByCategory[getCategoryName(category)].length : 0 }} permissions)
+                  </span>
+                </div>
+                <svg 
+                  class="w-5 h-5 text-gray-400 transition-transform"
+                  :class="{ 'rotate-180': expandedCategories.has(getCategoryName(category)) }"
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </div>
+
+              <!-- Category Permissions (Collapsible) -->
+              <div 
+                v-if="expandedCategories.has(getCategoryName(category))"
+                class="border-t border-gray-100 bg-gray-50"
+              >
+                <div 
+                  v-for="modelName in getUniqueModelsForCategory(getCategoryName(category))" 
+                  :key="modelName"
+                  class="grid gap-4 p-3 hover:bg-white transition-colors border-b border-gray-100 last:border-b-0"
+                  style="grid-template-columns: 300px repeat(6, 1fr);"
+                >
+                  <!-- Model Name -->
+                  <div class="flex items-center gap-3">
+                    <div class="w-2 h-2 rounded-full bg-gray-400"></div>
+                    <div>
+                      <div class="font-medium text-gray-900 text-sm capitalize">
+                        {{ formatModelName(modelName) }}
+                      </div>
+                      <div class="text-xs text-gray-500 font-mono">
+                        {{ modelName }}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Action Checkboxes -->
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `create-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `create-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `update-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `update-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `delete-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `delete-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `list-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `list-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `read-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `read-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                  <div class="flex justify-center">
+                    <input
+                      type="checkbox"
+                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `restore-${modelName}`) : false"
+                      @change="selectedRoleId && togglePermission(selectedRoleId, `restore-${modelName}`)"
+                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
+
+      <!-- No Role Selected Message -->
+      <div v-else class="text-center py-12">
+        <div class="max-w-md mx-auto">
+          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-gray-900">No role selected</h3>
+          <p class="mt-1 text-sm text-gray-500">Select a role from the dropdown above to manage its permissions.</p>
+        </div>
+      </div>
+    </div>
+    
+    <div v-else class="py-10 text-center text-gray-500">
+      You do not have permission to view role permissions.
+    </div>
+
+    <!-- Add Role Modal -->
+    <div v-if="showAddRoleModal" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Add New Role</h3>
+          <button @click="closeAddRoleModal" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Role Name</label>
+            <input
+              v-model="newRoleForm.name"
+              type="text"
+              required
+              placeholder="Enter role name"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
+        </div>
+
+        <div class="mt-6 flex justify-end space-x-3">
+          <Button @click="closeAddRoleModal" variant="outline">Cancel</Button>
+          <Button @click="createRole" class="bg-green-600 hover:bg-green-700">Create Role</Button>
         </div>
       </div>
     </div>
   </AppLayout>
 </template>
+
+

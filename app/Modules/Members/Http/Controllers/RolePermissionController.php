@@ -8,18 +8,80 @@ use Modules\Members\Models\PermissionGroup;
 use Modules\Members\Models\User;
 use Illuminate\Http\Request;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+use App\Models\PermissionCategory;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class RolePermissionController extends Controller
 {
     public function index()
     {
-        // Fetch roles, modules, and permissions from DB
+        // Fetch roles from Spatie
         $roles = Role::select(['id', 'name'])->whereNotIn('name', ['super admin'])->get();
+        
+        // Get modules for UI organization (keep this for now)
         $modules = Module::with('actions')->get();
+        
+        // Get all permissions from Spatie
+        $allPermissions = Permission::all();
+        
+        // Get categories with their rules for database-driven grouping
+        $categories = PermissionCategory::with('rules')
+            ->active()
+            ->ordered()
+            ->get();
+        
+        // Group permissions by category using priority-based rules
+        $permissionsByCategory = [];
+        $categorizedPermissions = [];
+        
+        // First pass: collect all matching permissions with their categories and priorities
+        foreach ($categories as $category) {
+            foreach ($category->rules as $rule) {
+                if (!$rule->is_active) continue;
+                
+                foreach ($allPermissions as $permission) {
+                    $matches = false;
+                    switch ($rule->rule_type) {
+                        case 'contains':
+                            $matches = str_contains(strtolower($permission->name), strtolower($rule->rule_value));
+                            break;
+                        case 'starts_with':
+                            $matches = str_starts_with(strtolower($permission->name), strtolower($rule->rule_value));
+                            break;
+                        case 'ends_with':
+                            $matches = str_ends_with(strtolower($permission->name), strtolower($rule->rule_value));
+                            break;
+                        case 'regex':
+                            $matches = preg_match($rule->rule_value, $permission->name);
+                            break;
+                    }
+                    
+                    if ($matches) {
+                        $categorizedPermissions[$permission->id] = [
+                            'permission' => $permission,
+                            'category' => $category->name,
+                            'priority' => $rule->priority
+                        ];
+                    }
+                }
+            }
+        }
+        
+        // Second pass: assign permissions to highest priority category
+        foreach ($categorizedPermissions as $permissionId => $data) {
+            $categoryName = $data['category'];
+            if (!isset($permissionsByCategory[$categoryName])) {
+                $permissionsByCategory[$categoryName] = [];
+            }
+            $permissionsByCategory[$categoryName][] = $data['permission'];
+        }
+        
+        // Build permissions matrix for roles (keeping existing logic for now)
         $permissions = [];
         $rolesPermissions = Role::with('permissions')->get()->pluck('permissions', 'id');
-
+        
         foreach ($rolesPermissions as $roleId => $rolePermissions) {
             $permissions[$roleId] = [];
             foreach ($modules as $module) {
@@ -47,12 +109,13 @@ class RolePermissionController extends Controller
         $permissionGroups = PermissionGroup::with('permissions')->get();
 
         return inertia('roles_permissions/Index', [
-            'rolesPermissions' => $rolesPermissions,
             'roles' => $roles,
             'modules' => $modules,
             'permissions' => $permissions,
             'modulesIdWise' => $modulesById,
             'permissionGroups' => $permissionGroups,
+            'permissionsByCategory' => $permissionsByCategory,
+            'categories' => $categories,
         ]);
     }
 
@@ -190,5 +253,112 @@ class RolePermissionController extends Controller
         });
 
         return redirect()->back()->with('success', 'Role created successfully.');
+    }
+
+    /**
+     * Apply a permission group to a role
+     */
+    public function applyGroup(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'group_id' => 'required|exists:permission_groups,id',
+        ]);
+
+        $role = Role::findOrFail($request->input('role_id'));
+        $permissionGroup = PermissionGroup::with('permissions')->findOrFail($request->input('group_id'));
+
+        // Get the permission slugs from the group
+        $permissionSlugs = $permissionGroup->getPermissionSlugs();
+
+        // Convert old permission slugs to Spatie permission names
+        // This is a mapping from old system to new system
+        $spatiePermissions = [];
+        
+        foreach ($permissionSlugs as $slug) {
+            // Try to find the permission in Spatie permissions table
+            $spatiePermission = Permission::where('name', $slug)->first();
+            if ($spatiePermission) {
+                $spatiePermissions[] = $spatiePermission->name;
+            }
+        }
+
+        // Sync the permissions to the role
+        $role->syncPermissions($spatiePermissions);
+
+        return redirect()->back()->with('success', "Permission group '{$permissionGroup->name}' applied to role '{$role->name}' successfully.");
+    }
+
+    /**
+     * Show preview of permission group for a role.
+     */
+    public function preview($groupId)
+    {
+        $permissionGroup = PermissionGroup::findOrFail($groupId);
+        
+        // Get modules data
+        $modules = Module::with('actions')->orderBy('name')->get();
+        $modulesIdWise = $modules->keyBy('id');
+        $permissionGroups = PermissionGroup::with('permissions')->orderBy('name')->get();
+        
+        // Get permission categories for grouping
+        $categories = PermissionCategory::active()->ordered()->with('rules')->get();
+        
+        // Group permissions by category using priority-based rules
+        $permissionsByCategory = [];
+        $categorizedPermissions = [];
+        
+        // First pass: collect all matching permissions with their categories and priorities
+        foreach ($categories as $category) {
+            foreach ($category->rules as $rule) {
+                if (!$rule->is_active) continue;
+                
+                foreach ($modules as $module) {
+                    foreach ($module->actions as $action) {
+                        $matches = false;
+                        switch ($rule->rule_type) {
+                            case 'contains':
+                                $matches = str_contains(strtolower($action->slug), strtolower($rule->rule_value));
+                                break;
+                            case 'starts_with':
+                                $matches = str_starts_with(strtolower($action->slug), strtolower($rule->rule_value));
+                                break;
+                            case 'ends_with':
+                                $matches = str_ends_with(strtolower($action->slug), strtolower($rule->rule_value));
+                                break;
+                            case 'regex':
+                                $matches = preg_match($rule->rule_value, $action->slug);
+                                break;
+                        }
+                        
+                        if ($matches) {
+                            $categorizedPermissions[$action->id] = [
+                                'permission' => $action,
+                                'category' => $category->name,
+                                'priority' => $rule->priority
+                            ];
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Second pass: assign permissions to highest priority category
+        foreach ($categorizedPermissions as $permissionId => $data) {
+            $categoryName = $data['category'];
+            if (!isset($permissionsByCategory[$categoryName])) {
+                $permissionsByCategory[$categoryName] = [];
+            }
+            $permissionsByCategory[$categoryName][] = $data['permission'];
+        }
+
+        return Inertia::render('roles_permissions/Preview', [
+            'modules' => $modules,
+            'modulesIdWise' => $modulesIdWise,
+            'permissionGroups' => $permissionGroups,
+            'permissionsByCategory' => $permissionsByCategory,
+            'categories' => $categories,
+            'selectedGroupId' => (int) $groupId,
+        ]);
     }
 }

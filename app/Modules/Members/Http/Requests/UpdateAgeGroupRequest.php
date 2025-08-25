@@ -3,7 +3,7 @@
 namespace Modules\Members\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-
+use Modules\Members\Models\AgeGroup;
 class UpdateAgeGroupRequest extends FormRequest
 {
     /**

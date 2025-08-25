@@ -300,6 +300,7 @@ export interface ModuleAction {
   id: number;
   name: string;
   slug: string;
+  action: string;
   icon?: string;
 }
 

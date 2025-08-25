@@ -151,9 +151,9 @@ const { can } = permissionHelpers()
 // Props
 const props = defineProps<{
   members?: any[]
-  communities?: Array<{ id: string | number; name: string }>
-  statuses?: Array<{ id: string | number; name: string }>
-  relationships?: Array<{ id: string | number; name: string }>
+  communities?: Array<{ id: number; name: string }>
+  statuses?: Array<{ id: number; name: string }>
+  relationships?: Array<{ id: number; name: string }>
 }>()
 
 // State
@@ -168,39 +168,38 @@ const tableColumns = [
     key: 'first_name',
     label: 'First Name',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter first name'
   },
   {
     key: 'middle_name',
     label: 'Middle Name',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter middle name'
   },
   {
     key: 'last_name',
     label: 'Last Name',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter last name'
   },
   {
     key: 'old_sal_id',
     label: 'Old SAL ID',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter old SAL ID'
   },
   {
     key: 'date_of_birth',
     label: 'Date of Birth',
     editable: true,
-    type: 'date',
+    type: 'date' as const,
     placeholder: 'Select date',
     formatter: (value: string) => {
       if (!value) return '<span class="text-red-500">Missing</span>'
-      // Format date to dd-mm-yyyy
       const date = new Date(value)
       const day = date.getDate().toString().padStart(2, '0')
       const month = (date.getMonth() + 1).toString().padStart(2, '0')
@@ -212,7 +211,7 @@ const tableColumns = [
     key: 'community_id',
     label: 'Community',
     editable: true,
-    type: 'select',
+    type: 'select' as const,
     options: props.communities?.map(c => ({ value: c.id, label: c.name })) || [],
     placeholder: 'Select community'
   },
@@ -220,7 +219,7 @@ const tableColumns = [
     key: 'status_id',
     label: 'Status',
     editable: true,
-    type: 'select',
+    type: 'select' as const,
     options: props.statuses?.map(s => ({ value: s.id, label: s.name })) || [],
     placeholder: 'Select status'
   },
@@ -228,21 +227,21 @@ const tableColumns = [
     key: 'contact_no_1',
     label: 'Contact No 1',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter contact number'
   },
   {
     key: 'contact_no_2',
     label: 'Contact No 2',
     editable: true,
-    type: 'text',
+    type: 'text' as const,
     placeholder: 'Enter contact number'
   },
   {
     key: 'relationship_id',
     label: 'Relationship',
     editable: true,
-    type: 'select',
+    type: 'select' as const,
     options: props.relationships?.map(r => ({ value: r.id, label: r.name })) || [],
     placeholder: 'Select relationship'
   }

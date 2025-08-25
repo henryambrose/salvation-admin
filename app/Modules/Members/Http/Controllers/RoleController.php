@@ -108,7 +108,7 @@ class RoleController extends Controller
 
             DB::commit();
 
-            return redirect()->route('roles.index')
+            return redirect()->route('roles.permissions.index')
                 ->with('success', 'Role created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -223,7 +223,7 @@ class RoleController extends Controller
 
             DB::commit();
 
-            return redirect()->route('roles.index')
+            return redirect()->route('roles.permissions.index')
                 ->with('success', 'Role updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -247,8 +247,8 @@ class RoleController extends Controller
 
         $role->delete();
 
-        return redirect()->route('roles.index')
-            ->with('success', 'Role deleted successfully.');
+                    return redirect()->route('roles.permissions.index')
+                ->with('success', 'Role deleted successfully.');
     }
 
     public function updatePermissions(Request $request, Role $role)
@@ -288,7 +288,7 @@ class RoleController extends Controller
         // Get category and module
         $category = $this->getCategoryForPermission($permissionName);
         $module = $this->getModuleForPermission($permissionName);
-        
+
         return $category . ' → ' . $module;
     }
 
@@ -313,7 +313,9 @@ class RoleController extends Controller
         // Organizational Structure
         if (str_contains($permissionName, 'zone') ||
             str_contains($permissionName, 'cluster') ||
-            str_contains($permissionName, 'cells-and-association')) {
+            str_contains($permissionName, 'community-cluster') ||
+            str_contains($permissionName, 'cells-and-association') ||
+            str_contains($permissionName, 'cells-association-member')) {
             return 'Organizational Structure';
         }
 
@@ -405,6 +407,12 @@ class RoleController extends Controller
         if (str_contains($permissionName, 'dashboard')) {
             return 'Dashboard';
         }
+        if (str_contains($permissionName, 'age-group')) {
+            return 'Age Group';
+        }
+        if (str_contains($permissionName, 'blood-group')) {
+            return 'Blood Group';
+        }
         
         if (str_contains($permissionName, 'role')) {
             return 'Role Management';
@@ -434,12 +442,15 @@ class RoleController extends Controller
         if (str_contains($permissionName, 'cells-and-association')) {
             return 'Cells and Association';
         }
-        
+        \Log::info('Permission Name442: ' . $permissionName);
+        // \Log::info('Category: ' . $category);
+        // \Log::info('Module: ' . $module);
         // Standard module extraction
         $parts = explode('-', $permissionName);
+
         if (count($parts) >= 2) {
             $module = $parts[1];
-            
+            \Log::info('Module447: ' . $module);
             // Handle compound words
             if (isset($parts[2])) {
                 $module .= ' ' . $parts[2];
@@ -447,8 +458,8 @@ class RoleController extends Controller
             
             // Capitalize and clean up
             $module = str_replace(['_', '-'], ' ', $module);
-            $module = ucwords($module);
-            
+            // $module = ucwords($module);
+            \Log::info('Module456: ' . $module);
             // Handle special cases
             $moduleMapping = [
                 'Member' => 'Members',
@@ -484,7 +495,7 @@ class RoleController extends Controller
             if (isset($parts[2])) {
                 $module .= ' ' . $parts[2];
             }
-            return ucwords(str_replace(['_', '-'], ' ', $module));
+            return str_replace(['_', '-'], ' ', $module);
         }
         
         return 'Other';

@@ -320,11 +320,13 @@ async function searchMembersByName(searchTerm: string) {
 
   isSearching.value = true;
   try {
-    const response = await axios.get('/api/members/search', {
-      params: { search: searchTerm }
+    const response = await axios.get('/member/search-members', {
+      params: { query: searchTerm }
     });
-    searchResults.value = response.data || [];
-    console.log('Search results:', searchResults.value);
+    searchResults.value = response.data.map((member: any) => ({
+      id: member.id,
+      name: member.text
+    })) || [];
   } catch (error) {
     console.error('Error searching members:', error);
     searchResults.value = [];

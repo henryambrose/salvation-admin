@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -101,7 +101,7 @@ function submit() {
             <Button
               type="button"
               variant="secondary"
-              @click="$inertia.visit('/users')"
+              @click="router.visit('/users')"
               class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
             >
               Cancel

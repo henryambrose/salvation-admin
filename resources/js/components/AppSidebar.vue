@@ -226,7 +226,7 @@ const navigationGroups = [
       },
       {
         title: 'Role Management',
-        href: route('roles.index'),
+        href: '/roles-permissions',
         icon: Shield,
         show: can('read-role'),
       },
