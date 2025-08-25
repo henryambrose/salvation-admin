@@ -41,3 +41,4 @@ class PermissionCategoryRule extends Model
     }
 }
 
+

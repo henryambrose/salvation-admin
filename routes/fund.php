@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Fund\Http\Controllers\AnnualContributionController;
+use Modules\Fund\Http\Controllers\FundCategoryController;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +20,15 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     Route::get('/', function () {
         return inertia('FundDashboard');
     })->name('dashboard');
+
+    // Fund Categories
+    Route::get('categories', [FundCategoryController::class, 'index'])->name('categories.index');
+    Route::post('categories', [FundCategoryController::class, 'store'])->name('categories.store');
+    Route::get('categories/{category}', [FundCategoryController::class, 'show'])->name('categories.show');
+    Route::put('categories/{category}', [FundCategoryController::class, 'update'])->name('categories.update');
+    Route::delete('categories/{category}', [FundCategoryController::class, 'destroy'])->name('categories.destroy');
+    Route::post('categories/{id}/restore', [FundCategoryController::class, 'restore'])->name('categories.restore');
+    Route::delete('categories/{id}/force-delete', [FundCategoryController::class, 'forceDelete'])->name('categories.force-delete');
 
     // Annual Contributions
     Route::resource('annual-contributions', AnnualContributionController::class);

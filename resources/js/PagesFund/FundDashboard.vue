@@ -6,7 +6,7 @@
           <h1 class="text-2xl font-semibold mb-6">Fund Management Dashboard</h1>
           
           <!-- Quick Stats -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="bg-blue-50 p-6 rounded-lg">
               <h3 class="text-lg font-medium text-blue-900">Annual Contributions</h3>
               <p class="text-3xl font-bold text-blue-600">₹0</p>
@@ -24,10 +24,16 @@
               <p class="text-3xl font-bold text-purple-600">0</p>
               <p class="text-sm text-purple-700">Contributing</p>
             </div>
+            
+            <div class="bg-orange-50 p-6 rounded-lg">
+              <h3 class="text-lg font-medium text-orange-900">Fund Categories</h3>
+              <p class="text-3xl font-bold text-orange-600">0</p>
+              <p class="text-sm text-orange-700">Active Categories</p>
+            </div>
           </div>
           
           <!-- Quick Actions -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white border border-gray-200 p-6 rounded-lg">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Annual Contributions</h3>
               <p class="text-gray-600 mb-4">Manage parish member contributions and track annual giving.</p>
@@ -47,6 +53,17 @@
                 class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
               >
                 Manage Intentions
+              </Link>
+            </div>
+            
+            <div class="bg-white border border-gray-200 p-6 rounded-lg">
+              <h3 class="text-lg font-medium text-gray-900 mb-4">Fund Categories</h3>
+              <p class="text-gray-600 mb-4">Manage fund categories for organizing contributions and donations.</p>
+              <Link 
+                :href="route('fund.categories.index')"
+                class="inline-flex items-center px-4 py-2 bg-orange-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-orange-700 focus:bg-orange-700 active:bg-orange-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
+              >
+                Manage Categories
               </Link>
             </div>
           </div>

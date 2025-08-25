@@ -59,15 +59,18 @@ async function bootstrap() {
           const fundPages = [
               'FundDashboard',
               'AnnualContributions',
-              'MassIntentions'
+              'MassIntentions',
+              'Category'
           ]; // All fund module components
           
           try {
               // First, try to resolve based on explicit fund pages (higher priority for Fund app)
-              if (fundPages.some(page => name.startsWith(page))) {
+              if (fundPages.some(page => name.startsWith(page)) || name.startsWith('Fund/')) {
                   // Check if the name contains a slash (nested structure like Dashboard/Index)
                   if (name.includes('/')) {
-                      return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
+                      // For Fund/ prefixed pages, strip the Fund/ prefix when looking in PagesFund
+                      const pagePath = name.startsWith('Fund/') ? name.substring(5) : name;
+                      return await resolvePageComponent(`./PagesFund/${pagePath}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
                   } else {
                       return await resolvePageComponent(`./PagesFund/${name}.vue`, import.meta.glob<DefineComponent>('./PagesFund/**/*.vue'));
                   }

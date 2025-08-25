@@ -45,7 +45,8 @@ import {
   FileText, 
   BarChart3, 
   Settings,
-  Home
+  Home,
+  FolderOpen
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -104,6 +105,12 @@ const fundNavigationGroups = [
   {
     label: 'Administration',
     items: [
+      {
+        title: 'Categories',
+        href: '/fund/categories',
+        icon: FolderOpen,
+        show: can('read-fund-category') || true,
+      },
       {
         title: 'Settings',
         href: '/fund/settings',

@@ -80,7 +80,7 @@
                         />
                         
                         <!-- Family Number Search Results -->
-                        <div v-if="showFamilySearchResults && familySearchResults.length > 0" 
+                        <div v-if="familySearchResults.length > 0 && showFamilySearchResults" 
                              class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                           <div v-for="member in familySearchResults" 
                                :key="member.id"
@@ -273,40 +273,32 @@
                     <!-- Member Search -->
                     <div>
                       <label for="member_search" class="block text-sm font-medium text-gray-700 mb-2">
-                        Search Member
+                        Select Family Member
                       </label>
                       <div class="relative">
-                        <input 
-                          id="member_search"
-                          v-model="memberSearch"
-                          type="text"
-                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Search by name, member number, or family number"
-                          @input="searchMembers"
-                          @focus="showMemberResults = true"
-                          @click.stop="showMemberResults = true"
-                        />
-                        
-                        <!-- Member Search Results -->
-                        <div v-if="showMemberResults && memberSearchResults.length > 0" 
-                             class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                          <div v-for="member in memberSearchResults" 
-                               :key="member.id"
-                               @click="selectMember(member)"
-                               class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0">
-                            <div class="font-medium">{{ member.full_name }}</div>
-                            <div class="text-sm text-gray-500">Member No: {{ member.member_no }} | Family: {{ member.family_no || 'N/A' }}</div>
-                          </div>
-                        </div>
-                        
-                        <!-- No Results Message -->
-                        <div v-if="showMemberResults && memberSearchResults.length === 0 && memberSearch.length >= 2" 
-                             class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-3 text-center text-gray-500">
-                          No members found
-                        </div>
+                        <select 
+                          id="member"
+                          v-model="form.member_id"
+                          :class="[
+                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            form.errors.member_id ? 'border-red-300' : 'border-gray-300'
+                          ]"
+                          :disabled="!form.family_no"
+                        >
+                          <option value="">Select a family member</option>
+                          <option v-for="member in familyMembers" :key="member.id" :value="member.id">
+                            {{ member.full_name }} 
+                          </option>
+                        </select>
+                        <p v-if="!form.family_no" class="mt-1 text-sm text-gray-500">
+                          Please select a family number first
+                        </p>
+                        <p v-else-if="familyMembers.length === 0" class="mt-1 text-sm text-gray-500">
+                          No family members found
+                        </p>
                       </div>
                       <p class="mt-1 text-sm text-gray-500">
-                        Search for a member by name, member number, or family number to link this contribution
+                        Select a family member from the dropdown to link this contribution
                       </p>
                     </div>
 
@@ -477,6 +469,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { SelectInput } from '@/components/ui/select';
 
 defineOptions({
     layout: AppLayout
@@ -515,6 +508,9 @@ const showMemberResults = ref(false);
 const familySearchResults = ref<any[]>([]);
 const showFamilySearchResults = ref(false);
 
+// Family members for the selected family
+const familyMembers = ref<any[]>([]);
+
 // Contribution history and pending amounts
 const contributionHistory = ref<any[]>([]);
 const pendingAmountsByCategory = ref<any[]>([]);
@@ -551,41 +547,41 @@ const statusOptions = [
 ];
 
 // Methods
-const searchMembers = async () => {
+// const searchMembers = async () => {
   
-  if (memberSearch.value.length < 2) {
-    memberSearchResults.value = [];
-    showMemberResults.value = false;
-    return;
-  }
+//   if (memberSearch.value.length < 2) {
+//     memberSearchResults.value = [];
+//     showMemberResults.value = false;
+//     return;
+//   }
 
-  try {
-    const url = `/member/search-members?query=${encodeURIComponent(memberSearch.value)}`;
+//   try {
+//     const url = `/member/search-members?query=${encodeURIComponent(form.family_no)}`;
     
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-      },
-      credentials: 'same-origin'
-    });
+//     const response = await fetch(url, {
+//       method: 'GET',
+//       headers: {
+//         'X-Requested-With': 'XMLHttpRequest',
+//         'Accept': 'application/json',
+//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+//       },
+//       credentials: 'same-origin'
+//     });
     
-    if (response.ok) {
-      const data = await response.json();
-      memberSearchResults.value = data || [];
-      showMemberResults.value = data && data.length > 0;
-    } else {
-      console.error('Response not ok:', response.status, response.statusText);
-      showMemberResults.value = false;
-    }
-  } catch (error) {
-    console.error('Error searching members:', error);
-    memberSearchResults.value = [];
-    showMemberResults.value = false;
-  }
-};
+//     if (response.ok) {
+//       const data = await response.json();
+//       memberSearchResults.value = data || [];
+//       showMemberResults.value = data && data.length > 0;
+//     } else {
+//       console.error('Response not ok:', response.status, response.statusText);
+//       showMemberResults.value = false;
+//     }
+//   } catch (error) {
+//     console.error('Error searching members:', error);
+//     memberSearchResults.value = [];
+//     showMemberResults.value = false;
+//   }
+// };
 
 const searchMembersForFamily = async () => {
   
@@ -611,6 +607,7 @@ const searchMembersForFamily = async () => {
     if (response.ok) {
       const data = await response.json();
       familySearchResults.value = data || [];
+      familyMembers.value = data || [];
       showFamilySearchResults.value = data && data.length > 0;
     } else {
       console.error('Response not ok:', response.status, response.statusText);
@@ -622,6 +619,45 @@ const searchMembersForFamily = async () => {
     showFamilySearchResults.value = false;
   }
 };
+
+// Fetch family members by family number
+// const fetchFamilyMembers = async (familyNo: string) => {
+//   if (!familyNo) {
+//     familyMembers.value = [];
+//     return;
+//   }
+
+//   try {
+//     const url = `/member/search-members?family_no=${encodeURIComponent(familyNo)}`;
+    
+//     const response = await fetch(url, {
+//       method: 'GET',
+//       headers: {
+//         'X-Requested-With': 'XMLHttpRequest',
+//         'Accept': 'application/json',
+//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+//       },
+//       credentials: 'same-origin'
+//     });
+    
+//     if (response.ok) {
+//       const data = await response.json();
+//       familyMembers.value = data || [];
+//     } else {
+//       console.error('Response not ok:', response.status, response.statusText);
+//       familyMembers.value = [];
+//     }
+//   } catch (error) {
+//     console.error('Error fetching family members:', error);
+//     familyMembers.value = [];
+//   }
+// };
+watch(() => showFamilySearchResults, () => {
+  if (showFamilySearchResults.value) {
+    familyMembers.value = familySearchResults.value;
+  }
+  // fetchFamilyMembers(form.family_no);
+});
 
 // Fetch family contribution history
 const fetchFamilyContributionHistory = async (familyNo: string) => {
@@ -725,6 +761,9 @@ const selectMember = (member: any) => {
   showMemberResults.value = false;
   memberSearchResults.value = [];
   
+  // Fetch family members for the selected family
+  // fetchFamilyMembers(member.family_no || '');
+  
   // Fetch contribution history and pending amounts when member is selected
   if (member.family_no) {
     fetchFamilyContributionHistory(member.family_no);
@@ -738,6 +777,9 @@ const selectMemberForFamily = (member: any) => {
   form.family_no = member.family_no || ''; // Auto-fill family_no
   familySearchResults.value = []; // Clear results
   showFamilySearchResults.value = false;
+  
+  // Fetch family members for the selected family
+  // fetchFamilyMembers(member.family_no || '');
   
   // Fetch contribution history and pending amounts when family is selected
   if (member.family_no) {
@@ -773,6 +815,9 @@ const clearMemberSelection = () => {
   // Also clear family search results
   familySearchResults.value = [];
   showFamilySearchResults.value = false;
+  
+  // Clear family members
+  familyMembers.value = [];
   
   // Clear contribution history and pending amounts
   contributionHistory.value = [];
@@ -912,6 +957,9 @@ watch(() => form.family_no, (newValue) => {
   if (!newValue) {
     familySearchResults.value = [];
     showFamilySearchResults.value = false;
+    
+    // Clear family members
+    familyMembers.value = [];
     
     // Clear contribution history and pending amounts
     contributionHistory.value = [];

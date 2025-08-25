@@ -110,3 +110,4 @@ class PermissionCategoryController extends Controller
     }
 }
 
+
