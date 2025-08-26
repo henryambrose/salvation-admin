@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import NavFooter from '@/components/NavFooter.vue';
-import NavMain from '@/components/NavMain.vue';
 import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { type NavItem } from '@/types';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link,  usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import { 
   UserCircle, 
@@ -41,18 +39,18 @@ const resolveIcon = (iconName: string) => {
 
 const page = usePage();
 
-const modules = computed(() => {
-  return (page.props.modules as Array<any>).map((module: any) => ({
-    title: module.name,
-    href: '/' + module.slug,
-    icon: resolveIcon(module.icon),
-    show: can(module.slug),
-  }));
-});
+// const modules = computed(() => {
+//   return (page.props.modules as Array<any>).map((module: any) => ({
+//     title: module.name,
+//     href: '/' + module.slug,
+//     icon: resolveIcon(module.icon),
+//     show: can(module.slug),
+//   }));
+// });
 
-const mainNavItems: NavItem[] = modules.value;
+// const mainNavItems: NavItem[] = modules.value;
 
-const filteredMainNavItems = mainNavItems.filter((item) => item.show);
+// const filteredMainNavItems = mainNavItems.filter((item) => item.show);
 
 // Organized navigation groups
 const navigationGroups = [
@@ -260,6 +258,7 @@ const filteredNavigationGroups = navigationGroups.map(group => ({
 const currentApp = computed(() => {
   const currentPath = page.url;
   if (currentPath.startsWith('/fund')) {
+
     return 'fund';
   }
   return 'members';

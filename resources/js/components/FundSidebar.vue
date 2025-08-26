@@ -12,13 +12,13 @@
       </SidebarMenu>
       
       <!-- App Switcher on the right side -->
-      <div class="ml-auto">
+      <!-- <div class="ml-auto">
         <AppSwitcher />
-      </div>
+      </div> -->
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMainGrouped :groups="fundNavigationGroups" />
+      <NavMainGrouped :groups="filteredFundNavigationGroups" />
     </SidebarContent>
 
     <SidebarFooter>
@@ -29,28 +29,26 @@
 </template>
 
 <script setup lang="ts">
-import NavFooter from '@/components/NavFooter.vue';
-import NavMain from '@/components/NavMain.vue';
 import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { type NavItem } from '@/types';
-import { Link, router, usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import { 
+  Home, 
   DollarSign, 
-  Calendar, 
-  Users, 
-  FileText, 
   BarChart3, 
-  Settings,
-  Home,
-  FolderOpen
+  Settings, 
+  FolderOpen, 
+  FileText,
+  Crown, 
+  Bot,
+  Clock
 } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
-import AppSwitcher from '@/components/AppSwitcher.vue';
 
 const { can } = permissionHelpers();
 
@@ -58,10 +56,11 @@ const resolveIcon = (iconName: string) => {
   return (Icons as any)[iconName] || Icons.HelpCircle; // fallback icon
 };
 
+// Get current page for debugging
 const page = usePage();
 
-// Fund-specific navigation groups
-const fundNavigationGroups = [
+// Fund-specific navigation groups - make them reactive
+const fundNavigationGroups = computed(() => [
   {
     label: 'Fund Management',
     items: [
@@ -80,9 +79,10 @@ const fundNavigationGroups = [
       {
         title: 'Mass Intentions',
         href: '/fund/mass-intentions',
-        icon: Calendar,
+        icon: FileText,
         show: can('read-mass-intentions') || true, // Default to true for now
       },
+
     ]
   },
   {
@@ -112,6 +112,24 @@ const fundNavigationGroups = [
         show: can('read-fund-category') || true,
       },
       {
+        title: 'Mass Intention Types',
+        href: '/fund/mass-intention-types',
+        icon: FileText,
+        show: can('read-mass-intention-types') || true,
+      },
+      {
+        title: 'Mass Types',
+        href: '/fund/mass-types',
+        icon: Clock,
+        show: can('read-mass-types') || true,
+      },
+      {
+        title: 'Payment Methods',
+        href: '/fund/payment-methods',
+        icon: DollarSign,
+        show: can('read-payment-methods') || true,
+      },
+      {
         title: 'Settings',
         href: '/fund/settings',
         icon: Settings,
@@ -119,10 +137,17 @@ const fundNavigationGroups = [
       },
     ]
   }
-];
+]);
 
-const filteredFundNavigationGroups = fundNavigationGroups.map(group => ({
-  ...group,
-  items: group.items.filter(item => item.show)
-})).filter(group => group.items.length > 0);
+const filteredFundNavigationGroups = computed(() => 
+  fundNavigationGroups.value.map(group => ({
+    ...group,
+    items: group.items.filter(item => item.show)
+  })).filter(group => group.items.length > 0)
+);
+
+// Watch for route changes
+watch(() => page.url, (newUrl) => {
+  // console.log('🔄 FundSidebar - Route changed to:', newUrl);
+}, { immediate: true });
 </script>

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class IntentionType extends Model
+class MassIntentionType extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -14,31 +14,38 @@ class IntentionType extends Model
         'name',
         'description',
         'default_amount',
-        'is_active',
+        'cost',
         'sort_order',
-        'created_by',
-        'updated_by'
+        'is_active',
     ];
 
     protected $casts = [
+        'default_amount' => 'decimal:2',
+        'cost' => 'decimal:2',
         'is_active' => 'boolean',
-        'sort_order' => 'integer',
-        'default_amount' => 'decimal:2'
     ];
 
-    // Relationships
+    /**
+     * Get the mass intentions for this intention type
+     */
     public function massIntentions()
     {
         return $this->hasMany(MassIntention::class);
     }
 
-    public function createdBy()
+    /**
+     * Scope to get only active intention types
+     */
+    public function scopeActive($query)
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $query->where('is_active', true);
     }
 
-    public function updatedBy()
+    /**
+     * Scope to order by sort order
+     */
+    public function scopeOrdered($query)
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $query->orderBy('sort_order', 'asc');
     }
 }

@@ -67,6 +67,102 @@
               </Link>
             </div>
           </div>
+
+          <!-- Mass Intention Types Quick Action -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <FileText class="h-6 w-6 text-gray-400" />
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Mass Intention Types</dt>
+                    <dd class="text-lg font-medium text-gray-900">Manage Types</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+              <div class="text-sm">
+                <Link :href="route('fund.mass-intention-types.index')" class="font-medium text-blue-700 hover:text-blue-900">
+                  Manage Types
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mass Types Quick Action -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <Clock class="h-6 w-6 text-gray-400" />
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Mass Types</dt>
+                    <dd class="text-lg font-medium text-gray-900">Manage Schedules</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+              <div class="text-sm">
+                <Link :href="route('fund.mass-types.index')" class="font-medium text-blue-700 hover:text-blue-900">
+                  Manage Schedules
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Methods Quick Action -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <DollarSign class="h-6 w-6 text-gray-400" />
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Payment Methods</dt>
+                    <dd class="text-lg font-medium text-gray-900">Manage Payment Options</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+              <div class="text-sm">
+                <Link :href="route('fund.payment-methods.index')" class="font-medium text-blue-700 hover:text-blue-900">
+                  Manage Methods
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          <!-- Book New Intention Quick Action -->
+          <div class="bg-white overflow-hidden shadow rounded-lg">
+            <div class="p-5">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <Plus class="h-6 w-6 text-gray-400" />
+                </div>
+                <div class="ml-5 w-0 flex-1">
+                  <dl>
+                    <dt class="text-sm font-medium text-gray-500 truncate">Book New Intention</dt>
+                    <dd class="text-lg font-medium text-gray-900">Schedule Mass</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+            <div class="bg-gray-50 px-5 py-3">
+              <div class="text-sm">
+                <Link :href="route('fund.mass-intentions.create')" class="font-medium text-blue-700 hover:text-blue-900">
+                  Book Now
+                </Link>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -76,6 +172,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { FileText, FolderOpen, Clock, Plus, DollarSign } from 'lucide-vue-next';
 
 defineOptions({
     layout: AppLayout

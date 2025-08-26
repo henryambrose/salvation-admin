@@ -5,7 +5,7 @@ namespace Modules\Fund\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Modules\Fund\Models\FundCategory;
 use Modules\Fund\Models\PaymentMethod;
-use Modules\Fund\Models\IntentionType;
+use Modules\Fund\Models\MassIntentionType;
 
 class FundSeeder extends Seeder
 {
@@ -57,7 +57,7 @@ class FundSeeder extends Seeder
         ];
 
         foreach ($intentionTypes as $type) {
-            IntentionType::updateOrCreate(
+            MassIntentionType::updateOrCreate(
                 ['name' => $type['name']],
                 $type
             );

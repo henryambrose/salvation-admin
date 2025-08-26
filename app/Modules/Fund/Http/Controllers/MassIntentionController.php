@@ -1,0 +1,375 @@
+<?php
+
+namespace Modules\Fund\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
+use Modules\Fund\Models\MassIntention;
+use Modules\Fund\Models\MassSchedule;
+use Modules\Fund\Models\MassIntentionType;
+use Modules\Fund\Models\MassType; // Added this import
+use Modules\Members\Models\Member;
+use Modules\Fund\Models\PaymentMethod;
+
+class MassIntentionController extends Controller
+{
+    /**
+     * Display a listing of mass intentions
+     */
+    public function index(Request $request)
+    {
+        $query = MassIntention::with(['member', 'massIntentionType', 'paymentMethod', 'massType']);
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('special_instructions', 'like', "%{$search}%")
+                  ->orWhere('non_member_name', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($memberQuery) use ($search) {
+                      $memberQuery->where('first_name', 'like', "%{$search}%")
+                                  ->orWhere('middle_name', 'like', "%{$search}%")
+                                  ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply status filter
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Apply mass date filter (for BookIntention page)
+        if ($request->filled('mass_date')) {
+            $query->where('mass_date', $request->mass_date);
+        }
+
+        // Apply mass type filter
+        if ($request->filled('mass_type_id')) {
+            $query->where('mass_type_id', $request->mass_type_id);
+        }
+
+        // Apply start date filter
+        if ($request->filled('start_date')) {
+            $query->where('mass_date', '>=', $request->start_date);
+        }
+
+        // Apply end date filter
+        if ($request->filled('end_date')) {
+            $query->where('mass_date', '<=', $request->end_date);
+        }
+
+        // Apply mass schedule filter (legacy)
+        if ($request->filled('mass_schedule_id')) {
+            $query->where('mass_schedule_id', $request->mass_schedule_id);
+        }
+
+        // Apply intention type filter
+        if ($request->filled('mass_intention_type_id')) {
+            $query->where('mass_intention_type_id', $request->mass_intention_type_id);
+        }
+
+        // Apply sorting
+        $sortBy = $request->get('sort_by', 'mass_date');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        // Apply pagination
+        $perPage = $request->get('per_page', 15);
+        $massIntentions = $query->paginate($perPage);
+
+        // If this is a request for booked masses (from BookIntention page), return only the data
+        if ($request->filled('mass_date') && $request->filled('mass_type_id')) {
+            $bookedMasses = $massIntentions->items();
+            
+            // Format the data for frontend display
+            $formattedMasses = collect($bookedMasses)->map(function ($mass) {
+                $displayName = '';
+                if ($mass->member) {
+                    $displayName = trim($mass->member->first_name . ' ' . $mass->member->last_name) . ' - ' . $mass->member->family_no;
+                } else {
+                    $displayName = $mass->non_member_name;
+                }
+                
+                return [
+                    'id' => $mass->id,
+                    'display_name' => $displayName,
+                    'intention_type_name' => $mass->massIntentionType->name ?? 'N/A',
+                    // 'status' => $mass->status, // Commented out - status workflow not implemented yet
+                ];
+            });
+            
+            return response()->json([
+                'booked_masses' => $formattedMasses
+            ]);
+        }
+
+        // Get mass types and intention types for filters
+        try {
+            $massTypes = MassType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $massTypes = MassType::all();
+        }
+
+        try {
+            $massIntentionTypes = MassIntentionType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $massIntentionTypes = MassIntentionType::all();
+        }
+
+        return Inertia::render('MassIntentions/Index', [
+            'massIntentions' => $massIntentions,
+            'massTypes' => $massTypes,
+            'massIntentionTypes' => $massIntentionTypes,
+            'filters' => $request->only(['search', 'status', 'mass_type_id', 'mass_intention_type_id', 'start_date', 'end_date', 'sort_by', 'sort_order', 'per_page']),
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new mass intention
+     */
+    public function create()
+    {
+        try {
+            $massTypes = MassType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $massTypes = MassType::all();
+        }
+
+        try {
+            $intentionTypes = MassIntentionType::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $intentionTypes = MassIntentionType::all();
+        }
+
+        try {
+            $paymentMethods = PaymentMethod::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $paymentMethods = PaymentMethod::all();
+        }
+
+        return Inertia::render('BookIntention', [
+            'massTypes' => $massTypes,
+            'intentionTypes' => $intentionTypes,
+            'paymentMethods' => $paymentMethods,
+        ]);
+    }
+
+    /**
+     * Store a newly created mass intention
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'member_type' => 'required|in:member,non_member',
+            'member_id' => 'nullable|exists:members,id',
+            'non_member_name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:20',
+            'mass_date' => 'required|date|after_or_equal:today',
+            'mass_type_id' => 'required|exists:mass_types,id',
+            'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
+            'special_instructions' => 'nullable|string|max:1000',
+            'payment_method_id' => 'required|exists:payment_methods,id',
+            'amount' => 'required|numeric|min:0',
+        ]);
+
+        // Validate member information based on type
+        if ($request->member_type === 'member' && !$request->member_id) {
+            return back()->withErrors(['member_id' => 'Member ID is required for parish members.']);
+        }
+
+        if ($request->member_type === 'non_member' && !$request->non_member_name) {
+            return back()->withErrors(['non_member_name' => 'Name is required for non-members.']);
+        }
+
+        // Check if the mass type exists and is active
+        $massType = MassType::find($request->mass_type_id);
+        if (!$massType || !$massType->is_active) {
+            return back()->withErrors(['mass_type_id' => 'Selected mass type is not available.']);
+        }
+
+        // Check if the intention type exists and is active
+        $intentionType = MassIntentionType::find($request->mass_intention_type_id);
+        if (!$intentionType || !$intentionType->is_active) {
+            return back()->withErrors(['mass_intention_type_id' => 'Selected intention type is not available.']);
+        }
+
+        // Create the mass intention
+        $massIntention = MassIntention::create([
+            'member_id' => $request->member_id,
+            'non_member_name' => $request->member_type === 'non_member' ? $request->non_member_name : null,
+            'phone' => $request->phone,
+            'mass_date' => $request->mass_date,
+            'mass_type_id' => $request->mass_type_id,
+            'mass_intention_type_id' => $request->mass_intention_type_id,
+            'special_instructions' => $request->special_instructions,
+            'payment_method_id' => $request->payment_method_id,
+            'amount' => $request->amount,
+            // 'status' => 'pending', // Commented out - status workflow not implemented yet
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
+        ]);
+
+        return redirect()->route('fund.mass-intentions.index')
+            ->with('success', 'Mass intention booked successfully!');
+    }
+
+    /**
+     * Display the specified mass intention
+     */
+    public function show(MassIntention $massIntention)
+    {
+        $massIntention->load(['member', 'massSchedule', 'intentionType', 'createdBy', 'updatedBy']);
+
+        return Inertia::render('MassIntentions/Show', [
+            'massIntention' => $massIntention,
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified mass intention
+     */
+    public function edit(MassIntention $massIntention)
+    {
+        $massIntention->load(['member', 'massSchedule', 'intentionType']);
+
+        $massSchedules = MassSchedule::where('is_active', true)
+            ->orderBy('mass_date', 'asc')
+            ->orderBy('mass_time', 'asc')
+            ->get(['id', 'mass_date', 'mass_time', 'max_intentions', 'current_intentions']);
+
+        $massIntentionTypes = MassIntentionType::where('is_active', true)
+            ->orderBy('sort_order', 'asc')
+            ->get(['id', 'name', 'default_amount', 'description']);
+
+        return Inertia::render('MassIntentions/Edit', [
+            'massIntention' => $massIntention,
+            'massSchedules' => $massSchedules,
+            'massIntentionTypes' => $massIntentionTypes,
+        ]);
+    }
+
+    /**
+     * Update the specified mass intention
+     */
+    public function update(Request $request, MassIntention $massIntention)
+    {
+        $request->validate([
+            'family_no' => 'required|string',
+            'member_id' => 'nullable|exists:members,id',
+            'mass_schedule_id' => 'required|exists:mass_schedules,id',
+            'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
+            'intention_for' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0.01',
+            'notes' => 'nullable|string|max:1000',
+            'status' => 'required|in:pending,confirmed,completed,cancelled',
+        ]);
+
+        $oldMassScheduleId = $massIntention->mass_schedule_id;
+        $newMassScheduleId = $request->mass_schedule_id;
+
+        // Update the mass intention
+        $massIntention->update([
+            'family_no' => $request->family_no,
+            'member_id' => $request->member_id,
+            'mass_schedule_id' => $newMassScheduleId,
+            'mass_intention_type_id' => $request->mass_intention_type_id,
+            'intention_for' => $request->intention_for,
+            'amount' => $request->amount,
+            'notes' => $request->notes,
+            'status' => $request->status,
+            'updated_by' => Auth::id(),
+        ]);
+
+        // Update mass schedule counts if schedule changed
+        if ($oldMassScheduleId !== $newMassScheduleId) {
+            // Decrement old schedule
+            MassSchedule::where('id', $oldMassScheduleId)->decrement('current_intentions');
+            // Increment new schedule
+            MassSchedule::where('id', $newMassScheduleId)->increment('current_intentions');
+        }
+
+        return redirect()->route('fund.mass-intentions.index')
+            ->with('success', 'Mass intention updated successfully.');
+    }
+
+    /**
+     * Remove the specified mass intention
+     */
+    public function destroy(MassIntention $massIntention)
+    {
+        // Decrement the mass schedule count
+        $massIntention->massSchedule()->decrement('current_intentions');
+
+        $massIntention->delete();
+
+        return redirect()->route('fund.mass-intentions.index')
+            ->with('success', 'Mass intention deleted successfully.');
+    }
+
+    /**
+     * Update the status of a mass intention
+     */
+    public function updateStatus(Request $request, MassIntention $massIntention)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,confirmed,completed,cancelled',
+        ]);
+
+        $massIntention->update([
+            'status' => $request->status,
+            'updated_by' => Auth::id(),
+        ]);
+
+        return back()->with('success', 'Mass intention status updated successfully.');
+    }
+
+    /**
+     * Search for members by family number or name
+     */
+    public function searchMembers(Request $request)
+    {
+        $query = $request->get('query', '');
+        $familyNo = $request->get('family_no', '');
+
+        $members = Member::where(function ($q) use ($query, $familyNo) {
+            if ($familyNo) {
+                $q->where('family_no', $familyNo);
+            }
+            if ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                  ->orWhere('middle_name', 'like', "%{$query}%")
+                  ->orWhere('last_name', 'like', "%{$query}%")
+                  ->orWhere('member_no', 'like', "%{$query}%");
+            }
+        })
+        ->limit(10)
+        ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'contact_no_1']);
+
+        // Add a computed 'name' field for frontend compatibility
+        $members = $members->map(function ($member) {
+            $member->name = trim(implode(' ', array_filter([
+                $member->first_name,
+                $member->middle_name,
+                $member->last_name
+            ])));
+            // Add phone field for frontend compatibility
+            $member->phone = $member->contact_no_1;
+            return $member;
+        });
+
+        return response()->json($members);
+    }
+}

@@ -116,6 +116,7 @@ class RolePermissionController extends Controller
             'permissionGroups' => $permissionGroups,
             'permissionsByCategory' => $permissionsByCategory,
             'categories' => $categories,
+            'categoriesByApp' => $categories->groupBy('app'),
         ]);
     }
 
@@ -359,6 +360,59 @@ class RolePermissionController extends Controller
             'permissionsByCategory' => $permissionsByCategory,
             'categories' => $categories,
             'selectedGroupId' => (int) $groupId,
+        ]);
+    }
+
+    /**
+     * Update permissions for a specific role.
+     */
+    public function updatePermissions(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'permissions' => 'required|array',
+        ]);
+
+        $role = Role::findOrFail($request->input('role_id'));
+        $permissions = $request->input('permissions');
+
+        // Get all available permissions from the modules
+        $modules = Module::with('actions')->get();
+        $allPermissions = [];
+
+        // Build the list of all available permissions
+        foreach ($modules as $module) {
+            foreach ($module->actions as $action) {
+                $allPermissions[] = $action->slug;
+            }
+        }
+
+        // Get the permissions that should be assigned to this role
+        $permissionsToAssign = [];
+        foreach ($permissions as $moduleId => $modulePermissions) {
+            foreach ($modulePermissions as $actionId => $hasPermission) {
+                if ($hasPermission == 1) {
+                    // Find the action slug for this action ID
+                    foreach ($modules as $module) {
+                        if ($module->id == $moduleId) {
+                            foreach ($module->actions as $action) {
+                                if ($action->id == $actionId) {
+                                    $permissionsToAssign[] = $action->slug;
+                                    break 2;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Sync the permissions to the role
+        $role->syncPermissions($permissionsToAssign);
+
+        return response()->json([
+            'success' => true,
+            'message' => "Permissions updated successfully for role '{$role->name}'"
         ]);
     }
 }

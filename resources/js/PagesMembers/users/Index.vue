@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,26 @@ import { router } from '@inertiajs/vue3';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
+// Type definitions
+interface Role {
+  id: number;
+  name: string;
+  permissions?: any[];
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  created_at: string;
+  roles?: Role[];
+}
+
 const { can } = permissionHelpers();
+
+// Get current logged-in user
+const page = usePage<any>();
+const currentUserId = page.props.auth?.user?.id;
 
 const props = defineProps({
   users: {
@@ -19,7 +38,7 @@ const props = defineProps({
     default: () => ({ data: [] }),
   },
   roles: {
-    type: Array,
+    type: Array as () => Role[],
     default: () => [],
   },
   filters: Object,
@@ -38,6 +57,7 @@ const columns = [
   { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
   { key: 'email', label: 'Email', sortable: true },
+  { key: 'roles', label: 'Roles', sortable: false },
   { key: 'created_at', label: 'Created At', sortable: true },
 ];
 
@@ -49,8 +69,8 @@ const showDeleteModal = ref(false);
 const showRoleModal = ref(false);
 const editingItem = ref<any>(null);
 const deletingItem = ref<any>(null);
-const selectedUser = ref<any>(null);
-const selectedRoles = ref<number[]>([]);
+const selectedUser = ref<User | null>(null);
+const selectedRoles = ref<number>(0);
 const showSuccessMessage = ref(false);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(props.filters?.isArchived === 'true');
@@ -71,7 +91,7 @@ const editForm = useForm({
 const roleForm = useForm({
   name: '',
   email: '',
-  roles: []
+  roles: [] as number[]
 });
 
 const search = ref(props.filters?.search || '');
@@ -81,18 +101,23 @@ const direction = ref(props.filters?.direction || 'asc');
 
 const enhancedUsers = computed(() => {
   const c = props.users || {};
+  const usersData = c.data || [];
+  
+  // Filter out the current logged-in user
+  const filteredUsers = usersData.filter((user: any) => user.id !== currentUserId);
+  
   return {
-    data: c.data || [],
+    data: filteredUsers,
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
     next_page_url: c.next_page_url ?? c.meta?.next_page_url,
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
-    total: c.total ?? c.meta?.total, // Add this line
+    total: filteredUsers.length, // Update total to reflect filtered count
   };
 });
 
 // Available roles from backend
-const availableRoles = computed(() => props.roles || []);
+const availableRoles = computed<Role[]>(() => props.roles || []);
 
 watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
@@ -193,25 +218,39 @@ function openDeleteModal(row: any) {
 
 function openRoleModal(user: any) {
   selectedUser.value = user;
-  selectedRoles.value = user.roles?.map((role: any) => role.id) || [];
+  // For single role, take the first role if user has roles, otherwise set to 0
+  selectedRoles.value = user.roles && user.roles.length > 0 ? user.roles[0].id : 0;
   showRoleModal.value = true;
 }
 
 function assignRoles() {
+  if (!selectedUser.value) return;
+  
   // Set all required user data, not just roles
   roleForm.name = selectedUser.value.name;
   roleForm.email = selectedUser.value.email;
-  roleForm.roles = selectedRoles.value;
+  roleForm.roles = [selectedRoles.value]; // Wrap single role in array for backend compatibility
   
   // Debug logging
-  console.log('Assigning roles for user:', selectedUser.value.name, 'Roles:', selectedRoles.value);
+  console.log('Assigning role for user:', selectedUser.value.name, 'Role:', selectedRoles.value);
+  console.log('Form data being sent:', roleForm.data());
+  
+  // Add a fallback to close modal after a timeout in case the request hangs
+  const modalTimeout = setTimeout(() => {
+    console.log('Modal close timeout triggered');
+    showRoleModal.value = false;
+    selectedUser.value = null;
+    selectedRoles.value = 0;
+  }, 10000); // 10 second timeout
   
   roleForm.put(route('users.update', selectedUser.value.id), {
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log('Role assignment successful:', response);
+      clearTimeout(modalTimeout);
       // Close the modal
       showRoleModal.value = false;
       selectedUser.value = null;
-      selectedRoles.value = [];
+      selectedRoles.value = 0;
       
       // Show success message briefly
       showSuccessMessage.value = true;
@@ -222,7 +261,9 @@ function assignRoles() {
       // Refresh the user data without page reload
       fetch();
     },
-    onError: () => {
+    onError: (errors) => {
+      console.error('Role assignment failed:', errors);
+      clearTimeout(modalTimeout);
       // Keep modal open on error so user can fix and retry
       // Error handling is already built into the form
     }
@@ -298,7 +339,11 @@ function handlePageChange(event: Event) {
   }
 }
 
-
+function closeRoleModal() {
+  showRoleModal.value = false;
+  selectedUser.value = null;
+  selectedRoles.value = 0;
+}
 
 
 </script>
@@ -439,6 +484,18 @@ function handlePageChange(event: Event) {
                   <template v-if="col.key === 'created_at'">
                     {{ formatDate(row[col.key]) }}
                   </template>
+                  <template v-else-if="col.key === 'roles'">
+                    <div class="flex flex-wrap gap-1">
+                      <span v-if="!row.roles || row.roles.length === 0" 
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                        No roles
+                      </span>
+                      <span v-for="role in row.roles" :key="role.id"
+                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {{ role.name }}
+                      </span>
+                    </div>
+                  </template>
                   <template v-else>
                     {{ row[col.key] }}
                   </template>
@@ -560,15 +617,15 @@ function handlePageChange(event: Event) {
         <div
           class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-white p-6">
-            <h3 class="mb-4 text-xl font-semibold">Manage Roles for {{ selectedUser?.name }}</h3>
-            <p class="mb-4 text-sm text-gray-600">Assign or remove roles for this user</p>
+            <h3 class="mb-4 text-xl font-semibold">Manage Role for {{ selectedUser?.name }}</h3>
+            <p class="mb-4 text-sm text-gray-600">Assign a single role for this user</p>
             
-            <!-- Current Roles Display -->
+            <!-- Current Role Display -->
             <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-700 mb-2">Current Roles:</h4>
+              <h4 class="text-sm font-medium text-gray-700 mb-2">Current Role:</h4>
               <div class="flex flex-wrap gap-2">
                 <span v-if="!selectedUser?.roles || selectedUser?.roles.length === 0" 
-                      class="text-gray-500 text-sm">No roles assigned</span>
+                      class="text-gray-500 text-sm">No role assigned</span>
                 <span v-for="role in selectedUser?.roles" :key="role.id"
                       class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       {{ role.name }}
@@ -579,12 +636,12 @@ function handlePageChange(event: Event) {
             <!-- Role Assignment Form -->
             <form @submit.prevent="assignRoles">
               <div class="mb-4">
-                <Label for="roles">Select Roles:</Label>
+                <Label for="roles">Select Role:</Label>
                 <div class="mt-2 space-y-2 max-h-40 overflow-y-auto">
                   <label v-for="role in availableRoles" :key="role.id" 
                          class="flex items-center space-x-3 p-2 rounded border border-gray-200 hover:bg-gray-50">
-                    <input type="checkbox" :value="role.id" v-model="selectedRoles" 
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                    <input type="radio" :value="role.id" v-model="selectedRoles" 
+                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
                     <div>
                       <span class="text-sm font-medium text-gray-900">{{ role.name }}</span>
                       <p class="text-xs text-gray-500">{{ role.permissions?.length || 0 }} permissions</p>
@@ -594,14 +651,14 @@ function handlePageChange(event: Event) {
               </div>
               
               <div class="flex justify-end space-x-2">
-                <Button type="button" variant="secondary" @click="showRoleModal = false"
+                <Button type="button" variant="secondary" @click="closeRoleModal"
                   :disabled="roleForm.processing"
                   class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
                   {{ roleForm.processing ? 'Processing...' : 'Cancel' }}
                 </Button>
                 <Button type="submit" :disabled="roleForm.processing"
                   class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2">
-                  {{ roleForm.processing ? 'Saving...' : 'Save Roles' }}
+                  {{ roleForm.processing ? 'Saving...' : 'Save Role' }}
                 </Button>
               </div>
             </form>

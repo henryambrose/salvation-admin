@@ -22,19 +22,25 @@ const getCurrentPath = () => {
 
 const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   // Handle Fund routes with more precise matching
-  if (itemHref === '/fund') {
-    // Dashboard should only be active when exactly on /fund
-    const isActive = currentUrl === '/fund';
-    console.log(`Dashboard (${itemHref}): currentUrl=${currentUrl}, isActive=${isActive}`);
-    return isActive;
+  
+  // Simple test for Fund routes
+  if (itemHref.startsWith('/fund')) {
+    // Fund route detected
   }
   
+  // Handle Fund dashboard - should be active for /fund and /fund/dashboard
+  if (itemHref === '/fund') {
+    const isActive = currentUrl === '/fund' || currentUrl === '/fund/dashboard';
+    return isActive;
+  }
+ 
+  // Handle Fund sub-routes - RETURN EARLY for all Fund routes
   if (itemHref.startsWith('/fund/')) {
     // For Fund sub-routes, check if current URL starts with the item href
-    // This handles: /fund/annual-contributions, /fund/annual-contributions/create, etc.
+    // This handles: /fund/annual-contributions, /fund/categories, etc.
+    // AND their nested routes like /fund/annual-contributions/create, /fund/annual-contributions/123/edit
     const isActive = currentUrl.startsWith(itemHref);
-    console.log(`Fund sub-route (${itemHref}): currentUrl=${currentUrl}, isActive=${isActive}`);
-    return isActive;
+    return isActive; // RETURN EARLY - don't continue to other logic
   }
   
   // Handle clashing URLs first - use exact match for URLs that might clash with others
@@ -73,18 +79,19 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
     '/town': ['/town/index','/town'],
     '/users': ['/users/index','/users'],
     '/roles-permissions': ['/roles-permissions/index','/roles-permissions'],
-    
   };
   
   // Check if the current URL matches any variation of the item href
   const variations = urlVariations[itemHref as keyof typeof urlVariations];
   if (variations) {
     // Check if current URL starts with any of the variations
-    return variations.some(variation => currentUrl.startsWith(variation));
+    const isActive = variations.some(variation => currentUrl.startsWith(variation));
+    return isActive;
   }
   
   // For other pages, check if current URL starts with the item href
-  return currentUrl.startsWith(itemHref);
+  const isActive = currentUrl.startsWith(itemHref);
+  return isActive;
 };
 
 const handleNavigation = (href: string) => {

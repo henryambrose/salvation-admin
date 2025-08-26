@@ -8,7 +8,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 
 const { can } = permissionHelpers();
 
-const props = defineProps<{
+interface Props {
   roles: Roles;
   modules: Modules;
   permissions: Permissions;
@@ -28,8 +28,12 @@ const props = defineProps<{
     color: string;
     sort_order: number;
     description: string;
+    app: string;
   }>;
-}>();
+  categoriesByApp: Record<string, any[]>;
+}
+
+const props = defineProps<Props>();
 
 // Permission checks
 const canManageRoles = can('manage-roles');
@@ -37,9 +41,31 @@ const canViewRoles = can('read-role');
 
 const selectedRoleId = ref<number | null>(null);
 const selectedGroupId = ref('custom');
-const expandedCategories = ref<Set<string>>(new Set(['Core Management']));
+const expandedCategories = ref<Set<string>>(new Set([
+  'Core Management',
+  'Fund Categories',
+  'Annual Contributions',
+  'Mass Intentions'
+]));
 const isApplyingGroup = ref(false);
+const showSuccessMessage = ref(false);
+const successMessage = ref('');
 
+// Store original permissions for reset functionality
+const originalPermissions = ref<Permissions>({});
+
+// Local copy of permissions that can be modified
+const localPermissions = ref<any>({});
+
+// Initialize original permissions when component mounts
+watch(() => props.permissions, (newPermissions) => {
+  if (newPermissions && Object.keys(newPermissions).length > 0) {
+    // Deep clone the permissions to preserve original state
+    originalPermissions.value = JSON.parse(JSON.stringify(newPermissions));
+    // Initialize local permissions with the same data
+    localPermissions.value = JSON.parse(JSON.stringify(newPermissions));
+  }
+}, { immediate: true });
 
 
 // Add Role Modal State
@@ -118,6 +144,168 @@ function getUniqueModelsForCategory(categoryName: string): string[] {
   return Array.from(models).sort();
 }
 
+// Helper function to get module for a model
+function getModuleForModel(modelName: string): string {
+  // Map model names to modules
+  const modelToModule: Record<string, string> = {
+    // Members module
+    'member': 'Members',
+    'user': 'Members',
+    'family': 'Members',
+    'community': 'Members',
+    'parish': 'Members',
+    'zone': 'Members',
+    'cluster': 'Members',
+    'age_group': 'Members',
+    'blood_group': 'Members',
+    'income_range': 'Members',
+    'relationship': 'Members',
+    'designation': 'Members',
+    'gender': 'Members',
+    'status': 'Members',
+    'city': 'Members',
+    'state': 'Members',
+    'country': 'Members',
+    'town': 'Members',
+    'external_member': 'Members',
+    'cells_and_association': 'Members',
+    'cells_and_association_member': 'Members',
+    
+    // Fund module
+    'fund_category': 'Fund',
+    'mass_intention': 'Fund',
+    'mass_intention_type': 'Fund',
+    'mass_type': 'Fund',
+    'payment_method': 'Fund',
+    'annual_contribution': 'Fund',
+    
+    // Graveyard module (for future)
+    'grave': 'Graveyard',
+    'plot': 'Graveyard',
+    'deceased': 'Graveyard',
+    'burial': 'Graveyard',
+    
+    // Default
+    'default': 'Core'
+  };
+  
+  return modelToModule[modelName] || 'Core';
+}
+
+// Helper function to get module background color
+function getModuleBackgroundColor(moduleName: string): string {
+  const moduleColors: Record<string, string> = {
+    'Members': 'bg-blue-50 border-l-4 border-l-blue-500',
+    'Fund': 'bg-green-50 border-l-4 border-l-green-500',
+    'Graveyard': 'bg-purple-50 border-l-4 border-l-purple-500',
+    'Core': 'bg-gray-50 border-l-4 border-l-gray-500'
+  };
+  
+  return moduleColors[moduleName] || 'bg-gray-50 border-l-4 border-l-gray-500';
+}
+
+// Helper function to get module text color
+function getModuleTextColor(moduleName: string): string {
+  const moduleTextColors: Record<string, string> = {
+    'Members': 'text-blue-700',
+    'Fund': 'text-green-700',
+    'Graveyard': 'text-purple-700',
+    'Core': 'text-gray-700'
+  };
+  
+  return moduleTextColors[moduleName] || 'text-gray-700';
+}
+
+// Helper function to get module dot color
+function getModuleDotColor(moduleName: string): string {
+  const moduleDotColors: Record<string, string> = {
+    'Members': 'bg-blue-500',
+    'Fund': 'bg-green-500',
+    'Graveyard': 'bg-purple-500',
+    'Core': 'bg-gray-500'
+  };
+  
+  return moduleDotColors[moduleName] || 'bg-gray-500';
+}
+
+// Helper function to get unique modules for a category
+function getUniqueModulesForCategory(categoryName: string): string[] {
+  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
+    return [];
+  }
+  
+  const modules = new Set<string>();
+  const permissions = props.permissionsByCategory[categoryName];
+  
+  permissions.forEach((permission: any) => {
+    const permissionName = permission.name || permission.slug || '';
+    const modelName = getPermissionBaseName({ slug: permissionName });
+    if (modelName) {
+      const moduleName = getModuleForModel(modelName);
+      modules.add(moduleName);
+    }
+  });
+  
+  return Array.from(modules).sort();
+}
+
+// Helper function to get models for a specific module in a category
+function getModelsForModuleInCategory(categoryName: string, moduleName: string): string[] {
+  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
+    return [];
+  }
+  
+  const models: string[] = [];
+  const permissions = props.permissionsByCategory[categoryName];
+  
+  permissions.forEach((permission: any) => {
+    const permissionName = permission.name || permission.slug || '';
+    const modelName = getPermissionBaseName({ slug: permissionName });
+    if (modelName && getModuleForModel(modelName) === moduleName) {
+      models.push(modelName);
+    }
+  });
+  
+  return models.sort();
+}
+
+// Helper function to get all Members module models
+function getMembersModels(): string[] {
+  const allModels = getAllModels();
+  return allModels.filter(model => getModuleForModel(model) === 'Members');
+}
+
+// Helper function to get all Fund module models
+function getFundModels(): string[] {
+  const allModels = getAllModels();
+  return allModels.filter(model => getModuleForModel(model) === 'Fund');
+}
+
+// Helper function to get all Core module models
+function getCoreModels(): string[] {
+  const allModels = getAllModels();
+  return allModels.filter(model => getModuleForModel(model) === 'Core');
+}
+
+// Helper function to get all available models from all categories
+function getAllModels(): string[] {
+  const allModels = new Set<string>();
+  
+  if (props.permissionsByCategory) {
+    Object.values(props.permissionsByCategory).forEach((permissions: any[]) => {
+      permissions.forEach((permission: any) => {
+        const permissionName = permission.name || permission.slug || '';
+        const modelName = getPermissionBaseName({ slug: permissionName });
+        if (modelName) {
+          allModels.add(modelName);
+        }
+      });
+    });
+  }
+  
+  return Array.from(allModels).sort();
+}
+
 // Helper function to format model name for display
 function formatModelName(modelName: string): string {
   return modelName
@@ -159,6 +347,26 @@ const getCategoryHeaders = computed(() => {
   ];
 });
 
+// Get categories grouped by app
+const getCategoriesByApp = computed(() => {
+  if (props.categoriesByApp) {
+    return props.categoriesByApp;
+  }
+  
+  // Fallback grouping
+  return {
+    'Members': props.categories?.filter(cat => 
+      ['Core Management', 'Organizational Structure', 'Leadership', 'Member Attributes', 'Geographic Data', 'System Management', 'Data Management', 'AI Assistance', 'Dashboard'].includes(cat.name)
+    ) || [],
+    'Fund': props.categories?.filter(cat => 
+      ['Fund Categories', 'Annual Contributions', 'Mass Intentions', 'Mass Types', 'Mass Intention Types', 'Payment Methods'].includes(cat.name)
+    ) || [],
+    'Core': props.categories?.filter(cat => 
+      ['System Management', 'Data Management', 'AI Assistance', 'Dashboard'].includes(cat.name)
+    ) || [],
+  };
+});
+
 // Get all unique actions from permissions
 const allActions = computed(() => {
   const actions = new Set<string>();
@@ -186,14 +394,14 @@ function hasPermission(roleId: number, permissionSlug: string): boolean {
   const role = props.roles.find((r) => r.id === roleId);
   if (!role) return false;
 
-  // Check if the role has this permission based on the permissions state
+  // Check if the role has this permission based on the local permissions state
   for (const module of props.modules) {
     for (const action of module.actions) {
       if (action.slug === permissionSlug) {
         // Check if this role has this permission
-        const rolePermissions = props.permissions[roleId];
-        if (rolePermissions && (rolePermissions as any)[module.id]) {
-          return (rolePermissions as any)[module.id][action.id] === 1;
+        const rolePermissions = localPermissions.value[roleId];
+        if (rolePermissions && rolePermissions[module.id]) {
+          return rolePermissions[module.id][action.id] === 1;
         }
         return false;
       }
@@ -209,16 +417,17 @@ function togglePermission(roleId: number, permissionSlug: string) {
   for (const module of props.modules) {
     for (const action of module.actions) {
       if (action.slug === permissionSlug) {
-        // Toggle the permission state
-        if (!props.permissions[roleId]) {
-          props.permissions[roleId] = {};
+        // Toggle the permission state in local permissions
+        if (!localPermissions.value[roleId]) {
+          localPermissions.value[roleId] = {};
         }
-        if (!(props.permissions as any)[roleId][module.id]) {
-          (props.permissions as any)[roleId][module.id] = {};
+        if (!localPermissions.value[roleId][module.id]) {
+          localPermissions.value[roleId][module.id] = {};
         }
 
-        const currentValue = (props.permissions as any)[roleId][module.id][action.id] || 0;
-        (props.permissions as any)[roleId][module.id][action.id] = currentValue === 1 ? 0 : 1;
+        const currentValue = localPermissions.value[roleId][module.id][action.id] || 0;
+        localPermissions.value[roleId][module.id][action.id] = currentValue === 1 ? 0 : 1;
+        
         return;
       }
     }
@@ -232,6 +441,20 @@ function toggleCategory(categoryName: string) {
   } else {
     expandedCategories.value.add(categoryName);
   }
+}
+
+// Expand all categories
+function expandAllCategories() {
+  if (props.categories) {
+    props.categories.forEach(category => {
+      expandedCategories.value.add(category.name);
+    });
+  }
+}
+
+// Collapse all categories
+function collapseAllCategories() {
+  expandedCategories.value.clear();
 }
 
 // Apply permission group to selected role
@@ -266,8 +489,98 @@ async function applyPermissionGroup(groupId: string) {
 }
 
 // Save permissions
-function savePermissions() {
-  console.log('Saving permissions...');
+async function savePermissions() {
+  if (!selectedRoleId.value) {
+    alert('Please select a role first');
+    return;
+  }
+
+  // Check if there are any changes to save
+  const hasChanges = JSON.stringify(localPermissions.value[selectedRoleId.value]) !== 
+                     JSON.stringify(originalPermissions.value[selectedRoleId.value]);
+  
+  if (!hasChanges) {
+    alert('No changes to save');
+    return;
+  }
+
+  try {
+    // Show loading state
+    const saveButton = document.querySelector('[data-save-permissions]') as HTMLButtonElement;
+    if (saveButton) {
+      saveButton.disabled = true;
+      saveButton.innerHTML = `
+        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Saving...
+      `;
+    }
+
+    // Send the updated permissions to the backend using fetch (not Inertia)
+    const response = await fetch('/roles-permissions/update-permissions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        role_id: selectedRoleId.value,
+        permissions: localPermissions.value[selectedRoleId.value]
+      })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      
+      // Update original permissions to match the new state
+      if (selectedRoleId.value) {
+        originalPermissions.value[selectedRoleId.value] = JSON.parse(JSON.stringify(localPermissions.value[selectedRoleId.value]));
+      }
+      
+      // Show success message
+      successMessage.value = 'Permissions saved successfully!';
+      showSuccessMessage.value = true;
+      
+      // Hide success message after 3 seconds
+      setTimeout(() => {
+        showSuccessMessage.value = false;
+      }, 3000);
+      
+      // Reload the page to get the latest data
+      router.reload();
+    } else {
+      const errorData = await response.json();
+      console.error('Error saving permissions:', errorData);
+      alert('Failed to save permissions. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error saving permissions:', error);
+    alert('Failed to save permissions. Please try again.');
+  } finally {
+    // Reset button state
+    const saveButton = document.querySelector('[data-save-permissions]') as HTMLButtonElement;
+    if (saveButton) {
+      saveButton.disabled = false;
+      saveButton.innerHTML = `
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Save Permissions
+      `;
+    }
+  }
+}
+
+// Reset permissions to original state
+function resetPermissions() {
+  if (confirm('Are you sure you want to reset all changes? This will restore the original permission state.')) {
+    // Restore original permissions to local permissions
+    localPermissions.value = JSON.parse(JSON.stringify(originalPermissions.value));
+    
+    console.log('Permissions reset to original state');
+  }
 }
 
 // Add Role Functions
@@ -341,6 +654,21 @@ function createRole() {
         </div>
       </div>
 
+      <!-- Success Message -->
+      <div v-if="showSuccessMessage" class="mb-6 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center justify-between">
+        <div class="flex items-center">
+          <svg class="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span class="font-medium">{{ successMessage }}</span>
+        </div>
+        <button @click="showSuccessMessage = false" class="text-green-500 hover:text-green-700">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
       <!-- Role Selection and Quick Actions -->
       <div class="mb-6 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border border-blue-100">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -412,12 +740,13 @@ function createRole() {
               <p class="text-gray-600 mt-1">Manage permissions for this role</p>
             </div>
             <div class="flex gap-3">
-              <Button variant="outline" @click="router.reload()">
+              <Button variant="outline" @click="resetPermissions">
                 Reset Changes
               </Button>
               <Button
                 v-if="canManageRoles"
                 @click="savePermissions"
+                data-save-permissions
                 class="bg-blue-600 hover:bg-blue-700"
               >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -431,6 +760,35 @@ function createRole() {
 
         <!-- Permission Matrix -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+          <!-- App Legend and Controls -->
+          <div class="bg-gray-50 border-b border-gray-200 p-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-6 text-sm">
+                <span class="font-medium text-gray-700">Application Groups:</span>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-blue-500"></div>
+                  <span class="text-blue-700">Members</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                  <span class="text-green-700">Fund</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <div class="w-3 h-3 rounded-full bg-gray-500"></div>
+                  <span class="text-gray-700">Core</span>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <Button variant="outline" size="sm" @click="expandAllCategories">
+                  Expand All
+                </Button>
+                <Button variant="outline" size="sm" @click="collapseAllCategories">
+                  Collapse All
+                </Button>
+              </div>
+            </div>
+          </div>
+
           <!-- Table Header -->
           <div class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
             <div class="grid gap-4 p-4" style="grid-template-columns: 300px repeat(6, 1fr);">
@@ -447,110 +805,145 @@ function createRole() {
           <!-- Permission Categories -->
           <div class="divide-y divide-gray-100">
             <div 
-              v-for="category in getCategoryHeaders" 
-              :key="typeof category === 'object' ? category.id : category" 
+              v-for="(categoryGroup, appName) in getCategoriesByApp" 
+              :key="appName"
               class="bg-white"
             >
-              <!-- Category Header -->
-              <div 
-                @click="toggleCategory(getCategoryName(category))"
-                class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-              >
-                <div class="flex items-center gap-3">
-                  <div 
-                    class="w-3 h-3 rounded-full"
-                    :style="{ backgroundColor: typeof category === 'object' ? category.color : '#3B82F6' }"
-                  ></div>
-                  <h3 class="text-lg font-semibold text-gray-900">
-                    {{ getCategoryName(category) }}
-                  </h3>
-                  <span class="text-sm text-gray-500">
-                    ({{ (props.permissionsByCategory && props.permissionsByCategory[getCategoryName(category)]) ? props.permissionsByCategory[getCategoryName(category)].length : 0 }} permissions)
-                  </span>
-                </div>
-                <svg 
-                  class="w-5 h-5 text-gray-400 transition-transform"
-                  :class="{ 'rotate-180': expandedCategories.has(getCategoryName(category)) }"
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                </svg>
+              <!-- App Header -->
+              <div class="p-4 border-b border-gray-200" :class="{
+                'bg-blue-50': appName === 'Members',
+                'bg-green-50': appName === 'Fund',
+                'bg-gray-50': appName === 'Core'
+              }">
+                <h3 class="text-lg font-semibold" :class="{
+                  'text-blue-900': appName === 'Members',
+                  'text-green-900': appName === 'Fund',
+                  'text-gray-900': appName === 'Core'
+                }">{{ appName }}</h3>
               </div>
 
-              <!-- Category Permissions (Collapsible) -->
+              <!-- Categories within this app -->
               <div 
-                v-if="expandedCategories.has(getCategoryName(category))"
-                class="border-t border-gray-100 bg-gray-50"
+                v-for="category in categoryGroup" 
+                :key="category.id"
+                class="border-b border-gray-100 last:border-b-0"
               >
+                <!-- Category Header -->
                 <div 
-                  v-for="modelName in getUniqueModelsForCategory(getCategoryName(category))" 
-                  :key="modelName"
-                  class="grid gap-4 p-3 hover:bg-white transition-colors border-b border-gray-100 last:border-b-0"
-                  style="grid-template-columns: 300px repeat(6, 1fr);"
+                  @click="toggleCategory(category.name)"
+                  class="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
                 >
-                  <!-- Model Name -->
                   <div class="flex items-center gap-3">
-                    <div class="w-2 h-2 rounded-full bg-gray-400"></div>
-                    <div>
-                      <div class="font-medium text-gray-900 text-sm capitalize">
-                        {{ formatModelName(modelName) }}
-                      </div>
-                      <div class="text-xs text-gray-500 font-mono">
-                        {{ modelName }}
+                    <div 
+                      class="w-3 h-3 rounded-full"
+                      :style="{ backgroundColor: category.color }"
+                    ></div>
+                    <h4 class="text-md font-semibold text-gray-900">
+                      {{ category.name }}
+                    </h4>
+                    <div class="text-xs text-gray-500">
+                      {{ category.description }}
+                    </div>
+                    <span class="text-sm text-gray-500">
+                      ({{ (props.permissionsByCategory && props.permissionsByCategory[category.name]) ? props.permissionsByCategory[category.name].length : 0 }} permissions)
+                    </span>
+                  </div>
+                  <svg 
+                    class="w-5 h-5 text-gray-400 transition-transform"
+                    :class="{ 'rotate-180': expandedCategories.has(category.name) }"
+                    fill="none" 
+                    stroke="currentColor" 
+                    viewBox="0 0 24 24"
+                  >
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+
+                <!-- Category Permissions (Collapsible) -->
+                <div 
+                  v-if="expandedCategories.has(category.name)"
+                  class="border-t border-gray-100 bg-gray-50"
+                >
+                  <div 
+                    v-if="getUniqueModelsForCategory(category.name).length === 0"
+                    class="p-4 text-center text-gray-500"
+                  >
+                    No permissions found for this category. This might be due to:
+                    <ul class="mt-2 text-sm text-left list-disc list-inside">
+                      <li>Permissions not yet generated for this category</li>
+                      <li>Category rules not matching existing permissions</li>
+                      <li>Database permissions not synced with categories</li>
+                    </ul>
+                  </div>
+                  <div 
+                    v-else
+                    v-for="modelName in getUniqueModelsForCategory(category.name)" 
+                    :key="modelName"
+                    class="grid gap-4 p-3 hover:bg-white transition-colors border-b border-gray-100 last:border-b-0"
+                    style="grid-template-columns: 300px repeat(6, 1fr);"
+                  >
+                    <!-- Model Name -->
+                    <div class="flex items-center gap-3">
+                      <div class="w-2 h-2 rounded-full bg-gray-400"></div>
+                      <div>
+                        <div class="font-medium text-gray-900 text-sm capitalize">
+                          {{ formatModelName(modelName) }}
+                        </div>
+                        <div class="text-xs text-gray-500 font-mono">
+                          {{ modelName }}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  
-                  <!-- Action Checkboxes -->
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `create-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `create-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `update-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `update-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `delete-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `delete-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `list-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `list-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `read-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `read-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
-                  </div>
-                  <div class="flex justify-center">
-                    <input
-                      type="checkbox"
-                      :checked="selectedRoleId ? hasPermission(selectedRoleId, `restore-${modelName}`) : false"
-                      @change="selectedRoleId && togglePermission(selectedRoleId, `restore-${modelName}`)"
-                      class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                    />
+                    
+                    <!-- Action Checkboxes -->
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `create-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `create-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `update-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `update-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `delete-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `delete-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `list-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `list-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `read-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `read-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
+                    <div class="flex justify-center">
+                      <input
+                        type="checkbox"
+                        :checked="selectedRoleId ? hasPermission(selectedRoleId, `restore-${modelName}`) : false"
+                        @change="selectedRoleId && togglePermission(selectedRoleId, `restore-${modelName}`)"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

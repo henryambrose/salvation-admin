@@ -48,6 +48,8 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         ->name('roles.permissions.create-role');
     Route::post('/roles-permissions/apply-group', [RolePermissionController::class, 'applyGroup'])
         ->name('roles.permissions.apply-group');
+    Route::post('/roles-permissions/update-permissions', [RolePermissionController::class, 'updatePermissions'])
+        ->name('roles.permissions.update-permissions');
     Route::get('/roles-permissions/preview/{groupId}', [RolePermissionController::class, 'preview'])
         ->name('roles.permissions.preview');
     

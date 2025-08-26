@@ -30,8 +30,8 @@ class SampleContributionsSeeder extends Seeder
                 'status' => 'paid',
                 'paid_by_name' => 'John Doe',
                 'notes' => 'Building fund contribution',
-                'created_by' => 1,
-                'updated_by' => 1
+                'created_by' => null,
+                'updated_by' => null
             ],
             [
                 'family_no' => 'F002',
@@ -43,8 +43,8 @@ class SampleContributionsSeeder extends Seeder
                 'status' => 'partial',
                 'paid_by_name' => 'Jane Smith',
                 'notes' => 'Partial payment for building fund',
-                'created_by' => 1,
-                'updated_by' => 1
+                'created_by' => null,
+                'updated_by' => null
             ],
             [
                 'family_no' => 'F003',
@@ -56,8 +56,8 @@ class SampleContributionsSeeder extends Seeder
                 'status' => 'pending',
                 'paid_by_name' => 'Bob Johnson',
                 'notes' => 'Mission fund contribution',
-                'created_by' => 1,
-                'updated_by' => 1
+                'created_by' => null,
+                'updated_by' => null
             ],
             [
                 'family_no' => 'F004',
@@ -69,8 +69,8 @@ class SampleContributionsSeeder extends Seeder
                 'status' => 'paid',
                 'paid_by_name' => 'Alice Brown',
                 'notes' => 'Previous year contribution',
-                'created_by' => 1,
-                'updated_by' => 1
+                'created_by' => null,
+                'updated_by' => null
             ],
             [
                 'family_no' => 'F005',
@@ -82,8 +82,8 @@ class SampleContributionsSeeder extends Seeder
                 'status' => 'paid',
                 'paid_by_name' => 'Charlie Wilson',
                 'notes' => 'Charity fund contribution',
-                'created_by' => 1,
-                'updated_by' => 1
+                'created_by' => null,
+                'updated_by' => null
             ]
         ];
 

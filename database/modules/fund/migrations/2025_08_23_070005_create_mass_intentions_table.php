@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('family_no', 50);
             $table->foreignId('member_id')->nullable()->constrained('members')->onDelete('set null');
             $table->foreignId('mass_schedule_id')->constrained('mass_schedules')->onDelete('cascade');
-            $table->foreignId('intention_type_id')->constrained('intention_types')->onDelete('cascade');
+            $table->foreignId('mass_intention_type_id')->constrained('mass_intention_types')->onDelete('cascade');
             $table->string('intention_for');
             $table->decimal('amount', 10, 2);
             $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');

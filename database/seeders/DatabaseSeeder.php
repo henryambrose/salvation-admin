@@ -13,6 +13,13 @@ class DatabaseSeeder extends Seeder
             PermissionCategorySeeder::class,
         ]);
 
+        // Call the permission seeders
+        $this->call([
+            FundPermissionsSeeder::class,
+            MembersPermissionsSeeder::class,
+            CorePermissionsSeeder::class,
+        ]);
+
         // Call the Members module seeders
         $this->call([
             \Modules\Members\Database\Seeders\DatabaseSeeder::class,

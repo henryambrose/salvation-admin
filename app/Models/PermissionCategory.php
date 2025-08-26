@@ -11,7 +11,7 @@ class PermissionCategory extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'name', 'slug', 'description', 'color', 'sort_order', 'is_active'
+        'name', 'slug', 'description', 'app', 'color', 'sort_order', 'is_active'
     ];
 
     protected $casts = [

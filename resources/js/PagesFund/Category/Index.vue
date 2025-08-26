@@ -6,7 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
 import { Input } from '@/components/ui/input';
-import { Pencil, Trash, RotateCcw, Plus, Eye } from 'lucide-vue-next';
+import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
 import { computed, ref, watch, nextTick } from 'vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 
@@ -415,9 +415,6 @@ const breadcrumbs = [
                       <Button v-if="canUpdateAnyCategory" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition p-2">
                         <Pencil class="w-4 h-4" />
                       </Button>
-                      <Link v-if="canReadAnyCategory" :href="route('fund.categories.show', row.id)" class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition p-2">
-                        <Eye class="w-4 h-4" />
-                      </Link>
                     </div>
                   </template>
                   <template v-else>

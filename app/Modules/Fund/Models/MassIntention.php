@@ -12,36 +12,56 @@ class MassIntention extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'family_no',
         'member_id',
-        'mass_schedule_id',
-        'intention_type_id',
-        'intention_for',
+        'non_member_name',
+        'phone',
+        'mass_date',
+        'mass_type_id',
+        'mass_intention_type_id',
+        'special_instructions',
+        'payment_method_id',
         'amount',
         'status',
-        'notes',
         'created_by',
-        'updated_by'
+        'updated_by',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2'
+        'mass_date' => 'date',
+        'amount' => 'decimal:2',
+        'status' => 'string',
     ];
 
-    // Relationships
+    /**
+     * Get the member for this mass intention
+     */
     public function member()
     {
-        return $this->belongsTo(Member::class);
+        return $this->belongsTo(\Modules\Members\Models\Member::class);
     }
 
-    public function massSchedule()
+    /**
+     * Get the mass type for this mass intention
+     */
+    public function massType()
     {
-        return $this->belongsTo(MassSchedule::class);
+        return $this->belongsTo(MassType::class);
     }
 
-    public function intentionType()
+    /**
+     * Get the mass intention type for this mass intention
+     */
+    public function massIntentionType()
     {
-        return $this->belongsTo(IntentionType::class);
+        return $this->belongsTo(MassIntentionType::class, 'mass_intention_type_id');
+    }
+
+    /**
+     * Get the payment method for this mass intention
+     */
+    public function paymentMethod()
+    {
+        return $this->belongsTo(\Modules\Fund\Models\PaymentMethod::class);
     }
 
     public function createdBy()

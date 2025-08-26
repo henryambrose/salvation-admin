@@ -18,6 +18,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Core Management',
                 'slug' => 'core-management',
                 'description' => 'Core member and community management permissions',
+                'app' => 'Members',
                 'color' => '#3B82F6',
                 'sort_order' => 1,
                 'rules' => [
@@ -31,6 +32,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Organizational Structure',
                 'slug' => 'organizational-structure',
                 'description' => 'Zone, cluster, and organizational structure permissions',
+                'app' => 'Members',
                 'color' => '#10B981',
                 'sort_order' => 2,
                 'rules' => [
@@ -45,6 +47,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Leadership',
                 'slug' => 'leadership',
                 'description' => 'PPC Head, SCC Head, and leadership permissions',
+                'app' => 'Members',
                 'color' => '#8B5CF6',
                 'sort_order' => 3,
                 'rules' => [
@@ -58,6 +61,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Member Attributes',
                 'slug' => 'member-attributes',
                 'description' => 'Member attribute and demographic permissions',
+                'app' => 'Members',
                 'color' => '#F59E0B',
                 'sort_order' => 4,
                 'rules' => [
@@ -75,6 +79,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Geographic Data',
                 'slug' => 'geographic-data',
                 'description' => 'Country, state, city, and town permissions',
+                'app' => 'Members',
                 'color' => '#06B6D4',
                 'sort_order' => 5,
                 'rules' => [
@@ -88,6 +93,7 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'System Management',
                 'slug' => 'system-management',
                 'description' => 'User, role, and system management permissions',
+                'app' => 'Members',
                 'color' => '#EF4444',
                 'sort_order' => 6,
                 'rules' => [
@@ -99,25 +105,12 @@ class PermissionCategorySeeder extends Seeder
                 ]
             ],
             [
-                'name' => 'Fund App Management',
-                'slug' => 'fund-app-management',
-                'description' => 'Fund, contributions, and payment permissions',
-                'color' => '#EC4899',
-                'sort_order' => 7,
-                'rules' => [
-                    ['rule_type' => 'contains', 'rule_value' => 'fund', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'annual-contribution', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'mass-intention', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'payment-method', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'fund-category', 'priority' => 10],
-                ]
-            ],
-            [
                 'name' => 'Data Management',
                 'slug' => 'data-management',
                 'description' => 'Data verification, import, export permissions',
+                'app' => 'Members',
                 'color' => '#8B5A2B',
-                'sort_order' => 8,
+                'sort_order' => 7,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'data-verification', 'priority' => 10],
                     ['rule_type' => 'contains', 'rule_value' => 'import', 'priority' => 10],
@@ -130,8 +123,9 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'AI Assistance',
                 'slug' => 'ai-assistance',
                 'description' => 'AI chat and assistance permissions',
+                'app' => 'Members',
                 'color' => '#FF6B6B',
-                'sort_order' => 9,
+                'sort_order' => 8,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'chat', 'priority' => 10],
                     ['rule_type' => 'contains', 'rule_value' => 'ai', 'priority' => 10],
@@ -142,10 +136,84 @@ class PermissionCategorySeeder extends Seeder
                 'name' => 'Dashboard',
                 'slug' => 'dashboard',
                 'description' => 'Dashboard and overview permissions',
+                'app' => 'Members',
                 'color' => '#6366F1',
-                'sort_order' => 10,
+                'sort_order' => 9,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'dashboard', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Fund Categories',
+                'slug' => 'fund-categories',
+                'description' => 'Fund category management permissions',
+                'app' => 'Fund',
+                'color' => '#10B981',
+                'sort_order' => 10,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'fund-category', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'fund_category', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'fundcategory', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Annual Contributions',
+                'slug' => 'annual-contributions',
+                'description' => 'Annual contribution management permissions (uses family_contributions table)',
+                'app' => 'Fund',
+                'color' => '#F59E0B',
+                'sort_order' => 11,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'annual-contribution', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'annual_contribution', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Mass Intentions',
+                'slug' => 'mass-intentions',
+                'description' => 'Mass intention management permissions',
+                'app' => 'Fund',
+                'color' => '#8B5CF6',
+                'sort_order' => 12,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'mass-intention', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'mass_intention', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Mass Types',
+                'slug' => 'mass-types',
+                'description' => 'Mass type management permissions',
+                'app' => 'Fund',
+                'color' => '#EC4899',
+                'sort_order' => 13,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'mass-type', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'mass_type', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Mass Intention Types',
+                'slug' => 'mass-intention-types',
+                'description' => 'Mass intention type management permissions',
+                'app' => 'Fund',
+                'color' => '#06B6D4',
+                'sort_order' => 14,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'mass-intention-type', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'mass_intention_type', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Payment Methods',
+                'slug' => 'payment-methods',
+                'description' => 'Payment method management permissions',
+                'app' => 'Fund',
+                'color' => '#EF4444',
+                'sort_order' => 15,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'payment-method', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'payment_method', 'priority' => 10],
                 ]
             ],
         ];
