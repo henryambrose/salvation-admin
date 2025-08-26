@@ -17,7 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
   strokeWidth: 2,
 });
 
-const className = computed(() => cn('h-4 w-4', props.class));
+const className = computed(() => cn('h-[1rem] w-[1rem]', props.class));
 
 const icon = computed(() => {
   const iconName = props.name.charAt(0).toUpperCase() + props.name.slice(1);

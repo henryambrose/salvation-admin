@@ -440,7 +440,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <button
               v-if="enhancedExternalMembers.prev_page_url"
               @click="fetch(enhancedExternalMembers.current_page - 1)"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
             >
               ← Prev
             </button>
@@ -452,7 +452,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 v-if="enhancedExternalMembers.last_page && enhancedExternalMembers.last_page > 1"
                 :value="enhancedExternalMembers.current_page"
                 @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
               >
                 <option v-for="page in enhancedExternalMembers.last_page" :key="page" :value="page">
                   {{ page }}
@@ -464,7 +464,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             <button
               v-if="enhancedExternalMembers.next_page_url"
               @click="fetch(enhancedExternalMembers.current_page + 1)"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
             >
               Next →
             </button>
@@ -476,7 +476,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </div>
         </div>
 
-        <div class="datatable2 mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <div class="datatable2 mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
           <!-- Table -->
           <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="w-full border-collapse text-left">
@@ -532,7 +532,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                                 class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
                                 title="View Family Tree"
                               >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path
                                     stroke-linecap="round"
                                     stroke-linejoin="round"
@@ -694,7 +694,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
   <transition name="fade">
     <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
       <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-        <div class="rounded-lg bg-white p-6">
+        <div class="rounded-lg bg-[#ffffff] p-6">
           <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
           <p>
             Are you sure you want to delete <span class="font-bold">{{ deletingMember?.first_name }} {{ deletingMember?.last_name }}</span

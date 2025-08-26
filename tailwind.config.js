@@ -1,10 +1,15 @@
 // tailwind.config.js
-import forms from '@tailwindcss/forms'
-
-export default {
-  content: ['./resources/**/*.{js,ts,vue,blade.php}'],
+module.exports = {
+  content: [
+    "./resources/**/*.blade.php",
+    "./resources/**/*.js", 
+    "./resources/**/*.vue",
+    "./resources/js/**/*.vue",
+  ],
   theme: {
-    extend: {},
+    extend: {
+      // Your custom extensions here
+    },
   },
-  plugins: [forms],
+  plugins: [],
 }

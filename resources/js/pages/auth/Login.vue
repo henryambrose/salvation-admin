@@ -53,7 +53,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Our Lady of Salvation';
               autocomplete="email" 
               v-model="form.email" 
               placeholder="Enter your email address" 
-              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
+              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4 rounded-xl transition-all duration-200 bg-[#ffffff] bg-opacity-50 backdrop-blur-sm"
             />
           </div>
           <InputError :message="form.errors.email" />
@@ -73,7 +73,7 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Our Lady of Salvation';
               autocomplete="current-password"
               v-model="form.password"
               placeholder="Enter your password"
-              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4rounded-xl transition-all duration-200 bg-white bg-opacity-50 backdrop-blur-sm"
+              class="pl-12 h-14 text-base border-2 border-gray-200 focus:border-blue-500 focus:ring-4rounded-xl transition-all duration-200 bg-[#ffffff] bg-opacity-50 backdrop-blur-sm"
             />
           </div>
           <InputError :message="form.errors.password" />

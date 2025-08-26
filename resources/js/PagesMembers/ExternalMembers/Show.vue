@@ -27,7 +27,7 @@
       </div>
 
       <!-- Member Information -->
-      <div class="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="bg-[#ffffff] shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6">
           <div class="flex items-center">
             <div class="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center mr-4">
@@ -55,7 +55,7 @@
               </dd>
             </div>
             
-            <div class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div class="bg-[#ffffff] px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">Family Number</dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {{ externalMember.family_no }}
@@ -69,7 +69,7 @@
               </dd>
             </div>
             
-            <div v-if="externalMember.relationship" class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div v-if="externalMember.relationship" class="bg-[#ffffff] px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">Relationship</dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {{ externalMember.relationship.name }}
@@ -80,7 +80,7 @@
       </div>
 
       <!-- Family Relationships -->
-      <div class="mt-8 bg-white shadow overflow-hidden sm:rounded-lg">
+      <div class="mt-8 bg-[#ffffff] shadow overflow-hidden sm:rounded-lg">
         <div class="px-4 py-5 sm:px-6">
           <h3 class="text-lg leading-6 font-medium text-gray-900">Family Relationships</h3>
           <p class="mt-1 max-w-2xl text-sm text-gray-500">
@@ -101,7 +101,7 @@
               </dd>
             </div>
             
-            <div v-if="externalMember.mother" class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+            <div v-if="externalMember.mother" class="bg-[#ffffff] px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
               <dt class="text-sm font-medium text-gray-500">Mother</dt>
               <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                 {{ externalMember.mother.full_name }}

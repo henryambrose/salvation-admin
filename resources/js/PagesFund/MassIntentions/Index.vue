@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-semibold">Mass Intentions</h1>
@@ -22,7 +22,7 @@
                   v-model="filters.search" 
                   type="text" 
                   placeholder="Search intentions, notes, or member names..."
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -30,7 +30,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
                 <select 
                   v-model="filters.status" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 >
                   <option value="">All Statuses</option>
                   <option value="pending">Pending</option>
@@ -44,7 +44,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Mass Type</label>
                 <select 
                   v-model="filters.mass_type_id" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 >
                   <option value="">All Types</option>
                   <option v-for="type in massTypes" :key="type.id" :value="type.id">
@@ -57,7 +57,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Intention Type</label>
                 <select 
                   v-model="filters.mass_intention_type_id" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 >
                   <option value="">All Types</option>
                   <option v-for="type in massIntentionTypes" :key="type.id" :value="type.id">
@@ -71,7 +71,7 @@
                 <input 
                   v-model="filters.start_date" 
                   type="date" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -80,7 +80,7 @@
                 <input 
                   v-model="filters.end_date" 
                   type="date" 
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -111,7 +111,7 @@
                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
                  </tr>
                </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-[#ffffff] divide-y divide-gray-200">
                 <tr v-for="intention in massIntentions.data" :key="intention.id" class="hover:bg-gray-50">
                                      <td class="px-6 py-4 whitespace-nowrap">
                      <div class="flex space-x-2">
@@ -192,14 +192,14 @@
                 <Link 
                   v-if="massIntentions.prev_page_url"
                   :href="massIntentions.prev_page_url"
-                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Previous
                 </Link>
                 <Link 
                   v-if="massIntentions.next_page_url"
                   :href="massIntentions.next_page_url"
-                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Next
                 </Link>

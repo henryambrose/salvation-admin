@@ -225,7 +225,7 @@ function getCategoryCoverage(categoryName: string): number {
             variant="outline"
             class="inline-flex items-center gap-2"
           >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Back to Roles
@@ -234,7 +234,7 @@ function getCategoryCoverage(categoryName: string): number {
       </div>
 
       <!-- Permission Matrix -->
-      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="bg-[#ffffff] rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <!-- Table Header -->
         <div class="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
           <div class="grid gap-4 p-4" style="grid-template-columns: 300px repeat(6, 1fr);">
@@ -253,7 +253,7 @@ function getCategoryCoverage(categoryName: string): number {
           <div 
             v-for="category in getCategoryHeaders" 
             :key="typeof category === 'object' ? category.id : category" 
-            class="bg-white"
+            class="bg-[#ffffff]"
           >
             <!-- Category Header -->
             <div 
@@ -291,7 +291,7 @@ function getCategoryCoverage(categoryName: string): number {
               <div 
                 v-for="modelName in getUniqueModelsForCategory(getCategoryName(category))" 
                 :key="modelName"
-                class="grid gap-4 p-3 hover:bg-white transition-colors border-b border-gray-100 last:border-b-0"
+                class="grid gap-4 p-3 hover:bg-[#ffffff] transition-colors border-b border-gray-100 last:border-b-0"
                 style="grid-template-columns: 300px repeat(6, 1fr);"
               >
                 <!-- Model Name - Just show the clean model name -->

@@ -431,13 +431,13 @@ watch(() => currentTab.value, (newTab) => {
         <!-- Header -->
         <div class="flex items-center justify-between rounded-t-2xl bg-blue-600 px-6 py-4">
           <h3 class="text-2xl font-bold text-white">Member Details</h3>
-          <button class="rounded-full bg-white/20 p-2 text-white hover:bg-white/40" @click="closeModal" aria-label="Close Modal">
+          <button class="rounded-full bg-[#ffffff]/20 p-2 text-white hover:bg-[#ffffff]/40" @click="closeModal" aria-label="Close Modal">
             <span class="text-2xl leading-none">×</span>
           </button>
         </div>
 
         <!-- Tabs -->
-        <div class="flex gap-2 border-b border-gray-200 bg-white px-6 pt-4">
+        <div class="flex gap-2 border-b border-gray-200 bg-[#ffffff] px-6 pt-4">
           <button
             v-for="tab in tabs"
             :key="tab.key"
@@ -452,14 +452,14 @@ watch(() => currentTab.value, (newTab) => {
         </div>
 
         <!-- Loading indicator for member details -->
-        <div v-if="loadingMemberDetails" class="bg-white px-6 py-4">
+        <div v-if="loadingMemberDetails" class="bg-[#ffffff] px-6 py-4">
           <div class="flex items-center justify-center py-8">
             <div class="text-gray-500">Loading member details...</div>
           </div>
         </div>
 
         <!-- Tab Content -->
-        <div v-if="member" class="bg-white px-6 py-6 flex-1 overflow-y-auto">
+        <div v-if="member" class="bg-[#ffffff] px-6 py-6 flex-1 overflow-y-auto">
           <div
             v-for="tab in tabs"
             :key="tab.key"
@@ -587,7 +587,7 @@ watch(() => currentTab.value, (newTab) => {
                       </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200">
-                      <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-white hover:bg-gray-50">
+                      <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-[#ffffff] hover:bg-gray-50">
                         <td class="px-4 py-3 text-sm text-gray-800">
                           <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
                           <div class="flex items-center gap-2 mt-1">

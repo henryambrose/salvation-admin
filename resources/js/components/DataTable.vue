@@ -89,7 +89,7 @@
             <th scope="col" class="px-6 py-3 text-right text-xs font-medium tracking-wider text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
+        <tbody class="divide-y divide-gray-200 bg-[#ffffff]">
           <tr v-for="(item, index) in paginatedData" :key="index" class="hover:bg-gray-50">
             <td v-for="column in columns" :key="column.key" class="px-6 py-4 text-sm whitespace-nowrap text-gray-500">
               {{ item[column.key] }}
@@ -118,7 +118,7 @@
           <button
             @click="currentPage = 1"
             :disabled="currentPage === 1"
-            class="relative inline-flex items-center rounded-l-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="relative inline-flex items-center rounded-l-md border border-gray-300 bg-[#ffffff] px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span class="sr-only">First</span>
             <svg
@@ -140,7 +140,7 @@
           <button
             @click="currentPage--"
             :disabled="currentPage === 1"
-            class="relative inline-flex items-center border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="relative inline-flex items-center border border-gray-300 bg-[#ffffff] px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span class="sr-only">Previous</span>
             <svg
@@ -164,7 +164,7 @@
             @click="currentPage = page"
             :class="[
               'relative inline-flex items-center border px-4 py-2 text-sm font-medium',
-              currentPage === page ? 'bg-primary border-primary z-10 text-white' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50',
+              currentPage === page ? 'bg-primary border-primary z-10 text-white' : 'border-gray-300 bg-[#ffffff] text-gray-500 hover:bg-gray-50',
             ]"
           >
             {{ page }}
@@ -172,7 +172,7 @@
           <button
             @click="currentPage++"
             :disabled="currentPage === totalPages"
-            class="relative inline-flex items-center border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="relative inline-flex items-center border border-gray-300 bg-[#ffffff] px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span class="sr-only">Next</span>
             <svg
@@ -193,7 +193,7 @@
           <button
             @click="currentPage = totalPages"
             :disabled="currentPage === totalPages"
-            class="relative inline-flex items-center rounded-r-md border border-gray-300 bg-white px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            class="relative inline-flex items-center rounded-r-md border border-gray-300 bg-[#ffffff] px-2 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <span class="sr-only">Last</span>
             <svg

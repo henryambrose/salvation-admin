@@ -119,11 +119,11 @@ const rightNavItems: NavItem[] = [
               <NavigationMenuItem v-for="(item, index) in mainNavItems" :key="index" class="relative flex h-full items-center">
                 <Link :href="item.href">
                   <NavigationMenuLink :class="[navigationMenuTriggerStyle(), activeItemStyles(item.href), 'h-9 cursor-pointer px-3']">
-                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-4 w-4" />
+                    <component v-if="item.icon" :is="item.icon" class="mr-2 h-[1rem] w-[1rem]" />
                     {{ item.title }}
                   </NavigationMenuLink>
                 </Link>
-                <div v-if="isCurrentRoute(item.href)" class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-white"></div>
+                <div v-if="isCurrentRoute(item.href)" class="absolute bottom-0 left-0 h-0.5 w-full translate-y-px bg-black dark:bg-[#ffffff]"></div>
               </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>

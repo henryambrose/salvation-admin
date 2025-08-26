@@ -317,7 +317,7 @@ const breadcrumbs = [
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Fund Categories</h2>
         <Button v-if="canCreateCategory" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <Plus class="w-4 h-4" />
+          <Plus class="w-[1rem] h-[1rem]" />
           <span>Add Category</span>
         </Button>
       </div>
@@ -357,7 +357,7 @@ const breadcrumbs = [
           <button 
             v-if="categories?.prev_page_url" 
             @click="fetch(categories.current_page - 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             ← Prev
           </button>
@@ -368,7 +368,7 @@ const breadcrumbs = [
               v-if="categories?.last_page && categories.last_page > 1"
               :value="categories?.current_page" 
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
             >
               <option v-for="page in categories.last_page" :key="page" :value="page">
                 {{ page }}
@@ -380,7 +380,7 @@ const breadcrumbs = [
           <button 
             v-if="categories?.next_page_url" 
             @click="fetch(categories.current_page + 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             Next →
           </button>
@@ -394,7 +394,7 @@ const breadcrumbs = [
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -413,13 +413,13 @@ const breadcrumbs = [
                   <template v-if="!serverArchived">
                     <div class="flex items-center gap-2">
                       <Button v-if="canUpdateAnyCategory" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition p-2">
-                        <Pencil class="w-4 h-4" />
+                        <Pencil class="w-[1rem] h-[1rem]" />
                       </Button>
                     </div>
                   </template>
                   <template v-else>
                     <Button v-if="canRestoreCategory" @click="restoreCategory(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition p-2">
-                      <RotateCcw class="w-4 h-4" />
+                      <RotateCcw class="w-[1rem] h-[1rem]" />
                     </Button>
                   </template>
                 </td>
@@ -441,7 +441,7 @@ const breadcrumbs = [
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCategory">
                     <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition p-2">
-                      <Trash class="w-4 h-4" />
+                      <Trash class="w-[1rem] h-[1rem]" />
                     </Button>
                   </template>
                 </td>
@@ -458,7 +458,7 @@ const breadcrumbs = [
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Fund Category</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
@@ -473,7 +473,7 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="flex items-center gap-2">
-                  <input v-model="form.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input v-model="form.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]" />
                   <span class="text-sm font-medium">Active</span>
                 </label>
               </div>
@@ -509,7 +509,7 @@ const breadcrumbs = [
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Fund Category</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
@@ -524,7 +524,7 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="flex items-center gap-2">
-                  <input v-model="editForm.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                  <input v-model="editForm.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]" />
                   <span class="text-sm font-medium">Active</span>
                 </label>
               </div>
@@ -560,7 +560,7 @@ const breadcrumbs = [
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Fund Category</h3>
             <p>
               Are you sure you want to delete <span class="font-bold">{{ deletingCategory?.name }}</span>?

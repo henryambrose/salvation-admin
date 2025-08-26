@@ -48,7 +48,7 @@ function submit() {
     <Head :title="isEditing ? 'Edit User' : 'Create User'" />
     
     <div class="mx-auto max-w-2xl">
-      <div class="rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+      <div class="rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
         <h2 class="mb-6 text-2xl font-bold text-gray-900">
           {{ isEditing ? 'Edit User' : 'Create User' }}
         </h2>

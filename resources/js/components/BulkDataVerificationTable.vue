@@ -1,5 +1,5 @@
 <template>
-  <div class="w-full p-6 bg-white rounded-lg shadow-sm">
+  <div class="w-full p-6 bg-[#ffffff] rounded-lg shadow-sm">
          <!-- Header with Summary Stats -->
      <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
        <div class="flex items-center justify-between">
@@ -35,7 +35,7 @@
              type="checkbox"
              :checked="isAllSelected"
              @change="toggleSelectAll"
-             class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+             class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
            />
            <span class="text-sm font-medium text-gray-700">Select All</span>
          </label>
@@ -52,11 +52,11 @@
           :disabled="saving"
           class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50"
         >
-          <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg v-if="saving" class="animate-spin -ml-1 mr-2 h-[1rem] w-[1rem] text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-          <svg v-else class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg v-else class="-ml-1 mr-2 h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
           </svg>
           {{ saving ? 'Saving...' : `Save ${selectedRecords.length} Changes` }}
@@ -67,7 +67,7 @@
           @click="discardChanges"
           class="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
-          <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="-ml-1 mr-2 h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
           Discard Changes
@@ -76,9 +76,9 @@
         <button
           @click="exportSelected"
           :disabled="selectedRecords.length === 0"
-          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
+          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 disabled:opacity-50"
         >
-          <svg class="-ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="-ml-1 mr-2 h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
           </svg>
           Export Selected
@@ -93,26 +93,26 @@
           v-model="searchQuery"
           type="text"
           placeholder="Search members by name, old SAL ID, or contact number..."
-          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
         />
       </div>
       
       <div class="flex gap-2">
-        <select v-model="filterStatus" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <select v-model="filterStatus" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500">
           <option value="">All Status</option>
           <option v-for="status in statuses" :key="status.id" :value="status.id">
             {{ status.name }}
           </option>
         </select>
         
-        <select v-model="filterCommunity" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <select v-model="filterCommunity" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500">
           <option value="">All Communities</option>
           <option v-for="community in communities" :key="community.id" :value="community.id">
             {{ community.name }}
           </option>
         </select>
         
-        <select v-model="perPage" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <select v-model="perPage" class="px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500">
           <option value="25">25 per page</option>
           <option value="50">50 per page</option>
           <option value="100">100 per page</option>
@@ -131,7 +131,7 @@
                  type="checkbox"
                  :checked="isAllSelected"
                  @change="toggleSelectAll"
-                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                 class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                />
              </th>
             <th
@@ -142,7 +142,7 @@
             >
               <div class="flex items-center gap-1">
                 <span>{{ column.label }}</span>
-                <svg v-if="sortColumn === column.key" class="h-4 w-4 text-gray-400">
+                <svg v-if="sortColumn === column.key" class="h-[1rem] w-[1rem] text-gray-400">
                   <path v-if="sortDirection === 'asc'" d="M7 14l5-5 5 5" />
                   <path v-else d="M7 10l5 5 5-5" />
                 </svg>
@@ -153,7 +153,7 @@
             </th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-[#ffffff] divide-y divide-gray-200">
           <tr
             v-for="(item, index) in paginatedData"
             :key="item.id || index"
@@ -169,7 +169,7 @@
                  type="checkbox"
                  :checked="selectedRecords.includes(item.id)"
                  @change="toggleSelection(item.id)"
-                 class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                 class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                />
              </td>
 
@@ -186,14 +186,14 @@
                   v-model="editingData[item.id][column.key]"
                   :type="column.type"
                   :placeholder="column.placeholder || ''"
-                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   @input="markAsModified(item.id)"
                 />
                 
                 <select
                   v-else-if="column.type === 'select' && column.options"
                   v-model="editingData[item.id][column.key]"
-                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   @change="markAsModified(item.id)"
                 >
                   <option value="">{{ column.placeholder || 'Select...' }}</option>
@@ -207,7 +207,7 @@
                   v-model="editingData[item.id][column.key]"
                   :placeholder="column.placeholder || ''"
                   rows="2"
-                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-2 py-1 text-sm border border-blue-300 rounded focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   @input="markAsModified(item.id)"
                 />
               </div>

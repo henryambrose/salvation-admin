@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
           <div class="flex items-center mb-6">
@@ -25,19 +25,19 @@
             
             <!-- Quick Stats -->
             <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div class="bg-white rounded-lg p-3 border border-blue-100">
+              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
                 <div class="text-2xl font-bold text-blue-600">{{ totalContributions || 0 }}</div>
                 <div class="text-sm text-gray-600">Total Contributions</div>
               </div>
-              <div class="bg-white rounded-lg p-3 border border-blue-100">
+              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
                 <div class="text-2xl font-bold text-green-600">₹{{ totalPaid || 0 }}</div>
                 <div class="text-sm text-gray-600">Total Paid</div>
               </div>
-              <div class="bg-white rounded-lg p-3 border border-blue-100">
+              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
                 <div class="text-2xl font-bold text-orange-600">₹{{ totalPending || 0 }}</div>
                 <div class="text-sm text-gray-600">Total Pending</div>
               </div>
-                                            <div class="bg-white rounded-lg p-3 border border-blue-100">
+                                            <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
                  <div class="text-2xl font-bold text-purple-600">
                    {{ form.years.length > 0 ? form.years.join(', ') : 'No years selected' }}
                  </div>
@@ -69,7 +69,7 @@
                           v-model="form.family_no"
                           type="text"
                           :class="[
-                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                             form.errors.family_no ? 'border-red-300' : 'border-gray-300'
                           ]"
                           placeholder="Enter family number or search for member"
@@ -81,7 +81,7 @@
                         
                         <!-- Family Number Search Results -->
                         <div v-if="familySearchResults.length > 0 && showFamilySearchResults" 
-                             class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                             class="absolute z-10 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                           <div v-for="member in familySearchResults" 
                                :key="member.id"
                                @click="selectMemberForFamily(member)"
@@ -93,7 +93,7 @@
                         
                         <!-- No Results Message for Family Search -->
                         <div v-if="showFamilySearchResults && familySearchResults.length === 0 && form.family_no.length >= 2" 
-                             class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg p-3 text-center text-gray-500">
+                             class="absolute z-10 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-md shadow-lg p-3 text-center text-gray-500">
                           No members found
                         </div>
                       </div>
@@ -115,7 +115,7 @@
                         v-model="form.years"
                         multiple
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.years ? 'border-red-300' : 'border-gray-300'
                         ]"
                         required
@@ -151,7 +151,7 @@
                         step="0.01"
                         min="0.01"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.amount ? 'border-red-300' : 'border-gray-300'
                         ]"
                         placeholder="0.00"
@@ -183,7 +183,7 @@
                         v-model="form.payment_date"
                         type="date"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.payment_date ? 'border-red-300' : 'border-gray-300'
                         ]"
                         required
@@ -202,7 +202,7 @@
                         id="status"
                         v-model="form.status"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.status ? 'border-red-300' : 'border-gray-300'
                         ]"
                         required
@@ -226,7 +226,7 @@
                         id="fund_category_id"
                         v-model="form.fund_category_id"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.fund_category_id ? 'border-red-300' : 'border-gray-300'
                         ]"
                       >
@@ -249,7 +249,7 @@
                         id="payment_method_id"
                         v-model="form.payment_method_id"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.payment_method_id ? 'border-red-300' : 'border-gray-300'
                         ]"
                       >
@@ -280,7 +280,7 @@
                           id="member"
                           v-model="form.member_id"
                           :class="[
-                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                             form.errors.member_id ? 'border-red-300' : 'border-gray-300'
                           ]"
                           :disabled="!form.family_no"
@@ -312,7 +312,7 @@
                         v-model="form.paid_by_name"
                         type="text"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                           form.errors.paid_by_name ? 'border-red-300' : 'border-gray-300'
                         ]"
                         placeholder="Enter payer's name"
@@ -359,7 +359,7 @@
                       v-model="form.notes"
                       rows="3"
                       :class="[
-                        'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+                        'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
                         form.errors.notes ? 'border-red-300' : 'border-gray-300'
                       ]"
                       placeholder="Any additional notes about this contribution..."
@@ -381,7 +381,7 @@
                 <div v-if="pendingYears.length > 0" class="space-y-2">
                   <div class="text-sm font-medium text-yellow-800 mb-2">Years with pending contributions:</div>
                   <div v-for="year in pendingYears" :key="year" 
-                       class="bg-white rounded-lg p-3 border border-yellow-100 text-center">
+                       class="bg-[#ffffff] rounded-lg p-3 border border-yellow-100 text-center">
                     <span class="text-lg font-bold text-yellow-700">{{ year }}</span>
                   </div>
                 </div>
@@ -400,12 +400,12 @@
           </div>
 
                      <!-- Sticky Form Actions -->
-           <div class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 py-4 z-50">
+           <div class="fixed bottom-0 left-0 right-0 bg-[#ffffff] border-t border-gray-200 py-4 z-50">
              <div class="max-w-7xl mx-auto px-6">
                <div class="flex justify-start space-x-3" style="margin-left: 200px; margin-right: 0;">
                  <Link 
                    href="/fund/annual-contributions"
-                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]"
                  >
                    Cancel
                  </Link>
@@ -413,7 +413,7 @@
                    type="submit"
                    :disabled="form.processing"
                    @click="submitForm"
-                   class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                   class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] disabled:opacity-50 disabled:cursor-not-allowed"
                  >
                    <span v-if="form.processing">Creating...</span>
                    <span v-else>Create Contribution</span>
@@ -423,7 +423,7 @@
            </div>
 
           <!-- Contribution History Section (Moved to bottom) -->
-          <div v-if="form.family_no && contributionHistory.length > 0" class="bg-white border border-gray-200 rounded-lg mt-6">
+          <div v-if="form.family_no && contributionHistory.length > 0" class="bg-[#ffffff] border border-gray-200 rounded-lg mt-6">
             <div class="px-4 py-3 border-b border-gray-200">
               <h4 class="text-lg font-medium text-gray-900">Contribution History</h4>
               <p class="text-sm text-gray-600">Previous contributions for this family</p>
@@ -440,7 +440,7 @@
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
                   </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
+                <tbody class="bg-[#ffffff] divide-y divide-gray-200">
                   <tr v-for="contribution in contributionHistory" :key="contribution.id" class="hover:bg-gray-50">
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.year }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.category_name }}</td>

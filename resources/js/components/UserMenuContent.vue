@@ -30,26 +30,26 @@ defineProps<Props>();
   <DropdownMenuGroup>
     <!-- <DropdownMenuItem :as-child="true" v-if="can('read-users') || (user as any)?.roles?.includes('superadmin')">
       <Link class="block w-full" href="/users" prefetch as="button">
-        <Users class="mr-2 h-4 w-4" />
+        <Users class="mr-2 h-[1rem] w-[1rem]" />
         Users
       </Link>
     </DropdownMenuItem>
     <DropdownMenuItem :as-child="true" v-if="can('update-role-permissions')">
       <Link class="block w-full" href="/roles-permissions" prefetch as="button">
-        <Shield class="mr-2 h-4 w-4" />
+        <Shield class="mr-2 h-[1rem] w-[1rem]" />
         Role Permissions
       </Link>
     </DropdownMenuItem> -->
     <DropdownMenuItem :as-child="true">
       <Link class="block w-full" :href="route('profile.edit')" prefetch as="button">
-        <Settings class="mr-2 h-4 w-4" />
+        <Settings class="mr-2 h-[1rem] w-[1rem]" />
         Settings
       </Link>
     </DropdownMenuItem>
   </DropdownMenuGroup>
   <DropdownMenuSeparator />
   <DropdownMenuItem @click="handleLogout">
-    <LogOut class="mr-2 h-4 w-4" />
+    <LogOut class="mr-2 h-[1rem] w-[1rem]" />
     Log out
   </DropdownMenuItem>
 </template>

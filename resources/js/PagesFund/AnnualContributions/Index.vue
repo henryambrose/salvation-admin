@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="mx-auto max-w-7xl">
-      <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+      <div class="overflow-hidden bg-[#ffffff] shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
           <div class="mb-6 flex items-center justify-between">
@@ -52,7 +52,7 @@
                   v-model="filters.family_no"
                   type="text"
                   placeholder="Search family..."
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 />
               </div>
 
@@ -61,7 +61,7 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">Year</label>
                 <select
                   v-model="filters.year"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 >
                   <option value="">All Years</option>
                   <option v-for="year in filterOptions?.years || []" :key="year" :value="year">{{ year }}</option>
@@ -73,7 +73,7 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">Status</label>
                 <select
                   v-model="filters.status"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 >
                   <option value="">All Statuses</option>
                   <option v-for="status in filterOptions?.statuses || []" :key="status.value" :value="status.value">
@@ -87,7 +87,7 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">Fund Category</label>
                 <select
                   v-model="filters.fund_category_id"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 >
                   <option value="">All Categories</option>
                   <option v-for="category in filterOptions?.fund_categories || []" :key="category.id" :value="category.id">
@@ -101,7 +101,7 @@
                 <label class="mb-1 block text-sm font-medium text-gray-700">Payment Method</label>
                 <select
                   v-model="filters.payment_method_id"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 >
                   <option value="">All Methods</option>
                   <option v-for="method in filterOptions?.payment_methods || []" :key="method.id" :value="method.id">
@@ -116,7 +116,7 @@
                 <input
                   v-model="filters.date_from"
                   type="date"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 />
               </div>
 
@@ -125,7 +125,7 @@
                 <input
                   v-model="filters.date_to"
                   type="date"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 />
               </div>
 
@@ -133,7 +133,7 @@
               <div class="flex items-end space-x-2">
                 <button
                   type="submit"
-                  class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  class="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                 >
                   Apply Filters
                 </button>
@@ -190,7 +190,7 @@
                       type="checkbox"
                       :checked="isAllSelected"
                       @change="toggleSelectAll"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                       v-if="contributions?.data && Array.isArray(contributions.data) && contributions.data.length > 0"
                     />
                   </th>
@@ -204,14 +204,14 @@
                   <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Actions</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-gray-200 bg-white">
+              <tbody class="divide-y divide-gray-200 bg-[#ffffff]">
                 <tr v-for="contribution in contributions?.data || []" :key="contribution.id" class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <input
                       type="checkbox"
                       :value="contribution.id"
                       v-model="selectedContributions"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                     />
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -253,19 +253,19 @@
             </table>
 
             <!-- Pagination -->
-            <div v-if="contributions?.total > 0" class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+            <div v-if="contributions?.total > 0" class="flex items-center justify-between border-t border-gray-200 bg-[#ffffff] px-4 py-3 sm:px-6">
               <div class="flex flex-1 justify-between sm:hidden">
                 <Link
                   v-if="contributions?.prev_page_url && contributions.prev_page_url !== '#'"
                   :href="contributions.prev_page_url"
-                  class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  class="relative inline-flex items-center rounded-md border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Previous
                 </Link>
                 <Link
                   v-if="contributions?.next_page_url && contributions.next_page_url !== '#'"
                   :href="contributions.next_page_url"
-                  class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   Next
                 </Link>
@@ -290,7 +290,7 @@
                         :href="link.url || '#'"
                         :class="[
                           'relative inline-flex items-center border px-4 py-2 text-sm font-medium',
-                          link.active ? 'z-10 border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-300 bg-white text-gray-500 hover:bg-gray-50',
+                          link.active ? 'z-10 border-blue-500 bg-blue-50 text-blue-600' : 'border-gray-300 bg-[#ffffff] text-gray-500 hover:bg-gray-50',
                         ]"
                         v-html="link.label"
                       />
@@ -319,7 +319,7 @@
               <div class="mt-6">
                 <Link
                   href="/fund/annual-contributions/create"
-                  class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
+                  class="inline-flex items-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 focus:outline-none"
                 >
                   Add Contribution
                 </Link>

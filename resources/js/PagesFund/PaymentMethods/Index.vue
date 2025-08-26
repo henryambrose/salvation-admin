@@ -4,7 +4,7 @@
       <div class="flex items-center justify-between">
         <h2 class="text-xl font-semibold text-gray-800">Payment Methods</h2>
         <Button @click="showCreateModal = true" class="bg-blue-600 hover:bg-blue-700">
-          <Plus class="w-4 h-4 mr-2" />
+          <Plus class="w-[1rem] h-[1rem] mr-2" />
           Add Payment Method
         </Button>
       </div>
@@ -14,7 +14,7 @@
       <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -30,7 +30,7 @@
             </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -46,7 +46,7 @@
             </div>
           </div>
 
-          <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -64,7 +64,7 @@
         </div>
 
         <!-- Filters and Search -->
-        <div class="bg-white overflow-hidden shadow-sm rounded-lg mb-6">
+        <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg mb-6">
           <div class="p-6">
             <div class="flex flex-col md:flex-row gap-4">
               <div class="flex-1">
@@ -92,7 +92,7 @@
         </div>
 
         <!-- Data Table -->
-        <div class="bg-white overflow-hidden shadow-sm rounded-lg">
+        <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
           <div v-if="paymentMethods.data && paymentMethods.data.length > 0" class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
               <thead class="bg-gray-50">
@@ -117,7 +117,7 @@
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-[#ffffff] divide-y divide-gray-200">
                 <tr v-for="paymentMethod in paymentMethods.data" :key="paymentMethod.id">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <div class="text-sm font-medium text-gray-900">{{ paymentMethod.name }}</div>
@@ -150,14 +150,14 @@
                         variant="outline"
                         size="sm"
                       >
-                        <Eye class="w-4 h-4" />
+                        <Eye class="w-[1rem] h-[1rem]" />
                       </Button>
                       <Button
                         @click="editPaymentMethod(paymentMethod)"
                         variant="outline"
                         size="sm"
                       >
-                        <Pencil class="w-4 h-4" />
+                        <Pencil class="w-[1rem] h-[1rem]" />
                       </Button>
                       <Button
                         @click="deletePaymentMethod(paymentMethod)"
@@ -165,7 +165,7 @@
                         size="sm"
                         class="text-red-600 hover:text-red-700"
                       >
-                        <Trash2 class="w-4 h-4" />
+                        <Trash2 class="w-[1rem] h-[1rem]" />
                       </Button>
                     </div>
                   </td>
@@ -183,20 +183,20 @@
           </div>
 
           <!-- Pagination -->
-          <div v-if="paymentMethods.links && paymentMethods.links.length > 0" class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+          <div v-if="paymentMethods.links && paymentMethods.links.length > 0" class="bg-[#ffffff] px-4 py-3 border-t border-gray-200 sm:px-6">
             <div class="flex items-center justify-between">
               <div class="flex-1 flex justify-between sm:hidden">
                 <Link
                   v-if="paymentMethods.links[0] && paymentMethods.links[0].url"
                   :href="paymentMethods.links[0].url"
-                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Previous
                 </Link>
                 <Link
                   v-if="paymentMethods.links[paymentMethods.links.length - 1] && paymentMethods.links[paymentMethods.links.length - 1].url"
                   :href="paymentMethods.links[paymentMethods.links.length - 1].url"
-                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Next
                 </Link>
@@ -224,7 +224,7 @@
                           'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
                           link.active
                             ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                            : 'bg-[#ffffff] border-gray-300 text-gray-500 hover:bg-gray-50'
                         ]"
                       />
                     </template>
@@ -239,7 +239,7 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
         <div class="mt-3">
           <h3 class="text-lg font-medium text-gray-900 mb-4">
             {{ editingPaymentMethod ? 'Edit Payment Method' : 'Add Payment Method' }}
@@ -300,7 +300,7 @@
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
         <div class="mt-3">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Payment Method</h3>
           <div class="space-y-4">

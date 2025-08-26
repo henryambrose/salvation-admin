@@ -382,7 +382,7 @@ const canExportSCCHead = can('read-scc-head');
           <button 
             v-if="enhancedSCCHeads.prev_page_url" 
             @click="fetch(enhancedSCCHeads.current_page - 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             ← Prev
           </button>
@@ -393,7 +393,7 @@ const canExportSCCHead = can('read-scc-head');
               v-if="enhancedSCCHeads.last_page && enhancedSCCHeads.last_page > 1"
               :value="enhancedSCCHeads.current_page" 
               @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
             >
               <option v-for="page in enhancedSCCHeads.last_page" :key="page" :value="page">
                 {{ page }}
@@ -405,7 +405,7 @@ const canExportSCCHead = can('read-scc-head');
           <button 
             v-if="enhancedSCCHeads.next_page_url" 
             @click="fetch(enhancedSCCHeads.current_page + 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             Next →
           </button>
@@ -419,7 +419,7 @@ const canExportSCCHead = can('read-scc-head');
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -473,7 +473,7 @@ const canExportSCCHead = can('read-scc-head');
     <!-- <div class="mt-6 flex items-center justify-between gap-4"> ... </div> -->
     <transition name="fade">
       <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-white p-8 shadow-2xl sm:w-[420px]">
+        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit SCC Head</h2>
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
@@ -507,7 +507,7 @@ const canExportSCCHead = can('read-scc-head');
     </transition>
     <transition name="fade">
       <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-white p-8 shadow-2xl sm:w-[420px]">
+        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Create SCC Member</h2>
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
@@ -535,7 +535,7 @@ const canExportSCCHead = can('read-scc-head');
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete SCC Member</h3>
             <p>
               Are you sure you want to delete this SCC Head?

@@ -305,7 +305,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
           <button 
             v-if="enhancedGenders.prev_page_url" 
             @click="fetch(enhancedGenders.current_page! - 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             ← Prev
           </button>
@@ -316,7 +316,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
               v-if="enhancedGenders.last_page && enhancedGenders.last_page > 1"
               :value="enhancedGenders.current_page" 
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
             >
               <option v-for="page in enhancedGenders.last_page" :key="page" :value="page">
                 {{ page }}
@@ -328,7 +328,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
           <button 
             v-if="enhancedGenders.next_page_url" 
             @click="fetch(enhancedGenders.current_page! + 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             Next →
           </button>
@@ -342,7 +342,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -398,7 +398,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Gender</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
@@ -433,7 +433,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Gender</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
@@ -468,7 +468,7 @@ watch(() => enhancedGenders.value.data, (rows) => {
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Gender</h3>
             <p>
               Are you sure you want to delete <span class="font-bold">{{ deletingGender?.name }}</span>?

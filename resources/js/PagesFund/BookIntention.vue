@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
           <div class="mb-6">
@@ -26,7 +26,7 @@
                           v-model="form.member_type" 
                           type="radio" 
                           value="member"
-                          class="mr-2 text-blue-600 focus:ring-blue-500"
+                          class="mr-2 text-blue-600 focus:ring-[#3b82f6]"
                         />
                         <span class="text-sm text-gray-700">Parish Member</span>
                       </label>
@@ -35,7 +35,7 @@
                           v-model="form.member_type" 
                           type="radio" 
                           value="non_member"
-                          class="mr-2 text-blue-600 focus:ring-blue-500"
+                          class="mr-2 text-blue-600 focus:ring-[#3b82f6]"
                         />
                         <span class="text-sm text-gray-700">Non-Member</span>
                       </label>
@@ -50,12 +50,12 @@
                         v-model="memberSearchQuery"
                         type="text" 
                         placeholder="Search by name, family number, or phone..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                         @input="searchMembers"
                       />
                       
                       <!-- Search Results Dropdown -->
-                      <div v-if="memberSearchResults.length > 0 && memberSearchQuery" class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      <div v-if="memberSearchResults.length > 0 && memberSearchQuery" class="absolute z-10 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                         <div 
                           v-for="member in memberSearchResults" 
                           :key="member.id"
@@ -84,7 +84,7 @@
                           type="button"
                           class="text-blue-600 hover:text-blue-800"
                         >
-                          <X class="w-4 h-4" />
+                          <X class="w-[1rem] h-[1rem]" />
                         </button>
                       </div>
                     </div>
@@ -97,7 +97,7 @@
                       v-model="form.non_member_name"
                       type="text" 
                       placeholder="Enter full name"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
 
@@ -108,7 +108,7 @@
                       v-model="form.phone"
                       type="tel" 
                       placeholder="Enter phone number"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                   </div>
                 </div>
@@ -126,7 +126,7 @@
                       :min="minDate"
                       :max="maxDate"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                       @change="onDateChange"
                     />
                     <p class="text-xs text-gray-500 mt-1">
@@ -140,7 +140,7 @@
                     <select 
                       v-model="form.mass_type_id"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                       @change="onMassTypeChange"
                     >
                       <option value="">Select Mass Type</option>
@@ -165,7 +165,7 @@
                     <select 
                       v-model="form.mass_intention_type_id"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     >
                       <option value="">Select Intention Type</option>
                       <option 
@@ -185,7 +185,7 @@
                       v-model="form.special_instructions"
                       rows="3"
                       placeholder="Any special instructions or notes..."
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     ></textarea>
                   </div>
 
@@ -195,7 +195,7 @@
                     <select 
                       v-model="form.payment_method_id"
                       required
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     >
                       <option value="">Select Payment Method</option>
                       <option 
@@ -214,7 +214,7 @@
                   <button 
                     type="submit"
                     :disabled="isSubmitting"
-                    class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="px-6 py-3 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span v-if="isSubmitting">Booking...</span>
                     <span v-else>Book Mass Intention</span>
@@ -257,7 +257,7 @@
                     <div 
                       v-for="mass in bookedMasses" 
                       :key="mass.id"
-                      class="bg-white p-3 rounded-md border border-gray-200"
+                      class="bg-[#ffffff] p-3 rounded-md border border-gray-200"
                     >
                                              <div class="flex justify-between items-start">
                          <div class="flex-1">

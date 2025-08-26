@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <h1 class="text-2xl font-semibold mb-6">Fund Management Dashboard</h1>
           
@@ -34,7 +34,7 @@
           
           <!-- Quick Actions -->
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white border border-gray-200 p-6 rounded-lg">
+            <div class="bg-[#ffffff] border border-gray-200 p-6 rounded-lg">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Annual Contributions</h3>
               <p class="text-gray-600 mb-4">Manage parish member contributions and track annual giving.</p>
               <Link 
@@ -45,7 +45,7 @@
               </Link>
             </div>
             
-            <div class="bg-white border border-gray-200 p-6 rounded-lg">
+            <div class="bg-[#ffffff] border border-gray-200 p-6 rounded-lg">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Mass Intentions</h3>
               <p class="text-gray-600 mb-4">Schedule and manage mass intentions and special ceremonies.</p>
               <Link 
@@ -56,7 +56,7 @@
               </Link>
             </div>
             
-            <div class="bg-white border border-gray-200 p-6 rounded-lg">
+            <div class="bg-[#ffffff] border border-gray-200 p-6 rounded-lg">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Fund Categories</h3>
               <p class="text-gray-600 mb-4">Manage fund categories for organizing contributions and donations.</p>
               <Link 
@@ -69,11 +69,11 @@
           </div>
 
           <!-- Mass Intention Types Quick Action -->
-          <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <FileText class="h-6 w-6 text-gray-400" />
+                  <FileText class="h-[1.5rem] w-[1.5rem] text-gray-400" />
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -93,11 +93,11 @@
           </div>
 
           <!-- Mass Types Quick Action -->
-          <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <Clock class="h-6 w-6 text-gray-400" />
+                  <Clock class="h-[1.5rem] w-[1.5rem] text-gray-400" />
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -117,11 +117,11 @@
           </div>
 
           <!-- Payment Methods Quick Action -->
-          <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <DollarSign class="h-6 w-6 text-gray-400" />
+                  <DollarSign class="h-[1.5rem] w-[1.5rem] text-gray-400" />
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -141,11 +141,11 @@
           </div>
 
           <!-- Book New Intention Quick Action -->
-          <div class="bg-white overflow-hidden shadow rounded-lg">
+          <div class="bg-[#ffffff] overflow-hidden shadow rounded-lg">
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <Plus class="h-6 w-6 text-gray-400" />
+                  <Plus class="h-[1.5rem] w-[1.5rem] text-gray-400" />
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>

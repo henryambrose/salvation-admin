@@ -510,7 +510,7 @@ async function savePermissions() {
     if (saveButton) {
       saveButton.disabled = true;
       saveButton.innerHTML = `
-        <svg class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-[1rem] h-[1rem] mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
         </svg>
         Saving...
@@ -564,7 +564,7 @@ async function savePermissions() {
     if (saveButton) {
       saveButton.disabled = false;
       saveButton.innerHTML = `
-        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-[1rem] h-[1rem] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
         </svg>
         Save Permissions
@@ -646,7 +646,7 @@ function createRole() {
             @click="openAddRoleModal"
             class="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700"
           >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
             Add Role
@@ -677,7 +677,7 @@ function createRole() {
             <label class="block text-sm font-medium text-blue-900 mb-2">Select Role to Manage</label>
             <select 
               v-model="selectedRoleId" 
-              class="w-full rounded-lg border border-blue-200 px-4 py-3 bg-white text-blue-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-full rounded-lg border border-blue-200 px-4 py-3 bg-[#ffffff] text-blue-900 focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
             >
               <option :value="null">Choose a role...</option>
               <option v-for="role in props.roles" :key="role.id" :value="role.id">
@@ -692,7 +692,7 @@ function createRole() {
             <div class="flex items-center gap-3">
               <select 
                 v-model="selectedGroupId" 
-                class="flex-1 rounded-lg border border-blue-200 px-4 py-3 bg-white text-blue-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                class="flex-1 rounded-lg border border-blue-200 px-4 py-3 bg-[#ffffff] text-blue-900 focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
               >
                 <option value="custom">Custom Selection</option>
                 <option v-for="group in props.permissionGroups" :key="group.id" :value="group.id.toString()">
@@ -705,10 +705,10 @@ function createRole() {
                 :disabled="selectedGroupId === 'custom' || !selectedRoleId"
                 class="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-6 py-3"
               >
-                <svg v-if="!isApplyingGroup" class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-if="!isApplyingGroup" class="w-[1rem] h-[1rem] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <svg v-else class="w-4 h-4 mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg v-else class="w-[1rem] h-[1rem] mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
                 {{ isApplyingGroup ? 'Applying...' : 'Apply Group' }}
@@ -733,7 +733,7 @@ function createRole() {
       <!-- Role Title and Permissions Matrix -->
       <div v-if="selectedRole" class="space-y-6">
         <!-- Role Title -->
-        <div class="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+        <div class="bg-[#ffffff] rounded-xl border border-gray-200 p-6 shadow-sm">
           <div class="flex items-center justify-between">
             <div>
               <h2 class="text-2xl font-bold text-gray-900">Role: {{ selectedRole.name }}</h2>
@@ -749,7 +749,7 @@ function createRole() {
                 data-save-permissions
                 class="bg-blue-600 hover:bg-blue-700"
               >
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-[1rem] h-[1rem] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
                 Save Permissions
@@ -759,7 +759,7 @@ function createRole() {
         </div>
 
         <!-- Permission Matrix -->
-        <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="bg-[#ffffff] rounded-xl border border-gray-200 shadow-sm overflow-hidden">
           <!-- App Legend and Controls -->
           <div class="bg-gray-50 border-b border-gray-200 p-4">
             <div class="flex items-center justify-between">
@@ -807,7 +807,7 @@ function createRole() {
             <div 
               v-for="(categoryGroup, appName) in getCategoriesByApp" 
               :key="appName"
-              class="bg-white"
+              class="bg-[#ffffff]"
             >
               <!-- App Header -->
               <div class="p-4 border-b border-gray-200" :class="{
@@ -879,7 +879,7 @@ function createRole() {
                     v-else
                     v-for="modelName in getUniqueModelsForCategory(category.name)" 
                     :key="modelName"
-                    class="grid gap-4 p-3 hover:bg-white transition-colors border-b border-gray-100 last:border-b-0"
+                    class="grid gap-4 p-3 hover:bg-[#ffffff] transition-colors border-b border-gray-100 last:border-b-0"
                     style="grid-template-columns: 300px repeat(6, 1fr);"
                   >
                     <!-- Model Name -->
@@ -901,7 +901,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `create-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `create-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <div class="flex justify-center">
@@ -909,7 +909,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `update-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `update-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <div class="flex justify-center">
@@ -917,7 +917,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `delete-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `delete-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <div class="flex justify-center">
@@ -925,7 +925,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `list-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `list-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <div class="flex justify-center">
@@ -933,7 +933,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `read-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `read-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                     <div class="flex justify-center">
@@ -941,7 +941,7 @@ function createRole() {
                         type="checkbox"
                         :checked="selectedRoleId ? hasPermission(selectedRoleId, `restore-${modelName}`) : false"
                         @change="selectedRoleId && togglePermission(selectedRoleId, `restore-${modelName}`)"
-                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        class="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6] cursor-pointer"
                       />
                     </div>
                   </div>
@@ -970,11 +970,11 @@ function createRole() {
 
     <!-- Add Role Modal -->
     <div v-if="showAddRoleModal" class="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-      <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6">
+      <div class="bg-[#ffffff] rounded-xl shadow-2xl max-w-md w-full p-6">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-lg font-semibold text-gray-900">Add New Role</h3>
           <button @click="closeAddRoleModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-[1.5rem] h-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -988,7 +988,7 @@ function createRole() {
               type="text"
               required
               placeholder="Enter role name"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
             />
           </div>
         </div>

@@ -1,7 +1,7 @@
 <template>
   <div class="py-6">
     <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
           <div class="flex justify-between items-center mb-6">
@@ -10,7 +10,7 @@
               @click="openCreateModal"
               class="inline-flex items-center px-4 py-2 bg-green-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-green-700 focus:bg-green-700 active:bg-green-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition ease-in-out duration-150"
             >
-              <Plus class="w-4 h-4 mr-2" />
+              <Plus class="w-[1rem] h-[1rem] mr-2" />
               Add New Mass Type
             </button>
           </div>
@@ -36,14 +36,14 @@
                   v-model="searchQuery"
                   type="text" 
                   placeholder="Search mass types..."
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               <div class="flex gap-2">
                 <select 
                   v-model="sortBy"
                   @change="updateSorting"
-                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 >
                   <option value="name">Sort by Name</option>
                   <option value="default_time">Sort by Time</option>
@@ -52,7 +52,7 @@
                 </select>
                 <button 
                   @click="toggleSortOrder"
-                  class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 >
                   {{ sortOrder === 'asc' ? '↑' : '↓' }}
                 </button>
@@ -75,14 +75,14 @@
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Delete</th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-[#ffffff] divide-y divide-gray-200">
                 <tr v-for="type in massTypes.data" :key="type.id" class="hover:bg-gray-50">
                   <td class="px-6 py-4 whitespace-nowrap">
                     <button 
                       @click="openEditModal(type)"
                       class="text-indigo-600 hover:text-indigo-900"
                     >
-                      <Pencil class="w-4 h-4" />
+                      <Pencil class="w-[1rem] h-[1rem]" />
                     </button>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap">
@@ -110,7 +110,7 @@
                       @click="deleteType(type.id)"
                       class="text-red-600 hover:text-red-900"
                     >
-                      <Trash class="w-4 h-4" />
+                      <Trash class="w-[1rem] h-[1rem]" />
                     </button>
                   </td>
                 </tr>
@@ -126,14 +126,14 @@
                 <Link 
                   v-if="massTypes.prev_page_url"
                   :href="massTypes.prev_page_url"
-                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Previous
                 </Link>
                 <Link 
                   v-if="massTypes.next_page_url"
                   :href="massTypes.next_page_url"
-                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                  class="px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50"
                 >
                   Next
                 </Link>
@@ -154,7 +154,7 @@
                   @click="openCreateModal"
                   class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
-                  <Plus class="w-4 h-4 mr-2" />
+                  <Plus class="w-[1rem] h-[1rem] mr-2" />
                   Add Mass Type
                 </button>
               </div>
@@ -166,7 +166,7 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="showModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
         <div class="mt-3">
           <h3 class="text-lg font-medium text-gray-900 mb-4">
             {{ editingType ? 'Edit Mass Type' : 'Create Mass Type' }}
@@ -180,7 +180,7 @@
                   v-model="form.name"
                   type="text" 
                   required
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -189,7 +189,7 @@
                 <textarea 
                   v-model="form.description"
                   rows="3"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 ></textarea>
               </div>
               
@@ -199,7 +199,7 @@
                   v-model="form.default_time"
                   type="time" 
                   required
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -209,7 +209,7 @@
                   v-model="form.sort_order"
                   type="number" 
                   min="0"
-                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                 />
               </div>
               
@@ -218,7 +218,7 @@
                   <input 
                     v-model="form.is_active"
                     type="checkbox" 
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                   />
                   <span class="ml-2 text-sm text-gray-700">Active</span>
                 </label>
@@ -229,7 +229,7 @@
               <button 
                 type="button"
                 @click="closeModal"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50"
               >
                 Cancel
               </button>
@@ -377,7 +377,7 @@ function formatTime(timeString: string) {
 
 <style scoped>
 .switch-checkbox {
-  @apply relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+  @apply relative inline-flex h-[1.5rem] w-[2.75rem] items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2;
   background-color: #d1d5db;
 }
 
@@ -387,7 +387,7 @@ function formatTime(timeString: string) {
 
 .switch-checkbox::before {
   content: '';
-  @apply inline-block h-4 w-4 transform rounded-full bg-white transition-transform;
+  @apply inline-block h-[1rem] w-[1rem] transform rounded-full bg-[#ffffff] transition-transform;
   margin-left: 2px;
 }
 

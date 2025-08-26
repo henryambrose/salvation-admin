@@ -129,10 +129,10 @@ onMounted(() => {
 
     <div class="flex flex-col h-[calc(100vh-120px)] max-w-4xl mx-auto">
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b bg-white dark:bg-slate-800 rounded-t-xl">
+      <div class="flex items-center justify-between p-6 border-b bg-[#ffffff] dark:bg-slate-800 rounded-t-xl">
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <Bot class="w-6 h-6 text-white" />
+            <Bot class="w-[1.5rem] h-[1.5rem] text-white" />
           </div>
           <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Catholic AI Chat Assistant</h1>
@@ -146,7 +146,7 @@ onMounted(() => {
             size="sm"
             class="text-gray-500 hover:text-red-500"
           >
-            <Trash2 class="w-4 h-4 mr-2" />
+            <Trash2 class="w-[1rem] h-[1rem] mr-2" />
             Clear Chat
           </Button>
         </div>
@@ -181,14 +181,14 @@ onMounted(() => {
                   : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
               ]"
             >
-              <User v-if="message.role === 'user'" class="w-4 h-4" />
-              <Bot v-else class="w-4 h-4" />
+              <User v-if="message.role === 'user'" class="w-[1rem] h-[1rem]" />
+              <Bot v-else class="w-[1rem] h-[1rem]" />
             </div>
           </div>
 
           <!-- Message Content -->
           <div class="flex-1 min-w-0">
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <div class="bg-[#ffffff] dark:bg-slate-800 rounded-lg p-4 shadow-sm">
               <!-- Message Text -->
               <div class="prose prose-sm max-w-none dark:prose-invert">
                 <div v-html="message.content.replace(/\n/g, '<br>')" class="whitespace-pre-wrap"></div>
@@ -197,7 +197,7 @@ onMounted(() => {
               <!-- References Section -->
               <div v-if="message.references && message.references.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
                 <div class="flex items-center gap-2 mb-2">
-                  <BookOpen class="w-4 h-4 text-blue-500" />
+                  <BookOpen class="w-[1rem] h-[1rem] text-blue-500" />
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">References</h4>
                 </div>
                 <div class="space-y-1">
@@ -218,7 +218,7 @@ onMounted(() => {
               <!-- Keywords Section -->
               <div v-if="message.keywords && message.keywords.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
                 <div class="flex items-center gap-2 mb-2">
-                  <Tag class="w-4 h-4 text-green-500" />
+                  <Tag class="w-[1rem] h-[1rem] text-green-500" />
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Keywords</h4>
                 </div>
                 <div class="flex flex-wrap gap-1">
@@ -266,13 +266,13 @@ onMounted(() => {
         <div v-if="isLoading" class="flex gap-3">
           <div class="flex-shrink-0">
             <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Bot class="w-4 h-4 text-white" />
+              <Bot class="w-[1rem] h-[1rem] text-white" />
             </div>
           </div>
           <div class="flex-1">
-            <div class="bg-white dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <div class="bg-[#ffffff] dark:bg-slate-800 rounded-lg p-4 shadow-sm">
               <div class="flex items-center gap-2">
-                <Loader2 class="w-4 h-4 animate-spin text-blue-500" />
+                <Loader2 class="w-[1rem] h-[1rem] animate-spin text-blue-500" />
                 <span class="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
               </div>
             </div>
@@ -281,7 +281,7 @@ onMounted(() => {
       </div>
 
       <!-- Input Area -->
-      <div class="p-6 border-t bg-white dark:bg-slate-800 rounded-b-xl">
+      <div class="p-6 border-t bg-[#ffffff] dark:bg-slate-800 rounded-b-xl">
         <div class="flex gap-3">
           <div class="flex-1">
             <Input
@@ -297,8 +297,8 @@ onMounted(() => {
             :disabled="!newMessage.trim() || isLoading"
             class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           >
-            <Send v-if="!isLoading" class="w-4 h-4" />
-            <Loader2 v-else class="w-4 h-4 animate-spin" />
+            <Send v-if="!isLoading" class="w-[1rem] h-[1rem]" />
+            <Loader2 v-else class="w-[1rem] h-[1rem] animate-spin" />
           </Button>
         </div>
       </div>

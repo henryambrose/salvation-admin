@@ -4,11 +4,11 @@
       <div class="flex items-center gap-3">
         <button
           type="button"
-          class="inline-flex items-center rounded-md border border-gray-200 bg-white px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+          class="inline-flex items-center rounded-md border border-gray-200 bg-[#ffffff] px-3 py-1.5 text-sm text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
           @click="goBack"
           aria-label="Go back"
         >
-          <svg class="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg class="h-[1rem] w-[1rem] mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
             <line x1="9" y1="12" x2="21" y2="12"></line>
           </svg>
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Enhanced Audit Logs Display -->
-    <div class="bg-white rounded-lg shadow-sm border p-6">
+    <div class="bg-[#ffffff] rounded-lg shadow-sm border p-6">
       <h2 class="text-lg font-semibold mb-4">Audit Logs System</h2>
       
       <div v-if="logs && logs.data && logs.data.length > 0" class="space-y-4">
@@ -41,7 +41,7 @@
                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody class="bg-[#ffffff] divide-y divide-gray-200">
               <tr v-for="log in logs.data.slice(0, 10)" :key="log.id" class="hover:bg-gray-50">
                 <td class="px-4 py-4 whitespace-nowrap">
                   <span
@@ -112,7 +112,7 @@
 
     <!-- Enhanced Log Details Modal -->
     <div v-if="selectedLog" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-white max-h-[90vh] overflow-y-auto">
+      <div class="relative top-10 mx-auto p-5 border w-[2.75rem]/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-md bg-[#ffffff] max-h-[90vh] overflow-y-auto">
         <div class="mt-3">
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-bold text-gray-900">Audit Log Details</h3>
@@ -206,7 +206,7 @@
                 </h4>
                 <div class="max-h-64 overflow-y-auto space-y-2">
                   <div v-for="(value, key) in selectedLog.old_values" :key="key" 
-                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-red-400">
+                       class="flex justify-between items-center p-2 bg-[#ffffff] rounded border-l-4 border-red-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
                     <span class="text-red-700 bg-red-50 px-2 py-1 rounded shadow-sm">
                       {{ formatValue(value) }}
@@ -222,7 +222,7 @@
                 </h4>
                 <div class="max-h-64 overflow-y-auto space-y-2">
                   <div v-for="(value, key) in selectedLog.new_values" :key="key" 
-                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-green-400">
+                       class="flex justify-between items-center p-2 bg-[#ffffff] rounded border-l-4 border-green-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
                     <span class="text-green-700 bg-green-50 px-2 py-1 rounded shadow-sm">
                       {{ formatValue(value) }}
@@ -239,7 +239,7 @@
                 <div class="space-y-2 text-sm max-h-64 overflow-y-auto">
                   <div v-for="(value, key) in selectedLog.new_values" :key="key" 
                        v-show="hasValueChanged(selectedLog.old_values[key], value)"
-                       class="flex justify-between items-center p-2 bg-white rounded border-l-4 border-yellow-400">
+                       class="flex justify-between items-center p-2 bg-[#ffffff] rounded border-l-4 border-yellow-400">
                     <span class="font-medium text-gray-600">{{ key }}:</span>
                     <div class="flex items-center space-x-2">
                       <!-- Show old value if it exists and is different -->

@@ -1,12 +1,12 @@
 <template>
   <transition name="fade-scale">
     <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeModal">
-      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#ffffff] rounded-2xl shadow-2xl">
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 class="text-2xl font-bold text-gray-900">Add New Member</h2>
           <button @click="closeModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-[1.5rem] h-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
@@ -26,7 +26,7 @@
                       type="radio" 
                       v-model="familyType" 
                       value="new" 
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                     />
                     <span class="text-gray-700">New Family</span>
                   </label>
@@ -44,7 +44,7 @@
                       type="radio" 
                       v-model="familyType" 
                       value="existing" 
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                     />
                     <span class="text-gray-700">Existing Family</span>
                   </label>
@@ -53,7 +53,7 @@
                       v-model="existingFamilyNo" 
                       type="text"
                       placeholder="Enter family number (e.g., {{ page.props.church_code }}-001-001)"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                     />
                     <button 
                       type="button"
@@ -73,14 +73,14 @@
                         v-model="familySearchQuery" 
                         type="text" 
                         placeholder="Search by family number or member name..."
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 mb-3"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500 mb-3"
                       />
                       <div v-if="familySearchResults.length > 0" class="space-y-2 max-h-40 overflow-y-auto">
                         <div 
                           v-for="family in familySearchResults" 
                           :key="family.family_no"
                           @click="selectFamily(family.family_no)"
-                          class="p-2 bg-white border border-gray-200 rounded cursor-pointer hover:bg-blue-50 transition"
+                          class="p-2 bg-[#ffffff] border border-gray-200 rounded cursor-pointer hover:bg-blue-50 transition"
                         >
                           <div class="flex items-center justify-between">
                             <span class="font-mono text-sm">{{ family.family_no }}</span>
@@ -114,7 +114,7 @@
                     type="text" 
                     required
                     placeholder="Enter first name"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   />
                 </div>
                 
@@ -124,7 +124,7 @@
                     v-model="form.last_name" 
                     type="text" 
                     placeholder="Enter last name"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   />
                 </div>
                 
@@ -134,7 +134,7 @@
                     v-model="form.middle_name" 
                     type="text" 
                     placeholder="Enter middle name"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   />
                 </div>
                 
@@ -143,7 +143,7 @@
                   <input 
                     v-model="form.date_of_birth" 
                     type="date" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   />
                 </div>
                 
@@ -159,7 +159,7 @@
               <div v-if="familyType === 'existing' && existingFamilyNo && isPrePopulated" 
                    class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                 <div class="flex items-center gap-2">
-                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg class="w-[1rem] h-[1rem] text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                   </svg>
                   <span class="text-sm text-blue-800">
@@ -173,7 +173,7 @@
                   <label class="block text-sm font-medium text-gray-700 mb-1">Community <span class="text-red-500">*</span></label>
                   <select 
                     v-model="form.community_id" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   >
                     <option value="">Select Community</option>
                     <option v-for="community in communities" :key="community.id" :value="community.id">
@@ -187,7 +187,7 @@
                   <select 
                     v-model="form.community_cluster_id" 
                     :disabled="!form.community_id"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   >
                     <option value="">{{ form.community_id ? 'Select Cluster' : 'Select Community First' }}</option>
                     <option v-for="cluster in filteredClusters" :key="cluster.id" :value="cluster.id">
@@ -206,7 +206,7 @@
                   </label>
                   <select 
                     v-model="form.relationship_id" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                   >
                     <option value="">Select Relationship</option>
                     <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id">

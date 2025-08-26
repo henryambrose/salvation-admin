@@ -65,7 +65,7 @@ function can(permission) {
 </script>
 
 <template>
-  <div class="datatable2 mt-4 w-full overflow-hidden rounded bg-white p-4 shadow">
+  <div class="datatable2 mt-4 w-full overflow-hidden rounded bg-[#ffffff] p-4 shadow">
     <div class="mb-2 flex items-center gap-2">
       <input v-model="search" type="text" class="rounded border px-2 py-1" placeholder="Search..." />
       <select v-model="perPage" class="rounded border px-2 py-1">

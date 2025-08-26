@@ -216,7 +216,7 @@ const cancel = () => {
     <FormBody>
       <form @submit.prevent="submit" class="space-y-8">
         <!-- Personal Information Section -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Personal Information</h3>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -275,7 +275,7 @@ const cancel = () => {
         </div>
 
         <!-- Family Information Section -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Family Information</h3>
 
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -302,7 +302,7 @@ const cancel = () => {
         </div>
 
         <!-- Family Tree Relationships Section - Updated to match Member.vue -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">
             Family Tree Relationships
           </h3>
@@ -322,7 +322,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.spouse_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.spouse_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -332,7 +332,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.spouse_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.spouse_source === 'External'"
                     />
                     <span class="text-sm">External</span>
@@ -374,7 +374,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.father_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.father_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -384,7 +384,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.father_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.father_source === 'External'"
                     />
                     <span class="text-sm">External</span>
@@ -426,7 +426,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.mother_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.mother_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -436,7 +436,7 @@ const cancel = () => {
                       type="radio"
                       v-model="form.mother_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.mother_source === 'External'"
                     />
                     <span class="text-sm">External</span>

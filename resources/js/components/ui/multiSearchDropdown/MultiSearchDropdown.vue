@@ -73,7 +73,7 @@ function removeSelected(id: string | number) {
 <template>
   <div class="relative w-full" ref="dropdownRef">
     <div
-      class="border rounded px-3 py-1 bg-white cursor-pointer flex flex-wrap items-center justify-between text-black min-h-[40px]"
+      class="border rounded px-3 py-1 bg-[#ffffff] cursor-pointer flex flex-wrap items-center justify-between text-black min-h-[40px]"
       @click="open = !open"
     >
       <template v-if="modelValue && modelValue.length">
@@ -91,13 +91,13 @@ function removeSelected(id: string | number) {
         </span>
       </template>
       <span v-if="!modelValue || !modelValue.length" class="text-gray-400">Select Options</span>
-      <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-[1rem] h-[1rem] ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>
     <div
       v-if="open"
-      class="absolute left-0 right-0 z-50 bg-white border rounded shadow mt-1 max-h-60 overflow-auto"
+      class="absolute left-0 right-0 z-50 bg-[#ffffff] border rounded shadow mt-1 max-h-60 overflow-auto"
     >
       <input
         type="text"

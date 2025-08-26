@@ -4,17 +4,17 @@
     <div class="relative">
       <button
         @click="isOpen = !isOpen"
-        class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        class="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 bg-[#ffffff] border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
       >
-        <component :is="currentApp.icon" class="w-4 h-4" />
+        <component :is="currentApp.icon" class="w-[1rem] h-[1rem]" />
         <span>{{ currentApp.name }}</span>
-        <ChevronDownIcon class="w-4 h-4" />
+        <ChevronDownIcon class="w-[1rem] h-[1rem]" />
       </button>
 
       <!-- Dropdown Menu -->
       <div
         v-if="isOpen"
-        class="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
+        class="absolute right-0 mt-2 w-56 bg-[#ffffff] rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-50"
       >
         <div class="py-1">
           <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-b border-gray-100">
@@ -33,7 +33,7 @@
               <div class="font-medium">{{ app.name }}</div>
               <div class="text-xs text-gray-500">{{ app.description }}</div>
             </div>
-            <CheckIcon v-if="app.id === currentApp.id" class="w-4 h-4 ml-auto text-green-500" />
+            <CheckIcon v-if="app.id === currentApp.id" class="w-[1rem] h-[1rem] ml-auto text-green-500" />
           </Link>
         </div>
       </div>

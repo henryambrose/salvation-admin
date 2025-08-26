@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
     <div class="max-w-md w-full">
       <!-- Error Card -->
-      <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+      <div class="bg-[#ffffff] rounded-2xl shadow-xl p-8 text-center">
         <!-- Icon -->
         <div class="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-6">
           <svg class="w-10 h-10 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -55,7 +55,7 @@
       </div>
 
       <!-- Additional Info Card -->
-      <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
+      <div class="mt-6 bg-[#ffffff] rounded-xl shadow-lg p-6">
         <h3 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>

@@ -971,7 +971,7 @@ onMounted(() => {
     <FormBody>
       <form @submit.prevent="submit" class="space-y-8">
         <!-- Personal Details -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Personal Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
@@ -1206,7 +1206,7 @@ onMounted(() => {
         </div>
 
         <!-- Family Tree Relationships Section - NEW -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Family Tree Relationships</h3>
           <p class="mb-4 text-sm text-gray-600">
             Define family relationships for building the family tree. Select whether each relationship is with a member or external person.
@@ -1224,7 +1224,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.spouse_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.spouse_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -1234,7 +1234,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.spouse_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.spouse_source === 'External'"
                     />
                     <span class="text-sm">External</span>
@@ -1277,7 +1277,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.father_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.father_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -1287,7 +1287,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.father_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.father_source === 'External'"
                     />
                     <span class="text-sm">External</span>
@@ -1330,7 +1330,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.mother_source"
                       value="Member"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.mother_source === 'Member'"
                     />
                     <span class="text-sm">Member</span>
@@ -1340,7 +1340,7 @@ onMounted(() => {
                       type="radio"
                       v-model="form.mother_source"
                       value="External"
-                      class="text-blue-600 focus:ring-blue-500"
+                      class="text-blue-600 focus:ring-[#3b82f6]"
                       :checked="form.mother_source === 'External'"
                     />
                     <span class="text-sm">External</span>
@@ -1373,7 +1373,7 @@ onMounted(() => {
         </div>
 
         <!-- Community Details -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Community Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
@@ -1403,7 +1403,7 @@ onMounted(() => {
         </div>
 
         <!-- Permanent Address -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Permanent Address</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
@@ -1498,7 +1498,7 @@ onMounted(() => {
         </div>
 
         <!-- Current Address -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Current Address</h3>
 
           <!-- Same as Permanent Address Checkbox -->
@@ -1508,7 +1508,7 @@ onMounted(() => {
                 type="checkbox"
                 v-model="sameAsPermanent"
                 @change="copyPermanentToCurrent"
-                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
               />
               <span class="text-sm font-medium text-gray-700">Same as Permanent Address</span>
             </label>
@@ -1607,7 +1607,7 @@ onMounted(() => {
         </div>
 
         <!-- Education & Work Details -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Education & Work Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
@@ -1680,7 +1680,7 @@ onMounted(() => {
         </div>
 
         <!-- Sacrament Details -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-white p-6 shadow">
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Sacrament Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">

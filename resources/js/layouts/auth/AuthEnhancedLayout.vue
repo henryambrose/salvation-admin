@@ -365,7 +365,7 @@ onMounted(() => {
       <!-- Animated Background -->
       <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
         <!-- Floating Elements -->
-        <div class="absolute top-20 left-20 w-32 h-32 bg-white/5 rounded-full blur-xl animate-pulse"></div>
+        <div class="absolute top-20 left-20 w-32 h-32 bg-[#ffffff]/5 rounded-full blur-xl animate-pulse"></div>
         <div class="absolute top-40 right-32 w-24 h-24 bg-yellow-400/10 rounded-full blur-lg animate-bounce"></div>
         <div class="absolute bottom-32 left-32 w-40 h-40 bg-purple-400/10 rounded-full blur-xl animate-pulse"></div>
         <div class="absolute bottom-20 right-20 w-28 h-28 bg-blue-400/10 rounded-full blur-lg animate-bounce"></div>
@@ -375,7 +375,7 @@ onMounted(() => {
       <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
         <!-- Header with Logo -->
         <div class="flex items-center gap-3 lg:gap-6 mb-4 lg:mb-6">
-          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-white/90 backdrop-blur-xl border-2 border-white shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
+          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-[#ffffff]/90 backdrop-blur-xl border-2 border-white shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
             <AppLogoIcon class="size-10 lg:size-12 fill-current text-blue-600 drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
             <!-- Enhanced Glow effect -->
             <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
@@ -400,7 +400,7 @@ onMounted(() => {
 
         <!-- Catholic Calendar Section (without title) -->
         <div class="flex-1 mb-3 lg:mb-4">
-          <div class="bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-3 lg:p-4 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
+          <div class="bg-[#ffffff]/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-3 lg:p-4 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
             <div class="text-center mb-3">
               <div class="text-lg lg:text-2xl font-bold text-yellow-300 mb-1 drop-shadow-lg">
                 {{ catholicCalendar.date ? new Date(catholicCalendar.date).getDate() : new Date().getDate() }} {{ catholicCalendar.date ? new Date(catholicCalendar.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
@@ -411,7 +411,7 @@ onMounted(() => {
             </div>
             
             <div class="grid grid-cols-2 gap-3">
-              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
                 <div class="text-xs text-blue-200 mb-1">Liturgical Season</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.liturgicalSeason || 'Ordinary Time' }}</div>
                 <div v-if="catholicCalendar.seasonWeek" class="text-xs text-blue-100">
@@ -419,17 +419,17 @@ onMounted(() => {
                 </div>
               </div>
               
-              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
                 <div class="text-xs text-blue-200 mb-1">Feast Day</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.feastDay || 'No special feast today' }}</div>
               </div>
               
-              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
                 <div class="text-xs text-blue-200 mb-1">Saint of the Day</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.saintOfTheDay || 'No saint feast today' }}</div>
               </div>
               
-              <div class="text-center p-3 bg-white/5 rounded-xl border border-white/10">
+              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
                 <div class="text-xs text-blue-200 mb-1">Liturgical Color</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.color || 'Green' }}</div>
               </div>
@@ -452,15 +452,15 @@ onMounted(() => {
               Saints of the Church Community
             </span>
           </h2>
-          <div class="relative bg-white/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] flex-1 min-h-0">
+          <div class="relative bg-[#ffffff]/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] flex-1 min-h-0">
             <!-- Fixed Layout Structure -->
             <div class="h-full flex flex-col">
               <!-- Top Section: Image -->
               <div class="flex-shrink-0 flex justify-center mb-2 lg:mb-3">
                 <div class="relative w-20 h-20 lg:w-24 lg:h-24">
                   <!-- Loading State -->
-                  <div v-if="saints[currentSaintIndex]?.loading" class="w-20 h-20 lg:w-24 lg:h-24 bg-white/20 rounded-full flex items-center justify-center animate-pulse">
-                    <div class="w-5 h-5 lg:w-6 lg:h-6 border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
+                  <div v-if="saints[currentSaintIndex]?.loading" class="w-20 h-20 lg:w-24 lg:h-24 bg-[#ffffff]/20 rounded-full flex items-center justify-center animate-pulse">
+                    <div class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
                   </div>
                   
                   <!-- Image Container -->
@@ -482,8 +482,8 @@ onMounted(() => {
                   </div>
                   
                   <!-- Image Loading Overlay -->
-                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 bg-white bg-opacity-10 rounded-full flex items-center justify-center">
-                    <div class="w-4 h-4 lg:w-5 lg:h-5 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
+                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 bg-[#ffffff] bg-opacity-10 rounded-full flex items-center justify-center">
+                    <div class="w-[1rem] h-[1rem] lg:w-5 lg:h-5 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
                   </div>
                 </div>
               </div>
@@ -496,7 +496,7 @@ onMounted(() => {
                 <p class="text-blue-200 mb-1 text-sm lg:text-base font-medium">
                   {{ saints[currentSaintIndex]?.feastDay || '' }}
                 </p>
-                <div class="h-6 lg:h-8 px-2 lg:px-4 overflow-hidden pb-10 lg:pb-12">
+                <div class="h-[1.5rem] lg:h-8 px-2 lg:px-4 overflow-hidden pb-10 lg:pb-12">
                   <p class="text-xs text-blue-100 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
                     {{ saints[currentSaintIndex]?.description || '' }}
                   </p>
@@ -514,7 +514,7 @@ onMounted(() => {
                   'w-2 h-2 lg:w-3 lg:h-3 rounded-full transition-all duration-300 hover:scale-150 flex-shrink-0 border-2',
                   index === currentSaintIndex 
                     ? 'bg-yellow-300 border-yellow-200 shadow-lg shadow-yellow-300/50 scale-125' 
-                    : 'bg-white/80 border-white/60 hover:bg-white hover:border-white'
+                    : 'bg-[#ffffff]/80 border-white/60 hover:bg-[#ffffff] hover:border-white'
                 ]"
                 :disabled="saints.length === 0"
               />
@@ -523,20 +523,20 @@ onMounted(() => {
             <!-- Previous/Next Buttons -->
             <button 
               @click="previousSaint"
-              class="absolute left-2 lg:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="absolute left-2 lg:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-[#ffffff] bg-opacity-10 hover:bg-[#ffffff] hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
             </button>
             
             <button 
               @click="nextSaint"
-              class="absolute right-2 lg:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-white bg-opacity-10 hover:bg-white hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="absolute right-2 lg:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-[#ffffff] bg-opacity-10 hover:bg-[#ffffff] hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-5 h-5 lg:w-6 lg:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
               </svg>
             </button>
@@ -573,7 +573,7 @@ onMounted(() => {
         </div>
 
         <!-- Login Form -->
-        <div class="bg-white bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
+        <div class="bg-[#ffffff] bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
           <div class="text-center mb-8">
             <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
             <p class="text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>

@@ -257,7 +257,7 @@ const getCustomPermissionsCount = (): number => {
     
     <div v-if="canViewRoles" class="min-h-screen bg-gray-50">
       <!-- Header -->
-      <div class="bg-white border-b border-gray-200">
+      <div class="bg-[#ffffff] border-b border-gray-200">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div class="flex items-center justify-between">
             <div>
@@ -268,7 +268,7 @@ const getCustomPermissionsCount = (): number => {
             </div>
             <button 
               @click="router.visit('/roles-permissions')"
-              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]"
             >
               ← Back to Permissions
             </button>
@@ -278,7 +278,7 @@ const getCustomPermissionsCount = (): number => {
 
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <!-- Filters and Search -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="bg-[#ffffff] rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div class="flex flex-col sm:flex-row gap-4">
             <!-- Search -->
             <div class="flex-1">
@@ -288,7 +288,7 @@ const getCustomPermissionsCount = (): number => {
                   v-model="searchTerm"
                   type="text"
                   placeholder="Search by name or email..."
-                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
                 />
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,7 +303,7 @@ const getCustomPermissionsCount = (): number => {
               <label class="block text-sm font-medium text-gray-700 mb-2">Filter by Role</label>
               <select
                 v-model="selectedRoleFilter"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
               >
                 <option v-for="option in roleOptions" :key="option.value" :value="option.value">
                   {{ option.label }}
@@ -316,7 +316,7 @@ const getCustomPermissionsCount = (): number => {
         <!-- Users Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <div v-for="user in filteredUsers" :key="user.id" 
-               class="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
+               class="bg-[#ffffff] rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 hover:scale-[1.02]">
             
             <!-- User Header -->
             <div class="p-6 border-b border-gray-100">
@@ -351,7 +351,7 @@ const getCustomPermissionsCount = (): number => {
                   :value="user.roles[0]?.id || ''" 
                   @change="onRoleChange(user.id, $event)"
                   :disabled="isProcessingRole[user.id]"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <option value="">Select Role</option>
                   <option v-for="role in roles" :key="role.id" :value="role.id">
@@ -407,7 +407,7 @@ const getCustomPermissionsCount = (): number => {
 
       <!-- Permission Modal -->
       <div v-if="showPermissionModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="bg-[#ffffff] rounded-2xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
           <!-- Modal Header -->
           <div class="p-6 border-b border-gray-200">
             <div class="flex items-center justify-between">
@@ -423,7 +423,7 @@ const getCustomPermissionsCount = (): number => {
                 @click="closePermissionModal"
                 class="text-gray-400 hover:text-gray-600 transition-colors"
               >
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="h-[1.5rem] w-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
@@ -458,12 +458,12 @@ const getCustomPermissionsCount = (): number => {
                 
                 <div class="space-y-3">
                   <label v-for="action in module.actions" :key="action.id" 
-                         class="flex items-center p-2 rounded-lg hover:bg-white transition-colors cursor-pointer">
+                         class="flex items-center p-2 rounded-lg hover:bg-[#ffffff] transition-colors cursor-pointer">
                     <input 
                       type="checkbox"
                       :checked="(userPermissions[editingUser?.id] || []).includes(action.slug)"
                       @change="togglePermission(action.slug)"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
                     />
                     <span class="ml-3 text-sm text-gray-700 flex items-center gap-2">
                       <span class="text-lg">{{ getPermissionIcon(action.action) }}</span>
@@ -480,7 +480,7 @@ const getCustomPermissionsCount = (): number => {
             <div class="flex justify-end gap-3">
               <button
                 @click="closePermissionModal"
-                class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                class="px-4 py-2 text-gray-700 bg-[#ffffff] border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Cancel
               </button>

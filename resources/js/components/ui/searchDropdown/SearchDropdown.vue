@@ -88,7 +88,7 @@ function fetchOption(page = 1) {
           'Select Option'
         }}
       </span>
-      <svg class="absolute top-[2px] right-[15px] h-full w-4 h-4 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="absolute top-[2px] right-[15px] h-full w-[1rem] h-[1rem] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>

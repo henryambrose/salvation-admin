@@ -298,7 +298,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
           <button 
             v-if="enhancedBloodGroups.prev_page_url" 
             @click="fetch(enhancedBloodGroups.current_page - 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             ← Prev
           </button>
@@ -309,7 +309,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
               v-if="enhancedBloodGroups.last_page && enhancedBloodGroups.last_page > 1"
               :value="enhancedBloodGroups.current_page" 
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
             >
               <option v-for="page in enhancedBloodGroups.last_page" :key="page" :value="page">
                 {{ page }}
@@ -321,7 +321,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
           <button 
             v-if="enhancedBloodGroups.next_page_url" 
             @click="fetch(enhancedBloodGroups.current_page + 1)" 
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
           >
             Next →
           </button>
@@ -335,7 +335,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -384,7 +384,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Blood Group</h3>
             <form @submit.prevent="submit">
               <div class="mb-3">
@@ -419,7 +419,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Blood Group</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
@@ -454,7 +454,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Blood Group</h3>
             <p>
               Are you sure you want to delete <span class="font-bold">{{ deletingBloodGroup?.name }}</span

@@ -6,7 +6,7 @@
         v-model="searchQuery"
         type="text"
         :placeholder="placeholder"
-        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500 pr-10"
         @focus="showDropdown = true"
         @blur="handleBlur"
         @keydown.escape="closeDropdown"
@@ -29,14 +29,14 @@
         v-if="isLoading"
         class="absolute right-2 top-1/2 transform -translate-y-1/2"
       >
-        <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+        <div class="animate-spin rounded-full h-[1rem] w-[1rem] border-b-2 border-blue-500"></div>
       </div>
     </div>
 
     <!-- Dropdown Results -->
     <div
       v-if="showDropdown && (searchResults.length > 0 || isLoading || searchQuery.length >= 2)"
-      class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+      class="absolute z-50 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
     >
       <!-- Loading State -->
       <div v-if="isLoading" class="p-3 text-center text-gray-500">

@@ -362,7 +362,7 @@ function closeRoleModal() {
           <span class="font-medium">User roles updated successfully!</span>
         </div>
         <button @click="showSuccessMessage = false" class="text-green-500 hover:text-green-700">
-          <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+          <svg class="w-[1rem] h-[1rem]" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
           </svg>
         </button>
@@ -413,7 +413,7 @@ function closeRoleModal() {
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
           <button v-if="enhancedUsers.prev_page_url" @click="fetch(enhancedUsers.current_page - 1)"
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
             ← Prev
           </button>
 
@@ -421,7 +421,7 @@ function closeRoleModal() {
             <span>Page</span>
             <select v-if="enhancedUsers.last_page && enhancedUsers.last_page > 1" :value="enhancedUsers.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500">
               <option v-for="page in enhancedUsers.last_page" :key="page" :value="page">
                 {{ page }}
               </option>
@@ -430,7 +430,7 @@ function closeRoleModal() {
           </div>
 
           <button v-if="enhancedUsers.next_page_url" @click="fetch(enhancedUsers.current_page + 1)"
-            class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
             Next →
           </button>
         </div>
@@ -443,7 +443,7 @@ function closeRoleModal() {
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl bg-white p-6 shadow-xl border border-gray-100">
+      <div class="mt-4 rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -521,7 +521,7 @@ function closeRoleModal() {
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div
           class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Add User</h3>
             <form @submit.prevent="submitCreate">
               <div class="mb-3">
@@ -558,7 +558,7 @@ function closeRoleModal() {
         class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div
           class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit User</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
@@ -596,7 +596,7 @@ function closeRoleModal() {
         class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div
           class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete User</h3>
             <p>Are you sure you want to delete <span class="font-bold">{{ deletingItem?.name }}</span>?</p>
             <div class="mt-6 flex justify-end space-x-2">
@@ -616,7 +616,7 @@ function closeRoleModal() {
         class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div
           class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-          <div class="rounded-lg bg-white p-6">
+          <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Manage Role for {{ selectedUser?.name }}</h3>
             <p class="mb-4 text-sm text-gray-600">Assign a single role for this user</p>
             
@@ -641,7 +641,7 @@ function closeRoleModal() {
                   <label v-for="role in availableRoles" :key="role.id" 
                          class="flex items-center space-x-3 p-2 rounded border border-gray-200 hover:bg-gray-50">
                     <input type="radio" :value="role.id" v-model="selectedRoles" 
-                           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" />
+                           class="h-[1rem] w-[1rem] text-blue-600 focus:ring-[#3b82f6] border-gray-300" />
                     <div>
                       <span class="text-sm font-medium text-gray-900">{{ role.name }}</span>
                       <p class="text-xs text-gray-500">{{ role.permissions?.length || 0 }} permissions</p>

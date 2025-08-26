@@ -513,7 +513,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
               :href="route('member.data-verification')"
               class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
             >
-              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span>Data Verification</span>
@@ -585,7 +585,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 <button
                   v-if="enhancedMembers.prev_page_url"
                   @click="fetch(enhancedMembers.current_page! - 1)"
-                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+                  class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
                 >
                   ← Prev
                 </button>
@@ -601,7 +601,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 v-if="enhancedMembers.last_page && enhancedMembers.last_page > 1"
                 :value="enhancedMembers.current_page"
                 @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-                class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
               >
                 <option v-for="page in enhancedMembers.last_page" :key="page" :value="page">
                   {{ page }}
@@ -615,7 +615,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 <button
                   v-if="enhancedMembers.next_page_url"
                   @click="fetch(enhancedMembers.current_page! + 1)"
-                  class="rounded border border-gray-300 bg-white px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+                  class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
                 >
                   Next →
                 </button>
@@ -649,7 +649,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
           </div>
         </div>
 
-        <div class="datatable2 rounded-2xl border border-gray-100 bg-white p-6 shadow-xl">
+        <div class="datatable2 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
           <!-- Table content -->
           <div class="overflow-x-auto rounded-xl border border-gray-100">
             <table class="w-full border-collapse text-left">
@@ -709,7 +709,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button @click="viewFamilyTree(member)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
-                              <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <svg class="h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path
                                   stroke-linecap="round"
                                   stroke-linejoin="round"
@@ -867,7 +867,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
     <!-- Delete Modal with tooltip -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <div class="w-full max-w-md rounded-lg bg-[#ffffff] p-6 shadow-xl">
           <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
           <p class="mb-2">Are you sure you want to delete this member?</p>
           <div class="mb-4 rounded-lg bg-gray-50 p-3">
