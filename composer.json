@@ -33,14 +33,17 @@
             "App\\": "app/",
             "Modules\\Members\\": "app/Modules/Members/",
             "Modules\\Fund\\": "app/Modules/Fund/",
+            "Modules\\Graveyard\\": "app/Modules/Graveyard/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/",
             "Modules\\Members\\Database\\Seeders\\": "database/modules/members/database/seeders/",
-            "Modules\\Fund\\Database\\Seeders\\": "database/modules/fund/database/seeders/"
+            "Modules\\Fund\\Database\\Seeders\\": "database/modules/fund/database/seeders/",
+            "Modules\\Graveyard\\Database\\Seeders\\": "database/modules/graveyard/seeders/"
         },
         "classmap": [
             "database/modules/members/database/seeders/",
-            "database/modules/fund/database/seeders/"
+            "database/modules/fund/database/seeders/",
+            "database/modules/graveyard/seeders/"
         ]
     },
     "autoload-dev": {

@@ -96,6 +96,7 @@ require __DIR__.'/community_clusters.php';
 require __DIR__.'/audit.php';
 require __DIR__.'/external_members.php';
 require __DIR__.'/fund.php';
+require __DIR__.'/graveyard.php';
 
 // Public API routes (after all other routes to avoid conflicts)
 Route::get('/api/catholic-calendar', [CatholicCalendarController::class, 'index']);

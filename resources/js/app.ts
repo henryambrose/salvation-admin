@@ -66,8 +66,26 @@ async function bootstrap() {
               'PaymentMethods'
           ]; // All fund module components
           
+          // List of pages that are in PagesGraveyard directory
+          const graveyardPages = [
+              'PagesGraveyard/Dashboard',
+              'PagesGraveyard/Cemeteries',
+              'PagesGraveyard/Sections',
+              'PagesGraveyard/Graves',
+              'PagesGraveyard/Burials',
+              'PagesGraveyard/Maintenance',
+              'PagesGraveyard/Finances',
+              'PagesGraveyard/Visitors',
+              'PagesGraveyard/Reports'
+          ]; // All graveyard module components
+          
           try {
-              // First, try to resolve based on explicit fund pages (higher priority for Fund app)
+              // First, try to resolve based on explicit graveyard pages
+              if (graveyardPages.some(page => name.startsWith(page)) || name.startsWith('PagesGraveyard/')) {
+                  return await resolvePageComponent(`./${name}.vue`, import.meta.glob<DefineComponent>('./PagesGraveyard/**/*.vue'));
+              }
+              
+              // Then, try to resolve based on explicit fund pages (higher priority for Fund app)
               if (fundPages.some(page => name.startsWith(page)) || name.startsWith('Fund/')) {
                   // Check if the name contains a slash (nested structure like Dashboard/Index)
                   if (name.includes('/')) {
@@ -94,14 +112,19 @@ async function bootstrap() {
           } catch (error) {
               // Fallback: try the other directories
               try {
-                  // Try pages directory first
-                  return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
-              } catch (fallbackError) {
+                  // Try PagesGraveyard first
+                  return await resolvePageComponent(`./PagesGraveyard/${name}.vue`, import.meta.glob<DefineComponent>('./PagesGraveyard/**/*.vue'));
+              } catch (graveyardError) {
                   try {
-                      // Try PagesMembers as last resort
-                      return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
-                  } catch (finalError) {
-                      throw new Error(`Page not found: ${name}`);
+                      // Try pages directory
+                      return await resolvePageComponent(`./pages/${name}.vue`, import.meta.glob<DefineComponent>('./pages/**/*.vue'));
+                  } catch (fallbackError) {
+                      try {
+                          // Try PagesMembers as last resort
+                          return await resolvePageComponent(`./PagesMembers/${name}.vue`, import.meta.glob<DefineComponent>('./PagesMembers/**/*.vue'));
+                      } catch (finalError) {
+                          throw new Error(`Page not found: ${name}`);
+                      }
                   }
               }
           }

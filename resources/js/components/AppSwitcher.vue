@@ -54,6 +54,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { 
   Users, 
   DollarSign, 
+  MapPin,
   ChevronDownIcon, 
   CheckIcon 
 } from 'lucide-vue-next';
@@ -81,6 +82,14 @@ const availableApps = [
     href: '/fund',
     icon: DollarSign,
     color: 'text-green-600'
+  },
+  {
+    id: 'graveyard',
+    name: 'Graveyard',
+    description: 'Cemetery & burial management',
+    href: '/graveyard',
+    icon: MapPin,
+    color: 'text-purple-600'
   }
 ];
 
@@ -88,6 +97,8 @@ const availableApps = [
 const currentApp = computed(() => {
   if (currentPath.startsWith('/fund')) {
     return availableApps.find(app => app.id === 'fund') || availableApps[0];
+  } else if (currentPath.startsWith('/graveyard')) {
+    return availableApps.find(app => app.id === 'graveyard') || availableApps[0];
   }
   return availableApps.find(app => app.id === 'members') || availableApps[0];
 });
