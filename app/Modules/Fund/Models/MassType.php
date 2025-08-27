@@ -28,13 +28,7 @@ class MassType extends Model
         'sort_order' => 'integer',
     ];
 
-    /**
-     * Get the mass schedules for this mass type
-     */
-    public function massSchedules()
-    {
-        return $this->hasMany(MassSchedule::class);
-    }
+
 
     /**
      * Get the mass intentions for this mass type

@@ -149,7 +149,7 @@ watch(
 // Watch for modal state changes to reset form when closed
 watch(showModal, (newValue) => {
   if (!newValue) {
-    form.reset();
+  form.reset();
     form.clearErrors();
   }
 });
@@ -182,23 +182,37 @@ function submit() {
 
 function openEditModal(row: any) {
   editingType.value = row;
+  editForm.clearErrors();
   editForm.name = row.name;
   editForm.description = row.description || '';
-  editForm.default_time = row.default_time || '';
+  // Convert the default_time format if needed (e.g., from "09:00:00" to "09:00")
+  editForm.default_time = row.default_time ? row.default_time.substring(0, 5) : '';
   editForm.sort_order = row.sort_order || 0;
-  editForm.is_active = row.is_active;
+  editForm.is_active = Boolean(row.is_active);
   showEditModal.value = true;
+  console.log('Edit form data:', editForm.data());
 }
 
 function submitEdit() {
   const editedId = editingType.value?.id;
-  editForm.put(`/fund/mass-types/${editedId || ''}`, {
+  if (!editedId) {
+    console.error('No mass type selected for editing');
+    return;
+  }
+  
+  editForm.put(route('fund.mass-types.update', editedId), {
     preserveScroll: true,
+    only: partialOnly,
     onSuccess: () => {
       showEditModal.value = false;
       editingType.value = undefined;
+      editForm.reset();
+      editForm.clearErrors();
       highlightedRowId.value = editedId;
       nextTick(() => scrollToRow(editedId));
+    },
+    onError: (errors) => {
+      console.error('Edit form validation errors:', errors);
     },
   });
 }
@@ -440,18 +454,22 @@ const breadcrumbs = [
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
                 <Input v-model="editForm.name" type="text" />
+                <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
                 <textarea v-model="editForm.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Default Time</label>
                 <Input v-model="editForm.default_time" type="time" />
+                <div v-if="editForm.errors.default_time" class="mt-1 text-sm text-red-500">{{ editForm.errors.default_time }}</div>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Sort Order</label>
                 <Input v-model="editForm.sort_order" type="number" min="0" />
+                <div v-if="editForm.errors.sort_order" class="mt-1 text-sm text-red-500">{{ editForm.errors.sort_order }}</div>
               </div>
               <div class="mb-3">
                 <label class="flex items-center gap-2">
@@ -462,7 +480,7 @@ const breadcrumbs = [
               <div class="flex justify-end space-x-2">
                 <Button
                   type="button"
-                  @click="showEditModal = false"
+                  @click="() => { showEditModal = false; editForm.reset(); editForm.clearErrors(); editingType.value = undefined; }"
                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
                 >
                   Cancel

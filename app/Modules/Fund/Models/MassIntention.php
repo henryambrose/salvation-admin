@@ -81,10 +81,10 @@ class MassIntention extends Model
     /**
      * Get the mass schedule for this mass intention
      */
-    public function massSchedule()
-    {
-        return $this->belongsTo(MassSchedule::class, 'mass_schedule_id');
-    }
+    // public function massSchedule()
+    // {
+    //     return $this->belongsTo(MassSchedule::class, 'mass_schedule_id');
+    // }
 
     public function createdBy()
     {

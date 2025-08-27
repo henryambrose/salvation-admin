@@ -118,7 +118,6 @@ class MassTypeController extends Controller
         \Log::info('Attempting to delete mass type', [
             'id' => $massType->id,
             'name' => $massType->name,
-            'related_schedules_count' => $massType->massSchedules()->count(),
             'related_intentions_count' => $massType->massIntentions()->count()
         ]);
 

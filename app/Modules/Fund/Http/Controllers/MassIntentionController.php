@@ -69,9 +69,9 @@ class MassIntentionController extends Controller
         }
 
         // Apply mass schedule filter (legacy)
-        if ($request->filled('mass_schedule_id')) {
-            $query->where('mass_schedule_id', $request->mass_schedule_id);
-        }
+        // if ($request->filled('mass_schedule_id')) {
+        //     $query->where('mass_schedule_id', $request->mass_schedule_id);
+        // }
 
         // Apply intention type filter
         if ($request->filled('mass_intention_type_id')) {
