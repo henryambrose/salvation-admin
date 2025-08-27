@@ -4,19 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
+import { User, Lock, Palette } from 'lucide-vue-next';
 
 const sidebarNavItems: NavItem[] = [
   {
     title: 'Profile',
     href: '/settings/profile',
+    icon: User,
   },
   {
     title: 'Password',
     href: '/settings/password',
+    icon: Lock,
   },
   {
     title: 'Appearance',
     href: '/settings/appearance',
+    icon: Palette,
   },
 ];
 
@@ -26,32 +30,48 @@ const currentPath = (page.props.ziggy as any)?.location ? new URL((page.props.zi
 </script>
 
 <template>
-  <div class="px-4 py-6">
-    <Heading title="Settings" description="Manage your profile and account settings" />
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div class="container mx-auto px-4 py-8">
+      <!-- Header Section -->
+      <div class="mb-8 text-center">
+        <div class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
+          <User class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+        </div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
+        <p class="mt-2 text-gray-600 dark:text-gray-300">Manage your profile and account preferences</p>
+      </div>
 
-    <div class="flex flex-col space-y-8 md:space-y-0 lg:flex-row lg:space-y-0 lg:space-x-12">
-      <aside class="w-full max-w-xl lg:w-48">
-        <nav class="flex flex-col space-y-1 space-x-0">
-          <Button
-            v-for="item in sidebarNavItems"
-            :key="item.href"
-            variant="ghost"
-            :class="['w-full justify-start', { 'bg-muted': currentPath === item.href }]"
-            as-child
-          >
-            <Link :href="item.href">
-              {{ item.title }}
-            </Link>
-          </Button>
-        </nav>
-      </aside>
+      <div class="mx-auto max-w-6xl">
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-4">
+          <!-- Sidebar Navigation -->
+          <div class="lg:col-span-1">
+            <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <nav class="space-y-2">
+                <Link
+                  v-for="item in sidebarNavItems"
+                  :key="item.href"
+                  :href="item.href"
+                  :class="[
+                    'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
+                    currentPath === item.href
+                      ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-blue-900 dark:text-blue-300'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                  ]"
+                >
+                  <component :is="item.icon" class="h-5 w-5" />
+                  {{ item.title }}
+                </Link>
+              </nav>
+            </div>
+          </div>
 
-      <Separator class="my-6 md:hidden" />
-
-      <div class="flex-1 md:max-w-2xl">
-        <section class="max-w-xl space-y-12">
-          <slot />
-        </section>
+          <!-- Main Content Area -->
+          <div class="lg:col-span-3">
+            <div class="rounded-2xl border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <slot />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

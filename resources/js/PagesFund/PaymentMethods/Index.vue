@@ -1,497 +1,645 @@
-<template>
-  <AppLayout title="Payment Methods">
-    <template #header>
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold text-gray-800">Payment Methods</h2>
-        <Button @click="showCreateModal = true" class="bg-blue-600 hover:bg-blue-700">
-          <Plus class="w-[1rem] h-[1rem] mr-2" />
-          Add Payment Method
-        </Button>
-      </div>
-    </template>
-
-    <div class="py-6">
-      <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-        <!-- Stats Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <DollarSign class="h-8 w-8 text-blue-600" />
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Payment Methods</dt>
-                    <dd class="text-lg font-medium text-gray-900">{{ stats.total }}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <CheckCircle class="h-8 w-8 text-green-600" />
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Active</dt>
-                    <dd class="text-lg font-medium text-gray-900">{{ stats.active }}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
-            <div class="p-6">
-              <div class="flex items-center">
-                <div class="flex-shrink-0">
-                  <X class="h-8 w-8 text-red-600" />
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                  <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Inactive</dt>
-                    <dd class="text-lg font-medium text-gray-900">{{ stats.inactive }}</dd>
-                  </dl>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Filters and Search -->
-        <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg mb-6">
-          <div class="p-6">
-            <div class="flex flex-col md:flex-row gap-4">
-              <div class="flex-1">
-                <Input
-                  v-model="filters.search"
-                  placeholder="Search payment methods..."
-                  class="w-full"
-                  @input="debouncedSearch"
-                />
-              </div>
-              <div class="flex gap-2">
-                <SelectInput 
-                  v-model="filters.status" 
-                  :options="[
-                    { id: '', name: 'All Status' },
-                    { id: 'active', name: 'Active' },
-                    { id: 'inactive', name: 'Inactive' }
-                  ]"
-                  class="w-40"
-                />
-                <Button @click="resetFilters" variant="outline">Reset</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Data Table -->
-        <div class="bg-[#ffffff] overflow-hidden shadow-sm rounded-lg">
-          <div v-if="paymentMethods.data && paymentMethods.data.length > 0" class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-              <thead class="bg-gray-50">
-                <tr>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Description
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Sort Order
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Created
-                  </th>
-                  <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody class="bg-[#ffffff] divide-y divide-gray-200">
-                <tr v-for="paymentMethod in paymentMethods.data" :key="paymentMethod.id">
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="text-sm font-medium text-gray-900">{{ paymentMethod.name }}</div>
-                  </td>
-                  <td class="px-6 py-4">
-                    <div class="text-sm text-gray-900">{{ paymentMethod.description || 'No description' }}</div>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <span
-                      :class="[
-                        'inline-flex px-2 py-1 text-xs font-semibold rounded-full',
-                        paymentMethod.is_active
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      ]"
-                    >
-                      {{ paymentMethod.is_active ? 'Active' : 'Inactive' }}
-                    </span>
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {{ paymentMethod.sort_order || 0 }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {{ formatDate(paymentMethod.created_at) }}
-                  </td>
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div class="flex items-center justify-end gap-2">
-                      <Button
-                        @click="viewPaymentMethod(paymentMethod)"
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Eye class="w-[1rem] h-[1rem]" />
-                      </Button>
-                      <Button
-                        @click="editPaymentMethod(paymentMethod)"
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Pencil class="w-[1rem] h-[1rem]" />
-                      </Button>
-                      <Button
-                        @click="deletePaymentMethod(paymentMethod)"
-                        variant="outline"
-                        size="sm"
-                        class="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 class="w-[1rem] h-[1rem]" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <!-- No Data Message -->
-          <div v-else class="p-8 text-center">
-            <div class="text-gray-500">
-              <p class="text-lg font-medium">No payment methods found</p>
-              <p class="text-sm mt-2">Get started by creating your first payment method.</p>
-            </div>
-          </div>
-
-          <!-- Pagination -->
-          <div v-if="paymentMethods.links && paymentMethods.links.length > 0" class="bg-[#ffffff] px-4 py-3 border-t border-gray-200 sm:px-6">
-            <div class="flex items-center justify-between">
-              <div class="flex-1 flex justify-between sm:hidden">
-                <Link
-                  v-if="paymentMethods.links[0] && paymentMethods.links[0].url"
-                  :href="paymentMethods.links[0].url"
-                  class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-[#ffffff] hover:bg-gray-50"
-                >
-                  Previous
-                </Link>
-                <Link
-                  v-if="paymentMethods.links[paymentMethods.links.length - 1] && paymentMethods.links[paymentMethods.links.length - 1].url"
-                  :href="paymentMethods.links[paymentMethods.links.length - 1].url"
-                  class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-[#ffffff] hover:bg-gray-50"
-                >
-                  Next
-                </Link>
-              </div>
-              <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                  <p class="text-sm text-gray-700">
-                    Showing
-                    <span class="font-medium">{{ paymentMethods.from || 0 }}</span>
-                    to
-                    <span class="font-medium">{{ paymentMethods.to || 0 }}</span>
-                    of
-                    <span class="font-medium">{{ paymentMethods.total || 0 }}</span>
-                    results
-                  </p>
-                </div>
-                <div>
-                  <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                    <template v-for="(link, index) in paymentMethods.links" :key="index">
-                      <Link
-                        v-if="link && link.url"
-                        :href="link.url"
-                        v-html="link.label"
-                        :class="[
-                          'relative inline-flex items-center px-4 py-2 border text-sm font-medium',
-                          link.active
-                            ? 'z-10 bg-blue-50 border-blue-500 text-blue-600'
-                            : 'bg-[#ffffff] border-gray-300 text-gray-500 hover:bg-gray-50'
-                        ]"
-                      />
-                    </template>
-                  </nav>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Create/Edit Modal -->
-    <div v-if="showCreateModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            {{ editingPaymentMethod ? 'Edit Payment Method' : 'Add Payment Method' }}
-          </h3>
-          <form @submit.prevent="savePaymentMethod" class="space-y-4">
-            <div>
-              <Label for="name">Name</Label>
-              <Input
-                id="name"
-                v-model="form.name"
-                type="text"
-                required
-                placeholder="Enter payment method name"
-              />
-            </div>
-
-            <div>
-              <Label for="description">Description</Label>
-              <Textarea
-                id="description"
-                v-model="form.description"
-                placeholder="Enter description (optional)"
-                rows="3"
-              />
-            </div>
-
-            <div class="flex items-center space-x-2">
-              <Checkbox
-                id="is_active"
-                v-model:checked="form.is_active"
-              />
-              <Label for="is_active">Active</Label>
-            </div>
-
-            <div>
-              <Label for="sort_order">Sort Order</Label>
-              <Input
-                id="sort_order"
-                v-model="form.sort_order"
-                type="number"
-                min="0"
-                placeholder="0"
-              />
-            </div>
-
-            <div class="flex justify-end space-x-2">
-              <Button type="button" variant="outline" @click="closeModal">
-                Cancel
-              </Button>
-              <Button type="submit" :disabled="saving">
-                {{ saving ? 'Saving...' : (editingPaymentMethod ? 'Update' : 'Create') }}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
-        <div class="mt-3">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Delete Payment Method</h3>
-          <div class="space-y-4">
-            <p class="text-gray-600">
-              Are you sure you want to delete "{{ deletingPaymentMethod?.name }}"? This action cannot be undone.
-            </p>
-            <div class="flex justify-end space-x-2">
-              <Button variant="outline" @click="showDeleteModal = false">
-                Cancel
-              </Button>
-              <Button variant="destructive" @click="confirmDelete" :disabled="deleting">
-                {{ deleting ? 'Deleting...' : 'Delete' }}
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </AppLayout>
-</template>
-
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
-import { router } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/app/AppSidebarLayout.vue'
-import Button from '@/components/ui/button/Button.vue'
-import Input from '@/components/ui/input/Input.vue'
-import Label from '@/components/ui/label/Label.vue'
-import Textarea from '@/components/ui/textarea/Textarea.vue'
-import Checkbox from '@/components/ui/checkbox/Checkbox.vue'
-import SelectInput from '@/components/ui/select/SelectInput.vue'
-import { Link } from '@inertiajs/vue3'
-import { Plus, Eye, Pencil, Trash2, DollarSign, CheckCircle, X } from 'lucide-vue-next'
+import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
+import DatatableHeader from '@/components/DatatableHeader.vue';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Column } from '@/types';
+import { Input } from '@/components/ui/input';
+import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
+import { computed, ref, watch, nextTick } from 'vue';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 
-interface PaymentMethod {
-  id: number
-  name: string
-  description: string | null
-  is_active: boolean
-  sort_order: number | null
-  created_at: string
-  updated_at: string
+const { can } = permissionHelpers();
+
+const props = defineProps({
+  paymentMethods: Object,
+  filters: Object,
+  fetchUrl: String,
+});
+
+// Permission checks
+const canCreatePaymentMethod = can('create-fund-payment-method') || true;
+const canReadAnyPaymentMethod = can('read-fund-payment-method') || true;
+const canUpdateAnyPaymentMethod = can('update-fund-payment-method') || true;
+const canDeleteAnyPaymentMethod = can('delete-fund-payment-method') || true;
+const canRestorePaymentMethod = can('restore-fund-payment-method') || true;
+
+const columns: Column[] = [
+  { key: 'id', label: 'Id', sortable: true },
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'description', label: 'Description', sortable: false },
+  { key: 'sort_order', label: 'Sort Order', sortable: true },
+  { key: 'is_active', label: 'Status', sortable: true },
+];
+
+const showModal = ref(false);
+const showEditModal = ref(false);
+const showDeleteModal = ref(false);
+
+// Function to open create modal and reset form
+function openCreateModal() {
+  form.reset();
+  form.clearErrors();
+  showModal.value = true;
 }
 
-interface Stats {
-  total: number
-  active: number
-  inactive: number
+const editingMethod = ref<Record<string, any>>();
+const deletingMethod = ref<Record<string, any> | null>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+const highlightedRowId = ref<number|null>(null);
+
+function scrollToRow(rowId: number) {
+  nextTick(() => {
+    const el = document.getElementById(`payment-method-row-${rowId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('highlight-row');
+      setTimeout(() => el.classList.remove('highlight-row'), 2000);
+    }
+  });
 }
 
-interface Filters {
-  search: string
-  status: string
-}
-
-interface Props {
-  paymentMethods: {
-    data: PaymentMethod[]
-    links: any[]
-    from?: number
-    to?: number
-    total?: number
-  }
-  stats: Stats
-  filters: Filters
-}
-
-const props = defineProps<Props>()
-
-// Reactive state
-const showCreateModal = ref(false)
-const showDeleteModal = ref(false)
-const editingPaymentMethod = ref<PaymentMethod | null>(null)
-const deletingPaymentMethod = ref<PaymentMethod | null>(null)
-const saving = ref(false)
-const deleting = ref(false)
-
-const form = reactive({
+const form = useForm({
   name: '',
   description: '',
+  sort_order: 0,
   is_active: true,
-  sort_order: 0
-})
+});
 
-const filters = reactive({
-  search: props.filters.search || '',
-  status: props.filters.status || ''
-})
+const editForm = useForm({
+  name: '',
+  description: '',
+  sort_order: 0,
+  is_active: true,
+});
 
-// Methods
-function openCreateModal() {
-  editingPaymentMethod.value = null
-  resetForm()
-  showCreateModal.value = true
+// Validation function to check for duplicate method names
+const validateMethodName = (name: string, excludeId?: number) => {
+  if (!name || name.trim() === '') {
+    return 'The payment method name cannot be empty.';
+  }
+  
+  const existingMethods = enhancedPaymentMethods.value.data;
+  const duplicate = existingMethods.find((method: any) => {
+    if (excludeId && method.id === excludeId) return false;
+    return method.name.toLowerCase() === name.toLowerCase();
+  });
+  
+  return duplicate ? 'A payment method with this name already exists.' : null;
+};
+
+const search = ref(props.filters?.search || '');
+const perPage = ref(props.filters?.perPage || 10);
+const sort = ref(props.filters?.sort || '');
+const direction = ref(props.filters?.direction || 'asc');
+
+const partialOnly = ['paymentMethods', 'filters'];
+const searchTimeout = ref<number | null>(null);
+
+function clearSearch() {
+  search.value = '';
+  if (searchTimeout.value) {
+    clearTimeout(searchTimeout.value);
+  }
+  if (props.fetchUrl) {
+    router.get(
+      props.fetchUrl,
+      {
+        search: '',
+        sort: sort.value,
+        direction: direction.value,
+        perPage: perPage.value,
+        isArchived: isArchived.value ? 'true' : 'false',
+        page: 1,
+      },
+      { preserveState: false, replace: true },
+    );
+  }
 }
 
-function editPaymentMethod(paymentMethod: PaymentMethod) {
-  editingPaymentMethod.value = paymentMethod
-  form.name = paymentMethod.name
-  form.description = paymentMethod.description || ''
-  form.is_active = paymentMethod.is_active
-  form.sort_order = paymentMethod.sort_order || 0
-  showCreateModal.value = true
+function restorePaymentMethod(id: number) {
+  router.post(route('fund.payment-methods.restore', id), {}, {
+    preserveScroll: true,
+    only: partialOnly,
+    onSuccess: () => {
+      isArchived.value = false;
+    },
+  });
 }
 
-function viewPaymentMethod(paymentMethod: PaymentMethod) {
-  router.visit(`/fund/payment-methods/${paymentMethod.id}`)
+function fetch(page = 1) {
+  if (!props.fetchUrl) return;
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
+  );
 }
 
-function deletePaymentMethod(paymentMethod: PaymentMethod) {
-  deletingPaymentMethod.value = paymentMethod
-  showDeleteModal.value = true
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300);
+  },
+  { immediate: false, deep: false },
+);
+
+// Watch for modal state changes to reset form when closed
+watch(showModal, (newValue) => {
+  if (!newValue) {
+    form.reset();
+    form.clearErrors();
+  }
+});
+
+// Watch for changes in method name to validate duplicates
+watch(() => form.name, () => {
+  // Don't validate if the form is empty (during reset)
+  if (!form.name || form.name.trim() === '') {
+    if (form.errors.name) form.clearErrors('name');
+    return;
+  }
+  
+  const error = validateMethodName(form.name);
+  if (error) {
+    form.setError('name', error);
+  } else {
+    if (form.errors.name) form.clearErrors('name');
+  }
+});
+
+// Watch for changes in edit form method name
+watch(() => editForm.name, () => {
+  // Don't validate if the form is empty (during reset)
+  if (!editForm.name || editForm.name.trim() === '') {
+    if (editForm.errors.name) editForm.clearErrors('name');
+    return;
+  }
+  
+  const error = validateMethodName(editForm.name, editingMethod.value?.id);
+  if (error) {
+    editForm.setError('name', error);
+  } else {
+    if (editForm.errors.name) editForm.clearErrors('name');
+  }
+});
+
+const enhancedPaymentMethods = computed(() => {
+  const methods = props.paymentMethods || {};
+  return {
+    data: methods.data || [],
+    prev_page_url: methods.prev_page_url ?? methods.meta?.prev_page_url,
+    next_page_url: methods.next_page_url ?? methods.meta?.next_page_url,
+    current_page: methods.current_page ?? methods.meta?.current_page,
+    last_page: methods.last_page ?? methods.meta?.last_page,
+  };
+});
+
+function submit() {
+  form.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedPaymentMethods.value.last_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  form.post('/fund/payment-methods', {
+    preserveScroll: true,
+    onSuccess: () => {
+      form.reset();
+      form.clearErrors();
+      showModal.value = false;
+      nextTick(() => {
+        fetch(enhancedPaymentMethods.value.last_page);
+        highlightedRowId.value = -1;
+      });
+    },
+    onError: () => {
+      // Keep modal open on error
+    },
+  });
+}
+
+function openEditModal(row: any) {
+  editingMethod.value = row;
+  editForm.name = row.name;
+  editForm.description = row.description || '';
+  editForm.sort_order = row.sort_order || 0;
+  editForm.is_active = row.is_active;
+  showEditModal.value = true;
+}
+
+function submitEdit() {
+  const editedId = editingMethod.value?.id;
+  editForm.transform(data => ({
+    ...data,
+    perPage: perPage.value,
+    page: enhancedPaymentMethods.value.current_page,
+    search: search.value,
+    sort: sort.value,
+    direction: direction.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  }));
+  editForm.put(`/fund/payment-methods/${editedId || ''}`, {
+    preserveScroll: true,
+    onSuccess: () => {
+      showEditModal.value = false;
+      editingMethod.value = undefined;
+      highlightedRowId.value = editedId;
+      nextTick(() => scrollToRow(editedId));
+    },
+  });
+}
+
+function openDeleteModal(row: any) {
+  deletingMethod.value = row;
+  showDeleteModal.value = true;
 }
 
 function confirmDelete() {
-  if (!deletingPaymentMethod.value) return
-  
-  deleting.value = true
-  router.delete(`/fund/payment-methods/${deletingPaymentMethod.value.id}`, {
-    onSuccess: () => {
-      showDeleteModal.value = false
-      deletingPaymentMethod.value = null
-      deleting.value = false
+  if (!deletingMethod.value) return;
+  const deletedId = deletingMethod.value.id;
+
+  router.delete(route('fund.payment-methods.destroy', deletedId), {
+    data: {
+      perPage: perPage.value,
+      page: enhancedPaymentMethods.value.current_page,
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      isArchived: isArchived.value ? 'true' : 'false',
     },
-    onError: () => {
-      deleting.value = false
-    }
-  })
+    preserveScroll: true,
+    only: partialOnly,
+    onSuccess: () => {
+      showDeleteModal.value = false;
+      deletingMethod.value = null;
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
+    },
+  });
 }
 
-function savePaymentMethod() {
-  saving.value = true
-  
-  if (editingPaymentMethod.value) {
-    router.put(`/fund/payment-methods/${editingPaymentMethod.value.id}`, form, {
-      onSuccess: () => {
-        closeModal()
-        saving.value = false
-      },
-      onError: () => {
-        saving.value = false
-      }
-    })
-  } else {
-    router.post('/fund/payment-methods', form, {
-      onSuccess: () => {
-        closeModal()
-        saving.value = false
-      },
-      onError: () => {
-        saving.value = false
-      }
-    })
+function handlePageChange(event: Event) {
+  const target = event.target as HTMLSelectElement;
+  if (target) {
+    fetch(Number(target.value));
   }
 }
 
-function closeModal() {
-  showCreateModal.value = false
-  editingPaymentMethod.value = null
-  resetForm()
-}
-
-function resetForm() {
-  form.name = ''
-  form.description = ''
-  form.is_active = true
-  form.sort_order = 0
-}
-
-function resetFilters() {
-  filters.search = ''
-  filters.status = ''
-  router.visit('/fund/payment-methods', {
-    data: { search: '', status: '' },
-    preserveState: false
-  })
-}
-
-function debouncedSearch() {
-  router.visit('/fund/payment-methods', {
-    data: filters,
-    preserveState: true
-  })
-}
-
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString()
-}
-
-// Watch for filter changes
-watch(filters, () => {
-  debouncedSearch()
-}, { deep: true })
+const breadcrumbs = [
+  { title: 'Fund', href: '/fund' },
+  { title: 'Payment Methods', href: '/fund/payment-methods' }
+];
 </script>
+
+<template>
+  <AppLayout :breadcrumbs="breadcrumbs">
+    <Head title="Payment Methods" />
+    <DatatableHeader>
+      <div class="mb-4 flex items-center justify-between">
+        <h2 class="text-2xl font-bold text-blue-700">Payment Methods</h2>
+        <Button v-if="canCreatePaymentMethod" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+          <Plus class="w-[1rem] h-[1rem]" />
+          <span>Add Payment Method</span>
+        </Button>
+      </div>
+      <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+        <div class="flex flex-wrap items-center gap-3">
+          <div class="relative">
+            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
+            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+          </div>
+          <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+            <option :value="10">10</option>
+            <option :value="25">25</option>
+            <option :value="50">50</option>
+            <option :value="100">100</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-4">
+          <label class="flex items-center gap-2 cursor-pointer select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
+      </div>
+    </DatatableHeader>
+    
+    <div v-if="canReadAnyPaymentMethod">
+      <!-- Compact pagination with inline stats above the table -->
+      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+        <!-- Left side: Total records info -->
+        <div class="text-gray-600">
+          Showing <span class="font-semibold">{{ paymentMethods?.total || 0 }}</span> total payment methods
+          <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
+        </div>
+        
+        <!-- Center: Pagination controls -->
+        <div class="flex items-center gap-2">
+          <button 
+            v-if="paymentMethods?.prev_page_url" 
+            @click="fetch(paymentMethods.current_page - 1)" 
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            ← Prev
+          </button>
+          
+          <div class="flex items-center gap-1 text-gray-600">
+            <span>Page</span>
+            <select 
+              v-if="paymentMethods?.last_page && paymentMethods.last_page > 1"
+              :value="paymentMethods?.current_page" 
+              @change="handlePageChange"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+            >
+              <option v-for="page in paymentMethods.last_page" :key="page" :value="page">
+                {{ page }}
+              </option>
+            </select>
+            <span>of {{ paymentMethods?.last_page }}</span>
+          </div>
+          
+          <button 
+            v-if="paymentMethods?.next_page_url" 
+            @click="fetch(paymentMethods.current_page + 1)" 
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          >
+            Next →
+          </button>
+        </div>
+        
+        <!-- Right side: Additional info -->
+        <div class="text-gray-500">
+          <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">
+            Payment Methods
+          </span>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
+        <!-- Table content -->
+        <div class="overflow-x-auto rounded-xl border border-gray-100">
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                  {{ col.label }}
+                </th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="row in enhancedPaymentMethods.data" :key="row.id" :id="`payment-method-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+                <td class="p-2">
+                  <template v-if="!serverArchived">
+                    <div class="flex items-center gap-2">
+                      <Button v-if="canUpdateAnyPaymentMethod" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition p-2">
+                        <Pencil class="w-[1rem] h-[1rem]" />
+                      </Button>
+                    </div>
+                  </template>
+                  <template v-else>
+                    <Button v-if="canRestorePaymentMethod" @click="restorePaymentMethod(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition p-2">
+                      <RotateCcw class="w-[1rem] h-[1rem]" />
+                    </Button>
+                  </template>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  <template v-if="col.key === 'is_active'">
+                    <span :class="[
+                      'px-2 py-1 rounded-full text-xs font-medium',
+                      row[col.key] 
+                        ? 'bg-green-100 text-green-800' 
+                        : 'bg-red-100 text-red-800'
+                    ]">
+                      {{ row[col.key] ? 'Active' : 'Inactive' }}
+                    </span>
+                  </template>
+                  <template v-else>
+                    {{ row[col.key] || '-' }}
+                  </template>
+                </td>
+                <td v-if="!serverArchived" class="p-2">
+                  <template v-if="canDeleteAnyPaymentMethod">
+                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition p-2">
+                      <Trash class="w-[1rem] h-[1rem]" />
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view payment methods.</div>
+
+    <!-- Create Modal -->
+    <transition name="fade">
+      <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Create Payment Method</h3>
+            <form @submit.prevent="submit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="form.name" type="text" />
+                <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Description</label>
+                <textarea v-model="form.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <div v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Sort Order</label>
+                <Input v-model="form.sort_order" type="number" min="0" />
+                <div v-if="form.errors.sort_order" class="mt-1 text-sm text-red-500">{{ form.errors.sort_order }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="flex items-center gap-2">
+                  <input v-model="form.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]" />
+                  <span class="text-sm font-medium">Active</span>
+                </label>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="() => { showModal = false; form.reset(); form.clearErrors(); }"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="form.processing || form.errors.name"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
+                  {{ form.processing ? 'Creating...' : 'Create' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Edit Modal -->
+    <transition name="fade">
+      <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Edit Payment Method</h3>
+            <form @submit.prevent="submitEdit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="editForm.name" type="text" />
+                <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Description</label>
+                <textarea v-model="editForm.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Sort Order</label>
+                <Input v-model="editForm.sort_order" type="number" min="0" />
+                <div v-if="editForm.errors.sort_order" class="mt-1 text-sm text-red-500">{{ editForm.errors.sort_order }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="flex items-center gap-2">
+                  <input v-model="editForm.is_active" type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-[#3b82f6]" />
+                  <span class="text-sm font-medium">Active</span>
+                </label>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showEditModal = false"
+                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="editForm.processing || editForm.errors.name"
+                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                >
+                  {{ editForm.processing ? 'Saving...' : 'Save' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
+
+    <!-- Delete Modal -->
+    <transition name="fade">
+      <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Delete Payment Method</h3>
+            <p>
+              Are you sure you want to delete <span class="font-bold">{{ deletingMethod?.name }}</span>?
+            </p>
+            <div class="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                type="button"
+                @click="showDeleteModal = false"
+                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                :disabled="false"
+                @click="confirmDelete"
+                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
+  </AppLayout>
+</template>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #ef4444;
+  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  position: relative;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.switch-checkbox[data-state="checked"] {
+  background: #2563eb;
+}
+.switch-checkbox input[type="checkbox"] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot="checkbox-indicator"] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+  left: 1.375rem;
+}
+.highlight-row {
+  animation: highlight-fade 2s;
+  background-color: #fef08a !important; /* Tailwind yellow-200 */
+}
+@keyframes highlight-fade {
+  0% { background-color: #fde047; }
+  100% { background-color: inherit; }
+}
+</style>

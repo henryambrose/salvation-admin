@@ -26,18 +26,26 @@ class MassTypeController extends Controller
             });
         }
 
+        // Handle archived filter
+        if ($request->get('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         // Apply sorting
-        $sortBy = $request->get('sort_by', 'sort_order');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort', 'sort_order');
+        $sortOrder = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
         // Apply pagination
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('perPage', 15);
         $massTypes = $query->paginate($perPage);
 
         return Inertia::render('MassTypes/Index', [
             'massTypes' => $massTypes,
-            'filters' => $request->only(['search', 'sort_by', 'sort_order', 'per_page']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+            'fetchUrl' => route('fund.mass-types.index'),
         ]);
     }
 
@@ -107,14 +115,31 @@ class MassTypeController extends Controller
      */
     public function destroy(MassType $massType)
     {
-        // Check if it's being used by any mass schedules or intentions
-        if ($massType->massSchedules()->count() > 0 || $massType->massIntentions()->count() > 0) {
-            return back()->withErrors(['error' => 'Cannot delete mass type as it is being used by mass schedules or intentions.']);
+        \Log::info('Attempting to delete mass type', [
+            'id' => $massType->id,
+            'name' => $massType->name,
+            'related_schedules_count' => $massType->massSchedules()->count(),
+            'related_intentions_count' => $massType->massIntentions()->count()
+        ]);
+
+        try {
+            $massType->delete();
+            
+            \Log::info('Mass type deleted successfully', [
+                'id' => $massType->id,
+                'deleted_at' => $massType->deleted_at
+            ]);
+
+            return back()->with('success', 'Mass type deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete mass type', [
+                'id' => $massType->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withErrors(['error' => 'Failed to delete mass type: ' . $e->getMessage()]);
         }
-
-        $massType->delete();
-
-        return back()->with('success', 'Mass type deleted successfully.');
     }
 
     /**
@@ -122,7 +147,7 @@ class MassTypeController extends Controller
      */
     public function restore($id)
     {
-        $massType = MassType::withTrashed()->findOrFail($id);
+        $massType = MassType::onlyTrashed()->findOrFail($id);
         $massType->restore();
 
         return back()->with('success', 'Mass type restored successfully.');

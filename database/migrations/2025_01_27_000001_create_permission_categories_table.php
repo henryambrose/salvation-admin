@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('permission_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name')->unique(); // e.g., 'Core Management', 'Fund App Management'
-            $table->string('slug')->unique(); // e.g., 'core-management', 'fund-app-management'
+            $table->string('slug')->unique(); // e.g
+            $table->string('app')->default('Core');
             $table->text('description')->nullable();
             $table->string('color')->default('#3B82F6'); // For UI styling
             $table->integer('sort_order')->default(0);

@@ -64,6 +64,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     // Annual Contributions
     Route::resource('annual-contributions', AnnualContributionController::class);
     Route::post('annual-contributions/bulk-update', [AnnualContributionController::class, 'bulkUpdate'])->name('annual-contributions.bulk-update');
+    Route::post('annual-contributions/{id}/restore', [AnnualContributionController::class, 'restore'])->name('annual-contributions.restore');
 
     // Mass Intentions
     Route::get('mass-intentions', [MassIntentionController::class, 'index'])->name('mass-intentions.index');
@@ -73,6 +74,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     Route::get('mass-intentions/{massIntention}/edit', [MassIntentionController::class, 'edit'])->name('mass-intentions.edit');
     Route::put('mass-intentions/{massIntention}', [MassIntentionController::class, 'update'])->name('mass-intentions.update');
     Route::delete('mass-intentions/{massIntention}', [MassIntentionController::class, 'destroy'])->name('mass-intentions.destroy');
+    Route::post('mass-intentions/{id}/restore', [MassIntentionController::class, 'restore'])->name('mass-intentions.restore');
     Route::put('mass-intentions/{massIntention}/status', [MassIntentionController::class, 'updateStatus'])->name('mass-intentions.update-status');
     Route::get('mass-intentions/search/members', [MassIntentionController::class, 'searchMembers'])->name('mass-intentions.search-members');
 

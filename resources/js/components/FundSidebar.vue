@@ -131,9 +131,9 @@ const fundNavigationGroups = computed(() => [
       },
       {
         title: 'Settings',
-        href: '/fund/settings',
+        href: '/settings/profile',
         icon: Settings,
-        show: can('read-fund-settings') || true,
+        show: true,
       },
     ]
   }

@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Members\Models\Member;
+use Modules\Fund\Models\MassType;
+use Modules\Fund\Models\MassIntentionType;
+use Modules\Fund\Models\PaymentMethod;
+use Modules\Fund\Models\MassSchedule;
+use App\Models\User;
 
 class MassIntention extends Model
 {
@@ -21,6 +26,7 @@ class MassIntention extends Model
         'special_instructions',
         'payment_method_id',
         'amount',
+        'intention_for',
         'status',
         'created_by',
         'updated_by',
@@ -37,7 +43,7 @@ class MassIntention extends Model
      */
     public function member()
     {
-        return $this->belongsTo(\Modules\Members\Models\Member::class);
+        return $this->belongsTo(Member::class);
     }
 
     /**
@@ -57,21 +63,37 @@ class MassIntention extends Model
     }
 
     /**
+     * Alias for massIntentionType relationship
+     */
+    public function intentionType()
+    {
+        return $this->massIntentionType();
+    }
+
+    /**
      * Get the payment method for this mass intention
      */
     public function paymentMethod()
     {
-        return $this->belongsTo(\Modules\Fund\Models\PaymentMethod::class);
+        return $this->belongsTo(PaymentMethod::class);
+    }
+
+    /**
+     * Get the mass schedule for this mass intention
+     */
+    public function massSchedule()
+    {
+        return $this->belongsTo(MassSchedule::class, 'mass_schedule_id');
     }
 
     public function createdBy()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function updatedBy()
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $this->belongsTo(User::class, 'updated_by');
     }
 
     // Helper methods

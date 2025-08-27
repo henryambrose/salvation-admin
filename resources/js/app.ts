@@ -62,7 +62,7 @@ async function bootstrap() {
               'MassIntentions',
               'MassIntentionTypes',
               'MassTypes',
-              'BookIntention',
+              'MassIntentions/Create',
               'PaymentMethods'
           ]; // All fund module components
           

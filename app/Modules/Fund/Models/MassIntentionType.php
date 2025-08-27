@@ -17,6 +17,8 @@ class MassIntentionType extends Model
         'cost',
         'sort_order',
         'is_active',
+        'created_by',
+        'updated_by',
     ];
 
     protected $casts = [

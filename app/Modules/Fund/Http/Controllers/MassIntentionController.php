@@ -22,6 +22,13 @@ class MassIntentionController extends Controller
     {
         $query = MassIntention::with(['member', 'massIntentionType', 'paymentMethod', 'massType']);
 
+        // Archive logic
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
@@ -77,7 +84,7 @@ class MassIntentionController extends Controller
         $query->orderBy($sortBy, $sortOrder);
 
         // Apply pagination
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('per_page', 10);
         $massIntentions = $query->paginate($perPage);
 
         // If this is a request for booked masses (from BookIntention page), return only the data
@@ -122,12 +129,12 @@ class MassIntentionController extends Controller
         } catch (\Exception $e) {
             $massIntentionTypes = MassIntentionType::all();
         }
-
+        \Log::info($massIntentions);
         return Inertia::render('MassIntentions/Index', [
             'massIntentions' => $massIntentions,
             'massTypes' => $massTypes,
             'massIntentionTypes' => $massIntentionTypes,
-            'filters' => $request->only(['search', 'status', 'mass_type_id', 'mass_intention_type_id', 'start_date', 'end_date', 'sort_by', 'sort_order', 'per_page']),
+            'filters' => $request->only(['search', 'status', 'mass_type_id', 'mass_intention_type_id', 'start_date', 'end_date', 'sort_by', 'sort_order', 'per_page', 'isArchived']),
         ]);
     }
 
@@ -160,7 +167,7 @@ class MassIntentionController extends Controller
             $paymentMethods = PaymentMethod::all();
         }
 
-        return Inertia::render('BookIntention', [
+        return Inertia::render('MassIntentions/Create', [
             'massTypes' => $massTypes,
             'intentionTypes' => $intentionTypes,
             'paymentMethods' => $paymentMethods,
@@ -180,9 +187,11 @@ class MassIntentionController extends Controller
             'mass_date' => 'required|date|after_or_equal:today',
             'mass_type_id' => 'required|exists:mass_types,id',
             'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
+            'intention_for' => 'required|string|max:255',
+            'amount' => 'required|numeric|min:0',
+            'status' => 'required|in:pending,confirmed,completed,cancelled',
             'special_instructions' => 'nullable|string|max:1000',
             'payment_method_id' => 'required|exists:payment_methods,id',
-            'amount' => 'required|numeric|min:0',
         ]);
 
         // Validate member information based on type
@@ -214,10 +223,11 @@ class MassIntentionController extends Controller
             'mass_date' => $request->mass_date,
             'mass_type_id' => $request->mass_type_id,
             'mass_intention_type_id' => $request->mass_intention_type_id,
+            'intention_for' => $request->intention_for,
+            'amount' => $request->amount,
+            'status' => $request->status,
             'special_instructions' => $request->special_instructions,
             'payment_method_id' => $request->payment_method_id,
-            'amount' => $request->amount,
-            // 'status' => 'pending', // Commented out - status workflow not implemented yet
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
         ]);
@@ -243,21 +253,30 @@ class MassIntentionController extends Controller
      */
     public function edit(MassIntention $massIntention)
     {
-        $massIntention->load(['member', 'massSchedule', 'intentionType']);
+        $massIntention->load(['member', 'massIntentionType']);
 
-        $massSchedules = MassSchedule::where('is_active', true)
-            ->orderBy('mass_date', 'asc')
-            ->orderBy('mass_time', 'asc')
-            ->get(['id', 'mass_date', 'mass_time', 'max_intentions', 'current_intentions']);
+        // Add members for the dropdown
+        $members = Member::orderBy('first_name', 'asc')
+            ->orderBy('last_name', 'asc')
+            ->get(['id', 'first_name', 'last_name', 'family_no']);
 
         $massIntentionTypes = MassIntentionType::where('is_active', true)
             ->orderBy('sort_order', 'asc')
             ->get(['id', 'name', 'default_amount', 'description']);
 
+        try {
+            $paymentMethods = PaymentMethod::where('is_active', true)
+                ->orderBy('sort_order', 'asc')
+                ->get();
+        } catch (\Exception $e) {
+            $paymentMethods = PaymentMethod::all();
+        }
+
         return Inertia::render('MassIntentions/Edit', [
             'massIntention' => $massIntention,
-            'massSchedules' => $massSchedules,
+            'members' => $members,
             'massIntentionTypes' => $massIntentionTypes,
+            'paymentMethods' => $paymentMethods,
         ]);
     }
 
@@ -267,39 +286,30 @@ class MassIntentionController extends Controller
     public function update(Request $request, MassIntention $massIntention)
     {
         $request->validate([
-            'family_no' => 'required|string',
             'member_id' => 'nullable|exists:members,id',
-            'mass_schedule_id' => 'required|exists:mass_schedules,id',
+            'non_member_name' => 'nullable|string|max:255',
+            'mass_date' => 'required|date',
             'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
             'intention_for' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01',
-            'notes' => 'nullable|string|max:1000',
+            'payment_method_id' => 'required|exists:payment_methods,id',
+            'special_instructions' => 'nullable|string|max:1000',
             'status' => 'required|in:pending,confirmed,completed,cancelled',
         ]);
 
-        $oldMassScheduleId = $massIntention->mass_schedule_id;
-        $newMassScheduleId = $request->mass_schedule_id;
-
         // Update the mass intention
         $massIntention->update([
-            'family_no' => $request->family_no,
             'member_id' => $request->member_id,
-            'mass_schedule_id' => $newMassScheduleId,
+            'non_member_name' => $request->non_member_name,
+            'mass_date' => $request->mass_date,
             'mass_intention_type_id' => $request->mass_intention_type_id,
             'intention_for' => $request->intention_for,
             'amount' => $request->amount,
-            'notes' => $request->notes,
+            'payment_method_id' => $request->payment_method_id,
+            'special_instructions' => $request->special_instructions,
             'status' => $request->status,
             'updated_by' => Auth::id(),
         ]);
-
-        // Update mass schedule counts if schedule changed
-        if ($oldMassScheduleId !== $newMassScheduleId) {
-            // Decrement old schedule
-            MassSchedule::where('id', $oldMassScheduleId)->decrement('current_intentions');
-            // Increment new schedule
-            MassSchedule::where('id', $newMassScheduleId)->increment('current_intentions');
-        }
 
         return redirect()->route('fund.mass-intentions.index')
             ->with('success', 'Mass intention updated successfully.');
@@ -310,13 +320,20 @@ class MassIntentionController extends Controller
      */
     public function destroy(MassIntention $massIntention)
     {
-        // Decrement the mass schedule count
-        $massIntention->massSchedule()->decrement('current_intentions');
-
         $massIntention->delete();
 
-        return redirect()->route('fund.mass-intentions.index')
-            ->with('success', 'Mass intention deleted successfully.');
+        return back()->with('success', 'Mass intention deleted successfully.');
+    }
+
+    /**
+     * Restore the specified mass intention
+     */
+    public function restore($id)
+    {
+        $massIntention = MassIntention::onlyTrashed()->findOrFail($id);
+        $massIntention->restore();
+
+        return back()->with('success', 'Mass intention restored successfully.');
     }
 
     /**

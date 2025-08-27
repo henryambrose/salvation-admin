@@ -29,33 +29,26 @@ class PaymentMethodController extends Controller
             });
         }
 
-        // Apply status filter
-        if ($request->filled('status')) {
-            if ($request->status === 'active') {
-                $query->where('is_active', true);
-            } elseif ($request->status === 'inactive') {
-                $query->where('is_active', false);
-            }
+        // Handle archived filter
+        if ($request->get('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
         }
 
         // Apply sorting
-        $sortBy = $request->get('sort_by', 'sort_order');
-        $sortDirection = $request->get('sort_direction', 'asc');
+        $sortBy = $request->get('sort', 'sort_order');
+        $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection);
 
-        $paymentMethods = $query->paginate(15)->withQueryString();
+        // Apply pagination
+        $perPage = $request->get('perPage', 15);
+        $paymentMethods = $query->paginate($perPage);
 
-        // Get statistics
-        $stats = [
-            'total' => PaymentMethod::count(),
-            'active' => PaymentMethod::where('is_active', true)->count(),
-            'inactive' => PaymentMethod::where('is_active', false)->count(),
-        ];
-
-        return Inertia::render('Fund/PaymentMethods/Index', [
+        return Inertia::render('PaymentMethods/Index', [
             'paymentMethods' => $paymentMethods,
-            'stats' => $stats,
-            'filters' => $request->only(['search', 'status', 'sort_by', 'sort_direction']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+            'fetchUrl' => route('fund.payment-methods.index'),
         ]);
     }
 
@@ -135,16 +128,30 @@ class PaymentMethodController extends Controller
      */
     public function destroy(PaymentMethod $paymentMethod): RedirectResponse
     {
-        // Check if payment method is being used
-        if ($paymentMethod->familyContributions()->count() > 0) {
-            return redirect()->route('fund.payment-methods.index')
-                ->with('error', 'Cannot delete payment method. It is being used by contributions.');
+        \Log::info('Attempting to delete payment method', [
+            'id' => $paymentMethod->id,
+            'name' => $paymentMethod->name,
+            'related_contributions_count' => $paymentMethod->familyContributions()->count()
+        ]);
+
+        try {
+            $paymentMethod->delete();
+            
+            \Log::info('Payment method deleted successfully', [
+                'id' => $paymentMethod->id,
+                'deleted_at' => $paymentMethod->deleted_at
+            ]);
+
+            return back()->with('success', 'Payment method deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete payment method', [
+                'id' => $paymentMethod->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withErrors(['error' => 'Failed to delete payment method: ' . $e->getMessage()]);
         }
-
-        $paymentMethod->delete();
-
-        return redirect()->route('fund.payment-methods.index')
-            ->with('success', 'Payment method deleted successfully.');
     }
 
     /**
@@ -155,8 +162,7 @@ class PaymentMethodController extends Controller
         $paymentMethod = PaymentMethod::onlyTrashed()->findOrFail($id);
         $paymentMethod->restore();
 
-        return redirect()->route('fund.payment-methods.index')
-            ->with('success', 'Payment method restored successfully.');
+        return back()->with('success', 'Payment method restored successfully.');
     }
 
     /**

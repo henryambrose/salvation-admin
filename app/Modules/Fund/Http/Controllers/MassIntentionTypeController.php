@@ -26,18 +26,26 @@ class MassIntentionTypeController extends Controller
             });
         }
 
+        // Handle archived filter
+        if ($request->get('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
         // Apply sorting
-        $sortBy = $request->get('sort_by', 'name');
-        $sortOrder = $request->get('sort_order', 'asc');
+        $sortBy = $request->get('sort', 'name');
+        $sortOrder = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortOrder);
 
         // Apply pagination
-        $perPage = $request->get('per_page', 15);
+        $perPage = $request->get('perPage', 15);
         $massIntentionTypes = $query->paginate($perPage);
 
         return Inertia::render('MassIntentionTypes/Index', [
             'massIntentionTypes' => $massIntentionTypes,
-            'filters' => $request->only(['search', 'sort_by', 'sort_order', 'per_page']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
+            'fetchUrl' => route('fund.mass-intention-types.index'),
         ]);
     }
 
@@ -107,14 +115,30 @@ class MassIntentionTypeController extends Controller
      */
     public function destroy(MassIntentionType $massIntentionType)
     {
-        // Check if it's being used by any mass intentions
-        if ($massIntentionType->massIntentions()->count() > 0) {
-            return back()->withErrors(['error' => 'Cannot delete mass intention type as it is being used by mass intentions.']);
+        \Log::info('Attempting to delete mass intention type', [
+            'id' => $massIntentionType->id,
+            'name' => $massIntentionType->name,
+            'related_intentions_count' => $massIntentionType->massIntentions()->count()
+        ]);
+
+        try {
+            $massIntentionType->delete();
+            
+            \Log::info('Mass intention type deleted successfully', [
+                'id' => $massIntentionType->id,
+                'deleted_at' => $massIntentionType->deleted_at
+            ]);
+
+            return back()->with('success', 'Mass intention type deleted successfully.');
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete mass intention type', [
+                'id' => $massIntentionType->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->withErrors(['error' => 'Failed to delete mass intention type: ' . $e->getMessage()]);
         }
-
-        $massIntentionType->delete();
-
-        return back()->with('success', 'Mass intention type deleted successfully.');
     }
 
     /**
@@ -122,7 +146,7 @@ class MassIntentionTypeController extends Controller
      */
     public function restore($id)
     {
-        $massIntentionType = MassIntentionType::withTrashed()->findOrFail($id);
+        $massIntentionType = MassIntentionType::onlyTrashed()->findOrFail($id);
         $massIntentionType->restore();
 
         return back()->with('success', 'Mass intention type restored successfully.');

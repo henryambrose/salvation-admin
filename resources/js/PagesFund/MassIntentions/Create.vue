@@ -166,6 +166,7 @@
                       v-model="form.mass_intention_type_id"
                       required
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
+                      @change="onIntentionTypeChange"
                     >
                       <option value="">Select Intention Type</option>
                       <option 
@@ -175,6 +176,49 @@
                       >
                         {{ intentionType.name }} - ₹{{ intentionType.default_amount }}
                       </option>
+                    </select>
+                  </div>
+
+                  <!-- Intention For -->
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Intention For</label>
+                    <input 
+                      v-model="form.intention_for"
+                      type="text" 
+                      placeholder="Enter intention for (e.g., For the soul of John Doe)"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
+                    />
+                  </div>
+
+                  <!-- Amount -->
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <input 
+                      v-model="form.amount"
+                      type="number" 
+                      step="0.01"
+                      min="0.01"
+                      placeholder="Enter amount"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
+                    />
+                    <p class="text-xs text-gray-500 mt-1">Amount will be auto-filled based on intention type</p>
+                  </div>
+
+                  <!-- Status -->
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                    <select 
+                      v-model="form.status"
+                      required
+                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
+                    >
+                      <option value="">Select Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="confirmed">Confirmed</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
                     </select>
                   </div>
 
@@ -316,9 +360,11 @@ const form = useForm({
   mass_date: '',
   mass_type_id: '',
   mass_intention_type_id: '',
+  intention_for: '',
+  amount: 0,
+  status: 'pending',
   special_instructions: '',
   payment_method_id: '',
-  amount: 0,
 });
 
 // Local state
@@ -387,6 +433,14 @@ function onMassTypeChange() {
   }
 }
 
+function onIntentionTypeChange() {
+  // Auto-fill amount based on selected intention type
+  const selectedIntentionType = props.intentionTypes.find(type => type.id == form.mass_intention_type_id);
+  if (selectedIntentionType) {
+    form.amount = selectedIntentionType.default_amount;
+  }
+}
+
 async function fetchBookedMasses() {
   if (!form.mass_date || !form.mass_type_id) return;
 
@@ -422,10 +476,19 @@ function submitForm() {
     return;
   }
 
-  // Set amount based on selected intention type
-  const selectedIntentionType = props.intentionTypes.find(type => type.id == form.mass_intention_type_id);
-  if (selectedIntentionType) {
-    form.amount = selectedIntentionType.default_amount;
+  if (!form.intention_for) {
+    alert('Please enter what the intention is for');
+    return;
+  }
+
+  if (!form.amount || form.amount <= 0) {
+    alert('Please enter a valid amount');
+    return;
+  }
+
+  if (!form.status) {
+    alert('Please select a status');
+    return;
   }
 
   isSubmitting.value = true;
