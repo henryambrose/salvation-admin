@@ -13,23 +13,24 @@ class FamilyContribution extends Model
 
     protected $fillable = [
         'family_no',
-        'year',
         'amount',
         'payment_method_id',
         'fund_category_id',
-        'payment_date',
+        'start_date',
+        'end_date',
         'status',
         'member_id',
         'paid_by_name',
+        'contact_no',
         'notes',
         'created_by',
         'updated_by'
     ];
 
     protected $casts = [
-        'payment_date' => 'date',
+        'start_date' => 'date',
+        'end_date' => 'date',
         'amount' => 'decimal:2',
-        'year' => 'integer'
     ];
 
     // Relationships

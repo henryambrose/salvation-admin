@@ -24,6 +24,5 @@ class ClusterSeeder extends Seeder
             Cluster::create($cluster);
         }
 
-        $this->command->info('5 clusters seeded: A, B, C, D, E');
     }
 }

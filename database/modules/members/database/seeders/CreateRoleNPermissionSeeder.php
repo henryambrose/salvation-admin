@@ -34,7 +34,5 @@ class CreateRoleNPermissionSeeder extends Seeder
         );
         $user->assignRole('viewer');
 
-        $this->command->info('Roles and users created successfully!');
-        $this->command->info('Note: Permissions will be assigned by ModuleSeeder');
     }
 }

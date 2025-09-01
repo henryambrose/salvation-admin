@@ -48,7 +48,7 @@ class ModuleServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(base_path('routes/town.php'));
         $this->loadRoutesFrom(base_path('routes/zones.php'));
         
-        $this->loadMigrationsFrom(database_path('modules/members/migrations'));
+        $this->loadMigrationsFrom(database_path('modules/members/database/migrations'));
         $this->loadPolicies();
         $this->loadCommands();
     }

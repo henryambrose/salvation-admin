@@ -1,128 +1,124 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import { Link, usePage } from '@inertiajs/vue3';
+import NavMainGrouped from '@/components/NavMainGrouped.vue';
+import NavUser from '@/components/NavUser.vue';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
-import { 
-  LayoutDashboard, 
-  MapPin, 
-  Grid3X3, 
-  Users, 
-  Calendar, 
-  Settings2, 
-  DollarSign, 
-  UserCheck, 
+import { type NavItem } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import * as Icons from 'lucide-vue-next';
+import {
+  Home,
+  MapPin,
+  Grid3X3,
+  Users,
+  Calendar,
+  Settings2,
+  DollarSign,
+  UserCheck,
   BarChart3,
-  Settings 
+  Settings,
+  Cross,
+  Clock,
+  Box
 } from 'lucide-vue-next';
+import { computed, watch } from 'vue';
+import AppLogo from '@/components/AppLogo.vue';
 
 const { can } = permissionHelpers();
-const page = usePage();
 
-// Get current URL for active link detection
-const currentUrl = computed(() => {
-  return (page.props.ziggy as any)?.location || '';
-});
-
-const isActive = (href: string) => {
-  return currentUrl.value.includes(href);
+const resolveIcon = (iconName: string) => {
+  return (Icons as any)[iconName] || Icons.HelpCircle; // fallback icon
 };
 
-const navItems = [
+// Get current page for debugging
+const page = usePage();
+
+// Grouped navigation like Fund sidebar
+const graveyardNavigationGroups = computed(() => [
   {
-    title: 'Dashboard',
-    href: '/graveyard',
-    icon: LayoutDashboard,
-    show: true, // TODO: Add permission check
+    label: 'Overview',
+    items: [
+      { title: 'Dashboard', href: '/graveyard', icon: Home, show: true },
+    ],
   },
   {
-    title: 'Cemeteries',
-    href: '/graveyard/cemeteries',
-    icon: MapPin,
-    show: can('read-graveyard-cemetery') || true,
+    label: 'Structures',
+    items: [
+      { title: 'Cemeteries', href: '/graveyard/cemeteries', icon: MapPin, show: can('read-cemetery') || true },
+      { title: 'Sections', href: '/graveyard/sections', icon: Grid3X3, show: can('read-section') || true },
+      { title: 'Graves', href: '/graveyard/graves', icon: Users, show: can('read-grave') || true },
+    ],
   },
   {
-    title: 'Sections',
-    href: '/graveyard/sections',
-    icon: Grid3X3,
-    show: can('read-graveyard-section') || true,
+    label: 'Operations',
+    items: [
+      { title: 'Burials', href: '/graveyard/burials', icon: Calendar, show: can('read-grave-booking') || true },
+      { title: 'Maintenance', href: '/graveyard/maintenance', icon: Settings2, show: can('read-maintenance') || true },
+      { title: 'Visitors', href: '/graveyard/visitors', icon: UserCheck, show: can('read-visitor') || true },
+    ],
   },
   {
-    title: 'Graves',
-    href: '/graveyard/graves',
-    icon: Users,
-    show: can('read-graveyard-grave') || true,
+    label: 'Finance',
+    items: [
+      { title: 'Finances', href: '/graveyard/finances', icon: DollarSign, show: can('read-graveyard-finance') || true },
+    ],
   },
   {
-    title: 'Burials',
-    href: '/graveyard/burials',
-    icon: Calendar,
-    show: can('read-graveyard-burial') || true,
+    label: 'Administration',
+    items: [
+      { title: 'Permanent Graves', href: '/graveyard/permanent-graves', icon: Cross, show: can('read-permanent-grave') || true },
+      { title: 'Temporary Graves', href: '/graveyard/temporary-graves', icon: Clock, show: can('read-temporary-grave') || true },
+      { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
+      { title: 'Service Types', href: '/graveyard/service-types', icon: Settings, show: can('read-service-type') || true },
+      { title: 'Settings', href: '/settings/profile', icon: Settings, show: true },
+    ],
   },
   {
-    title: 'Maintenance',
-    href: '/graveyard/maintenance',
-    icon: Settings2,
-    show: can('read-graveyard-maintenance') || true,
+    label: 'Reports & Analytics',
+    items: [
+      { title: 'Reports', href: '/graveyard/reports', icon: BarChart3, show: can('view-graveyard-reports') || true },
+    ],
   },
-  {
-    title: 'Finances',
-    href: '/graveyard/finances',
-    icon: DollarSign,
-    show: can('read-graveyard-finance') || true,
-  },
-  {
-    title: 'Visitors',
-    href: '/graveyard/visitors',
-    icon: UserCheck,
-    show: can('read-graveyard-visitor') || true,
-  },
-  {
-    title: 'Reports',
-    href: '/graveyard/reports',
-    icon: BarChart3,
-    show: can('read-graveyard-report') || true,
-  },
-  {
-    title: 'Settings',
-    href: '/settings/profile',
-    icon: Settings,
-    show: true,
-  },
-];
+]);
+
+const filteredGraveyardNavigationGroups = computed(() =>
+  graveyardNavigationGroups.value.map(group => ({
+    ...group,
+    items: group.items.filter(item => item.show)
+  })).filter(group => group.items.length > 0)
+);
+
+// Watch for route changes
+watch(() => page.url, (newUrl) => {
+  // console.log('🔄 GraveyardSidebar - Route changed to:', newUrl);
+}, { immediate: true });
 </script>
 
 <template>
-  <nav class="space-y-1 px-2 py-4">
-    <!-- Graveyard Header -->
-    <div class="mb-4 px-3">
-      <h3 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-        Graveyard Management
-      </h3>
-    </div>
+  <Sidebar collapsible="icon" variant="inset">
+    <SidebarHeader>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" as-child>
+            <Link :href="'/graveyard'">
+              <AppLogo />
+            </Link>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
 
-    <!-- Navigation Links -->
-    <template v-for="item in navItems" :key="item.href">
-      <Link
-        v-if="item.show"
-        :href="item.href"
-        :class="[
-          'group flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200',
-          isActive(item.href)
-            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
-            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
-        ]"
-      >
-        <component
-          :is="item.icon"
-          :class="[
-            'mr-3 h-5 w-5 flex-shrink-0',
-            isActive(item.href)
-              ? 'text-blue-500 dark:text-blue-300'
-              : 'text-gray-400 group-hover:text-gray-500 dark:text-gray-400 dark:group-hover:text-gray-300'
-          ]"
-        />
-        {{ item.title }}
-      </Link>
-    </template>
-  </nav>
+      <!-- App Switcher on the right side -->
+      <!-- <div class="ml-auto">
+        <AppSwitcher />
+      </div> -->
+    </SidebarHeader>
+
+    <SidebarContent>
+      <NavMainGrouped :groups="filteredGraveyardNavigationGroups" />
+    </SidebarContent>
+
+    <SidebarFooter>
+      <NavUser />
+    </SidebarFooter>
+  </Sidebar>
 </template>

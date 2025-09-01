@@ -30,6 +30,7 @@ import {
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
 import FundSidebar from './FundSidebar.vue';
+import GraveyardSidebar from './GraveyardSidebar.vue';
 
 const { can } = permissionHelpers();
 
@@ -224,7 +225,7 @@ const navigationGroups = [
       },
       {
         title: 'Role Management',
-        href: '/roles-permissions',
+        href: route('roles.index'),
         icon: Shield,
         show: can('read-role'),
       },
@@ -261,6 +262,9 @@ const currentApp = computed(() => {
 
     return 'fund';
   }
+  if (currentPath.startsWith('/graveyard')) {
+    return 'graveyard';
+  }
   return 'members';
 });
 
@@ -269,6 +273,9 @@ const logoLink = computed(() => {
   if (currentApp.value === 'fund') {
     return route('fund.dashboard');
   }
+  if (currentApp.value === 'graveyard') {
+    return route('graveyard.dashboard');
+  }
   return route('dashboard');
 });
 </script>
@@ -276,6 +283,7 @@ const logoLink = computed(() => {
 <template>
   <!-- Render Fund Sidebar when in Fund app -->
   <FundSidebar v-if="currentApp === 'fund'" />
+  <GraveyardSidebar v-else-if="currentApp === 'graveyard'" />
   
   <!-- Render Members Sidebar when in Members app -->
   <Sidebar v-else collapsible="icon" variant="inset">

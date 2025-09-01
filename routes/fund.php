@@ -62,11 +62,13 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     Route::delete('payment-methods/{id}/force-delete', [PaymentMethodController::class, 'forceDelete'])->name('payment-methods.force-delete');
 
     // Annual Contributions
+    Route::get('annual-contributions/export', [AnnualContributionController::class, 'export'])->name('annual-contributions.export');
     Route::resource('annual-contributions', AnnualContributionController::class);
     Route::post('annual-contributions/bulk-update', [AnnualContributionController::class, 'bulkUpdate'])->name('annual-contributions.bulk-update');
     Route::post('annual-contributions/{id}/restore', [AnnualContributionController::class, 'restore'])->name('annual-contributions.restore');
 
     // Mass Intentions
+    Route::get('mass-intentions/export', [MassIntentionController::class, 'export'])->name('mass-intentions.export');
     Route::get('mass-intentions', [MassIntentionController::class, 'index'])->name('mass-intentions.index');
     Route::get('mass-intentions/create', [MassIntentionController::class, 'create'])->name('mass-intentions.create');
     Route::post('mass-intentions', [MassIntentionController::class, 'store'])->name('mass-intentions.store');
@@ -85,20 +87,25 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
 
     // API-like endpoints for contribution history and pending amounts
     Route::get('family-contributions/{familyNo}', function ($familyNo) {
-        $contributions = \Modules\Fund\Models\FamilyContribution::with(['fundCategory', 'paymentMethod'])
+        $contributions = \Modules\Fund\Models\FamilyContribution::with(['fundCategory', 'paymentMethod', 'member'])
             ->where('family_no', $familyNo)
-            ->orderBy('year', 'desc')
-            ->orderBy('payment_date', 'desc')
+            ->orderBy('start_date', 'asc')
+            ->orderBy('end_date', 'asc')
             ->get()
             ->map(function ($contribution) {
+                $paidBy = $contribution->member_id && $contribution->member
+                    ? trim(($contribution->member->first_name ?? '') . ' ' . ($contribution->member->last_name ?? ''))
+                    : ($contribution->paid_by_name ?? '');
                 return [
                     'id' => $contribution->id,
-                    'year' => $contribution->year,
+                    'start_date' => $contribution->start_date,
+                    'end_date' => $contribution->end_date,
                     'amount' => $contribution->amount,
                     'status' => $contribution->status,
-                    'payment_date' => $contribution->payment_date,
                     'category_name' => $contribution->fundCategory->name ?? 'N/A',
                     'payment_method' => $contribution->paymentMethod->name ?? 'N/A',
+                    'paid_by' => $paidBy,
+                    'date_of_payment' => $contribution->created_at,
                     'notes' => $contribution->notes
                 ];
             });

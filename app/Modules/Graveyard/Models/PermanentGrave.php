@@ -1,0 +1,124 @@
+<?php
+
+namespace Modules\Graveyard\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Members\Models\User;
+
+class PermanentGrave extends Model
+{
+    use HasFactory, SoftDeletes;
+
+    protected $fillable = [
+        'section',
+        'row_no',
+        'grave_no',
+        'oldno',
+        'status',
+        'last_burial_date',
+        'owner_name',
+        'remarks',
+        'plot_size',
+        'is_active',
+        'created_by',
+        'updated_by',
+    ];
+
+    protected $casts = [
+        'last_burial_date' => 'date',
+        'plot_size' => 'decimal:2',
+        'is_active' => 'boolean',
+        'row_no' => 'integer',
+        'grave_no' => 'integer',
+    ];
+
+    /**
+     * Get the bookings for this permanent grave
+     */
+    public function bookings()
+    {
+        return $this->hasMany(GraveBooking::class, 'permanent_grave_id');
+    }
+
+    /**
+     * Get the user who created this record
+     */
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    /**
+     * Get the user who last updated this record
+     */
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the latest booking for this grave
+     */
+    public function latestBooking()
+    {
+        return $this->hasOne(GraveBooking::class, 'permanent_grave_id')->latest();
+    }
+
+    /**
+     * Scope to get only available graves
+     */
+    public function scopeAvailable($query)
+    {
+        return $query->where('status', 'available')->where('is_active', true);
+    }
+
+    /**
+     * Scope to get graves by section
+     */
+    public function scopeBySection($query, $section)
+    {
+        return $query->where('section', $section);
+    }
+
+    /**
+     * Scope to search graves by various criteria
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('owner_name', 'like', "%{$search}%")
+              ->orWhere('grave_no', 'like', "%{$search}%")
+              ->orWhere('section', 'like', "%{$search}%")
+              ->orWhere('oldno', 'like', "%{$search}%");
+        });
+    }
+
+    /**
+     * Get the full grave identifier
+     */
+    public function getFullIdentifierAttribute()
+    {
+        return "{$this->section}-{$this->row_no}-{$this->grave_no}";
+    }
+
+    /**
+     * Check if the grave is available for booking
+     */
+    public function isAvailable()
+    {
+        return $this->status === 'available' && $this->is_active;
+    }
+
+    /**
+     * Mark the grave as unavailable and update last burial date
+     */
+    public function markAsBooked($burialDate = null)
+    {
+        $this->update([
+            'status' => 'unavailable',
+            'last_burial_date' => $burialDate ?? now()->toDateString(),
+        ]);
+    }
+}

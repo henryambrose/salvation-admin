@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             FundPermissionsSeeder::class,
             MembersPermissionsSeeder::class,
             CorePermissionsSeeder::class,
+            GraveyardPermissionsSeeder::class,
         ]);
 
         // Call the Members module seeders
@@ -28,6 +29,11 @@ class DatabaseSeeder extends Seeder
         // Call the Fund module seeders
         $this->call([
             \Modules\Fund\Database\Seeders\DatabaseSeeder::class,
+        ]);
+
+        // Call the Graveyard module seeders
+        $this->call([
+            \Modules\Graveyard\Database\Seeders\DatabaseSeeder::class,
         ]);
     }
 }

@@ -35,9 +35,6 @@ class UserSeeder extends Seeder
             $user->assignRole($superAdminRole);
         }
 
-        $this->command->info('UserSeeder completed successfully!');
-        $this->command->info('Super Admin assigned to User ID superadmin@salvationchurch.in with password "superadmin"');
-        $this->command->info('You can now login with the superadmin role and manage permissions.');
 
         // Create SCC Head and PPC Head roles
         $sccHeadRole = Role::firstOrCreate(['name' => 'scc-head']); // hyphen
@@ -69,7 +66,6 @@ class UserSeeder extends Seeder
             $ppcHeadUser->assignRole($ppcHeadRole);
         }
 
-        $this->command->info('SCC Head and PPC Head roles and users created successfully!');
 
         // Create the admin role if it doesn't exist
         $adminRole = Role::firstOrCreate(['name' => 'admin']);

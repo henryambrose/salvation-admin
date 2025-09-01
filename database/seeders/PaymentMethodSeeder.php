@@ -13,7 +13,6 @@ class PaymentMethodSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Creating sample payment methods...');
 
         $paymentMethods = [
             [
@@ -76,6 +75,5 @@ class PaymentMethodSeeder extends Seeder
             );
         }
 
-        $this->command->info('Sample payment methods created successfully!');
     }
 }

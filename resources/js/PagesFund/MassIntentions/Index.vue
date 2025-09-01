@@ -156,6 +156,20 @@ function clearFilters() {
   perPage.value = 10;
 }
 
+function exportToCSV() {
+  const params = new URLSearchParams({
+    search: search.value,
+    status: status.value,
+    mass_type_id: massTypeId.value,
+    mass_intention_type_id: massIntentionTypeId.value,
+    start_date: startDate.value,
+    end_date: endDate.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  window.location.href = `${window.location.origin}/fund/mass-intentions/export?${params.toString()}`;
+}
+
 // Utility functions
 function formatDate(dateString: string) {
   if (!dateString) return 'N/A';
@@ -184,10 +198,18 @@ const breadcrumbs = [
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Mass Intentions</h2>
-        <Button v-if="canCreateMassIntention" @click="router.visit(route('fund.mass-intentions.create'))" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <Plus class="w-[1rem] h-[1rem]" />
-          <span>Book New Intention</span>
-        </Button>
+        <div class="flex items-center gap-3">
+          <Button @click="exportToCSV" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <svg class="w-[1rem] h-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Export CSV</span>
+          </Button>
+          <Button v-if="canCreateMassIntention" @click="router.visit(route('fund.mass-intentions.create'))" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+            <Plus class="w-[1rem] h-[1rem]" />
+            <span>Book New Intention</span>
+          </Button>
+        </div>
           </div>
 
       <!-- Filters Section -->

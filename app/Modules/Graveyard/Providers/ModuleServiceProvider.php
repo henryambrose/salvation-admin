@@ -23,7 +23,7 @@ class ModuleServiceProvider extends ServiceProvider
     {
         parent::boot();
         
-        $this->loadMigrationsFrom(database_path('modules/graveyard/migrations'));
+        $this->loadMigrationsFrom(database_path('modules/graveyard/database/migrations'));
         $this->loadPolicies();
         $this->loadCommands();
     }

@@ -13,7 +13,6 @@ class CorePermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Creating Core module permissions...');
 
         // Define all Core module permissions
         $corePermissions = [
@@ -152,24 +151,18 @@ class CorePermissionsSeeder extends Seeder
         // Create permissions
         foreach ($corePermissions as $permissionName) {
             Permission::firstOrCreate(['name' => $permissionName]);
-            $this->command->info("Created permission: {$permissionName}");
         }
-
-        $this->command->info('Core module permissions created successfully!');
-        $this->command->info('Total permissions created: ' . count($corePermissions));
 
         // Optionally assign these permissions to a super admin role if it exists
         $superAdminRole = Role::where('name', 'super-admin')->first();
         if ($superAdminRole) {
             $superAdminRole->givePermissionTo($corePermissions);
-            $this->command->info('Permissions assigned to super-admin role');
         }
 
         // Also assign to admin role if it exists
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminRole->givePermissionTo($corePermissions);
-            $this->command->info('Permissions assigned to admin role');
         }
     }
 }

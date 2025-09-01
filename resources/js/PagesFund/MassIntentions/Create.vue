@@ -62,10 +62,9 @@
                           @click="selectMember(member)"
                           class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
                         >
-                          <div class="font-medium text-gray-900">{{ member.name }}</div>
-                          <div class="text-sm text-gray-600">
-                            Family: {{ member.family_no }} | Phone: {{ member.phone }}
-                          </div>
+                            <div class="font-medium">{{ member.name }}</div>
+                            <div class="text-sm text-gray-500">Community No: {{ member.community.name.split('-')[0].trim() }} | Family: {{ member.family_no || 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">Address: {{ member.current_add1 }} | {{ member.contact_no_1 }}</div>
                         </div>
                       </div>
                     </div>
@@ -76,7 +75,9 @@
                         <div>
                           <div class="font-medium text-blue-900">{{ selectedMember.name }}</div>
                           <div class="text-sm text-blue-700">
-                            Family: {{ selectedMember.family_no }} | Phone: {{ selectedMember.phone }}
+                            <div class="font-medium">{{ selectedMember.full_name }}</div>
+                            <div class="text-sm text-gray-500">Community No: {{ selectedMember.community.name.split('-')[0].trim() }} | Family: {{ selectedMember.family_no || 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">Address: {{ selectedMember.current_add1 }} | {{ selectedMember.contact_no_1 }}</div>
                           </div>
                         </div>
                         <button 
@@ -197,10 +198,7 @@
                     <input 
                       v-model="form.amount"
                       type="number" 
-                      step="0.01"
-                      min="0.01"
                       placeholder="Enter amount"
-                      required
                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
                     />
                     <p class="text-xs text-gray-500 mt-1">Amount will be auto-filled based on intention type</p>
@@ -471,20 +469,20 @@ function submitForm() {
     return;
   }
 
-  if (!form.phone) {
-    alert('Please enter phone number');
-    return;
-  }
+  // if (!form.phone) {
+  //   alert('Please enter phone number');
+  //   return;
+  // }
 
   if (!form.intention_for) {
     alert('Please enter what the intention is for');
     return;
   }
 
-  if (!form.amount || form.amount <= 0) {
-    alert('Please enter a valid amount');
-    return;
-  }
+  // if (!form.amount || form.amount <= 0) {
+  //   alert('Please enter a valid amount');
+  //   return;
+  // }
 
   if (!form.status) {
     alert('Please select a status');
@@ -501,7 +499,7 @@ function submitForm() {
       selectedMember.value = null;
       bookedMasses.value = [];
       isSubmitting.value = false;
-      alert('Mass intention booked successfully!');
+    
     },
     onError: () => {
       isSubmitting.value = false;

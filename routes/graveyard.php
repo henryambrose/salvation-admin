@@ -10,6 +10,7 @@ use Modules\Graveyard\Http\Controllers\BurialController;
 use Modules\Graveyard\Http\Controllers\MaintenanceController;
 use Modules\Graveyard\Http\Controllers\FinanceController;
 use Modules\Graveyard\Http\Controllers\VisitorController;
+use Modules\Graveyard\Http\Controllers\PermanentGraveController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
@@ -91,6 +92,17 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{visitor}', [VisitorController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [VisitorController::class, 'restore'])->name('restore');
         Route::delete('/{id}/force-delete', [VisitorController::class, 'forceDelete'])->name('force-delete');
+    });
+
+    // Permanent Graves Management
+    Route::prefix('graveyard/permanent-graves')->name('graveyard.permanent-graves.')->group(function () {
+        Route::get('/', [PermanentGraveController::class, 'index'])->name('index');
+        Route::post('/', [PermanentGraveController::class, 'store'])->name('store');
+        Route::get('/{grave}', [PermanentGraveController::class, 'show'])->name('show');
+        Route::put('/{grave}', [PermanentGraveController::class, 'update'])->name('update');
+        Route::delete('/{grave}', [PermanentGraveController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [PermanentGraveController::class, 'restore'])->name('restore');
+        Route::delete('/{id}/force-delete', [PermanentGraveController::class, 'forceDelete'])->name('force-delete');
     });
     
     // Permission denied route for graveyard

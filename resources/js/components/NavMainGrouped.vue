@@ -2,6 +2,7 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem, type SharedData } from '@/types';
 import { Link, usePage, router } from '@inertiajs/vue3';
+import { ref, onUnmounted, nextTick } from 'vue';
 
 interface NavigationGroup {
   label: string;
@@ -13,6 +14,12 @@ defineProps<{
 }>();
 
 const page = usePage<SharedData>();
+const isComponentMounted = ref(true);
+
+// Cleanup on unmount
+onUnmounted(() => {
+  isComponentMounted.value = false;
+});
 
 // Get current URL path from window.location for more reliable path detection
 const getCurrentPath = () => {
@@ -41,6 +48,17 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
     // AND their nested routes like /fund/annual-contributions/create, /fund/annual-contributions/123/edit
     const isActive = currentUrl.startsWith(itemHref);
     return isActive; // RETURN EARLY - don't continue to other logic
+  }
+
+  // Handle Graveyard routes explicitly (mirror Fund logic)
+  if (itemHref === '/graveyard') {
+    // Active on base dashboard
+    return currentUrl === '/graveyard' || currentUrl === '/graveyard/dashboard';
+  }
+
+  if (itemHref.startsWith('/graveyard/')) {
+    // Any nested graveyard route should highlight its parent link
+    return currentUrl.startsWith(itemHref);
   }
   
   // Handle clashing URLs first - use exact match for URLs that might clash with others
@@ -104,13 +122,19 @@ const handleNavigation = (href: string) => {
     preserveScroll: false,
     preserveState: false,
     onSuccess: () => {
-      // Restore the sidebar scroll position after the page loads
-      setTimeout(() => {
+      // Only execute if component is still mounted
+      if (!isComponentMounted.value) return;
+      
+      // Use nextTick to ensure DOM is updated
+      nextTick(() => {
+        if (!isComponentMounted.value) return;
+        
+        // Restore the sidebar scroll position after the page loads
         const newSidebarContent = document.querySelector('[data-slot="sidebar-content"]');
         if (newSidebarContent && scrollPosition > 0) {
           newSidebarContent.scrollTop = scrollPosition;
         }
-      }, 50);
+      });
     },
   });
 };

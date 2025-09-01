@@ -10,7 +10,7 @@
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-      
+
       <!-- App Switcher on the right side -->
       <!-- <div class="ml-auto">
         <AppSwitcher />
@@ -25,7 +25,6 @@
       <NavUser />
     </SidebarFooter>
   </Sidebar>
-  <slot />
 </template>
 
 <script setup lang="ts">

@@ -14,14 +14,17 @@ return new class extends Migration
         Schema::create('family_contributions', function (Blueprint $table) {
             $table->id();
             $table->string('family_no', 50);
-            $table->integer('year');
+            // Date range instead of single year
             $table->decimal('amount', 10, 2);
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null');
             $table->foreignId('fund_category_id')->nullable()->constrained('fund_categories')->onDelete('set null');
-            $table->date('payment_date');
+            // Start and end date for contribution period
+            $table->date('start_date');
+            $table->date('end_date');
             $table->enum('status', ['pending', 'paid', 'partial', 'cancelled', 'refunded'])->default('pending');
             $table->foreignId('member_id')->nullable()->constrained('members')->onDelete('set null');
             $table->string('paid_by_name', 255)->nullable();
+            $table->string('contact_no', 20)->nullable();
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
@@ -29,9 +32,10 @@ return new class extends Migration
             $table->softDeletes();
 
             // Indexes
-            $table->index(['family_no', 'year']);
-            $table->index(['year', 'status']);
-            $table->index('payment_date');
+            $table->index(['family_no', 'start_date', 'end_date']);
+            $table->index(['status']);
+            $table->index(['start_date']);
+            $table->index(['end_date']);
             $table->index('member_id');
         });
     }

@@ -23,6 +23,6 @@ class ModuleServiceProvider extends ServiceProvider
         $this->loadRoutesFrom(base_path('routes/fund.php'));
         
         // Load migrations
-        $this->loadMigrationsFrom(database_path('modules/fund/migrations'));
+        $this->loadMigrationsFrom(database_path('modules/fund/database/migrations'));
     }
 }

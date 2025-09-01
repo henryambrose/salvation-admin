@@ -183,12 +183,12 @@ class MassIntentionController extends Controller
             'member_type' => 'required|in:member,non_member',
             'member_id' => 'nullable|exists:members,id',
             'non_member_name' => 'nullable|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'mass_date' => 'required|date|after_or_equal:today',
             'mass_type_id' => 'required|exists:mass_types,id',
             'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
-            'intention_for' => 'required|string|max:255',
-            'amount' => 'required|numeric|min:0',
+            'intention_for' => 'nullable|string|max:255',
+            'amount' => 'nullable|numeric|min:0',
             'status' => 'required|in:pending,confirmed,completed,cancelled',
             'special_instructions' => 'nullable|string|max:1000',
             'payment_method_id' => 'required|exists:payment_methods,id',
@@ -285,10 +285,13 @@ class MassIntentionController extends Controller
      */
     public function update(Request $request, MassIntention $massIntention)
     {
+        \Log::info('Mass Intention Update Request:', $request->all());
+        
         $request->validate([
             'member_id' => 'nullable|exists:members,id',
             'non_member_name' => 'nullable|string|max:255',
             'mass_date' => 'required|date',
+            'phone' => 'nullable|string|max:20',
             'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
             'intention_for' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0.01',
@@ -297,7 +300,10 @@ class MassIntentionController extends Controller
             'status' => 'required|in:pending,confirmed,completed,cancelled',
         ]);
 
-        // Update the mass intention
+
+        
+
+
         $massIntention->update([
             'member_id' => $request->member_id,
             'non_member_name' => $request->non_member_name,
@@ -361,7 +367,7 @@ class MassIntentionController extends Controller
         $query = $request->get('query', '');
         $familyNo = $request->get('family_no', '');
 
-        $members = Member::where(function ($q) use ($query, $familyNo) {
+        $members = Member::with('community')->where(function ($q) use ($query, $familyNo) {
             if ($familyNo) {
                 $q->where('family_no', $familyNo);
             }
@@ -373,8 +379,8 @@ class MassIntentionController extends Controller
             }
         })
         ->limit(10)
-        ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'contact_no_1']);
-
+        ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'community_id', 'current_add1', 'contact_no_1']);
+    
         // Add a computed 'name' field for frontend compatibility
         $members = $members->map(function ($member) {
             $member->name = trim(implode(' ', array_filter([
@@ -383,10 +389,139 @@ class MassIntentionController extends Controller
                 $member->last_name
             ])));
             // Add phone field for frontend compatibility
-            $member->phone = $member->contact_no_1;
+            $member->community = $member->community;
+            $member->current_add1 = $member->current_add1;
+            $member->contact_no_1 = $member->contact_no_1;
             return $member;
         });
 
         return response()->json($members);
+    }
+
+    /**
+     * Export mass intentions to CSV
+     */
+    public function export(Request $request)
+    {
+        $query = MassIntention::with(['member', 'massIntentionType', 'paymentMethod', 'massType']);
+
+        // Archive logic
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('special_instructions', 'like', "%{$search}%")
+                  ->orWhere('non_member_name', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($memberQuery) use ($search) {
+                      $memberQuery->where('first_name', 'like', "%{$search}%")
+                                  ->orWhere('middle_name', 'like', "%{$search}%")
+                                  ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Apply status filter
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        // Apply mass date filter
+        if ($request->filled('mass_date')) {
+            $query->where('mass_date', $request->mass_date);
+        }
+
+        // Apply mass type filter
+        if ($request->filled('mass_type_id')) {
+            $query->where('mass_type_id', $request->mass_type_id);
+        }
+
+        // Apply start date filter
+        if ($request->filled('start_date')) {
+            $query->where('mass_date', '>=', $request->start_date);
+        }
+
+        // Apply end date filter
+        if ($request->filled('end_date')) {
+            $query->where('mass_date', '<=', $request->end_date);
+        }
+
+        // Apply intention type filter
+        if ($request->filled('mass_intention_type_id')) {
+            $query->where('mass_intention_type_id', $request->mass_intention_type_id);
+        }
+
+        // Apply sorting
+        $sortBy = $request->get('sort_by', 'mass_date');
+        $sortOrder = $request->get('sort_order', 'desc');
+        $query->orderBy($sortBy, $sortOrder);
+
+        $massIntentions = $query->get();
+
+        $filename = 'mass-intentions-' . date('Y-m-d-H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'must-revalidate',
+            'Pragma' => 'public',
+        ];
+
+        $callback = function() use ($massIntentions) {
+            // Clear any output buffers
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel compatibility
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            // CSV Headers
+            fputcsv($file, [
+                'ID',
+                'Member Name',
+                'Non Member Name',
+                'Mass Date',
+                'Mass Type',
+                'Intention Type',
+                'Intention For',
+                'Amount',
+                'Payment Method',
+                'Special Instructions',
+                'Status',
+                'Created At',
+                'Updated At'
+            ]);
+
+            // CSV Data
+            foreach ($massIntentions as $intention) {
+                fputcsv($file, [
+                    $intention->id,
+                    $intention->member ? $intention->member->first_name . ' ' . $intention->member->last_name : 'N/A',
+                    $intention->non_member_name ?? 'N/A',
+                    $intention->mass_date,
+                    $intention->massType->name ?? 'N/A',
+                    $intention->massIntentionType->name ?? 'N/A',
+                    $intention->intention_for ?? 'N/A',
+                    $intention->amount,
+                    $intention->paymentMethod->name ?? 'N/A',
+                    $intention->special_instructions ?? 'N/A',
+                    $intention->status,
+                    $intention->created_at,
+                    $intention->updated_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

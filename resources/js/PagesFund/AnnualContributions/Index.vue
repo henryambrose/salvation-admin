@@ -46,7 +46,8 @@ function scrollToRow(rowId: number) {
 // Local filters state
 const search = ref(props.filters?.search || '');
 const familyNo = ref(props.filters?.family_no || '');
-const year = ref(props.filters?.year || '');
+const startDate = ref(props.filters?.start_date || '');
+const endDate = ref(props.filters?.end_date || '');
 const categoryId = ref(props.filters?.category_id || '');
 const paymentMethodId = ref(props.filters?.payment_method_id || '');
 const perPage = ref(props.filters?.per_page || 10);
@@ -79,7 +80,8 @@ function fetch(page = 1) {
     {
       search: search.value,
       family_no: familyNo.value,
-      year: year.value,
+      start_date: startDate.value,
+      end_date: endDate.value,
       category_id: categoryId.value,
       payment_method_id: paymentMethodId.value,
       per_page: perPage.value,
@@ -91,7 +93,7 @@ function fetch(page = 1) {
 }
 
 watch(
-  [search, familyNo, year, categoryId, paymentMethodId, perPage, isArchived],
+  [search, familyNo, startDate, endDate, categoryId, paymentMethodId, perPage, isArchived],
   () => {
     if (searchTimeout.value) {
       clearTimeout(searchTimeout.value);
@@ -148,10 +150,25 @@ function handlePageChange(event: Event) {
 function clearFilters() {
   search.value = '';
   familyNo.value = '';
-  year.value = '';
+  startDate.value = '';
+  endDate.value = '';
   categoryId.value = '';
   paymentMethodId.value = '';
   perPage.value = 10;
+}
+
+function exportToCSV() {
+  const params = new URLSearchParams({
+    search: search.value,
+    family_no: familyNo.value,
+    start_date: startDate.value,
+    end_date: endDate.value,
+    category_id: categoryId.value,
+    payment_method_id: paymentMethodId.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+  });
+  
+  window.location.href = `${window.location.origin}/fund/annual-contributions/export?${params.toString()}`;
 }
 
 // Utility functions
@@ -180,10 +197,18 @@ const breadcrumbs = [
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Annual Contributions</h2>
-        <Button v-if="canCreateAnnualContribution" @click="router.visit(route('fund.annual-contributions.create'))" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <Plus class="w-[1rem] h-[1rem]" />
-          <span>Add Contribution</span>
-        </Button>
+        <div class="flex items-center gap-3">
+          <Button @click="exportToCSV" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+            <svg class="w-[1rem] h-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <span>Export CSV</span>
+          </Button>
+          <Button v-if="canCreateAnnualContribution" @click="router.visit(route('fund.annual-contributions.create'))" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+            <Plus class="w-[1rem] h-[1rem]" />
+            <span>Add Contribution</span>
+          </Button>
+        </div>
             </div>
 
             <!-- Filters Section -->
@@ -201,13 +226,12 @@ const breadcrumbs = [
               </div>
 
               <div>
-            <label class="block text-xs font-medium text-gray-600 mb-1">Year</label>
-            <select v-model="year" class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200">
-                  <option value="">All Years</option>
-              <option v-for="yearOption in years" :key="yearOption" :value="yearOption">
-                {{ yearOption }}
-                  </option>
-                </select>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+            <input v-model="startDate" type="date" class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200" />
+              </div>
+              <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+            <input v-model="endDate" type="date" class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200" />
               </div>
 
               <div>
@@ -311,7 +335,7 @@ const breadcrumbs = [
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Family & Name</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Year</th>
+                <th class="border-b p-3 font-semibold text-gray-700">Period</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Category</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Amount</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Payment</th>
@@ -347,8 +371,8 @@ const breadcrumbs = [
                   </div>
                   </td>
                 <td class="p-2">
-                    <div class="text-sm text-gray-900">{{ contribution.year }}</div>
-                  </td>
+                  <div class="text-sm text-gray-900">{{ formatDate(contribution.start_date) }} - {{ formatDate(contribution.end_date) }}</div>
+                </td>
                                 <td class="p-2">
                   <div class="text-sm text-gray-900">{{ contribution.fund_category?.name || '-' }}</div>
                   </td>
@@ -359,7 +383,10 @@ const breadcrumbs = [
                   <div class="text-sm text-gray-900">{{ contribution.payment_method?.name || '-' }}</div>
                   </td>
                 <td class="p-2 text-sm text-gray-500">
-                  {{ formatDate(contribution.payment_date) }}
+                  {{ formatDate(contribution.start_date) }}
+                  </td>
+                <td class="p-2 text-sm text-gray-500">
+                  {{ formatDate(contribution.end_date) }}
                   </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyAnnualContribution">

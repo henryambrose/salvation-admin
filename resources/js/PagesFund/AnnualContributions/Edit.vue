@@ -17,15 +17,15 @@
           </div>
           
           <!-- Form Layout -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main Form (2 columns) -->
-            <div class="lg:col-span-2">
+                                                          <div class="grid grid-cols-1 gap-6">
+              <!-- Main Form (Full Width) -->
+              <div>
               <form @submit.prevent="submitForm" class="space-y-6">
                 <!-- Family Information Section -->
                 <div class="bg-gray-50 p-6 rounded-lg">
                   <h3 class="text-lg font-medium text-gray-900 mb-4">Family Information</h3>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Family Number -->
                     <div>
                       <label for="family_no" class="block text-sm font-medium text-gray-700 mb-2">
@@ -47,27 +47,7 @@
                       </p>
                     </div>
 
-                    <!-- Year -->
-                    <div>
-                      <label for="year" class="block text-sm font-medium text-gray-700 mb-2">
-                        Year <span class="text-red-500">*</span>
-                      </label>
-                      <input 
-                        id="year"
-                        v-model="form.year"
-                        type="number"
-                        min="2020"
-                        max="2030"
-                        :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.year ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
-                      />
-                      <p v-if="form.errors.year" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.year }}
-                      </p>
-                    </div>
+                    
                   </div>
                 </div>
 
@@ -75,7 +55,7 @@
                 <div class="bg-gray-50 p-6 rounded-lg">
                   <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Amount -->
                     <div>
                       <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
@@ -92,30 +72,50 @@
                           form.errors.amount ? 'border-red-300' : 'border-gray-300'
                         ]"
                         placeholder="0.00"
-                        required
+
                       />
                       <p v-if="form.errors.amount" class="mt-1 text-sm text-red-600">
                         {{ form.errors.amount }}
                       </p>
                     </div>
 
-                    <!-- Payment Date -->
+                    <!-- Start Date -->
                     <div>
-                      <label for="payment_date" class="block text-sm font-medium text-gray-700 mb-2">
-                        Payment Date <span class="text-red-500">*</span>
+                      <label for="start_date" class="block text-xs font-medium text-gray-700 mb-3">
+                        Start Date <span class="text-red-500">*</span>
                       </label>
                       <input 
-                        id="payment_date"
-                        v-model="form.payment_date"
+                        id="start_date"
+                        v-model="form.start_date"
                         type="date"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.payment_date ? 'border-red-300' : 'border-gray-300'
+                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.start_date ? 'border-red-300' : 'border-gray-300'
                         ]"
                         required
                       />
-                      <p v-if="form.errors.payment_date" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.payment_date }}
+                      <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.start_date }}
+                      </p>
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                      <label for="end_date" class="block text-xs font-medium text-gray-700 mb-3">
+                        End Date <span class="text-red-500">*</span>
+                      </label>
+                      <input 
+                        id="end_date"
+                        v-model="form.end_date"
+                        type="date"
+                        :class="[
+                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.end_date ? 'border-red-300' : 'border-gray-300'
+                        ]"
+                        required
+                      />
+                      <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.end_date }}
                       </p>
                     </div>
 
@@ -220,27 +220,47 @@
                       </p>
                     </div>
 
-                    <!-- Paid By Name -->
-                    <div>
-                      <label for="paid_by_name" class="block text-sm font-medium text-gray-700 mb-2">
-                        Paid By Name
-                      </label>
-                      <input 
-                        id="paid_by_name"
-                        v-model="form.paid_by_name"
-                        type="text"
-                        :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.paid_by_name ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        placeholder="Enter payer's name"
-                        :disabled="!!form.member_id"
-                      />
-                      <p v-if="form.errors.paid_by_name" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.paid_by_name }}
-                      </p>
-                    </div>
-                  </div>
+                                         <!-- Paid By Name -->
+                     <div>
+                       <label for="paid_by_name" class="block text-sm font-medium text-gray-700 mb-2">
+                         Paid By Name
+                       </label>
+                       <input 
+                         id="paid_by_name"
+                         v-model="form.paid_by_name"
+                         type="text"
+                         :class="[
+                           'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                           form.errors.paid_by_name ? 'border-red-300' : 'border-gray-300'
+                         ]"
+                         placeholder="Enter payer's name"
+                         :disabled="!!form.member_id"
+                       />
+                       <p v-if="form.errors.paid_by_name" class="mt-1 text-sm text-red-600">
+                         {{ form.errors.paid_by_name }}
+                       </p>
+                     </div>
+
+                     <!-- Contact Number -->
+                     <div>
+                       <label for="contact_no" class="block text-sm font-medium text-gray-700 mb-2">
+                         Contact Number
+                       </label>
+                       <input 
+                         id="contact_no"
+                         v-model="form.contact_no"
+                         type="tel"
+                         :class="[
+                           'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                           form.errors.contact_no ? 'border-red-300' : 'border-gray-300'
+                         ]"
+                         placeholder="Enter contact number"
+                       />
+                       <p v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
+                         {{ form.errors.contact_no }}
+                       </p>
+                     </div>
+                   </div>
                 </div>
 
                 <!-- Additional Information Section -->
@@ -269,35 +289,47 @@
               </form>
             </div>
             
-            <!-- Contribution Info Sidebar -->
-            <div class="lg:col-span-1">
-              <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 sticky top-6">
-                <h4 class="text-lg font-medium text-blue-900 mb-3">Contribution Details</h4>
                 
-                <div class="space-y-3">
-                  <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                    <div class="text-sm text-gray-600">Family Number</div>
-                    <div class="text-lg font-bold text-blue-600">{{ form.family_no || '-' }}</div>
                   </div>
                   
-                  <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                    <div class="text-sm text-gray-600">Year</div>
-                    <div class="text-lg font-bold text-blue-600">{{ form.year || '-' }}</div>
+          <!-- Contribution History (bottom) -->
+          <div class="bg-[#ffffff] border border-gray-200 rounded-lg mt-6">
+            <div class="px-4 py-3 border-b border-gray-200">
+              <h4 class="text-lg font-medium text-gray-900">Contribution History</h4>
+              <p class="text-sm text-gray-600">Previous contributions for this family</p>
                   </div>
-                  
-                  <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                    <div class="text-sm text-gray-600">Amount</div>
-                    <div class="text-lg font-bold text-green-600">₹{{ form.amount || '0.00' }}</div>
-                  </div>
-                  
-                  <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                    <div class="text-sm text-gray-600">Status</div>
-                    <div class="text-lg font-bold" :class="getStatusTextColor(form.status)">
-                      {{ getStatusLabel(form.status) || '-' }}
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid By</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Payment</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                  </tr>
+                </thead>
+                                <tbody class="bg-[#ffffff] divide-y divide-gray-200">
+                  <tr v-if="contributionHistory.length === 0" class="hover:bg-gray-50">
+                    <td colspan="7" class="px-4 py-8 text-center text-sm text-gray-500">
+                      No contribution history found for this family
+                    </td>
+                  </tr>
+                  <tr v-for="c in contributionHistory" :key="c.id" class="hover:bg-gray-50">
+                                         <td class="px-4 py-3 text-sm text-gray-900">{{ c.start_date ? new Date(c.start_date).toLocaleDateString() : '-' }} - {{ c.end_date ? new Date(c.end_date).toLocaleDateString() : '-' }}</td>
+                     <td class="px-4 py-3 text-sm text-gray-900">{{ c.category_name || '-' }}</td>
+                     <td class="px-4 py-3 text-sm text-gray-900">₹{{ c.amount || '0.00' }}</td>
+                     <td class="px-4 py-3">
+                       <span :class="getStatusTextColor(c.status)">{{ c.status || '-' }}</span>
+                     </td>
+                     <td class="px-4 py-3 text-sm text-gray-900">{{ c.paid_by || '-' }}</td>
+                     <td class="px-4 py-3 text-sm text-gray-900">{{ c.date_of_payment ? new Date(c.date_of_payment).toLocaleDateString() : '-' }}</td>
+                     <td class="px-4 py-3 text-sm text-gray-900">{{ c.payment_method || '-' }}</td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
 
@@ -336,6 +368,7 @@
 import { onMounted } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { ref } from 'vue';
 
 defineOptions({
     layout: AppLayout
@@ -345,14 +378,15 @@ interface Props {
   contribution: {
     id: number;
     family_no: string;
-    year: number;
     amount: string;
     payment_method_id: number | null;
     fund_category_id: number | null;
-    payment_date: string;
+    start_date: string;
+    end_date: string;
     status: string;
     member_id: number | null;
     paid_by_name: string | null;
+    contact_no: string | null;
     notes: string | null;
   };
   filterOptions: {
@@ -371,16 +405,20 @@ const props = defineProps<Props>();
 // Form handling
 const form = useForm({
   family_no: props.contribution.family_no,
-  year: props.contribution.year,
   amount: props.contribution.amount,
   payment_method_id: props.contribution.payment_method_id || '',
   fund_category_id: props.contribution.fund_category_id || '',
-  payment_date: props.contribution.payment_date,
+  start_date: props.contribution.start_date,
+  end_date: props.contribution.end_date,
   status: props.contribution.status,
   member_id: props.contribution.member_id || '',
   paid_by_name: props.contribution.paid_by_name || '',
+  contact_no: props.contribution.contact_no || '',
   notes: props.contribution.notes || ''
 });
+
+// Contribution history for this family (reusing bottom list like in create)
+const contributionHistory = ref<any[]>([]);
 
 const statusOptions = [
   { value: 'pending', label: 'Pending' },
@@ -431,12 +469,37 @@ const getStatusTextColor = (status: string) => {
   return colors[status as keyof typeof colors] || 'text-gray-600';
 };
 
-// Format date to YYYY-MM-DD for date input
+// Format dates to YYYY-MM-DD for date inputs
 onMounted(() => {
-  if (form.payment_date) {
-    // Ensure date is in correct format for date input
-    const date = new Date(form.payment_date);
-    form.payment_date = date.toISOString().split('T')[0];
+  if (form.start_date) {
+    const s = new Date(form.start_date);
+    form.start_date = s.toISOString().split('T')[0];
+  }
+  if (form.end_date) {
+    const e = new Date(form.end_date);
+    form.end_date = e.toISOString().split('T')[0];
+  }
+
+  // Load contribution history for this family
+  if (form.family_no) {
+    console.log('Fetching contribution history for family:', form.family_no);
+    fetch(`/fund/family-contributions/${encodeURIComponent(form.family_no)}`)
+      .then(r => r.json())
+             .then(data => {
+         console.log('Contribution history data:', data);
+         contributionHistory.value = data?.contributions || [];
+         console.log('Contribution history array:', contributionHistory.value);
+         
+         // Debug: Log the first contribution to see available fields
+         if (contributionHistory.value.length > 0) {
+           console.log('First contribution fields:', Object.keys(contributionHistory.value[0]));
+           console.log('First contribution data:', contributionHistory.value[0]);
+         }
+       })
+      .catch((error) => {
+        console.error('Error fetching contribution history:', error);
+        contributionHistory.value = [];
+      });
   }
 });
 </script>

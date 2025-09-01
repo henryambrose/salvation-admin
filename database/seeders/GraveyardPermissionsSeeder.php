@@ -1,0 +1,133 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+
+class GraveyardPermissionsSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Define all Graveyard module permissions
+        $graveyardPermissions = [
+            // Dashboard
+            'read-graveyard-dashboard',
+
+            // Permanent Graves
+            'create-permanent-grave',
+            'read-permanent-grave',
+            'update-permanent-grave',
+            'delete-permanent-grave',
+            'list-permanent-grave',
+            'restore-permanent-grave',
+
+            // Temporary Graves
+            'create-temporary-grave',
+            'read-temporary-grave',
+            'update-temporary-grave',
+            'delete-temporary-grave',
+            'list-temporary-grave',
+            'restore-temporary-grave',
+
+            // Niches
+            'create-niche',
+            'read-niche',
+            'update-niche',
+            'delete-niche',
+            'list-niche',
+            'restore-niche',
+
+            // Grave Bookings
+            'create-grave-booking',
+            'read-grave-booking',
+            'update-grave-booking',
+            'delete-grave-booking',
+            'list-grave-booking',
+            'restore-grave-booking',
+            'confirm-grave-booking',
+            'cancel-grave-booking',
+
+            // Service Types
+            'create-service-type',
+            'read-service-type',
+            'update-service-type',
+            'delete-service-type',
+            'list-service-type',
+            'restore-service-type',
+
+            // Cemeteries
+            'create-cemetery',
+            'read-cemetery',
+            'update-cemetery',
+            'delete-cemetery',
+            'list-cemetery',
+            'restore-cemetery',
+
+            // Sections
+            'create-section',
+            'read-section',
+            'update-section',
+            'delete-section',
+            'list-section',
+            'restore-section',
+
+            // Maintenance Records
+            'create-maintenance',
+            'read-maintenance',
+            'update-maintenance',
+            'delete-maintenance',
+            'list-maintenance',
+            'restore-maintenance',
+
+            // Financial Records
+            'create-graveyard-finance',
+            'read-graveyard-finance',
+            'update-graveyard-finance',
+            'delete-graveyard-finance',
+            'list-graveyard-finance',
+            'restore-graveyard-finance',
+
+            // Visitor Records
+            'create-visitor',
+            'read-visitor',
+            'update-visitor',
+            'delete-visitor',
+            'list-visitor',
+            'restore-visitor',
+
+            // Reports
+            'view-graveyard-reports',
+            'export-graveyard-data',
+
+            // Transfer Operations
+            'transfer-temporary-to-niche',
+            'transfer-temporary-to-permanent',
+
+            // Administrative
+            'manage-graveyard-settings',
+            'view-graveyard-analytics',
+        ];
+
+        // Create permissions
+        foreach ($graveyardPermissions as $permissionName) {
+            Permission::firstOrCreate(['name' => $permissionName]);
+        }
+
+        // Optionally assign these permissions to a super admin role if it exists
+        $superAdminRole = Role::where('name', 'super-admin')->first();
+        if ($superAdminRole) {
+            $superAdminRole->givePermissionTo($graveyardPermissions);
+        }
+
+        // Also assign to admin role if it exists
+        $adminRole = Role::where('name', 'admin')->first();
+        if ($adminRole) {
+            $adminRole->givePermissionTo($graveyardPermissions);
+        }
+    }
+}

@@ -1076,6 +1076,8 @@ class MemberController extends Controller
                     'first_name' => $member->first_name,
                     'last_name' => $member->last_name,
                     'community' => $member->community->name ?? '',
+                    'current_add1' => $member->current_add1,
+                    'contact_no_1' => $member->contact_no_1,
                     'relationship' => $member->relationship->name ?? '',
                     'gender' => $member->gender->name ?? '',
                 ];

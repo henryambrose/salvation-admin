@@ -13,7 +13,6 @@ class FundPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Creating Fund module permissions...');
 
         // Define all Fund module permissions
         $fundPermissions = [
@@ -69,24 +68,19 @@ class FundPermissionsSeeder extends Seeder
         // Create permissions
         foreach ($fundPermissions as $permissionName) {
             Permission::firstOrCreate(['name' => $permissionName]);
-            $this->command->info("Created permission: {$permissionName}");
         }
 
-        $this->command->info('Fund module permissions created successfully!');
-        $this->command->info('Total permissions created: ' . count($fundPermissions));
 
         // Optionally assign these permissions to a super admin role if it exists
         $superAdminRole = Role::where('name', 'super-admin')->first();
         if ($superAdminRole) {
             $superAdminRole->givePermissionTo($fundPermissions);
-            $this->command->info('Permissions assigned to super-admin role');
         }
 
         // Also assign to admin role if it exists
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminRole->givePermissionTo($fundPermissions);
-            $this->command->info('Permissions assigned to admin role');
         }
     }
 }

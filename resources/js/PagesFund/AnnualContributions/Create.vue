@@ -50,14 +50,14 @@
           
           <!-- Form Layout -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Main Form (2 columns) -->
-            <div class="lg:col-span-2">
+            <!-- Main Form (full width when sidebar removed) -->
+            <div class="lg:col-span-3">
               <form @submit.prevent="submitForm" class="space-y-6">
                 <!-- Family Information Section -->
                 <div class="bg-gray-50 p-6 rounded-lg">
                   <h3 class="text-lg font-medium text-gray-900 mb-4">Family Information</h3>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Family Number -->
                     <div>
                       <label for="family_no" class="block text-sm font-medium text-gray-700 mb-2">
@@ -87,7 +87,8 @@
                                @click="selectMemberForFamily(member)"
                                class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0">
                             <div class="font-medium">{{ member.full_name }}</div>
-                            <div class="text-sm text-gray-500">Member No: {{ member.member_no }} | Family: {{ member.family_no || 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">Community No: {{ member.community.split('-')[0].trim() }} | Family: {{ member.family_no || 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">Address: {{ member.current_add1 }} | {{ member.contact_no_1 }}</div>
                           </div>
                         </div>
                         
@@ -103,34 +104,14 @@
                       <p class="mt-1 text-sm text-gray-500">
                         Type family number directly or search for a member to auto-fill
                       </p>
+                      <div v-if="selectedFamilyMember" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <div class="font-medium">{{ selectedFamilyMember.full_name }}</div>
+                        <div class="text-sm text-gray-600">Community No: {{ selectedFamilyMember.community.split('-')[0].trim() }} | Family: {{ selectedFamilyMember.family_no || 'N/A' }}</div>
+                        <div class="text-sm text-gray-600">Address: {{ selectedFamilyMember.current_add1 }} | {{ selectedFamilyMember.contact_no_1 }}</div>
+                      </div>
                     </div>
 
-                    <!-- Year -->
-                    <div>
-                      <label for="year" class="block text-sm font-medium text-gray-700 mb-2">
-                        Year(s) <span class="text-red-500">*</span>
-                      </label>
-                      <select 
-                        id="year"
-                        v-model="form.years"
-                        multiple
-                        :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.years ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
-                      >
-                        <option v-for="year in availableYears" :key="year" :value="year">
-                          {{ year }}
-                        </option>
-                      </select>
-                      <p v-if="form.errors.years" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.years }}
-                      </p>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Select one or more years for contribution. Amount will be split equally between selected years.
-                      </p>
-                    </div>
+                    
                   </div>
                 </div>
 
@@ -138,7 +119,7 @@
                 <div class="bg-gray-50 p-6 rounded-lg">
                   <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
                   
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Amount -->
                     <div>
                       <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
@@ -155,41 +136,52 @@
                           form.errors.amount ? 'border-red-300' : 'border-gray-300'
                         ]"
                         placeholder="0.00"
-                        required
+
                       />
                       <p v-if="form.errors.amount" class="mt-1 text-sm text-red-600">
                         {{ form.errors.amount }}
                       </p>
                       
-                      <!-- Amount Split Display -->
-                      <div v-if="form.years.length > 1 && form.amount" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                        <p class="text-sm font-medium text-blue-900 mb-2">Amount will be split as follows:</p>
-                        <div class="space-y-1">
-                          <div v-for="(year, index) in form.years" :key="year" class="flex justify-between text-sm">
-                            <span class="text-blue-700">{{ year }}:</span>
-                            <span class="font-medium text-blue-900">₹{{ getSplitAmount(year, index) }}</span>
-                          </div>
-                        </div>
-                      </div>
+                      
                     </div>
 
-                    <!-- Payment Date -->
+                    <!-- Start Date -->
                     <div>
-                      <label for="payment_date" class="block text-sm font-medium text-gray-700 mb-2">
-                        Payment Date <span class="text-red-500">*</span>
+                      <label for="start_date" class="block text-xs font-medium text-gray-700 mb-3">
+                        Start Date <span class="text-red-500">*</span>
                       </label>
                       <input 
-                        id="payment_date"
-                        v-model="form.payment_date"
+                        id="start_date"
+                        v-model="form.start_date"
                         type="date"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.payment_date ? 'border-red-300' : 'border-gray-300'
+                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.start_date ? 'border-red-300' : 'border-gray-300'
                         ]"
                         required
                       />
-                      <p v-if="form.errors.payment_date" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.payment_date }}
+                      <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.start_date }}
+                      </p>
+                    </div>
+
+                    <!-- End Date -->
+                    <div>
+                      <label for="end_date" class="block text-xs font-medium text-gray-700 mb-3">
+                        End Date <span class="text-red-500">*</span>
+                      </label>
+                      <input 
+                        id="end_date"
+                        v-model="form.end_date"
+                        type="date"
+                        :class="[
+                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.end_date ? 'border-red-300' : 'border-gray-300'
+                        ]"
+                        required
+                      />
+                      <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.end_date }}
                       </p>
                     </div>
 
@@ -325,6 +317,26 @@
                         {{ form.member_id ? 'Auto-filled from member' : 'Required if no member selected' }}
                       </p>
                     </div>
+
+                    <!-- Contact Number -->
+                    <div>
+                      <label for="contact_no" class="block text-sm font-medium text-gray-700 mb-2">
+                        Contact Number
+                      </label>
+                      <input 
+                        id="contact_no"
+                        v-model="form.contact_no"
+                        type="tel"
+                        :class="[
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.contact_no ? 'border-red-300' : 'border-gray-300'
+                        ]"
+                        placeholder="Enter contact number"
+                      />
+                      <p v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.contact_no }}
+                      </p>
+                    </div>
                   </div>
 
                   <!-- Selected Member Display -->
@@ -372,31 +384,7 @@
               </form>
             </div>
             
-            <!-- Pending Amounts Sidebar (1 column) -->
-            <div class="lg:col-span-1">
-              <div v-if="form.family_no" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 sticky top-6">
-                <h4 class="text-lg font-medium text-yellow-900 mb-3">Pending Amount</h4>
-                
-                <!-- Pending Years List -->
-                <div v-if="pendingYears.length > 0" class="space-y-2">
-                  <div class="text-sm font-medium text-yellow-800 mb-2">Years with pending contributions:</div>
-                  <div v-for="year in pendingYears" :key="year" 
-                       class="bg-[#ffffff] rounded-lg p-3 border border-yellow-100 text-center">
-                    <span class="text-lg font-bold text-yellow-700">{{ year }}</span>
-                  </div>
-                </div>
-                
-                <!-- No Pending Years Message -->
-                <div v-else class="text-center py-4">
-                  <div class="text-green-600 mb-2">
-                    <svg class="w-8 h-8 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                  </div>
-                  <p class="text-sm text-green-700">All years are up to date</p>
-                </div>
-              </div>
-            </div>
+            
           </div>
 
                      <!-- Sticky Form Actions -->
@@ -433,16 +421,20 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Year</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
+                    <th @click="toggleCategorySort" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none">
+                      Category <span class="ml-1 text-[10px]">{{ categorySortAsc ? '▲' : '▼' }}</span>
+                    </th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Date</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid By</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Payment</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
                   </tr>
                 </thead>
                 <tbody class="bg-[#ffffff] divide-y divide-gray-200">
-                  <tr v-for="contribution in contributionHistory" :key="contribution.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.year }}</td>
+                  <tr v-for="contribution in sortedContributionHistory" :key="contribution.id" class="hover:bg-gray-50">
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(contribution.start_date) }} - {{ formatDate(contribution.end_date) }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.category_name }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">₹{{ contribution.amount }}</td>
                     <td class="px-4 py-3">
@@ -450,7 +442,9 @@
                         {{ contribution.status }}
                       </span>
                     </td>
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(contribution.payment_date) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.paid_by || '-' }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(contribution.date_of_payment) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.payment_method || '-' }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -487,14 +481,15 @@ const props = withDefaults(defineProps<{
 // Form handling
 const form = useForm({
   family_no: '',
-  years: [] as number[],
   amount: '',
   payment_method_id: '',
   fund_category_id: '',
-  payment_date: '',
+  start_date: '',
+  end_date: '',
   status: '',
   member_id: '',
   paid_by_name: '',
+  contact_no: '',
   notes: ''
 });
 
@@ -507,12 +502,28 @@ const showMemberResults = ref(false);
 // Family number search
 const familySearchResults = ref<any[]>([]);
 const showFamilySearchResults = ref(false);
+const selectedFamilyMember = ref<any>(null);
 
 // Family members for the selected family
 const familyMembers = ref<any[]>([]);
 
 // Contribution history and pending amounts
 const contributionHistory = ref<any[]>([]);
+const categorySortAsc = ref(true);
+const sortedContributionHistory = computed(() => {
+  const list = [...contributionHistory.value];
+  return list.sort((a, b) => {
+    const an = (a.category_name || '').toString().toLowerCase();
+    const bn = (b.category_name || '').toString().toLowerCase();
+    if (an < bn) return categorySortAsc.value ? -1 : 1;
+    if (an > bn) return categorySortAsc.value ? 1 : -1;
+    return 0;
+  });
+});
+
+const toggleCategorySort = () => {
+  categorySortAsc.value = !categorySortAsc.value;
+};
 const pendingAmountsByCategory = ref<any[]>([]);
 const totalContributions = ref(0);
 const totalPaid = ref(0);
@@ -524,19 +535,7 @@ const pendingYears = ref<number[]>([]);
 // Computed properties
 const currentYear = computed(() => new Date().getFullYear());
 
-const annualContributionStartYear = computed(() => {
-  // Get from environment variable or default to 2023
-  return import.meta.env.VITE_ANNUAL_CONTRIBUTION_START_YEAR || 2023;
-});
-
-const availableYears = computed(() => {
-  const currentYear = new Date().getFullYear();
-  const years = [];
-  for (let year = currentYear + 1; year >= annualContributionStartYear.value; year--) {
-    years.push(year);
-  }
-  return years;
-});
+// Year selection removed; using date range now
 
 const statusOptions = [
   { value: 'pending', label: 'Pending' },
@@ -621,42 +620,43 @@ const searchMembersForFamily = async () => {
 };
 
 // Fetch family members by family number
-// const fetchFamilyMembers = async (familyNo: string) => {
-//   if (!familyNo) {
-//     familyMembers.value = [];
-//     return;
-//   }
-
-//   try {
-//     const url = `/member/search-members?family_no=${encodeURIComponent(familyNo)}`;
-    
-//     const response = await fetch(url, {
-//       method: 'GET',
-//       headers: {
-//         'X-Requested-With': 'XMLHttpRequest',
-//         'Accept': 'application/json',
-//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-//       },
-//       credentials: 'same-origin'
-//     });
-    
-//     if (response.ok) {
-//       const data = await response.json();
-//       familyMembers.value = data || [];
-//     } else {
-//       console.error('Response not ok:', response.status, response.statusText);
-//       familyMembers.value = [];
-//     }
-//   } catch (error) {
-//     console.error('Error fetching family members:', error);
-//     familyMembers.value = [];
-//   }
-// };
-watch(() => showFamilySearchResults, () => {
-  if (showFamilySearchResults.value) {
-    familyMembers.value = familySearchResults.value;
+const fetchFamilyMembers = async (familyNo: string) => {
+  if (!familyNo) {
+    familyMembers.value = [];
+    return;
   }
-  // fetchFamilyMembers(form.family_no);
+
+  try {
+    const url = `/member/family-members/${encodeURIComponent(familyNo)}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+      },
+      credentials: 'same-origin'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      // Map to the format used in the dropdown
+      familyMembers.value = (Array.isArray(data) ? data : []).map((m: any) => ({
+        id: m.id,
+        full_name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : (m.full_name || ''),
+        member_no: m.member_no,
+        family_no: familyNo,
+      }));
+    } else {
+      console.error('Response not ok:', response.status, response.statusText);
+      familyMembers.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching family members:', error);
+    familyMembers.value = [];
+  }
+};
+watch(() => showFamilySearchResults, () => {
+  // No-op; don't sync dropdown with search list
 });
 
 // Fetch family contribution history
@@ -670,8 +670,7 @@ const fetchFamilyContributionHistory = async (familyNo: string) => {
     totalPaid.value = data.total_paid || 0;
     totalPending.value = data.total_pending || 0;
     
-    // Calculate pending years after we have the contribution history
-    calculatePendingYears(familyNo);
+    // Pending years removed with year logic
   } catch (error) {
     console.error('Error fetching contribution history:', error);
     contributionHistory.value = [];
@@ -682,68 +681,12 @@ const fetchFamilyContributionHistory = async (familyNo: string) => {
   }
 };
 
-// Calculate pending years based on existing contribution history
-const calculatePendingYears = (familyNo: string) => {
-  try {
-    const allContributions = contributionHistory.value;
-    
-    // Calculate pending years (years with no contributions or only pending contributions)
-    const currentYear = new Date().getFullYear();
-    const pendingYearsList = [];
-    
-    for (let checkYear = annualContributionStartYear.value; checkYear <= currentYear; checkYear++) {
-      // Get all contributions for this specific year
-      const contributionsForYear = allContributions.filter((contribution: any) => {
-        const yearMatch = contribution.year.toString() === checkYear.toString();
-        return yearMatch;
-      });
-      
-      // Check if year should be considered pending
-      let shouldBePending = false;
-      
-      if (contributionsForYear.length === 0) {
-        // No contributions for this year - definitely pending
-        shouldBePending = true;
-      } else {
-        // Check if all contributions for this year are "pending" status
-        const allPending = contributionsForYear.every((contribution: any) => {
-          const isPending = contribution.status === 'pending';
-          return isPending;
-        });
-        
-        if (allPending) {
-          shouldBePending = true;
-        }
-      }
-      
-      if (shouldBePending) {
-        pendingYearsList.push(checkYear);
-      }
-    }
-    
-    pendingYears.value = pendingYearsList;
-    
-  } catch (error) {
-    console.error('Error calculating pending years:', error);
-    pendingYears.value = [];
-  }
-};
+// Year pending calculation removed
 
 // Fetch pending amounts by category (simplified - just calls calculatePendingYears)
-const fetchPendingAmountsByCategory = async (familyNo: string, year: string) => {
+const fetchPendingAmountsByCategory = async (familyNo: string) => {
   try {
-    // Only fetch if year is 2023 or later
-    if (parseInt(year) < annualContributionStartYear.value) {
-      pendingAmountsByCategory.value = [];
-      totalPendingAmount.value = 0;
-      pendingYears.value = [];
-      return;
-    }
-    
-    // If we already have contribution history, calculate pending years from it
-    if (contributionHistory.value.length > 0) {
-      calculatePendingYears(familyNo);
-    }
+    // Year-based pending logic removed
     // Don't fetch again if we already have the data
     
   } catch (error) {
@@ -762,14 +705,12 @@ const selectMember = (member: any) => {
   memberSearchResults.value = [];
   
   // Fetch family members for the selected family
-  // fetchFamilyMembers(member.family_no || '');
+  fetchFamilyMembers(member.family_no || '');
   
   // Fetch contribution history and pending amounts when member is selected
   if (member.family_no) {
     fetchFamilyContributionHistory(member.family_no);
-    if (form.years.length > 0) {
-      fetchPendingAmountsByCategory(member.family_no, form.years[0].toString());
-    }
+    fetchPendingAmountsByCategory(member.family_no);
   }
 };
 
@@ -777,16 +718,15 @@ const selectMemberForFamily = (member: any) => {
   form.family_no = member.family_no || ''; // Auto-fill family_no
   familySearchResults.value = []; // Clear results
   showFamilySearchResults.value = false;
+  selectedFamilyMember.value = member;
   
   // Fetch family members for the selected family
-  // fetchFamilyMembers(member.family_no || '');
+  fetchFamilyMembers(member.family_no || '');
   
   // Fetch contribution history and pending amounts when family is selected
   if (member.family_no) {
     fetchFamilyContributionHistory(member.family_no);
-    if (form.years.length > 0) {
-      fetchPendingAmountsByCategory(member.family_no, form.years[0].toString()); // Assuming all years have the same amount
-    }
+    fetchPendingAmountsByCategory(member.family_no);
   }
   
   // Also clear member search if it was previously selected
@@ -808,6 +748,7 @@ const clearMemberSelection = () => {
   form.member_id = '';
   form.paid_by_name = '';
   form.family_no = ''; // Clear family_no
+  selectedFamilyMember.value = null;
   memberSearch.value = '';
   showMemberResults.value = false;
   memberSearchResults.value = [];
@@ -841,47 +782,17 @@ const submitForm = () => {
     return;
   }
 
-  // Validate that at least one year is selected
-  if (!form.years || form.years.length === 0) {
-    alert('Please select at least one year for the contribution.');
-    return;
-  }
-
-  // Validate that amount is provided
+  // Validate amount
   if (!form.amount || parseFloat(form.amount) <= 0) {
     alert('Please enter a valid amount for the contribution.');
     return;
   }
 
-  // Calculate split amounts for each year
-  const totalAmount = parseFloat(form.amount);
-  const totalYears = form.years.length;
-  const baseAmount = Math.floor(totalAmount / totalYears);
-  const remainder = totalAmount % totalYears;
+  if (!form.start_date || !form.end_date) {
+    alert('Please select start and end dates.');
+    return;
+  }
 
-  // Create contributions data for each year
-  const contributionsData = form.years.map((year, index) => {
-    // First year(s) get the extra amount if there's a remainder
-    const yearAmount = index < remainder ? baseAmount + 1 : baseAmount;
-    
-    return {
-      family_no: form.family_no,
-      year: year.toString(),
-      amount: yearAmount.toFixed(2),
-      payment_method_id: form.payment_method_id,
-      fund_category_id: form.fund_category_id,
-      payment_date: form.payment_date,
-      status: form.status,
-      member_id: form.member_id,
-      paid_by_name: form.paid_by_name,
-      notes: form.notes,
-      created_by: null, // Will be set by backend
-      updated_by: null  // Will be set by backend
-    };
-  });
-
-  // Submit the form with contributions data
-  // The backend will handle splitting the amount between selected years
   form.post('/fund/annual-contributions', {
     onSuccess: () => {
       // Form will redirect on success
@@ -909,20 +820,7 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-IN');
 };
 
-const getSplitAmount = (year: number, index: number) => {
-  if (!form.amount || form.years.length === 0) {
-    return '0.00';
-  }
-  const totalAmount = parseFloat(form.amount);
-  const totalYears = form.years.length;
-  const baseAmount = Math.floor(totalAmount / totalYears);
-  const remainder = totalAmount % totalYears;
-  
-  // First year(s) get the extra amount if there's a remainder
-  const yearAmount = index < remainder ? baseAmount + 1 : baseAmount;
-  
-  return yearAmount.toFixed(2);
-};
+// Removed split amount logic (no years)
 
 // Close member search results when clicking outside
 const closeMemberSearch = (event: Event) => {
@@ -969,32 +867,24 @@ watch(() => form.family_no, (newValue) => {
     totalPending.value = 0;
     totalPendingAmount.value = 0;
     pendingYears.value = [];
+  } else {
+    // Fetch members for selected family
+    fetchFamilyMembers(newValue);
   }
 });
 
-// Watch for year changes to fetch pending amounts
-watch(() => form.years, (newYears) => {
-  // Only recalculate if we already have family data
-  if (newYears.length > 0 && form.family_no && contributionHistory.value.length > 0) {
-    calculatePendingYears(form.family_no);
-  }
-});
+// Removed year watcher
 
 // Watch for fund category changes to fetch pending amounts
 watch(() => form.fund_category_id, (newCategoryId) => {
-  // Only recalculate if we already have family data
-  if (newCategoryId && form.family_no && form.years.length > 0 && contributionHistory.value.length > 0) {
-    calculatePendingYears(form.family_no);
-  }
+  // No-op: year-based pending logic removed
 });
 
-// Initialize form with current date
+// Initialize form with current dates
 onMounted(() => {
-  form.payment_date = new Date().toISOString().split('T')[0];
-  
-  // Set default year to current year or annual contribution start year, whichever is later
-  const currentYearValue = new Date().getFullYear();
-  form.years = [Math.max(currentYearValue, annualContributionStartYear.value)];
+  const today = new Date().toISOString().split('T')[0];
+  form.start_date = today;
+  form.end_date = today;
   
   // Set default fund category to "Annual Contributions" if available
   if (props.filterOptions?.fund_categories) {

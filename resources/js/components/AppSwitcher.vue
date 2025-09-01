@@ -92,7 +92,6 @@ const availableApps = [
     color: 'text-purple-600'
   }
 ];
-
 // Determine current app based on URL
 const currentApp = computed(() => {
   if (currentPath.startsWith('/fund')) {

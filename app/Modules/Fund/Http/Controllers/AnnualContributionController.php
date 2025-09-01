@@ -42,8 +42,12 @@ class AnnualContributionController extends Controller
             $query->where('family_no', 'like', '%' . $request->family_no . '%');
         }
 
-        if ($request->filled('year')) {
-            $query->where('year', $request->year);
+        // Optional: filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('end_date', '<=', $request->end_date);
         }
 
         if ($request->filled('category_id')) {
@@ -68,11 +72,11 @@ class AnnualContributionController extends Controller
 
         return Inertia::render('AnnualContributions/Index', [
             'annualContributions' => $annualContributions,
-            'years' => $filterOptions['years'],
+            // Years removed from filter options
             'categories' => $filterOptions['fund_categories'],
             'paymentMethods' => $filterOptions['payment_methods'],
             'filters' => $request->only([
-                'search', 'family_no', 'year', 'category_id', 
+                'search', 'family_no', 'start_date', 'end_date', 'category_id', 
                 'payment_method_id', 'per_page', 'isArchived'
             ])
         ]);
@@ -120,7 +124,7 @@ class AnnualContributionController extends Controller
     private function getFilterOptions()
     {
         return [
-            'years' => FamilyContribution::distinct()->pluck('year')->sort()->values(),
+            // Years removed
             'statuses' => [
                 ['value' => 'pending', 'label' => 'Pending'],
                 ['value' => 'partial', 'label' => 'Partial'],
@@ -150,56 +154,36 @@ class AnnualContributionController extends Controller
     {
         $validated = $request->validate([
             'family_no' => 'required|string|max:50',
-            'years' => 'required|array|min:1',
-            'years.*' => 'integer|min:2000|max:2100',
             'amount' => 'required|numeric|min:0.01',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'fund_category_id' => 'nullable|exists:fund_categories,id',
-            'payment_date' => 'required|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'status' => 'required|in:pending,partial,paid,cancelled,refunded',
             'member_id' => 'nullable|exists:members,id',
             'paid_by_name' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
         ]);
 
-        $years = $validated['years'];
-        $totalAmount = $validated['amount'];
-        $totalYears = count($years);
-        
-        // Calculate split amounts for each year
-        $baseAmount = floor($totalAmount / $totalYears);
-        $remainder = $totalAmount % $totalYears;
-
-        // Create contributions for each year
-        $contributions = [];
-        foreach ($years as $index => $year) {
-            // First year(s) get the extra amount if there's a remainder
-            $yearAmount = $index < $remainder ? $baseAmount + 1 : $baseAmount;
-            
-            $contributionData = [
-                'family_no' => $validated['family_no'],
-                'year' => $year,
-                'amount' => $yearAmount,
-                'payment_method_id' => $validated['payment_method_id'],
-                'fund_category_id' => $validated['fund_category_id'],
-                'payment_date' => $validated['payment_date'],
-                'status' => $validated['status'],
-                'member_id' => $validated['member_id'],
-                'paid_by_name' => $validated['paid_by_name'],
-                'notes' => $validated['notes'],
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
-            ];
-            
-            $contributions[] = FamilyContribution::create($contributionData);
-        }
-
-        $message = $totalYears > 1 
-            ? "Created {$totalYears} contributions with total amount ₹{$totalAmount} split equally between years: " . implode(', ', $years)
-            : 'Contribution created successfully.';
+        FamilyContribution::create([
+            'family_no' => $validated['family_no'],
+            'amount' => $validated['amount'],
+            'payment_method_id' => $validated['payment_method_id'],
+            'fund_category_id' => $validated['fund_category_id'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
+            'status' => $validated['status'],
+            'member_id' => $validated['member_id'],
+            'paid_by_name' => $validated['paid_by_name'],
+            'contact_no' => $validated['contact_no'],
+            'notes' => $validated['notes'],
+            'created_by' => auth()->id(),
+            'updated_by' => auth()->id(),
+        ]);
 
         return redirect()->route('fund.annual-contributions.index')
-            ->with('success', $message);
+            ->with('success', 'Contribution created successfully.');
     }
 
     public function show($id)
@@ -235,28 +219,30 @@ class AnnualContributionController extends Controller
 
         $validated = $request->validate([
             'family_no' => 'required|string|max:50',
-            'year' => 'required|integer|min:2000|max:2100',
             'amount' => 'required|numeric|min:0.01',
             'payment_method_id' => 'nullable|exists:payment_methods,id',
             'fund_category_id' => 'nullable|exists:fund_categories,id',
-            'payment_date' => 'required|date',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
             'status' => 'required|in:pending,partial,paid,cancelled,refunded',
             'member_id' => 'nullable|exists:members,id',
             'paid_by_name' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|string|max:20',
             'notes' => 'nullable|string',
         ]);
 
         // Update the existing contribution
         $contribution->update([
             'family_no' => $validated['family_no'],
-            'year' => $validated['year'],
             'amount' => $validated['amount'],
             'payment_method_id' => $validated['payment_method_id'],
             'fund_category_id' => $validated['fund_category_id'],
-            'payment_date' => $validated['payment_date'],
+            'start_date' => $validated['start_date'],
+            'end_date' => $validated['end_date'],
             'status' => $validated['status'],
             'member_id' => $validated['member_id'],
             'paid_by_name' => $validated['paid_by_name'],
+            'contact_no' => $validated['contact_no'],
             'notes' => $validated['notes'],
             'updated_by' => auth()->id(),
         ]);
@@ -296,5 +282,120 @@ class AnnualContributionController extends Controller
             ]);
 
         return back()->with('success', 'Contributions updated successfully.');
+    }
+
+    public function export(Request $request)
+    {
+        \Log::info('Export method called with parameters:', $request->all());
+        
+        $query = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
+            ->orderBy('created_at', 'desc');
+
+        // Apply search filter
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('family_no', 'like', "%{$search}%")
+                  ->orWhereHas('member', function ($memberQuery) use ($search) {
+                      $memberQuery->where('first_name', 'like', "%{$search}%")
+                                  ->orWhere('last_name', 'like', "%{$search}%");
+                  });
+            });
+        }
+
+        // Handle archived filter
+        if ($request->get('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        // Apply filters
+        if ($request->filled('family_no')) {
+            $query->where('family_no', 'like', '%' . $request->family_no . '%');
+        }
+
+        // Optional: filter by date range
+        if ($request->filled('start_date')) {
+            $query->whereDate('start_date', '>=', $request->start_date);
+        }
+        if ($request->filled('end_date')) {
+            $query->whereDate('end_date', '<=', $request->end_date);
+        }
+
+        if ($request->filled('category_id')) {
+            $query->where('fund_category_id', $request->category_id);
+        }
+
+        if ($request->filled('payment_method_id')) {
+            $query->where('payment_method_id', $request->payment_method_id);
+        }
+
+        $contributions = $query->get();
+        
+        \Log::info('Export query returned ' . $contributions->count() . ' records');
+
+        $filename = 'annual-contributions-' . date('Y-m-d-H-i-s') . '.csv';
+        
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Cache-Control' => 'must-revalidate',
+            'Pragma' => 'public',
+        ];
+
+        $callback = function() use ($contributions) {
+            // Clear any output buffers
+            if (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            $file = fopen('php://output', 'w');
+            
+            // Add BOM for Excel compatibility
+            fwrite($file, "\xEF\xBB\xBF");
+            
+            // CSV Headers
+            fputcsv($file, [
+                'ID',
+                'Family Number',
+                'Amount',
+                'Start Date',
+                'End Date',
+                'Status',
+                'Fund Category',
+                'Payment Method',
+                'Member Name',
+                'Paid By Name',
+                'Contact Number',
+                'Notes',
+                'Created At',
+                'Updated At'
+            ]);
+
+            // CSV Data
+            foreach ($contributions as $contribution) {
+                fputcsv($file, [
+                    $contribution->id,
+                    $contribution->family_no,
+                    $contribution->amount,
+                    $contribution->start_date,
+                    $contribution->end_date,
+                    $contribution->status,
+                    $contribution->fundCategory->name ?? 'N/A',
+                    $contribution->paymentMethod->name ?? 'N/A',
+                    $contribution->member ? $contribution->member->first_name . ' ' . $contribution->member->last_name : 'N/A',
+                    $contribution->paid_by_name ?? 'N/A',
+                    $contribution->contact_no ?? 'N/A',
+                    $contribution->notes ?? 'N/A',
+                    $contribution->created_at,
+                    $contribution->updated_at
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

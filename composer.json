@@ -43,7 +43,7 @@
         "classmap": [
             "database/modules/members/database/seeders/",
             "database/modules/fund/database/seeders/",
-            "database/modules/graveyard/seeders/"
+            "database/modules/graveyard/database/seeders/"
         ]
     },
     "autoload-dev": {

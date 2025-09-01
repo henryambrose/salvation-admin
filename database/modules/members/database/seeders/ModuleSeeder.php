@@ -214,7 +214,6 @@ class ModuleSeeder extends Seeder
         if ($superadminRole) {
             $allPermissions = ModuleAction::all()->pluck('slug')->toArray();
             $superadminRole->syncPermissions($allPermissions);
-            $this->command->info('Super Admin assigned all permissions: ' . count($allPermissions));
         }
 
         // Assign permissions to admin (all except delete, restore, and role management)
@@ -227,7 +226,6 @@ class ModuleSeeder extends Seeder
                 ->pluck('slug')
                 ->toArray();
             $adminRole->syncPermissions($adminPermissions);
-            $this->command->info('Admin assigned permissions: ' . count($adminPermissions));
         }
 
         // Assign permissions to viewer (read and list only, excluding role management)
@@ -240,7 +238,6 @@ class ModuleSeeder extends Seeder
                 ->pluck('slug')
                 ->toArray();
             $viewerRole->syncPermissions($viewerPermissions);
-            $this->command->info('Viewer assigned permissions: ' . count($viewerPermissions));
         }
     }
 }

@@ -13,7 +13,6 @@ class MembersPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->command->info('Creating Members module permissions...');
 
         // Define all Members module permissions
         $membersPermissions = [
@@ -303,24 +302,18 @@ class MembersPermissionsSeeder extends Seeder
         // Create permissions
         foreach ($membersPermissions as $permissionName) {
             Permission::firstOrCreate(['name' => $permissionName]);
-            $this->command->info("Created permission: {$permissionName}");
         }
-
-        $this->command->info('Members module permissions created successfully!');
-        $this->command->info('Total permissions created: ' . count($membersPermissions));
 
         // Optionally assign these permissions to a super admin role if it exists
         $superAdminRole = Role::where('name', 'super-admin')->first();
         if ($superAdminRole) {
             $superAdminRole->givePermissionTo($membersPermissions);
-            $this->command->info('Permissions assigned to super-admin role');
         }
 
         // Also assign to admin role if it exists
         $adminRole = Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminRole->givePermissionTo($membersPermissions);
-            $this->command->info('Permissions assigned to admin role');
         }
     }
 }
