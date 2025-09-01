@@ -47,6 +47,8 @@ const graveyardNavigationGroups = computed(() => [
       { title: 'Cemeteries', href: '/graveyard/cemeteries', icon: MapPin, show: can('read-cemetery') || true },
       { title: 'Sections', href: '/graveyard/sections', icon: Grid3X3, show: can('read-section') || true },
       { title: 'Graves', href: '/graveyard/graves', icon: Users, show: can('read-grave') || true },
+      { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
+      { title: 'Permanent Valid Members', href: '/graveyard/permanent-valid-members', icon: UserCheck, show: can('read-permanent-valid-member') || true },
     ],
   },
   {

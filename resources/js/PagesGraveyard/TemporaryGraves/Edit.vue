@@ -1,184 +1,282 @@
 <template>
   <div class="py-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="mx-auto max-w-7xl">
+      <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
-          <div class="flex justify-between items-center mb-6">
+          <div class="mb-6 flex items-center justify-between">
             <h1 class="text-2xl font-bold text-blue-700">Edit Temporary Grave</h1>
-            <Link 
+            <Link
               :href="route('graveyard.temporary-graves.index')"
-              class="inline-flex items-center px-4 py-2 bg-gray-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-gray-700 focus:bg-gray-700 active:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition ease-in-out duration-150"
+              class="inline-flex items-center rounded-md border border-transparent bg-gray-600 px-4 py-2 text-xs font-semibold tracking-widest text-white uppercase transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:outline-none active:bg-gray-900"
             >
               Back to List
             </Link>
           </div>
 
-          <form @submit.prevent="submit">
-            <!-- Basic Information -->
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label for="section" class="block text-sm font-medium text-gray-700 mb-2">Section</label>
-                  <input
-                    id="section"
-                    v-model="form.section"
-                    type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.section }"
-                    required
-                  />
-                  <p v-if="form.errors.section" class="mt-1 text-sm text-red-600">{{ form.errors.section }}</p>
+          <div class="mx-auto max-w-4xl">
+            <form @submit.prevent="submitForm" class="space-y-6">
+              <!-- Basic Information Section -->
+              <div class="rounded-lg bg-gray-50 p-6">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Basic Information</h3>
+
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Section *</label>
+                    <input
+                      v-model="form.section"
+                      type="text"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter section name"
+                      required
+                    />
+                    <p v-if="errors.section" class="mt-1 text-sm text-red-600">{{ errors.section }}</p>
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Row No *</label>
+                    <input
+                      v-model="form.row_no"
+                      type="number"
+                      min="1"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter row number"
+                      required
+                    />
+                    <p v-if="errors.row_no" class="mt-1 text-sm text-red-600">{{ errors.row_no }}</p>
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Grave No *</label>
+                    <input
+                      v-model="form.grave_no"
+                      type="number"
+                      min="1"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter grave number"
+                      required
+                    />
+                    <p v-if="errors.grave_no" class="mt-1 text-sm text-red-600">{{ errors.grave_no }}</p>
+                  </div>
                 </div>
 
-                <div>
-                  <label for="row_no" class="block text-sm font-medium text-gray-700 mb-2">Row No</label>
-                  <input
-                    id="row_no"
-                    v-model="form.row_no"
-                    type="number"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.row_no }"
-                    required
-                  />
-                  <p v-if="form.errors.row_no" class="mt-1 text-sm text-red-600">{{ form.errors.row_no }}</p>
-                </div>
+                <div class="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Old Number</label>
+                    <input
+                      v-model="form.oldno"
+                      type="text"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter old grave number"
+                    />
+                    <p v-if="errors.oldno" class="mt-1 text-sm text-red-600">{{ errors.oldno }}</p>
+                  </div>
 
-                <div>
-                  <label for="grave_no" class="block text-sm font-medium text-gray-700 mb-2">Grave No</label>
-                  <input
-                    id="grave_no"
-                    v-model="form.grave_no"
-                    type="number"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.grave_no }"
-                    required
-                  />
-                  <p v-if="form.errors.grave_no" class="mt-1 text-sm text-red-600">{{ form.errors.grave_no }}</p>
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Status *</label>
+                    <select
+                      v-model="form.status"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      required
+                    >
+                      <option value="">Select Status</option>
+                      <option v-for="status in statuses" :key="status" :value="status">
+                        {{ status.charAt(0).toUpperCase() + status.slice(1) }}
+                      </option>
+                    </select>
+                    <p v-if="errors.status" class="mt-1 text-sm text-red-600">{{ errors.status }}</p>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <!-- Status and Details -->
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Status & Details</h3>
-              <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                  <select
-                    id="status"
-                    v-model="form.status"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.status }"
-                    required
-                  >
-                    <option value="">Select Status</option>
-                    <option value="available">Available</option>
-                    <option value="occupied">Occupied</option>
-                    <option value="reserved">Reserved</option>
-                    <option value="maintenance">Maintenance</option>
-                  </select>
-                  <p v-if="form.errors.status" class="mt-1 text-sm text-red-600">{{ form.errors.status }}</p>
+              <!-- Member Information Section -->
+              <div class="rounded-lg bg-gray-50 p-6">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Member Information</h3>
+
+                <!-- Member Type Selection -->
+                <div class="mb-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Member Type</label>
+                  <div class="flex space-x-4">
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="member"
+                        class="mr-2 text-blue-600 focus:ring-blue-500"
+                        @change="handleMemberTypeChange"
+                      />
+                      <span class="text-sm text-gray-700">Parish Member</span>
+                    </label>
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="non_member"
+                        class="mr-2 text-blue-600 focus:ring-blue-500"
+                        @change="handleMemberTypeChange"
+                      />
+                      <span class="text-sm text-gray-700">Non-Member</span>
+                    </label>
+                  </div>
                 </div>
 
-                <div>
-                  <label for="plot_size" class="block text-sm font-medium text-gray-700 mb-2">Plot Size (sq ft)</label>
-                  <input
-                    id="plot_size"
-                    v-model="form.plot_size"
-                    type="number"
-                    step="0.01"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.plot_size }"
-                  />
-                  <p v-if="form.errors.plot_size" class="mt-1 text-sm text-red-600">{{ form.errors.plot_size }}</p>
+                <!-- Member Search (for parish members) -->
+                <div v-if="form.member_type === 'member'" class="mb-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Search Member</label>
+                  <div class="relative">
+                    <input
+                      v-model="memberSearchQuery"
+                      type="text"
+                      placeholder="Search by name, family number, or phone..."
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      @input="searchMembers"
+                    />
+
+                    <!-- Search Results Dropdown -->
+                    <div
+                      v-if="memberSearchResults.length > 0 && memberSearchQuery"
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                    >
+                      <div
+                        v-for="member in memberSearchResults"
+                        :key="member.id"
+                        @click="selectMember(member)"
+                        class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
+                      >
+                        <div class="font-medium">{{ member.full_name }}</div>
+                        <div class="text-sm text-gray-500">
+                          Community No: {{ member.community?.name?.split('-')[0]?.trim() }} | Family: {{ member.family_no || 'N/A' }}
+                        </div>
+                        <div class="text-sm text-gray-500">Address: {{ member.current_add1 }} | {{ member.contact_no_1 }}</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Selected Member Display -->
+                  <div v-if="selectedMember" class="mt-3 rounded-md bg-blue-50 p-3">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <div class="text-sm text-blue-700">
+                          <div class="font-medium">{{ selectedMember.full_name || selectedMember.first_name + ' ' + selectedMember.last_name }}</div>
+                          <div class="text-sm text-gray-500">
+                            Community No: {{ selectedMember.community?.name?.split('-')[0]?.trim() }} | Family:
+                            {{ selectedMember.family_no || 'N/A' }}
+                          </div>
+                          <div class="text-sm text-gray-500">Address: {{ selectedMember.current_add1 }} | {{ selectedMember.contact_no_1 }}</div>
+                        </div>
+                      </div>
+                      <button @click="clearSelectedMember" type="button" class="text-blue-600 hover:text-blue-800">
+                        <X class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div>
-                  <label for="owner_name" class="block text-sm font-medium text-gray-700 mb-2">Owner Name</label>
+                <!-- Non-Member Input -->
+                <div v-if="form.member_type === 'non_member'" class="mb-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Name</label>
                   <input
-                    id="owner_name"
                     v-model="form.owner_name"
                     type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.owner_name }"
+                    placeholder="Enter full name"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  <p v-if="form.errors.owner_name" class="mt-1 text-sm text-red-600">{{ form.errors.owner_name }}</p>
+                  <p v-if="errors.owner_name" class="mt-1 text-sm text-red-600">{{ errors.owner_name }}</p>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="mb-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number</label>
+                  <input
+                    v-model="form.contact_no"
+                    type="tel"
+                    placeholder="Enter phone number"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  />
+                  <p v-if="errors.contact_no" class="mt-1 text-sm text-red-600">{{ errors.contact_no }}</p>
                 </div>
               </div>
 
-              <div class="mt-4">
-                <label for="remarks" class="block text-sm font-medium text-gray-700 mb-2">Remarks</label>
-                <textarea
-                  id="remarks"
-                  v-model="form.remarks"
-                  rows="3"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  :class="{ 'border-red-500': form.errors.remarks }"
-                ></textarea>
-                <p v-if="form.errors.remarks" class="mt-1 text-sm text-red-600">{{ form.errors.remarks }}</p>
-              </div>
-            </div>
+              <!-- Details Section -->
+              <div class="rounded-lg bg-gray-50 p-6">
+                <h3 class="mb-4 text-lg font-medium text-gray-900">Grave Details</h3>
 
-            <!-- Additional Information -->
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-              <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label for="oldno" class="block text-sm font-medium text-gray-700 mb-2">Old Number</label>
-                  <input
-                    id="oldno"
-                    v-model="form.oldno"
-                    type="text"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.oldno }"
-                  />
-                  <p v-if="form.errors.oldno" class="mt-1 text-sm text-red-600">{{ form.errors.oldno }}</p>
+                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Plot Size (sq ft)</label>
+                    <input
+                      v-model="form.plot_size"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter plot size"
+                    />
+                    <p v-if="errors.plot_size" class="mt-1 text-sm text-red-600">{{ errors.plot_size }}</p>
+                  </div>
+
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Duration (Months)</label>
+                    <input
+                      v-model="form.duration_months"
+                      type="number"
+                      min="1"
+                      max="120"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      placeholder="Enter duration in months"
+                    />
+                    <p v-if="errors.duration_months" class="mt-1 text-sm text-red-600">{{ errors.duration_months }}</p>
+                  </div>
                 </div>
 
-                <div>
-                  <label for="last_burial_date" class="block text-sm font-medium text-gray-700 mb-2">Last Burial Date</label>
+                <div class="mt-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Last Burial Date</label>
                   <input
-                    id="last_burial_date"
                     v-model="form.last_burial_date"
                     type="date"
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    :class="{ 'border-red-500': form.errors.last_burial_date }"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   />
-                  <p v-if="form.errors.last_burial_date" class="mt-1 text-sm text-red-600">{{ form.errors.last_burial_date }}</p>
+                  <p v-if="errors.last_burial_date" class="mt-1 text-sm text-red-600">{{ errors.last_burial_date }}</p>
+                </div>
+
+                <div class="mt-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Remarks</label>
+                  <textarea
+                    v-model="form.remarks"
+                    rows="3"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Enter any additional remarks"
+                  ></textarea>
+                  <p v-if="errors.remarks" class="mt-1 text-sm text-red-600">{{ errors.remarks }}</p>
+                </div>
+
+                <div class="mt-4">
+                  <label class="flex items-center">
+                    <input v-model="form.is_active" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <span class="ml-2 text-sm text-gray-700">Active</span>
+                  </label>
+                  <p v-if="errors.is_active" class="mt-1 text-sm text-red-600">{{ errors.is_active }}</p>
                 </div>
               </div>
 
-              <div class="mt-4">
-                <label class="flex items-center">
-                  <input
-                    v-model="form.is_active"
-                    type="checkbox"
-                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <span class="ml-2 text-sm text-gray-700">Active</span>
-                </label>
+              <!-- Submit Button -->
+              <div class="flex justify-end space-x-3">
+                <Link
+                  :href="route('graveyard.temporary-graves.index')"
+                  class="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  :disabled="submitting"
+                  class="rounded-md bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {{ submitting ? 'Updating...' : 'Update Temporary Grave' }}
+                </button>
               </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="flex justify-end space-x-3">
-              <Link
-                :href="route('graveyard.temporary-graves.index')"
-                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Cancel
-              </Link>
-              <button
-                type="submit"
-                :disabled="form.processing"
-                class="px-4 py-2 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-              >
-                {{ form.processing ? 'Updating...' : 'Update Temporary Grave' }}
-              </button>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
       </div>
     </div>
@@ -186,33 +284,155 @@
 </template>
 
 <script setup lang="ts">
-import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { Link, useForm } from '@inertiajs/vue3';
+import { X } from 'lucide-vue-next';
+import { onMounted, ref } from 'vue';
 
 defineOptions({
-  layout: AppLayout
+  layout: AppLayout,
 });
 
 interface Props {
   temporaryGrave: any;
+  sections: string[];
+  statuses: string[];
+  errors?: any;
 }
 
 const props = defineProps<Props>();
+console.log('Props:', props.temporaryGrave);
+const submitting = ref(false);
+
+// Member search state
+const memberSearchQuery = ref('');
+const memberSearchResults = ref<any[]>([]);
+const selectedMember = ref<any>(null);
 
 const form = useForm({
-  section: props.temporaryGrave.section || '',
-  row_no: props.temporaryGrave.row_no || '',
-  grave_no: props.temporaryGrave.grave_no || '',
-  status: props.temporaryGrave.status || '',
-  plot_size: props.temporaryGrave.plot_size || '',
-  owner_name: props.temporaryGrave.owner_name || '',
-  remarks: props.temporaryGrave.remarks || '',
-  oldno: props.temporaryGrave.oldno || '',
-  last_burial_date: props.temporaryGrave.last_burial_date || '',
-  is_active: props.temporaryGrave.is_active !== undefined ? props.temporaryGrave.is_active : true,
+  member_type: 'member',
+  section: '',
+  row_no: '',
+  grave_no: '',
+  oldno: '',
+  status: '',
+  last_burial_date: '',
+  duration_months: '',
+  owner_name: '',
+  member_id: null as number | null,
+  contact_no: '',
+  remarks: '',
+  plot_size: '',
+  is_active: true,
 });
 
-const submit = () => {
-  form.put(route('graveyard.temporary-graves.update', props.temporaryGrave.id));
+const initializeForm = () => {
+  if (props.temporaryGrave) {
+    const grave = props.temporaryGrave;
+
+    // Format the date for the HTML date input (YYYY-MM-DD format)
+    let formattedDate = '';
+    if (grave.last_burial_date) {
+      try {
+        const date = new Date(grave.last_burial_date);
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          formattedDate = `${year}-${month}-${day}`;
+        }
+      } catch (error) {
+        console.error('Date parsing error:', error);
+      }
+    }
+
+    // Determine member type based on existing data
+    form.member_type = grave.member_id ? 'member' : 'non_member';
+    form.section = grave.section || '';
+    form.row_no = grave.row_no || '';
+    form.grave_no = grave.grave_no || '';
+    form.oldno = grave.oldno || '';
+    form.status = grave.status || '';
+    form.last_burial_date = formattedDate;
+    form.duration_months = grave.duration_months || '';
+    form.owner_name = grave.owner_name || '';
+    form.member_id = grave.member_id || null;
+    form.contact_no = grave.contact_no || '';
+    form.remarks = grave.remarks || '';
+    form.plot_size = grave.plot_size || '';
+    form.is_active = grave.is_active !== undefined ? grave.is_active : true;
+
+    // If there's a member associated, set selectedMember and populate search field
+    if (grave.member_id && grave.member) {
+      selectedMember.value = grave.member;
+      // Don't show in search field since member is already selected
+      memberSearchQuery.value = '';
+      // If contact_no is not set, use member's contact
+      if (!form.contact_no && grave.member.contact_no_1) {
+        form.contact_no = grave.member.contact_no_1;
+      }
+    }
+  }
 };
+
+const submitForm = () => {
+  submitting.value = true;
+
+  form.put(route('graveyard.temporary-graves.update', props.temporaryGrave.id), {
+    onSuccess: () => {
+      submitting.value = false;
+    },
+    onError: () => {
+      submitting.value = false;
+    },
+  });
+};
+
+// Member search functions
+async function searchMembers() {
+  if (memberSearchQuery.value.length < 2) {
+    memberSearchResults.value = [];
+    return;
+  }
+
+  try {
+    const response = await fetch('/graveyard/temporary-graves/search-members?query=' + encodeURIComponent(memberSearchQuery.value));
+    const data = await response.json();
+    memberSearchResults.value = data;
+  } catch (error) {
+    console.error('Error searching members:', error);
+    memberSearchResults.value = [];
+  }
+}
+
+function selectMember(member: any) {
+  selectedMember.value = member;
+  form.member_id = member.id;
+  form.contact_no = member.contact_no_1 || '';
+  memberSearchQuery.value = '';
+  memberSearchResults.value = [];
+}
+
+function clearSelectedMember() {
+  selectedMember.value = null;
+  form.member_id = null;
+  form.contact_no = '';
+}
+
+function handleMemberTypeChange() {
+  if (form.member_type === 'member') {
+    // Clear non-member data
+    form.owner_name = '';
+  } else {
+    // Clear member data
+    form.member_id = null;
+    selectedMember.value = null;
+    memberSearchQuery.value = '';
+    memberSearchResults.value = [];
+  }
+}
+
+onMounted(() => {
+  initializeForm();
+});
 </script>

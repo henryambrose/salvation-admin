@@ -36,7 +36,7 @@ class PermanentValidMemberController extends Controller
 
         $perPage = $request->input('perPage', 10);
 
-        return Inertia::render('graveyard/permanent_valid_member/Index', [
+        return Inertia::render('PagesGraveyard/PermanentValidMember/Index', [
             'permanentValidMembers' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'perPage', 'isArchived']),
         ]);
@@ -47,7 +47,7 @@ class PermanentValidMemberController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('graveyard/permanent_valid_member/Create');
+        return Inertia::render('PagesGraveyard/PermanentValidMember/Create');
     }
 
     /**
@@ -78,7 +78,7 @@ class PermanentValidMemberController extends Controller
      */
     public function edit(PermanentValidMember $permanentValidMember): Response
     {
-        return Inertia::render('graveyard/permanent_valid_member/Edit', [
+        return Inertia::render('PagesGraveyard/PermanentValidMember/Edit', [
             'permanentValidMember' => $permanentValidMember
         ]);
     }

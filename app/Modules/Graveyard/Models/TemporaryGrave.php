@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
+use Modules\Members\Models\Member;
 use Carbon\Carbon;
 
 class TemporaryGrave extends Model
@@ -13,6 +14,7 @@ class TemporaryGrave extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'grave_id',
         'section',
         'row_no',
         'grave_no',
@@ -23,6 +25,8 @@ class TemporaryGrave extends Model
         'remarks',
         'plot_size',
         'owner_name',
+        'member_id',
+        'contact_no',
         'is_active',
         'created_by',
         'updated_by',
@@ -62,6 +66,14 @@ class TemporaryGrave extends Model
     }
 
     /**
+     * Get the member associated with this grave
+     */
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id');
+    }
+
+    /**
      * Get the latest booking for this grave
      */
     public function latestBooking()
@@ -83,6 +95,25 @@ class TemporaryGrave extends Model
     public function scopeBySection($query, $section)
     {
         return $query->where('section', $section);
+    }
+
+    /**
+     * Scope to search graves
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('section', 'like', "%{$search}%")
+              ->orWhere('grave_no', 'like', "%{$search}%")
+              ->orWhere('oldno', 'like', "%{$search}%")
+              ->orWhere('owner_name', 'like', "%{$search}%")
+              ->orWhereHas('member', function ($memberQuery) use ($search) {
+                  $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+                              ->orWhere('family_no', 'like', "%{$search}%")
+                              ->orWhere('contact_no_1', 'like', "%{$search}%")
+                              ->orWhere('contact_no_2', 'like', "%{$search}%");
+              });
+        });
     }
 
     /**

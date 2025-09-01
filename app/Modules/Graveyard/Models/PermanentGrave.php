@@ -6,12 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Members\Models\User;
+use Modules\Members\Models\Member;
+use Carbon\Carbon;
 
 class PermanentGrave extends Model
 {
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'grave_id',
         'section',
         'row_no',
         'grave_no',
@@ -19,6 +22,8 @@ class PermanentGrave extends Model
         'status',
         'last_burial_date',
         'owner_name',
+        'member_id',
+        'contact_no',
         'remarks',
         'plot_size',
         'is_active',
@@ -56,6 +61,14 @@ class PermanentGrave extends Model
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the associated member
+     */
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id');
     }
 
     /**

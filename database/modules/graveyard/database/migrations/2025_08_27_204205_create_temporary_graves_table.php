@@ -22,6 +22,7 @@ return new class extends Migration
             $table->date('last_burial_date')->nullable();
             $table->integer('duration_months')->default(18); // Duration before transfer to niche
             $table->string('owner_name')->nullable()->index(); // For search functionality
+            $table->string('contact_no')->nullable();
             $table->foreignId('member_id')->nullable()->references('id')->on('members')->onDelete('set null');
             $table->text('remarks')->nullable();
             $table->decimal('plot_size', 8, 2)->nullable(); // in square feet

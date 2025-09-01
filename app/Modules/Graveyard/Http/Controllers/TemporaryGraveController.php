@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\TemporaryGrave;
+use Modules\Members\Models\Member;
 
 class TemporaryGraveController extends Controller
 {
@@ -16,7 +17,7 @@ class TemporaryGraveController extends Controller
      */
     public function index(Request $request)
     {
-        $query = TemporaryGrave::query();
+        $query = TemporaryGrave::query()->with('member');
 
         // Archive logic
         if ($request->input('isArchived') === 'true') {
@@ -28,11 +29,7 @@ class TemporaryGraveController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('section', 'like', "%{$search}%")
-                  ->orWhere('grave_no', 'like', "%{$search}%")
-                  ->orWhere('oldno', 'like', "%{$search}%");
-            });
+            $query->search($search);
         }
 
         // Apply filters
@@ -61,7 +58,7 @@ class TemporaryGraveController extends Controller
 
         // Get filter options
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Index', [
             'data' => $temporaryGraves,
@@ -80,7 +77,7 @@ class TemporaryGraveController extends Controller
     public function create()
     {
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Create', [
             'sections' => $sections,
@@ -98,14 +95,31 @@ class TemporaryGraveController extends Controller
             'row_no' => 'required|integer|min:1',
             'grave_no' => 'required|integer|min:1',
             'oldno' => 'nullable|string|max:50',
-            'status' => 'required|in:available,occupied,reserved,maintenance',
+            'status' => 'required|in:available,unavailable',
             'last_burial_date' => 'nullable|date',
             'duration_months' => 'nullable|integer|min:1|max:120',
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
+            'member_id' => 'nullable|exists:members,id',
+            'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
         ]);
+
+        // Validate mutually exclusive fields
+        if ($request->member_type === 'member') {
+            if (empty($request->member_id)) {
+                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
+            }
+            // Clear owner_name if member is selected
+            $request->merge(['owner_name' => null]);
+        } else {
+            if (empty($request->owner_name)) {
+                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
+            }
+            // Clear member_id if non-member is selected
+            $request->merge(['member_id' => null]);
+        }
 
         // Check for duplicate grave in same section
         $existingGrave = TemporaryGrave::where('section', $request->section)
@@ -129,6 +143,8 @@ class TemporaryGraveController extends Controller
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
+                'member_id' => $request->member_id,
+                'contact_no' => $request->contact_no,
                 'is_active' => $request->boolean('is_active', true),
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
@@ -171,8 +187,11 @@ class TemporaryGraveController extends Controller
      */
     public function edit(TemporaryGrave $temporaryGrave)
     {
+               \Log::info('Editing temporary grave', $temporaryGrave->toArray());
+        $temporaryGrave->load(['member', 'member.community']);
+ 
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Edit', [
             'temporaryGrave' => $temporaryGrave,
@@ -197,8 +216,26 @@ class TemporaryGraveController extends Controller
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
+            'member_id' => 'nullable|exists:members,id',
+            'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
+            'member_type' => 'required|in:member,non_member',
         ]);
+
+        // Validate mutually exclusive fields
+        if ($request->member_type === 'member') {
+            if (empty($request->member_id)) {
+                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
+            }
+            // Clear owner_name if member is selected
+            $request->merge(['owner_name' => null]);
+        } else {
+            if (empty($request->owner_name)) {
+                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
+            }
+            // Clear member_id if non-member is selected
+            $request->merge(['member_id' => null]);
+        }
 
         // Check for duplicate grave in same section (excluding current grave)
         $existingGrave = TemporaryGrave::where('section', $request->section)
@@ -223,6 +260,8 @@ class TemporaryGraveController extends Controller
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
+                'member_id' => $request->member_id,
+                'contact_no' => $request->contact_no,
                 'is_active' => $request->boolean('is_active', true),
                 'updated_by' => Auth::id(),
             ]);
@@ -251,9 +290,11 @@ class TemporaryGraveController extends Controller
     /**
      * Remove the specified temporary grave
      */
-    public function destroy(TemporaryGrave $temporaryGrave)
+    public function destroy($id)
     {
         try {
+            $temporaryGrave = TemporaryGrave::findOrFail($id);
+            
             // Check if grave has any bookings
             if ($temporaryGrave->bookings()->exists()) {
                 return back()->withErrors(['error' => 'Cannot delete grave. It has associated burial records.']);
@@ -304,5 +345,39 @@ class TemporaryGraveController extends Controller
 
             return back()->withErrors(['error' => 'Failed to restore temporary grave. Please try again.']);
         }
+    }
+
+    /**
+     * Search members for temporary graves
+     */
+    public function searchMembers(Request $request)
+    {
+        $query = $request->get('query');
+        
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $members = Member::with('community')
+            ->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+            ->orWhere('family_no', 'like', "%{$query}%")
+            ->orWhere('contact_no_1', 'like', "%{$query}%")
+            ->orWhere('contact_no_2', 'like', "%{$query}%")
+            ->limit(10)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'full_name' => $member->first_name . ' ' . $member->last_name,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'family_no' => $member->family_no,
+                    'contact_no_1' => $member->contact_no_1,
+                    'current_add1' => $member->current_add1,
+                    'community' => $member->community,
+                ];
+            });
+
+        return response()->json($members);
     }
 }

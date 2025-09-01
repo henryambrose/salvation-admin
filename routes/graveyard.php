@@ -11,8 +11,10 @@ use Modules\Graveyard\Http\Controllers\MaintenanceController;
 use Modules\Graveyard\Http\Controllers\FinanceController;
 use Modules\Graveyard\Http\Controllers\VisitorController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
+use Modules\Graveyard\Http\Controllers\TemporaryGraveController;
 use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
 use Modules\Graveyard\Http\Controllers\PermanentValidMemberController;
+use Modules\Graveyard\Http\Controllers\NicheController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
@@ -96,6 +98,18 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{id}/force-delete', [VisitorController::class, 'forceDelete'])->name('force-delete');
     });
 
+    // Niches Management
+    Route::prefix('graveyard/niches')->name('graveyard.niches.')->group(function () {
+        Route::get('/', [NicheController::class, 'index'])->name('index');
+        Route::get('/create', [NicheController::class, 'create'])->name('create');
+        Route::post('/', [NicheController::class, 'store'])->name('store');
+        Route::get('/{niche}', [NicheController::class, 'show'])->name('show');
+        Route::get('/{niche}/edit', [NicheController::class, 'edit'])->name('edit');
+        Route::put('/{niche}', [NicheController::class, 'update'])->name('update');
+        Route::delete('/{niche}', [NicheController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [NicheController::class, 'restore'])->name('restore');
+    });
+
     // Niche Valid Member Management
     Route::prefix('graveyard/niche-valid-members')->name('graveyard.niche-valid-members.')->group(function () {
         Route::get('/', [NicheValidMemberController::class, 'index'])->name('index');
@@ -121,12 +135,27 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Permanent Graves Management
     Route::prefix('graveyard/permanent-graves')->name('graveyard.permanent-graves.')->group(function () {
         Route::get('/', [PermanentGraveController::class, 'index'])->name('index');
+        Route::get('/create', [PermanentGraveController::class, 'create'])->name('create');
         Route::post('/', [PermanentGraveController::class, 'store'])->name('store');
-        Route::get('/{grave}', [PermanentGraveController::class, 'show'])->name('show');
-        Route::put('/{grave}', [PermanentGraveController::class, 'update'])->name('update');
-        Route::delete('/{grave}', [PermanentGraveController::class, 'destroy'])->name('destroy');
+        Route::get('/search-members', [PermanentGraveController::class, 'searchMembers'])->name('search-members');
+        Route::get('/{permanentGrave}', [PermanentGraveController::class, 'show'])->name('show');
+        Route::get('/{permanentGrave}/edit', [PermanentGraveController::class, 'edit'])->name('edit');
+        Route::put('/{permanentGrave}', [PermanentGraveController::class, 'update'])->name('update');
+        Route::delete('/{permanentGrave}', [PermanentGraveController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [PermanentGraveController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [PermanentGraveController::class, 'forceDelete'])->name('force-delete');
+    });
+
+    // Temporary Graves Management
+    Route::prefix('graveyard/temporary-graves')->name('graveyard.temporary-graves.')->group(function () {
+        Route::get('/', [TemporaryGraveController::class, 'index'])->name('index');
+        Route::get('/create', [TemporaryGraveController::class, 'create'])->name('create');
+        Route::post('/', [TemporaryGraveController::class, 'store'])->name('store');
+        Route::get('/search-members', [TemporaryGraveController::class, 'searchMembers'])->name('search-members');
+        Route::get('/{temporaryGrave}', [TemporaryGraveController::class, 'show'])->name('show');
+        Route::get('/{temporaryGrave}/edit', [TemporaryGraveController::class, 'edit'])->name('edit');
+        Route::put('/{temporaryGrave}', [TemporaryGraveController::class, 'update'])->name('update');
+        Route::delete('/{temporaryGrave}', [TemporaryGraveController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [TemporaryGraveController::class, 'restore'])->name('restore');
     });
     
     // Permission denied route for graveyard

@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('status', ['available', 'occupied'])->default('available')->index();
             $table->date('last_occupation_date')->nullable();
             $table->string('owner_name')->nullable()->index(); // For search functionality
+            $table->string('contact_no')->nullable();
             $table->foreignId('member_id')->nullable()->references('id')->on('members')->onDelete('set null');
             $table->text('remarks')->nullable();
             $table->decimal('size_width', 8, 2)->nullable(); // in inches
