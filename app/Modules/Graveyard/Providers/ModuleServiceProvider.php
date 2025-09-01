@@ -49,13 +49,10 @@ class ModuleServiceProvider extends ServiceProvider
     protected function loadPolicies(): void
     {
         $policies = [
-            // \Modules\Graveyard\Models\Cemetery::class => \Modules\Graveyard\Policies\CemeteryPolicy::class,
-            // \Modules\Graveyard\Models\Section::class => \Modules\Graveyard\Policies\SectionPolicy::class,
-            // \Modules\Graveyard\Models\Grave::class => \Modules\Graveyard\Policies\GravePolicy::class,
-            // \Modules\Graveyard\Models\Burial::class => \Modules\Graveyard\Policies\BurialPolicy::class,
-            // \Modules\Graveyard\Models\MaintenanceRecord::class => \Modules\Graveyard\Policies\MaintenanceRecordPolicy::class,
-            // \Modules\Graveyard\Models\FinancialTransaction::class => \Modules\Graveyard\Policies\FinancialTransactionPolicy::class,
-            // \Modules\Graveyard\Models\Visitor::class => \Modules\Graveyard\Policies\VisitorPolicy::class,
+            \Modules\Graveyard\Models\NicheValidMember::class => \Modules\Graveyard\Policies\NicheValidMemberPolicy::class,
+            \Modules\Graveyard\Models\PermanentValidMember::class => \Modules\Graveyard\Policies\PermanentValidMemberPolicy::class,
+            \Modules\Graveyard\Models\NicheGrave::class => \Modules\Graveyard\Policies\NicheGravePolicy::class,
+            \Modules\Graveyard\Models\PermanentGrave::class => \Modules\Graveyard\Policies\PermanentGravePolicy::class,
         ];
 
         foreach ($policies as $key => $value) {

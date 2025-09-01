@@ -10,7 +10,7 @@ use Modules\Members\Models\Member;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
 use Modules\Fund\Models\PaymentMethod;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Carbon\Carbon;
 
 class BurialBookingsSeeder extends Seeder

@@ -11,6 +11,8 @@ use Modules\Graveyard\Http\Controllers\MaintenanceController;
 use Modules\Graveyard\Http\Controllers\FinanceController;
 use Modules\Graveyard\Http\Controllers\VisitorController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
+use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
+use Modules\Graveyard\Http\Controllers\PermanentValidMemberController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
@@ -92,6 +94,28 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{visitor}', [VisitorController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [VisitorController::class, 'restore'])->name('restore');
         Route::delete('/{id}/force-delete', [VisitorController::class, 'forceDelete'])->name('force-delete');
+    });
+
+    // Niche Valid Member Management
+    Route::prefix('graveyard/niche-valid-members')->name('graveyard.niche-valid-members.')->group(function () {
+        Route::get('/', [NicheValidMemberController::class, 'index'])->name('index');
+        Route::post('/', [NicheValidMemberController::class, 'store'])->name('store');
+        Route::get('/create', [NicheValidMemberController::class, 'create'])->name('create');
+        Route::get('/{nicheValidMember}', [NicheValidMemberController::class, 'show'])->name('show');
+        Route::put('/{nicheValidMember}', [NicheValidMemberController::class, 'update'])->name('update');
+        Route::delete('/{nicheValidMember}', [NicheValidMemberController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [NicheValidMemberController::class, 'restore'])->name('restore');
+    });
+
+    // Permanent Valid Member Management
+    Route::prefix('graveyard/permanent-valid-members')->name('graveyard.permanent-valid-members.')->group(function () {
+        Route::get('/', [PermanentValidMemberController::class, 'index'])->name('index');
+        Route::post('/', [PermanentValidMemberController::class, 'store'])->name('store');
+        Route::get('/create', [PermanentValidMemberController::class, 'create'])->name('create');
+        Route::get('/{permanentValidMember}', [PermanentValidMemberController::class, 'show'])->name('show');
+        Route::put('/{permanentValidMember}', [PermanentValidMemberController::class, 'update'])->name('update');
+        Route::delete('/{permanentValidMember}', [PermanentValidMemberController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [PermanentValidMemberController::class, 'restore'])->name('restore');
     });
 
     // Permanent Graves Management
