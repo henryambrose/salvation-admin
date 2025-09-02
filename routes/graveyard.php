@@ -5,12 +5,12 @@ use Inertia\Inertia;
 use Modules\Graveyard\Http\Controllers\DashboardController;
 
 use Modules\Graveyard\Http\Controllers\GraveController;
-use Modules\Graveyard\Http\Controllers\MaintenanceController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveController;
 use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
 use Modules\Graveyard\Http\Controllers\NicheController;
 use Modules\Graveyard\Http\Controllers\ValidMemberController;
+use Modules\Graveyard\Http\Controllers\ServiceTypeController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
@@ -28,18 +28,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [GraveController::class, 'restore'])->name('restore');
         Route::delete('/{id}/force-delete', [GraveController::class, 'forceDelete'])->name('force-delete');
     });
-    
-    // Maintenance Management
-    Route::prefix('graveyard/maintenance')->name('graveyard.maintenance.')->group(function () {
-        Route::get('/', [MaintenanceController::class, 'index'])->name('index');
-        Route::post('/', [MaintenanceController::class, 'store'])->name('store');
-        Route::get('/{maintenance}', [MaintenanceController::class, 'show'])->name('show');
-        Route::put('/{maintenance}', [MaintenanceController::class, 'update'])->name('update');
-        Route::delete('/{maintenance}', [MaintenanceController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [MaintenanceController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [MaintenanceController::class, 'forceDelete'])->name('force-delete');
-    });
-    
 
     // Niches Management
     Route::prefix('graveyard/niches')->name('graveyard.niches.')->group(function () {
@@ -97,11 +85,26 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/', [ValidMemberController::class, 'index'])->name('index');
         Route::get('/create', [ValidMemberController::class, 'create'])->name('create');
         Route::post('/', [ValidMemberController::class, 'store'])->name('store');
+        Route::get('/search-members', [ValidMemberController::class, 'searchMembers'])->name('search-members');
         Route::get('/{validMember}', [ValidMemberController::class, 'show'])->name('show');
         Route::get('/{validMember}/edit', [ValidMemberController::class, 'edit'])->name('edit');
         Route::put('/{validMember}', [ValidMemberController::class, 'update'])->name('update');
         Route::delete('/{validMember}', [ValidMemberController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [ValidMemberController::class, 'restore'])->name('restore');
+    });
+
+    // Service Types Management
+    Route::prefix('graveyard/service-types')->name('graveyard.service-types.')->group(function () {
+        Route::get('/', [ServiceTypeController::class, 'index'])->name('index');
+        Route::get('/create', [ServiceTypeController::class, 'create'])->name('create');
+        Route::post('/', [ServiceTypeController::class, 'store'])->name('store');
+        Route::get('/{serviceType}', [ServiceTypeController::class, 'show'])->name('show');
+        Route::get('/{serviceType}/edit', [ServiceTypeController::class, 'edit'])->name('edit');
+        Route::put('/{serviceType}', [ServiceTypeController::class, 'update'])->name('update');
+        Route::delete('/{serviceType}', [ServiceTypeController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [ServiceTypeController::class, 'restore'])->name('restore');
+        Route::post('/{serviceType}/toggle-active', [ServiceTypeController::class, 'toggleActive'])->name('toggle-active');
+        Route::get('/service-types', [ServiceTypeController::class, 'getServiceTypes'])->name('api');
     });
     
     // Permission denied route for graveyard

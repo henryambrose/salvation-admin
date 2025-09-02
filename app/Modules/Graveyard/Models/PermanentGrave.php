@@ -72,6 +72,14 @@ class PermanentGrave extends Model
     }
 
     /**
+     * Get the valid members for this permanent grave
+     */
+    public function validMembers()
+    {
+        return $this->hasMany(ValidMember::class, 'permanent_grave_id');
+    }
+
+    /**
      * Get the latest booking for this grave
      */
     public function latestBooking()

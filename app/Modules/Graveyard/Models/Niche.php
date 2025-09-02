@@ -65,6 +65,14 @@ class Niche extends Model
     }
 
     /**
+     * Get the valid members for this niche
+     */
+    public function validMembers()
+    {
+        return $this->hasMany(ValidMember::class, 'niche_id');
+    }
+
+    /**
      * Scope to get only available niches
      */
     public function scopeAvailable($query)

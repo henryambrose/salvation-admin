@@ -63,15 +63,6 @@ class GraveyardPermissionsSeeder extends Seeder
 
 
 
-            // Maintenance Records
-            'create-maintenance',
-            'read-maintenance',
-            'update-maintenance',
-            'delete-maintenance',
-            'list-maintenance',
-            'restore-maintenance',
-
-
 
             // Reports
             'view-graveyard-reports',

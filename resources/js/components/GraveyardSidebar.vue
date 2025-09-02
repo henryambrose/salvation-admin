@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, Box, Calendar, Clock, Cross, IndianRupee, Grid3X3, Home, Settings, Settings2, UserCheck, Users } from 'lucide-vue-next';
+import { BarChart3, Box, Calendar, Clock, Cross, IndianRupee, Grid3X3, Home, Settings, UserCheck, Users } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -37,19 +37,12 @@ const graveyardNavigationGroups = computed(() => [
     ],
   },
   {
-    label: 'Operations',
-    items: [
-      { title: 'Maintenance', href: '/graveyard/maintenance', icon: Settings2, show: can('read-maintenance') || true },
-    ],
-  },
-  {
     label: 'Administration',
     items: [
       { title: 'Permanent Graves', href: '/graveyard/permanent-graves', icon: Cross, show: can('read-permanent-grave') || true },
       { title: 'Temporary Graves', href: '/graveyard/temporary-graves', icon: Clock, show: can('read-temporary-grave') || true },
       { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
       { title: 'Service Types', href: '/graveyard/service-types', icon: Settings, show: can('read-service-type') || true },
-      { title: 'Settings', href: '/settings/profile', icon: Settings, show: true },
     ],
   },
   {

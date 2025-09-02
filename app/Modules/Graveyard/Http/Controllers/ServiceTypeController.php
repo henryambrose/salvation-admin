@@ -3,11 +3,14 @@
 namespace Modules\Graveyard\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Modules\Graveyard\Http\Requests\StoreServiceTypeRequest;
+use Modules\Graveyard\Http\Requests\UpdateServiceTypeRequest;
+use Modules\Graveyard\Models\ServiceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
-use Modules\Graveyard\Models\ServiceType;
+use Inertia\Response;
 
 class ServiceTypeController extends Controller
 {
@@ -62,138 +65,101 @@ class ServiceTypeController extends Controller
             'isArchived' => $request->input('isArchived', 'false'),
         ];
 
-        return Inertia::render('PagesGraveyard/ServiceTypes/Index', [
-            'data' => $serviceTypes,
+        return Inertia::render('PagesGraveyard/ServiceType/Index', [
+            'serviceTypes' => $serviceTypes,
             'filters' => $filters,
-            'fetchUrl' => route('graveyard.service-types.index'),
+            'filterOptions' => [
+                'categories' => [
+                    ['value' => 'grave', 'label' => 'Grave'],
+                    ['value' => 'funeral', 'label' => 'Funeral'],
+                    ['value' => 'additional', 'label' => 'Additional'],
+                ],
+                'types' => [
+                    ['value' => 'normal', 'label' => 'Normal'],
+                    ['value' => 'concession', 'label' => 'Concession'],
+                    ['value' => 'free', 'label' => 'Free'],
+                ],
+            ],
         ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('PagesGraveyard/ServiceType/Create');
     }
 
     /**
      * Store a newly created service type
      */
-    public function store(Request $request)
+    public function store(StoreServiceTypeRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:service_types,name',
-            'description' => 'nullable|string',
-            'cost' => 'required|numeric|min:0',
-            'type' => 'required|in:normal,concession,free',
-            'category' => 'required|in:grave,funeral,additional',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
+        $validatedData = $request->validated();
+        $validatedData['created_by'] = auth()->id();
+        $validatedData['updated_by'] = auth()->id();
+        $validatedData['sort_order'] = $validatedData['sort_order'] ?? ServiceType::max('sort_order') + 1;
+        
+        ServiceType::create($validatedData);
+
+        return redirect()->route('graveyard.service-types.index')
+            ->with('success', 'Service type created successfully.');
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(ServiceType $serviceType): Response
+    {
+        $serviceType->load(['creator', 'updater']);
+        
+        return Inertia::render('PagesGraveyard/ServiceType/Show', [
+            'serviceType' => $serviceType
         ]);
+    }
 
-        try {
-            $serviceTypeData = $request->all();
-            $serviceTypeData['created_by'] = Auth::id();
-            $serviceTypeData['updated_by'] = Auth::id();
-            $serviceTypeData['sort_order'] = $serviceTypeData['sort_order'] ?? 0;
-
-            $serviceType = ServiceType::create($serviceTypeData);
-
-            Log::info('Service type created', [
-                'service_type_id' => $serviceType->id,
-                'name' => $serviceType->name,
-                'cost' => $serviceType->cost,
-                'type' => $serviceType->type,
-                'created_by' => Auth::id(),
-            ]);
-
-            return back()->with('success', 'Service type created successfully.');
-
-        } catch (\Exception $e) {
-            Log::error('Failed to create service type', [
-                'error' => $e->getMessage(),
-                'request_data' => $request->all(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()->withErrors(['error' => 'Failed to create service type. Please try again.']);
-        }
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(ServiceType $serviceType): Response
+    {
+        return Inertia::render('PagesGraveyard/ServiceType/Edit', [
+            'serviceType' => $serviceType
+        ]);
     }
 
     /**
      * Update the specified service type
      */
-    public function update(Request $request, $id)
+    public function update(UpdateServiceTypeRequest $request, ServiceType $serviceType)
     {
-        $serviceType = ServiceType::findOrFail($id);
+        $validatedData = $request->validated();
+        $validatedData['updated_by'] = auth()->id();
+        
+        $serviceType->update($validatedData);
 
-        $request->validate([
-            'name' => 'required|string|max:255|unique:service_types,name,' . $id,
-            'description' => 'nullable|string',
-            'cost' => 'required|numeric|min:0',
-            'type' => 'required|in:normal,concession,free',
-            'category' => 'required|in:grave,funeral,additional',
-            'sort_order' => 'nullable|integer|min:0',
-            'is_active' => 'boolean',
-        ]);
-
-        try {
-            $serviceTypeData = $request->all();
-            $serviceTypeData['updated_by'] = Auth::id();
-            $serviceTypeData['sort_order'] = $serviceTypeData['sort_order'] ?? 0;
-
-            $serviceType->update($serviceTypeData);
-
-            Log::info('Service type updated', [
-                'service_type_id' => $serviceType->id,
-                'name' => $serviceType->name,
-                'cost' => $serviceType->cost,
-                'type' => $serviceType->type,
-                'updated_by' => Auth::id(),
-            ]);
-
-            return back()->with('success', 'Service type updated successfully.');
-
-        } catch (\Exception $e) {
-            Log::error('Failed to update service type', [
-                'service_type_id' => $id,
-                'error' => $e->getMessage(),
-                'request_data' => $request->all(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()->withErrors(['error' => 'Failed to update service type. Please try again.']);
-        }
+        return redirect()->route('graveyard.service-types.index')
+            ->with('success', 'Service type updated successfully.');
     }
 
     /**
      * Remove the specified service type (soft delete)
      */
-    public function destroy($id)
+    public function destroy(Request $request, ServiceType $serviceType)
     {
-        try {
-            $serviceType = ServiceType::findOrFail($id);
+        $serviceType->delete();
 
-            Log::info('Attempting to delete service type', [
-                'service_type_id' => $serviceType->id,
-                'name' => $serviceType->name,
-                'cost' => $serviceType->cost,
-                'type' => $serviceType->type,
-                'user_id' => Auth::id(),
-            ]);
-
-            $serviceType->delete();
-
-            Log::info('Service type deleted successfully', [
-                'service_type_id' => $serviceType->id,
-                'deleted_at' => $serviceType->deleted_at,
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()->with('success', 'Service type deleted successfully.');
-
-        } catch (\Exception $e) {
-            Log::error('Failed to delete service type', [
-                'service_type_id' => $id,
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()->with('error', 'Failed to delete service type.');
-        }
+        $page = $request->input('page', 1);
+        $perPage = $request->input('perPage', 10);
+        
+        return redirect()->route('graveyard.service-types.index', array_merge(
+            $request->only(['search', 'sort', 'direction', 'isArchived', 'category', 'type', 'is_active']),
+            [
+                'page' => $page,
+                'perPage' => $perPage,
+            ]
+        ))->with('success', 'Service type deleted successfully.');
     }
 
     /**
@@ -201,27 +167,27 @@ class ServiceTypeController extends Controller
      */
     public function restore($id)
     {
-        try {
-            $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
-            $serviceType->restore();
+        $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
+        $serviceType->restore();
 
-            Log::info('Service type restored successfully', [
-                'service_type_id' => $serviceType->id,
-                'name' => $serviceType->name,
-                'user_id' => Auth::id(),
-            ]);
+        return redirect()->route('graveyard.service-types.index')
+            ->with('success', 'Service type restored successfully.');
+    }
 
-            return back()->with('success', 'Service type restored successfully.');
+    /**
+     * Toggle the active status of the service type.
+     */
+    public function toggleActive(Request $request, ServiceType $serviceType)
+    {
+        $serviceType->update([
+            'is_active' => !$serviceType->is_active,
+            'updated_by' => auth()->id(),
+        ]);
 
-        } catch (\Exception $e) {
-            Log::error('Failed to restore service type', [
-                'service_type_id' => $id,
-                'error' => $e->getMessage(),
-                'user_id' => Auth::id(),
-            ]);
-
-            return back()->with('error', 'Failed to restore service type.');
-        }
+        $status = $serviceType->is_active ? 'activated' : 'deactivated';
+        
+        return redirect()->back()
+            ->with('success', "Service type {$status} successfully.");
     }
 
     /**
