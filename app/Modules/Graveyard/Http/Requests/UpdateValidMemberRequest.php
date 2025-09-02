@@ -5,7 +5,7 @@ namespace Modules\Graveyard\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdatePermanentValidMemberRequest extends FormRequest
+class UpdateValidMemberRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +32,7 @@ class UpdatePermanentValidMemberRequest extends FormRequest
                 'required',
                 'string',
                 'max:20',
-                Rule::unique('permanent_valid_member', 'aadhar_no')->ignore($this->permanent_valid_member),
+                Rule::unique('valid_members', 'aadhar_no')->ignore($this->validMember),
             ],
         ];
     }

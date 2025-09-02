@@ -4,11 +4,11 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreatePermanentValidMemberTable extends Migration
+class CreateValidMembersTable extends Migration
 {
     public function up()
     {
-        Schema::create('permanent_valid_member', function (Blueprint $table) {
+        Schema::create('valid_members', function (Blueprint $table) {
             $table->id();
             $table->foreignId('permanent_grave_id')
                   ->constrained('permanent_graves')
@@ -30,6 +30,6 @@ class CreatePermanentValidMemberTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('permanent_valid_member');
+        Schema::dropIfExists('valid_members');
     }
 }

@@ -4,7 +4,7 @@ namespace Modules\Graveyard\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePermanentValidMemberRequest extends FormRequest
+class StoreValidMemberRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -27,7 +27,7 @@ class StorePermanentValidMemberRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:255'],
             'member_id' => ['required', 'exists:members,id'],
             'contact_no' => ['required', 'string', 'max:20'],
-            'aadhar_no' => ['required', 'string', 'max:20', 'unique:permanent_valid_member,aadhar_no'],
+            'aadhar_no' => ['required', 'string', 'max:20', 'unique:valid_members,aadhar_no'],
         ];
     }
 }

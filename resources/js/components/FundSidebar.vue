@@ -37,7 +37,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import { 
   Home, 
-  DollarSign, 
+  IndianRupee, 
   BarChart3, 
   Settings, 
   FolderOpen, 
@@ -72,7 +72,7 @@ const fundNavigationGroups = computed(() => [
       {
         title: 'Annual Contributions',
         href: '/fund/annual-contributions',
-        icon: DollarSign,
+        icon: IndianRupee,
         show: can('read-annual-contributions') || true, // Default to true for now
       },
       {
@@ -125,7 +125,7 @@ const fundNavigationGroups = computed(() => [
       {
         title: 'Payment Methods',
         href: '/fund/payment-methods',
-        icon: DollarSign,
+        icon: IndianRupee,
         show: can('read-payment-methods') || true,
       },
       {

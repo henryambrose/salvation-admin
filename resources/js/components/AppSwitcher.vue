@@ -53,7 +53,7 @@ import { ref, computed } from 'vue';
 import { Link, usePage } from '@inertiajs/vue3';
 import { 
   Users, 
-  DollarSign, 
+  IndianRupee, 
   MapPin,
   ChevronDownIcon, 
   CheckIcon 
@@ -63,7 +63,6 @@ const isOpen = ref(false);
 
 // Get current page info
 const page = usePage();
-const currentPath = page.url;
 
 // Define available apps
 const availableApps = [
@@ -80,7 +79,7 @@ const availableApps = [
     name: 'Fund',
     description: 'Financial management & mass intentions',
     href: '/fund',
-    icon: DollarSign,
+    icon: IndianRupee,
     color: 'text-green-600'
   },
   {
@@ -94,6 +93,7 @@ const availableApps = [
 ];
 // Determine current app based on URL
 const currentApp = computed(() => {
+  const currentPath = page.url;
   if (currentPath.startsWith('/fund')) {
     return availableApps.find(app => app.id === 'fund') || availableApps[0];
   } else if (currentPath.startsWith('/graveyard')) {

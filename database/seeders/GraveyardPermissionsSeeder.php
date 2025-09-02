@@ -60,21 +60,8 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-service-type',
             'restore-service-type',
 
-            // Cemeteries
-            'create-cemetery',
-            'read-cemetery',
-            'update-cemetery',
-            'delete-cemetery',
-            'list-cemetery',
-            'restore-cemetery',
 
-            // Sections
-            'create-section',
-            'read-section',
-            'update-section',
-            'delete-section',
-            'list-section',
-            'restore-section',
+
 
             // Maintenance Records
             'create-maintenance',
@@ -84,21 +71,7 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-maintenance',
             'restore-maintenance',
 
-            // Financial Records
-            'create-graveyard-finance',
-            'read-graveyard-finance',
-            'update-graveyard-finance',
-            'delete-graveyard-finance',
-            'list-graveyard-finance',
-            'restore-graveyard-finance',
 
-            // Visitor Records
-            'create-visitor',
-            'read-visitor',
-            'update-visitor',
-            'delete-visitor',
-            'list-visitor',
-            'restore-visitor',
 
             // Reports
             'view-graveyard-reports',

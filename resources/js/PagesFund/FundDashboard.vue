@@ -121,7 +121,7 @@
             <div class="p-5">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <DollarSign class="h-[1.5rem] w-[1.5rem] text-gray-400" />
+                  <IndianRupee class="h-[1.5rem] w-[1.5rem] text-gray-400" />
                 </div>
                 <div class="ml-5 w-0 flex-1">
                   <dl>
@@ -172,7 +172,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { FileText, FolderOpen, Clock, Plus, DollarSign } from 'lucide-vue-next';
+import { FileText, FolderOpen, Clock, Plus, IndianRupee } from 'lucide-vue-next';
 
 defineOptions({
     layout: AppLayout

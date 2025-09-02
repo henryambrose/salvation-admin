@@ -1,28 +1,13 @@
 <script setup lang="ts">
+import AppLogo from '@/components/AppLogo.vue';
 import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import {
-  Home,
-  MapPin,
-  Grid3X3,
-  Users,
-  Calendar,
-  Settings2,
-  DollarSign,
-  UserCheck,
-  BarChart3,
-  Settings,
-  Cross,
-  Clock,
-  Box
-} from 'lucide-vue-next';
+import { BarChart3, Box, Calendar, Clock, Cross, IndianRupee, Grid3X3, Home, Settings, Settings2, UserCheck, Users } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
-import AppLogo from '@/components/AppLogo.vue';
 
 const { can } = permissionHelpers();
 
@@ -37,32 +22,24 @@ const page = usePage();
 const graveyardNavigationGroups = computed(() => [
   {
     label: 'Overview',
-    items: [
-      { title: 'Dashboard', href: '/graveyard', icon: Home, show: true },
-    ],
+    items: [{ title: 'Dashboard', href: '/graveyard', icon: Home, show: true }],
   },
   {
     label: 'Structures',
     items: [
-      { title: 'Cemeteries', href: '/graveyard/cemeteries', icon: MapPin, show: can('read-cemetery') || true },
-      { title: 'Sections', href: '/graveyard/sections', icon: Grid3X3, show: can('read-section') || true },
       { title: 'Graves', href: '/graveyard/graves', icon: Users, show: can('read-grave') || true },
-      { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
-      { title: 'Permanent Valid Members', href: '/graveyard/permanent-valid-members', icon: UserCheck, show: can('read-permanent-valid-member') || true },
+      {
+        title: 'Valid Members',
+        href: '/graveyard/valid-members',
+        icon: UserCheck,
+        show: can('read-valid-member') || true,
+      },
     ],
   },
   {
     label: 'Operations',
     items: [
-      { title: 'Burials', href: '/graveyard/burials', icon: Calendar, show: can('read-grave-booking') || true },
       { title: 'Maintenance', href: '/graveyard/maintenance', icon: Settings2, show: can('read-maintenance') || true },
-      { title: 'Visitors', href: '/graveyard/visitors', icon: UserCheck, show: can('read-visitor') || true },
-    ],
-  },
-  {
-    label: 'Finance',
-    items: [
-      { title: 'Finances', href: '/graveyard/finances', icon: DollarSign, show: can('read-graveyard-finance') || true },
     ],
   },
   {
@@ -77,23 +54,27 @@ const graveyardNavigationGroups = computed(() => [
   },
   {
     label: 'Reports & Analytics',
-    items: [
-      { title: 'Reports', href: '/graveyard/reports', icon: BarChart3, show: can('view-graveyard-reports') || true },
-    ],
+    items: [{ title: 'Reports', href: '/graveyard/reports', icon: BarChart3, show: can('view-graveyard-reports') || true }],
   },
 ]);
 
 const filteredGraveyardNavigationGroups = computed(() =>
-  graveyardNavigationGroups.value.map(group => ({
-    ...group,
-    items: group.items.filter(item => item.show)
-  })).filter(group => group.items.length > 0)
+  graveyardNavigationGroups.value
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.show),
+    }))
+    .filter((group) => group.items.length > 0),
 );
 
 // Watch for route changes
-watch(() => page.url, (newUrl) => {
-  // console.log('🔄 GraveyardSidebar - Route changed to:', newUrl);
-}, { immediate: true });
+watch(
+  () => page.url,
+  (newUrl) => {
+    // console.log('🔄 GraveyardSidebar - Route changed to:', newUrl);
+  },
+  { immediate: true },
+);
 </script>
 
 <template>

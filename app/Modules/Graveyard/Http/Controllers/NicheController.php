@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\Niche;
+use Modules\Members\Models\Member;
 
 class NicheController extends Controller
 {
@@ -16,7 +17,7 @@ class NicheController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Niche::query();
+        $query = Niche::query()->with('member');
 
         // Archive logic
         if ($request->input('isArchived') === 'true') {
@@ -28,11 +29,7 @@ class NicheController extends Controller
         // Apply search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('niche_no', 'like', "%{$search}%")
-                  ->orWhere('sr_no', 'like', "%{$search}%")
-                  ->orWhere('location', 'like', "%{$search}%");
-            });
+            $query->search($search);
         }
 
         // Apply filters
@@ -99,12 +96,31 @@ class NicheController extends Controller
             'location' => 'required|string|max:100',
             'status' => 'required|in:available,occupied,reserved,maintenance',
             'last_occupation_date' => 'nullable|date',
+            'owner_name' => 'nullable|string|max:255',
+            'member_id' => 'nullable|exists:members,id',
+            'contact_no' => 'nullable|string|max:20',
             'remarks' => 'nullable|string|max:1000',
             'size_width' => 'nullable|numeric|min:0',
             'size_height' => 'nullable|numeric|min:0',
             'size_depth' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
+            'member_type' => 'required|in:member,non_member',
         ]);
+
+        // Validate mutually exclusive fields
+        if ($request->member_type === 'member') {
+            if (empty($request->member_id)) {
+                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
+            }
+            // Clear owner_name if member is selected
+            $request->merge(['owner_name' => null]);
+        } else {
+            if (empty($request->owner_name)) {
+                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
+            }
+            // Clear member_id if non-member is selected
+            $request->merge(['member_id' => null]);
+        }
 
         // Check for duplicate niche in same location
         $existingNiche = Niche::where('location', $request->location)
@@ -123,6 +139,9 @@ class NicheController extends Controller
                 'location' => $request->location,
                 'status' => $request->status,
                 'last_occupation_date' => $request->last_occupation_date,
+                'owner_name' => $request->owner_name,
+                'member_id' => $request->member_id,
+                'contact_no' => $request->contact_no,
                 'remarks' => $request->remarks,
                 'size_width' => $request->size_width,
                 'size_height' => $request->size_height,
@@ -157,7 +176,7 @@ class NicheController extends Controller
      */
     public function show(Niche $niche)
     {
-        $niche->load(['creator', 'updater']);
+        $niche->load(['member', 'creator', 'updater']);
 
         return Inertia::render('PagesGraveyard/Niches/Show', [
             'niche' => $niche,
@@ -169,6 +188,8 @@ class NicheController extends Controller
      */
     public function edit(Niche $niche)
     {
+        $niche->load(['member', 'member.community']);
+        
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
         $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
 
@@ -190,12 +211,31 @@ class NicheController extends Controller
             'location' => 'required|string|max:100',
             'status' => 'required|in:available,occupied,reserved,maintenance',
             'last_occupation_date' => 'nullable|date',
+            'owner_name' => 'nullable|string|max:255',
+            'member_id' => 'nullable|exists:members,id',
+            'contact_no' => 'nullable|string|max:20',
             'remarks' => 'nullable|string|max:1000',
             'size_width' => 'nullable|numeric|min:0',
             'size_height' => 'nullable|numeric|min:0',
             'size_depth' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
+            'member_type' => 'required|in:member,non_member',
         ]);
+
+        // Validate mutually exclusive fields
+        if ($request->member_type === 'member') {
+            if (empty($request->member_id)) {
+                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
+            }
+            // Clear owner_name if member is selected
+            $request->merge(['owner_name' => null]);
+        } else {
+            if (empty($request->owner_name)) {
+                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
+            }
+            // Clear member_id if non-member is selected
+            $request->merge(['member_id' => null]);
+        }
 
         // Check for duplicate niche in same location (excluding current niche)
         $existingNiche = Niche::where('location', $request->location)
@@ -215,6 +255,9 @@ class NicheController extends Controller
                 'location' => $request->location,
                 'status' => $request->status,
                 'last_occupation_date' => $request->last_occupation_date,
+                'owner_name' => $request->owner_name,
+                'member_id' => $request->member_id,
+                'contact_no' => $request->contact_no,
                 'remarks' => $request->remarks,
                 'size_width' => $request->size_width,
                 'size_height' => $request->size_height,
@@ -249,6 +292,7 @@ class NicheController extends Controller
      */
     public function destroy(Niche $niche)
     {
+        \Log::info('Attempting to delete niche', $niche->toArray());
         try {
             // Check if niche is occupied
             if ($niche->status === 'occupied') {
@@ -302,5 +346,43 @@ class NicheController extends Controller
 
             return back()->withErrors(['error' => 'Failed to restore niche. Please try again.']);
         }
+    }
+
+    /**
+     * Search for members (for AJAX calls)
+     */
+    public function searchMembers(Request $request)
+    {
+        $query = $request->get('query');
+        
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $members = Member::with(['community'])
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                  ->orWhere('last_name', 'like', "%{$query}%")
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
+                  ->orWhere('family_no', 'like', "%{$query}%")
+                  ->orWhere('contact_no_1', 'like', "%{$query}%")
+                  ->orWhere('contact_no_2', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'full_name' => "{$member->first_name} {$member->last_name}",
+                    'family_no' => $member->family_no,
+                    'contact_no_1' => $member->contact_no_1,
+                    'current_add1' => $member->current_add1,
+                    'community' => $member->community,
+                ];
+            });
+
+        return response()->json($members);
     }
 }

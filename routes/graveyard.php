@@ -3,46 +3,21 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Graveyard\Http\Controllers\DashboardController;
-use Modules\Graveyard\Http\Controllers\CemeteryController;
-use Modules\Graveyard\Http\Controllers\SectionController;
+
 use Modules\Graveyard\Http\Controllers\GraveController;
-use Modules\Graveyard\Http\Controllers\BurialController;
 use Modules\Graveyard\Http\Controllers\MaintenanceController;
-use Modules\Graveyard\Http\Controllers\FinanceController;
-use Modules\Graveyard\Http\Controllers\VisitorController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveController;
 use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
-use Modules\Graveyard\Http\Controllers\PermanentValidMemberController;
 use Modules\Graveyard\Http\Controllers\NicheController;
+use Modules\Graveyard\Http\Controllers\ValidMemberController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
     // Graveyard Dashboard
     Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
     
-    // Cemeteries Management
-    Route::prefix('graveyard/cemeteries')->name('graveyard.cemeteries.')->group(function () {
-        Route::get('/', [CemeteryController::class, 'index'])->name('index');
-        Route::post('/', [CemeteryController::class, 'store'])->name('store');
-        Route::get('/{cemetery}', [CemeteryController::class, 'show'])->name('show');
-        Route::put('/{cemetery}', [CemeteryController::class, 'update'])->name('update');
-        Route::delete('/{cemetery}', [CemeteryController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [CemeteryController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [CemeteryController::class, 'forceDelete'])->name('force-delete');
-    });
-    
-    // Sections Management
-    Route::prefix('graveyard/sections')->name('graveyard.sections.')->group(function () {
-        Route::get('/', [SectionController::class, 'index'])->name('index');
-        Route::post('/', [SectionController::class, 'store'])->name('store');
-        Route::get('/{section}', [SectionController::class, 'show'])->name('show');
-        Route::put('/{section}', [SectionController::class, 'update'])->name('update');
-        Route::delete('/{section}', [SectionController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [SectionController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [SectionController::class, 'forceDelete'])->name('force-delete');
-    });
-    
+
     // Graves Management
     Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
         Route::get('/', [GraveController::class, 'index'])->name('index');
@@ -52,17 +27,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{grave}', [GraveController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [GraveController::class, 'restore'])->name('restore');
         Route::delete('/{id}/force-delete', [GraveController::class, 'forceDelete'])->name('force-delete');
-    });
-    
-    // Burials Management
-    Route::prefix('graveyard/burials')->name('graveyard.burials.')->group(function () {
-        Route::get('/', [BurialController::class, 'index'])->name('index');
-        Route::post('/', [BurialController::class, 'store'])->name('store');
-        Route::get('/{burial}', [BurialController::class, 'show'])->name('show');
-        Route::put('/{burial}', [BurialController::class, 'update'])->name('update');
-        Route::delete('/{burial}', [BurialController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [BurialController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [BurialController::class, 'forceDelete'])->name('force-delete');
     });
     
     // Maintenance Management
@@ -76,33 +40,13 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{id}/force-delete', [MaintenanceController::class, 'forceDelete'])->name('force-delete');
     });
     
-    // Finance Management
-    Route::prefix('graveyard/finances')->name('graveyard.finances.')->group(function () {
-        Route::get('/', [FinanceController::class, 'index'])->name('index');
-        Route::post('/', [FinanceController::class, 'store'])->name('store');
-        Route::get('/{transaction}', [FinanceController::class, 'show'])->name('show');
-        Route::put('/{transaction}', [FinanceController::class, 'update'])->name('update');
-        Route::delete('/{transaction}', [FinanceController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [FinanceController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [FinanceController::class, 'forceDelete'])->name('force-delete');
-    });
-    
-    // Visitor Management
-    Route::prefix('graveyard/visitors')->name('graveyard.visitors.')->group(function () {
-        Route::get('/', [VisitorController::class, 'index'])->name('index');
-        Route::post('/', [VisitorController::class, 'store'])->name('store');
-        Route::get('/{visitor}', [VisitorController::class, 'show'])->name('show');
-        Route::put('/{visitor}', [VisitorController::class, 'update'])->name('update');
-        Route::delete('/{visitor}', [VisitorController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [VisitorController::class, 'restore'])->name('restore');
-        Route::delete('/{id}/force-delete', [VisitorController::class, 'forceDelete'])->name('force-delete');
-    });
 
     // Niches Management
     Route::prefix('graveyard/niches')->name('graveyard.niches.')->group(function () {
         Route::get('/', [NicheController::class, 'index'])->name('index');
         Route::get('/create', [NicheController::class, 'create'])->name('create');
         Route::post('/', [NicheController::class, 'store'])->name('store');
+        Route::get('/search-members', [NicheController::class, 'searchMembers'])->name('search-members');
         Route::get('/{niche}', [NicheController::class, 'show'])->name('show');
         Route::get('/{niche}/edit', [NicheController::class, 'edit'])->name('edit');
         Route::put('/{niche}', [NicheController::class, 'update'])->name('update');
@@ -121,16 +65,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [NicheValidMemberController::class, 'restore'])->name('restore');
     });
 
-    // Permanent Valid Member Management
-    Route::prefix('graveyard/permanent-valid-members')->name('graveyard.permanent-valid-members.')->group(function () {
-        Route::get('/', [PermanentValidMemberController::class, 'index'])->name('index');
-        Route::post('/', [PermanentValidMemberController::class, 'store'])->name('store');
-        Route::get('/create', [PermanentValidMemberController::class, 'create'])->name('create');
-        Route::get('/{permanentValidMember}', [PermanentValidMemberController::class, 'show'])->name('show');
-        Route::put('/{permanentValidMember}', [PermanentValidMemberController::class, 'update'])->name('update');
-        Route::delete('/{permanentValidMember}', [PermanentValidMemberController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [PermanentValidMemberController::class, 'restore'])->name('restore');
-    });
 
     // Permanent Graves Management
     Route::prefix('graveyard/permanent-graves')->name('graveyard.permanent-graves.')->group(function () {
@@ -156,6 +90,18 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::put('/{temporaryGrave}', [TemporaryGraveController::class, 'update'])->name('update');
         Route::delete('/{temporaryGrave}', [TemporaryGraveController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [TemporaryGraveController::class, 'restore'])->name('restore');
+    });
+
+    // Valid Member Management
+    Route::prefix('graveyard/valid-members')->name('graveyard.valid-members.')->group(function () {
+        Route::get('/', [ValidMemberController::class, 'index'])->name('index');
+        Route::get('/create', [ValidMemberController::class, 'create'])->name('create');
+        Route::post('/', [ValidMemberController::class, 'store'])->name('store');
+        Route::get('/{validMember}', [ValidMemberController::class, 'show'])->name('show');
+        Route::get('/{validMember}/edit', [ValidMemberController::class, 'edit'])->name('edit');
+        Route::put('/{validMember}', [ValidMemberController::class, 'update'])->name('update');
+        Route::delete('/{validMember}', [ValidMemberController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [ValidMemberController::class, 'restore'])->name('restore');
     });
     
     // Permission denied route for graveyard

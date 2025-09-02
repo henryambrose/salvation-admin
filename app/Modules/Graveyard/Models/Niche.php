@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
+use Modules\Members\Models\Member;
 
 class Niche extends Model
 {
@@ -17,6 +18,9 @@ class Niche extends Model
         'location',
         'status',
         'last_occupation_date',
+        'owner_name',
+        'member_id',
+        'contact_no',
         'remarks',
         'size_width',
         'size_height',
@@ -53,6 +57,14 @@ class Niche extends Model
     }
 
     /**
+     * Get the associated member
+     */
+    public function member()
+    {
+        return $this->belongsTo(Member::class, 'member_id');
+    }
+
+    /**
      * Scope to get only available niches
      */
     public function scopeAvailable($query)
@@ -66,6 +78,19 @@ class Niche extends Model
     public function scopeByLocation($query, $location)
     {
         return $query->where('location', $location);
+    }
+
+    /**
+     * Scope to search niches by various criteria
+     */
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($q) use ($search) {
+            $q->where('owner_name', 'like', "%{$search}%")
+              ->orWhere('niche_no', 'like', "%{$search}%")
+              ->orWhere('sr_no', 'like', "%{$search}%")
+              ->orWhere('location', 'like', "%{$search}%");
+        });
     }
 
     /**

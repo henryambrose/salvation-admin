@@ -50,7 +50,7 @@ class ModuleServiceProvider extends ServiceProvider
     {
         $policies = [
             \Modules\Graveyard\Models\NicheValidMember::class => \Modules\Graveyard\Policies\NicheValidMemberPolicy::class,
-            \Modules\Graveyard\Models\PermanentValidMember::class => \Modules\Graveyard\Policies\PermanentValidMemberPolicy::class,
+            \Modules\Graveyard\Models\ValidMember::class => \Modules\Graveyard\Policies\ValidMemberPolicy::class,
             \Modules\Graveyard\Models\NicheGrave::class => \Modules\Graveyard\Policies\NicheGravePolicy::class,
             \Modules\Graveyard\Models\PermanentGrave::class => \Modules\Graveyard\Policies\PermanentGravePolicy::class,
         ];

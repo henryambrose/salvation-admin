@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PermanentValidMember extends Model
+class ValidMember extends Model
 {
     use HasFactory, SoftDeletes;
 
@@ -16,7 +16,7 @@ class PermanentValidMember extends Model
      *
      * @var array
      */
-    protected $table = 'permanent_valid_member';
+    protected $table = 'valid_members';
 
     protected $fillable = [
         'permanent_grave_id',

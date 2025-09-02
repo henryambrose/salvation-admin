@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { MapPin, Users, Calendar, DollarSign, Cross } from 'lucide-vue-next';
+import { MapPin, Users, Calendar, IndianRupee, Cross } from 'lucide-vue-next';
 import { Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 
@@ -86,7 +86,7 @@ const props = defineProps<Props>();
       <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <div class="flex items-center">
           <div class="flex-shrink-0">
-            <DollarSign class="h-8 w-8 text-purple-600" />
+            <IndianRupee class="h-8 w-8 text-purple-600" />
           </div>
           <div class="ml-4">
             <p class="text-sm font-medium text-gray-600 dark:text-gray-300">Monthly Revenue</p>
@@ -116,7 +116,7 @@ const props = defineProps<Props>();
         </a>
 
         <a href="/graveyard/maintenance" class="block rounded-lg bg-orange-50 p-4 text-center hover:bg-orange-100 dark:bg-orange-900 dark:hover:bg-orange-800">
-          <DollarSign class="mx-auto h-8 w-8 text-orange-600 dark:text-orange-400" />
+          <IndianRupee class="mx-auto h-8 w-8 text-orange-600 dark:text-orange-400" />
           <p class="mt-2 font-medium text-orange-900 dark:text-orange-100">Maintenance</p>
         </a>
       </div>
