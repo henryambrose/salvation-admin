@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, Box, Calendar, Clock, Cross, IndianRupee, Grid3X3, Home, Settings, UserCheck, Users } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Box, Clock, Cross, Home, Settings, UserCheck } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -25,15 +25,11 @@ const graveyardNavigationGroups = computed(() => [
     items: [{ title: 'Dashboard', href: '/graveyard', icon: Home, show: true }],
   },
   {
-    label: 'Structures',
+    label: 'Bookings',
     items: [
-      { title: 'Graves', href: '/graveyard/graves', icon: Users, show: can('read-grave') || true },
-      {
-        title: 'Valid Members',
-        href: '/graveyard/valid-members',
-        icon: UserCheck,
-        show: can('read-valid-member') || true,
-      },
+      { title: 'Permanent Grave Bookings', href: '/graveyard/permanent-grave-bookings', icon: Cross, show: can('read-permanent-grave-booking') || true },
+      { title: 'Temporary Grave Bookings', href: '/graveyard/temporary-grave-bookings', icon: Clock, show: can('read-temporary-grave-booking') || true },
+      { title: 'Niche Transfers', href: '/graveyard/niche-transfers', icon: BookOpen, show: can('read-niche-transfer') || true },
     ],
   },
   {
@@ -42,6 +38,7 @@ const graveyardNavigationGroups = computed(() => [
       { title: 'Permanent Graves', href: '/graveyard/permanent-graves', icon: Cross, show: can('read-permanent-grave') || true },
       { title: 'Temporary Graves', href: '/graveyard/temporary-graves', icon: Clock, show: can('read-temporary-grave') || true },
       { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
+      { title: 'Valid Members', href: '/graveyard/valid-members', icon: UserCheck, show: can('read-valid-member') || true },
       { title: 'Service Types', href: '/graveyard/service-types', icon: Settings, show: can('read-service-type') || true },
     ],
   },

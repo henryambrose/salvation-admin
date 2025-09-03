@@ -11,6 +11,9 @@ use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
 use Modules\Graveyard\Http\Controllers\NicheController;
 use Modules\Graveyard\Http\Controllers\ValidMemberController;
 use Modules\Graveyard\Http\Controllers\ServiceTypeController;
+use Modules\Graveyard\Http\Controllers\PermanentGraveBookingController;
+use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
+use Modules\Graveyard\Http\Controllers\NicheTransferController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     
@@ -105,6 +108,42 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [ServiceTypeController::class, 'restore'])->name('restore');
         Route::post('/{serviceType}/toggle-active', [ServiceTypeController::class, 'toggleActive'])->name('toggle-active');
         Route::get('/service-types', [ServiceTypeController::class, 'getServiceTypes'])->name('api');
+    });
+
+    // Permanent Grave Booking Management
+    Route::prefix('graveyard/permanent-grave-bookings')->name('graveyard.permanent-grave-bookings.')->group(function () {
+        Route::get('/', [PermanentGraveBookingController::class, 'index'])->name('index');
+        Route::get('/create', [PermanentGraveBookingController::class, 'create'])->name('create');
+        Route::post('/search-permanent-grave', [PermanentGraveBookingController::class, 'searchPermanentGrave'])->name('search-permanent-grave');
+        Route::post('/', [PermanentGraveBookingController::class, 'store'])->name('store');
+        Route::get('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'show'])->name('show');
+        Route::post('/{permanentGraveBooking}/confirm', [PermanentGraveBookingController::class, 'confirm'])->name('confirm');
+        Route::post('/{permanentGraveBooking}/cancel', [PermanentGraveBookingController::class, 'cancel'])->name('cancel');
+    });
+
+    // Temporary Grave Booking Management
+    Route::prefix('graveyard/temporary-grave-bookings')->name('graveyard.temporary-grave-bookings.')->group(function () {
+        Route::get('/', [TemporaryGraveBookingController::class, 'index'])->name('index');
+        Route::get('/create', [TemporaryGraveBookingController::class, 'create'])->name('create');
+        Route::post('/', [TemporaryGraveBookingController::class, 'store'])->name('store');
+        Route::get('/eligible-for-transfer', [TemporaryGraveBookingController::class, 'eligibleForTransfer'])->name('eligible-for-transfer');
+        Route::get('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'show'])->name('show');
+        Route::post('/{temporaryGraveBooking}/confirm', [TemporaryGraveBookingController::class, 'confirm'])->name('confirm');
+        Route::post('/{temporaryGraveBooking}/cancel', [TemporaryGraveBookingController::class, 'cancel'])->name('cancel');
+        Route::post('/{temporaryGraveBooking}/request-transfer', [TemporaryGraveBookingController::class, 'requestTransfer'])->name('request-transfer');
+    });
+
+    // Niche Transfer Management
+    Route::prefix('graveyard/niche-transfers')->name('graveyard.niche-transfers.')->group(function () {
+        Route::get('/', [NicheTransferController::class, 'index'])->name('index');
+        Route::get('/create', [NicheTransferController::class, 'create'])->name('create');
+        Route::post('/', [NicheTransferController::class, 'store'])->name('store');
+        Route::get('/statistics', [NicheTransferController::class, 'statistics'])->name('statistics');
+        Route::get('/{nicheTransfer}', [NicheTransferController::class, 'show'])->name('show');
+        Route::post('/{nicheTransfer}/approve', [NicheTransferController::class, 'approve'])->name('approve');
+        Route::post('/{nicheTransfer}/reject', [NicheTransferController::class, 'reject'])->name('reject');
+        Route::post('/{nicheTransfer}/complete', [NicheTransferController::class, 'complete'])->name('complete');
+        Route::post('/{nicheTransfer}/cancel', [NicheTransferController::class, 'cancel'])->name('cancel');
     });
     
     // Permission denied route for graveyard

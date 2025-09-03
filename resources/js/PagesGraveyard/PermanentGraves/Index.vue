@@ -18,6 +18,7 @@
           <div class="relative">
             <input
               v-model="filters.search"
+              @input="debouncedSearch"
               @keyup.enter="applyFilters()"
               type="text"
               class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
@@ -34,7 +35,7 @@
           </div>
           <select
             v-model="filters.perPage"
-            @change="applyFilters()"
+            @change="applyFilters"
             class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
           >
             <option :value="10">10</option>
@@ -191,7 +192,7 @@
                     {{ grave.status.charAt(0).toUpperCase() + grave.status.slice(1) }}
                   </span>
                 </td>
-                <td class="p-2">{{ grave.owner_name || grave.member.first_name + ' ' + grave.member.last_name }}</td>
+                <td class="p-2">{{ grave.owner_name || (grave.member ? grave.member.first_name + ' ' + grave.member.last_name : '-') }}</td>
                 <td class="p-2">{{ grave.plot_size ? `${grave.plot_size} sq ft` : '-' }}</td>
                 <td class="p-2">{{ grave.last_burial_date ? formatDate(grave.last_burial_date) : '-' }}</td>
                 <td v-if="!serverArchived" class="p-2">
@@ -286,7 +287,14 @@ const breadcrumbs = [
 ];
 
 // Reactive state
-const filters = ref({ ...(props.filters || 10) });
+console.log(props.filters);
+const filters = ref({ 
+  perPage: 10, 
+  search: '', 
+  sort: 'section', 
+  direction: 'asc',
+  ...(props.filters || {}) 
+});
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
 const graveToDelete = ref<any>(null);
@@ -298,8 +306,11 @@ let searchTimeout: number;
 const debouncedSearch = () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 300);
+    // Only search if 2+ characters or empty (to clear results)
+    if (!filters.value.search || filters.value.search.length >= 2) {
+      applyFilters();
+    }
+  }, 500);
 };
 
 const clearSearch = () => {
@@ -310,7 +321,11 @@ const clearSearch = () => {
 const applyFilters = () => {
   router.get(
     props.fetchUrl,
-    { ...filters.value, isArchived: isArchived.value ? 'true' : 'false' },
+    { 
+      ...filters.value, 
+      page: 1, // Reset to first page when filtering
+      isArchived: isArchived.value ? 'true' : 'false' 
+    },
     {
       preserveState: true,
       preserveScroll: true,

@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class CreateValidMembersTable extends Migration
 {
@@ -33,13 +34,13 @@ class CreateValidMembersTable extends Migration
             $table->timestamps();
             $table->softDeletes();
             
-            // Constraints to ensure exactly one grave type is selected
-            $table->check('(permanent_grave_id IS NOT NULL AND niche_id IS NULL) OR (permanent_grave_id IS NULL AND niche_id IS NOT NULL)');
-            
             // Index for duplicate prevention queries
             $table->index(['member_id', 'deleted_at']);
             $table->index(['aadhar_no', 'deleted_at']);
         });
+
+        // Add check constraint using raw SQL
+        DB::statement('ALTER TABLE valid_members ADD CONSTRAINT chk_grave_type CHECK ((permanent_grave_id IS NOT NULL AND niche_id IS NULL) OR (permanent_grave_id IS NULL AND niche_id IS NOT NULL))');
     }
 
     /**

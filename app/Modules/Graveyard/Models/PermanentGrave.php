@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\DB;
 use Modules\Members\Models\User;
 use Modules\Members\Models\Member;
 use Carbon\Carbon;
@@ -112,7 +113,12 @@ class PermanentGrave extends Model
             $q->where('owner_name', 'like', "%{$search}%")
               ->orWhere('grave_no', 'like', "%{$search}%")
               ->orWhere('section', 'like', "%{$search}%")
-              ->orWhere('oldno', 'like', "%{$search}%");
+              ->orWhere('oldno', 'like', "%{$search}%")
+              ->orWhereHas('member', function ($memberQuery) use ($search) {
+                  $memberQuery->where('first_name', 'like', "%{$search}%")
+                              ->orWhere('last_name', 'like', "%{$search}%")
+                              ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+              });
         });
     }
 
