@@ -22,7 +22,7 @@ class ModuleServiceProvider extends ServiceProvider
     public function boot(): void
     {
         parent::boot();
-        
+
         $this->loadMigrationsFrom(database_path('modules/graveyard/database/migrations'));
         $this->loadPolicies();
         $this->loadCommands();
@@ -49,9 +49,7 @@ class ModuleServiceProvider extends ServiceProvider
     protected function loadPolicies(): void
     {
         $policies = [
-            \Modules\Graveyard\Models\NicheValidMember::class => \Modules\Graveyard\Policies\NicheValidMemberPolicy::class,
             \Modules\Graveyard\Models\ValidMember::class => \Modules\Graveyard\Policies\ValidMemberPolicy::class,
-            \Modules\Graveyard\Models\NicheGrave::class => \Modules\Graveyard\Policies\NicheGravePolicy::class,
             \Modules\Graveyard\Models\PermanentGrave::class => \Modules\Graveyard\Policies\PermanentGravePolicy::class,
             \Modules\Graveyard\Models\ServiceType::class => \Modules\Graveyard\Policies\ServiceTypePolicy::class,
         ];

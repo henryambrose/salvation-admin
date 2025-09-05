@@ -1,12 +1,14 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class CatholicCalendarController extends Controller
 {
@@ -68,7 +70,7 @@ class CatholicCalendarController extends Controller
                 ];
             }
         } catch (\Exception $e) {
-            \Log::warning('Failed to fetch external calendar data: '.$e->getMessage());
+            Log::warning('Failed to fetch external calendar data: ' . $e->getMessage());
         }
 
         return null;
@@ -222,7 +224,7 @@ class CatholicCalendarController extends Controller
             '12-25' => 'Christmas',
         ];
 
-        $key = $month.'-'.$day;
+        $key = $month . '-' . $day;
 
         return $feasts[$key] ?? 'No special feast today';
     }
@@ -298,7 +300,7 @@ class CatholicCalendarController extends Controller
             '2-29' => 'St. Oswald of Worcester',
         ];
 
-        $key = $month.'-'.$day;
+        $key = $month . '-' . $day;
 
         return $saints[$key] ?? 'No saint feast today';
     }
@@ -333,7 +335,7 @@ class CatholicCalendarController extends Controller
     {
         // This would typically connect to a lectionary database
         // For now, return a simple reference
-        return 'Daily Mass Readings - '.$date->format('F j, Y');
+        return 'Daily Mass Readings - ' . $date->format('F j, Y');
     }
 
     /**

@@ -1,8 +1,9 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Modules\Members\Models\Cluster;
 use Modules\Members\Models\Community;
 use Modules\Members\Models\CommunityCluster;
@@ -60,7 +61,7 @@ class CommunityClusterController extends Controller
                 ->map(function ($member) {
                     return [
                         'id' => $member->id,
-                        'name' => $member->first_name.' '.$member->last_name,
+                        'name' => $member->first_name . ' ' . $member->last_name,
                         'community_id' => $member->community_id,
                     ];
                 }),
@@ -216,9 +217,9 @@ class CommunityClusterController extends Controller
                     $q->whereHas('community', function ($communityQuery) use ($search) {
                         $communityQuery->where('name', 'like', "%$search%");
                     })
-                    ->orWhereHas('cluster', function ($clusterQuery) use ($search) {
-                        $clusterQuery->where('name', 'like', "%$search%");
-                    });
+                        ->orWhereHas('cluster', function ($clusterQuery) use ($search) {
+                            $clusterQuery->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
@@ -246,7 +247,9 @@ class CommunityClusterController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Community', 'Cluster'
+                    'ID',
+                    'Community',
+                    'Cluster'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -258,14 +261,13 @@ class CommunityClusterController extends Controller
                 }
 
                 fclose($out);
-            }, 'community_clusters_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'community_clusters_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Community Cluster Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Community Cluster Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Modules\Members\Http\Requests\StoreCityRequest;
@@ -10,6 +11,7 @@ use Modules\Members\Models\State;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
 
 class CityController extends Controller
 {
@@ -129,7 +131,7 @@ class CityController extends Controller
             ]
         ))->with('success', 'City deleted successfully.');
     }
-   
+
     /**
      * Restore the specified resource.
      */
@@ -187,7 +189,9 @@ class CityController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'City Name', 'State'
+                    'ID',
+                    'City Name',
+                    'State'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -199,14 +203,13 @@ class CityController extends Controller
                 }
 
                 fclose($out);
-            }, 'cities_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'cities_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('City Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('City Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

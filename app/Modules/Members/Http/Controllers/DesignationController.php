@@ -1,8 +1,9 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Modules\Members\Http\Requests\StoreDesignationRequest;
 use Modules\Members\Http\Requests\UpdateDesignationRequest;
 use Modules\Members\Models\Designation;
@@ -154,7 +155,8 @@ class DesignationController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Designation Name'
+                    'ID',
+                    'Designation Name'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -165,14 +167,13 @@ class DesignationController extends Controller
                 }
 
                 fclose($out);
-            }, 'designations_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'designations_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Designation Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Designation Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

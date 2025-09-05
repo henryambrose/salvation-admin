@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 use Modules\Members\Http\Requests\StoreMemberRequest;
 use Modules\Members\Http\Requests\UpdateMemberRequest;
@@ -17,9 +18,7 @@ use Modules\Members\Models\Gender;
 use Modules\Members\Models\IncomeRange;
 use Modules\Members\Models\Member;
 use Modules\Members\Models\Parish;
-use Modules\Members\Models\PPCHead;
 use Modules\Members\Models\Relationship;
-use Modules\Members\Models\SCCHead;
 use Modules\Members\Models\State;
 use Modules\Members\Models\Status;
 use Modules\Members\Models\Town;
@@ -27,9 +26,9 @@ use Modules\Members\Models\UnifiedPerson;
 use Modules\Members\Services\FamilyNumberingService;
 use Modules\Members\Services\FamilyTreeService;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -38,7 +37,7 @@ class MemberController extends Controller
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Member::class);
-    
+
         // Map used for display-enrichment (kept as-is for UI compatibility)
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
@@ -58,7 +57,7 @@ class MemberController extends Controller
             'current_state_id' => ['relation' => 'currentState', 'column' => 'name'],
             'current_country_id' => ['relation' => 'currentCountry', 'column' => 'name'],
         ];
-    
+
         // Base query + eager loads
         $query = Member::query()->with([
             'community',
@@ -87,28 +86,28 @@ class MemberController extends Controller
             'clusterHeads.community',
             'clusterHeads.cluster',
         ]);
-    
+
         // Community scoping
-        $query->forUserCommunities(auth()->user());
-    
+        $query->forUserCommunities(Auth::user());
+
         // Apply filters & sorting centrally
         $this->applyFilters($query, $request);
         $this->applySorting($query, $request);
-    
+
         // Count BEFORE paginate (same filtered scope)
         $totalCount = (clone $query)->count();
-    
+
         // Single paginate call
         $perPage   = (int) $request->input('perPage', 10);
         $paginator = $query->paginate($perPage)->appends($request->query());
-    
+
         // Enrich rows for dropdown display (kept for UI compatibility)
         $paginator->getCollection()->transform(function ($item) use ($dropdownColumns) {
             foreach ($dropdownColumns as $key => $relation) {
                 $relationPath = explode('.', $relation['relation']);
                 $currentRelation = $item;
                 $found = true;
-    
+
                 foreach ($relationPath as $path) {
                     if (isset($currentRelation->{$path}) && $currentRelation->{$path}) {
                         $currentRelation = $currentRelation->{$path};
@@ -117,30 +116,30 @@ class MemberController extends Controller
                         break;
                     }
                 }
-    
+
                 $item->$key = $found ? ($currentRelation->{$relation['column']} ?? '') : '';
             }
-    
+
             return $item;
         });
-    
+
         // -------- Family Statistics (reuse same filters without duplication) --------
         $totalStatsQuery = Member::query();
-        $totalStatsQuery->forUserCommunities(auth()->user());
+        $totalStatsQuery->forUserCommunities(Auth::user());
         $this->applyFilters($totalStatsQuery, $request);
-    
+
         $totalMembers = (clone $totalStatsQuery)->count();
         $totalFamilies = (clone $totalStatsQuery)
             ->whereNotNull('family_no')
             ->distinct()
             ->count('family_no');
-    
+
         $familyStats = [
             'totalMembers' => $totalMembers,
             'totalFamilies' => $totalFamilies,
             'averageMembersPerFamily' => $totalFamilies > 0 ? round($totalMembers / $totalFamilies, 1) : 0,
         ];
-    
+
         return Inertia::render('member/Index', [
             'communities' => Community::all(),
             'relationships' => Relationship::all(),
@@ -157,8 +156,20 @@ class MemberController extends Controller
             'totalCount' => $totalCount,
             'familyStats' => $familyStats,
             'filters' => $request->only([
-                'search','sort','direction','perPage','communityId','relationship','ageGroup',
-                'bloodGroup','gender','filterColumnKey','filterColumnValue','isArchived','familySearch','status'
+                'search',
+                'sort',
+                'direction',
+                'perPage',
+                'communityId',
+                'relationship',
+                'ageGroup',
+                'bloodGroup',
+                'gender',
+                'filterColumnKey',
+                'filterColumnValue',
+                'isArchived',
+                'familySearch',
+                'status'
             ]),
             'canViewAnyMember' => auth()->user()->can('list-member'),
             'canCreateMember' => auth()->user()->can('create-member'),
@@ -171,7 +182,7 @@ class MemberController extends Controller
             ],
         ]);
     }
-    
+
     /**
      * Centralized filters used by index() + totals.
      */
@@ -179,18 +190,18 @@ class MemberController extends Controller
     {
         // Archived scope
         $request->boolean('isArchived') ? $query->onlyTrashed() : $query->withoutTrashed();
-    
+
         // Text search
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
-                  ->orWhere('last_name', 'like', "%$search%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                  ->orWhere('family_no', 'like', "%$search%")
-                  ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
+                    ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                    ->orWhere('family_no', 'like', "%$search%")
+                    ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
             });
         }
-    
+
         // Individual filters
         if ($v = $request->input('familySearch')) $query->where('family_no', 'like', "%$v%");
         if ($v = $request->input('communityId'))  $query->where('community_id', $v);
@@ -198,7 +209,7 @@ class MemberController extends Controller
         if ($v = $request->input('status'))       $query->where('status_id', $v);
         if ($v = $request->input('bloodGroup'))   $query->where('blood_group_id', $v);
         if ($v = $request->input('gender'))       $query->where('gender_id', $v);
-    
+
         // Age group filter
         if ($ageGroup = $request->input('ageGroup')) {
             if ($ag = AgeGroup::find($ageGroup)) {
@@ -208,11 +219,11 @@ class MemberController extends Controller
                 );
             }
         }
-    
+
         // Legacy filter support (unchanged)
         if (($filterColumnKey = $request->input('filterColumnKey')) !== null) {
             $filterColumnValue = $request->input('filterColumnValue');
-    
+
             $dropdownColumns = [
                 'community_id' => ['relation' => 'community', 'column' => 'name'],
                 'community_cluster_id' => ['relation' => 'communityCluster.cluster', 'column' => 'name'],
@@ -231,7 +242,7 @@ class MemberController extends Controller
                 'current_state_id' => ['relation' => 'currentState', 'column' => 'name'],
                 'current_country_id' => ['relation' => 'currentCountry', 'column' => 'name'],
             ];
-    
+
             if ($filterColumnKey && $filterColumnValue) {
                 if (array_key_exists($filterColumnKey, $dropdownColumns)) {
                     $relation = $dropdownColumns[$filterColumnKey]['relation'];
@@ -245,7 +256,7 @@ class MemberController extends Controller
             }
         }
     }
-    
+
     /**
      * Sorting with sane defaults and whitelist if you want to restrict.
      */
@@ -253,14 +264,14 @@ class MemberController extends Controller
     {
         $sort = $request->input('sort');
         $direction = $request->input('direction', 'asc');
-    
+
         if ($sort) {
             $query->orderBy($sort, $direction === 'desc' ? 'desc' : 'asc');
         } else {
             $query->orderBy('id', 'asc');
         }
     }
-    
+
 
     public function create(Request $request): Response
     {
@@ -320,8 +331,8 @@ class MemberController extends Controller
     private function resolvePageFor(Member $member, Request $request, int $perPage): int
     {
         // replicate the same sort (default id asc)
-        $sort = $request->input('sort','id');
-        $dir  = $request->input('direction','asc') === 'desc' ? 'desc' : 'asc';
+        $sort = $request->input('sort', 'id');
+        $dir  = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
 
         $base = Member::query();
 
@@ -338,11 +349,11 @@ class MemberController extends Controller
 
         // Fallback rough page if custom sort is in play
         $rankQuery = (clone $base)
-            ->where(function($q) use ($sort, $dir, $member) {
+            ->where(function ($q) use ($sort, $dir, $member) {
                 $q->where($sort, $dir === 'asc' ? '<' : '>', $member->{$sort})
-                ->orWhere(function($qq) use ($sort, $member) {
-                    $qq->where($sort, $member->{$sort})->where('id','<=',$member->id);
-                });
+                    ->orWhere(function ($qq) use ($sort, $member) {
+                        $qq->where($sort, $member->{$sort})->where('id', '<=', $member->id);
+                    });
             })
             ->count();
 
@@ -376,7 +387,7 @@ class MemberController extends Controller
                 // Check if family actually exists in database
                 $existingFamily = Member::where('family_no', $familyNo)->first();
                 if (! $existingFamily) {
-                    throw new \Exception('Family number "'.$familyNo.'" does not exist. Please search for existing families or create a new family.');
+                    throw new \Exception('Family number "' . $familyNo . '" does not exist. Please search for existing families or create a new family.');
                 }
 
                 $familyInfo = $numberingService->parseFamilyNumber($familyNo);
@@ -386,7 +397,6 @@ class MemberController extends Controller
 
                 // Generate member number for existing family
                 $data['member_no'] = $numberingService->generateMemberNumber();
-
             } else {
                 // New family - numbers will be auto-generated in model
                 $data['registration_year'] = date('Y');
@@ -425,9 +435,9 @@ class MemberController extends Controller
             $page = $this->resolvePageFor($member, $request, $perPage);
 
             return redirect()->route('member.index', array_merge(
-                $request->only(['search','sort','direction','isArchived','communityId','filterColumnKey','filterColumnValue']),
-                ['page'=>$page,'perPage'=>$perPage,'highlightId'=>$member->id]
-            ))->with('success', 'Member created successfully with Family No: '.$member->family_no);
+                $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+                ['page' => $page, 'perPage' => $perPage, 'highlightId' => $member->id]
+            ))->with('success', 'Member created successfully with Family No: ' . $member->family_no);
             // return redirect()->route('member.index', array_merge(
             //     $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
             //     [
@@ -536,8 +546,8 @@ class MemberController extends Controller
         $page = $this->resolvePageFor($member, $request, $perPage);
 
         return redirect()->route('member.index', array_merge(
-            $request->only(['search','sort','direction','isArchived','communityId','filterColumnKey','filterColumnValue']),
-            ['page'=>$page,'perPage'=>$perPage,'highlightId'=>$member->id]
+            $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
+            ['page' => $page, 'perPage' => $perPage, 'highlightId' => $member->id]
         ))->with('success', 'Member updated successfully.');
     }
 
@@ -587,10 +597,10 @@ class MemberController extends Controller
     {
         if ($type == 'internal') {
             $member = Member::with(['gender', 'community', 'relationship'])->findOrFail($id);
-            $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
+            $person = UnifiedPerson::where('uid', '=', 'M-' . $id)->first();
         } else {
             $member = ExternalMember::with(['gender', 'relationship'])->findOrFail($id);
-            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
+            $person = UnifiedPerson::where('uid', '=', 'E-' . $id)->first();
         }
         $service = new FamilyTreeService;
         $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)
@@ -630,22 +640,35 @@ class MemberController extends Controller
 
         return response()->json($members);
     }
-    
-    
+
+
     public function export(Request $request)
     {
         $this->authorize('viewAny', Member::class);
-    
+
         // Streamed CSV keeps memory flat
         return response()->streamDownload(function () use ($request) {
             $out = fopen('php://output', 'w');
-        
+
             fputcsv($out, [
-                'ID','First Name','Last Name','Old SAL ID','Family No','Member No',
-                'Contact No','Email','Date of Birth','Age',
-                'Community','Cluster','Relationship','Blood Group','Gender','Status',
+                'ID',
+                'First Name',
+                'Last Name',
+                'Old SAL ID',
+                'Family No',
+                'Member No',
+                'Contact No',
+                'Email',
+                'Date of Birth',
+                'Age',
+                'Community',
+                'Cluster',
+                'Relationship',
+                'Blood Group',
+                'Gender',
+                'Status',
             ]);
-        
+
             // Get allowed community IDs for PPC/SCC head scoping
             $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
 
@@ -659,44 +682,64 @@ class MemberController extends Controller
                 ->leftJoin('genders as g', 'g.id', '=', 'members.gender_id')
                 ->leftJoin('statuses as s', 's.id', '=', 'members.status_id')
                 ->select([
-                    'members.id','members.first_name','members.last_name','members.old_sal_id',
-                    'members.family_no','members.member_no','members.contact_no_1','members.email',
+                    'members.id',
+                    'members.first_name',
+                    'members.last_name',
+                    'members.old_sal_id',
+                    'members.family_no',
+                    'members.member_no',
+                    'members.contact_no_1',
+                    'members.email',
                     'members.date_of_birth',
                     \DB::raw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) as age'),
-                    'c.name as community_name','cl.name as cluster_name','r.name as relationship_name',
-                    'bg.name as blood_group_name','g.name as gender_name','s.name as status_name',
+                    'c.name as community_name',
+                    'cl.name as cluster_name',
+                    'r.name as relationship_name',
+                    'bg.name as blood_group_name',
+                    'g.name as gender_name',
+                    's.name as status_name',
                 ]);
 
             // Apply PPC/SCC community scoping
             if ($allowedCommunityIds !== null) {
                 $q->whereIn('members.community_id', $allowedCommunityIds);
             }
-        
+
             if ($search = $request->input('search')) {
                 $q->where(function ($w) use ($search) {
                     $w->where('members.first_name', 'like', "%$search%")
-                      ->orWhere('members.last_name', 'like', "%$search%")
-                      ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%$search%"])
-                      ->orWhere('members.family_no', 'like', "%$search%")
-                      ->orWhere('c.name', 'like', "%$search%");
+                        ->orWhere('members.last_name', 'like', "%$search%")
+                        ->orWhereRaw("CONCAT(members.first_name, ' ', members.last_name) LIKE ?", ["%$search%"])
+                        ->orWhere('members.family_no', 'like', "%$search%")
+                        ->orWhere('c.name', 'like', "%$search%");
                 });
             }
-            if ($v = $request->input('familySearch')) { $q->where('members.family_no', 'like', "%$v%"); }
-            if ($v = $request->input('communityId'))  { $q->where('members.community_id', $v); }
-            if ($v = $request->input('relationship')) { $q->where('members.relationship_id', $v); }
-            if ($v = $request->input('bloodGroup'))   { $q->where('members.blood_group_id', $v); }
-            if ($v = $request->input('gender'))       { $q->where('members.gender_id', $v); }
+            if ($v = $request->input('familySearch')) {
+                $q->where('members.family_no', 'like', "%$v%");
+            }
+            if ($v = $request->input('communityId')) {
+                $q->where('members.community_id', $v);
+            }
+            if ($v = $request->input('relationship')) {
+                $q->where('members.relationship_id', $v);
+            }
+            if ($v = $request->input('bloodGroup')) {
+                $q->where('members.blood_group_id', $v);
+            }
+            if ($v = $request->input('gender')) {
+                $q->where('members.gender_id', $v);
+            }
             if ($v = $request->input('ageGroup')) {
                 if ($ag = AgeGroup::find($v)) {
                     $q->whereRaw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) BETWEEN ? AND ?', [$ag->min_age, $ag->max_age]);
                 }
             }
-        
-            $allowed = ['id','first_name','last_name','family_no','member_no','date_of_birth'];
-            $sort = in_array($request->input('sort','id'), $allowed, true) ? $request->input('sort','id') : 'id';
-            $direction = $request->input('direction','asc') === 'desc' ? 'desc' : 'asc';
+
+            $allowed = ['id', 'first_name', 'last_name', 'family_no', 'member_no', 'date_of_birth'];
+            $sort = in_array($request->input('sort', 'id'), $allowed, true) ? $request->input('sort', 'id') : 'id';
+            $direction = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
             $q->orderBy("members.$sort", $direction)->orderBy('members.id');
-        
+
             foreach ($q->cursor() as $row) {
                 fputcsv($out, [
                     $row->id,
@@ -717,14 +760,14 @@ class MemberController extends Controller
                     $row->status_name ?? '',
                 ]);
             }
-        
+
             fclose($out);
-        }, 'members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+        }, 'members_' . now()->format('Y-m-d_H-i-s') . '.csv', [
             'Content-Type' => 'text/csv',
             'Cache-Control' => 'no-store, no-cache',
         ]);
     }
-    
+
 
     public function getMembersByCommunity($communityId)
     {
@@ -739,75 +782,77 @@ class MemberController extends Controller
     public function getMembersByFamily($familyNo, Request $request)
     {
         $members = Member::where('family_no', $familyNo)
-            ->select('id','first_name','last_name','date_of_birth','gender_id','member_no')
+            ->select('id', 'first_name', 'last_name', 'date_of_birth', 'gender_id', 'member_no')
             ->get();
-    
+
         $unified = UnifiedPerson::where('family_no', $familyNo)
-            ->select('uid','original_id','father_uid','mother_uid','spouse_uid','source','first_name','last_name')
+            ->select('uid', 'original_id', 'father_uid', 'mother_uid', 'spouse_uid', 'source', 'first_name', 'last_name')
             ->get();
-    
+
         $uByUid = $unified->keyBy('uid');
         $mById  = $members->keyBy('id');
-    
+
         // generation via DFS using the in-memory map
         $gen = [];
         $vis = [];
-        $calc = function($uid) use (&$calc, &$gen, &$vis, $uByUid) {
+        $calc = function ($uid) use (&$calc, &$gen, &$vis, $uByUid) {
             if (isset($gen[$uid])) return $gen[$uid];
             if (isset($vis[$uid])) return 0;
             $vis[$uid] = true;
             $p = $uByUid[$uid] ?? null;
             if (!$p) return $gen[$uid] = 0;
             $best = 0;
-            foreach (['father_uid','mother_uid'] as $par) {
-                if ($pid = $p->{$par}) $best = max($best, $calc($pid)+1);
+            foreach (['father_uid', 'mother_uid'] as $par) {
+                if ($pid = $p->{$par}) $best = max($best, $calc($pid) + 1);
             }
             return $gen[$uid] = $best;
         };
-    
-        $enhanced = $members->map(function($m) use ($uByUid, $mById, &$calc) {
-            $uid = 'M-'.$m->id;
+
+        $enhanced = $members->map(function ($m) use ($uByUid, $mById, &$calc) {
+            $uid = 'M-' . $m->id;
             $up  = $uByUid->get($uid);
-    
+
             $father = $mother = $spouse = null;
             if ($up?->father_uid && ($fu = $uByUid->get($up->father_uid))) {
-                if (str_starts_with($fu->uid,'M-') && ($fm = $mById->get((int) substr($fu->uid,2)))) {
-                    $father = ['id'=>$fm->id,'name'=>$fm->first_name.' '.$fm->last_name,'member_no'=>$fm->member_no];
+                if (str_starts_with($fu->uid, 'M-') && ($fm = $mById->get((int) substr($fu->uid, 2)))) {
+                    $father = ['id' => $fm->id, 'name' => $fm->first_name . ' ' . $fm->last_name, 'member_no' => $fm->member_no];
                 }
             }
             if ($up?->mother_uid && ($mu = $uByUid->get($up->mother_uid))) {
-                if (str_starts_with($mu->uid,'M-') && ($mm = $mById->get((int) substr($mu->uid,2)))) {
-                    $mother = ['id'=>$mm->id,'name'=>$mm->first_name.' '.$mm->last_name,'member_no'=>$mm->member_no];
+                if (str_starts_with($mu->uid, 'M-') && ($mm = $mById->get((int) substr($mu->uid, 2)))) {
+                    $mother = ['id' => $mm->id, 'name' => $mm->first_name . ' ' . $mm->last_name, 'member_no' => $mm->member_no];
                 }
             }
             if ($up?->spouse_uid && ($su = $uByUid->get($up->spouse_uid))) {
-                if (str_starts_with($su->uid,'M-') && ($sm = $mById->get((int) substr($su->uid,2)))) {
-                    $spouse = ['id'=>$sm->id,'name'=>$sm->first_name.' '.$sm->last_name,'member_no'=>$sm->member_no];
+                if (str_starts_with($su->uid, 'M-') && ($sm = $mById->get((int) substr($su->uid, 2)))) {
+                    $spouse = ['id' => $sm->id, 'name' => $sm->first_name . ' ' . $sm->last_name, 'member_no' => $sm->member_no];
                 }
             }
-    
+
             return [
-                'id'=>$m->id,
-                'first_name'=>$m->first_name,
-                'last_name'=>$m->last_name,
-                'date_of_birth'=>$m->date_of_birth,
-                'gender_id'=>$m->gender_id,
-                'member_no'=>$m->member_no,
-                'father'=>$father,'mother'=>$mother,'spouse'=>$spouse,
-                'generation'=>$calc($uid),
+                'id' => $m->id,
+                'first_name' => $m->first_name,
+                'last_name' => $m->last_name,
+                'date_of_birth' => $m->date_of_birth,
+                'gender_id' => $m->gender_id,
+                'member_no' => $m->member_no,
+                'father' => $father,
+                'mother' => $mother,
+                'spouse' => $spouse,
+                'generation' => $calc($uid),
             ];
-        })->sortBy([['generation','asc'],['date_of_birth','asc']])->values();
-    
-        \Log::info('Family members with generations:', $enhanced->map(fn($x)=>[
-            'name'=>$x['first_name'].' '.$x['last_name'],
-            'generation'=>$x['generation'],
-            'date_of_birth'=>$x['date_of_birth'],
+        })->sortBy([['generation', 'asc'], ['date_of_birth', 'asc']])->values();
+
+        \Log::info('Family members with generations:', $enhanced->map(fn($x) => [
+            'name' => $x['first_name'] . ' ' . $x['last_name'],
+            'generation' => $x['generation'],
+            'date_of_birth' => $x['date_of_birth'],
         ])->toArray());
-    
+
         return response()->json($enhanced);
     }
-    
-   
+
+
 
     public function getFamilyDetails($familyNo, Request $request)
     {
@@ -815,26 +860,38 @@ class MemberController extends Controller
             // Load all unified people for this family (single query)
             $family = UnifiedPerson::where('family_no', $familyNo)
                 ->select([
-                    'uid','original_id','first_name','last_name','member_no','source',
-                    'father_uid','mother_uid','spouse_uid'
+                    'uid',
+                    'original_id',
+                    'first_name',
+                    'last_name',
+                    'member_no',
+                    'source',
+                    'father_uid',
+                    'mother_uid',
+                    'spouse_uid'
                 ])
                 ->get();
-    
+
             if ($family->isEmpty()) {
                 return response()->json(['error' => 'Family not found'], 404);
             }
-    
 
-    
+
+
             // Build quick lookup maps
             $uByUid = $family->keyBy('uid');                                          // uid => UnifiedPerson
-            $internalIds = $family->where('source', 'Member')->pluck('original_id')->map(fn($v)=>(int)$v)->unique()->values();
-    
+            $internalIds = $family->where('source', 'Member')->pluck('original_id')->map(fn($v) => (int)$v)->unique()->values();
+
             // Prefetch Members for internal entries (single query)
             $members = Member::whereIn('id', $internalIds)
                 ->select([
-                    'id','first_name','last_name','member_no','date_of_birth',
-                    'community_id','community_cluster_id'
+                    'id',
+                    'first_name',
+                    'last_name',
+                    'member_no',
+                    'date_of_birth',
+                    'community_id',
+                    'community_cluster_id'
                 ])
                 ->with([
                     'community:id,name',
@@ -843,19 +900,20 @@ class MemberController extends Controller
                 ])
                 ->get()
                 ->keyBy('id');                                                        // id => Member
-    
+
             // Compute generation levels (memoized DFS on in-memory graph)
-            $gen = []; $vis = [];
+            $gen = [];
+            $vis = [];
             $calcGen = function (string $uid) use (&$calcGen, &$gen, &$vis, $uByUid): int {
                 if (isset($gen[$uid])) return $gen[$uid];
                 if (isset($vis[$uid])) return 0; // cycle guard
                 $vis[$uid] = true;
-    
+
                 $p = $uByUid->get($uid);
                 if (!$p) return $gen[$uid] = 0;
-    
+
                 $best = 0;
-                foreach (['father_uid','mother_uid'] as $k) {
+                foreach (['father_uid', 'mother_uid'] as $k) {
                     $pid = $p->{$k};
                     if ($pid && $uByUid->has($pid)) {
                         $best = max($best, $calcGen($pid) + 1);
@@ -863,9 +921,12 @@ class MemberController extends Controller
                 }
                 return $gen[$uid] = $best;
             };
-    
+
             // Community/cluster info (prefer internal member)
-            $communityId = null; $communityClusterId = null; $communityName = null; $clusterName = null;
+            $communityId = null;
+            $communityClusterId = null;
+            $communityName = null;
+            $clusterName = null;
             if ($internalIds->isNotEmpty()) {
                 // Choose the first internal for community metadata
                 $firstInternal = $members->first();
@@ -876,7 +937,7 @@ class MemberController extends Controller
                     $clusterName        = optional(optional($firstInternal->communityCluster)->cluster)->name;
                 }
             }
-    
+
             // Build response members array (no DB calls inside loop)
             $membersResp = $family->map(function ($p) use ($members, $uByUid, $calcGen) {
                 $dateOfBirth = null;
@@ -886,12 +947,12 @@ class MemberController extends Controller
                         $dateOfBirth = $m->date_of_birth;
                     }
                 }
-    
+
                 $mapRelative = function (?string $relUid) use ($uByUid, $members) {
                     if (!$relUid) return null;
                     $rel = $uByUid->get($relUid);
                     if (!$rel) return null;
-    
+
                     // Prefer internal member details if available
                     if (str_starts_with($rel->uid, 'M-')) {
                         $rid = (int) substr($rel->uid, 2);
@@ -899,19 +960,19 @@ class MemberController extends Controller
                             return [
                                 'id'   => $m->id,
                                 'uid'  => $rel->uid,
-                                'name' => trim(($m->first_name ?? '').' '.($m->last_name ?? '')),
+                                'name' => trim(($m->first_name ?? '') . ' ' . ($m->last_name ?? '')),
                             ];
                         }
                     }
-    
+
                     // Fallback to unified names (external or missing internal)
                     return [
                         'id'   => (int) $rel->original_id,
                         'uid'  => $rel->uid,
-                        'name' => trim(($rel->first_name ?? '').' '.($rel->last_name ?? '')),
+                        'name' => trim(($rel->first_name ?? '') . ' ' . ($rel->last_name ?? '')),
                     ];
                 };
-    
+
                 return [
                     'id'          => (int) $p->original_id,
                     'uid'         => $p->uid,
@@ -926,12 +987,12 @@ class MemberController extends Controller
                     'spouse'      => $mapRelative($p->spouse_uid),
                 ];
             });
-    
+
             // Counts
             $memberCount   = $family->count();
             $internalCount = $family->where('source', 'Member')->count();
             $externalCount = $memberCount - $internalCount;
-    
+
             return response()->json([
                 'family_no'            => $familyNo,
                 'community_id'         => $communityId,
@@ -944,11 +1005,11 @@ class MemberController extends Controller
                 'members'              => $membersResp,
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Error getting family details: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            \Log::error('Error getting family details: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'An error occurred while fetching family details'], 500);
         }
     }
-    
+
 
     public function searchFamilies(Request $request)
     {
@@ -964,8 +1025,8 @@ class MemberController extends Controller
 
             return response()->json($results);
         } catch (\Exception $e) {
-            \Log::error('Error in searchFamilies: '.$e->getMessage());
-            \Log::error('Stack trace: '.$e->getTraceAsString());
+            \Log::error('Error in searchFamilies: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'error' => 'An error occurred while searching families',
@@ -1019,7 +1080,7 @@ class MemberController extends Controller
         } catch (\Exception $e) {
             \Log::error('Error generating next available numbers: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
-            
+
             return response()->json([
                 'error' => 'Failed to generate next available numbers',
                 'message' => $e->getMessage()
@@ -1090,7 +1151,7 @@ class MemberController extends Controller
     public function getMemberDetails($id)
     {
         try {
-            
+
             $member = Member::with([
                 'community:id,name',
                 'relationship:id,name',
@@ -1115,7 +1176,7 @@ class MemberController extends Controller
 
             return response()->json($transformedMember);
         } catch (\Exception $e) {
-            \Log::error('Error getting member details: '.$e->getMessage());
+            \Log::error('Error getting member details: ' . $e->getMessage());
             return response()->json(['error' => 'Member not found'], 404);
         }
     }
@@ -1127,57 +1188,66 @@ class MemberController extends Controller
             \Log::error('User not authenticated for data verification page');
             abort(401, 'Unauthenticated');
         }
-        
+
         $user = auth()->user();
-        
+
         // Check permission to access data verification
         if (!$user->can('read-data-verification')) {
             \Log::warning('User denied access to data verification page', [
-                'user_id' => $user->id, 
+                'user_id' => $user->id,
                 'email' => $user->email,
                 'permissions' => $user->getAllPermissionsAttribute()
             ]);
             abort(403, 'Access denied. You do not have permission to view data verification.');
         }
-        
+
         \Log::info('User accessing data verification page', ['user_id' => $user->id, 'email' => $user->email]);
-        
+
         // Load data directly instead of via AJAX
         $members = Member::with([
             'community:id,name',
             'status:id,name',
             'relationship:id,name'
         ])
-        ->select([
-            'id', 'first_name', 'middle_name', 'last_name', 'date_of_birth',
-            'old_sal_id', 'community_id', 'status_id', 'contact_no_1', 'contact_no_2', 'relationship_id'
-        ])
-        ->orderBy('first_name')
-        ->orderBy('last_name')
-        ->get()
-        ->map(function ($member) {
-            return [
-                'id' => $member->id,
-                'first_name' => $member->first_name,
-                'middle_name' => $member->middle_name,
-                'last_name' => $member->last_name,
-                'date_of_birth' => $member->date_of_birth,
-                'old_sal_id' => $member->old_sal_id,
-                'community_id' => $member->community_id,
-                'community_name' => $member->community->name ?? null,
-                'status_id' => $member->status_id,
-                'status_name' => $member->status ? $member->status->name : null,
-                'contact_no_1' => $member->contact_no_1,
-                'contact_no_2' => $member->contact_no_2,
-                'relationship_id' => $member->relationship_id,
-                'relationship_name' => $member->relationship ? $member->relationship->name : null,
-            ];
-        });
-        
+            ->select([
+                'id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'date_of_birth',
+                'old_sal_id',
+                'community_id',
+                'status_id',
+                'contact_no_1',
+                'contact_no_2',
+                'relationship_id'
+            ])
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'first_name' => $member->first_name,
+                    'middle_name' => $member->middle_name,
+                    'last_name' => $member->last_name,
+                    'date_of_birth' => $member->date_of_birth,
+                    'old_sal_id' => $member->old_sal_id,
+                    'community_id' => $member->community_id,
+                    'community_name' => $member->community->name ?? null,
+                    'status_id' => $member->status_id,
+                    'status_name' => $member->status ? $member->status->name : null,
+                    'contact_no_1' => $member->contact_no_1,
+                    'contact_no_2' => $member->contact_no_2,
+                    'relationship_id' => $member->relationship_id,
+                    'relationship_name' => $member->relationship ? $member->relationship->name : null,
+                ];
+            });
+
         $communities = Community::select('id', 'name')->orderBy('name')->get();
         $statuses = Status::select('id', 'name')->orderBy('name')->get();
         $relationships = Relationship::select('id', 'name')->orderBy('name')->get();
-        
+
         return Inertia::render('member/DataVerification', [
             'members' => $members,
             'communities' => $communities,
@@ -1192,21 +1262,21 @@ class MemberController extends Controller
         if (!auth()->check()) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
-        
+
         $user = auth()->user();
-        
+
         // Check permission to update data verification
         if (!$user->can('update-data-verification')) {
             \Log::warning('User denied access to bulk update', [
-                'user_id' => $user->id, 
+                'user_id' => $user->id,
                 'email' => $user->email,
                 'permissions' => $user->getAllPermissionsAttribute()
             ]);
             return response()->json(['error' => 'Access denied. You do not have permission to update data verification.'], 403);
         }
-        
+
         \Log::info('User authenticated for bulk update', ['user_id' => $user->id, 'email' => $user->email]);
-        
+
         $request->validate([
             'changes' => 'required|array',
             'changes.*.id' => 'required|exists:members,id',
@@ -1226,17 +1296,24 @@ class MemberController extends Controller
 
                 // Update only allowed fields
                 $allowedFields = [
-                    'first_name', 'middle_name', 'last_name', 'date_of_birth',
-                    'old_sal_id', 'community_id', 'status_id', 'contact_no_1', 'contact_no_2', 'relationship_id'
+                    'first_name',
+                    'middle_name',
+                    'last_name',
+                    'date_of_birth',
+                    'old_sal_id',
+                    'community_id',
+                    'status_id',
+                    'contact_no_1',
+                    'contact_no_2',
+                    'relationship_id'
                 ];
 
                 $updateData = array_intersect_key($change['data'], array_flip($allowedFields));
-                
+
                 if (!empty($updateData)) {
                     $member->update($updateData);
                     $updatedCount++;
                 }
-
             } catch (\Exception $e) {
                 $errors[] = "Error updating member {$change['id']}: " . $e->getMessage();
             }

@@ -49,8 +49,8 @@ class TemporaryGraveController extends Controller
         $sortBy = $request->get('sort', 'section');
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection)
-              ->orderBy('row_no', 'asc')
-              ->orderBy('grave_no', 'asc');
+            ->orderBy('row_no', 'asc')
+            ->orderBy('grave_no', 'asc');
 
         // Pagination
         $perPage = $request->get('perPage', 10);
@@ -187,9 +187,9 @@ class TemporaryGraveController extends Controller
      */
     public function edit(TemporaryGrave $temporaryGrave)
     {
-               \Log::info('Editing temporary grave', $temporaryGrave->toArray());
+
         $temporaryGrave->load(['member', 'member.community']);
- 
+
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
@@ -294,7 +294,7 @@ class TemporaryGraveController extends Controller
     {
         try {
             $temporaryGrave = TemporaryGrave::findOrFail($id);
-            
+
             // Check if grave has any bookings
             if ($temporaryGrave->bookings()->exists()) {
                 return back()->withErrors(['error' => 'Cannot delete grave. It has associated burial records.']);
@@ -312,7 +312,6 @@ class TemporaryGraveController extends Controller
             return back()->with('success', 'Temporary grave deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete temporary grave', [
-                'id' => $temporaryGrave->id,
                 'error' => $e->getMessage(),
             ]);
 
@@ -353,7 +352,7 @@ class TemporaryGraveController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->get('query');
-        
+
         if (strlen($query) < 2) {
             return response()->json([]);
         }

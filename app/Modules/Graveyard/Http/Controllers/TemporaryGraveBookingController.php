@@ -20,9 +20,9 @@ class TemporaryGraveBookingController extends Controller
     public function index(Request $request)
     {
         $query = TemporaryGraveBooking::with([
-            'temporaryGrave', 
-            'gender', 
-            'parish', 
+            'temporaryGrave',
+            'gender',
+            'parish',
             'applicantMember',
             'creator'
         ]);
@@ -133,8 +133,8 @@ class TemporaryGraveBookingController extends Controller
                 'special_requirements' => $request->special_requirements,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
+                'created_by' => auth()->id,
+                'updated_by' => auth()->id,
             ]);
 
             // Calculate total cost from selected services
@@ -150,10 +150,9 @@ class TemporaryGraveBookingController extends Controller
 
             return redirect()->route('graveyard.temporary-grave-bookings.show', $booking->id)
                 ->with('success', 'Temporary grave booking created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return back()->withErrors(['error' => 'Failed to create booking. Please try again.'])
                 ->withInput();
         }
@@ -208,7 +207,7 @@ class TemporaryGraveBookingController extends Controller
             $temporaryGraveBooking->update([
                 'status' => 'cancelled',
                 'remarks' => $request->cancellation_reason,
-                'updated_by' => auth()->id()
+                'updated_by' => auth()->id
             ]);
 
             // Free up the temporary grave if it was occupied
@@ -216,14 +215,13 @@ class TemporaryGraveBookingController extends Controller
                 $temporaryGraveBooking->temporaryGrave->update([
                     'is_available' => true,
                     'occupied_date' => null,
-                    'updated_by' => auth()->id()
+                    'updated_by' => auth()->id
                 ]);
             }
 
             DB::commit();
 
             return back()->with('success', 'Booking cancelled successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to cancel booking.');

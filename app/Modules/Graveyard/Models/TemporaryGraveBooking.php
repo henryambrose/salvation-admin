@@ -183,19 +183,26 @@ class TemporaryGraveBooking extends Model
     public function scopeEligibleForTransfer($query)
     {
         return $query->where('status', 'confirmed')
-                    ->where('transfer_requested', false)
-                    ->where('expected_transfer_date', '<=', now()->addMonths(2)); // Within 2 months of transfer date
+            ->where('transfer_requested', false)
+            ->where('expected_transfer_date', '<=', now()->addMonths(2)); // Within 2 months of transfer date
     }
 
     /**
-     * Scope to search by deceased name
+     * Scope to search by deceased name and related fields
      */
     public function scopeSearchDeceased($query, $search)
     {
         return $query->where(function ($q) use ($search) {
             $q->where('dead_first_name', 'like', "%{$search}%")
-              ->orWhere('dead_last_name', 'like', "%{$search}%")
-              ->orWhere('permit_no', 'like', "%{$search}%");
+                ->orWhere('dead_last_name', 'like', "%{$search}%")
+                ->orWhere('permit_no', 'like', "%{$search}%")
+                ->orWhere('booking_reference', 'like', "%{$search}%")
+                ->orWhere('applicant_name', 'like', "%{$search}%")
+                ->orWhere('contact_no', 'like', "%{$search}%")
+                ->orWhereHas('temporaryGrave', function ($graveQuery) use ($search) {
+                    $graveQuery->where('grave_no', 'like', "%{$search}%")
+                        ->orWhere('section', 'like', "%{$search}%");
+                });
         });
     }
 
@@ -226,7 +233,7 @@ class TemporaryGraveBooking extends Model
         if ($this->date_of_birth) {
             $dob = Carbon::parse($this->date_of_birth);
             $deathDate = Carbon::parse($this->died_on);
-            
+
             $years = $dob->diffInYears($deathDate);
             $months = $dob->copy()->addYears($years)->diffInMonths($deathDate);
             $days = $dob->copy()->addYears($years)->addMonths($months)->diffInDays($deathDate);
@@ -254,7 +261,7 @@ class TemporaryGraveBooking extends Model
         $this->temporaryGrave->update([
             'is_available' => false,
             'occupied_date' => $this->buried_on,
-            'updated_by' => auth()->id()
+            'updated_by' => auth()->id() ?? null
         ]);
     }
 
@@ -264,7 +271,7 @@ class TemporaryGraveBooking extends Model
     public function calculateBalance(): void
     {
         $this->balance_amount = $this->total_cost - $this->paid_amount;
-        
+
         if ($this->paid_amount == 0) {
             $this->payment_status = 'pending';
         } elseif ($this->paid_amount >= $this->total_cost) {
@@ -316,7 +323,7 @@ class TemporaryGraveBooking extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'bg-yellow-100 text-yellow-800',
             'confirmed' => 'bg-green-100 text-green-800',
             'cancelled' => 'bg-red-100 text-red-800',

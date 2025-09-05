@@ -18,7 +18,7 @@
           <div class="relative">
             <input
               v-model="filters.search"
-              @keyup.enter="applyFilters()"
+              @input="debouncedSearch"
               type="text"
               class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
               placeholder="Search..."
@@ -116,7 +116,8 @@
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Name</th>
+                <th class="border-b p-3 font-semibold text-gray-700">First Name</th>
+                <th class="border-b p-3 font-semibold text-gray-700">Last Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Location</th>
@@ -156,22 +157,27 @@
                 </td>
                 <td class="p-2">
                   <div>
-                    <div class="font-medium">{{ validMember.full_name }}</div>
-                    <div v-if="validMember.member" class="text-xs text-gray-500">
-                      Family: {{ validMember.member.family_number }}
+                    <div class="font-medium">
+                      {{ validMember.member ? validMember.member.first_name : validMember.first_name }}
                     </div>
+                    <div v-if="validMember.member" class="text-xs text-gray-500">Family: {{ validMember.member.family_no }}</div>
                   </div>
                 </td>
                 <td class="p-2">
-                  <span 
+                  <div class="font-medium">
+                    {{ validMember.member ? validMember.member.last_name : validMember.last_name }}
+                  </div>
+                </td>
+                <td class="p-2">
+                  <span
                     class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-                    :class="validMember.is_parish_member ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
+                    :class="validMember.member_type ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
                   >
-                    {{ validMember.is_parish_member ? 'Parish Member' : 'External' }}
+                    {{ validMember.member_type == 'member' ? 'Parish Member' : 'External' }}
                   </span>
                 </td>
                 <td class="p-2">
-                  <span 
+                  <span
                     class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
                     :class="validMember.grave_type === 'permanent_grave' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'"
                   >
@@ -218,7 +224,8 @@
             <h3 class="mb-4 text-xl font-semibold">Delete Valid Member</h3>
             <p>
               Are you sure you want to delete
-              <span class="font-bold">{{ memberToDelete?.full_name }}</span>?
+              <span class="font-bold">{{ memberToDelete?.full_name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -258,11 +265,11 @@ import { computed, ref, watch } from 'vue';
 const { can } = permissionHelpers();
 
 // Permission checks
-const canCreateValidMember = can('create-valid-member') || can('create-permanent-valid-member');
-const canReadAnyValidMember = can('read-valid-member') || can('read-permanent-valid-member');
-const canUpdateAnyValidMember = can('update-valid-member') || can('update-permanent-valid-member');
-const canDeleteAnyValidMember = can('delete-valid-member') || can('delete-permanent-valid-member');
-const canRestoreValidMember = can('restore-valid-member') || can('restore-permanent-valid-member');
+const canCreateValidMember = can('create-valid-member');
+const canReadAnyValidMember = can('read-valid-member');
+const canUpdateAnyValidMember = can('update-valid-member');
+const canDeleteAnyValidMember = can('delete-valid-member');
+const canRestoreValidMember = can('restore-valid-member');
 
 interface Props {
   data: any;
@@ -285,6 +292,18 @@ const showDeleteModal = ref(false);
 const memberToDelete = ref<any>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+
+// Debounced search
+let searchTimeout: number;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    // Only search if 2+ characters or empty (to clear results)
+    if (!filters.value.search || filters.value.search.length >= 2) {
+      applyFilters();
+    }
+  }, 500);
+};
 
 // Clear search
 const clearSearch = () => {

@@ -71,6 +71,18 @@ const paymentStatusColors = {
   paid: 'bg-green-100 text-green-800',
 };
 
+// Debounced search
+let searchTimeout: number;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    // Only search if 2+ characters or empty (to clear results)
+    if (!search.value || search.value.length >= 2) {
+      applyFilters();
+    }
+  }, 500);
+};
+
 const applyFilters = () => {
   router.get(
     route('graveyard.permanent-grave-bookings.index'),
@@ -152,6 +164,7 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
                     v-model="search"
                     placeholder="Search by member name, grave number, or permit..."
                     class="pl-10"
+                    @input="debouncedSearch"
                     @keyup.enter="applyFilters"
                   />
                 </div>
@@ -159,7 +172,7 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
 
               <div>
                 <Label for="status">Status</Label>
-                <Select v-model="status">
+                <Select v-model="status" @update:modelValue="applyFilters">
                   <SelectTrigger class="mt-1">
                     <SelectValue placeholder="All statuses" />
                   </SelectTrigger>
@@ -172,9 +185,8 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
                 </Select>
               </div>
 
-              <div class="flex items-end space-x-2">
-                <Button @click="applyFilters" class="flex-1"> Apply Filters </Button>
-                <Button variant="outline" @click="clearFilters"> Clear </Button>
+              <div class="flex items-end">
+                <Button variant="outline" @click="clearFilters"> Clear Filters </Button>
               </div>
             </div>
           </div>

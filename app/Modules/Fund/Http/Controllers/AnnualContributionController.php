@@ -10,6 +10,7 @@ use Modules\Fund\Models\FundCategory;
 use Modules\Fund\Models\PaymentMethod;
 use Modules\Members\Models\Member;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AnnualContributionController extends Controller
 {
@@ -23,10 +24,10 @@ class AnnualContributionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('family_no', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($memberQuery) use ($search) {
-                      $memberQuery->where('first_name', 'like', "%{$search}%")
-                                  ->orWhere('last_name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -76,8 +77,14 @@ class AnnualContributionController extends Controller
             'categories' => $filterOptions['fund_categories'],
             'paymentMethods' => $filterOptions['payment_methods'],
             'filters' => $request->only([
-                'search', 'family_no', 'start_date', 'end_date', 'category_id', 
-                'payment_method_id', 'per_page', 'isArchived'
+                'search',
+                'family_no',
+                'start_date',
+                'end_date',
+                'category_id',
+                'payment_method_id',
+                'per_page',
+                'isArchived'
             ])
         ]);
     }
@@ -92,21 +99,21 @@ class AnnualContributionController extends Controller
             COUNT(CASE WHEN status = "partial" THEN 1 END) as partial_count,
             COUNT(CASE WHEN status = "paid" THEN 1 END) as paid_count
         ')
-        ->where('year', $year)
-        ->first();
+            ->where('year', $year)
+            ->first();
 
         // Calculate monthly average
         $monthlyStats = FamilyContribution::selectRaw('
             MONTH(payment_date) as month,
             SUM(amount) as monthly_amount
         ')
-        ->where('year', $year)
-        ->where('status', '!=', 'cancelled')
-        ->groupBy('month')
-        ->get();
+            ->where('year', $year)
+            ->where('status', '!=', 'cancelled')
+            ->groupBy('month')
+            ->get();
 
-        $monthlyAverage = $monthlyStats->count() > 0 
-            ? $monthlyStats->avg('monthly_amount') 
+        $monthlyAverage = $monthlyStats->count() > 0
+            ? $monthlyStats->avg('monthly_amount')
             : 0;
 
         return [
@@ -144,7 +151,7 @@ class AnnualContributionController extends Controller
     public function create()
     {
         $filterOptions = $this->getFilterOptions();
-        
+
         return Inertia::render('AnnualContributions/Create', [
             'filterOptions' => $filterOptions
         ]);
@@ -178,8 +185,8 @@ class AnnualContributionController extends Controller
             'paid_by_name' => $validated['paid_by_name'],
             'contact_no' => $validated['contact_no'],
             'notes' => $validated['notes'],
-            'created_by' => auth()->id(),
-            'updated_by' => auth()->id(),
+            'created_by' => auth()->id,
+            'updated_by' => auth()->id,
         ]);
 
         return redirect()->route('fund.annual-contributions.index')
@@ -200,7 +207,7 @@ class AnnualContributionController extends Controller
     {
         $contribution = FamilyContribution::findOrFail($id);
         $filterOptions = $this->getFilterOptions();
-        
+
         // Get all members for the dropdown
         $members = Member::orderBy('first_name')
             ->orderBy('last_name')
@@ -244,7 +251,7 @@ class AnnualContributionController extends Controller
             'paid_by_name' => $validated['paid_by_name'],
             'contact_no' => $validated['contact_no'],
             'notes' => $validated['notes'],
-            'updated_by' => auth()->id(),
+            'updated_by' => auth()->id,
         ]);
 
         return redirect()->route('fund.annual-contributions.index')
@@ -278,7 +285,7 @@ class AnnualContributionController extends Controller
         FamilyContribution::whereIn('id', $validated['ids'])
             ->update([
                 'status' => $validated['status'],
-                'updated_by' => auth()->id()
+                'updated_by' => auth()->id
             ]);
 
         return back()->with('success', 'Contributions updated successfully.');
@@ -286,8 +293,8 @@ class AnnualContributionController extends Controller
 
     public function export(Request $request)
     {
-        \Log::info('Export method called with parameters:', $request->all());
-        
+        Log::info('Export method called with parameters:', $request->all());
+
         $query = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
             ->orderBy('created_at', 'desc');
 
@@ -296,10 +303,10 @@ class AnnualContributionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('family_no', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($memberQuery) use ($search) {
-                      $memberQuery->where('first_name', 'like', "%{$search}%")
-                                  ->orWhere('last_name', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -332,11 +339,11 @@ class AnnualContributionController extends Controller
         }
 
         $contributions = $query->get();
-        
-        \Log::info('Export query returned ' . $contributions->count() . ' records');
+
+        Log::info('Export query returned ' . $contributions->count() . ' records');
 
         $filename = 'annual-contributions-' . date('Y-m-d-H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -344,17 +351,17 @@ class AnnualContributionController extends Controller
             'Pragma' => 'public',
         ];
 
-        $callback = function() use ($contributions) {
+        $callback = function () use ($contributions) {
             // Clear any output buffers
             if (ob_get_level()) {
                 ob_end_clean();
             }
-            
+
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for Excel compatibility
             fwrite($file, "\xEF\xBB\xBF");
-            
+
             // CSV Headers
             fputcsv($file, [
                 'ID',

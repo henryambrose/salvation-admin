@@ -1,8 +1,11 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Modules\Members\Models\ExternalMember;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Member;
@@ -26,11 +29,11 @@ class ExternalMemberController extends Controller
             $query->withoutTrashed();
         }
 
-        $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+        $allowedCommunityIds = $this->allowedCommunityIdsFor(Auth::user());
         if ($allowedCommunityIds !== null) {
             // Use whereExists to check if any member with this family_no is in allowed communities
             $query->whereExists(function ($subquery) use ($allowedCommunityIds) {
-                $subquery->select(\DB::raw(1))
+                $subquery->select(DB::raw(1))
                     ->from('members')
                     ->whereColumn('members.family_no', 'external_members.family_no')
                     ->whereIn('members.community_id', $allowedCommunityIds);
@@ -76,7 +79,7 @@ class ExternalMemberController extends Controller
                 }
                 $externalMember->father_data = $father ? [
                     'id' => $father->id,
-                    'name' => trim($father->first_name.' '.$father->last_name),
+                    'name' => trim($father->first_name . ' ' . $father->last_name),
                     'type' => $father instanceof Member ? 'Member' : 'External',
                 ] : null;
             }
@@ -89,7 +92,7 @@ class ExternalMemberController extends Controller
                 }
                 $externalMember->mother_data = $mother ? [
                     'id' => $mother->id,
-                    'name' => trim($mother->first_name.' '.$mother->last_name),
+                    'name' => trim($mother->first_name . ' ' . $mother->last_name),
                     'type' => $mother instanceof Member ? 'Member' : 'External',
                 ] : null;
             }
@@ -102,7 +105,7 @@ class ExternalMemberController extends Controller
                 }
                 $externalMember->spouse_data = $spouse ? [
                     'id' => $spouse->id,
-                    'name' => trim($spouse->first_name.' '.$spouse->last_name),
+                    'name' => trim($spouse->first_name . ' ' . $spouse->last_name),
                     'type' => $spouse instanceof Member ? 'Member' : 'External',
                 ] : null;
             }
@@ -121,13 +124,13 @@ class ExternalMemberController extends Controller
             'filters' => $request->only(['search', 'familySearch', 'sort', 'direction', 'perPage', 'relationship', 'isArchived']),
             'pagination' => [
                 'currentPage' => $externalMembers->currentPage(),
-                'lastPage' => $externalMembers->lastPage(),
+                'lastPage' => $externalMembers->lastPage()
             ],
-            'canViewAnyExternalMember' => auth()->user()->can('list-external-member'),
-            'canCreateExternalMember' => auth()->user()->can('create-external-member'),
-            'canEditExternalMember' => auth()->user()->can('update-external-member'),
-            'canDeleteExternalMember' => auth()->user()->can('delete-external-member'),
-            'canRestoreExternalMember' => auth()->user()->can('restore-external-member'),
+            'canViewAnyExternalMember' => Auth::user()?->can('list-external-member') ?? false,
+            'canCreateExternalMember' => Auth::user()?->can('create-external-member') ?? false,
+            'canEditExternalMember' => Auth::user()?->can('update-external-member') ?? false,
+            'canDeleteExternalMember' => Auth::user()?->can('delete-external-member') ?? false,
+            'canRestoreExternalMember' => Auth::user()?->can('restore-external-member') ?? false,
         ]);
     }
 
@@ -168,7 +171,7 @@ class ExternalMemberController extends Controller
         ]);
 
         // Use the provided family_no if user doesn't have one set
-        $validated['family_no'] = auth()->user()->family_no ?? $validated['family_no'];
+        $validated['family_no'] = Auth::user()->family_no ?? $validated['family_no'];
 
         $externalMember = ExternalMember::create($validated);
 
@@ -209,7 +212,7 @@ class ExternalMemberController extends Controller
         }
         $externalMember->father_data = $father ? [
             'id' => $father->id,
-            'name' => $father->first_name.' '.$father->last_name,
+            'name' => $father->first_name . ' ' . $father->last_name,
             'type' => $type,
         ] : null;
 
@@ -222,7 +225,7 @@ class ExternalMemberController extends Controller
         }
         $externalMember->mother_data = $mother ? [
             'id' => $mother->id,
-            'name' => $mother->first_name.' '.$mother->last_name,
+            'name' => $mother->first_name . ' ' . $mother->last_name,
             'type' => $type,
         ] : null;
 
@@ -235,7 +238,7 @@ class ExternalMemberController extends Controller
         }
         $externalMember->spouse_data = $spouse ? [
             'id' => $spouse->id,
-            'name' => $spouse->first_name.' '.$spouse->last_name,
+            'name' => $spouse->first_name . ' ' . $spouse->last_name,
             'type' => $type,
         ] : null;
 
@@ -279,14 +282,14 @@ class ExternalMemberController extends Controller
         // Calculate the page where the updated member will be displayed
         $perPage = $request->input('perPage', 15);
         $query = ExternalMember::query()->with(['relationship', 'gender']);
-        
+
         // Apply the same filters as the index method
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
         } else {
             $query->withoutTrashed();
         }
-        
+
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
@@ -295,19 +298,19 @@ class ExternalMemberController extends Controller
                     ->orWhere('family_no', 'like', "%$search%");
             });
         }
-        
+
         if ($familySearch = $request->input('familySearch')) {
             $query->where('family_no', 'like', "%$familySearch%");
         }
-        
+
         if ($relationship = $request->input('relationship')) {
             $query->where('relationship_id', $relationship);
         }
-        
+
         $sort = $request->input('sort', 'first_name');
         $direction = $request->input('direction', 'asc');
         $query->orderBy($sort, $direction);
-        
+
         $allIds = $query->pluck('id')->toArray();
         $position = array_search($externalMember->id, $allIds);
         $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
@@ -441,9 +444,8 @@ class ExternalMemberController extends Controller
                     'type' => 'External',
                 ];
             }));
-
         } catch (\Exception $e) {
-            \Log::error('External members search error: '.$e->getMessage());
+            Log::error('External members search error: ' . $e->getMessage());
 
             return response()->json(['error' => 'Search failed'], 500);
         }
@@ -478,15 +480,14 @@ class ExternalMemberController extends Controller
                         'family_no' => $family->family_no,
                         'member_count' => $memberCount,
                         'sample_members' => $sampleMembers->map(function ($member) {
-                            return trim($member->first_name.' '.$member->last_name);
+                            return trim($member->first_name . ' ' . $member->last_name);
                         })->join(', '),
                     ];
                 });
 
             return response()->json($familyNumbers);
-
         } catch (\Exception $e) {
-            \Log::error('Family numbers search error: '.$e->getMessage());
+            Log::error('Family numbers search error: ' . $e->getMessage());
 
             return response()->json(['error' => 'Search failed'], 500);
         }
@@ -506,7 +507,7 @@ class ExternalMemberController extends Controller
                         'id' => $member->id,
                         'first_name' => $member->first_name,
                         'last_name' => $member->last_name,
-                        'full_name' => trim($member->first_name.' '.$member->last_name),
+                        'full_name' => trim($member->first_name . ' ' . $member->last_name),
                         'family_no' => $member->family_no,
                         'relationship' => $member->relationship?->name,
                         'gender' => $member->gender?->name,
@@ -518,9 +519,8 @@ class ExternalMemberController extends Controller
                 'family_no' => $familyNo,
                 'members' => $externalMembers
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('External member family details error: '.$e->getMessage());
+            Log::error('External member family details error: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch family details'], 500);
         }
     }
@@ -574,7 +574,15 @@ class ExternalMemberController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'First Name', 'Last Name', 'Family No', 'Community', 'Relationship', 'Contact Number', 'Email', 'Date of Birth'
+                    'ID',
+                    'First Name',
+                    'Last Name',
+                    'Family No',
+                    'Community',
+                    'Relationship',
+                    'Contact Number',
+                    'Email',
+                    'Date of Birth'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -592,14 +600,13 @@ class ExternalMemberController extends Controller
                 }
 
                 fclose($out);
-            }, 'external_members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'external_members_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('External Member Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('External Member Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 

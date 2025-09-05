@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Fund\Models\MassType;
+use Illuminate\Support\Facades\Log;
 
 class MassTypeController extends Controller
 {
@@ -22,7 +23,7 @@ class MassTypeController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -115,7 +116,7 @@ class MassTypeController extends Controller
      */
     public function destroy(MassType $massType)
     {
-        \Log::info('Attempting to delete mass type', [
+        Log::info('Attempting to delete mass type', [
             'id' => $massType->id,
             'name' => $massType->name,
             'related_intentions_count' => $massType->massIntentions()->count()
@@ -123,20 +124,19 @@ class MassTypeController extends Controller
 
         try {
             $massType->delete();
-            
-            \Log::info('Mass type deleted successfully', [
+
+            Log::info('Mass type deleted successfully', [
                 'id' => $massType->id,
                 'deleted_at' => $massType->deleted_at
             ]);
 
             return back()->with('success', 'Mass type deleted successfully.');
-            
         } catch (\Exception $e) {
-            \Log::error('Failed to delete mass type', [
+            Log::error('Failed to delete mass type', [
                 'id' => $massType->id,
                 'error' => $e->getMessage()
             ]);
-            
+
             return back()->withErrors(['error' => 'Failed to delete mass type: ' . $e->getMessage()]);
         }
     }

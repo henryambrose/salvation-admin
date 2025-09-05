@@ -4,7 +4,6 @@ namespace Modules\Fund\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\View\View;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fund\Models\FundCategory;
@@ -22,7 +21,7 @@ class FundCategoryController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 

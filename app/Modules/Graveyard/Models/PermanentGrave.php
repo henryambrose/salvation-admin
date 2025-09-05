@@ -43,10 +43,6 @@ class PermanentGrave extends Model
     /**
      * Get the bookings for this permanent grave
      */
-    public function bookings()
-    {
-        return $this->hasMany(GraveBooking::class, 'permanent_grave_id');
-    }
 
     /**
      * Get the user who created this record
@@ -83,10 +79,7 @@ class PermanentGrave extends Model
     /**
      * Get the latest booking for this grave
      */
-    public function latestBooking()
-    {
-        return $this->hasOne(GraveBooking::class, 'permanent_grave_id')->latest();
-    }
+
 
     /**
      * Scope to get only available graves
@@ -111,14 +104,14 @@ class PermanentGrave extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('owner_name', 'like', "%{$search}%")
-              ->orWhere('grave_no', 'like', "%{$search}%")
-              ->orWhere('section', 'like', "%{$search}%")
-              ->orWhere('oldno', 'like', "%{$search}%")
-              ->orWhereHas('member', function ($memberQuery) use ($search) {
-                  $memberQuery->where('first_name', 'like', "%{$search}%")
-                              ->orWhere('last_name', 'like', "%{$search}%")
-                              ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
-              });
+                ->orWhere('grave_no', 'like', "%{$search}%")
+                ->orWhere('section', 'like', "%{$search}%")
+                ->orWhere('oldno', 'like', "%{$search}%")
+                ->orWhereHas('member', function ($memberQuery) use ($search) {
+                    $memberQuery->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%")
+                        ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'like', "%{$search}%");
+                });
         });
     }
 

@@ -8,7 +8,6 @@ use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fund\Models\PaymentMethod;
-use Modules\Members\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class PaymentMethodController extends Controller
@@ -29,26 +28,33 @@ class PaymentMethodController extends Controller
             });
         }
 
-        // Handle archived filter
-        if ($request->get('isArchived') === 'true') {
-            $query->onlyTrashed();
-        } else {
-            $query->withoutTrashed();
+        // Apply status filter
+        if ($request->filled('status')) {
+            if ($request->status === 'active') {
+                $query->where('is_active', true);
+            } elseif ($request->status === 'inactive') {
+                $query->where('is_active', false);
+            }
         }
 
         // Apply sorting
-        $sortBy = $request->get('sort', 'sort_order');
-        $sortDirection = $request->get('direction', 'asc');
+        $sortBy = $request->get('sort_by', 'sort_order');
+        $sortDirection = $request->get('sort_direction', 'asc');
         $query->orderBy($sortBy, $sortDirection);
 
-        // Apply pagination
-        $perPage = $request->get('perPage', 15);
-        $paymentMethods = $query->paginate($perPage);
+        $paymentMethods = $query->paginate(15)->withQueryString();
 
-        return Inertia::render('PaymentMethods/Index', [
+        // Get statistics
+        $stats = [
+            'total' => PaymentMethod::count(),
+            'active' => PaymentMethod::where('is_active', true)->count(),
+            'inactive' => PaymentMethod::where('is_active', false)->count(),
+        ];
+
+        return Inertia::render('Fund/PaymentMethods/Index', [
             'paymentMethods' => $paymentMethods,
-            'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
-            'fetchUrl' => route('fund.payment-methods.index'),
+            'stats' => $stats,
+            'filters' => $request->only(['search', 'status', 'sort_by', 'sort_direction']),
         ]);
     }
 
@@ -128,30 +134,16 @@ class PaymentMethodController extends Controller
      */
     public function destroy(PaymentMethod $paymentMethod): RedirectResponse
     {
-        \Log::info('Attempting to delete payment method', [
-            'id' => $paymentMethod->id,
-            'name' => $paymentMethod->name,
-            'related_contributions_count' => $paymentMethod->familyContributions()->count()
-        ]);
-
-        try {
-            $paymentMethod->delete();
-            
-            \Log::info('Payment method deleted successfully', [
-                'id' => $paymentMethod->id,
-                'deleted_at' => $paymentMethod->deleted_at
-            ]);
-
-            return back()->with('success', 'Payment method deleted successfully.');
-            
-        } catch (\Exception $e) {
-            \Log::error('Failed to delete payment method', [
-                'id' => $paymentMethod->id,
-                'error' => $e->getMessage()
-            ]);
-            
-            return back()->withErrors(['error' => 'Failed to delete payment method: ' . $e->getMessage()]);
+        // Check if payment method is being used
+        if ($paymentMethod->familyContributions()->count() > 0) {
+            return redirect()->route('fund.payment-methods.index')
+                ->with('error', 'Cannot delete payment method. It is being used by contributions.');
         }
+
+        $paymentMethod->delete();
+
+        return redirect()->route('fund.payment-methods.index')
+            ->with('success', 'Payment method deleted successfully.');
     }
 
     /**
@@ -162,7 +154,8 @@ class PaymentMethodController extends Controller
         $paymentMethod = PaymentMethod::onlyTrashed()->findOrFail($id);
         $paymentMethod->restore();
 
-        return back()->with('success', 'Payment method restored successfully.');
+        return redirect()->route('fund.payment-methods.index')
+            ->with('success', 'Payment method restored successfully.');
     }
 
     /**

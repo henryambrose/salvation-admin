@@ -64,6 +64,11 @@ async function bootstrap() {
         'PagesGraveyard/Graves',
         'PagesGraveyard/Maintenance',
         'PagesGraveyard/Reports',
+        'PagesGraveyard/PermanentGraveBooking',
+        'PagesGraveyard/TemporaryGraveBooking',
+        'PagesGraveyard/ValidMember',
+        'PagesGraveyard/NicheTransfer',
+        'PagesGraveyard/ServiceType',
       ]; // All graveyard module components
 
       try {

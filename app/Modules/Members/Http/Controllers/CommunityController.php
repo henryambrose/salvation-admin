@@ -1,8 +1,9 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
-use App\Http\Controllers\Controller;
 
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Modules\Members\Http\Requests\StoreCommunityRequest;
 use Modules\Members\Http\Requests\UpdateCommunityRequest;
 use Modules\Members\Models\Community;
@@ -258,16 +259,20 @@ class CommunityController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Community Name', 'Zone', 'PPC Head', 'SCC Head'
+                    'ID',
+                    'Community Name',
+                    'Zone',
+                    'PPC Head',
+                    'SCC Head'
                 ]);
 
                 foreach ($query->cursor() as $item) {
                     $ppcHeadName = $item->ppchead && $item->ppchead->member
-                        ? trim($item->ppchead->member->first_name.' '.$item->ppchead->member->last_name)
+                        ? trim($item->ppchead->member->first_name . ' ' . $item->ppchead->member->last_name)
                         : '';
 
                     $sccHeadName = $item->scchead && $item->scchead->member
-                        ? trim($item->scchead->member->first_name.' '.$item->scchead->member->last_name)
+                        ? trim($item->scchead->member->first_name . ' ' . $item->scchead->member->last_name)
                         : '';
 
                     fputcsv($out, [
@@ -280,14 +285,13 @@ class CommunityController extends Controller
                 }
 
                 fclose($out);
-            }, 'communities_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'communities_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Community Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Community Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

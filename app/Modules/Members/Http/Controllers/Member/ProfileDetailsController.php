@@ -18,14 +18,13 @@ class ProfileDetailsController extends Controller
      */
     public function create(Request $request): Response
     {
-        return Inertia::render('member/Details', [
-        ]);
+        return Inertia::render('member/Details', []);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMemberProfileDetailsRequest $request)
+    public function store(StoreProfileDetailsRequest $request)
     {
         $validated = $request->validated();
 
@@ -46,7 +45,7 @@ class ProfileDetailsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMemberProfileDetailsRequest $request, Member $member)
+    public function update(UpdateProfileDetailsRequest $request, Member $member)
     {
         $validated = $request->validated();
         return redirect()->route('member.index')->with('success', 'Member updated successfully.');

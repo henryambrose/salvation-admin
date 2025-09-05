@@ -195,7 +195,7 @@ import { Calendar, MapPin, Pencil, User, Users } from 'lucide-vue-next';
 const { can } = permissionHelpers();
 
 // Permission checks
-const canUpdateValidMember = can('update-valid-member') || can('update-permanent-valid-member');
+const canUpdateValidMember = can('update-valid-member');
 
 interface Props {
   validMember: {

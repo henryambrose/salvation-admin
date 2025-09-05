@@ -21,7 +21,7 @@ return new class extends Migration
             $table->enum('status', ['available', 'unavailable'])->default('available')->index();
             $table->date('last_burial_date')->nullable();
             $table->integer('duration_months')->default(18); // Duration before transfer to niche
-            $table->string('owner_name')->nullable()->index(); // For search functionality
+            $table->string('buried_name')->nullable()->index(); // For search functionality
             $table->string('contact_no')->nullable();
             $table->foreignId('member_id')->nullable()->references('id')->on('members')->onDelete('set null');
             $table->text('remarks')->nullable();

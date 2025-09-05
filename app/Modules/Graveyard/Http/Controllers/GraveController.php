@@ -4,8 +4,6 @@ namespace Modules\Graveyard\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Graveyard\Models\TemporaryGrave;
@@ -18,7 +16,7 @@ class GraveController extends Controller
     public function index(Request $request)
     {
         $graveType = $request->get('type', 'permanent'); // permanent or temporary
-        
+
         if ($graveType === 'permanent') {
             $query = PermanentGrave::query();
         } else {
@@ -40,8 +38,8 @@ class GraveController extends Controller
             } else {
                 $query->where(function ($q) use ($search) {
                     $q->where('section', 'like', "%{$search}%")
-                      ->orWhere('grave_no', 'like', "%{$search}%")
-                      ->orWhere('oldno', 'like', "%{$search}%");
+                        ->orWhere('grave_no', 'like', "%{$search}%")
+                        ->orWhere('oldno', 'like', "%{$search}%");
                 });
             }
         }
@@ -59,8 +57,8 @@ class GraveController extends Controller
         $sortBy = $request->get('sort', 'section');
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection)
-              ->orderBy('row_no', 'asc')
-              ->orderBy('grave_no', 'asc');
+            ->orderBy('row_no', 'asc')
+            ->orderBy('grave_no', 'asc');
 
         // Pagination
         $perPage = $request->get('perPage', 10);
@@ -85,27 +83,33 @@ class GraveController extends Controller
         ]);
     }
 
-    public function store(Request $request) { 
-        return back()->with('success', 'Grave created successfully.'); 
+    public function store(Request $request)
+    {
+        return back()->with('success', 'Grave created successfully.');
     }
-    
-    public function show($grave) { 
-        return Inertia::render('PagesGraveyard/Graves/Show', []); 
+
+    public function show($grave)
+    {
+        return Inertia::render('PagesGraveyard/Graves/Show', []);
     }
-    
-    public function update(Request $request, $grave) { 
-        return back()->with('success', 'Grave updated successfully.'); 
+
+    public function update(Request $request, $grave)
+    {
+        return back()->with('success', 'Grave updated successfully.');
     }
-    
-    public function destroy($grave) { 
-        return back()->with('success', 'Grave deleted successfully.'); 
+
+    public function destroy($grave)
+    {
+        return back()->with('success', 'Grave deleted successfully.');
     }
-    
-    public function restore($id) { 
-        return back()->with('success', 'Grave restored successfully.'); 
+
+    public function restore($id)
+    {
+        return back()->with('success', 'Grave restored successfully.');
     }
-    
-    public function forceDelete($id) { 
-        return back()->with('success', 'Grave permanently deleted.'); 
+
+    public function forceDelete($id)
+    {
+        return back()->with('success', 'Grave permanently deleted.');
     }
 }

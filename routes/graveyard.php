@@ -7,7 +7,6 @@ use Modules\Graveyard\Http\Controllers\DashboardController;
 use Modules\Graveyard\Http\Controllers\GraveController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveController;
-use Modules\Graveyard\Http\Controllers\NicheValidMemberController;
 use Modules\Graveyard\Http\Controllers\NicheController;
 use Modules\Graveyard\Http\Controllers\ValidMemberController;
 use Modules\Graveyard\Http\Controllers\ServiceTypeController;
@@ -16,10 +15,10 @@ use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
 use Modules\Graveyard\Http\Controllers\NicheTransferController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
-    
+
     // Graveyard Dashboard
     Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
-    
+
 
     // Graves Management
     Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
@@ -43,17 +42,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::put('/{niche}', [NicheController::class, 'update'])->name('update');
         Route::delete('/{niche}', [NicheController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [NicheController::class, 'restore'])->name('restore');
-    });
-
-    // Niche Valid Member Management
-    Route::prefix('graveyard/niche-valid-members')->name('graveyard.niche-valid-members.')->group(function () {
-        Route::get('/', [NicheValidMemberController::class, 'index'])->name('index');
-        Route::post('/', [NicheValidMemberController::class, 'store'])->name('store');
-        Route::get('/create', [NicheValidMemberController::class, 'create'])->name('create');
-        Route::get('/{nicheValidMember}', [NicheValidMemberController::class, 'show'])->name('show');
-        Route::put('/{nicheValidMember}', [NicheValidMemberController::class, 'update'])->name('update');
-        Route::delete('/{nicheValidMember}', [NicheValidMemberController::class, 'destroy'])->name('destroy');
-        Route::post('/{id}/restore', [NicheValidMemberController::class, 'restore'])->name('restore');
     });
 
 
@@ -89,6 +77,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/create', [ValidMemberController::class, 'create'])->name('create');
         Route::post('/', [ValidMemberController::class, 'store'])->name('store');
         Route::get('/search-members', [ValidMemberController::class, 'searchMembers'])->name('search-members');
+        Route::post('/search-graves', [ValidMemberController::class, 'searchGraves'])->name('search-graves');
         Route::get('/{validMember}', [ValidMemberController::class, 'show'])->name('show');
         Route::get('/{validMember}/edit', [ValidMemberController::class, 'edit'])->name('edit');
         Route::put('/{validMember}', [ValidMemberController::class, 'update'])->name('update');
@@ -145,12 +134,12 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{nicheTransfer}/complete', [NicheTransferController::class, 'complete'])->name('complete');
         Route::post('/{nicheTransfer}/cancel', [NicheTransferController::class, 'cancel'])->name('cancel');
     });
-    
+
     // Permission denied route for graveyard
     Route::get('/graveyard/permission-denied', function () {
         return Inertia::render('errors/PermissionDenied', [
             'message' => request()->get('message', ''),
-            'user' => auth()->user()
+            'user' => \Illuminate\Support\Facades\Auth::user()
         ]);
     })->name('graveyard.permission-denied');
 });

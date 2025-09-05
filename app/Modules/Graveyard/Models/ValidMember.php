@@ -2,7 +2,7 @@
 
 namespace Modules\Graveyard\Models;
 
-use App\Models\Member;
+use \Modules\Members\Models\Member;
 use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Graveyard\Models\Niche;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -28,6 +28,8 @@ class ValidMember extends Model
         'last_name',
         'contact_no',
         'aadhar_no',
+        'member_type', // 'member' or 'external
+        'grave_type', // 'permanent_grave' or 'niche'
     ];
 
     /**

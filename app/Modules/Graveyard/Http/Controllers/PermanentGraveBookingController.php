@@ -9,6 +9,7 @@ use Modules\Graveyard\Models\ValidMember;
 use Modules\Graveyard\Models\ServiceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -20,8 +21,8 @@ class PermanentGraveBookingController extends Controller
     public function index(Request $request)
     {
         $query = PermanentGraveBooking::with([
-            'permanentGrave', 
-            'validMember.member', 
+            'permanentGrave',
+            'validMember.member',
             'creator'
         ]);
 
@@ -33,16 +34,16 @@ class PermanentGraveBookingController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where('permit_no', 'like', "%{$search}%")
-                  ->orWhere('booking_reference', 'like', "%{$search}%")
-                  ->orWhere('applicant_name', 'like', "%{$search}%")
-                  ->orWhereHas('permanentGrave', function ($q) use ($search) {
-                      $q->where('owner_name', 'like', "%{$search}%");
-                  })
-                  ->orWhereHas('validMember', function ($q) use ($search) {
-                      $q->where('first_name', 'like', "%{$search}%")
+                ->orWhere('booking_reference', 'like', "%{$search}%")
+                ->orWhere('applicant_name', 'like', "%{$search}%")
+                ->orWhereHas('permanentGrave', function ($q) use ($search) {
+                    $q->where('owner_name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('validMember', function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
-                  });
+                });
         }
 
         // Pagination
@@ -69,20 +70,18 @@ class PermanentGraveBookingController extends Controller
      */
     public function searchPermanentGrave(Request $request)
     {
+        Log::info('Search Term: ' . $request->search_term . ', Search Type: ' . $request->search_type);
         $request->validate([
             'search_term' => 'required|string|min:2',
-            'search_type' => 'required|in:owner_name,grave_no'
         ]);
 
         $query = PermanentGrave::with(['validMembers']);
 
-        if ($request->search_type === 'owner_name') {
-            $query->where('owner_name', 'like', '%' . $request->search_term . '%');
-        } else {
-            $query->where('grave_no', 'like', '%' . $request->search_term . '%');
-        }
+        $query->where('owner_name', 'like', '%' . $request->search_term . '%')
+            ->orWhere('grave_no', 'like', '%' . $request->search_term . '%');
 
-        $graves = $query->get()->map(function ($grave) {
+        Log::info('Query Built: ' . $query->toSql());
+        $graves = $query->get()->map(function (PermanentGrave $grave) {
             return [
                 'id' => $grave->id,
                 'grave_no' => $grave->grave_no,
@@ -92,7 +91,7 @@ class PermanentGraveBookingController extends Controller
                 'last_burial_date' => $grave->last_burial_date,
                 'is_eligible' => $this->checkGraveEligibility($grave),
                 'eligibility_message' => $this->getEligibilityMessage($grave),
-                'valid_members' => $grave->validMembers->map(function ($member) {
+                'valid_members' => $grave->validMembers->map(function (ValidMember $member) {
                     return [
                         'id' => $member->id,
                         'full_name' => $member->full_name,
@@ -101,10 +100,10 @@ class PermanentGraveBookingController extends Controller
                     ];
                 }),
                 'has_valid_members' => $grave->validMembers->count() > 0,
-                'available_members' => $grave->validMembers->whereNull('death_date')->values()
+                'available_members_count' => $grave->validMembers->whereNull('death_date')->values()
             ];
         });
-
+        Log::info('Found Graves: ' . $graves->count());
         return response()->json([
             'graves' => $graves,
             'found' => $graves->count()
@@ -137,7 +136,7 @@ class PermanentGraveBookingController extends Controller
 
             // Get the permanent grave
             $grave = PermanentGrave::findOrFail($request->permanent_grave_id);
-            
+
             // Double-check eligibility
             if (!$this->checkGraveEligibility($grave)) {
                 return back()->withErrors(['grave' => 'This grave is not eligible for burial yet.']);
@@ -145,7 +144,7 @@ class PermanentGraveBookingController extends Controller
 
             // Get the valid member
             $validMember = ValidMember::findOrFail($request->valid_member_id);
-            
+
             // Check if valid member is already deceased
             if ($validMember->death_date) {
                 return back()->withErrors(['valid_member' => 'This valid member is already marked as deceased.']);
@@ -168,8 +167,8 @@ class PermanentGraveBookingController extends Controller
                 'special_requirements' => $request->special_requirements,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
+                'created_by' => auth()->id ?? null,
+                'updated_by' => auth()->id ?? null,
             ]);
 
             // Calculate total cost from selected services
@@ -185,10 +184,9 @@ class PermanentGraveBookingController extends Controller
 
             return redirect()->route('graveyard.permanent-grave-bookings.show', $booking->id)
                 ->with('success', 'Permanent grave booking created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
-            
+
             return back()->withErrors(['error' => 'Failed to create booking. Please try again.'])
                 ->withInput();
         }

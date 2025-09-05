@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Modules\Members\Http\Requests\StoreCellsAndAssociationMemberRequest;
@@ -9,7 +10,7 @@ use Modules\Members\Models\CellsAndAssociationMember;
 use Modules\Members\Models\CellsAndAssociation;
 use Modules\Members\Models\Member;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -55,10 +56,10 @@ class CellsAndAssociationMemberController extends Controller
 
         // Transform data to include related names
         $cellsAndAssociationMembers->getCollection()->transform(function ($item) {
-            $memberName = $item->member ? trim($item->member->first_name.' '.$item->member->last_name) : '';
+            $memberName = $item->member ? trim($item->member->first_name . ' ' . $item->member->last_name) : '';
             $communityName = $item->member && $item->member->community ? $item->member->community->name : 'N/A';
             $memberNo = $item->member ? $item->member->member_no : 'N/A';
-            $item->member_name = $memberName.' - '.$communityName.' - '.$memberNo;
+            $item->member_name = $memberName . ' - ' . $communityName . ' - ' . $memberNo;
             $item->cells_and_association_name = $item->cellsAndAssociation->name ?? '';
 
             return $item;
@@ -86,12 +87,12 @@ class CellsAndAssociationMemberController extends Controller
     public function store(StoreCellsAndAssociationMemberRequest $request)
     {
         $validated = $request->validated();
-        
+
         // Handle multiple cell associations
         if (is_array($validated['cells_and_association_id'])) {
             // Remove duplicates from the array
             $uniqueCellAssociationIds = array_unique($validated['cells_and_association_id']);
-            
+
             // Check for existing associations to prevent duplicates
             $existingAssociations = CellsAndAssociationMember::where('member_id', $validated['member_id'])
                 ->whereIn('cells_and_association_id', $uniqueCellAssociationIds)
@@ -100,15 +101,15 @@ class CellsAndAssociationMemberController extends Controller
 
             if (!empty($existingAssociations)) {
                 return response()->json([
-                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                    'message' => 'Member is already associated with some of the selected cell associations: ' .
                         implode(', ', $existingAssociations),
                     'errors' => [
-                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' .
                             implode(', ', $existingAssociations)]
                     ]
                 ], 422);
             }
-            
+
             // Use bulk insert for better performance
             $records = [];
             foreach ($uniqueCellAssociationIds as $cellAssociationId) {
@@ -119,7 +120,7 @@ class CellsAndAssociationMemberController extends Controller
                     'updated_at' => now(),
                 ];
             }
-            
+
             if (!empty($records)) {
                 CellsAndAssociationMember::insert($records);
             }
@@ -155,12 +156,12 @@ class CellsAndAssociationMemberController extends Controller
     public function update(UpdateCellsAndAssociationMemberRequest $request, CellsAndAssociationMember $cellsAndAssociationMember)
     {
         $validated = $request->validated();
-        
+
         // Handle multiple cell associations
         if (is_array($validated['cells_and_association_id'])) {
             // Remove duplicates from the array
             $uniqueCellAssociationIds = array_unique($validated['cells_and_association_id']);
-            
+
             // Check for existing associations to prevent duplicates (excluding current record)
             $existingAssociations = CellsAndAssociationMember::where('member_id', $validated['member_id'])
                 ->whereIn('cells_and_association_id', $uniqueCellAssociationIds)
@@ -170,18 +171,18 @@ class CellsAndAssociationMemberController extends Controller
 
             if (!empty($existingAssociations)) {
                 return response()->json([
-                    'message' => 'Member is already associated with some of the selected cell associations: ' . 
+                    'message' => 'Member is already associated with some of the selected cell associations: ' .
                         implode(', ', $existingAssociations),
                     'errors' => [
-                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' . 
+                        'cells_and_association_id' => ['Member is already associated with some of the selected cell associations: ' .
                             implode(', ', $existingAssociations)]
                     ]
                 ], 422);
             }
-            
+
             // Delete existing record
             $cellsAndAssociationMember->delete();
-            
+
             // Use bulk insert for better performance
             $records = [];
             foreach ($uniqueCellAssociationIds as $cellAssociationId) {
@@ -192,7 +193,7 @@ class CellsAndAssociationMemberController extends Controller
                     'updated_at' => now(),
                 ];
             }
-            
+
             if (!empty($records)) {
                 CellsAndAssociationMember::insert($records);
             }
@@ -241,7 +242,7 @@ class CellsAndAssociationMemberController extends Controller
 
         $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
             ->with('community:id,name')
-            ->where(function($query) use ($search) {
+            ->where(function ($query) use ($search) {
                 $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
                     ->orWhere('first_name', 'like', "%{$search}%")
                     ->orWhere('last_name', 'like', "%{$search}%")
@@ -323,9 +324,9 @@ class CellsAndAssociationMemberController extends Controller
                     $q->whereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
                     })
-                    ->orWhereHas('cellsAndAssociation', function ($caQuery) use ($search) {
-                        $caQuery->where('name', 'like', "%$search%");
-                    });
+                        ->orWhereHas('cellsAndAssociation', function ($caQuery) use ($search) {
+                            $caQuery->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
@@ -353,12 +354,16 @@ class CellsAndAssociationMemberController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Member Name', 'Cell/Association', 'Contact Number', 'Email'
+                    'ID',
+                    'Member Name',
+                    'Cell/Association',
+                    'Contact Number',
+                    'Email'
                 ]);
 
                 foreach ($query->cursor() as $item) {
-                    $memberName = $item->member 
-                        ? trim($item->member->first_name.' '.$item->member->last_name)
+                    $memberName = $item->member
+                        ? trim($item->member->first_name . ' ' . $item->member->last_name)
                         : '';
 
                     fputcsv($out, [
@@ -371,14 +376,13 @@ class CellsAndAssociationMemberController extends Controller
                 }
 
                 fclose($out);
-            }, 'cells_and_association_members_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'cells_and_association_members_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Cells and Association Member Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Cells and Association Member Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

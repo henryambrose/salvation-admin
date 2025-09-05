@@ -7,11 +7,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Fund\Models\MassIntention;
-use Modules\Fund\Models\MassSchedule;
 use Modules\Fund\Models\MassIntentionType;
-use Modules\Fund\Models\MassType; // Added this import
+use Modules\Fund\Models\MassType;
 use Modules\Members\Models\Member;
 use Modules\Fund\Models\PaymentMethod;
+use Illuminate\Support\Facades\Log;
 
 class MassIntentionController extends Controller
 {
@@ -34,12 +34,12 @@ class MassIntentionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
-                  ->orWhere('non_member_name', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($memberQuery) use ($search) {
-                      $memberQuery->where('first_name', 'like', "%{$search}%")
-                                  ->orWhere('middle_name', 'like', "%{$search}%")
-                                  ->orWhere('last_name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('non_member_name', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('middle_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -90,7 +90,7 @@ class MassIntentionController extends Controller
         // If this is a request for booked masses (from BookIntention page), return only the data
         if ($request->filled('mass_date') && $request->filled('mass_type_id')) {
             $bookedMasses = $massIntentions->items();
-            
+
             // Format the data for frontend display
             $formattedMasses = collect($bookedMasses)->map(function ($mass) {
                 $displayName = '';
@@ -99,7 +99,7 @@ class MassIntentionController extends Controller
                 } else {
                     $displayName = $mass->non_member_name;
                 }
-                
+
                 return [
                     'id' => $mass->id,
                     'display_name' => $displayName,
@@ -107,7 +107,7 @@ class MassIntentionController extends Controller
                     // 'status' => $mass->status, // Commented out - status workflow not implemented yet
                 ];
             });
-            
+
             return response()->json([
                 'booked_masses' => $formattedMasses
             ]);
@@ -129,7 +129,7 @@ class MassIntentionController extends Controller
         } catch (\Exception $e) {
             $massIntentionTypes = MassIntentionType::all();
         }
-        \Log::info($massIntentions);
+        Log::info($massIntentions);
         return Inertia::render('MassIntentions/Index', [
             'massIntentions' => $massIntentions,
             'massTypes' => $massTypes,
@@ -228,8 +228,8 @@ class MassIntentionController extends Controller
             'status' => $request->status,
             'special_instructions' => $request->special_instructions,
             'payment_method_id' => $request->payment_method_id,
-            'created_by' => Auth::id(),
-            'updated_by' => Auth::id(),
+            'created_by' => auth()->id,
+            'updated_by' => auth()->id,
         ]);
 
         return redirect()->route('fund.mass-intentions.index')
@@ -285,8 +285,8 @@ class MassIntentionController extends Controller
      */
     public function update(Request $request, MassIntention $massIntention)
     {
-        \Log::info('Mass Intention Update Request:', $request->all());
-        
+        Log::info('Mass Intention Update Request:', $request->all());
+
         $request->validate([
             'member_id' => 'nullable|exists:members,id',
             'non_member_name' => 'nullable|string|max:255',
@@ -301,7 +301,7 @@ class MassIntentionController extends Controller
         ]);
 
 
-        
+
 
 
         $massIntention->update([
@@ -373,14 +373,14 @@ class MassIntentionController extends Controller
             }
             if ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('middle_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhere('member_no', 'like', "%{$query}%");
+                    ->orWhere('middle_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhere('member_no', 'like', "%{$query}%");
             }
         })
-        ->limit(10)
-        ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'community_id', 'current_add1', 'contact_no_1']);
-    
+            ->limit(10)
+            ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'community_id', 'current_add1', 'contact_no_1']);
+
         // Add a computed 'name' field for frontend compatibility
         $members = $members->map(function ($member) {
             $member->name = trim(implode(' ', array_filter([
@@ -417,12 +417,12 @@ class MassIntentionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
-                  ->orWhere('non_member_name', 'like', "%{$search}%")
-                  ->orWhereHas('member', function ($memberQuery) use ($search) {
-                      $memberQuery->where('first_name', 'like', "%{$search}%")
-                                  ->orWhere('middle_name', 'like', "%{$search}%")
-                                  ->orWhere('last_name', 'like', "%{$search}%");
-                  });
+                    ->orWhere('non_member_name', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($memberQuery) use ($search) {
+                        $memberQuery->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('middle_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -464,7 +464,7 @@ class MassIntentionController extends Controller
         $massIntentions = $query->get();
 
         $filename = 'mass-intentions-' . date('Y-m-d-H-i-s') . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
@@ -472,17 +472,17 @@ class MassIntentionController extends Controller
             'Pragma' => 'public',
         ];
 
-        $callback = function() use ($massIntentions) {
+        $callback = function () use ($massIntentions) {
             // Clear any output buffers
             if (ob_get_level()) {
                 ob_end_clean();
             }
-            
+
             $file = fopen('php://output', 'w');
-            
+
             // Add BOM for Excel compatibility
             fwrite($file, "\xEF\xBB\xBF");
-            
+
             // CSV Headers
             fputcsv($file, [
                 'ID',

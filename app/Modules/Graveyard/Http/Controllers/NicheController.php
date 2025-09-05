@@ -49,8 +49,8 @@ class NicheController extends Controller
         $sortBy = $request->get('sort', 'location');
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection)
-              ->orderBy('niche_no', 'asc')
-              ->orderBy('sr_no', 'asc');
+            ->orderBy('niche_no', 'asc')
+            ->orderBy('sr_no', 'asc');
 
         // Pagination
         $perPage = $request->get('perPage', 10);
@@ -94,7 +94,7 @@ class NicheController extends Controller
             'niche_no' => 'required|integer|min:1',
             'sr_no' => 'required|integer|min:1',
             'location' => 'required|string|max:100',
-            'status' => 'required|in:available,occupied,reserved,maintenance',
+            'status' => 'required|in:available,occupied',
             'last_occupation_date' => 'nullable|date',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
@@ -189,7 +189,7 @@ class NicheController extends Controller
     public function edit(Niche $niche)
     {
         $niche->load(['member', 'member.community']);
-        
+
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
         $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
 
@@ -292,7 +292,7 @@ class NicheController extends Controller
      */
     public function destroy(Niche $niche)
     {
-        \Log::info('Attempting to delete niche', $niche->toArray());
+        Log::info('Attempting to delete niche', $niche->toArray());
         try {
             // Check if niche is occupied
             if ($niche->status === 'occupied') {
@@ -354,7 +354,7 @@ class NicheController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->get('query');
-        
+
         if (strlen($query) < 2) {
             return response()->json([]);
         }
@@ -362,11 +362,11 @@ class NicheController extends Controller
         $members = Member::with(['community'])
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
-                  ->orWhere('family_no', 'like', "%{$query}%")
-                  ->orWhere('contact_no_1', 'like', "%{$query}%")
-                  ->orWhere('contact_no_2', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
+                    ->orWhere('family_no', 'like', "%{$query}%")
+                    ->orWhere('contact_no_1', 'like', "%{$query}%")
+                    ->orWhere('contact_no_2', 'like', "%{$query}%");
             })
             ->limit(10)
             ->get()

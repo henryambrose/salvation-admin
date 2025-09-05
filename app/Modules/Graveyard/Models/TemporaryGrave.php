@@ -44,10 +44,6 @@ class TemporaryGrave extends Model
     /**
      * Get the bookings for this temporary grave
      */
-    public function bookings()
-    {
-        return $this->hasMany(GraveBooking::class, 'temporary_grave_id');
-    }
 
     /**
      * Get the user who created this record
@@ -76,10 +72,6 @@ class TemporaryGrave extends Model
     /**
      * Get the latest booking for this grave
      */
-    public function latestBooking()
-    {
-        return $this->hasOne(GraveBooking::class, 'temporary_grave_id')->latest();
-    }
 
     /**
      * Scope to get only available graves
@@ -104,15 +96,15 @@ class TemporaryGrave extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('section', 'like', "%{$search}%")
-              ->orWhere('grave_no', 'like', "%{$search}%")
-              ->orWhere('oldno', 'like', "%{$search}%")
-              ->orWhere('owner_name', 'like', "%{$search}%")
-              ->orWhereHas('member', function ($memberQuery) use ($search) {
-                  $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-                              ->orWhere('family_no', 'like', "%{$search}%")
-                              ->orWhere('contact_no_1', 'like', "%{$search}%")
-                              ->orWhere('contact_no_2', 'like', "%{$search}%");
-              });
+                ->orWhere('grave_no', 'like', "%{$search}%")
+                ->orWhere('oldno', 'like', "%{$search}%")
+                ->orWhere('owner_name', 'like', "%{$search}%")
+                ->orWhereHas('member', function ($memberQuery) use ($search) {
+                    $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+                        ->orWhere('family_no', 'like', "%{$search}%")
+                        ->orWhere('contact_no_1', 'like', "%{$search}%")
+                        ->orWhere('contact_no_2', 'like', "%{$search}%");
+                });
         });
     }
 
@@ -122,8 +114,8 @@ class TemporaryGrave extends Model
     public function scopeNeedingTransfer($query)
     {
         return $query->where('status', 'unavailable')
-                    ->whereNotNull('last_burial_date')
-                    ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= duration_months * 30');
+            ->whereNotNull('last_burial_date')
+            ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= duration_months * 30');
     }
 
     /**
