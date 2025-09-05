@@ -33,7 +33,7 @@ class ServiceTypeController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -97,10 +97,10 @@ class ServiceTypeController extends Controller
     public function store(StoreServiceTypeRequest $request)
     {
         $validatedData = $request->validated();
-        $validatedData['created_by'] = auth()->id();
-        $validatedData['updated_by'] = auth()->id();
+        $validatedData['created_by'] = Auth::id();
+        $validatedData['updated_by'] = aUTH::id();
         $validatedData['sort_order'] = $validatedData['sort_order'] ?? ServiceType::max('sort_order') + 1;
-        
+
         ServiceType::create($validatedData);
 
         return redirect()->route('graveyard.service-types.index')
@@ -113,7 +113,7 @@ class ServiceTypeController extends Controller
     public function show(ServiceType $serviceType): Response
     {
         $serviceType->load(['creator', 'updater']);
-        
+
         return Inertia::render('PagesGraveyard/ServiceType/Show', [
             'serviceType' => $serviceType
         ]);
@@ -135,8 +135,8 @@ class ServiceTypeController extends Controller
     public function update(UpdateServiceTypeRequest $request, ServiceType $serviceType)
     {
         $validatedData = $request->validated();
-        $validatedData['updated_by'] = auth()->id();
-        
+        $validatedData['updated_by'] = Auth::id();
+
         $serviceType->update($validatedData);
 
         return redirect()->route('graveyard.service-types.index')
@@ -152,7 +152,7 @@ class ServiceTypeController extends Controller
 
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
-        
+
         return redirect()->route('graveyard.service-types.index', array_merge(
             $request->only(['search', 'sort', 'direction', 'isArchived', 'category', 'type', 'is_active']),
             [
@@ -181,11 +181,11 @@ class ServiceTypeController extends Controller
     {
         $serviceType->update([
             'is_active' => !$serviceType->is_active,
-            'updated_by' => auth()->id(),
+            'updated_by' => Auth::id(),
         ]);
 
         $status = $serviceType->is_active ? 'activated' : 'deactivated';
-        
+
         return redirect()->back()
             ->with('success', "Service type {$status} successfully.");
     }
@@ -197,7 +197,7 @@ class ServiceTypeController extends Controller
     {
         try {
             $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
-            
+
             Log::info('Attempting to permanently delete service type', [
                 'service_type_id' => $serviceType->id,
                 'name' => $serviceType->name,
@@ -212,7 +212,6 @@ class ServiceTypeController extends Controller
             ]);
 
             return back()->with('success', 'Service type permanently deleted.');
-
         } catch (\Exception $e) {
             Log::error('Failed to permanently delete service type', [
                 'service_type_id' => $id,

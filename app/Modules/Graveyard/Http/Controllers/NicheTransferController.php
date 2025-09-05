@@ -10,6 +10,8 @@ use Modules\Graveyard\Models\ServiceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class NicheTransferController extends Controller
 {
@@ -35,8 +37,8 @@ class NicheTransferController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('deceased_first_name', 'like', "%{$search}%")
-                  ->orWhere('deceased_last_name', 'like', "%{$search}%")
-                  ->orWhere('transfer_reference', 'like', "%{$search}%");
+                    ->orWhere('deceased_last_name', 'like', "%{$search}%")
+                    ->orWhere('transfer_reference', 'like', "%{$search}%");
             });
         }
 
@@ -131,8 +133,8 @@ class NicheTransferController extends Controller
                 'selected_services' => $request->selected_services,
                 'niche_cost' => $niche->cost,
                 'status' => 'pending',
-                'created_by' => auth()->id(),
-                'updated_by' => auth()->id(),
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ]);
 
             // Calculate transfer cost from services
@@ -152,7 +154,6 @@ class NicheTransferController extends Controller
 
             return redirect()->route('graveyard.niche-transfers.show', $transfer->id)
                 ->with('success', 'Niche transfer request created successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->withErrors(['error' => 'Failed to create transfer request.'])->withInput();
@@ -224,7 +225,6 @@ class NicheTransferController extends Controller
             DB::commit();
 
             return back()->with('success', 'Transfer rejected successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to reject transfer.');
@@ -262,7 +262,7 @@ class NicheTransferController extends Controller
             $nicheTransfer->update([
                 'status' => 'cancelled',
                 'rejection_reason' => $request->cancellation_reason,
-                'updated_by' => auth()->id()
+                'updated_by' => Auth::id()
             ]);
 
             // Reset transfer requested flag on original booking
@@ -271,7 +271,6 @@ class NicheTransferController extends Controller
             DB::commit();
 
             return back()->with('success', 'Transfer cancelled successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             return back()->with('error', 'Failed to cancel transfer.');

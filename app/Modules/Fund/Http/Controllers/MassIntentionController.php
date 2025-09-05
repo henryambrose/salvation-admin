@@ -129,7 +129,6 @@ class MassIntentionController extends Controller
         } catch (\Exception $e) {
             $massIntentionTypes = MassIntentionType::all();
         }
-        Log::info($massIntentions);
         return Inertia::render('MassIntentions/Index', [
             'massIntentions' => $massIntentions,
             'massTypes' => $massTypes,
@@ -285,8 +284,6 @@ class MassIntentionController extends Controller
      */
     public function update(Request $request, MassIntention $massIntention)
     {
-        Log::info('Mass Intention Update Request:', $request->all());
-
         $request->validate([
             'member_id' => 'nullable|exists:members,id',
             'non_member_name' => 'nullable|string|max:255',
@@ -299,10 +296,6 @@ class MassIntentionController extends Controller
             'special_instructions' => 'nullable|string|max:1000',
             'status' => 'required|in:pending,confirmed,completed,cancelled',
         ]);
-
-
-
-
 
         $massIntention->update([
             'member_id' => $request->member_id,

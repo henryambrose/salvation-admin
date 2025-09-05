@@ -116,20 +116,8 @@ class MassTypeController extends Controller
      */
     public function destroy(MassType $massType)
     {
-        Log::info('Attempting to delete mass type', [
-            'id' => $massType->id,
-            'name' => $massType->name,
-            'related_intentions_count' => $massType->massIntentions()->count()
-        ]);
-
         try {
             $massType->delete();
-
-            Log::info('Mass type deleted successfully', [
-                'id' => $massType->id,
-                'deleted_at' => $massType->deleted_at
-            ]);
-
             return back()->with('success', 'Mass type deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete mass type', [

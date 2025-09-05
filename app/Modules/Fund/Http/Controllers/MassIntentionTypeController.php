@@ -116,27 +116,15 @@ class MassIntentionTypeController extends Controller
      */
     public function destroy(MassIntentionType $massIntentionType)
     {
-        Log::info('Attempting to delete mass intention type', [
-            'id' => $massIntentionType->id,
-            'name' => $massIntentionType->name,
-            'related_intentions_count' => $massIntentionType->massIntentions()->count()
-        ]);
 
         try {
             $massIntentionType->delete();
-
-            Log::info('Mass intention type deleted successfully', [
-                'id' => $massIntentionType->id,
-                'deleted_at' => $massIntentionType->deleted_at
-            ]);
-
             return back()->with('success', 'Mass intention type deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete mass intention type', [
                 'id' => $massIntentionType->id,
                 'error' => $e->getMessage()
             ]);
-
             return back()->withErrors(['error' => 'Failed to delete mass intention type: ' . $e->getMessage()]);
         }
     }
