@@ -1,9 +1,10 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
-use Modules\Members\Http\Requests\StoreZoneRequest;
+use Illuminate\Support\Facades\Auth;
 use Modules\Members\Models\Zone;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -37,7 +38,7 @@ class ZoneController extends Controller
             'fetchUrl' => route('zone.index'),
             'zones' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
-            'canRestoreZone' => auth()->user()->can('restore-zone'),
+            'canRestoreZone' => Auth::can('restore-zone'),
         ]);
     }
 
@@ -102,7 +103,7 @@ class ZoneController extends Controller
     public function update(Request $request, Zone $zone)
     {
         $validated = $request->validate([
-            'name' => 'required|string|unique:zones,name,'.$zone->id,
+            'name' => 'required|string|unique:zones,name,' . $zone->id,
             'description' => 'nullable|string',
         ]);
 

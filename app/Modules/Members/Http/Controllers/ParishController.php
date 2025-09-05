@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Modules\Members\Http\Requests\StoreParishRequest;
@@ -9,6 +10,9 @@ use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 class ParishController extends Controller
 {
@@ -17,7 +21,7 @@ class ParishController extends Controller
      */
     public function index(Request $request): Response
     {
-        \DB::enableQueryLog();
+        DB::enableQueryLog();
         $query = Parish::query();
 
         // Handle archived records
@@ -51,7 +55,7 @@ class ParishController extends Controller
             'fetchUrl' => route('parish.index'),
             'parishes' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
-            'query' => \DB::getQueryLog(),
+            'query' => DB::getQueryLog(),
         ]);
     }
 
@@ -174,7 +178,9 @@ class ParishController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Parish Name', 'Zone'
+                    'ID',
+                    'Parish Name',
+                    'Zone'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -186,14 +192,13 @@ class ParishController extends Controller
                 }
 
                 fclose($out);
-            }, 'parishes_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'parishes_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Parish Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Parish Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
-import { computed, ref, watch, nextTick } from 'vue';
-import { permissionHelpers } from '@/composables/permissionHelpers';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
@@ -45,11 +45,11 @@ function openCreateModal() {
   showModal.value = true;
 }
 
-const editingType = ref<Record<string, any>>();
+const editingType = ref<Record<string, any> | undefined>(undefined);
 const deletingType = ref<Record<string, any> | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -62,7 +62,13 @@ function scrollToRow(rowId: number) {
   });
 }
 
-const form = useForm({
+const form = useForm<{
+  name: string;
+  description: string;
+  default_time: string;
+  sort_order: number;
+  is_active: boolean;
+}>({
   name: '',
   description: '',
   default_time: '',
@@ -70,7 +76,13 @@ const form = useForm({
   is_active: true,
 });
 
-const editForm = useForm({
+const editForm = useForm<{
+  name: string;
+  description: string;
+  default_time: string;
+  sort_order: number;
+  is_active: boolean;
+}>({
   name: '',
   description: '',
   default_time: '',
@@ -108,13 +120,17 @@ function clearSearch() {
 }
 
 function restoreMassType(id: number) {
-  router.post(route('fund.mass-types.restore', id), {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    route('fund.mass-types.restore', id),
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function fetch(page = 1) {
@@ -149,7 +165,7 @@ watch(
 // Watch for modal state changes to reset form when closed
 watch(showModal, (newValue) => {
   if (!newValue) {
-  form.reset();
+    form.reset();
     form.clearErrors();
   }
 });
@@ -199,7 +215,7 @@ function submitEdit() {
     console.error('No mass type selected for editing');
     return;
   }
-  
+
   editForm.put(route('fund.mass-types.update', editedId), {
     preserveScroll: true,
     only: partialOnly,
@@ -247,7 +263,7 @@ function handlePageChange(event: Event) {
 
 const breadcrumbs = [
   { title: 'Fund', href: '/fund' },
-  { title: 'Mass Types', href: '/fund/mass-types' }
+  { title: 'Mass Types', href: '/fund/mass-types' },
 ];
 </script>
 
@@ -257,16 +273,29 @@ const breadcrumbs = [
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Mass Types</h2>
-        <Button v-if="canCreateMassType" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <Plus class="w-[1rem] h-[1rem]" />
+        <Button
+          v-if="canCreateMassType"
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+        >
+          <Plus class="h-[1rem] w-[1rem]" />
           <span>Add Mass Type</span>
         </Button>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
@@ -276,37 +305,37 @@ const breadcrumbs = [
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
         </div>
       </div>
     </DatatableHeader>
-    
+
     <div v-if="canReadAnyMassType">
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ massTypes?.total || 0 }}</span> total mass types
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <div class="flex items-center gap-2">
-          <button 
-            v-if="massTypes?.prev_page_url" 
-            @click="fetch(massTypes.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="massTypes?.prev_page_url"
+            @click="fetch(massTypes.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="massTypes?.last_page && massTypes.last_page > 1"
-              :value="massTypes?.current_page" 
+              :value="massTypes?.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
             >
               <option v-for="page in massTypes.last_page" :key="page" :value="page">
                 {{ page }}
@@ -314,20 +343,18 @@ const breadcrumbs = [
             </select>
             <span>of {{ massTypes?.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="massTypes?.next_page_url" 
-            @click="fetch(massTypes.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="massTypes?.next_page_url"
+            @click="fetch(massTypes.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">
-            Mass Types
-          </span>
+          <span class="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium text-teal-800"> Mass Types </span>
         </div>
       </div>
 
@@ -344,34 +371,51 @@ const breadcrumbs = [
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedMassTypes.data" :key="row.id" :id="`mass-type-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedMassTypes.data"
+                :key="row.id"
+                :id="`mass-type-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
                     <div class="flex items-center gap-2">
-                      <Button v-if="canUpdateAnyMassType" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition p-2">
-                        <Pencil class="w-[1rem] h-[1rem]" />
+                      <Button
+                        v-if="canUpdateAnyMassType"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
+                      >
+                        <Pencil class="h-[1rem] w-[1rem]" />
                       </Button>
                     </div>
                   </template>
                   <template v-else>
-                    <Button v-if="canRestoreMassType" @click="restoreMassType(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition p-2">
-                      <RotateCcw class="w-[1rem] h-[1rem]" />
+                    <Button
+                      v-if="canRestoreMassType"
+                      @click="restoreMassType(row.id)"
+                      class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200"
+                    >
+                      <RotateCcw class="h-[1rem] w-[1rem]" />
                     </Button>
                   </template>
                 </td>
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   <template v-if="col.key === 'is_active'">
-                    <span :class="[
-                      'px-2 py-1 rounded-full text-xs font-medium',
-                      row[col.key] 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    ]">
+                    <span
+                      :class="[
+                        'rounded-full px-2 py-1 text-xs font-medium',
+                        row[col.key] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
+                      ]"
+                    >
                       {{ row[col.key] ? 'Active' : 'Inactive' }}
                     </span>
                   </template>
                   <template v-else-if="col.key === 'default_time'">
-                    {{ row[col.key] ? new Date(`1970-01-01T${row[col.key]}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }) : '-' }}
+                    {{
+                      row[col.key]
+                        ? new Date(`1970-01-01T${row[col.key]}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+                        : '-'
+                    }}
                   </template>
                   <template v-else>
                     {{ row[col.key] || '-' }}
@@ -379,8 +423,12 @@ const breadcrumbs = [
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyMassType">
-                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition p-2">
-                      <Trash class="w-[1rem] h-[1rem]" />
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
+                    >
+                      <Trash class="h-[1rem] w-[1rem]" />
                     </Button>
                   </template>
                 </td>
@@ -394,8 +442,17 @@ const breadcrumbs = [
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
+        <div
+          class="bg-opacity-50 absolute inset-0 bg-black"
+          @click="
+            () => {
+              showModal = false;
+              form.reset();
+              form.clearErrors();
+            }
+          "
+        ></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Mass Type</h3>
             <form @submit.prevent="submit">
@@ -406,7 +463,11 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
-                <textarea v-model="form.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <textarea
+                  v-model="form.description"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+                  rows="3"
+                ></textarea>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Default Time</label>
@@ -425,15 +486,21 @@ const breadcrumbs = [
               <div class="flex justify-end space-x-2">
                 <Button
                   type="button"
-                  @click="() => { showModal = false; form.reset(); form.clearErrors(); }"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  @click="
+                    () => {
+                      showModal = false;
+                      form.reset();
+                      form.clearErrors();
+                    }
+                  "
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2"
+                  class="rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -458,7 +525,11 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
-                <textarea v-model="editForm.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <textarea
+                  v-model="editForm.description"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+                  rows="3"
+                ></textarea>
                 <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
               </div>
               <div class="mb-3">
@@ -480,15 +551,21 @@ const breadcrumbs = [
               <div class="flex justify-end space-x-2">
                 <Button
                   type="button"
-                  @click="() => { showEditModal = false; editForm.reset(); editForm.clearErrors(); editingType.value = undefined; }"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  @click="
+                    () => {
+                      showEditModal = false;
+                      editForm.reset();
+                      editForm.clearErrors();
+                    }
+                  "
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2"
+                  class="rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -506,21 +583,18 @@ const breadcrumbs = [
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Mass Type</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingType?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingType?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
-              <Button
-                type="button"
-                @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2"
-              >
+              <Button type="button" @click="confirmDelete" class="rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700">
                 Delete
               </Button>
             </div>
@@ -532,10 +606,12 @@ const breadcrumbs = [
 </template>
 
 <style>
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s;
 }
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 .switch-checkbox {
@@ -543,14 +619,18 @@ const breadcrumbs = [
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444;
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -560,7 +640,7 @@ const breadcrumbs = [
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -570,7 +650,7 @@ const breadcrumbs = [
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -578,7 +658,11 @@ const breadcrumbs = [
   background-color: #fef08a !important;
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

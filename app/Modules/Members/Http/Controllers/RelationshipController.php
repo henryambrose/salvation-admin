@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Modules\Members\Http\Requests\StoreRelationshipRequest;
@@ -9,6 +10,7 @@ use Modules\Members\Models\Relationship;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
 
 class RelationshipController extends Controller
 {
@@ -154,7 +156,8 @@ class RelationshipController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Relationship Name'
+                    'ID',
+                    'Relationship Name'
                 ]);
 
                 foreach ($query->cursor() as $item) {
@@ -165,14 +168,13 @@ class RelationshipController extends Controller
                 }
 
                 fclose($out);
-            }, 'relationships_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'relationships_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('Relationship Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('Relationship Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

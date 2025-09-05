@@ -4,13 +4,13 @@ namespace Modules\Members\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class RoleController extends Controller
 {
@@ -70,7 +70,7 @@ class RoleController extends Controller
         $permissions = Permission::orderBy('name')->get()->map(function ($permission) {
             // Extract module from permission name (e.g., "create-member" -> "Member")
             $module = $this->extractModuleFromPermission($permission->name);
-            
+
             return [
                 'id' => $permission->id,
                 'name' => $permission->name,
@@ -174,7 +174,7 @@ class RoleController extends Controller
         $permissions = Permission::orderBy('name')->get()->map(function ($permission) {
             // Extract module from permission name (e.g., "create-member" -> "Member")
             $module = $this->extractModuleFromPermission($permission->name);
-            
+
             return [
                 'id' => $permission->id,
                 'name' => $permission->name,
@@ -247,8 +247,8 @@ class RoleController extends Controller
 
         $role->delete();
 
-                    return redirect()->route('roles.permissions.index')
-                ->with('success', 'Role deleted successfully.');
+        return redirect()->route('roles.permissions.index')
+            ->with('success', 'Role deleted successfully.');
     }
 
     public function updatePermissions(Request $request, Role $role)
@@ -303,66 +303,82 @@ class RoleController extends Controller
         }
 
         // Core Management
-        if (str_contains($permissionName, 'member') || 
+        if (
+            str_contains($permissionName, 'member') ||
             str_contains($permissionName, 'external-member') ||
             str_contains($permissionName, 'community') ||
-            str_contains($permissionName, 'parish')) {
+            str_contains($permissionName, 'parish')
+        ) {
             return 'Core Management';
         }
 
         // Organizational Structure
-        if (str_contains($permissionName, 'zone') ||
+        if (
+            str_contains($permissionName, 'zone') ||
             str_contains($permissionName, 'cluster') ||
             str_contains($permissionName, 'community-cluster') ||
             str_contains($permissionName, 'cells-and-association') ||
-            str_contains($permissionName, 'cells-association-member')) {
+            str_contains($permissionName, 'cells-association-member')
+        ) {
             return 'Organizational Structure';
         }
 
         // Leadership
-        if (str_contains($permissionName, 'scc-head') ||
+        if (
+            str_contains($permissionName, 'scc-head') ||
             str_contains($permissionName, 'ppc-head') ||
             str_contains($permissionName, 's-c-c-head') ||
-            str_contains($permissionName, 'p-p-c-head')) {
+            str_contains($permissionName, 'p-p-c-head')
+        ) {
             return 'Leadership';
         }
 
         // Member Attributes
-        if (str_contains($permissionName, 'relationship') ||
+        if (
+            str_contains($permissionName, 'relationship') ||
             str_contains($permissionName, 'designation') ||
             str_contains($permissionName, 'age-group') ||
             str_contains($permissionName, 'blood-group') ||
             str_contains($permissionName, 'gender') ||
             str_contains($permissionName, 'status') ||
-            str_contains($permissionName, 'income-range')) {
+            str_contains($permissionName, 'income-range')
+        ) {
             return 'Member Attributes';
         }
 
         // Geographic Data
-        if (str_contains($permissionName, 'country') ||
+        if (
+            str_contains($permissionName, 'country') ||
             str_contains($permissionName, 'state') ||
             str_contains($permissionName, 'city') ||
-            str_contains($permissionName, 'town')) {
+            str_contains($permissionName, 'town')
+        ) {
             return 'Geographic Data';
         }
 
         // System Management
-        if (str_contains($permissionName, 'user') ||
+        if (
+            str_contains($permissionName, 'user') ||
             str_contains($permissionName, 'role') ||
-            str_contains($permissionName, 'audit')) {
+            str_contains($permissionName, 'audit')
+        ) {
             return 'System Management';
         }
 
         // AI Assistance
-        if (str_contains($permissionName, 'chat') ||
-            str_contains($permissionName, 'ai')) {
+        if (
+            str_contains($permissionName, 'chat') ||
+            str_contains($permissionName, 'ai')
+        ) {
             return 'AI Assistance';
         }
 
         // Fund App
-        if (str_contains($permissionName, 'fund') || 
-            str_contains($permissionName, 'annual-contribution') || 
-            str_contains($permissionName, 'mass-intention')) {
+        if (
+            str_contains($permissionName, 'fund') ||
+            str_contains($permissionName, 'annual-contribution') ||
+            str_contains($permissionName, 'mass-intention')
+        ) {
             return 'Fund App';
         }
 
@@ -370,17 +386,19 @@ class RoleController extends Controller
         $parts = explode('-', $permissionName);
         if (count($parts) >= 2) {
             $firstPart = $parts[1];
-            
+
             // Handle specific cases that might not have been caught
             if (str_contains($firstPart, 'group')) {
                 return 'Member Attributes';
             }
-            
+
             // For any other unrecognized permissions, group them logically
-            if (str_contains($permissionName, 'create') || str_contains($permissionName, 'read') || 
+            if (
+                str_contains($permissionName, 'create') || str_contains($permissionName, 'read') ||
                 str_contains($permissionName, 'update') || str_contains($permissionName, 'delete') ||
-                str_contains($permissionName, 'list') || str_contains($permissionName, 'restore')) {
-                
+                str_contains($permissionName, 'list') || str_contains($permissionName, 'restore')
+            ) {
+
                 // Try to find a meaningful category based on the second part
                 if (isset($parts[2])) {
                     $secondPart = $parts[2];
@@ -393,7 +411,7 @@ class RoleController extends Controller
                 }
             }
         }
-        
+
         // If still no match, put in Core Management as default
         return 'Core Management';
     }
@@ -413,23 +431,23 @@ class RoleController extends Controller
         if (str_contains($permissionName, 'blood-group')) {
             return 'Blood Group';
         }
-        
+
         if (str_contains($permissionName, 'role')) {
             return 'Role Management';
         }
-        
+
         if (str_contains($permissionName, 'user')) {
             return 'User Management';
         }
-        
+
         if (str_contains($permissionName, 'fund')) {
             return 'Fund Dashboard';
         }
-        
+
         if (str_contains($permissionName, 'annual-contribution')) {
             return 'Annual Contributions';
         }
-        
+
         if (str_contains($permissionName, 'mass-intention')) {
             return 'Mass Intentions';
         }
@@ -438,28 +456,25 @@ class RoleController extends Controller
         if (str_contains($permissionName, 'cells-and-association-member')) {
             return 'Cells Association Members';
         }
-        
+
         if (str_contains($permissionName, 'cells-and-association')) {
             return 'Cells and Association';
         }
-        \Log::info('Permission Name442: ' . $permissionName);
-        // \Log::info('Category: ' . $category);
-        // \Log::info('Module: ' . $module);
-        // Standard module extraction
+        Log::info('Permission Name442: ' . $permissionName);
         $parts = explode('-', $permissionName);
 
         if (count($parts) >= 2) {
             $module = $parts[1];
-            \Log::info('Module447: ' . $module);
+            Log::info('Module447: ' . $module);
             // Handle compound words
             if (isset($parts[2])) {
                 $module .= ' ' . $parts[2];
             }
-            
+
             // Capitalize and clean up
             $module = str_replace(['_', '-'], ' ', $module);
             // $module = ucwords($module);
-            \Log::info('Module456: ' . $module);
+            Log::info('Module456: ' . $module);
             // Handle special cases
             $moduleMapping = [
                 'Member' => 'Members',
@@ -485,10 +500,10 @@ class RoleController extends Controller
                 'S C C Head' => 'SCC Head',
                 'P P C Head' => 'PPC Head',
             ];
-            
+
             return $moduleMapping[$module] ?? $module;
         }
-        
+
         // If still no match, try to create a meaningful module name
         if (count($parts) >= 2) {
             $module = $parts[1];
@@ -497,7 +512,7 @@ class RoleController extends Controller
             }
             return str_replace(['_', '-'], ' ', $module);
         }
-        
+
         return 'Other';
     }
 }

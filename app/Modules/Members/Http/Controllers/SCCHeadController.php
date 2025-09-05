@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Modules\Members\Http\Requests\StoreSCCHeadRequest;
@@ -12,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
 
 class SCCHeadController extends Controller
 {
@@ -29,7 +31,10 @@ class SCCHeadController extends Controller
         $query->select('s_c_c_heads.*');
         $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
-        $query->select('s_c_c_heads.*', 'members.first_name as member_first_name', 'members.last_name as member_last_name',
+        $query->select(
+            's_c_c_heads.*',
+            'members.first_name as member_first_name',
+            'members.last_name as member_last_name',
             DB::raw("CONCAT(members.first_name, ' ', members.last_name) as member_full_name"),
             'communities.name as community_name'
         );
@@ -193,7 +198,7 @@ class SCCHeadController extends Controller
 
             return response()->json($members);
         } catch (\Exception $e) {
-            \Log::error('Error fetching members by community: ' . $e->getMessage());
+            Log::error('Error fetching members by community: ' . $e->getMessage());
             return response()->json(['error' => 'Failed to fetch members'], 500);
         }
     }
@@ -219,9 +224,9 @@ class SCCHeadController extends Controller
                     $q->whereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"]);
                     })
-                    ->orWhereHas('community', function ($communityQuery) use ($search) {
-                        $communityQuery->where('name', 'like', "%$search%");
-                    });
+                        ->orWhereHas('community', function ($communityQuery) use ($search) {
+                            $communityQuery->where('name', 'like', "%$search%");
+                        });
                 });
             }
 
@@ -249,12 +254,16 @@ class SCCHeadController extends Controller
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [
-                    'ID', 'Member Name', 'Community', 'Contact Number', 'Email'
+                    'ID',
+                    'Member Name',
+                    'Community',
+                    'Contact Number',
+                    'Email'
                 ]);
 
                 foreach ($query->cursor() as $item) {
-                    $memberName = $item->member 
-                        ? trim($item->member->first_name.' '.$item->member->last_name)
+                    $memberName = $item->member
+                        ? trim($item->member->first_name . ' ' . $item->member->last_name)
                         : '';
 
                     fputcsv($out, [
@@ -267,14 +276,13 @@ class SCCHeadController extends Controller
                 }
 
                 fclose($out);
-            }, 'scc_heads_'.now()->format('Y-m-d_H-i-s').'.csv', [
+            }, 'scc_heads_' . now()->format('Y-m-d_H-i-s') . '.csv', [
                 'Content-Type' => 'text/csv',
                 'Cache-Control' => 'no-store, no-cache',
             ]);
-
         } catch (\Exception $e) {
-            \Log::error('SCC Head Export failed: '.$e->getMessage());
-            return response()->json(['error' => 'Export failed: '.$e->getMessage()], 500);
+            Log::error('SCC Head Export failed: ' . $e->getMessage());
+            return response()->json(['error' => 'Export failed: ' . $e->getMessage()], 500);
         }
     }
 }

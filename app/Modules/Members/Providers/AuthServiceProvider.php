@@ -53,7 +53,6 @@ class AuthServiceProvider extends ServiceProvider
         City::class => CityPolicy::class,
         Community::class => CommunityPolicy::class,
         CommunityCluster::class => CommunityClusterPolicy::class,
-        CommunityFund::class => CommunityFundPolicy::class,
         Designation::class => DesignationPolicy::class,
         ExternalMember::class => ExternalMemberPolicy::class,
         IncomeRange::class => IncomeRangePolicy::class,

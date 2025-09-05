@@ -232,15 +232,15 @@ const submit = () => {
                   <div class="mt-2 grid grid-cols-3 gap-4">
                     <div>
                       <Label for="age">Years</Label>
-                      <Input id="age" v-model.number="form.age" type="number" min="0" max="150" class="mt-1" />
+                      <Input id="age" :model-value="form.age ?? ''" @input="form.age = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="150" class="mt-1" />
                     </div>
                     <div>
                       <Label for="months">Months</Label>
-                      <Input id="months" v-model.number="form.months" type="number" min="0" max="11" class="mt-1" />
+                      <Input id="months" :model-value="form.months ?? ''" @input="form.months = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="11" class="mt-1" />
                     </div>
                     <div>
                       <Label for="days">Days</Label>
-                      <Input id="days" v-model.number="form.days" type="number" min="0" max="30" class="mt-1" />
+                      <Input id="days" :model-value="form.days ?? ''" @input="form.days = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="30" class="mt-1" />
                     </div>
                   </div>
                 </div>

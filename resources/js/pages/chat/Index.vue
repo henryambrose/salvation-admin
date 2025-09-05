@@ -1,11 +1,10 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue';
-import { Head } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Send, Bot, User, Loader2, RefreshCw, Trash2, BookOpen, Tag, ExternalLink } from 'lucide-vue-next';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { Head } from '@inertiajs/vue3';
+import { BookOpen, Bot, ExternalLink, Loader2, Send, Tag, Trash2, User } from 'lucide-vue-next';
+import { nextTick, onMounted, ref } from 'vue';
 
 interface Message {
   id: string;
@@ -44,15 +43,14 @@ const sendMessage = async () => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-
       },
       credentials: 'same-origin',
       body: JSON.stringify({
         message: currentMessage,
-        conversation_history: messages.value.slice(0, -1).map(msg => ({
+        conversation_history: messages.value.slice(0, -1).map((msg) => ({
           role: msg.role,
           content: msg.content,
           uniqueID: msg.uniqueID,
@@ -127,12 +125,12 @@ onMounted(() => {
   <AppLayout>
     <Head title="Catholic AI Chat Assistant" />
 
-    <div class="flex flex-col h-[calc(100vh-120px)] max-w-4xl mx-auto">
+    <div class="mx-auto flex h-[calc(100vh-120px)] max-w-4xl flex-col">
       <!-- Header -->
-      <div class="flex items-center justify-between p-6 border-b bg-[#ffffff] dark:bg-slate-800 rounded-t-xl">
+      <div class="flex items-center justify-between rounded-t-xl border-b bg-[#ffffff] p-6 dark:bg-slate-800">
         <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
-            <Bot class="w-[1.5rem] h-[1.5rem] text-white" />
+          <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <Bot class="h-[1.5rem] w-[1.5rem] text-white" />
           </div>
           <div>
             <h1 class="text-xl font-bold text-gray-900 dark:text-white">Catholic AI Chat Assistant</h1>
@@ -140,92 +138,79 @@ onMounted(() => {
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <Button
-            @click="clearChat"
-            variant="outline"
-            size="sm"
-            class="text-gray-500 hover:text-red-500"
-          >
-            <Trash2 class="w-[1rem] h-[1rem] mr-2" />
+          <Button @click="clearChat" variant="outline" size="sm" class="text-gray-500 hover:text-red-500">
+            <Trash2 class="mr-2 h-[1rem] w-[1rem]" />
             Clear Chat
           </Button>
         </div>
       </div>
 
       <!-- Messages Container -->
-      <div
-        ref="messagesContainer"
-        class="flex-1 overflow-y-auto p-6 space-y-4 bg-gray-50 dark:bg-slate-900"
-      >
-        <div v-if="messages.length === 0" class="flex flex-col items-center justify-center h-full text-center">
-          <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-4">
-            <Bot class="w-8 h-8 text-white" />
+      <div ref="messagesContainer" class="flex-1 space-y-4 overflow-y-auto bg-gray-50 p-6 dark:bg-slate-900">
+        <div v-if="messages.length === 0" class="flex h-full flex-col items-center justify-center text-center">
+          <div class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <Bot class="h-8 w-8 text-white" />
           </div>
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-            Welcome to Catholic AI Chat Assistant
-          </h3>
-          <p class="text-gray-500 dark:text-gray-400 max-w-md">
-            I'm here to help you with questions about Catholic teachings, prayers, and spiritual guidance. 
-            How can I assist you today?
+          <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Welcome to Catholic AI Chat Assistant</h3>
+          <p class="max-w-md text-gray-500 dark:text-gray-400">
+            I'm here to help you with questions about Catholic teachings, prayers, and spiritual guidance. How can I assist you today?
           </p>
         </div>
 
         <div v-for="message in messages" :key="message.id" class="flex gap-3">
           <!-- Avatar -->
           <div class="flex-shrink-0">
-            <div 
+            <div
               :class="[
-                'w-8 h-8 rounded-full flex items-center justify-center',
-                message.role === 'user' 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white'
+                'flex h-8 w-8 items-center justify-center rounded-full',
+                message.role === 'user' ? 'bg-blue-500 text-white' : 'bg-gradient-to-br from-purple-500 to-pink-500 text-white',
               ]"
             >
-              <User v-if="message.role === 'user'" class="w-[1rem] h-[1rem]" />
-              <Bot v-else class="w-[1rem] h-[1rem]" />
+              <User v-if="message.role === 'user'" class="h-[1rem] w-[1rem]" />
+              <Bot v-else class="h-[1rem] w-[1rem]" />
             </div>
           </div>
 
           <!-- Message Content -->
-          <div class="flex-1 min-w-0">
-            <div class="bg-[#ffffff] dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+          <div class="min-w-0 flex-1">
+            <div class="rounded-lg bg-[#ffffff] p-4 shadow-sm dark:bg-slate-800">
               <!-- Message Text -->
-              <div class="prose prose-sm max-w-none dark:prose-invert">
+              <div class="prose prose-sm dark:prose-invert max-w-none">
                 <div v-html="message.content.replace(/\n/g, '<br>')" class="whitespace-pre-wrap"></div>
               </div>
 
               <!-- References Section -->
-              <div v-if="message.references && message.references.length > 0" class="mt-4 pt-4 border-t border-gray-200 dark:border-slate-700">
-                <div class="flex items-center gap-2 mb-2">
-                  <BookOpen class="w-[1rem] h-[1rem] text-blue-500" />
+              <div v-if="message.references && message.references.length > 0" class="mt-4 border-t border-gray-200 pt-4 dark:border-slate-700">
+                <div class="mb-2 flex items-center gap-2">
+                  <BookOpen class="h-[1rem] w-[1rem] text-blue-500" />
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">References</h4>
                 </div>
                 <div class="space-y-1">
-                  <a 
-                    v-for="reference in message.references" 
+                  <a
+                    v-for="reference in message.references"
                     :key="reference.url"
-                    :href="reference.url" 
-                    target="_blank" 
+                    :href="reference.url"
+                    target="_blank"
                     rel="noopener noreferrer"
-                    class="block text-sm text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 flex items-center gap-1"
+                    class="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    <ExternalLink class="w-3 h-3" />
+                    <ExternalLink class="h-3 w-3" />
                     {{ reference.description }}
                   </a>
                 </div>
               </div>
 
               <!-- Keywords Section -->
-              <div v-if="message.keywords && message.keywords.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
-                <div class="flex items-center gap-2 mb-2">
-                  <Tag class="w-[1rem] h-[1rem] text-green-500" />
+              <div v-if="message.keywords && message.keywords.length > 0" class="mt-3 border-t border-gray-200 pt-3 dark:border-slate-700">
+                <div class="mb-2 flex items-center gap-2">
+                  <Tag class="h-[1rem] w-[1rem] text-green-500" />
                   <h4 class="text-sm font-medium text-gray-900 dark:text-white">Keywords</h4>
                 </div>
                 <div class="flex flex-wrap gap-1">
-                  <span 
-                    v-for="keyword in message.keywords" 
+                  <span
+                    v-for="keyword in message.keywords"
                     :key="keyword"
-                    class="inline-block px-2 py-1 text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full"
+                    class="inline-block rounded-full bg-green-100 px-2 py-1 text-xs text-green-800 dark:bg-green-900 dark:text-green-200"
                   >
                     {{ keyword }}
                   </span>
@@ -233,14 +218,17 @@ onMounted(() => {
               </div>
 
               <!-- Related Questions -->
-              <div v-if="message.others && message.others.length > 0" class="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
-                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-2">Related Questions</h4>
+              <div v-if="message.others && message.others.length > 0" class="mt-3 border-t border-gray-200 pt-3 dark:border-slate-700">
+                <h4 class="mb-2 text-sm font-medium text-gray-900 dark:text-white">Related Questions</h4>
                 <div class="space-y-1">
-                  <div 
-                    v-for="question in message.others" 
+                  <div
+                    v-for="question in message.others"
                     :key="question"
-                    class="text-sm text-gray-600 dark:text-gray-400 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400"
-                    @click="newMessage = question; sendMessage()"
+                    class="cursor-pointer text-sm text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400"
+                    @click="
+                      newMessage = question;
+                      sendMessage();
+                    "
                   >
                     • {{ question }}
                   </div>
@@ -248,10 +236,8 @@ onMounted(() => {
               </div>
 
               <!-- Token Usage -->
-              <div v-if="message.all_tokens" class="mt-3 pt-3 border-t border-gray-200 dark:border-slate-700">
-                <div class="text-xs text-gray-500 dark:text-gray-400">
-                  Tokens used: {{ message.all_tokens }}
-                </div>
+              <div v-if="message.all_tokens" class="mt-3 border-t border-gray-200 pt-3 dark:border-slate-700">
+                <div class="text-xs text-gray-500 dark:text-gray-400">Tokens used: {{ message.all_tokens }}</div>
               </div>
 
               <!-- Timestamp -->
@@ -265,14 +251,14 @@ onMounted(() => {
         <!-- Loading Indicator -->
         <div v-if="isLoading" class="flex gap-3">
           <div class="flex-shrink-0">
-            <div class="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-              <Bot class="w-[1rem] h-[1rem] text-white" />
+            <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-pink-500">
+              <Bot class="h-[1rem] w-[1rem] text-white" />
             </div>
           </div>
           <div class="flex-1">
-            <div class="bg-[#ffffff] dark:bg-slate-800 rounded-lg p-4 shadow-sm">
+            <div class="rounded-lg bg-[#ffffff] p-4 shadow-sm dark:bg-slate-800">
               <div class="flex items-center gap-2">
-                <Loader2 class="w-[1rem] h-[1rem] animate-spin text-blue-500" />
+                <Loader2 class="h-[1rem] w-[1rem] animate-spin text-blue-500" />
                 <span class="text-sm text-gray-600 dark:text-gray-400">Thinking...</span>
               </div>
             </div>
@@ -281,7 +267,7 @@ onMounted(() => {
       </div>
 
       <!-- Input Area -->
-      <div class="p-6 border-t bg-[#ffffff] dark:bg-slate-800 rounded-b-xl">
+      <div class="rounded-b-xl border-t bg-[#ffffff] p-6 dark:bg-slate-800">
         <div class="flex gap-3">
           <div class="flex-1">
             <Input
@@ -297,8 +283,8 @@ onMounted(() => {
             :disabled="!newMessage.trim() || isLoading"
             class="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
           >
-            <Send v-if="!isLoading" class="w-[1rem] h-[1rem]" />
-            <Loader2 v-else class="w-[1rem] h-[1rem] animate-spin" />
+            <Send v-if="!isLoading" class="h-[1rem] w-[1rem]" />
+            <Loader2 v-else class="h-[1rem] w-[1rem] animate-spin" />
           </Button>
         </div>
       </div>
@@ -340,4 +326,4 @@ onMounted(() => {
 .dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #64748b;
 }
-</style> 
+</style>

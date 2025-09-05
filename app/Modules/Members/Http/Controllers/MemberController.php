@@ -171,11 +171,11 @@ class MemberController extends Controller
                 'familySearch',
                 'status'
             ]),
-            'canViewAnyMember' => auth()->user()->can('list-member'),
-            'canCreateMember' => auth()->user()->can('create-member'),
-            'canEditMember' => auth()->user()->can('update-member'),
-            'canDeleteMember' => auth()->user()->can('delete-member'),
-            'canRestoreMember' => auth()->user()->can('restore-member'),
+            'canViewAnyMember' => Auth::can('list-member'),
+            'canCreateMember' => Auth::can('create-member'),
+            'canEditMember' => Auth::can('update-member'),
+            'canDeleteMember' => Auth::can('delete-member'),
+            'canRestoreMember' => Auth::can('restore-member'),
             'pagination' => [
                 'currentPage' => $paginator->currentPage(),
                 'lastPage'    => $paginator->lastPage(),
@@ -410,7 +410,7 @@ class MemberController extends Controller
                 'action' => 'CREATE',
                 'record_id' => $member->id,
                 'new_values' => $member->toArray(),
-                'user_id' => auth()->id(),
+                'user_id' => Auth::id(),
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ]);
@@ -536,7 +536,7 @@ class MemberController extends Controller
             'record_id' => $member->id,
             'old_values' => $oldValues,
             'new_values' => $member->fresh()->toArray(),
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ]);
@@ -566,7 +566,7 @@ class MemberController extends Controller
             'action' => 'DELETE',
             'record_id' => $memberData['id'],
             'old_values' => $memberData,
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
         ]);
@@ -614,7 +614,7 @@ class MemberController extends Controller
             $relation = $service->calculateRelationship($person, $familyMember);
             $familyMember->relation = $relation;
         }
-        \Log::info($allFamilyMembers);
+        Log::info($allFamilyMembers);
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
             'person' => $person,
@@ -626,20 +626,20 @@ class MemberController extends Controller
         ]);
     }
 
-    public function searchFamilyMembers(Request $request)
-    {
-        $query = $request->input('q', '');
-        $limit = $request->input('limit', 10);
+    // public function searchFamilyMembers(Request $request)
+    // {
+    //     $query = $request->input('q', '');
+    //     $limit = $request->input('limit', 10);
 
-        if (empty($query) || strlen($query) < 2) {
-            return response()->json([]);
-        }
+    //     if (empty($query) || strlen($query) < 2) {
+    //         return response()->json([]);
+    //     }
 
-        $familyTreeService = new FamilyTreeService;
-        $members = $familyTreeService->searchMembers($query, $limit);
+    //     $familyTreeService = new FamilyTreeService;
+    //     $members = $familyTreeService->searchMembers($query, $limit);
 
-        return response()->json($members);
-    }
+    //     return response()->json($members);
+    // }
 
 
     public function export(Request $request)
@@ -670,7 +670,7 @@ class MemberController extends Controller
             ]);
 
             // Get allowed community IDs for PPC/SCC head scoping
-            $allowedCommunityIds = $this->allowedCommunityIdsFor(auth()->user());
+            $allowedCommunityIds = $this->allowedCommunityIdsFor(Auth::user());
 
             $q = Member::query()
                 ->when($request->boolean('isArchived'), fn($qq) => $qq->onlyTrashed(), fn($qq) => $qq->withoutTrashed())
@@ -691,7 +691,7 @@ class MemberController extends Controller
                     'members.contact_no_1',
                     'members.email',
                     'members.date_of_birth',
-                    \DB::raw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) as age'),
+                    DB::raw('TIMESTAMPDIFF(YEAR, members.date_of_birth, CURDATE()) as age'),
                     'c.name as community_name',
                     'cl.name as cluster_name',
                     'r.name as relationship_name',
@@ -843,7 +843,7 @@ class MemberController extends Controller
             ];
         })->sortBy([['generation', 'asc'], ['date_of_birth', 'asc']])->values();
 
-        \Log::info('Family members with generations:', $enhanced->map(fn($x) => [
+        Log::info('Family members with generations:', $enhanced->map(fn($x) => [
             'name' => $x['first_name'] . ' ' . $x['last_name'],
             'generation' => $x['generation'],
             'date_of_birth' => $x['date_of_birth'],
@@ -1005,7 +1005,7 @@ class MemberController extends Controller
                 'members'              => $membersResp,
             ]);
         } catch (\Throwable $e) {
-            \Log::error('Error getting family details: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Error getting family details: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response()->json(['error' => 'An error occurred while fetching family details'], 500);
         }
     }
@@ -1025,8 +1025,8 @@ class MemberController extends Controller
 
             return response()->json($results);
         } catch (\Exception $e) {
-            \Log::error('Error in searchFamilies: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error in searchFamilies: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'error' => 'An error occurred while searching families',
@@ -1054,7 +1054,7 @@ class MemberController extends Controller
             $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
             $nextMemberNo = $numberingService->generateMemberNumber();
 
-            \Log::info('Generated next available numbers', [
+            Log::info('Generated next available numbers', [
                 'church_code' => $churchCode,
                 'next_family_group' => $nextFamilyGroup,
                 'next_family_no' => $nextFamilyNo,
@@ -1078,8 +1078,8 @@ class MemberController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            \Log::error('Error generating next available numbers: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error generating next available numbers: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return response()->json([
                 'error' => 'Failed to generate next available numbers',
@@ -1176,7 +1176,7 @@ class MemberController extends Controller
 
             return response()->json($transformedMember);
         } catch (\Exception $e) {
-            \Log::error('Error getting member details: ' . $e->getMessage());
+            Log::error('Error getting member details: ' . $e->getMessage());
             return response()->json(['error' => 'Member not found'], 404);
         }
     }
@@ -1184,24 +1184,24 @@ class MemberController extends Controller
     public function dataVerification()
     {
         // Debug authentication
-        if (!auth()->check()) {
-            \Log::error('User not authenticated for data verification page');
+        if (!Auth::check()) {
+            Log::error('User not authenticated for data verification page');
             abort(401, 'Unauthenticated');
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Check permission to access data verification
-        if (!$user->can('read-data-verification')) {
-            \Log::warning('User denied access to data verification page', [
+        if (!Auth::can('read-data-verification')) {
+            Log::warning('User denied access to data verification page', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'permissions' => $user->getAllPermissionsAttribute()
+                'permissions' => Auth::getAllPermissionsAttribute()
             ]);
             abort(403, 'Access denied. You do not have permission to view data verification.');
         }
 
-        \Log::info('User accessing data verification page', ['user_id' => $user->id, 'email' => $user->email]);
+        Log::info('User accessing data verification page', ['user_id' => $user->id, 'email' => $user->email]);
 
         // Load data directly instead of via AJAX
         $members = Member::with([
@@ -1259,23 +1259,23 @@ class MemberController extends Controller
     public function bulkUpdate(Request $request)
     {
         // Debug authentication
-        if (!auth()->check()) {
+        if (!Auth::check()) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
-        $user = auth()->user();
+        $user = Auth::user();
 
         // Check permission to update data verification
-        if (!$user->can('update-data-verification')) {
-            \Log::warning('User denied access to bulk update', [
+        if (!Auth::can('update-data-verification')) {
+            Log::warning('User denied access to bulk update', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'permissions' => $user->getAllPermissionsAttribute()
+                'permissions' => Auth::getAllPermissionsAttribute()
             ]);
             return response()->json(['error' => 'Access denied. You do not have permission to update data verification.'], 403);
         }
 
-        \Log::info('User authenticated for bulk update', ['user_id' => $user->id, 'email' => $user->email]);
+        Log::info('User authenticated for bulk update', ['user_id' => $user->id, 'email' => $user->email]);
 
         $request->validate([
             'changes' => 'required|array',

@@ -20,10 +20,10 @@ class ContactDetailsController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreMemberRequest $request)
-    {
-        //
-    }
+    // public function store(StoreMemberRequest $request)
+    // {
+    //     //
+    // }
 
     /**
      * Display the specified resource.
@@ -44,8 +44,8 @@ class ContactDetailsController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateMemberRequest $request, Member $member)
-    {
-        //
-    }
+    // public function update(UpdateMemberRequest $request, Member $member)
+    // {
+    //     //
+    // }
 }

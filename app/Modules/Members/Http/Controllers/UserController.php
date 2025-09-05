@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
@@ -93,7 +94,7 @@ class UserController extends Controller
 
         // Debug logging for role updates
         if ($request->has('roles')) {
-            \Log::info('Role update request', [
+            Log::info('Role update request', [
                 'user_id' => $user->id,
                 'roles' => $request->input('roles')
             ]);
@@ -113,8 +114,8 @@ class UserController extends Controller
         // Handle role updates if provided
         if ($request->input('roles')) {
             $user->syncRoles($request->input('roles'));
-            
-            \Log::info('Roles synced successfully', [
+
+            Log::info('Roles synced successfully', [
                 'user_id' => $user->id,
                 'new_roles' => $user->fresh()->roles->pluck('name')
             ]);
@@ -124,7 +125,7 @@ class UserController extends Controller
         if (request()->header('X-Inertia')) {
             return back()->with('success', 'User updated successfully');
         }
-        
+
         return redirect()->route('users.index');
     }
 

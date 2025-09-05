@@ -4,6 +4,7 @@ namespace Modules\Members\Services;
 
 use Modules\Members\Models\Member;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class FamilyNumberingService
 {
@@ -26,7 +27,7 @@ class FamilyNumberingService
             // Find the highest family group number for this church
             $highestFamily = DB::table('members')
                 ->whereNotNull('family_no')
-                ->where('family_no', 'like', $churchCode.'-%')
+                ->where('family_no', 'like', $churchCode . '-%')
                 ->orderByRaw('CAST(SUBSTRING_INDEX(family_no, "-", -1) AS UNSIGNED) DESC')
                 ->first();
 
@@ -43,7 +44,7 @@ class FamilyNumberingService
             $familyGroupSequence = str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
             $result = "{$churchCode}-{$familyGroupSequence}";
 
-            \Log::info('Generated family group number', [
+            Log::info('Generated family group number', [
                 'church_code' => $churchCode,
                 'highest_family' => $highestFamily ? $highestFamily->family_no : 'none',
                 'next_sequence' => $nextSequence,
@@ -52,8 +53,8 @@ class FamilyNumberingService
 
             return $result;
         } catch (\Exception $e) {
-            \Log::error('Error generating family group number: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error generating family group number: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             throw $e;
         }
     }
@@ -82,7 +83,7 @@ class FamilyNumberingService
             // Find the highest member sequence for this year and church
             $highestMember = DB::table('members')
                 ->where('registration_year', $year)
-                ->where('member_no', 'like', '%'.$churchCode.'-M%')
+                ->where('member_no', 'like', '%' . $churchCode . '-M%')
                 ->whereNotNull('member_no')
                 ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
                 ->first();
@@ -100,7 +101,7 @@ class FamilyNumberingService
             $memberSequence = str_pad($nextSequence, 6, '0', STR_PAD_LEFT);
             $result = "{$year}-{$churchCode}-M{$memberSequence}";
 
-            \Log::info('Generated member number', [
+            Log::info('Generated member number', [
                 'year' => $year,
                 'church_code' => $churchCode,
                 'highest_member' => $highestMember ? $highestMember->member_no : 'none',
@@ -110,8 +111,8 @@ class FamilyNumberingService
 
             return $result;
         } catch (\Exception $e) {
-            \Log::error('Error generating member number: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error generating member number: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
             throw $e;
         }
     }
@@ -197,7 +198,7 @@ class FamilyNumberingService
         ];
     }
 
-    
+
 
     public function handleFamilyMove($familyNo, $newCommunityId, $newChurchCode = null)
     {
@@ -249,7 +250,7 @@ class FamilyNumberingService
     {
         $parsed = $this->parseFamilyNumber($familyNo);
 
-        return $parsed['church_code'].'-'.str_pad($parsed['family_group'], 3, '0', STR_PAD_LEFT);
+        return $parsed['church_code'] . '-' . str_pad($parsed['family_group'], 3, '0', STR_PAD_LEFT);
     }
 
     public function getEffectiveFamilyNumber($member)
@@ -275,7 +276,7 @@ class FamilyNumberingService
     {
         $churchCode = $churchCode ?? $this->churchCode;
 
-        $query = Member::where('family_no', 'like', $churchCode.'-%');
+        $query = Member::where('family_no', 'like', $churchCode . '-%');
 
         if ($year) {
             $query->where('registration_year', $year);
@@ -321,7 +322,7 @@ class FamilyNumberingService
                     'family_group' => $familyGroup, // Keep family group for reference
                     'member_count' => $members->count(),
                     'members' => $members->map(function ($member) {
-                        return $member->first_name.' '.$member->last_name;
+                        return $member->first_name . ' ' . $member->last_name;
                     })->toArray(),
                     'community' => $members->first()->community?->name,
                     'registration_year' => $members->first()->registration_year,

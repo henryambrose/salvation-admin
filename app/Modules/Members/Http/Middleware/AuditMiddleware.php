@@ -2,7 +2,7 @@
 
 namespace Modules\Members\Http\Middleware;
 
-use App\Helpers\AuditHelper;
+use Modules\Members\Helpers\AuditHelper;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;

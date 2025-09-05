@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
 import { Link } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 defineProps<{
   title?: string;
@@ -50,7 +50,7 @@ const catholicCalendar = ref<CatholicCalendar>({
   weekday: '',
   seasonWeek: null,
   celebrations: [],
-  source: ''
+  source: '',
 });
 
 // Saints carousel data
@@ -88,30 +88,33 @@ const fetchSaints = () => {
       name: 'Peter',
       feastDay: 'June 29',
       image: '/images/saints/imgi_12_St.-Peter.jpg',
-      description: 'Saint Peter, also known as Simon Peter, was one of the Twelve Apostles of Jesus Christ and the first Pope of the Catholic Church.',
+      description:
+        'Saint Peter, also known as Simon Peter, was one of the Twelve Apostles of Jesus Christ and the first Pope of the Catholic Church.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 2,
       name: 'Augustine',
       feastDay: 'August 28',
       image: '/images/saints/imgi_8_St.-Augustine.jpg',
-      description: 'Saint Augustine of Hippo was a theologian and philosopher who became one of the most important figures in the development of Western Christianity.',
+      description:
+        'Saint Augustine of Hippo was a theologian and philosopher who became one of the most important figures in the development of Western Christianity.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 3,
       name: 'Anthony',
       feastDay: 'June 13',
       image: '/images/saints/imgi_9_St.-Anthony.jpg',
-      description: 'Saint Anthony of Padua was a Portuguese Catholic priest and friar of the Franciscan Order, known for his powerful preaching and miracles.',
+      description:
+        'Saint Anthony of Padua was a Portuguese Catholic priest and friar of the Franciscan Order, known for his powerful preaching and miracles.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 4,
@@ -121,7 +124,7 @@ const fetchSaints = () => {
       description: 'Saint Lawrence was one of the seven deacons of the city of Rome, martyred during the persecution of Emperor Valerian.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 5,
@@ -131,7 +134,7 @@ const fetchSaints = () => {
       description: 'Saint Faustina Kowalska was a Polish nun and mystic who received visions of Jesus and promoted the Divine Mercy devotion.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 6,
@@ -141,7 +144,7 @@ const fetchSaints = () => {
       description: 'Saint Andrew was one of the Twelve Apostles of Jesus Christ and the brother of Saint Peter. He is the patron saint of Scotland.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 7,
@@ -151,7 +154,7 @@ const fetchSaints = () => {
       description: 'Saint Francis Xavier was a Jesuit missionary who spread Christianity in Asia, particularly in India, Japan, and the East Indies.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 8,
@@ -161,17 +164,18 @@ const fetchSaints = () => {
       description: 'Saint Blaise was a physician and bishop of Sebastea who is venerated as the patron saint of throat ailments.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 9,
       name: 'Anne',
       feastDay: 'July 26',
       image: '/images/saints/imgi_20_St.-Anne.jpg',
-      description: 'Saint Anne is traditionally the mother of the Virgin Mary and grandmother of Jesus Christ, though not mentioned in the canonical gospels.',
+      description:
+        'Saint Anne is traditionally the mother of the Virgin Mary and grandmother of Jesus Christ, though not mentioned in the canonical gospels.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 10,
@@ -181,7 +185,7 @@ const fetchSaints = () => {
       description: 'Saint Gonsalo Garcia was a Franciscan friar and martyr who was crucified in Japan for his Christian faith.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 11,
@@ -191,7 +195,7 @@ const fetchSaints = () => {
       description: 'Saint Maria Goretti was an Italian virgin martyr who died defending her chastity and is known as the patron saint of purity.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 12,
@@ -201,7 +205,7 @@ const fetchSaints = () => {
       description: 'Saint Sebastian was a Roman soldier who was martyred for his Christian faith and is often depicted with arrows.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 13,
@@ -211,7 +215,7 @@ const fetchSaints = () => {
       description: 'Saint John the Baptist was a Jewish preacher who baptized Jesus and is considered a prophet in Christianity.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 14,
@@ -221,7 +225,7 @@ const fetchSaints = () => {
       description: 'Saint Thomas was one of the Twelve Apostles of Jesus Christ, known for his initial doubt about the Resurrection.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 15,
@@ -231,7 +235,7 @@ const fetchSaints = () => {
       description: 'Saint Christopher is venerated as a martyr and is considered the patron saint of travelers and motorists.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 16,
@@ -241,17 +245,18 @@ const fetchSaints = () => {
       description: 'Saint Paul was an apostle who spread the teachings of Jesus Christ and wrote many of the New Testament epistles.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 17,
       name: 'Theresa of Child Jesus',
       feastDay: 'October 1',
       image: '/images/saints/imgi_11_St.-Theresa-of-Child-Jesus.jpg',
-      description: 'Saint Therese of Lisieux, also known as the Little Flower, was a French Carmelite nun known for her "Little Way" of spiritual childhood.',
+      description:
+        'Saint Therese of Lisieux, also known as the Little Flower, was a French Carmelite nun known for her "Little Way" of spiritual childhood.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 18,
@@ -261,7 +266,7 @@ const fetchSaints = () => {
       description: 'Saint Vincent de Paul was a French priest who dedicated his life to serving the poor and founded the Vincentians.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 19,
@@ -271,7 +276,7 @@ const fetchSaints = () => {
       description: 'Saint Michael the Archangel is a powerful angel who is considered the protector of the Church and the patron of soldiers.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 20,
@@ -281,7 +286,7 @@ const fetchSaints = () => {
       description: 'Saint Martin of Tours was a bishop who is known for cutting his cloak in half to share with a beggar.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 21,
@@ -291,7 +296,7 @@ const fetchSaints = () => {
       description: 'Saint Dominic Savio was a young Italian student of Saint John Bosco who died at the age of 14 and is known for his piety.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 22,
@@ -301,7 +306,7 @@ const fetchSaints = () => {
       description: 'The Holy Family consists of Jesus, Mary, and Joseph, serving as a model of family life and Christian virtues.',
       loading: false,
       imageLoading: false,
-      imageError: false
+      imageError: false,
     },
     {
       id: 23,
@@ -311,8 +316,8 @@ const fetchSaints = () => {
       description: 'Saint Jude Thaddeus was one of the Twelve Apostles and is known as the patron saint of lost causes and desperate situations.',
       loading: false,
       imageLoading: false,
-      imageError: false
-    }
+      imageError: false,
+    },
   ];
 };
 
@@ -331,9 +336,7 @@ const nextSaint = () => {
 
 const previousSaint = () => {
   if (saints.value.length > 0) {
-    currentSaintIndex.value = currentSaintIndex.value === 0 
-      ? saints.value.length - 1 
-      : currentSaintIndex.value - 1;
+    currentSaintIndex.value = currentSaintIndex.value === 0 ? saints.value.length - 1 : currentSaintIndex.value - 1;
   }
 };
 
@@ -359,86 +362,101 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen max-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900">
+  <div
+    class="flex max-h-screen min-h-screen overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-900 dark:to-indigo-900"
+  >
     <!-- Left Side - Catholic Content -->
-    <div class="hidden lg:flex lg:w-1/2 relative overflow-hidden">
+    <div class="relative hidden overflow-hidden lg:flex lg:w-1/2">
       <!-- Animated Background -->
       <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900">
         <!-- Floating Elements -->
-        <div class="absolute top-20 left-20 w-32 h-32 bg-[#ffffff]/5 rounded-full blur-xl animate-pulse"></div>
-        <div class="absolute top-40 right-32 w-24 h-24 bg-yellow-400/10 rounded-full blur-lg animate-bounce"></div>
-        <div class="absolute bottom-32 left-32 w-40 h-40 bg-purple-400/10 rounded-full blur-xl animate-pulse"></div>
-        <div class="absolute bottom-20 right-20 w-28 h-28 bg-blue-400/10 rounded-full blur-lg animate-bounce"></div>
+        <div class="absolute top-20 left-20 h-32 w-32 animate-pulse rounded-full bg-[#ffffff]/5 blur-xl"></div>
+        <div class="absolute top-40 right-32 h-24 w-24 animate-bounce rounded-full bg-yellow-400/10 blur-lg"></div>
+        <div class="absolute bottom-32 left-32 h-40 w-40 animate-pulse rounded-full bg-purple-400/10 blur-xl"></div>
+        <div class="absolute right-20 bottom-20 h-28 w-28 animate-bounce rounded-full bg-blue-400/10 blur-lg"></div>
       </div>
-      
+
       <!-- Content Overlay -->
-      <div class="relative z-10 flex flex-col w-full p-4 lg:p-8 overflow-hidden">
+      <div class="relative z-10 flex w-full flex-col overflow-hidden p-4 lg:p-8">
         <!-- Header with Logo -->
-        <div class="flex items-center gap-3 lg:gap-6 mb-4 lg:mb-6">
-          <div class="flex h-16 w-16 lg:h-20 lg:w-20 items-center justify-center rounded-2xl lg:rounded-3xl bg-[#ffffff]/90 backdrop-blur-xl border-2 border-white shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-110 group relative overflow-hidden">
-            <AppLogoIcon class="size-10 lg:size-12 fill-current text-blue-600 drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500 relative z-10" />
+        <div class="mb-4 flex items-center gap-3 lg:mb-6 lg:gap-6">
+          <div
+            class="hover:shadow-3xl group relative flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border-2 border-white bg-[#ffffff]/90 shadow-2xl backdrop-blur-xl transition-all duration-500 hover:scale-110 lg:h-20 lg:w-20 lg:rounded-3xl"
+          >
+            <AppLogoIcon
+              class="relative z-10 size-10 fill-current text-blue-600 drop-shadow-lg transition-all duration-500 group-hover:drop-shadow-2xl lg:size-12"
+            />
             <!-- Enhanced Glow effect -->
-            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div
+              class="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 opacity-60 blur-xl transition-opacity duration-500 group-hover:opacity-100 lg:rounded-3xl"
+            ></div>
             <!-- Animated border glow -->
-            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 opacity-0 group-hover:opacity-30 blur-sm transition-opacity duration-500"></div>
+            <div
+              class="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400 via-purple-400 to-indigo-400 opacity-0 blur-sm transition-opacity duration-500 group-hover:opacity-30 lg:rounded-3xl"
+            ></div>
             <!-- Shimmer effect -->
-            <div class="absolute inset-0 rounded-2xl lg:rounded-3xl bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+            <div
+              class="absolute inset-0 -translate-x-full rounded-2xl bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-1000 group-hover:translate-x-full lg:rounded-3xl"
+            ></div>
           </div>
           <div class="flex-1">
-            <h1 class="text-xl lg:text-3xl font-bold text-white mb-2 drop-shadow-lg bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
+            <h1 class="mb-2 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-xl font-bold text-transparent drop-shadow-lg lg:text-3xl">
               {{ title }}
             </h1>
-            <p class="text-blue-200 text-sm lg:text-base font-medium mb-2">Catholic Community Management</p>
+            <p class="mb-2 text-sm font-medium text-blue-200 lg:text-base">Catholic Community Management</p>
             <div class="flex items-center gap-3">
-              <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-              <span class="text-sm text-blue-100 font-medium">Secure • Reliable • Faithful</span>
+              <div class="h-2 w-2 animate-pulse rounded-full bg-green-400 shadow-lg shadow-green-400/50"></div>
+              <span class="text-sm font-medium text-blue-100">Secure • Reliable • Faithful</span>
             </div>
           </div>
         </div>
 
-
-
         <!-- Catholic Calendar Section (without title) -->
-        <div class="flex-1 mb-3 lg:mb-4">
-          <div class="bg-[#ffffff]/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-3 lg:p-4 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02]">
-            <div class="text-center mb-3">
-              <div class="text-lg lg:text-2xl font-bold text-yellow-300 mb-1 drop-shadow-lg">
-                {{ catholicCalendar.date ? new Date(catholicCalendar.date).getDate() : new Date().getDate() }} {{ catholicCalendar.date ? new Date(catholicCalendar.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) }}
+        <div class="mb-3 flex-1 lg:mb-4">
+          <div
+            class="hover:shadow-3xl rounded-xl border border-white/20 bg-[#ffffff]/10 p-3 shadow-2xl backdrop-blur-md transition-all duration-500 hover:scale-[1.02] lg:rounded-2xl lg:p-4"
+          >
+            <div class="mb-3 text-center">
+              <div class="mb-1 text-lg font-bold text-yellow-300 drop-shadow-lg lg:text-2xl">
+                {{ catholicCalendar.date ? new Date(catholicCalendar.date).getDate() : new Date().getDate() }}
+                {{
+                  catholicCalendar.date
+                    ? new Date(catholicCalendar.date).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                    : new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+                }}
               </div>
-              <div v-if="catholicCalendar.weekday" class="text-sm text-blue-100 font-medium">
+              <div v-if="catholicCalendar.weekday" class="text-sm font-medium text-blue-100">
                 {{ catholicCalendar.weekday }}
               </div>
             </div>
-            
+
             <div class="grid grid-cols-2 gap-3">
-              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
-                <div class="text-xs text-blue-200 mb-1">Liturgical Season</div>
+              <div class="rounded-xl border border-white/10 bg-[#ffffff]/5 p-3 text-center">
+                <div class="mb-1 text-xs text-blue-200">Liturgical Season</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.liturgicalSeason || 'Ordinary Time' }}</div>
-                <div v-if="catholicCalendar.seasonWeek" class="text-xs text-blue-100">
-                  Week {{ catholicCalendar.seasonWeek }}
-                </div>
+                <div v-if="catholicCalendar.seasonWeek" class="text-xs text-blue-100">Week {{ catholicCalendar.seasonWeek }}</div>
               </div>
-              
-              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
-                <div class="text-xs text-blue-200 mb-1">Feast Day</div>
+
+              <div class="rounded-xl border border-white/10 bg-[#ffffff]/5 p-3 text-center">
+                <div class="mb-1 text-xs text-blue-200">Feast Day</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.feastDay || 'No special feast today' }}</div>
               </div>
-              
-              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
-                <div class="text-xs text-blue-200 mb-1">Saint of the Day</div>
+
+              <div class="rounded-xl border border-white/10 bg-[#ffffff]/5 p-3 text-center">
+                <div class="mb-1 text-xs text-blue-200">Saint of the Day</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.saintOfTheDay || 'No saint feast today' }}</div>
               </div>
-              
-              <div class="text-center p-3 bg-[#ffffff]/5 rounded-xl border border-white/10">
-                <div class="text-xs text-blue-200 mb-1">Liturgical Color</div>
+
+              <div class="rounded-xl border border-white/10 bg-[#ffffff]/5 p-3 text-center">
+                <div class="mb-1 text-xs text-blue-200">Liturgical Color</div>
                 <div class="text-sm font-semibold text-white">{{ catholicCalendar.color || 'Green' }}</div>
               </div>
             </div>
-            
+
             <!-- API Source Indicator -->
-            <div v-if="catholicCalendar.source" class="text-center mt-3 pt-2 border-t border-white/20">
-              <div class="text-xs text-blue-100 flex items-center justify-center gap-2">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+            <div v-if="catholicCalendar.source" class="mt-3 border-t border-white/20 pt-2 text-center">
+              <div class="flex items-center justify-center gap-2 text-xs text-blue-100">
+                <div class="h-2 w-2 animate-pulse rounded-full bg-green-400"></div>
                 Data from external Catholic calendar API
               </div>
             </div>
@@ -446,97 +464,113 @@ onMounted(() => {
         </div>
 
         <!-- Saints Carousel Section -->
-        <div class="flex-1 flex flex-col">
-          <h2 class="text-lg lg:text-2xl font-bold mb-2 lg:mb-3 text-center text-white">
-            <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
-              Saints of the Church Community
-            </span>
+        <div class="flex flex-1 flex-col">
+          <h2 class="mb-2 text-center text-lg font-bold text-white lg:mb-3 lg:text-2xl">
+            <span class="bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent"> Saints of the Church Community </span>
           </h2>
-          <div class="relative bg-[#ffffff]/10 backdrop-blur-md rounded-xl lg:rounded-2xl p-4 lg:p-6 border border-white/20 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-[1.02] flex-1 min-h-0">
+          <div
+            class="hover:shadow-3xl relative min-h-0 flex-1 rounded-xl border border-white/20 bg-[#ffffff]/10 p-4 shadow-2xl backdrop-blur-md transition-all duration-500 hover:scale-[1.02] lg:rounded-2xl lg:p-6"
+          >
             <!-- Fixed Layout Structure -->
-            <div class="h-full flex flex-col">
+            <div class="flex h-full flex-col">
               <!-- Top Section: Image -->
-              <div class="flex-shrink-0 flex justify-center mb-2 lg:mb-3">
-                <div class="relative w-20 h-20 lg:w-24 lg:h-24">
+              <div class="mb-2 flex flex-shrink-0 justify-center lg:mb-3">
+                <div class="relative h-20 w-20 lg:h-24 lg:w-24">
                   <!-- Loading State -->
-                  <div v-if="saints[currentSaintIndex]?.loading" class="w-20 h-20 lg:w-24 lg:h-24 bg-[#ffffff]/20 rounded-full flex items-center justify-center animate-pulse">
-                    <div class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] border-3 border-white/50 border-t-white rounded-full animate-spin"></div>
+                  <div
+                    v-if="saints[currentSaintIndex]?.loading"
+                    class="flex h-20 w-20 animate-pulse items-center justify-center rounded-full bg-[#ffffff]/20 lg:h-24 lg:w-24"
+                  >
+                    <div class="h-5 w-5 animate-spin rounded-full border-3 border-white/50 border-t-white lg:h-[1.5rem] lg:w-[1.5rem]"></div>
                   </div>
-                  
+
                   <!-- Image Container -->
-                  <div v-else class="relative w-20 h-20 lg:w-24 lg:h-24">
-                    <img 
+                  <div v-else class="relative h-20 w-20 lg:h-24 lg:w-24">
+                    <img
                       v-if="saints[currentSaintIndex]?.image && !saints[currentSaintIndex]?.imageError"
-                      :src="saints[currentSaintIndex].image" 
+                      :src="saints[currentSaintIndex].image"
                       :alt="saints[currentSaintIndex]?.name"
                       @load="handleImageLoad(currentSaintIndex)"
                       @error="handleImageError(currentSaintIndex)"
-                      class="w-20 h-20 lg:w-24 lg:h-24 rounded-full object-cover border-4 border-white/30 shadow-2xl transition-all duration-500 hover:scale-110 hover:shadow-3xl"
+                      class="hover:shadow-3xl h-20 w-20 rounded-full border-4 border-white/30 object-cover shadow-2xl transition-all duration-500 hover:scale-110 lg:h-24 lg:w-24"
                       :class="{ 'opacity-0': saints[currentSaintIndex]?.imageLoading }"
                     />
-                    
+
                     <!-- Fallback Icon -->
-                    <div v-else class="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 rounded-full flex items-center justify-center border-4 border-white/30 shadow-2xl">
+                    <div
+                      v-else
+                      class="flex h-20 w-20 items-center justify-center rounded-full border-4 border-white/30 bg-gradient-to-br from-yellow-400/20 to-orange-500/20 shadow-2xl lg:h-24 lg:w-24"
+                    >
                       <span class="text-3xl lg:text-4xl">🙏</span>
                     </div>
                   </div>
-                  
+
                   <!-- Image Loading Overlay -->
-                  <div v-if="saints[currentSaintIndex]?.imageLoading" class="absolute inset-0 w-20 h-20 lg:w-24 lg:h-24 bg-[#ffffff] bg-opacity-10 rounded-full flex items-center justify-center">
-                    <div class="w-[1rem] h-[1rem] lg:w-5 lg:h-5 border-3 border-white border-opacity-50 border-t-white rounded-full animate-spin"></div>
+                  <div
+                    v-if="saints[currentSaintIndex]?.imageLoading"
+                    class="bg-opacity-10 absolute inset-0 flex h-20 w-20 items-center justify-center rounded-full bg-[#ffffff] lg:h-24 lg:w-24"
+                  >
+                    <div
+                      class="border-opacity-50 h-[1rem] w-[1rem] animate-spin rounded-full border-3 border-white border-t-white lg:h-5 lg:w-5"
+                    ></div>
                   </div>
                 </div>
               </div>
-              
+
               <!-- Middle Section: Saint Info (Fixed Height) -->
-              <div class="flex-1 flex flex-col justify-center text-center min-h-0">
-                <h3 class="text-lg lg:text-xl font-bold text-white mb-1 transition-all duration-500">
+              <div class="flex min-h-0 flex-1 flex-col justify-center text-center">
+                <h3 class="mb-1 text-lg font-bold text-white transition-all duration-500 lg:text-xl">
                   {{ saints[currentSaintIndex]?.name || 'Loading...' }}
                 </h3>
-                <p class="text-blue-200 mb-1 text-sm lg:text-base font-medium">
+                <p class="mb-1 text-sm font-medium text-blue-200 lg:text-base">
                   {{ saints[currentSaintIndex]?.feastDay || '' }}
                 </p>
-                <div class="h-[1.5rem] lg:h-8 px-2 lg:px-4 overflow-hidden pb-10 lg:pb-12">
-                  <p class="text-xs text-blue-100 leading-tight" style="display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;">
+                <div class="h-[1.5rem] overflow-hidden px-2 pb-10 lg:h-8 lg:px-4 lg:pb-12">
+                  <p
+                    class="text-xs leading-tight text-blue-100"
+                    style="display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden"
+                  >
                     {{ saints[currentSaintIndex]?.description || '' }}
                   </p>
                 </div>
               </div>
             </div>
-            
+
             <!-- Carousel Navigation -->
-            <div class="absolute bottom-4 lg:bottom-6 left-1/2 transform -translate-x-1/2 flex items-center gap-1 bg-black/40 backdrop-blur-md px-3 py-2 rounded-full border-2 border-white/30">
+            <div
+              class="absolute bottom-4 left-1/2 flex -translate-x-1/2 transform items-center gap-1 rounded-full border-2 border-white/30 bg-black/40 px-3 py-2 backdrop-blur-md lg:bottom-6"
+            >
               <button
                 v-for="(saint, index) in saints"
                 :key="saint.id"
                 @click="goToSaint(index)"
                 :class="[
-                  'w-2 h-2 lg:w-3 lg:h-3 rounded-full transition-all duration-300 hover:scale-150 flex-shrink-0 border-2',
-                  index === currentSaintIndex 
-                    ? 'bg-yellow-300 border-yellow-200 shadow-lg shadow-yellow-300/50 scale-125' 
-                    : 'bg-[#ffffff]/80 border-white/60 hover:bg-[#ffffff] hover:border-white'
+                  'h-2 w-2 flex-shrink-0 rounded-full border-2 transition-all duration-300 hover:scale-150 lg:h-3 lg:w-3',
+                  index === currentSaintIndex
+                    ? 'scale-125 border-yellow-200 bg-yellow-300 shadow-lg shadow-yellow-300/50'
+                    : 'border-white/60 bg-[#ffffff]/80 hover:border-white hover:bg-[#ffffff]',
                 ]"
                 :disabled="saints.length === 0"
               />
             </div>
-            
+
             <!-- Previous/Next Buttons -->
-            <button 
+            <button
               @click="previousSaint"
-              class="absolute left-2 lg:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-[#ffffff] bg-opacity-10 hover:bg-[#ffffff] hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="bg-opacity-10 hover:bg-opacity-20 border-opacity-20 absolute top-1/2 left-2 flex h-10 w-10 -translate-y-1/2 transform items-center justify-center rounded-full border border-white bg-[#ffffff] backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-[#ffffff] lg:left-4 lg:h-12 lg:w-12"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 text-white lg:h-[1.5rem] lg:w-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
             </button>
-            
-            <button 
+
+            <button
               @click="nextSaint"
-              class="absolute right-2 lg:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 lg:w-12 lg:h-12 bg-[#ffffff] bg-opacity-10 hover:bg-[#ffffff] hover:bg-opacity-20 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 backdrop-blur-sm border border-white border-opacity-20"
+              class="bg-opacity-10 hover:bg-opacity-20 border-opacity-20 absolute top-1/2 right-2 flex h-10 w-10 -translate-y-1/2 transform items-center justify-center rounded-full border border-white bg-[#ffffff] backdrop-blur-sm transition-all duration-300 hover:scale-110 hover:bg-[#ffffff] lg:right-4 lg:h-12 lg:w-12"
               :disabled="saints.length <= 1"
             >
-              <svg class="w-5 h-5 lg:w-[1.5rem] lg:h-[1.5rem] text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="h-5 w-5 text-white lg:h-[1.5rem] lg:w-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
               </svg>
             </button>
@@ -546,26 +580,30 @@ onMounted(() => {
     </div>
 
     <!-- Right Side - Login Form -->
-    <div class="flex-1 flex items-start justify-center p-8 relative pt-20">
+    <div class="relative flex flex-1 items-start justify-center p-8 pt-20">
       <!-- Background Pattern -->
       <div class="absolute inset-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900">
-        <div class="absolute inset-0 opacity-30 bg-dots-pattern"></div>
+        <div class="bg-dots-pattern absolute inset-0 opacity-30"></div>
       </div>
-      
+
       <div class="relative z-10 w-full max-w-md">
         <!-- Mobile Logo -->
-        <div class="lg:hidden flex flex-col items-center gap-8 mb-12">
-          <Link :href="route('home')" class="flex flex-col items-center gap-6 group">
-            <div class="flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-2xl group-hover:shadow-3xl transition-all duration-500 group-hover:scale-110 relative">
-              <AppLogoIcon class="size-20 fill-current text-white drop-shadow-lg group-hover:drop-shadow-2xl transition-all duration-500" />
+        <div class="mb-12 flex flex-col items-center gap-8 lg:hidden">
+          <Link :href="route('home')" class="group flex flex-col items-center gap-6">
+            <div
+              class="group-hover:shadow-3xl relative flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-2xl transition-all duration-500 group-hover:scale-110"
+            >
+              <AppLogoIcon class="size-20 fill-current text-white drop-shadow-lg transition-all duration-500 group-hover:drop-shadow-2xl" />
               <!-- Glow effect for mobile -->
-              <div class="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+              <div
+                class="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-purple-400/30 opacity-0 blur-xl transition-opacity duration-500 group-hover:opacity-100"
+              ></div>
             </div>
             <div class="text-center">
-              <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">{{ title }}</h1>
-              <p class="text-gray-600 dark:text-gray-400 text-lg font-medium">{{ description }}</p>
-              <div class="flex items-center justify-center gap-2 mt-3">
-                <div class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <h1 class="mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-4xl font-bold text-transparent">{{ title }}</h1>
+              <p class="text-lg font-medium text-gray-600 dark:text-gray-400">{{ description }}</p>
+              <div class="mt-3 flex items-center justify-center gap-2">
+                <div class="h-2 w-2 animate-pulse rounded-full bg-green-400"></div>
                 <span class="text-sm text-gray-500 dark:text-gray-400">Secure • Reliable • Faithful</span>
               </div>
             </div>
@@ -573,22 +611,22 @@ onMounted(() => {
         </div>
 
         <!-- Login Form -->
-        <div class="bg-[#ffffff] bg-opacity-80 dark:bg-slate-800 dark:bg-opacity-80 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white border-opacity-20 dark:border-slate-700 dark:border-opacity-50">
-          <div class="text-center mb-8">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome Back</h2>
+        <div
+          class="bg-opacity-80 dark:bg-opacity-80 border-opacity-20 dark:border-opacity-50 rounded-3xl border border-white bg-[#ffffff] p-8 shadow-2xl backdrop-blur-xl dark:border-slate-700 dark:bg-slate-800"
+        >
+          <div class="mb-8 text-center">
+            <h2 class="mb-2 text-2xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
             <p class="text-gray-600 dark:text-gray-400">Sign in to your account to continue</p>
           </div>
 
           <slot />
         </div>
-        
+
         <!-- Footer -->
-        <div class="text-center mt-8">
-          <p class="text-sm text-gray-500 dark:text-gray-400">
-            © 2025 {{ title }}. All rights reserved.
-          </p>
+        <div class="mt-8 text-center">
+          <p class="text-sm text-gray-500 dark:text-gray-400">© 2025 {{ title }}. All rights reserved.</p>
         </div>
       </div>
     </div>
   </div>
-</template> 
+</template>

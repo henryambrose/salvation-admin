@@ -5,6 +5,7 @@ namespace Modules\Members\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
 
 class SuperAdminMiddleware
 {
@@ -14,7 +15,7 @@ class SuperAdminMiddleware
     public function handle(Request $request, Closure $next): Response
     {
         // Check if user is authenticated and is a superadmin
-        if (! auth()->check() || ! auth()->user()->is_superadmin) {
+        if (! Auth::check() || ! Auth::user()->is_superadmin) {
             abort(403, 'Access denied. Superadmin privileges required.');
         }
 
