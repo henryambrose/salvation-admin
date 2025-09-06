@@ -56,8 +56,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
     // Comprehensive Role Management Routes
     Route::resource('roles', \Modules\Members\Http\Controllers\RoleController::class);
-    Route::put('/roles/{role}/permissions', [\Modules\Members\Http\Controllers\RoleController::class, 'updatePermissions'])
-        ->name('roles.permissions.update');
     Route::get('/roles/{role}/users', [\Modules\Members\Http\Controllers\RoleController::class, 'getUsers'])
         ->name('roles.users.get');
 
