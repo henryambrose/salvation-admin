@@ -226,50 +226,99 @@
               </div>
 
               <!-- External Member Form -->
-              <div v-if="member.member_type === 'external'" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div v-if="member.member_type === 'external'" class="space-y-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">First Name *</label>
+                    <input
+                      v-model="member.first_name"
+                      type="text"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      :class="{ 'border-red-300': getFieldError(`members.${index}.first_name`) }"
+                    />
+                    <div v-if="getFieldError(`members.${index}.first_name`)" class="mt-1 text-sm text-red-600">
+                      {{ getFieldError(`members.${index}.first_name`) }}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Last Name *</label>
+                    <input
+                      v-model="member.last_name"
+                      type="text"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      :class="{ 'border-red-300': getFieldError(`members.${index}.last_name`) }"
+                    />
+                    <div v-if="getFieldError(`members.${index}.last_name`)" class="mt-1 text-sm text-red-600">
+                      {{ getFieldError(`members.${index}.last_name`) }}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Contact Number</label>
+                    <input
+                      v-model="member.contact_no"
+                      type="text"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label class="mb-1 block text-sm font-medium text-gray-700">Aadhar Number</label>
+                    <input
+                      v-model="member.aadhar_no"
+                      type="text"
+                      class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      placeholder="Optional"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Common Fields for both Member Types -->
+              <div class="space-y-4">
                 <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700">First Name *</label>
-                  <input
-                    v-model="member.first_name"
-                    type="text"
+                  <label class="mb-1 block text-sm font-medium text-gray-700">Relationship to Grave Owner *</label>
+                  <select 
+                    v-model="member.relationship"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    :class="{ 'border-red-300': getFieldError(`members.${index}.first_name`) }"
-                  />
-                  <div v-if="getFieldError(`members.${index}.first_name`)" class="mt-1 text-sm text-red-600">
-                    {{ getFieldError(`members.${index}.first_name`) }}
+                    :class="{ 'border-red-300': getFieldError(`members.${index}.relationship`) }"
+                  >
+                    <option value="">Select relationship</option>
+                    <option value="Self">Self (Grave Owner)</option>
+                    <option value="Spouse">Spouse</option>
+                    <option value="Father">Father</option>
+                    <option value="Mother">Mother</option>
+                    <option value="Son">Son</option>
+                    <option value="Daughter">Daughter</option>
+                    <option value="Son-in-law">Son-in-law</option>
+                    <option value="Daughter-in-law">Daughter-in-law</option>
+                    <option value="Grandfather">Grandfather</option>
+                    <option value="Grandmother">Grandmother</option>
+                    <option value="Grandson">Grandson</option>
+                    <option value="Granddaughter">Granddaughter</option>
+                    <option value="Brother">Brother</option>
+                    <option value="Sister">Sister</option>
+                    <option value="Uncle">Uncle</option>
+                    <option value="Aunt">Aunt</option>
+                    <option value="Nephew">Nephew</option>
+                    <option value="Niece">Niece</option>
+                    <option value="Cousin">Cousin</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <div v-if="getFieldError(`members.${index}.relationship`)" class="mt-1 text-sm text-red-600">
+                    {{ getFieldError(`members.${index}.relationship`) }}
                   </div>
                 </div>
 
                 <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700">Last Name *</label>
-                  <input
-                    v-model="member.last_name"
-                    type="text"
+                  <label class="mb-1 block text-sm font-medium text-gray-700">Additional Notes</label>
+                  <textarea 
+                    v-model="member.notes"
+                    rows="3"
                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    :class="{ 'border-red-300': getFieldError(`members.${index}.last_name`) }"
-                  />
-                  <div v-if="getFieldError(`members.${index}.last_name`)" class="mt-1 text-sm text-red-600">
-                    {{ getFieldError(`members.${index}.last_name`) }}
-                  </div>
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700">Contact Number</label>
-                  <input
-                    v-model="member.contact_no"
-                    type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label class="mb-1 block text-sm font-medium text-gray-700">Aadhar Number</label>
-                  <input
-                    v-model="member.aadhar_no"
-                    type="text"
-                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    placeholder="Optional"
-                  />
+                    placeholder="Any additional information about this person..."
+                  ></textarea>
                 </div>
               </div>
             </div>
@@ -344,6 +393,8 @@ interface MemberFormData {
   last_name: string;
   contact_no: string;
   aadhar_no: string;
+  relationship: string;
+  notes: string;
 }
 
 const props = defineProps<Props>();
@@ -372,6 +423,8 @@ const formData = reactive({
       last_name: '',
       contact_no: '',
       aadhar_no: '',
+      relationship: '',
+      notes: '',
     },
   ] as MemberFormData[],
 });
@@ -506,6 +559,8 @@ const addMember = () => {
       last_name: '',
       contact_no: '',
       aadhar_no: '',
+      relationship: '',
+      notes: '',
     });
   }
 };
@@ -583,7 +638,7 @@ watch(
             member.last_name = '';
             member.aadhar_no = '';
           }
-          // Always clear contact as it's used by both types
+          // Always clear contact as it's used by both types, but keep relationship and notes
           member.contact_no = '';
         }
       });
@@ -606,6 +661,8 @@ const submitForm = () => {
       last_name: member.member_type === 'external' ? member.last_name : '',
       contact_no: member.contact_no || null,
       aadhar_no: member.member_type === 'external' ? member.aadhar_no || null : null,
+      relationship: member.relationship,
+      notes: member.notes || null,
     })),
   };
 

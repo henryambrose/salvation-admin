@@ -112,9 +112,9 @@ const enhancedTowns = computed(() => {
     data: c.data || [],
     prev_page_url: meta.prev_page_url,
     next_page_url: meta.next_page_url,
-    current_page: meta.current_page,
-    last_page: meta.last_page,
-    total: meta.total, // Add this line
+    current_page: meta.current_page || 1,
+    last_page: meta.last_page || 1,
+    total: meta.total || 0,
   };
 });
 

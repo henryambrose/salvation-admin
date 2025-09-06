@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Calendar, Eye, MapPin, Phone, Plus, Search, User } from 'lucide-vue-next';
+import { Calendar, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface PermanentGraveBooking {
@@ -123,6 +123,39 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
   }
   return `${validMember.first_name} ${validMember.last_name}`;
 };
+
+const canDeleteBooking = (booking: PermanentGraveBooking) => {
+  return booking.status === 'pending';
+};
+
+const deleteBooking = (booking: PermanentGraveBooking) => {
+  if (!canDeleteBooking(booking)) {
+    alert('Only pending bookings can be deleted.');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`)) {
+    router.delete(route('graveyard.permanent-grave-bookings.destroy', booking.id), {
+      onSuccess: () => {
+        // Success message will be shown via flash message
+      },
+      onError: (errors) => {
+        console.error('Failed to delete booking:', errors);
+        alert('Failed to delete booking. Please try again.');
+      },
+    });
+  }
+};
+
+const getBookingWarning = (booking: PermanentGraveBooking) => {
+  if (booking.status === 'pending') {
+    return 'This grave has a pending booking';
+  }
+  if (booking.status === 'confirmed') {
+    return 'This grave has a confirmed booking';
+  }
+  return null;
+};
 </script>
 
 <template>
@@ -212,14 +245,14 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
               <div class="hidden sm:block">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking Details</TableHead>
-                      <TableHead>Deceased</TableHead>
-                      <TableHead>Grave</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Financial</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead class="text-right">Actions</TableHead>
+                    <TableRow class="border-b">
+                      <TableHead class="font-medium text-gray-900">Booking Details</TableHead>
+                      <TableHead class="font-medium text-gray-900">Deceased</TableHead>
+                      <TableHead class="font-medium text-gray-900">Grave</TableHead>
+                      <TableHead class="font-medium text-gray-900">Contact</TableHead>
+                      <TableHead class="font-medium text-gray-900">Total Cost</TableHead>
+                      <TableHead class="font-medium text-gray-900">Status</TableHead>
+                      <TableHead class="text-right font-medium text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -263,9 +296,9 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
                           <div class="font-medium text-gray-900">
                             {{ formatCurrency(booking.total_cost) }}
                           </div>
-                          <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
+                          <!-- <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
                             {{ booking.payment_status }}
-                          </Badge>
+                          </Badge> -->
                         </div>
                       </TableCell>
                       <TableCell>
@@ -274,11 +307,22 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
                         </Badge>
                       </TableCell>
                       <TableCell class="text-right">
-                        <Button variant="outline" size="sm" as-child>
-                          <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
-                            <Eye class="h-4 w-4" />
-                          </Link>
-                        </Button>
+                        <div class="flex items-center justify-end space-x-2">
+                          <Button variant="outline" size="sm" as-child>
+                            <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
+                              <Eye class="h-4 w-4" />
+                            </Link>
+                          </Button>
+                          <Button
+                            v-if="canDeleteBooking(booking)"
+                            variant="outline"
+                            size="sm"
+                            @click="deleteBooking(booking)"
+                            class="text-red-600 hover:bg-red-50 hover:text-red-800"
+                          >
+                            <Trash2 class="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   </TableBody>
@@ -320,11 +364,22 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
                           {{ booking.payment_status }}
                         </Badge>
                       </div>
-                      <Button variant="outline" size="sm" as-child>
-                        <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
-                          <Eye class="h-4 w-4" />
-                        </Link>
-                      </Button>
+                      <div class="flex items-center space-x-2">
+                        <Button variant="outline" size="sm" as-child>
+                          <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
+                            <Eye class="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button
+                          v-if="canDeleteBooking(booking)"
+                          variant="outline"
+                          size="sm"
+                          @click="deleteBooking(booking)"
+                          class="text-red-600 hover:bg-red-50 hover:text-red-800"
+                        >
+                          <Trash2 class="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -332,6 +387,7 @@ const getDeceasedName = (booking: PermanentGraveBooking) => {
 
               <!-- Pagination -->
               <Pagination
+                v-if="bookings.meta"
                 :current-page="bookings.meta.current_page"
                 :last-page="bookings.meta.last_page"
                 :prev-page-url="bookings.meta.prev_page_url"

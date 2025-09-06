@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PermanentGraveBookingController extends Controller
 {
@@ -95,8 +96,13 @@ class PermanentGraveBookingController extends Controller
                     return [
                         'id' => $member->id,
                         'full_name' => $member->full_name,
+                        'first_name' => $member->first_name,
+                        'last_name' => $member->last_name,
                         'relationship' => $member->relationship,
-                        'is_deceased' => !is_null($member->death_date)
+                        'member_type' => $member->member_type,
+                        'is_deceased' => $member->is_deceased,
+                        'death_date' => $member->death_date?->format('Y-m-d'),
+                        'burial_date' => $member->burial_date?->format('Y-m-d')
                     ];
                 }),
                 'has_valid_members' => $grave->validMembers->count() > 0,
@@ -115,40 +121,67 @@ class PermanentGraveBookingController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'permanent_grave_id' => 'required|exists:permanent_graves,id',
-            'valid_member_id' => 'required|exists:valid_members,id',
-            'died_on' => 'required|date|before_or_equal:today',
-            'buried_on' => 'required|date|after_or_equal:died_on',
-            'cause_of_death' => 'required|string|max:255',
-            'minister' => 'nullable|string|max:255',
-            'applicant_type' => 'required|in:member,non_member',
-            'applicant_name' => 'required|string|max:255',
-            'contact_no' => 'required|string|max:20',
-            'contact_email' => 'nullable|email',
-            'permit_no' => 'nullable|string|max:50',
-            'selected_services' => 'nullable|array',
-            'selected_services.*' => 'exists:service_types,id'
-        ]);
+        Log::info('PermanentGraveBooking store method called');
+        Log::info('Request data:', $request->all());
+
+        try {
+            $request->validate([
+                'permanent_grave_id' => 'required|exists:permanent_graves,id',
+                'valid_member_id' => 'required|exists:valid_members,id',
+                'died_on' => 'required|date',
+                'buried_on' => 'required|date|after_or_equal:died_on',
+                'cause_of_death' => 'required|string|max:255',
+                'minister' => 'nullable|string|max:255',
+                'applicant_type' => 'required|in:member,non_member',
+                'applicant_name' => 'required|string|max:255',
+                'contact_no' => 'required|string|max:20',
+                'contact_email' => 'nullable|email',
+                'permit_no' => 'nullable|string|max:50',
+                'selected_services' => 'nullable|array',
+                'selected_services.*' => 'exists:service_types,id',
+                'special_requirements' => 'nullable|string|max:1000'
+            ]);
+            Log::info('Validation passed successfully');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Log::error('Validation failed: ', $e->errors());
+            throw $e;
+        }
 
         try {
             DB::beginTransaction();
 
             // Get the permanent grave
             $grave = PermanentGrave::findOrFail($request->permanent_grave_id);
+            Log::info('Found grave: ' . $grave->id . ' - ' . $grave->grave_no);
 
             // Double-check eligibility
             if (!$this->checkGraveEligibility($grave)) {
-                return back()->withErrors(['grave' => 'This grave is not eligible for burial yet.']);
+                Log::warning('Grave not eligible for burial');
+                return back()->withErrors(['permanent_grave_id' => 'This grave is not eligible for burial yet.']);
             }
+            Log::info('Grave eligibility check passed');
+
+            // Check for existing active bookings for this grave
+            $existingBooking = PermanentGraveBooking::where('permanent_grave_id', $request->permanent_grave_id)
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->exists();
+            
+            if ($existingBooking) {
+                Log::warning('Grave already has an active booking');
+                return back()->withErrors(['permanent_grave_id' => 'This grave already has a pending or confirmed booking. Cannot create duplicate booking.']);
+            }
+            Log::info('No existing active bookings found');
 
             // Get the valid member
             $validMember = ValidMember::findOrFail($request->valid_member_id);
+            Log::info('Found valid member: ' . $validMember->id . ' - ' . $validMember->full_name);
 
             // Check if valid member is already deceased
             if ($validMember->death_date) {
-                return back()->withErrors(['valid_member' => 'This valid member is already marked as deceased.']);
+                Log::warning('Valid member already deceased');
+                return back()->withErrors(['valid_member_id' => 'This valid member is already marked as deceased.']);
             }
+            Log::info('Valid member eligibility check passed');
 
             // Create the booking
             $booking = PermanentGraveBooking::create([
@@ -167,9 +200,10 @@ class PermanentGraveBookingController extends Controller
                 'special_requirements' => $request->special_requirements,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'created_by' => auth()->id ?? null,
-                'updated_by' => auth()->id ?? null,
+                'created_by' => Auth::id() ?: 1, // Default to user ID 1 if not authenticated
+                'updated_by' => Auth::id() ?: 1, // Default to user ID 1 if not authenticated
             ]);
+            Log::info('Booking created successfully with ID: ' . $booking->id);
 
             // Calculate total cost from selected services
             if ($request->selected_services) {
@@ -178,14 +212,18 @@ class PermanentGraveBookingController extends Controller
                     'total_cost' => $totalCost,
                     'balance_amount' => $totalCost
                 ]);
+                Log::info('Total cost calculated and updated: ' . $totalCost);
             }
 
             DB::commit();
+            Log::info('Transaction committed successfully');
 
             return redirect()->route('graveyard.permanent-grave-bookings.show', $booking->id)
                 ->with('success', 'Permanent grave booking created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Failed to create permanent grave booking: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
             return back()->withErrors(['error' => 'Failed to create booking. Please try again.'])
                 ->withInput();
@@ -201,7 +239,8 @@ class PermanentGraveBookingController extends Controller
             'permanentGrave',
             'validMember.member',
             'creator',
-            'updater'
+            'updater',
+            'payments'
         ]);
 
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Show', [
@@ -254,6 +293,124 @@ class PermanentGraveBookingController extends Controller
         $monthsSinceLastBurial = $lastBurial->diffInMonths(now());
 
         return $monthsSinceLastBurial >= 24;
+    }
+
+    /**
+     * Add a new valid member to a permanent grave
+     */
+    public function addValidMember(Request $request)
+    {
+        try {
+            $request->validate([
+                'permanent_grave_id' => 'required|exists:permanent_graves,id',
+                'first_name' => 'required|string|max:100',
+                'last_name' => 'required|string|max:100',
+                'relationship' => 'required|string|max:50',
+                'member_type' => 'required|in:Member,External',
+                'contact_no' => 'nullable|string|max:20',
+                'notes' => 'nullable|string|max:500'
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            throw $e;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Get the permanent grave
+            $grave = PermanentGrave::findOrFail($request->permanent_grave_id);
+
+            // Create the new valid member
+            $validMember = ValidMember::create([
+                'permanent_grave_id' => $request->permanent_grave_id,
+                'first_name' => $request->first_name,
+                'last_name' => $request->last_name,
+                'relationship' => $request->relationship,
+                'member_type' => strtolower($request->member_type), // Convert to lowercase for database
+                'grave_type' => 'permanent_grave',
+                'contact_no' => $request->contact_no,
+                'notes' => $request->notes,
+                'is_active' => true,
+                'created_by' => auth()->id ?? null,
+                'updated_by' => auth()->id ?? null,
+            ]);
+
+            DB::commit();
+
+            // Return the new member data
+            $newMemberData = [
+                'id' => $validMember->id,
+                'full_name' => $validMember->full_name,
+                'first_name' => $validMember->first_name,
+                'last_name' => $validMember->last_name,
+                'relationship' => $validMember->relationship,
+                'member_type' => $validMember->member_type,
+                'is_deceased' => $validMember->is_deceased,
+                'death_date' => $validMember->death_date?->format('Y-m-d'),
+                'burial_date' => $validMember->burial_date?->format('Y-m-d')
+            ];
+
+            // Return JSON response for AJAX requests
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'New person added successfully to the grave.',
+                    'newMember' => $newMemberData
+                ]);
+            }
+
+            return back()->with([
+                'success' => 'New person added successfully to the grave.',
+                'newMember' => $newMemberData
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add valid member: ' . $e->getMessage());
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to add new person. Please try again.',
+                    'error' => $e->getMessage()
+                ], 422);
+            }
+
+            return back()->withErrors([
+                'error' => 'Failed to add new person. Please try again.'
+            ])->withInput();
+        }
+    }
+
+    /**
+     * Delete a pending booking
+     */
+    public function destroy(PermanentGraveBooking $permanentGraveBooking)
+    {
+        // Only allow deletion of pending bookings
+        if ($permanentGraveBooking->status !== 'pending') {
+            return back()->with('error', 'Only pending bookings can be deleted.');
+        }
+
+        // Check if booking has any payments
+        if ($permanentGraveBooking->payments()->exists()) {
+            return back()->with('error', 'Cannot delete booking with payment records.');
+        }
+
+        try {
+            $permanentGraveBooking->delete();
+            return redirect()->route('graveyard.permanent-grave-bookings.index')
+                ->with('success', 'Booking deleted successfully.');
+        } catch (\Exception $e) {
+            Log::error('Failed to delete permanent grave booking: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete booking. Please try again.');
+        }
     }
 
     /**

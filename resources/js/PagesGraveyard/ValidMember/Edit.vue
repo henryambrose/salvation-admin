@@ -153,50 +153,99 @@
           </div>
 
           <!-- External Member Form -->
-          <div v-if="form.member_type === 'external'" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div v-if="form.member_type === 'external'" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">First Name *</label>
+                <input
+                  v-model="form.first_name"
+                  type="text"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  :class="{ 'border-red-300': form.errors.first_name }"
+                />
+                <div v-if="form.errors.first_name" class="mt-1 text-sm text-red-600">
+                  {{ form.errors.first_name }}
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Last Name *</label>
+                <input
+                  v-model="form.last_name"
+                  type="text"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  :class="{ 'border-red-300': form.errors.last_name }"
+                />
+                <div v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">
+                  {{ form.errors.last_name }}
+                </div>
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Contact Number</label>
+                <input
+                  v-model="form.contact_no"
+                  type="text"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                />
+              </div>
+
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Aadhar Number</label>
+                <input
+                  v-model="form.aadhar_no"
+                  type="text"
+                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <!-- Common Fields for both Member Types -->
+          <div class="space-y-4">
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700">First Name *</label>
-              <input
-                v-model="form.first_name"
-                type="text"
+              <label class="mb-1 block text-sm font-medium text-gray-700">Relationship to Grave Owner *</label>
+              <select 
+                v-model="form.relationship"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                :class="{ 'border-red-300': form.errors.first_name }"
-              />
-              <div v-if="form.errors.first_name" class="mt-1 text-sm text-red-600">
-                {{ form.errors.first_name }}
+                :class="{ 'border-red-300': form.errors.relationship }"
+              >
+                <option value="">Select relationship</option>
+                <option value="Self">Self (Grave Owner)</option>
+                <option value="Spouse">Spouse</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Son">Son</option>
+                <option value="Daughter">Daughter</option>
+                <option value="Son-in-law">Son-in-law</option>
+                <option value="Daughter-in-law">Daughter-in-law</option>
+                <option value="Grandfather">Grandfather</option>
+                <option value="Grandmother">Grandmother</option>
+                <option value="Grandson">Grandson</option>
+                <option value="Granddaughter">Granddaughter</option>
+                <option value="Brother">Brother</option>
+                <option value="Sister">Sister</option>
+                <option value="Uncle">Uncle</option>
+                <option value="Aunt">Aunt</option>
+                <option value="Nephew">Nephew</option>
+                <option value="Niece">Niece</option>
+                <option value="Cousin">Cousin</option>
+                <option value="Other">Other</option>
+              </select>
+              <div v-if="form.errors.relationship" class="mt-1 text-sm text-red-600">
+                {{ form.errors.relationship }}
               </div>
             </div>
 
             <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700">Last Name *</label>
-              <input
-                v-model="form.last_name"
-                type="text"
+              <label class="mb-1 block text-sm font-medium text-gray-700">Additional Notes</label>
+              <textarea 
+                v-model="form.notes"
+                rows="3"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                :class="{ 'border-red-300': form.errors.last_name }"
-              />
-              <div v-if="form.errors.last_name" class="mt-1 text-sm text-red-600">
-                {{ form.errors.last_name }}
-              </div>
-            </div>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700">Contact Number</label>
-              <input
-                v-model="form.contact_no"
-                type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label class="mb-1 block text-sm font-medium text-gray-700">Aadhar Number</label>
-              <input
-                v-model="form.aadhar_no"
-                type="text"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                placeholder="Optional"
-              />
+                placeholder="Any additional information about this person..."
+              ></textarea>
             </div>
           </div>
         </div>
@@ -231,6 +280,8 @@ interface Props {
     last_name: string;
     contact_no: string | null;
     aadhar_no: string | null;
+    relationship: string | null;
+    notes: string | null;
     member?: {
       id: number;
       first_name: string;
@@ -284,6 +335,8 @@ const form = useForm({
   last_name: props.validMember.last_name || '',
   contact_no: props.validMember.contact_no || '',
   aadhar_no: props.validMember.aadhar_no || '',
+  relationship: props.validMember.relationship || '',
+  notes: props.validMember.notes || '',
 });
 
 // Search functionality

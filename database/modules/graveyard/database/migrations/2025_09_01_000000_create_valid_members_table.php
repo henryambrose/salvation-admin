@@ -30,8 +30,17 @@ return new class  extends Migration
             $table->string('last_name')->nullable();
             $table->string('contact_no')->nullable();
             $table->string('aadhar_no')->nullable();
+            $table->string('relationship', 50)->nullable();
+            $table->date('death_date')->nullable();
+            $table->date('burial_date')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->text('notes')->nullable();
             $table->enum('grave_type', ['permanent_grave', 'niche']);
             $table->enum('member_type', ['member', 'external']);
+            $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
 

@@ -4,9 +4,12 @@ namespace Modules\Graveyard\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Modules\Graveyard\Models\ValidMember;
 
 class PermanentGraveBooking extends Model
 {
@@ -116,6 +119,62 @@ class PermanentGraveBooking extends Model
     }
 
     /**
+     * Get the payments for this booking
+     */
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
+    }
+
+    /**
+     * Get the latest payment
+     */
+    public function latestPayment()
+    {
+        return $this->morphOne(Payment::class, 'payable')->latest();
+    }
+
+    /**
+     * Check if booking has completed payment
+     */
+    public function hasCompletedPayment(): bool
+    {
+        return $this->payments()->completed()->exists();
+    }
+
+    /**
+     * Get total paid amount
+     */
+    public function getTotalPaidAmount(): float
+    {
+        return $this->payments()->sum('paid_amount');
+    }
+
+    /**
+     * Check if booking can be confirmed (includes payment check)
+     */
+    public function canBeConfirmed(): bool
+    {
+        if ($this->status !== 'pending') {
+            return false;
+        }
+
+        // Check if payment is completed
+        if (!$this->hasCompletedPayment()) {
+            return false;
+        }
+
+        // Check if grave is eligible (24-month rule)
+        $grave = $this->permanentGrave;
+        if (!$grave->last_burial_date) {
+            return true; // Never used before
+        }
+
+        $monthsSinceLastBurial = Carbon::parse($grave->last_burial_date)->diffInMonths(now());
+        return $monthsSinceLastBurial >= 24;
+    }
+
+    /**
      * Scope for filtering by status
      */
     public function scopeWithStatus($query, $status)
@@ -139,24 +198,6 @@ class PermanentGraveBooking extends Model
         return $query->where('status', 'confirmed');
     }
 
-    /**
-     * Check if booking can be confirmed (24-month rule)
-     */
-    public function canBeConfirmed(): bool
-    {
-        if ($this->status !== 'pending') {
-            return false;
-        }
-
-        // Check if grave is eligible (24-month rule)
-        $grave = $this->permanentGrave;
-        if (!$grave->last_burial_date) {
-            return true; // Never used before
-        }
-
-        $monthsSinceLastBurial = Carbon::parse($grave->last_burial_date)->diffInMonths(now());
-        return $monthsSinceLastBurial >= 24;
-    }
 
     /**
      * Get eligibility message
@@ -164,13 +205,13 @@ class PermanentGraveBooking extends Model
     public function getEligibilityMessage(): string
     {
         $grave = $this->permanentGrave;
-        
+
         if (!$grave->last_burial_date) {
             return 'Grave is eligible - never been used before.';
         }
 
         $monthsSinceLastBurial = Carbon::parse($grave->last_burial_date)->diffInMonths(now());
-        
+
         if ($monthsSinceLastBurial >= 24) {
             return "Grave is eligible - {$monthsSinceLastBurial} months since last burial.";
         } else {
@@ -187,13 +228,13 @@ class PermanentGraveBooking extends Model
         // Update grave's last burial date
         $this->permanentGrave->update([
             'last_burial_date' => $this->buried_on,
-            'updated_by' => auth()->id()
+            'updated_by' => Auth::id()
         ]);
 
         // Mark valid member as deceased
         $this->validMember->update([
             'death_date' => $this->died_on,
-            'updated_by' => auth()->id()
+            'updated_by' => Auth::id()
         ]);
     }
 
@@ -203,7 +244,7 @@ class PermanentGraveBooking extends Model
     public function calculateBalance(): void
     {
         $this->balance_amount = $this->total_cost - $this->paid_amount;
-        
+
         if ($this->paid_amount == 0) {
             $this->payment_status = 'pending';
         } elseif ($this->paid_amount >= $this->total_cost) {
@@ -253,7 +294,7 @@ class PermanentGraveBooking extends Model
     /**
      * Cancel the booking
      */
-    public function cancel(string $reason = null): bool
+    public function cancel($reason = null): bool
     {
         $this->update([
             'status' => 'cancelled',

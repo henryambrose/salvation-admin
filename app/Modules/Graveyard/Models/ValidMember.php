@@ -28,8 +28,26 @@ class ValidMember extends Model
         'last_name',
         'contact_no',
         'aadhar_no',
-        'member_type', // 'member' or 'external
+        'member_type', // 'member' or 'external'
         'grave_type', // 'permanent_grave' or 'niche'
+        'relationship', // relationship to grave owner
+        'death_date',
+        'burial_date',
+        'is_active',
+        'notes',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'death_date' => 'date',
+        'burial_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -101,5 +119,29 @@ class ValidMember extends Model
     public function getIsParishMemberAttribute()
     {
         return !is_null($this->member_id);
+    }
+
+    /**
+     * Check if this member is deceased.
+     */
+    public function getIsDeceasedAttribute()
+    {
+        return !is_null($this->death_date);
+    }
+
+    /**
+     * Get the creator user.
+     */
+    public function creator()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+
+    /**
+     * Get the updater user.
+     */
+    public function updater()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'updated_by');
     }
 }

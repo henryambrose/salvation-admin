@@ -13,6 +13,7 @@ use Modules\Graveyard\Http\Controllers\ServiceTypeController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveBookingController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
 use Modules\Graveyard\Http\Controllers\NicheTransferController;
+use Modules\Graveyard\Http\Controllers\PaymentController;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
@@ -51,6 +52,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/create', [PermanentGraveController::class, 'create'])->name('create');
         Route::post('/', [PermanentGraveController::class, 'store'])->name('store');
         Route::get('/search-members', [PermanentGraveController::class, 'searchMembers'])->name('search-members');
+        Route::post('/add-valid-member', [PermanentGraveBookingController::class, 'addValidMember'])->name('add-valid-member');
         Route::get('/{permanentGrave}', [PermanentGraveController::class, 'show'])->name('show');
         Route::get('/{permanentGrave}/edit', [PermanentGraveController::class, 'edit'])->name('edit');
         Route::put('/{permanentGrave}', [PermanentGraveController::class, 'update'])->name('update');
@@ -108,6 +110,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'show'])->name('show');
         Route::post('/{permanentGraveBooking}/confirm', [PermanentGraveBookingController::class, 'confirm'])->name('confirm');
         Route::post('/{permanentGraveBooking}/cancel', [PermanentGraveBookingController::class, 'cancel'])->name('cancel');
+        Route::delete('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'destroy'])->name('destroy');
     });
 
     // Temporary Grave Booking Management
@@ -133,6 +136,14 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{nicheTransfer}/reject', [NicheTransferController::class, 'reject'])->name('reject');
         Route::post('/{nicheTransfer}/complete', [NicheTransferController::class, 'complete'])->name('complete');
         Route::post('/{nicheTransfer}/cancel', [NicheTransferController::class, 'cancel'])->name('cancel');
+    });
+
+    // Payment Management
+    Route::prefix('graveyard/payments')->name('graveyard.payments.')->group(function () {
+        Route::get('/create/{bookingType}/{bookingId}', [PaymentController::class, 'create'])->name('create');
+        Route::post('/', [PaymentController::class, 'store'])->name('store');
+        Route::get('/{payment}', [PaymentController::class, 'show'])->name('show');
+        Route::get('/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('receipt');
     });
 
     // Permission denied route for graveyard

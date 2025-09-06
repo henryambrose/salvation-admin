@@ -2,7 +2,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,18 +11,17 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, CheckCircle, MapPin, Phone, Search, Users } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
-interface ServiceType {
-  id: number;
-  name: string;
-  cost: number;
-  description?: string;
-}
 
 interface ValidMember {
   id: number;
   full_name: string;
+  first_name: string;
+  last_name: string;
   relationship: string;
+  member_type: string;
   is_deceased: boolean;
+  death_date?: string;
+  burial_date?: string;
 }
 
 interface PermanentGrave {
@@ -46,7 +44,7 @@ interface PermanentGrave {
 }
 
 interface Props {
-  serviceTypes: ServiceType[];
+  // No props needed for this component
 }
 
 const props = defineProps<Props>();
@@ -63,7 +61,6 @@ const form = useForm({
   contact_no: '',
   contact_email: '',
   permit_no: '',
-  selected_services: [] as number[],
   special_requirements: '',
 });
 
@@ -74,8 +71,19 @@ const isSearching = ref(false);
 const selectedGrave = ref<PermanentGrave | null>(null);
 const availableValidMembers = ref<ValidMember[]>([]);
 
-// Service selection
-const selectedServiceIds = ref<number[]>([]);
+
+// Add new member functionality
+const showAddMemberModal = ref(false);
+const addingNewMember = ref(false);
+const newMemberForm = useForm({
+  permanent_grave_id: null as number | null,
+  first_name: '',
+  last_name: '',
+  relationship: '',
+  member_type: 'External' as 'Member' | 'External',
+  contact_no: '',
+  notes: ''
+});
 
 const searchGraves = async () => {
   if (graveSearchTerm.value.length < 2) {
@@ -123,6 +131,109 @@ const clearGraveSelection = () => {
 
 const selectValidMember = (member: ValidMember) => {
   form.valid_member_id = member.id;
+  // Clear validation errors when a member is selected
+  form.clearErrors('valid_member_id');
+};
+
+const openAddMemberModal = () => {
+  if (selectedGrave.value) {
+    console.log('Opening modal for grave:', selectedGrave.value.id);
+    newMemberForm.reset();
+    newMemberForm.clearErrors();
+    newMemberForm.permanent_grave_id = selectedGrave.value.id;
+    showAddMemberModal.value = true;
+    console.log('Modal opened, form data:', newMemberForm.data());
+  }
+};
+
+const closeAddMemberModal = () => {
+  showAddMemberModal.value = false;
+  newMemberForm.reset();
+  newMemberForm.clearErrors();
+  // Also clear any main form validation errors if they exist
+  form.clearErrors('valid_member_id');
+};
+
+const addNewMember = async () => {
+  console.log('addNewMember called');
+  console.log('Form data:', newMemberForm.data());
+  
+  addingNewMember.value = true;
+  
+  try {
+    const response = await fetch(route('graveyard.permanent-graves.add-valid-member'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify(newMemberForm.data()),
+    });
+
+    const data = await response.json();
+    console.log('Response data:', data);
+
+    if (response.ok && data.success && data.newMember) {
+      const newMember = data.newMember as ValidMember;
+      availableValidMembers.value.push(newMember);
+      // Auto-select the newly added member
+      form.valid_member_id = newMember.id;
+      
+      // Clear any existing validation errors
+      form.clearErrors('valid_member_id');
+      form.clearErrors();
+      
+      console.log('Added member to list, new count:', availableValidMembers.value.length);
+      
+      closeAddMemberModal();
+    } else if (response.status === 422 && data.errors) {
+      // Handle validation errors for the new member form
+      console.log('Validation errors:', data.errors);
+      Object.keys(data.errors).forEach(key => {
+        newMemberForm.setError(key as keyof typeof newMemberForm.data, data.errors[key][0]);
+      });
+    } else {
+      console.error('Failed to add member:', data);
+      // Show error message to user
+      alert(data.message || 'Failed to add new person. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error adding member:', error);
+    // Fallback: refresh grave data
+    await refreshGraveData();
+    closeAddMemberModal();
+  } finally {
+    addingNewMember.value = false;
+  }
+};
+
+// Add a function to refresh grave data
+const refreshGraveData = async () => {
+  if (!selectedGrave.value) return;
+  
+  try {
+    const response = await fetch(route('graveyard.permanent-grave-bookings.search-permanent-grave'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      body: JSON.stringify({
+        search_term: selectedGrave.value.grave_no,
+      }),
+    });
+    
+    const data = await response.json();
+    const updatedGrave = data.graves?.find((g: any) => g.id === selectedGrave.value?.id);
+    
+    if (updatedGrave) {
+      availableValidMembers.value = updatedGrave.valid_members || [];
+      console.log('Refreshed valid members:', availableValidMembers.value.length);
+    }
+  } catch (error) {
+    console.error('Failed to refresh grave data:', error);
+  }
 };
 
 // Debounced search
@@ -135,13 +246,6 @@ const debouncedSearchGraves = () => {
 };
 
 // Calculate total cost
-const totalCost = computed(() => {
-  return selectedServiceIds.value.reduce((total, serviceId) => {
-    const service = props.serviceTypes.find((s) => s.id === serviceId);
-    return total + (service?.cost || 0);
-  }, 0);
-});
-
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -155,17 +259,46 @@ const formatDate = (date: string) => {
   return date ? new Date(date).toLocaleDateString('en-IN') : '';
 };
 
-// Watch for service selection changes
-watch(
-  selectedServiceIds,
-  (newIds) => {
-    form.selected_services = newIds;
-  },
-  { deep: true },
-);
 
 const submit = () => {
-  form.post(route('graveyard.permanent-grave-bookings.store'));
+  console.log('Submit function called');
+  console.log('Form data:', form.data());
+  console.log('Form errors:', form.errors);
+  console.log('Form processing:', form.processing);
+  
+  // Check if all required fields are filled
+  if (!form.permanent_grave_id) {
+    alert('Please select a permanent grave');
+    return;
+  }
+  
+  if (!form.valid_member_id) {
+    alert('Please select a valid member');
+    return;
+  }
+  
+  if (!form.died_on || !form.buried_on || !form.cause_of_death || !form.applicant_name || !form.contact_no) {
+    alert('Please fill in all required fields');
+    return;
+  }
+  
+  console.log('About to submit form...');
+  console.log('Route URL:', route('graveyard.permanent-grave-bookings.store'));
+  
+  form.post(route('graveyard.permanent-grave-bookings.store'), {
+    onStart: () => {
+      console.log('Form submission started');
+    },
+    onSuccess: (page) => {
+      console.log('Form submission successful', page);
+    },
+    onError: (errors) => {
+      console.log('Form submission errors:', errors);
+    },
+    onFinish: () => {
+      console.log('Form submission finished');
+    }
+  });
 };
 </script>
 
@@ -174,7 +307,7 @@ const submit = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -253,6 +386,7 @@ const submit = () => {
                       <!-- Search Results -->
                       <div v-if="searchResults.length > 0" class="space-y-2">
                         <Label>Search Results ({{ searchResults.length }} found)</Label>
+                        <!-- {{ searchResults }} -->
                         <div class="max-h-60 space-y-2 overflow-y-auto rounded-lg border p-2">
                           <div
                             v-for="grave in searchResults"
@@ -278,11 +412,11 @@ const submit = () => {
                                     {{ grave.is_eligible ? 'Eligible' : 'Not Eligible' }}
                                   </Badge>
                                   <Badge v-if="grave.has_valid_members" class="bg-blue-100 text-blue-800">
-                                    {{ grave.available_members.length }} Valid Members
+                                    {{ grave.valid_members.filter((member) => !member.is_deceased).length }} Valid Members
                                   </Badge>
                                 </div>
                               </div>
-                              <Button v-if="grave.is_eligible" variant="outline" size="sm" @click.stop="selectGrave(grave)"> Select </Button>
+                              <!-- <Button v-if="grave.is_eligible" variant="outline" size="sm" @click.stop="selectGrave(grave)"> Select </Button> -->
                             </div>
                           </div>
                         </div>
@@ -351,15 +485,11 @@ const submit = () => {
                   <CardContent class="space-y-4">
                     <div>
                       <Label for="applicant_type">Applicant Type *</Label>
-                      <Select v-model="form.applicant_type">
-                        <SelectTrigger class="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="member">Church Member</SelectItem>
-                          <SelectItem value="non_member">Non-Member</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <select id="applicant_type" v-model="form.applicant_type" class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200">
+                        <option value="">Select applicant type</option>
+                        <option value="member">Church Member</option>
+                        <option value="non_member">Non-Member</option>
+                      </select>
                     </div>
 
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -397,58 +527,6 @@ const submit = () => {
                   </CardContent>
                 </Card>
 
-                <!-- Services Selection -->
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Additional Services</CardTitle>
-                    <CardDescription> Select any additional services required for the burial </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div class="space-y-3">
-                      <div v-for="service in serviceTypes" :key="service.id" class="flex items-start space-x-3 rounded-lg border p-3">
-                        <Checkbox
-                          :id="`service-${service.id}`"
-                          :checked="selectedServiceIds.includes(service.id)"
-                          @update:checked="
-                            (checked: boolean) => {
-                              if (checked) {
-                                selectedServiceIds.push(service.id);
-                              } else {
-                                const index = selectedServiceIds.indexOf(service.id);
-                                if (index > -1) selectedServiceIds.splice(index, 1);
-                              }
-                            }
-                          "
-                        />
-                        <div class="flex-1">
-                          <Label :for="`service-${service.id}`" class="cursor-pointer">
-                            <div class="flex items-start justify-between">
-                              <div>
-                                <span class="font-medium">{{ service.name }}</span>
-                                <p v-if="service.description" class="mt-1 text-sm text-gray-600">
-                                  {{ service.description }}
-                                </p>
-                              </div>
-                              <span class="font-medium text-green-600">
-                                {{ formatCurrency(service.cost) }}
-                              </span>
-                            </div>
-                          </Label>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Total Cost Display -->
-                    <div v-if="totalCost > 0" class="mt-4 border-t pt-4">
-                      <div class="flex items-center justify-between">
-                        <span class="text-lg font-medium">Total Cost:</span>
-                        <span class="text-xl font-bold text-green-600">
-                          {{ formatCurrency(totalCost) }}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
 
                 <!-- Special Requirements -->
                 <Card>
@@ -492,6 +570,14 @@ const submit = () => {
                       <CardDescription> Select the deceased person from {{ availableValidMembers.length }} available members </CardDescription>
                     </CardHeader>
                     <CardContent>
+                      <!-- Add New Person Button -->
+                      <div class="mb-4">
+                        <Button @click="openAddMemberModal" class="w-full" variant="outline">
+                          <Users class="mr-2 h-4 w-4" />
+                          Add New Person to This Grave
+                        </Button>
+                      </div>
+                      
                       <div class="space-y-3">
                         <div
                           v-for="member in availableValidMembers"
@@ -504,13 +590,38 @@ const submit = () => {
                           ]"
                           @click="selectValidMember(member)"
                         >
-                          <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                              <h4 class="font-medium text-gray-900">{{ member.full_name }}</h4>
-                              <p class="text-sm text-gray-600">{{ member.relationship }}</p>
-                            </div>
-                            <div v-if="form.valid_member_id === member.id" class="text-blue-600">
-                              <CheckCircle class="h-5 w-5" />
+                          <div class="space-y-2">
+                            <div class="flex items-start justify-between">
+                              <div class="flex-1">
+                                <div class="flex items-center gap-2">
+                                  <h4 class="font-medium text-gray-900">{{ member.full_name }}</h4>
+                                  <Badge v-if="member.is_deceased" variant="destructive" class="text-xs">
+                                    Deceased
+                                  </Badge>
+                                  <Badge v-else variant="outline" class="text-xs bg-green-50 text-green-700 border-green-200">
+                                    Living
+                                  </Badge>
+                                </div>
+                                <div class="mt-1 space-y-1">
+                                  <p class="text-sm text-gray-600">
+                                    <span class="font-medium">Relationship:</span> {{ member.relationship }}
+                                  </p>
+                                  <p v-if="member.member_type" class="text-sm text-gray-600">
+                                    <span class="font-medium">Type:</span> {{ member.member_type }}
+                                  </p>
+                                  <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="text-xs text-gray-500 space-y-1">
+                                    <p v-if="member.death_date">
+                                      <span class="font-medium">Death Date:</span> {{ formatDate(member.death_date) }}
+                                    </p>
+                                    <p v-if="member.burial_date">
+                                      <span class="font-medium">Burial Date:</span> {{ formatDate(member.burial_date) }}
+                                    </p>
+                                  </div>
+                                </div>
+                              </div>
+                              <div v-if="form.valid_member_id === member.id" class="text-blue-600">
+                                <CheckCircle class="h-5 w-5" />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -523,10 +634,26 @@ const submit = () => {
 
                   <!-- Empty State -->
                   <Card v-else-if="selectedGrave">
-                    <CardContent class="py-8 text-center">
-                      <Users class="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                      <h3 class="mb-2 text-lg font-medium text-gray-900">No Valid Members</h3>
-                      <p class="text-sm text-gray-500">This grave has no available valid members for booking.</p>
+                    <CardHeader>
+                      <CardTitle class="flex items-center space-x-2">
+                        <Users class="h-5 w-5" />
+                        <span>Valid Members</span>
+                      </CardTitle>
+                      <CardDescription>This grave has no valid members yet. Add the first person.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <!-- Add New Person Button -->
+                      <div class="mb-4">
+                        <Button @click="openAddMemberModal" class="w-full" variant="outline">
+                          <Users class="mr-2 h-4 w-4" />
+                          Add New Person to This Grave
+                        </Button>
+                      </div>
+                      
+                      <div class="py-4 text-center">
+                        <Users class="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                        <p class="text-sm text-gray-500">Click the button above to add the first valid member for this grave.</p>
+                      </div>
                     </CardContent>
                   </Card>
 
@@ -545,5 +672,121 @@ const submit = () => {
         </div>
       </div>
     </div>
+
+    <!-- Add New Member Modal -->
+    <transition name="fade">
+      <div v-if="showAddMemberModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+        <div class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg">
+          <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold">Add New Person to Grave</h3>
+            <Button variant="ghost" size="sm" @click="closeAddMemberModal">
+              ✕
+            </Button>
+          </div>
+          
+          <form @submit.prevent="addNewMember" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <Label for="first_name">First Name *</Label>
+                <Input 
+                  id="first_name" 
+                  v-model="newMemberForm.first_name" 
+                  :class="newMemberForm.errors.first_name && 'border-red-500'" 
+                  class="mt-1" 
+                />
+                <div v-if="newMemberForm.errors.first_name" class="mt-1 text-sm text-red-600">
+                  {{ newMemberForm.errors.first_name }}
+                </div>
+              </div>
+              
+              <div>
+                <Label for="last_name">Last Name *</Label>
+                <Input 
+                  id="last_name" 
+                  v-model="newMemberForm.last_name" 
+                  :class="newMemberForm.errors.last_name && 'border-red-500'" 
+                  class="mt-1" 
+                />
+                <div v-if="newMemberForm.errors.last_name" class="mt-1 text-sm text-red-600">
+                  {{ newMemberForm.errors.last_name }}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <Label for="relationship">Relationship to Grave Owner *</Label>
+              <select 
+                id="relationship" 
+                v-model="newMemberForm.relationship" 
+                :class="newMemberForm.errors.relationship && 'border-red-500'" 
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="">Select relationship</option>
+                <option value="Self">Self (Grave Owner)</option>
+                <option value="Spouse">Spouse</option>
+                <option value="Father">Father</option>
+                <option value="Mother">Mother</option>
+                <option value="Son">Son</option>
+                <option value="Daughter">Daughter</option>
+                <option value="Son-in-law">Son-in-law</option>
+                <option value="Daughter-in-law">Daughter-in-law</option>
+                <option value="Grandfather">Grandfather</option>
+                <option value="Grandmother">Grandmother</option>
+                <option value="Grandson">Grandson</option>
+                <option value="Granddaughter">Granddaughter</option>
+                <option value="Brother">Brother</option>
+                <option value="Sister">Sister</option>
+                <option value="Other">Other</option>
+              </select>
+              <div v-if="newMemberForm.errors.relationship" class="mt-1 text-sm text-red-600">
+                {{ newMemberForm.errors.relationship }}
+              </div>
+            </div>
+
+            <div>
+              <Label for="member_type">Member Type *</Label>
+              <select 
+                id="member_type" 
+                v-model="newMemberForm.member_type" 
+                class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+              >
+                <option value="Member">Member</option>
+                <option value="External">External</option>
+              </select>
+            </div>
+
+            <div>
+              <Label for="contact_no">Contact Number</Label>
+              <Input 
+                id="contact_no" 
+                v-model="newMemberForm.contact_no" 
+                placeholder="Optional contact number"
+                class="mt-1" 
+              />
+            </div>
+
+            <div>
+              <Label for="notes">Additional Notes</Label>
+              <Textarea 
+                id="notes" 
+                v-model="newMemberForm.notes" 
+                rows="2"
+                placeholder="Any additional information about this person..."
+                class="mt-1" 
+              />
+            </div>
+
+            <div class="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" @click="closeAddMemberModal">
+                Cancel
+              </Button>
+              <Button type="button" :disabled="addingNewMember" @click="addNewMember">
+                {{ addingNewMember ? 'Adding...' : 'Add Person' }}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </transition>
   </AppLayout>
 </template>

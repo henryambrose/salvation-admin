@@ -8,7 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, CheckCircle, DollarSign, FileText, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
+import { ArrowLeft, CheckCircle, FileText, IndianRupee, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface PermanentGraveBooking {
@@ -47,7 +47,7 @@ interface PermanentGraveBooking {
   total_cost: number;
   paid_amount: number;
   balance_amount: number;
-  payment_status: 'pending' | 'partial' | 'paid';
+  payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   special_requirements?: string;
   remarks?: string;
   created_at: string;
@@ -58,6 +58,15 @@ interface PermanentGraveBooking {
   updater?: {
     name: string;
   };
+  payments?: {
+    id: number;
+    payment_reference: string;
+    payment_status: 'pending' | 'partial' | 'completed' | 'refunded';
+    total_amount: number;
+    paid_amount: number;
+    balance_amount: number;
+    payment_date: string;
+  }[];
 }
 
 interface Props {
@@ -79,7 +88,9 @@ const statusColors = {
 const paymentStatusColors = {
   pending: 'bg-orange-100 text-orange-800',
   partial: 'bg-blue-100 text-blue-800',
-  paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
+  refunded: 'bg-red-100 text-red-800',
+  paid: 'bg-green-100 text-green-800', // Keep for booking.payment_status compatibility
 };
 
 const formatCurrency = (amount: number) => {
@@ -107,6 +118,10 @@ const getDeceasedName = () => {
   return `${validMember.first_name} ${validMember.last_name}`;
 };
 
+const goToPayment = () => {
+  router.visit(route('graveyard.payments.create', { bookingType: 'permanent', bookingId: props.booking.id }));
+};
+
 const confirmBooking = () => {
   router.post(route('graveyard.permanent-grave-bookings.confirm', props.booking.id));
 };
@@ -130,8 +145,22 @@ const cancelBooking = () => {
   );
 };
 
+const canMakePayment = () => {
+  // Can only make payment if booking is pending AND no completed payments exist
+  const isBookingPending = props.booking.status === 'pending';
+  const hasCompletedPayment = (props.booking.payments || []).some((payment) => payment.payment_status === 'completed');
+  const isPaymentStatusPending = props.booking.payment_status === 'pending';
+  
+  return isBookingPending && !hasCompletedPayment && isPaymentStatusPending;
+};
+
 const canConfirm = () => {
-  return props.booking.status === 'pending';
+  // Can confirm if booking is confirmed (payment completed) OR has completed payments
+  const isBookingConfirmed = props.booking.status === 'confirmed';
+  const hasCompletedPayment = (props.booking.payments || []).some((payment) => payment.payment_status === 'completed');
+  const isPaymentCompleted = ['paid', 'completed'].includes(props.booking.payment_status);
+  
+  return (isBookingConfirmed || hasCompletedPayment || isPaymentCompleted);
 };
 
 const canCancel = () => {
@@ -164,10 +193,24 @@ const canCancel = () => {
                 <Badge :class="statusColors[booking.status]">
                   {{ booking.status }}
                 </Badge>
+                <!-- Only show payment status badge if it provides meaningful info beyond booking status -->
+                <Badge 
+                  :class="paymentStatusColors[booking.payment_status]" 
+                  v-if="booking.payment_status && booking.payment_status !== 'pending'"
+                >
+                  {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
+                </Badge>
                 <div class="flex space-x-2">
+                  <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
+                    <IndianRupee class="mr-2 h-4 w-4" />
+                    Make Payment
+                  </Button>
+                  <div v-else-if="['paid', 'completed'].includes(booking.payment_status)" class="px-3 py-2 text-sm text-green-700 bg-green-50 rounded-md border border-green-200">
+                    ✓ Payment completed - No additional payments needed
+                  </div>
                   <Button v-if="canConfirm()" @click="confirmBooking" class="bg-green-600 hover:bg-green-700">
                     <CheckCircle class="mr-2 h-4 w-4" />
-                    Confirm
+                    Confirm Booking
                   </Button>
                   <Dialog v-if="canCancel()" v-model:open="showCancelDialog">
                     <DialogTrigger as-child>
@@ -339,7 +382,7 @@ const canCancel = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle class="flex items-center space-x-2">
-                      <DollarSign class="h-5 w-5" />
+                      <IndianRupee class="h-5 w-5" />
                       <span>Financial Details</span>
                     </CardTitle>
                   </CardHeader>
@@ -365,6 +408,25 @@ const canCancel = () => {
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Balance</Label>
                         <p class="text-base font-medium text-red-600">{{ formatCurrency(booking.balance_amount) }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Payment History -->
+                    <div v-if="booking.payments && booking.payments.length > 0" class="border-t pt-4">
+                      <Label class="text-sm font-medium text-gray-500">Payment History</Label>
+                      <div class="mt-2 space-y-2">
+                        <div v-for="payment in booking.payments" :key="payment.id" class="flex items-center justify-between rounded bg-gray-50 p-2">
+                          <div>
+                            <p class="text-sm font-medium">{{ payment.payment_reference }}</p>
+                            <p class="text-xs text-gray-500">{{ formatDate(payment.payment_date) }}</p>
+                          </div>
+                          <div class="text-right">
+                            <p class="text-sm font-medium">{{ formatCurrency(payment.paid_amount) }}</p>
+                            <Badge :class="paymentStatusColors[payment.payment_status]" class="text-xs">
+                              {{ payment.payment_status }}
+                            </Badge>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -394,7 +456,7 @@ const canCancel = () => {
                     <div class="grid grid-cols-1 gap-2 text-sm text-gray-500">
                       <div class="flex justify-between">
                         <span>Created by:</span>
-                        <span>{{ booking.creator.name }}</span>
+                        <span>{{ booking.creator?.name || 'Unknown' }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Created on:</span>
@@ -402,7 +464,7 @@ const canCancel = () => {
                       </div>
                       <div v-if="booking.updater" class="flex justify-between">
                         <span>Updated by:</span>
-                        <span>{{ booking.updater.name }}</span>
+                        <span>{{ booking.updater?.name || 'Unknown' }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Last updated:</span>

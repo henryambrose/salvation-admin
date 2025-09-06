@@ -1,0 +1,262 @@
+<script setup lang="ts">
+import { Head } from '@inertiajs/vue3';
+import { onMounted } from 'vue';
+
+interface Payment {
+  id: number;
+  payment_reference: string;
+  receipt_number: string;
+  payment_status: string;
+  total_amount: number;
+  paid_amount: number;
+  payment_date: string;
+  payment_mode: string;
+  transaction_reference?: string;
+  service_charges: Array<{
+    service_id: number;
+    service_name: string;
+    quantity: number;
+    unit_cost: number;
+    total_cost: number;
+  }>;
+  paymentMethod: {
+    name: string;
+  };
+  payable: {
+    booking_reference: string;
+    permanent_grave: {
+      grave_no: string;
+      section: string;
+      row_no: string;
+    };
+    valid_member: {
+      first_name: string;
+      last_name: string;
+      relationship: string;
+    };
+    applicant_name: string;
+    died_on: string;
+    buried_on: string;
+  };
+  creator: {
+    name: string;
+  };
+  created_at: string;
+}
+
+interface Props {
+  payment: Payment;
+}
+
+const props = defineProps<Props>();
+
+const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+  })
+    .format(amount)
+    .replace('₹', '₹ ');
+};
+
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleDateString('en-IN');
+};
+
+const formatDateTime = (date: string) => {
+  return new Date(date).toLocaleString('en-IN');
+};
+
+const getDeceasedName = () => {
+  const validMember = props.payment.payable.valid_member;
+  return `${validMember.first_name} ${validMember.last_name}`;
+};
+
+const printReceipt = () => {
+  window.print();
+};
+
+onMounted(() => {
+  // Auto-focus for printing
+  window.focus();
+});
+</script>
+
+<template>
+  <Head :title="`Receipt #${payment.receipt_number}`" />
+
+  <div class="min-h-screen bg-white">
+    <!-- Print Button (hidden when printing) -->
+    <div class="no-print fixed top-4 right-4 z-10">
+      <button
+        @click="printReceipt"
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
+      >
+        Print Receipt
+      </button>
+    </div>
+
+    <!-- Receipt Content -->
+    <div class="max-w-4xl mx-auto p-8">
+      <!-- Header -->
+      <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">ST. LAWRENCE CHURCH</h1>
+        <p class="text-lg text-gray-600 mb-1">Graveyard Services</p>
+        <p class="text-sm text-gray-500">Payment Receipt</p>
+      </div>
+
+      <!-- Receipt Details -->
+      <div class="bg-gray-50 p-6 rounded-lg mb-6">
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Receipt Information</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="font-medium">Receipt Number:</span>
+                <span>{{ payment.receipt_number }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Payment Reference:</span>
+                <span>{{ payment.payment_reference }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Payment Date:</span>
+                <span>{{ formatDate(payment.payment_date) }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Receipt Generated:</span>
+                <span>{{ formatDateTime(payment.created_at) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold mb-3">Booking Details</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="font-medium">Booking Reference:</span>
+                <span>{{ payment.payable.booking_reference }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Deceased Person:</span>
+                <span>{{ getDeceasedName() }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Grave Number:</span>
+                <span>{{ payment.payable.permanent_grave.grave_no }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="font-medium">Applicant:</span>
+                <span>{{ payment.payable.applicant_name }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Service Details -->
+      <div class="mb-6">
+        <h3 class="text-lg font-semibold mb-4">Service Details</h3>
+        <div class="border border-gray-200 rounded-lg overflow-hidden">
+          <table class="w-full">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left font-medium text-gray-700">Service</th>
+                <th class="px-4 py-3 text-center font-medium text-gray-700">Quantity</th>
+                <th class="px-4 py-3 text-right font-medium text-gray-700">Unit Cost</th>
+                <th class="px-4 py-3 text-right font-medium text-gray-700">Total Cost</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <tr v-for="service in payment.service_charges" :key="service.service_id">
+                <td class="px-4 py-3">{{ service.service_name }}</td>
+                <td class="px-4 py-3 text-center">{{ service.quantity }}</td>
+                <td class="px-4 py-3 text-right">{{ formatCurrency(service.unit_cost) }}</td>
+                <td class="px-4 py-3 text-right font-medium">{{ formatCurrency(service.total_cost) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Payment Summary -->
+      <div class="bg-gray-50 p-6 rounded-lg mb-6">
+        <h3 class="text-lg font-semibold mb-4">Payment Summary</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between text-lg">
+            <span class="font-medium">Total Amount:</span>
+            <span class="font-semibold">{{ formatCurrency(payment.total_amount) }}</span>
+          </div>
+          <div class="flex justify-between text-lg">
+            <span class="font-medium">Amount Paid:</span>
+            <span class="font-semibold text-green-600">{{ formatCurrency(payment.paid_amount) }}</span>
+          </div>
+          <div class="border-t border-gray-300 pt-3">
+            <div class="flex justify-between text-xl font-bold">
+              <span>Status:</span>
+              <span :class="payment.payment_status === 'completed' ? 'text-green-600' : 'text-blue-600'">
+                {{ payment.payment_status.toUpperCase() }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Method -->
+      <div class="grid grid-cols-2 gap-6 mb-8">
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Payment Method</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="font-medium">Method:</span>
+              <span>{{ payment.paymentMethod.name }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="font-medium">Mode:</span>
+              <span class="capitalize">{{ payment.payment_mode }}</span>
+            </div>
+            <div v-if="payment.transaction_reference" class="flex justify-between">
+              <span class="font-medium">Reference:</span>
+              <span>{{ payment.transaction_reference }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-semibold mb-3">Authorized By</h3>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="font-medium">Recorded By:</span>
+              <span>{{ payment.creator.name }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center text-sm text-gray-500 border-t border-gray-200 pt-6">
+        <p>This is a computer-generated receipt and does not require a signature.</p>
+        <p class="mt-2">For any queries, please contact the church office.</p>
+        <p class="mt-4 font-medium">Thank you for your contribution to St. Lawrence Church</p>
+      </div>
+    </div>
+  </div>
+
+  <style>
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    
+    body {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    
+    @page {
+      margin: 1in;
+      size: A4;
+    }
+  }
+  </style>
+</template>
