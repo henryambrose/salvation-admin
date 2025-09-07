@@ -9,6 +9,7 @@ use Modules\Members\Models\Zone;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Gate;
 
 class ZoneController extends Controller
 {
@@ -38,7 +39,7 @@ class ZoneController extends Controller
             'fetchUrl' => route('zone.index'),
             'zones' => $query->paginate($perPage)->appends($request->query()),
             'filters' => $request->only(['search', 'sort', 'direction', 'perPage', 'isArchived']),
-            'canRestoreZone' => Auth::can('restore-zone'),
+            'canRestoreZone' => Gate::allows('restore-zone'),
         ]);
     }
 

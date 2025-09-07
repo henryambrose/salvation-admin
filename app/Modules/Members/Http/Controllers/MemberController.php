@@ -29,15 +29,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class MemberController extends Controller
 {
+
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Member::class);
-
         // Map used for display-enrichment (kept as-is for UI compatibility)
         $dropdownColumns = [
             'community_id' => ['relation' => 'community', 'column' => 'name'],
@@ -171,11 +172,11 @@ class MemberController extends Controller
                 'familySearch',
                 'status'
             ]),
-            'canViewAnyMember' => Auth::can('list-member'),
-            'canCreateMember' => Auth::can('create-member'),
-            'canEditMember' => Auth::can('update-member'),
-            'canDeleteMember' => Auth::can('delete-member'),
-            'canRestoreMember' => Auth::can('restore-member'),
+            'canViewAnyMember' => Gate::allows('list-member'),
+            'canCreateMember' => Gate::allows('create-member'),
+            'canEditMember' => Gate::allows('update-member'),
+            'canDeleteMember' => Gate::allows('delete-member'),
+            'canRestoreMember' => Gate::allows('restore-member'),
             'pagination' => [
                 'currentPage' => $paginator->currentPage(),
                 'lastPage'    => $paginator->lastPage(),
@@ -1192,7 +1193,7 @@ class MemberController extends Controller
         $user = Auth::user();
 
         // Check permission to access data verification
-        if (!Auth::can('read-data-verification')) {
+        if (!Gate::allows('read-data-verification')) {
             Log::warning('User denied access to data verification page', [
                 'user_id' => $user->id,
                 'email' => $user->email,
@@ -1266,7 +1267,7 @@ class MemberController extends Controller
         $user = Auth::user();
 
         // Check permission to update data verification
-        if (!Auth::can('update-data-verification')) {
+        if (!Gate::allows('update-data-verification')) {
             Log::warning('User denied access to bulk update', [
                 'user_id' => $user->id,
                 'email' => $user->email,

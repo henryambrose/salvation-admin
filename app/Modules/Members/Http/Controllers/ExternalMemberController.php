@@ -12,6 +12,7 @@ use Modules\Members\Models\Member;
 use Modules\Members\Models\Relationship;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Gate;
 
 class ExternalMemberController extends Controller
 {
@@ -126,11 +127,11 @@ class ExternalMemberController extends Controller
                 'currentPage' => $externalMembers->currentPage(),
                 'lastPage' => $externalMembers->lastPage()
             ],
-            'canViewAnyExternalMember' => Auth::user()?->can('list-external-member') ?? false,
-            'canCreateExternalMember' => Auth::user()?->can('create-external-member') ?? false,
-            'canEditExternalMember' => Auth::user()?->can('update-external-member') ?? false,
-            'canDeleteExternalMember' => Auth::user()?->can('delete-external-member') ?? false,
-            'canRestoreExternalMember' => Auth::user()?->can('restore-external-member') ?? false,
+            'canViewAnyExternalMember' => Gate::allows('list-external-member') ?? false,
+            'canCreateExternalMember' => Gate::allows('create-external-member') ?? false,
+            'canEditExternalMember' => Gate::allows('update-external-member') ?? false,
+            'canDeleteExternalMember' => Gate::allows('delete-external-member') ?? false,
+            'canRestoreExternalMember' => Gate::allows('restore-external-member') ?? false,
         ]);
     }
 
@@ -258,7 +259,7 @@ class ExternalMemberController extends Controller
     public function update(Request $request, ExternalMember $externalMember)
     {
         // Ensure family-scoped access
-        if ($externalMember->family_no !== (auth()->user()->family_no ?? $externalMember->family_no)) {
+        if ($externalMember->family_no !== (Auth::user()->family_no ?? $externalMember->family_no)) {
             abort(403, 'Unauthorized access to external member.');
         }
 
@@ -377,7 +378,7 @@ class ExternalMemberController extends Controller
     public function search(Request $request)
     {
         $query = $request->get('query', '');
-        $familyNo = auth()->user()->family_no;
+        $familyNo = Auth::user()->family_no;
 
         $externalMembers = ExternalMember::where('family_no', $familyNo)
             ->where(function ($q) use ($query) {
