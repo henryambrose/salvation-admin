@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('cost', 10, 2)->default(0);
             $table->enum('type', ['normal', 'concession', 'free'])->default('normal')->index();
             $table->enum('category', ['grave', 'funeral', 'additional'])->default('additional')->index();
+            $table->string('applicable_to')->nullable();
             $table->boolean('is_active')->default(true);
             $table->integer('sort_order')->default(0);
             $table->unsignedBigInteger('created_by')->nullable();

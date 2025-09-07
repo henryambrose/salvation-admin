@@ -89,7 +89,6 @@ const selectedServiceIds = ref<number[]>([]);
 
 // Initialize selected services from booking
 const initializeServices = () => {
-
   if (props.selectedServices && props.selectedServices.length > 0) {
     selectedServiceIds.value = [...props.selectedServices];
     form.selected_services = props.selectedServices
@@ -126,16 +125,18 @@ const getBookingTypeFilter = () => {
 // Computed properties
 const availableServices = computed(() => {
   let filteredServices = props.serviceTypes.filter((service) => !selectedServiceIds.value.includes(service.id));
-  
+
   // Filter services based on booking type
   const bookingTypeFilter = getBookingTypeFilter();
-  
+
   if (bookingTypeFilter) {
     filteredServices = filteredServices.filter((service) => 
-      service.applicable_to === bookingTypeFilter || service.applicable_to === 'all'
+      service.applicable_to === bookingTypeFilter || 
+      service.applicable_to === 'all' || 
+      !service.applicable_to  // Include services with null/undefined applicable_to
     );
   }
-  
+
   // If free services are selected, hide all paid services
   if (hasFreeServices.value) {
     filteredServices = filteredServices.filter((service) => service.type === 'free');
@@ -144,34 +145,34 @@ const availableServices = computed(() => {
   else if (hasPaidServices.value) {
     filteredServices = filteredServices.filter((service) => service.type !== 'free');
   }
-  
+
   return filteredServices;
 });
 
 const hasFreeServices = computed(() => {
   return form.selected_services.some((service) => {
-    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type === 'free';
   });
 });
 
 const hasPaidServices = computed(() => {
   return form.selected_services.some((service) => {
-    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type !== 'free';
   });
 });
 
 const hasConcessionServices = computed(() => {
   return form.selected_services.some((service) => {
-    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type === 'concession';
   });
 });
 
 const hasNormalServices = computed(() => {
   return form.selected_services.some((service) => {
-    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type === 'normal';
   });
 });
@@ -185,7 +186,7 @@ const totalAmount = computed(() => {
     const cost = Number(service.total_cost) || 0;
     return sum + cost;
   }, 0);
-  
+
   const concessionAmount = Number(form.concession_amount) || 0;
   return Math.max(0, serviceTotal - concessionAmount);
 });
@@ -229,7 +230,7 @@ const addService = (serviceId: number) => {
   }
 
   selectedServiceIds.value.push(serviceId);
-  const serviceCost = isServiceFree ? 0 : (Number(service.cost) || 0);
+  const serviceCost = isServiceFree ? 0 : Number(service.cost) || 0;
   form.selected_services.push({
     service_id: service.id,
     service_name: service.name,
@@ -243,7 +244,7 @@ const removeService = (index: number) => {
   const serviceId = form.selected_services[index].service_id;
   selectedServiceIds.value = selectedServiceIds.value.filter((id) => id !== serviceId);
   form.selected_services.splice(index, 1);
-  
+
   // Clear concession amount if no concession services remain
   if (!hasConcessionServices.value) {
     form.concession_amount = 0;
@@ -285,9 +286,7 @@ const submit = () => {
     payment_method_id: parseInt(form.payment_method_id) || null,
   };
 
-  form
-    .transform((data) => formData)
-    .post(route('graveyard.payments.store'));
+  form.transform((data) => formData).post(route('graveyard.payments.store'));
 };
 </script>
 
@@ -369,7 +368,7 @@ const submit = () => {
                     <!-- Service Selection -->
                     <div>
                       <Label for="service_selection">Select Services *</Label>
-                      <div class="mb-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      <div class="mb-2 rounded bg-blue-50 px-2 py-1 text-xs text-blue-600">
                         📋 Showing services for {{ bookingType }} grave bookings
                       </div>
                       <select
@@ -386,7 +385,7 @@ const submit = () => {
                       >
                         <option value="">Add a service...</option>
                         <option v-for="service in availableServices" :key="service.id" :value="service.id.toString()">
-                          {{ service.name }} - 
+                          {{ service.name }} -
                           <span v-if="service.type === 'free'">FREE</span>
                           <span v-else-if="service.type === 'concession'">{{ formatCurrency(service.cost) }} (Concession Available)</span>
                           <span v-else>{{ formatCurrency(service.cost) }}</span>
@@ -400,22 +399,25 @@ const submit = () => {
                           :key="service.service_id"
                           :class="{
                             'flex items-center justify-between rounded-md p-2 text-sm': true,
-                            'bg-green-50 border border-green-200': service.total_cost === 0,
-                            'bg-orange-50 border border-orange-200': props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession',
-                            'bg-gray-50': service.total_cost > 0 && props.serviceTypes.find(s => s.id === service.service_id)?.type === 'normal'
+                            'border border-green-200 bg-green-50': service.total_cost === 0,
+                            'border border-orange-200 bg-orange-50':
+                              props.serviceTypes.find((s) => s.id === service.service_id)?.type === 'concession',
+                            'bg-gray-50': service.total_cost > 0 && props.serviceTypes.find((s) => s.id === service.service_id)?.type === 'normal',
                           }"
                         >
                           <div class="flex-1">
                             <span class="font-medium">{{ service.service_name }}</span>
-                            <span 
+                            <span
                               :class="{
-                                'ml-2 text-green-600 font-semibold': service.total_cost === 0,
-                                'ml-2 text-orange-600 font-medium': props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession',
-                                'ml-2 text-gray-500': service.total_cost > 0 && props.serviceTypes.find(s => s.id === service.service_id)?.type === 'normal'
+                                'ml-2 font-semibold text-green-600': service.total_cost === 0,
+                                'ml-2 font-medium text-orange-600':
+                                  props.serviceTypes.find((s) => s.id === service.service_id)?.type === 'concession',
+                                'ml-2 text-gray-500':
+                                  service.total_cost > 0 && props.serviceTypes.find((s) => s.id === service.service_id)?.type === 'normal',
                               }"
                             >
                               <span v-if="service.total_cost === 0">FREE</span>
-                              <span v-else-if="props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession'">
+                              <span v-else-if="props.serviceTypes.find((s) => s.id === service.service_id)?.type === 'concession'">
                                 {{ formatCurrency(service.total_cost) }} (Concession)
                               </span>
                               <span v-else>{{ formatCurrency(service.total_cost) }}</span>
@@ -433,9 +435,7 @@ const submit = () => {
                         <div v-if="hasFreeServices" class="mt-1 text-green-600">
                           ✓ Free services selected - only additional free services can be added
                         </div>
-                        <div v-else-if="hasPaidServices" class="mt-1 text-blue-600">
-                          ✓ Paid services selected - free services are not available
-                        </div>
+                        <div v-else-if="hasPaidServices" class="mt-1 text-blue-600">✓ Paid services selected - free services are not available</div>
                       </div>
                     </div>
 
@@ -468,9 +468,7 @@ const submit = () => {
                         placeholder="0.00"
                         class="w-full"
                       />
-                      <div class="mt-1 text-xs text-gray-500">
-                        Enter the concession amount to be deducted from the total
-                      </div>
+                      <div class="mt-1 text-xs text-gray-500">Enter the concession amount to be deducted from the total</div>
                       <div v-if="form.errors.concession_amount" class="mt-1 text-sm text-red-600">
                         {{ form.errors.concession_amount }}
                       </div>
@@ -529,11 +527,13 @@ const submit = () => {
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-2 gap-4 text-sm">
                       <!-- Show service subtotal if concession is applied -->
-                      <div v-if="showConcessionField && form.concession_amount > 0" class="flex justify-between col-span-2">
+                      <div v-if="showConcessionField && form.concession_amount > 0" class="col-span-2 flex justify-between">
                         <span class="text-gray-500">Service Subtotal:</span>
-                        <span class="font-medium">{{ formatCurrency(form.selected_services.reduce((sum, service) => sum + (Number(service.total_cost) || 0), 0)) }}</span>
+                        <span class="font-medium">{{
+                          formatCurrency(form.selected_services.reduce((sum, service) => sum + (Number(service.total_cost) || 0), 0))
+                        }}</span>
                       </div>
-                      <div v-if="showConcessionField && form.concession_amount > 0" class="flex justify-between col-span-2">
+                      <div v-if="showConcessionField && form.concession_amount > 0" class="col-span-2 flex justify-between">
                         <span class="text-orange-600">Concession Discount:</span>
                         <span class="font-medium text-orange-600">- {{ formatCurrency(Number(form.concession_amount) || 0) }}</span>
                       </div>
