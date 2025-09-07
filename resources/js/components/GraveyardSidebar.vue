@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, BookOpen, Box, Clock, Cross, Home, Settings, UserCheck } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Box, Clock, Cross, Home, Settings, UserCheck, CreditCard } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -30,6 +30,12 @@ const graveyardNavigationGroups = computed(() => [
       { title: 'Permanent Grave Bookings', href: '/graveyard/permanent-grave-bookings', icon: Cross, show: can('read-permanent-grave-booking') || true },
       { title: 'Temporary Grave Bookings', href: '/graveyard/temporary-grave-bookings', icon: Clock, show: can('read-temporary-grave-booking') || true },
       { title: 'Niche Transfers', href: '/graveyard/niche-transfers', icon: BookOpen, show: can('read-niche-transfer') || true },
+    ],
+  },
+  {
+    label: 'Payments & Finance',
+    items: [
+      { title: 'All Payments', href: '/graveyard/payments', icon: CreditCard, show: can('read-payment') || true },
     ],
   },
   {

@@ -16,6 +16,8 @@ interface ServiceType {
   name: string;
   cost: number;
   category: string;
+  type: string;
+  applicable_to: string;
   is_active: boolean;
 }
 
@@ -77,24 +79,16 @@ const form = useForm({
   payment_date: new Date().toISOString().split('T')[0],
   transaction_reference: '',
   payment_notes: '',
+  concession_amount: 0,
 });
 
-// Initialize form - Debug all received data
-console.log('=== PAYMENT FORM DATA DEBUG ===');
-console.log('PaymentMethods available:', props.paymentMethods);
-console.log('ServiceTypes available:', props.serviceTypes);
-console.log('Booking data:', props.booking);
-console.log('Selected services from booking:', props.selectedServices);
-console.log('Existing payment:', props.existingPayment);
-console.log('================================');
+// Initialize form
 
 // Reactive data
 const selectedServiceIds = ref<number[]>([]);
 
 // Initialize selected services from booking
 const initializeServices = () => {
-  console.log('Initializing services:', props.selectedServices);
-  console.log('Available service types:', props.serviceTypes);
 
   if (props.selectedServices && props.selectedServices.length > 0) {
     selectedServiceIds.value = [...props.selectedServices];
@@ -102,45 +96,109 @@ const initializeServices = () => {
       .map((serviceId) => {
         const service = props.serviceTypes.find((s) => s.id === serviceId);
         if (service) {
+          const serviceCost = Number(service.cost) || 0;
           return {
             service_id: service.id,
             service_name: service.name,
             quantity: 1,
-            unit_cost: service.cost,
-            total_cost: service.cost,
+            unit_cost: serviceCost,
+            total_cost: serviceCost,
           };
         }
         return null;
       })
       .filter(Boolean) as SelectedService[];
-    console.log('Initialized services:', form.selected_services);
   } else {
     // If no pre-selected services, ensure arrays are empty
     selectedServiceIds.value = [];
     form.selected_services = [];
-    console.log('No services pre-selected');
   }
 };
 
 // Initialize on component mount
 initializeServices();
 
+// Helper function to get booking type filter
+const getBookingTypeFilter = () => {
+  return props.bookingType; // 'permanent', 'temporary', 'niche'
+};
+
 // Computed properties
 const availableServices = computed(() => {
-  return props.serviceTypes.filter((service) => !selectedServiceIds.value.includes(service.id));
+  let filteredServices = props.serviceTypes.filter((service) => !selectedServiceIds.value.includes(service.id));
+  
+  // Filter services based on booking type
+  const bookingTypeFilter = getBookingTypeFilter();
+  
+  if (bookingTypeFilter) {
+    filteredServices = filteredServices.filter((service) => 
+      service.applicable_to === bookingTypeFilter || service.applicable_to === 'all'
+    );
+  }
+  
+  // If free services are selected, hide all paid services
+  if (hasFreeServices.value) {
+    filteredServices = filteredServices.filter((service) => service.type === 'free');
+  }
+  // If paid services are selected, hide all free services
+  else if (hasPaidServices.value) {
+    filteredServices = filteredServices.filter((service) => service.type !== 'free');
+  }
+  
+  return filteredServices;
+});
+
+const hasFreeServices = computed(() => {
+  return form.selected_services.some((service) => {
+    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    return serviceType?.type === 'free';
+  });
+});
+
+const hasPaidServices = computed(() => {
+  return form.selected_services.some((service) => {
+    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    return serviceType?.type !== 'free';
+  });
+});
+
+const hasConcessionServices = computed(() => {
+  return form.selected_services.some((service) => {
+    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    return serviceType?.type === 'concession';
+  });
+});
+
+const hasNormalServices = computed(() => {
+  return form.selected_services.some((service) => {
+    const serviceType = props.serviceTypes.find(s => s.id === service.service_id);
+    return serviceType?.type === 'normal';
+  });
+});
+
+const showConcessionField = computed(() => {
+  return hasConcessionServices.value && (hasNormalServices.value || hasConcessionServices.value);
 });
 
 const totalAmount = computed(() => {
-  return form.selected_services.reduce((sum, service) => sum + service.total_cost, 0);
+  const serviceTotal = form.selected_services.reduce((sum, service) => {
+    const cost = Number(service.total_cost) || 0;
+    return sum + cost;
+  }, 0);
+  
+  const concessionAmount = Number(form.concession_amount) || 0;
+  return Math.max(0, serviceTotal - concessionAmount);
 });
 
 const balanceAmount = computed(() => {
-  return Math.max(0, totalAmount.value - form.paid_amount);
+  const paidAmount = Number(form.paid_amount) || 0;
+  return Math.max(0, totalAmount.value - paidAmount);
 });
 
 const paymentStatus = computed(() => {
-  if (form.paid_amount === 0) return 'pending';
-  if (form.paid_amount >= totalAmount.value) return 'completed';
+  const paidAmount = Number(form.paid_amount) || 0;
+  if (paidAmount === 0) return 'pending';
+  if (paidAmount >= totalAmount.value) return 'completed';
   return 'partial';
 });
 
@@ -151,33 +209,52 @@ const selectedPaymentMethod = computed(() => {
 
 // Methods
 const addService = (serviceId: number) => {
-  console.log('Adding service:', serviceId);
   const service = props.serviceTypes.find((s) => s.id === serviceId);
-  if (service) {
-    console.log('Found service:', service.name);
-    selectedServiceIds.value.push(serviceId);
-    form.selected_services.push({
-      service_id: service.id,
-      service_name: service.name,
-      quantity: 1,
-      unit_cost: service.cost,
-      total_cost: service.cost,
-    });
-    console.log('Updated selected services:', form.selected_services);
-  } else {
-    console.log('Service not found for ID:', serviceId);
+  if (!service) {
+    return;
   }
+
+  // Check for conflicts between free and paid services
+  const isServiceFree = service.type === 'free';
+  const isServicePaid = service.type !== 'free';
+
+  if (isServiceFree && hasPaidServices.value) {
+    alert('You cannot add free services when paid services are selected. Please remove all paid services first.');
+    return;
+  }
+
+  if (isServicePaid && hasFreeServices.value) {
+    alert('You cannot add paid services when free services are selected. Please remove all free services first.');
+    return;
+  }
+
+  selectedServiceIds.value.push(serviceId);
+  const serviceCost = isServiceFree ? 0 : (Number(service.cost) || 0);
+  form.selected_services.push({
+    service_id: service.id,
+    service_name: service.name,
+    quantity: 1,
+    unit_cost: serviceCost,
+    total_cost: serviceCost,
+  });
 };
 
 const removeService = (index: number) => {
   const serviceId = form.selected_services[index].service_id;
   selectedServiceIds.value = selectedServiceIds.value.filter((id) => id !== serviceId);
   form.selected_services.splice(index, 1);
+  
+  // Clear concession amount if no concession services remain
+  if (!hasConcessionServices.value) {
+    form.concession_amount = 0;
+  }
 };
 
 const updateServiceCost = (index: number) => {
   const service = form.selected_services[index];
-  service.total_cost = service.quantity * service.unit_cost;
+  const quantity = Number(service.quantity) || 1;
+  const unitCost = Number(service.unit_cost) || 0;
+  service.total_cost = quantity * unitCost;
 };
 
 const setPaymentToTotal = () => {
@@ -206,22 +283,11 @@ const submit = () => {
   const formData = {
     ...form.data(),
     payment_method_id: parseInt(form.payment_method_id) || null,
-    payment_mode: 'online', // Set default payment mode since we removed the dropdown
   };
-
-  console.log('Submitting payment data:', formData);
 
   form
     .transform((data) => formData)
-    .post(route('graveyard.payments.store'), {
-      onSuccess: () => {
-        console.log('Payment submitted successfully');
-        // Will redirect to payment show page
-      },
-      onError: (errors) => {
-        console.error('Payment submission errors:', errors);
-      },
-    });
+    .post(route('graveyard.payments.store'));
 };
 </script>
 
@@ -303,6 +369,9 @@ const submit = () => {
                     <!-- Service Selection -->
                     <div>
                       <Label for="service_selection">Select Services *</Label>
+                      <div class="mb-2 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                        📋 Showing services for {{ bookingType }} grave bookings
+                      </div>
                       <select
                         @change="
                           (e) => {
@@ -316,8 +385,11 @@ const submit = () => {
                         class="mb-2 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">Add a service...</option>
-                        <option v-for="service in props.serviceTypes" :key="service.id" :value="service.id.toString()">
-                          {{ service.name }} - {{ formatCurrency(service.cost) }}
+                        <option v-for="service in availableServices" :key="service.id" :value="service.id.toString()">
+                          {{ service.name }} - 
+                          <span v-if="service.type === 'free'">FREE</span>
+                          <span v-else-if="service.type === 'concession'">{{ formatCurrency(service.cost) }} (Concession Available)</span>
+                          <span v-else>{{ formatCurrency(service.cost) }}</span>
                         </option>
                       </select>
 
@@ -326,11 +398,28 @@ const submit = () => {
                         <div
                           v-for="(service, index) in form.selected_services"
                           :key="service.service_id"
-                          class="flex items-center justify-between rounded-md bg-gray-50 p-2 text-sm"
+                          :class="{
+                            'flex items-center justify-between rounded-md p-2 text-sm': true,
+                            'bg-green-50 border border-green-200': service.total_cost === 0,
+                            'bg-orange-50 border border-orange-200': props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession',
+                            'bg-gray-50': service.total_cost > 0 && props.serviceTypes.find(s => s.id === service.service_id)?.type === 'normal'
+                          }"
                         >
                           <div class="flex-1">
                             <span class="font-medium">{{ service.service_name }}</span>
-                            <span class="ml-2 text-gray-500">{{ formatCurrency(service.total_cost) }}</span>
+                            <span 
+                              :class="{
+                                'ml-2 text-green-600 font-semibold': service.total_cost === 0,
+                                'ml-2 text-orange-600 font-medium': props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession',
+                                'ml-2 text-gray-500': service.total_cost > 0 && props.serviceTypes.find(s => s.id === service.service_id)?.type === 'normal'
+                              }"
+                            >
+                              <span v-if="service.total_cost === 0">FREE</span>
+                              <span v-else-if="props.serviceTypes.find(s => s.id === service.service_id)?.type === 'concession'">
+                                {{ formatCurrency(service.total_cost) }} (Concession)
+                              </span>
+                              <span v-else>{{ formatCurrency(service.total_cost) }}</span>
+                            </span>
                           </div>
                           <button @click="removeService(index)" type="button" class="px-2 py-1 text-xs text-red-600 hover:text-red-800">
                             Remove
@@ -340,7 +429,13 @@ const submit = () => {
                       </div>
 
                       <div class="text-xs text-gray-500">
-                        Services available: {{ props.serviceTypes?.length || 0 }} | Selected: {{ form.selected_services.length }}
+                        Services available: {{ availableServices?.length || 0 }} | Selected: {{ form.selected_services.length }}
+                        <div v-if="hasFreeServices" class="mt-1 text-green-600">
+                          ✓ Free services selected - only additional free services can be added
+                        </div>
+                        <div v-else-if="hasPaidServices" class="mt-1 text-blue-600">
+                          ✓ Paid services selected - free services are not available
+                        </div>
                       </div>
                     </div>
 
@@ -358,6 +453,26 @@ const submit = () => {
                       </select>
                       <div v-if="form.errors.payment_method_id" class="mt-1 text-sm text-red-600">
                         {{ form.errors.payment_method_id }}
+                      </div>
+                    </div>
+
+                    <!-- Concession Amount Field (only show if concession services are selected) -->
+                    <div v-if="showConcessionField">
+                      <Label for="concession_amount">Concession Amount</Label>
+                      <Input
+                        id="concession_amount"
+                        v-model.number="form.concession_amount"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        placeholder="0.00"
+                        class="w-full"
+                      />
+                      <div class="mt-1 text-xs text-gray-500">
+                        Enter the concession amount to be deducted from the total
+                      </div>
+                      <div v-if="form.errors.concession_amount" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.concession_amount }}
                       </div>
                     </div>
 
@@ -413,13 +528,22 @@ const submit = () => {
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-2 gap-4 text-sm">
+                      <!-- Show service subtotal if concession is applied -->
+                      <div v-if="showConcessionField && form.concession_amount > 0" class="flex justify-between col-span-2">
+                        <span class="text-gray-500">Service Subtotal:</span>
+                        <span class="font-medium">{{ formatCurrency(form.selected_services.reduce((sum, service) => sum + (Number(service.total_cost) || 0), 0)) }}</span>
+                      </div>
+                      <div v-if="showConcessionField && form.concession_amount > 0" class="flex justify-between col-span-2">
+                        <span class="text-orange-600">Concession Discount:</span>
+                        <span class="font-medium text-orange-600">- {{ formatCurrency(Number(form.concession_amount) || 0) }}</span>
+                      </div>
                       <div class="flex justify-between">
                         <span class="text-gray-500">Total Amount:</span>
                         <span class="font-medium">{{ formatCurrency(totalAmount) }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span class="text-gray-500">Amount Paying:</span>
-                        <span class="font-medium">{{ formatCurrency(form.paid_amount) }}</span>
+                        <span class="font-medium">{{ formatCurrency(Number(form.paid_amount) || 0) }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span class="text-gray-500">Balance:</span>

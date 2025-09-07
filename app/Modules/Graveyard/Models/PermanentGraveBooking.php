@@ -150,29 +150,6 @@ class PermanentGraveBooking extends Model
         return $this->payments()->sum('paid_amount');
     }
 
-    /**
-     * Check if booking can be confirmed (includes payment check)
-     */
-    public function canBeConfirmed(): bool
-    {
-        if ($this->status !== 'pending') {
-            return false;
-        }
-
-        // Check if payment is completed
-        if (!$this->hasCompletedPayment()) {
-            return false;
-        }
-
-        // Check if grave is eligible (24-month rule)
-        $grave = $this->permanentGrave;
-        if (!$grave->last_burial_date) {
-            return true; // Never used before
-        }
-
-        $monthsSinceLastBurial = Carbon::parse($grave->last_burial_date)->diffInMonths(now());
-        return $monthsSinceLastBurial >= 24;
-    }
 
     /**
      * Scope for filtering by status
@@ -278,18 +255,6 @@ class PermanentGraveBooking extends Model
         return $this->buried_on < now()->toDateString() && !in_array($this->status, ['completed', 'cancelled']);
     }
 
-    /**
-     * Confirm the booking
-     */
-    public function confirm(): bool
-    {
-        if (!$this->canBeConfirmed()) {
-            return false;
-        }
-
-        $this->update(['status' => 'confirmed']);
-        return true;
-    }
 
     /**
      * Cancel the booking

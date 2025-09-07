@@ -15,6 +15,7 @@ interface Payment {
   total_amount: number;
   paid_amount: number;
   balance_amount: number;
+  concession_amount: number;
   payment_date: string;
   payment_mode: string;
   transaction_reference?: string;
@@ -61,7 +62,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-console.log(props.payment);
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   partial: 'bg-blue-100 text-blue-800',
@@ -91,6 +91,11 @@ const getDeceasedName = () => {
   return `${validMember.first_name} ${validMember.last_name}`;
 };
 
+const calculateServiceSubtotal = () => {
+  if (!props.payment.service_charges) return 0;
+  return props.payment.service_charges.reduce((sum, service) => sum + service.total_cost, 0);
+};
+
 const generateReceipt = () => {
   window.open(route('graveyard.payments.receipt', props.payment.id), '_blank');
 };
@@ -101,7 +106,7 @@ const generateReceipt = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl sm:px-4 lg:px-6">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -121,6 +126,16 @@ const generateReceipt = () => {
                 <Badge :class="statusColors[payment.payment_status]">
                   {{ payment.payment_status }}
                 </Badge>
+                <Button 
+                  v-if="payment.payment_status === 'partial' && payment.balance_amount > 0" 
+                  as-child 
+                  class="bg-blue-600 hover:bg-blue-700"
+                >
+                  <Link :href="route('graveyard.payments.balance', payment.id)">
+                    <CreditCard class="mr-2 h-4 w-4" />
+                    Pay Balance
+                  </Link>
+                </Button>
                 <Button v-if="payment.receipt_number" @click="generateReceipt" variant="outline">
                   <Download class="mr-2 h-4 w-4" />
                   Download Receipt
@@ -234,6 +249,17 @@ const generateReceipt = () => {
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-1 gap-4">
+                      <!-- Show service subtotal and concession breakdown if concession was applied -->
+                      <div v-if="payment.concession_amount > 0" class="flex items-center justify-between border-b pb-2">
+                        <span class="text-sm font-medium text-gray-500">Service Subtotal</span>
+                        <span class="text-base font-medium">{{ formatCurrency(calculateServiceSubtotal()) }}</span>
+                      </div>
+
+                      <div v-if="payment.concession_amount > 0" class="flex items-center justify-between border-b pb-2">
+                        <span class="text-sm font-medium text-orange-600">Concession Discount</span>
+                        <span class="text-base font-medium text-orange-600">- {{ formatCurrency(payment.concession_amount) }}</span>
+                      </div>
+
                       <div class="flex items-center justify-between">
                         <span class="text-sm font-medium text-gray-500">Total Amount</span>
                         <span class="text-lg font-bold">{{ formatCurrency(payment.total_amount) }}</span>
@@ -249,6 +275,17 @@ const generateReceipt = () => {
                         <span class="text-lg font-semibold" :class="payment.balance_amount > 0 ? 'text-red-600' : 'text-green-600'">
                           {{ formatCurrency(payment.balance_amount) }}
                         </span>
+                      </div>
+
+                      <!-- Show total savings if concession was applied -->
+                      <div v-if="payment.concession_amount > 0" class="rounded-md bg-orange-50 p-3 mt-4">
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <p class="text-sm font-medium text-orange-800">Total Savings</p>
+                            <p class="text-xs text-orange-600">Concession discount applied</p>
+                          </div>
+                          <span class="text-lg font-bold text-orange-700">{{ formatCurrency(payment.concession_amount) }}</span>
+                        </div>
                       </div>
                     </div>
 

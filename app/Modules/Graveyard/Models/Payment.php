@@ -20,9 +20,9 @@ class Payment extends Model
         'total_amount',
         'paid_amount',
         'balance_amount',
+        'concession_amount',
         'payment_status',
         'payment_method_id',
-        'payment_mode',
         'transaction_reference',
         'payment_notes',
         'selected_services',
@@ -38,6 +38,7 @@ class Payment extends Model
         'total_amount' => 'decimal:2',
         'paid_amount' => 'decimal:2',
         'balance_amount' => 'decimal:2',
+        'concession_amount' => 'decimal:2',
         'selected_services' => 'array',
         'service_charges' => 'array',
         'payment_date' => 'date',
@@ -59,6 +60,10 @@ class Payment extends Model
 
         // Auto-calculate balance when amounts change
         static::saving(function ($payment) {
+            // Ensure numeric values
+            $payment->total_amount = (float) $payment->total_amount;
+            $payment->paid_amount = (float) $payment->paid_amount;
+            
             $payment->balance_amount = $payment->total_amount - $payment->paid_amount;
             
             // Update payment status based on amounts
@@ -207,6 +212,14 @@ class Payment extends Model
     public function getFormattedBalanceAmountAttribute(): string
     {
         return '₹ ' . number_format($this->balance_amount, 2);
+    }
+
+    /**
+     * Format concession amount
+     */
+    public function getFormattedConcessionAmountAttribute(): string
+    {
+        return '₹ ' . number_format($this->concession_amount, 2);
     }
 
     /**

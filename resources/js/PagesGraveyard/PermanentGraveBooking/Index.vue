@@ -35,7 +35,9 @@ interface PermanentGraveBooking {
   applicant_name: string;
   contact_no: string;
   total_cost: number;
-  payment_status: 'pending' | 'partial' | 'paid';
+  paid_amount: number;
+  balance_amount: number;
+  payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   created_at: string;
   creator: {
     name: string;
@@ -69,6 +71,7 @@ const paymentStatusColors = {
   pending: 'bg-orange-100 text-orange-800',
   partial: 'bg-blue-100 text-blue-800',
   paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
 };
 
 // Debounced search
@@ -250,7 +253,7 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                       <TableHead class="font-medium text-gray-900">Deceased</TableHead>
                       <TableHead class="font-medium text-gray-900">Grave</TableHead>
                       <TableHead class="font-medium text-gray-900">Contact</TableHead>
-                      <TableHead class="font-medium text-gray-900">Total Cost</TableHead>
+                      <TableHead class="font-medium text-gray-900">Payment Details</TableHead>
                       <TableHead class="font-medium text-gray-900">Status</TableHead>
                       <TableHead class="text-right font-medium text-gray-900">Actions</TableHead>
                     </TableRow>
@@ -294,11 +297,18 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                       <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">
-                            {{ formatCurrency(booking.total_cost) }}
+                            Total: {{ formatCurrency(booking.total_cost) }}
                           </div>
-                          <!-- <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
-                            {{ booking.payment_status }}
-                          </Badge> -->
+                          <div v-if="booking.payment_status === 'partial'" class="text-sm">
+                            <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
+                            <div class="text-red-600 font-medium">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
+                          </div>
+                          <div v-else-if="booking.payment_status === 'paid' || booking.payment_status === 'completed'" class="text-sm text-green-600">
+                            Fully Paid
+                          </div>
+                          <div v-else class="text-sm text-gray-500">
+                            Not Paid
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -359,8 +369,12 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                     </div>
                     <div class="flex items-center justify-between pt-2">
                       <div>
-                        <div class="font-medium">{{ formatCurrency(booking.total_cost) }}</div>
-                        <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
+                        <div class="font-medium">Total: {{ formatCurrency(booking.total_cost) }}</div>
+                        <div v-if="booking.payment_status === 'partial'" class="text-sm space-y-1">
+                          <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
+                          <div class="text-red-600 font-medium">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
+                        </div>
+                        <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs mt-1">
                           {{ booking.payment_status }}
                         </Badge>
                       </div>

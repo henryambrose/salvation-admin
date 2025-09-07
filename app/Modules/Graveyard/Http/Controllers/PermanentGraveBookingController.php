@@ -249,22 +249,6 @@ class PermanentGraveBookingController extends Controller
     }
 
     /**
-     * Confirm a booking
-     */
-    public function confirm(PermanentGraveBooking $permanentGraveBooking)
-    {
-        if (!$permanentGraveBooking->canBeConfirmed()) {
-            return back()->with('error', 'This booking cannot be confirmed at this time.');
-        }
-
-        if ($permanentGraveBooking->confirm()) {
-            return back()->with('success', 'Booking confirmed successfully.');
-        }
-
-        return back()->with('error', 'Failed to confirm booking.');
-    }
-
-    /**
      * Cancel a booking
      */
     public function cancel(Request $request, PermanentGraveBooking $permanentGraveBooking)

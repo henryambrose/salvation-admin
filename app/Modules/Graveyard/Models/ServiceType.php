@@ -17,6 +17,7 @@ class ServiceType extends Model
         'cost',
         'type',
         'category',
+        'applicable_to',
         'is_active',
         'sort_order',
         'created_by',

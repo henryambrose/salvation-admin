@@ -14,6 +14,8 @@ use Modules\Graveyard\Http\Controllers\PermanentGraveBookingController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
 use Modules\Graveyard\Http\Controllers\NicheTransferController;
 use Modules\Graveyard\Http\Controllers\PaymentController;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
@@ -108,7 +110,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/search-permanent-grave', [PermanentGraveBookingController::class, 'searchPermanentGrave'])->name('search-permanent-grave');
         Route::post('/', [PermanentGraveBookingController::class, 'store'])->name('store');
         Route::get('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'show'])->name('show');
-        Route::post('/{permanentGraveBooking}/confirm', [PermanentGraveBookingController::class, 'confirm'])->name('confirm');
         Route::post('/{permanentGraveBooking}/cancel', [PermanentGraveBookingController::class, 'cancel'])->name('cancel');
         Route::delete('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'destroy'])->name('destroy');
     });
@@ -140,9 +141,12 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
     // Payment Management
     Route::prefix('graveyard/payments')->name('graveyard.payments.')->group(function () {
+        Route::get('/', [PaymentController::class, 'index'])->name('index');
         Route::get('/create/{bookingType}/{bookingId}', [PaymentController::class, 'create'])->name('create');
         Route::post('/', [PaymentController::class, 'store'])->name('store');
         Route::get('/{payment}', [PaymentController::class, 'show'])->name('show');
+        Route::get('/{payment}/balance', [PaymentController::class, 'balancePaymentForm'])->name('balance');
+        Route::post('/{payment}/balance', [PaymentController::class, 'storeBalancePayment'])->name('balance.store');
         Route::get('/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('receipt');
     });
 
