@@ -3,29 +3,28 @@ import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
-import { type NavItem } from '@/types';
-import { Link,  usePage } from '@inertiajs/vue3';
+import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { 
-  UserCircle, 
-  Users, 
-  MapPin, 
-  Network, 
-  Building2, 
-  Heart, 
-  UserCheck, 
-  Calendar, 
-  Church, 
-  Droplets, 
-  CheckCircle, 
-  Globe, 
-  Map, 
-  Building, 
-  Home,
-  Crown,
-  Shield,
+import {
   Bot,
-  FileText
+  Building,
+  Building2,
+  Calendar,
+  CheckCircle,
+  Church,
+  Crown,
+  Droplets,
+  FileText,
+  Globe,
+  Heart,
+  Home,
+  Map,
+  MapPin,
+  Network,
+  Shield,
+  UserCheck,
+  UserCircle,
+  Users,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -82,7 +81,7 @@ const navigationGroups = [
         icon: Church,
         show: can('read-parish'),
       },
-    ]
+    ],
   },
   {
     label: 'Organizational Structure',
@@ -117,8 +116,7 @@ const navigationGroups = [
         icon: UserCheck,
         show: can('read-cells-and-association-member'),
       },
-      
-    ]
+    ],
   },
   {
     label: 'Leadership',
@@ -135,7 +133,7 @@ const navigationGroups = [
         icon: Shield,
         show: can('read-p-p-c-head'),
       },
-    ]
+    ],
   },
   {
     label: 'Member Attributes',
@@ -182,7 +180,7 @@ const navigationGroups = [
         icon: Heart,
         show: can('read-income-range'),
       },
-    ]
+    ],
   },
   {
     label: 'Geographic Data',
@@ -211,8 +209,7 @@ const navigationGroups = [
         icon: Home,
         show: can('read-town'),
       },
-      
-    ]
+    ],
   },
   {
     label: 'System Management',
@@ -225,7 +222,7 @@ const navigationGroups = [
       },
       {
         title: 'Role Management',
-        href: route('roles.index'),
+        href: '/roles-permissions',
         icon: Shield,
         show: can('read-role'),
       },
@@ -235,31 +232,32 @@ const navigationGroups = [
         icon: FileText,
         show: (page.props.auth as any)?.is_superadmin || false,
       },
-    ]
+    ],
   },
   {
     label: 'AI Assistance',
-      items: [
-        {
-          title: 'AI Chat',
-          href: '/chat',
-          icon: Bot,
-          show: (page.props.auth as any)?.roles?.includes('super admin') || false,
-        },
-      ]
-  }
+    items: [
+      {
+        title: 'AI Chat',
+        href: '/chat',
+        icon: Bot,
+        show: (page.props.auth as any)?.roles?.includes('super admin') || false,
+      },
+    ],
+  },
 ];
 
-const filteredNavigationGroups = navigationGroups.map(group => ({
-  ...group,
-  items: group.items.filter(item => item.show)
-})).filter(group => group.items.length > 0);
+const filteredNavigationGroups = navigationGroups
+  .map((group) => ({
+    ...group,
+    items: group.items.filter((item) => item.show),
+  }))
+  .filter((group) => group.items.length > 0);
 
 // Determine which app we're in based on current URL
 const currentApp = computed(() => {
   const currentPath = page.url;
   if (currentPath.startsWith('/fund')) {
-
     return 'fund';
   }
   if (currentPath.startsWith('/graveyard')) {
@@ -284,7 +282,7 @@ const logoLink = computed(() => {
   <!-- Render Fund Sidebar when in Fund app -->
   <FundSidebar v-if="currentApp === 'fund'" />
   <GraveyardSidebar v-else-if="currentApp === 'graveyard'" />
-  
+
   <!-- Render Members Sidebar when in Members app -->
   <Sidebar v-else collapsible="icon" variant="inset">
     <SidebarHeader>

@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
+use Modules\Graveyard\Models\TemporaryGrave;
+use Modules\Graveyard\Models\TemporaryGraveBooking;
+use Modules\Graveyard\Models\Niche;
+use Modules\Graveyard\Models\ServiceType;
+use Illuminate\Support\Facades\Auth;
 
 class NicheTransfer extends Model
 {
@@ -199,7 +204,7 @@ class NicheTransfer extends Model
     public function scopeDueSoon($query)
     {
         return $query->where('proposed_transfer_date', '<=', now()->addDays(7))
-                    ->whereIn('status', ['pending', 'approved']);
+            ->whereIn('status', ['pending', 'approved']);
     }
 
     /**
@@ -257,12 +262,12 @@ class NicheTransfer extends Model
         switch ($this->status) {
             case 'approved':
                 $this->approval_date = now();
-                $this->approved_by = auth()->id();
+                $this->approved_by = Auth::id();
                 break;
 
             case 'rejected':
                 $this->rejection_date = now();
-                $this->rejected_by = auth()->id();
+                $this->rejected_by = Auth::id();
                 break;
 
             case 'completed':
@@ -281,27 +286,27 @@ class NicheTransfer extends Model
         $this->fromTemporaryGrave->update([
             'is_available' => true,
             'occupied_date' => null,
-            'updated_by' => auth()->id()
+            'updated_by' => Auth::id()
         ]);
 
         // Mark niche as occupied
         $this->toNiche->update([
             'is_available' => false,
             'occupied_date' => $this->actual_transfer_date,
-            'updated_by' => auth()->id()
+            'updated_by' => Auth::id()
         ]);
 
         // Mark original booking as completed
         $this->fromBooking->update([
             'status' => 'completed',
-            'updated_by' => auth()->id()
+            'updated_by' => Auth::id()
         ]);
     }
 
     /**
      * Approve the transfer
      */
-    public function approve(string $notes = null): bool
+    public function approve(string $notes): bool
     {
         if ($this->status !== 'pending') {
             return false;
@@ -350,9 +355,9 @@ class NicheTransfer extends Model
      */
     public function canBeCompleted(): bool
     {
-        return $this->status === 'approved' && 
-               $this->payment_status === 'paid' && 
-               $this->proposed_transfer_date <= now();
+        return $this->status === 'approved' &&
+            $this->payment_status === 'paid' &&
+            $this->proposed_transfer_date <= now();
     }
 
     /**
@@ -360,7 +365,7 @@ class NicheTransfer extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->status) {
+        return match ($this->status) {
             'pending' => 'bg-yellow-100 text-yellow-800',
             'approved' => 'bg-blue-100 text-blue-800',
             'rejected' => 'bg-red-100 text-red-800',

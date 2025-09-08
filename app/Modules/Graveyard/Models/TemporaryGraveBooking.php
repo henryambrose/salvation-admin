@@ -6,11 +6,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Modules\Members\Models\Member;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
+use Modules\Members\Models\Relationship;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class TemporaryGraveBooking extends Model
 {
@@ -41,7 +43,7 @@ class TemporaryGraveBooking extends Model
         'applicant_name',
         'contact_no',
         'contact_email',
-        'relationship_to_deceased',
+        'relationship_id',
         'permit_no',
         'selected_services',
         'total_cost',
@@ -162,11 +164,27 @@ class TemporaryGraveBooking extends Model
     }
 
     /**
+     * Get the relationship
+     */
+    public function relationship(): BelongsTo
+    {
+        return $this->belongsTo(Relationship::class);
+    }
+
+    /**
      * Get niche transfers from this booking
      */
     public function nicheTransfers(): HasMany
     {
         return $this->hasMany(NicheTransfer::class, 'from_booking_id');
+    }
+
+    /**
+     * Get payments for this booking (polymorphic)
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(\Modules\Graveyard\Models\Payment::class, 'payable_id')->where('payable_type', self::class);
     }
 
     /**
@@ -261,7 +279,7 @@ class TemporaryGraveBooking extends Model
         $this->temporaryGrave->update([
             'is_available' => false,
             'occupied_date' => $this->buried_on,
-            'updated_by' => auth()->id() ?? null
+            'updated_by' => Auth::id() ?? null
         ]);
     }
 

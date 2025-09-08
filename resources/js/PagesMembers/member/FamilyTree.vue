@@ -1,9 +1,5 @@
 <template>
-  <div 
-    id="family-root" 
-    class="p-4 md:p-6"
-    :style="{ minHeight: containerHeight }"
-  >
+  <div id="family-root" class="p-4 md:p-6" :style="{ minHeight: containerHeight }">
     <div v-if="loading" class="py-10 text-center text-gray-500">Loading family tree...</div>
 
     <div v-else-if="!familyTree || !hasAnyMembers" class="py-16 text-center">
@@ -63,12 +59,17 @@
           </div>
           <!-- Download PNG Buttons -->
           <div class="flex items-center gap-2">
-            <button 
+            <button
               @click="downloadPNG(true)"
-              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white text-sm font-medium rounded-lg hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              class="inline-flex transform items-center rounded-lg bg-gradient-to-r from-green-500 to-green-600 px-4 py-2 text-sm font-medium text-white shadow-md transition-all duration-200 hover:-translate-y-0.5 hover:from-green-600 hover:to-green-700 hover:shadow-lg focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
             >
-              <svg class="h-[1rem] w-[1rem] mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              <svg class="mr-2 h-[1rem] w-[1rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               Save PNG
             </button>
@@ -308,100 +309,102 @@
 
 <script setup>
 import { router } from '@inertiajs/vue3';
+import { saveAs } from 'file-saver';
+import { toPng } from 'html-to-image';
 import { computed } from 'vue';
-import html2canvas from 'html2canvas'
-import { toPng } from 'html-to-image'
-import { saveAs } from 'file-saver'
 
 async function downloadPNG(full = false) {
   try {
-    const node = document.getElementById('family-root')
-    if (!node) return alert('Capture root not found')
+    const node = document.getElementById('family-root');
+    if (!node) return alert('Capture root not found');
 
     // Optional: wait for webfonts/icons to load so glyphs don’t disappear
-    if (document.fonts?.ready) await document.fonts.ready
+    if (document.fonts?.ready) await document.fonts.ready;
 
     // Temporarily tweak styles (avoid sticky headers, animations in snapshot)
-    const cleanup = prepareForSnapshot(node)
+    const cleanup = prepareForSnapshot(node);
 
     const dataUrl = await toPng(node, {
       cacheBust: true,
-      pixelRatio: 2,           // sharper image
+      pixelRatio: 2, // sharper image
       backgroundColor: '#fff', // if your page bg is transparent
       // Capture more content by temporarily expanding the container
       ...(full ? expandForFull(node) : {}),
       filter: (el) => !el.classList?.contains('no-print'),
-    })
+    });
 
-    cleanup?.()
-    saveAs(dataUrl, `family-${props.type}-${props.id}.png`)
+    cleanup?.();
+    saveAs(dataUrl, `family-${props.type}-${props.id}.png`);
   } catch (e) {
-    console.error(e)
-    alert('Failed to capture image. See console for details.')
+    console.error(e);
+    alert('Failed to capture image. See console for details.');
   }
 }
 /** Make the snapshot stable: pause animations, un-sticky, etc. */
 function prepareForSnapshot(root) {
-  const prev = new Map()
-  const elts = root.querySelectorAll('*')
-  elts.forEach(el => {
-    const s = el.style
+  const prev = new Map();
+  const elts = root.querySelectorAll('*');
+  elts.forEach((el) => {
+    const s = el.style;
     prev.set(el, {
-      pos: s.position, ani: s.animation, tran: s.transition,
-      filter: s.filter, will: s.willChange
-    })
-    s.animation = 'none'
-    s.transition = 'none'
-    if (getComputedStyle(el).position === 'sticky') s.position = 'static'
+      pos: s.position,
+      ani: s.animation,
+      tran: s.transition,
+      filter: s.filter,
+      will: s.willChange,
+    });
+    s.animation = 'none';
+    s.transition = 'none';
+    if (getComputedStyle(el).position === 'sticky') s.position = 'static';
     // optional: remove heavy filters/shadows if you see artifacts
     // s.filter = 'none'; s.willChange = 'auto'
-  })
+  });
   return () => {
-    elts.forEach(el => {
-      const p = prev.get(el)
-      if (!p) return
-      const s = el.style
-      s.position = p.pos
-      s.animation = p.ani
-      s.transition = p.tran
-      s.filter = p.filter
-      s.willChange = p.will
-    })
-  }
+    elts.forEach((el) => {
+      const p = prev.get(el);
+      if (!p) return;
+      const s = el.style;
+      s.position = p.pos;
+      s.animation = p.ani;
+      s.transition = p.tran;
+      s.filter = p.filter;
+      s.willChange = p.will;
+    });
+  };
 }
 
 /** Make the node height flexible based on content */
 function expandForFull(node) {
-  const prev = { height: node.style.height, overflow: node.style.overflow, minHeight: node.style.minHeight }
-  
+  const prev = { height: node.style.height, overflow: node.style.overflow, minHeight: node.style.minHeight };
+
   // Calculate the actual content height
-  const contentHeight = node.scrollHeight
-  const viewportHeight = window.innerHeight
-  const headerHeight = 100 // Approximate header height
-  const padding = 40 // Padding/margins
-  
+  const contentHeight = node.scrollHeight;
+  const viewportHeight = window.innerHeight;
+  const headerHeight = 100; // Approximate header height
+  const padding = 40; // Padding/margins
+
   // Set height to content height, but ensure it's at least viewport height
-  const desiredHeight = Math.max(contentHeight, viewportHeight - headerHeight - padding)
-  
-  node.style.height = 'auto' // Let it size naturally first
-  node.style.minHeight = desiredHeight + 'px'
-  node.style.overflow = 'visible'
-  
+  const desiredHeight = Math.max(contentHeight, viewportHeight - headerHeight - padding);
+
+  node.style.height = 'auto'; // Let it size naturally first
+  node.style.minHeight = desiredHeight + 'px';
+  node.style.overflow = 'visible';
+
   return {
     includeMargin: true,
     style: {},
-    postProcess: () => { 
-      node.style.height = prev.height
-      node.style.minHeight = prev.minHeight
-      node.style.overflow = prev.overflow 
-    }
-  }
+    postProcess: () => {
+      node.style.height = prev.height;
+      node.style.minHeight = prev.minHeight;
+      node.style.overflow = prev.overflow;
+    },
+  };
 }
 
 // Add a computed property for dynamic height
 const containerHeight = computed(() => {
-  if (!props.familyTree || props.familyTree.length === 0) return 'auto'
-  
+  if (!props.familyTree || props.familyTree.length === 0) return 'auto';
+
   // Calculate approximate height based on number of sections and members
   const sections = [
     greatGreatGrandparents.value.length > 0,
@@ -414,16 +417,16 @@ const containerHeight = computed(() => {
     greatGrandchildren.value.length > 0,
     greatGreatGrandchildren.value.length > 0,
     familyMembers.value.length > 0,
-    externalMembers.value.length > 0
-  ].filter(Boolean).length
-  
-  const totalMembers = props.familyTree.length
-  const baseHeight = 200 // Base height for header and spacing
-  const sectionHeight = sections * 80 // Height per section
-  const memberHeight = Math.ceil(totalMembers / 4) * 140 // Approximate height per row of members
-  
-  return Math.max(baseHeight + sectionHeight + memberHeight, window.innerHeight - 200) + 'px'
-})
+    externalMembers.value.length > 0,
+  ].filter(Boolean).length;
+
+  const totalMembers = props.familyTree.length;
+  const baseHeight = 200; // Base height for header and spacing
+  const sectionHeight = sections * 80; // Height per section
+  const memberHeight = Math.ceil(totalMembers / 4) * 140; // Approximate height per row of members
+
+  return Math.max(baseHeight + sectionHeight + memberHeight, window.innerHeight - 200) + 'px';
+});
 
 const props = defineProps({
   person: { type: Object, default: null },
@@ -431,7 +434,7 @@ const props = defineProps({
   member: { type: Object, default: null }, // ensure this exists
   personRelation: { type: String, default: '' }, // new
   loading: { type: Boolean, default: false },
-  id: String, 
+  id: String,
   print: Boolean,
   type: String,
 });
@@ -458,7 +461,7 @@ const displayNameWithNo = (m) => {
 const person = computed(() => props.person || null);
 function downloadPdf() {
   console.log(props.id, props.type);
-  window.open(route('family.pdf', { id: props.id, type: props.type }), '_blank')
+  window.open(route('family.pdf', { id: props.id, type: props.type }), '_blank');
 }
 // flat list from props.familyTree
 const raw = computed(() => (Array.isArray(props.familyTree) ? props.familyTree : []));
@@ -666,7 +669,11 @@ const hasAnyMembers = computed(() => {
 
 // Navigation
 function goBack() {
-  router.visit('/member/index');
+  if (props.type === 'external') {
+    router.visit(route('external-members.index'));
+  } else {
+    router.visit(route('member.index'));
+  }
 }
 </script>
 

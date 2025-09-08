@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\Payment;
 use Modules\Graveyard\Models\PermanentGraveBooking;
+use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\ServiceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -99,8 +100,16 @@ class PaymentController extends Controller
         // Get available payment methods
         $paymentMethods = \Modules\Fund\Models\PaymentMethod::active()->get();
 
+        // Load appropriate relationships based on booking type
+        $relationshipsToLoad = match ($bookingType) {
+            'permanent' => ['permanentGrave', 'validMember', 'creator'],
+            'temporary' => ['temporaryGrave', 'creator'],
+            'niche' => ['niche', 'creator'],
+            default => ['creator']
+        };
+
         return Inertia::render('PagesGraveyard/Payment/Create', [
-            'booking' => $booking->load(['permanentGrave', 'validMember', 'creator']),
+            'booking' => $booking->load($relationshipsToLoad),
             'bookingType' => $bookingType,
             'existingPayment' => $existingPayment,
             'serviceTypes' => $serviceTypes,
@@ -358,7 +367,7 @@ class PaymentController extends Controller
     {
         return match ($type) {
             'permanent' => PermanentGraveBooking::find($id),
-            'temporary' => null, // TODO: Implement when TemporaryGraveBooking model exists
+            'temporary' => TemporaryGraveBooking::find($id),
             'niche' => null, // TODO: Implement when NicheBooking model exists
             default => null
         };

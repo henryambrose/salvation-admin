@@ -40,17 +40,27 @@ interface Booking {
   id: number;
   booking_reference: string;
   status: string;
-  permanent_grave: {
+  // For permanent graves
+  permanent_grave?: {
     grave_no: string;
     owner_name: string;
     section: string;
     row_no: string;
   };
-  valid_member: {
+  valid_member?: {
     first_name: string;
     last_name: string;
     relationship: string;
   };
+  // For temporary graves
+  temporary_grave?: {
+    grave_no: string;
+    section: string;
+    row_no: string;
+  };
+  dead_first_name?: string;
+  dead_last_name?: string;
+  // Common fields
   applicant_name: string;
   contact_no: string;
   died_on: string;
@@ -276,7 +286,12 @@ const formatDate = (date: string) => {
 };
 
 const getDeceasedName = () => {
-  return `${props.booking.valid_member.first_name} ${props.booking.valid_member.last_name}`;
+  if (props.bookingType === 'temporary') {
+    return `${props.booking.dead_first_name} ${props.booking.dead_last_name}`;
+  } else if (props.bookingType === 'permanent') {
+    return `${props.booking.valid_member.first_name} ${props.booking.valid_member.last_name}`;
+  }
+  return 'Unknown';
 };
 
 const submit = () => {
@@ -344,8 +359,12 @@ const submit = () => {
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Grave Details</Label>
                       <p class="text-base">
-                        {{ booking.permanent_grave.grave_no }} - Section {{ booking.permanent_grave.section }}, Row
-                        {{ booking.permanent_grave.row_no }}
+                        <template v-if="bookingType === 'permanent' && booking.permanent_grave">
+                          {{ booking.permanent_grave.grave_no }} - Section {{ booking.permanent_grave.section }}, Row {{ booking.permanent_grave.row_no }}
+                        </template>
+                        <template v-else-if="bookingType === 'temporary' && booking.temporary_grave">
+                          {{ booking.temporary_grave.grave_no }} - Section {{ booking.temporary_grave.section }}, Row {{ booking.temporary_grave.row_no }}
+                        </template>
                       </p>
                     </div>
 

@@ -165,7 +165,7 @@ class PermanentGraveBookingController extends Controller
             $existingBooking = PermanentGraveBooking::where('permanent_grave_id', $request->permanent_grave_id)
                 ->whereIn('status', ['pending', 'confirmed'])
                 ->exists();
-            
+
             if ($existingBooking) {
                 Log::warning('Grave already has an active booking');
                 return back()->withErrors(['permanent_grave_id' => 'This grave already has a pending or confirmed booking. Cannot create duplicate booking.']);
@@ -322,8 +322,8 @@ class PermanentGraveBookingController extends Controller
                 'contact_no' => $request->contact_no,
                 'notes' => $request->notes,
                 'is_active' => true,
-                'created_by' => auth()->id ?? null,
-                'updated_by' => auth()->id ?? null,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ]);
 
             DB::commit();

@@ -227,8 +227,8 @@ class MassIntentionController extends Controller
             'status' => $request->status,
             'special_instructions' => $request->special_instructions,
             'payment_method_id' => $request->payment_method_id,
-            'created_by' => auth()->id,
-            'updated_by' => auth()->id,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
         ]);
 
         return redirect()->route('fund.mass-intentions.index')

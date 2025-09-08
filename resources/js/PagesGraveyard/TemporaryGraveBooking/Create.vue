@@ -1,22 +1,13 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Calendar, Clock, MapPin, Phone, User } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
-
-interface ServiceType {
-  id: number;
-  name: string;
-  cost: number;
-  description?: string;
-}
+import { ArrowLeft, Calendar, MapPin, Phone, User } from 'lucide-vue-next';
+import { computed } from 'vue';
 
 interface TemporaryGrave {
   id: number;
@@ -36,11 +27,16 @@ interface Parish {
   name: string;
 }
 
+interface Relationship {
+  id: number;
+  name: string;
+}
+
 interface Props {
-  serviceTypes: ServiceType[];
   availableGraves: TemporaryGrave[];
   genders: Gender[];
   parishes: Parish[];
+  relationships: Relationship[];
 }
 
 const props = defineProps<Props>();
@@ -55,63 +51,35 @@ const form = useForm({
   days: null as number | null,
   died_on: '',
   buried_on: '',
-  gender_id: null as number | null,
+  gender_id: '',
   cause_of_death: '',
   nationality: 'Indian',
-  parish_id: null as number | null,
+  parish_id: '16',
   minister: '',
-  applicant_type: 'non_member' as 'member' | 'non_member',
+  applicant_type: '' as '' | 'member' | 'external',
   applicant_name: '',
   contact_no: '',
   contact_email: '',
-  relationship_to_deceased: '',
+  relationship_id: '',
   permit_no: '',
-  selected_services: [] as number[],
-  duration_months: 12,
   special_requirements: '',
 });
 
-// Service selection
-const selectedServiceIds = ref<number[]>([]);
-
-// Calculate total cost
-const totalCost = computed(() => {
-  return selectedServiceIds.value.reduce((total, serviceId) => {
-    const service = props.serviceTypes.find((s) => s.id === serviceId);
-    return total + (service?.cost || 0);
-  }, 0);
-});
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  })
-    .format(amount)
-    .replace('₹', '₹ ');
-};
-
-// Watch for service selection changes
-watch(
-  selectedServiceIds,
-  (newIds) => {
-    form.selected_services = newIds;
-  },
-  { deep: true },
-);
-
-// Calculate expected transfer date based on buried_on and duration
-const expectedTransferDate = computed(() => {
-  if (form.buried_on && form.duration_months) {
-    const burialDate = new Date(form.buried_on);
-    burialDate.setMonth(burialDate.getMonth() + form.duration_months);
-    return burialDate.toLocaleDateString('en-IN');
-  }
-  return null;
+// Get selected grave details
+const selectedGrave = computed(() => {
+  if (!form.temporary_grave_id) return null;
+  return props.availableGraves.find((grave) => grave.id === form.temporary_grave_id);
 });
 
 const submit = () => {
-  form.post(route('graveyard.temporary-grave-bookings.store'));
+  form
+    .transform((data) => ({
+      ...data,
+      gender_id: data.gender_id ? parseInt(data.gender_id) : null,
+      parish_id: data.parish_id ? parseInt(data.parish_id) : null,
+      relationship_id: data.relationship_id ? parseInt(data.relationship_id) : null,
+    }))
+    .post(route('graveyard.temporary-grave-bookings.store'));
 };
 </script>
 
@@ -120,7 +88,7 @@ const submit = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -153,20 +121,74 @@ const submit = () => {
                 <CardDescription> Choose an available temporary grave </CardDescription>
               </CardHeader>
               <CardContent>
-                <div>
-                  <Label for="temporary_grave_id">Available Graves *</Label>
-                  <Select v-model="form.temporary_grave_id">
-                    <SelectTrigger class="mt-1" :class="form.errors.temporary_grave_id && 'border-red-500'">
-                      <SelectValue placeholder="Select a grave" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="grave in availableGraves" :key="grave.id" :value="grave.id">
-                        {{ grave.grave_no }} - {{ grave.section }}, Row {{ grave.row_no }}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div v-if="form.errors.temporary_grave_id" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.temporary_grave_id }}
+                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <!-- Main Selection Area -->
+                  <div class="space-y-4 lg:col-span-2">
+                    <!-- Suggested Grave -->
+                    <div v-if="availableGraves.length > 0" class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                      <h4 class="mb-2 font-medium text-blue-900">Recommended Available Grave</h4>
+                      <div class="flex items-center justify-between rounded-lg border border-blue-300 bg-white p-3">
+                        <div>
+                          <span class="font-semibold">{{ availableGraves[0].grave_no }}</span>
+                          <span class="ml-2 text-gray-600">Section {{ availableGraves[0].section }}, Row {{ availableGraves[0].row_no }}</span>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          :variant="form.temporary_grave_id === availableGraves[0].id ? 'default' : 'outline'"
+                          @click="form.temporary_grave_id = availableGraves[0].id"
+                        >
+                          {{ form.temporary_grave_id === availableGraves[0].id ? 'Selected' : 'Select This Grave' }}
+                        </Button>
+                      </div>
+                    </div>
+
+                    <!-- Selected Grave Display -->
+                    <div v-if="selectedGrave" class="rounded-lg border border-green-200 bg-green-50 p-4">
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <h4 class="font-medium text-green-900">Selected Grave</h4>
+                          <p class="text-green-700">
+                            <span class="font-semibold">{{ selectedGrave.grave_no }}</span>
+                            - Section {{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}
+                          </p>
+                        </div>
+                        <Button type="button" size="sm" variant="outline" @click="form.temporary_grave_id = null"> Change </Button>
+                      </div>
+                    </div>
+
+                    <!-- Validation Error -->
+                    <div v-if="form.errors.temporary_grave_id" class="text-sm text-red-600">
+                      {{ form.errors.temporary_grave_id }}
+                    </div>
+                  </div>
+
+                  <!-- Available Graves Sidebar -->
+                  <div class="lg:col-span-1">
+                    <div class="max-h-96 overflow-y-auto rounded-lg border p-4">
+                      <h4 class="mb-3 font-medium text-gray-900">All Available Graves ({{ availableGraves.length }})</h4>
+                      <div class="space-y-2">
+                        <div
+                          v-for="grave in availableGraves"
+                          :key="grave.id"
+                          :class="[
+                            'cursor-pointer rounded-lg border p-3 transition-colors',
+                            form.temporary_grave_id === grave.id
+                              ? 'border-blue-300 bg-blue-100 text-blue-900'
+                              : 'border-gray-200 bg-gray-50 hover:bg-gray-100',
+                          ]"
+                          @click="form.temporary_grave_id = grave.id"
+                        >
+                          <div class="text-sm font-medium">{{ grave.grave_no }}</div>
+                          <div class="text-xs text-gray-600">Sec {{ grave.section }}, Row {{ grave.row_no }}</div>
+                        </div>
+                      </div>
+
+                      <div v-if="availableGraves.length === 0" class="py-4 text-center text-gray-500">
+                        <MapPin class="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                        <p class="text-sm">No graves available</p>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -210,16 +232,16 @@ const submit = () => {
 
                   <div>
                     <Label for="gender_id">Gender *</Label>
-                    <Select v-model="form.gender_id">
-                      <SelectTrigger class="mt-1" :class="form.errors.gender_id && 'border-red-500'">
-                        <SelectValue placeholder="Select gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="gender in genders" :key="gender.id" :value="gender.id">
-                          {{ gender.name }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      v-model="form.gender_id"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                      :class="form.errors.gender_id && 'border-red-500'"
+                    >
+                      <option value="">Select Gender</option>
+                      <option v-for="gender in genders" :key="gender.id" :value="gender.id.toString()">
+                        {{ gender.name }}
+                      </option>
+                    </select>
                     <div v-if="form.errors.gender_id" class="mt-1 text-sm text-red-600">
                       {{ form.errors.gender_id }}
                     </div>
@@ -232,15 +254,39 @@ const submit = () => {
                   <div class="mt-2 grid grid-cols-3 gap-4">
                     <div>
                       <Label for="age">Years</Label>
-                      <Input id="age" :model-value="form.age ?? ''" @input="form.age = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="150" class="mt-1" />
+                      <Input
+                        id="age"
+                        :model-value="form.age ?? ''"
+                        @input="form.age = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="150"
+                        class="mt-1"
+                      />
                     </div>
                     <div>
                       <Label for="months">Months</Label>
-                      <Input id="months" :model-value="form.months ?? ''" @input="form.months = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="11" class="mt-1" />
+                      <Input
+                        id="months"
+                        :model-value="form.months ?? ''"
+                        @input="form.months = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="11"
+                        class="mt-1"
+                      />
                     </div>
                     <div>
                       <Label for="days">Days</Label>
-                      <Input id="days" :model-value="form.days ?? ''" @input="form.days = $event.target.value ? Number($event.target.value) : null" type="number" min="0" max="30" class="mt-1" />
+                      <Input
+                        id="days"
+                        :model-value="form.days ?? ''"
+                        @input="form.days = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="30"
+                        class="mt-1"
+                      />
                     </div>
                   </div>
                 </div>
@@ -253,16 +299,15 @@ const submit = () => {
 
                   <div>
                     <Label for="parish_id">Parish</Label>
-                    <Select v-model="form.parish_id">
-                      <SelectTrigger class="mt-1">
-                        <SelectValue placeholder="Select parish" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem v-for="parish in parishes" :key="parish.id" :value="parish.id">
-                          {{ parish.name }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      v-model="form.parish_id"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Parish</option>
+                      <option v-for="parish in parishes" :key="parish.id" :value="parish.id.toString()">
+                        {{ parish.name }}
+                      </option>
+                    </select>
                   </div>
                 </div>
               </CardContent>
@@ -308,45 +353,6 @@ const submit = () => {
               </CardContent>
             </Card>
 
-            <!-- Duration & Transfer -->
-            <Card>
-              <CardHeader>
-                <CardTitle class="flex items-center space-x-2">
-                  <Clock class="h-5 w-5" />
-                  <span>Duration & Transfer</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label for="duration_months">Duration (Months)</Label>
-                    <Select v-model="form.duration_months">
-                      <SelectTrigger class="mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem :value="6">6 Months</SelectItem>
-                        <SelectItem :value="12">12 Months (Default)</SelectItem>
-                        <SelectItem :value="18">18 Months</SelectItem>
-                        <SelectItem :value="24">24 Months</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <p class="mt-1 text-sm text-gray-500">Duration before transfer to permanent grave or niche is required</p>
-                  </div>
-
-                  <div v-if="expectedTransferDate">
-                    <Label>Expected Transfer Date</Label>
-                    <div class="mt-1 rounded-lg border border-blue-200 bg-blue-50 p-2">
-                      <p class="text-sm font-medium text-blue-900">
-                        {{ expectedTransferDate }}
-                      </p>
-                      <p class="text-xs text-blue-700">Based on burial date and duration</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
             <!-- Applicant Details -->
             <Card>
               <CardHeader>
@@ -358,15 +364,18 @@ const submit = () => {
               <CardContent class="space-y-4">
                 <div>
                   <Label for="applicant_type">Applicant Type *</Label>
-                  <Select v-model="form.applicant_type">
-                    <SelectTrigger class="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="member">Church Member</SelectItem>
-                      <SelectItem value="non_member">Non-Member</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    v-model="form.applicant_type"
+                    class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    :class="form.errors.applicant_type && 'border-red-500'"
+                  >
+                    <option value="">Select applicant type</option>
+                    <option value="member">Member</option>
+                    <option value="external">External</option>
+                  </select>
+                  <div v-if="form.errors.applicant_type" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.applicant_type }}
+                  </div>
                 </div>
 
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -392,66 +401,21 @@ const submit = () => {
                   </div>
 
                   <div>
-                    <Label for="relationship_to_deceased">Relationship to Deceased</Label>
-                    <Input id="relationship_to_deceased" v-model="form.relationship_to_deceased" class="mt-1" />
+                    <Label for="relationship_id">Relationship to Deceased</Label>
+                    <select
+                      v-model="form.relationship_id"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="">Select Relationship</option>
+                      <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id.toString()">
+                        {{ relationship.name }}
+                      </option>
+                    </select>
                   </div>
 
                   <div class="sm:col-span-2">
                     <Label for="permit_no">BMC Permit Number</Label>
                     <Input id="permit_no" v-model="form.permit_no" class="mt-1" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Services Selection -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Services</CardTitle>
-                <CardDescription> Select any additional services required for the burial </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div class="space-y-3">
-                  <div v-for="service in serviceTypes" :key="service.id" class="flex items-start space-x-3 rounded-lg border p-3">
-                    <Checkbox
-                      :id="`service-${service.id}`"
-                      :checked="selectedServiceIds.includes(service.id)"
-                      @update:checked="
-                        (checked: boolean) => {
-                          if (checked) {
-                            selectedServiceIds.push(service.id);
-                          } else {
-                            const index = selectedServiceIds.indexOf(service.id);
-                            if (index > -1) selectedServiceIds.splice(index, 1);
-                          }
-                        }
-                      "
-                    />
-                    <div class="flex-1">
-                      <Label :for="`service-${service.id}`" class="cursor-pointer">
-                        <div class="flex items-start justify-between">
-                          <div>
-                            <span class="font-medium">{{ service.name }}</span>
-                            <p v-if="service.description" class="mt-1 text-sm text-gray-600">
-                              {{ service.description }}
-                            </p>
-                          </div>
-                          <span class="font-medium text-green-600">
-                            {{ formatCurrency(service.cost) }}
-                          </span>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Total Cost Display -->
-                <div v-if="totalCost > 0" class="mt-4 border-t pt-4">
-                  <div class="flex items-center justify-between">
-                    <span class="text-lg font-medium">Total Cost:</span>
-                    <span class="text-xl font-bold text-green-600">
-                      {{ formatCurrency(totalCost) }}
-                    </span>
                   </div>
                 </div>
               </CardContent>

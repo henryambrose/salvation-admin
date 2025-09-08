@@ -7,9 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight, CheckCircle, DollarSign, FileText, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { ArrowLeft, ArrowRight, CheckCircle, FileText, IndianRupee, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface NicheTransfer {
   id: number;
@@ -49,7 +49,9 @@ interface TemporaryGraveBooking {
   applicant_name: string;
   contact_no: string;
   contact_email?: string;
-  relationship_to_deceased?: string;
+  relationship?: {
+    name: string;
+  };
   permit_no?: string;
   selected_services?: number[];
   total_cost: number;
@@ -70,6 +72,20 @@ interface TemporaryGraveBooking {
     name: string;
   };
   niche_transfers: NicheTransfer[];
+  payments?: {
+    id: number;
+    payment_reference: string;
+    payment_status: 'pending' | 'partial' | 'completed' | 'refunded';
+    total_amount: number;
+    paid_amount: number;
+    balance_amount: number;
+    payment_date: string;
+  }[];
+}
+
+interface FlashMessage {
+  success?: string;
+  error?: string;
 }
 
 interface Props {
@@ -77,6 +93,10 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// Flash message support
+const page = usePage();
+const flashMessage = computed(() => page.props.flash as FlashMessage | undefined);
 
 const showCancelDialog = ref(false);
 const cancelReason = ref('');
@@ -91,7 +111,9 @@ const statusColors = {
 const paymentStatusColors = {
   pending: 'bg-orange-100 text-orange-800',
   partial: 'bg-blue-100 text-blue-800',
-  paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
+  refunded: 'bg-red-100 text-red-800',
+  paid: 'bg-green-100 text-green-800', // Keep for booking.payment_status compatibility
 };
 
 const formatCurrency = (amount: number) => {
@@ -134,8 +156,21 @@ const isTransferDueSoon = () => {
   return dueDate <= twoMonthsFromNow && dueDate >= new Date();
 };
 
-const confirmBooking = () => {
-  router.post(route('graveyard.temporary-grave-bookings.confirm', props.booking.id));
+const goToPayment = () => {
+  router.visit(route('graveyard.payments.create', { bookingType: 'temporary', bookingId: props.booking.id }));
+};
+
+const canMakePayment = () => {
+  // Can make payment if booking is pending/confirmed AND payment is not completed
+  const isBookingActive = ['pending', 'confirmed'].includes(props.booking.status);
+  const hasCompletedPayment = (props.booking.payments || []).some((payment) => payment.payment_status === 'completed');
+  const isPaymentNotCompleted = !['paid', 'completed'].includes(props.booking.payment_status);
+
+  return isBookingActive && !hasCompletedPayment && isPaymentNotCompleted && props.booking.total_cost > 0;
+};
+
+const canCancel = () => {
+  return ['pending', 'confirmed'].includes(props.booking.status);
 };
 
 const cancelBooking = () => {
@@ -156,22 +191,6 @@ const cancelBooking = () => {
     },
   );
 };
-
-const requestTransfer = () => {
-  router.post(route('graveyard.temporary-grave-bookings.request-transfer', props.booking.id));
-};
-
-const canConfirm = () => {
-  return props.booking.status === 'pending';
-};
-
-const canCancel = () => {
-  return ['pending', 'confirmed'].includes(props.booking.status);
-};
-
-const canRequestTransfer = () => {
-  return props.booking.status === 'confirmed' && !props.booking.transfer_requested;
-};
 </script>
 
 <template>
@@ -179,7 +198,7 @@ const canRequestTransfer = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -199,15 +218,21 @@ const canRequestTransfer = () => {
                 <Badge :class="statusColors[booking.status]">
                   {{ booking.status }}
                 </Badge>
+                <!-- Only show payment status badge if it provides meaningful info beyond booking status -->
+                <Badge :class="paymentStatusColors[booking.payment_status]" v-if="booking.payment_status && booking.payment_status !== 'pending'">
+                  {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
+                </Badge>
                 <div class="flex space-x-2">
-                  <Button v-if="canConfirm()" @click="confirmBooking" class="bg-green-600 hover:bg-green-700">
-                    <CheckCircle class="mr-2 h-4 w-4" />
-                    Confirm
+                  <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
+                    <IndianRupee class="mr-2 h-4 w-4" />
+                    Make Payment
                   </Button>
-                  <Button v-if="canRequestTransfer()" @click="requestTransfer" class="bg-blue-600 hover:bg-blue-700">
-                    <ArrowRight class="mr-2 h-4 w-4" />
-                    Request Transfer
-                  </Button>
+                  <div
+                    v-else-if="['paid', 'completed'].includes(booking.payment_status)"
+                    class="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700"
+                  >
+                    ✓ Payment completed - Booking confirmed, burial can proceed
+                  </div>
                   <Dialog v-if="canCancel()" v-model:open="showCancelDialog">
                     <DialogTrigger as-child>
                       <Button variant="outline" class="border-red-200 text-red-600 hover:bg-red-50">
@@ -240,6 +265,21 @@ const canRequestTransfer = () => {
                   </Dialog>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Flash Messages -->
+          <div v-if="flashMessage?.success" class="border-b border-green-200 bg-green-50 px-4 py-3">
+            <div class="flex items-center">
+              <CheckCircle class="mr-2 h-5 w-5 text-green-600" />
+              <p class="text-sm text-green-800">{{ flashMessage.success }}</p>
+            </div>
+          </div>
+
+          <div v-if="flashMessage?.error" class="border-b border-red-200 bg-red-50 px-4 py-3">
+            <div class="flex items-center">
+              <XCircle class="mr-2 h-5 w-5 text-red-600" />
+              <p class="text-sm text-red-800">{{ flashMessage.error }}</p>
             </div>
           </div>
 
@@ -392,9 +432,9 @@ const canRequestTransfer = () => {
                       <p class="text-base">{{ booking.contact_email }}</p>
                     </div>
 
-                    <div v-if="booking.relationship_to_deceased">
+                    <div v-if="booking.relationship">
                       <Label class="text-sm font-medium text-gray-500">Relationship to Deceased</Label>
-                      <p class="text-base">{{ booking.relationship_to_deceased }}</p>
+                      <p class="text-base">{{ booking.relationship.name }}</p>
                     </div>
 
                     <div v-if="booking.permit_no">
@@ -408,7 +448,7 @@ const canRequestTransfer = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle class="flex items-center space-x-2">
-                      <DollarSign class="h-5 w-5" />
+                      <IndianRupee class="h-5 w-5" />
                       <span>Financial Details</span>
                     </CardTitle>
                   </CardHeader>
@@ -434,6 +474,85 @@ const canRequestTransfer = () => {
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Balance</Label>
                         <p class="text-base font-medium text-red-600">{{ formatCurrency(booking.balance_amount) }}</p>
+                      </div>
+                    </div>
+
+                    <!-- Quick Receipt Access -->
+                    <div v-if="booking.payments && booking.payments.length > 0" class="border-t pt-6">
+                      <div class="flex items-center justify-between mb-3">
+                        <Label class="text-sm font-semibold text-gray-700 flex items-center">
+                          <FileText class="mr-2 h-4 w-4 text-gray-500" />
+                          Payment Receipts
+                        </Label>
+                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                          {{ booking.payments.length }} {{ booking.payments.length === 1 ? 'Receipt' : 'Receipts' }}
+                        </span>
+                      </div>
+                      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        <Button
+                          v-for="payment in booking.payments"
+                          :key="'receipt-' + payment.id"
+                          as-child
+                          size="sm"
+                          variant="outline"
+                          class="h-12 justify-start text-left hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200 group"
+                        >
+                          <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex items-center space-x-3 p-3">
+                            <div class="flex-shrink-0 p-1.5 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                              <FileText class="h-4 w-4 text-blue-600" />
+                            </div>
+                            <div class="min-w-0 flex-1">
+                              <div class="text-sm font-medium text-gray-900">
+                                Receipt #{{ payment.payment_reference }}
+                              </div>
+                              <div class="text-xs text-gray-600 font-medium">
+                                {{ formatCurrency(payment.paid_amount) }}
+                              </div>
+                            </div>
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <!-- Payment History -->
+                    <div v-if="booking.payments && booking.payments.length > 0" class="border-t pt-4">
+                      <Label class="text-sm font-medium text-gray-500">Payment History</Label>
+                      <div class="mt-2 space-y-2">
+                        <div v-for="payment in booking.payments" :key="payment.id" class="flex items-center justify-between rounded bg-gray-50 p-2">
+                          <div class="flex-1">
+                            <div class="flex items-center space-x-2">
+                              <Link
+                                :href="route('graveyard.payments.show', payment.id)"
+                                class="text-sm font-medium text-blue-600 hover:text-blue-800"
+                              >
+                                {{ payment.payment_reference }}
+                              </Link>
+                              <Badge :class="paymentStatusColors[payment.payment_status]" class="text-xs">
+                                {{ payment.payment_status }}
+                              </Badge>
+                            </div>
+                            <p class="text-xs text-gray-500">{{ formatDate(payment.payment_date) }}</p>
+                          </div>
+                          <div class="flex items-center space-x-2">
+                            <div class="text-right">
+                              <p class="text-sm font-medium">{{ formatCurrency(payment.paid_amount) }}</p>
+                              <p v-if="payment.balance_amount > 0" class="text-xs text-red-600">
+                                Balance: {{ formatCurrency(payment.balance_amount) }}
+                              </p>
+                            </div>
+                            <div class="flex space-x-1">
+                              <!-- Balance Payment Button -->
+                              <Button
+                                v-if="payment.payment_status === 'partial' && payment.balance_amount > 0"
+                                as-child
+                                size="sm"
+                                class="bg-blue-600 text-xs hover:bg-blue-700"
+                              >
+                                <Link :href="route('graveyard.payments.balance', payment.id)"> Pay Balance </Link>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>

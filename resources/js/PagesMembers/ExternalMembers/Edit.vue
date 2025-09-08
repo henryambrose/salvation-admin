@@ -63,15 +63,17 @@ const fetchFamilyMembers = async () => {
       });
 
       const data = await response.json();
-      console.log(data)
+      console.log('data', data);
       // Filter members from the same family and exclude current member
       const currentMemberId = props.externalMember.id;
       familyMembers.value = data.members
         .filter((member: any) => member.id !== currentMemberId)
+        .filter((member: any) => member.source === 'Member')
         .map((member: any) => ({
           id: member.id,
           name: member.first_name + ' ' + member.last_name,
         }));
+      console.log('Fetched family members:', familyMembers.value);
     } catch (error) {
       console.error('Error fetching family members:', error);
       familyMembers.value = [];
@@ -130,7 +132,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 
 watch(
@@ -142,7 +143,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 
 watch(
@@ -154,7 +154,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 // Fetch family members on mount
 onMounted(() => {
@@ -303,9 +302,7 @@ const cancel = () => {
 
         <!-- Family Tree Relationships Section - Updated to match Member.vue -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
-          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">
-            Family Tree Relationships
-          </h3>
+          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Family Tree Relationships</h3>
           <p class="mb-4 text-sm text-gray-600">
             Define family relationships for building the family tree. Select whether each relationship is with a member or external person.
           </p>
@@ -348,12 +345,7 @@ const cancel = () => {
                     :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.spouse_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -400,12 +392,7 @@ const cancel = () => {
                     :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.father_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -453,12 +440,7 @@ const cancel = () => {
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.mother_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>

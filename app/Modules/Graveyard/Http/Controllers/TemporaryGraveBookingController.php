@@ -8,9 +8,12 @@ use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\ServiceType;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
+use Modules\Members\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class TemporaryGraveBookingController extends Controller
 {
@@ -59,10 +62,10 @@ class TemporaryGraveBookingController extends Controller
     public function create()
     {
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Create', [
-            'serviceTypes' => ServiceType::active()->byCategory('grave')->get(),
-            'availableGraves' => TemporaryGrave::where('is_available', true)->get(),
+            'availableGraves' => TemporaryGrave::available()->get(),
             'genders' => Gender::all(),
-            'parishes' => Parish::all()
+            'parishes' => Parish::all(),
+            'relationships' => Relationship::all()
         ]);
     }
 
@@ -86,23 +89,23 @@ class TemporaryGraveBookingController extends Controller
             'nationality' => 'nullable|string|max:100',
             'parish_id' => 'nullable|exists:parishes,id',
             'minister' => 'nullable|string|max:255',
-            'applicant_type' => 'required|in:member,non_member',
+            'applicant_type' => 'required|in:member,external',
             'applicant_name' => 'required|string|max:255',
             'contact_no' => 'required|string|max:20',
             'contact_email' => 'nullable|email',
-            'relationship_to_deceased' => 'nullable|string|max:100',
+            'relationship_id' => 'nullable|exists:relationships,id',
             'permit_no' => 'nullable|string|max:50',
             'selected_services' => 'nullable|array',
             'selected_services.*' => 'exists:service_types,id',
             'duration_months' => 'nullable|integer|min:6|max:24'
         ]);
-
+        Log::info('Creating temporary grave booking', $request->all());
         try {
             DB::beginTransaction();
 
             // Check if temporary grave is still available
             $grave = TemporaryGrave::findOrFail($request->temporary_grave_id);
-            if (!$grave->is_available) {
+            if (!$grave->status == 'available') {
                 return back()->withErrors(['grave' => 'This temporary grave is no longer available.']);
             }
 
@@ -126,17 +129,17 @@ class TemporaryGraveBookingController extends Controller
                 'applicant_name' => $request->applicant_name,
                 'contact_no' => $request->contact_no,
                 'contact_email' => $request->contact_email,
-                'relationship_to_deceased' => $request->relationship_to_deceased,
+                'relationship_id' => $request->relationship_id,
                 'permit_no' => $request->permit_no,
                 'selected_services' => $request->selected_services,
                 'duration_months' => $request->duration_months ?? 12,
                 'special_requirements' => $request->special_requirements,
                 'status' => 'pending',
                 'payment_status' => 'pending',
-                'created_by' => auth()->id,
-                'updated_by' => auth()->id,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
             ]);
-
+            Log::info('Temporary grave booking created', ['booking_id' => $booking->id]);
             // Calculate total cost from selected services
             if ($request->selected_services) {
                 $totalCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');
@@ -152,7 +155,7 @@ class TemporaryGraveBookingController extends Controller
                 ->with('success', 'Temporary grave booking created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-
+            Log::error('Error creating temporary grave booking', ['error' => $e->getMessage()]);
             return back()->withErrors(['error' => 'Failed to create booking. Please try again.'])
                 ->withInput();
         }
@@ -207,7 +210,7 @@ class TemporaryGraveBookingController extends Controller
             $temporaryGraveBooking->update([
                 'status' => 'cancelled',
                 'remarks' => $request->cancellation_reason,
-                'updated_by' => auth()->id
+                'updated_by' => Auth::id()
             ]);
 
             // Free up the temporary grave if it was occupied
@@ -215,7 +218,7 @@ class TemporaryGraveBookingController extends Controller
                 $temporaryGraveBooking->temporaryGrave->update([
                     'is_available' => true,
                     'occupied_date' => null,
-                    'updated_by' => auth()->id
+                    'updated_by' => Auth::id()
                 ]);
             }
 

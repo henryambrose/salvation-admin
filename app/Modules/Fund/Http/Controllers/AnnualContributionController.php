@@ -10,6 +10,8 @@ use Modules\Fund\Models\FundCategory;
 use Modules\Fund\Models\PaymentMethod;
 use Modules\Members\Models\Member;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB; // For DB transactions   
+use Illuminate\Support\Facades\Auth; // For Auth
 
 class AnnualContributionController extends Controller
 {
@@ -184,8 +186,8 @@ class AnnualContributionController extends Controller
             'paid_by_name' => $validated['paid_by_name'],
             'contact_no' => $validated['contact_no'],
             'notes' => $validated['notes'],
-            'created_by' => auth()->id,
-            'updated_by' => auth()->id,
+            'created_by' => Auth::id(),
+            'updated_by' => Auth::id(),
         ]);
 
         return redirect()->route('fund.annual-contributions.index')
@@ -250,7 +252,7 @@ class AnnualContributionController extends Controller
             'paid_by_name' => $validated['paid_by_name'],
             'contact_no' => $validated['contact_no'],
             'notes' => $validated['notes'],
-            'updated_by' => auth()->id,
+            'updated_by' => Auth::id(),
         ]);
 
         return redirect()->route('fund.annual-contributions.index')
@@ -284,7 +286,7 @@ class AnnualContributionController extends Controller
         FamilyContribution::whereIn('id', $validated['ids'])
             ->update([
                 'status' => $validated['status'],
-                'updated_by' => auth()->id
+                'updated_by' => Auth::id()
             ]);
 
         return back()->with('success', 'Contributions updated successfully.');
