@@ -67,7 +67,10 @@ class Payment extends Model
             $payment->balance_amount = $payment->total_amount - $payment->paid_amount;
             
             // Update payment status based on amounts
-            if ($payment->paid_amount == 0) {
+            // Special case: Free services (both total and paid amount are 0)
+            if ($payment->total_amount == 0 && $payment->paid_amount == 0) {
+                $payment->payment_status = 'completed';
+            } elseif ($payment->paid_amount == 0) {
                 $payment->payment_status = 'pending';
             } elseif ($payment->paid_amount >= $payment->total_amount) {
                 $payment->payment_status = 'completed';

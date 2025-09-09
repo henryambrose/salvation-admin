@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
@@ -186,22 +185,19 @@ const submit = () => {
               <CardContent>
                 <div>
                   <Label for="from_booking_id">Eligible Bookings *</Label>
-                  <Select v-model="form.from_booking_id" :disabled="!!props.selectedBooking">
-                    <SelectTrigger class="mt-1" :class="form.errors.from_booking_id && 'border-red-500'">
-                      <SelectValue placeholder="Select a booking" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="booking in eligibleBookings" :key="booking.id" :value="booking.id">
-                        <div class="flex w-full items-center justify-between">
-                          <div>
-                            <span class="font-medium">{{ booking.deceased_full_name }}</span>
-                            <span class="ml-2 text-sm text-gray-500"> ({{ booking.grave_no }}) </span>
-                          </div>
-                          <Badge v-if="booking.is_overdue" class="ml-2 bg-red-100 text-xs text-red-800"> Overdue </Badge>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    v-model="form.from_booking_id"
+                    :disabled="!!props.selectedBooking"
+                    :class="[
+                      'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
+                      form.errors.from_booking_id && 'border-red-500',
+                    ]"
+                  >
+                    <option value="" disabled>Select a booking</option>
+                    <option v-for="booking in eligibleBookings" :key="booking.id" :value="booking.id">
+                      {{ booking.deceased_full_name }} ({{ booking.grave_no }}){{ booking.is_overdue ? ' - Overdue' : '' }}
+                    </option>
+                  </select>
                   <div v-if="form.errors.from_booking_id" class="mt-1 text-sm text-red-600">
                     {{ form.errors.from_booking_id }}
                   </div>
@@ -239,24 +235,18 @@ const submit = () => {
               <CardContent>
                 <div>
                   <Label for="to_niche_id">Available Niches *</Label>
-                  <Select v-model="form.to_niche_id">
-                    <SelectTrigger class="mt-1" :class="form.errors.to_niche_id && 'border-red-500'">
-                      <SelectValue placeholder="Select a niche" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem v-for="niche in availableNiches" :key="niche.id" :value="niche.id">
-                        <div class="flex w-full items-center justify-between">
-                          <div>
-                            <span class="font-medium">{{ niche.niche_no }}</span>
-                            <span class="ml-2 text-sm text-gray-500"> {{ niche.section }}, Row {{ niche.row_no }} </span>
-                          </div>
-                          <span class="font-medium text-green-600">
-                            {{ formatCurrency(niche.cost) }}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    v-model="form.to_niche_id"
+                    :class="[
+                      'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
+                      form.errors.to_niche_id && 'border-red-500',
+                    ]"
+                  >
+                    <option value="" disabled>Select a niche</option>
+                    <option v-for="niche in availableNiches" :key="niche.id" :value="niche.id">
+                      {{ niche.niche_no }} - {{ niche.section }}, Row {{ niche.row_no }} ({{ formatCurrency(niche.cost) }})
+                    </option>
+                  </select>
                   <div v-if="form.errors.to_niche_id" class="mt-1 text-sm text-red-600">
                     {{ form.errors.to_niche_id }}
                   </div>

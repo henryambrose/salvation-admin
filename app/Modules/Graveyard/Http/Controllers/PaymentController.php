@@ -81,7 +81,7 @@ class PaymentController extends Controller
         }
 
         // Check if booking is eligible for payment
-        if ($booking->status !== 'pending') {
+        if (!in_array($booking->status, ['pending', 'confirmed'])) {
             return redirect()->back()->with('error', 'This booking is not eligible for payment.');
         }
 
@@ -123,21 +123,39 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
+        // Check if any selected services are free
+        $hasFreeServices = false;
+        if (!empty($request->selected_services)) {
+            $selectedServiceIds = collect($request->selected_services)->pluck('service_id');
+            $freeServicesCount = ServiceType::whereIn('id', $selectedServiceIds)
+                ->where('type', 'free')
+                ->count();
+            $hasFreeServices = $freeServicesCount > 0;
+        }
 
-        $request->validate([
+        $validationRules = [
             'booking_type' => 'required|in:permanent,temporary,niche',
             'booking_id' => 'required|integer',
-            'selected_services' => 'required|array|min:1',
-            'selected_services.*.service_id' => 'required|exists:service_types,id',
-            'selected_services.*.quantity' => 'required|integer|min:1',
-            'selected_services.*.unit_cost' => 'required|numeric|min:0',
-            'payment_method_id' => 'required|exists:payment_methods,id',
-            'paid_amount' => 'required|numeric|min:0',
+            'selected_services' => 'nullable|array',
+            'selected_services.*.service_id' => 'required_with:selected_services|exists:service_types,id',
+            'selected_services.*.quantity' => 'required_with:selected_services|integer|min:1',
+            'selected_services.*.unit_cost' => 'required_with:selected_services|numeric|min:0',
             'payment_date' => 'required|date',
             'transaction_reference' => 'nullable|string|max:100',
             'payment_notes' => 'nullable|string|max:1000',
             'concession_amount' => 'nullable|numeric|min:0'
-        ]);
+        ];
+
+        // For free services, payment method and amount are not required
+        if ($hasFreeServices) {
+            $validationRules['payment_method_id'] = 'nullable|exists:payment_methods,id';
+            $validationRules['paid_amount'] = 'nullable|numeric|min:0';
+        } else {
+            $validationRules['payment_method_id'] = 'required|exists:payment_methods,id';
+            $validationRules['paid_amount'] = 'required|numeric|min:0.01';
+        }
+
+        $request->validate($validationRules);
 
         try {
             DB::beginTransaction();
@@ -148,42 +166,74 @@ class PaymentController extends Controller
                 return back()->withErrors(['error' => 'Booking not found.']);
             }
 
-            // Calculate total amount from selected services
+            // Calculate total amount from selected services or use for balance payment
             $serviceSubtotal = 0;
             $serviceCharges = [];
+            $isBalancePayment = empty($request->selected_services);
 
-            foreach ($request->selected_services as $serviceData) {
-                $service = ServiceType::find($serviceData['service_id']);
-                $quantity = (int)$serviceData['quantity'];
-                $unitCost = (float)$serviceData['unit_cost'];
-                $serviceTotalCost = $quantity * $unitCost;
+            // Process selected services if any
+            if (!$isBalancePayment) {
+                foreach ($request->selected_services as $serviceData) {
+                    $service = ServiceType::find($serviceData['service_id']);
+                    $quantity = (int)$serviceData['quantity'];
+                    $unitCost = (float)$serviceData['unit_cost'];
+                    $serviceTotalCost = $quantity * $unitCost;
 
-                $serviceSubtotal += $serviceTotalCost;
+                    $serviceSubtotal += $serviceTotalCost;
 
-                $serviceCharges[] = [
-                    'service_id' => $service->id,
-                    'service_name' => $service->name,
-                    'quantity' => $quantity,
-                    'unit_cost' => $unitCost,
-                    'total_cost' => $serviceTotalCost
-                ];
+                    $serviceCharges[] = [
+                        'service_id' => $service->id,
+                        'service_name' => $service->name,
+                        'quantity' => $quantity,
+                        'unit_cost' => $unitCost,
+                        'total_cost' => $serviceTotalCost
+                    ];
+                }
             }
 
-            // Apply concession discount
-            $concessionAmount = (float)($request->concession_amount ?? 0);
-            $totalAmount = max(0, $serviceSubtotal - $concessionAmount);
+            // Apply concession discount (only for service payments)
+            $concessionAmount = $isBalancePayment ? 0 : (float)($request->concession_amount ?? 0);
+            
+            // For balance payments, total amount is the paid amount (no services)
+            // For service payments, calculate from services minus concession
+            $totalAmount = $isBalancePayment 
+                ? (float)$request->paid_amount 
+                : max(0, $serviceSubtotal - $concessionAmount);
+
+            // For free services, ensure amounts are set correctly
+            $paidAmount = $hasFreeServices ? 0 : (float)$request->paid_amount;
+            if ($hasFreeServices) {
+                $totalAmount = 0;
+                $paidAmount = 0;
+            }
+
+            // Validate payment amount doesn't exceed total amount (skip for free services)
+            if (!$hasFreeServices && $paidAmount > $totalAmount) {
+                return back()->withErrors([
+                    'paid_amount' => 'Payment amount cannot exceed the total amount of ' . number_format($totalAmount, 2)
+                ])->withInput();
+            }
+
+            // For balance payments, also validate against booking's remaining balance
+            if ($isBalancePayment && $paidAmount > $booking->balance_amount) {
+                return back()->withErrors([
+                    'paid_amount' => 'Payment amount cannot exceed the outstanding balance of ' . number_format($booking->balance_amount, 2)
+                ])->withInput();
+            }
 
             // Create payment record
             $payment = Payment::create([
                 'payable_type' => $this->getBookingModelClass($request->booking_type),
                 'payable_id' => $booking->id,
                 'total_amount' => $totalAmount,
-                'paid_amount' => $request->paid_amount,
-                'balance_amount' => $totalAmount - $request->paid_amount,
+                'paid_amount' => $paidAmount,
+                'balance_amount' => max(0, $totalAmount - $paidAmount),
                 'concession_amount' => $concessionAmount,
-                'payment_method_id' => $request->payment_method_id,
+                'payment_method_id' => $hasFreeServices ? null : $request->payment_method_id,
                 'transaction_reference' => $request->transaction_reference,
-                'payment_notes' => $request->payment_notes,
+                'payment_notes' => $hasFreeServices ? 
+                    ($request->payment_notes ? $request->payment_notes . ' (Free Service)' : 'Free Service - No Payment Required') : 
+                    $request->payment_notes,
                 'selected_services' => $request->selected_services,
                 'service_charges' => $serviceCharges,
                 'payment_date' => $request->payment_date,
@@ -194,19 +244,32 @@ class PaymentController extends Controller
             // Generate receipt for all payments (including partial payments)
             $payment->generateReceipt();
 
-            // Update booking's selected services and amounts
-            $booking->update([
-                'selected_services' => array_column($request->selected_services, 'service_id'),
-                'total_cost' => $totalAmount,
-                'paid_amount' => $request->paid_amount,
-                'balance_amount' => $totalAmount - $request->paid_amount,
-                'payment_status' => $payment->payment_status
-            ]);
-
-            // Confirm booking on ANY payment (partial or full) - burial cannot be delayed
-            if ($payment->paid_amount > 0) {
+            // Update booking amounts
+            if ($isBalancePayment) {
+                // For balance payments, update payment amounts but keep existing services and total cost
+                $newPaidAmount = $booking->paid_amount + $request->paid_amount;
+                $newBalanceAmount = max(0, $booking->total_cost - $newPaidAmount);
+                
                 $booking->update([
-                    'status' => 'confirmed'  // Any payment received, booking confirmed for burial
+                    'paid_amount' => $newPaidAmount,
+                    'balance_amount' => $newBalanceAmount,
+                    'payment_status' => $payment->payment_status
+                ]);
+            } else {
+                // For service payments, update services and all amounts
+                $booking->update([
+                    'selected_services' => array_column($request->selected_services, 'service_id'),
+                    'total_cost' => $totalAmount,
+                    'paid_amount' => $paidAmount,
+                    'balance_amount' => max(0, $totalAmount - $paidAmount),
+                    'payment_status' => $payment->payment_status
+                ]);
+            }
+
+            // Confirm booking on ANY payment (partial or full) OR free services - burial cannot be delayed
+            if ($payment->paid_amount > 0 || $hasFreeServices) {
+                $booking->update([
+                    'status' => 'confirmed'  // Any payment received OR free services confirmed, booking confirmed for burial
                 ]);
             }
 
@@ -231,7 +294,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment)
     {
-        $payment->load(['payable', 'payable.ValidMember', 'payable.PermanentGrave', 'paymentMethod', 'creator', 'updater']);
+        $payment->load($this->getPaymentRelationships($payment));
 
         return Inertia::render('PagesGraveyard/Payment/Show', [
             'payment' => $payment
@@ -248,7 +311,7 @@ class PaymentController extends Controller
             return redirect()->back()->with('error', 'This payment is not eligible for balance payment.');
         }
 
-        $payment->load(['payable.permanentGrave', 'payable.validMember', 'paymentMethod', 'creator']);
+        $payment->load($this->getPaymentRelationships($payment));
 
         // Get available payment methods
         $paymentMethods = \Modules\Fund\Models\PaymentMethod::active()->get();
@@ -353,7 +416,7 @@ class PaymentController extends Controller
             $payment->generateReceipt();
         }
 
-        $payment->load(['payable.permanentGrave', 'payable.validMember', 'paymentMethod', 'creator']);
+        $payment->load($this->getPaymentRelationships($payment));
 
         return Inertia::render('PagesGraveyard/Payment/Receipt', [
             'payment' => $payment
@@ -397,5 +460,24 @@ class PaymentController extends Controller
             'niche' => 'graveyard.niche-transfers.show', // or appropriate niche route
             default => 'graveyard.dashboard'
         };
+    }
+
+    /**
+     * Get payment relationships based on payable type
+     */
+    private function getPaymentRelationships(Payment $payment): array
+    {
+        $baseRelationships = ['paymentMethod', 'creator', 'updater'];
+        
+        // Determine payable type from payment
+        if (str_contains($payment->payable_type, 'PermanentGraveBooking')) {
+            return array_merge($baseRelationships, ['payable.permanentGrave', 'payable.validMember']);
+        } elseif (str_contains($payment->payable_type, 'TemporaryGraveBooking')) {
+            return array_merge($baseRelationships, ['payable.temporaryGrave', 'payable.gender', 'payable.parish']);
+        } elseif (str_contains($payment->payable_type, 'NicheBooking')) {
+            return array_merge($baseRelationships, ['payable.niche']);
+        }
+        
+        return array_merge($baseRelationships, ['payable']);
     }
 }

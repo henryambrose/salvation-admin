@@ -118,12 +118,12 @@ class Niche extends Model
     }
 
     /**
-     * Mark the niche as occupied
+     * Mark the niche as unavailable
      */
-    public function markAsOccupied($occupationDate = null)
+    public function markAsUnavailable($occupationDate = null)
     {
         $this->update([
-            'status' => 'occupied',
+            'status' => 'unavailable',
             'last_occupation_date' => $occupationDate ?? now()->toDateString(),
         ]);
     }

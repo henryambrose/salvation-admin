@@ -35,17 +35,27 @@ interface Payment {
   payable: {
     id: number;
     booking_reference: string;
-    permanent_grave: {
+    // For permanent grave bookings
+    permanent_grave?: {
       grave_no: string;
       owner_name: string;
       section: string;
       row_no: string;
     };
-    valid_member: {
+    valid_member?: {
       first_name: string;
       last_name: string;
       relationship: string;
     };
+    // For temporary grave bookings
+    temporary_grave?: {
+      grave_no: string;
+      section: string;
+      row_no: string;
+    };
+    dead_first_name?: string;
+    dead_last_name?: string;
+    // Common fields
     applicant_name: string;
     died_on: string;
     buried_on: string;
@@ -87,13 +97,42 @@ const formatDateTime = (date: string) => {
 };
 
 const getDeceasedName = () => {
-  const validMember = props.payment.payable.valid_member;
-  return `${validMember.first_name} ${validMember.last_name}`;
+  const payable = props.payment.payable;
+  
+  // For permanent grave bookings
+  if (payable.valid_member) {
+    return `${payable.valid_member.first_name} ${payable.valid_member.last_name}`;
+  }
+  
+  // For temporary grave bookings
+  if (payable.dead_first_name && payable.dead_last_name) {
+    return `${payable.dead_first_name} ${payable.dead_last_name}`;
+  }
+  
+  // Fallback
+  return 'Unknown';
 };
 
 const calculateServiceSubtotal = () => {
   if (!props.payment.service_charges) return 0;
   return props.payment.service_charges.reduce((sum, service) => sum + service.total_cost, 0);
+};
+
+const getBookingRoute = () => {
+  const payable = props.payment.payable;
+  
+  // For permanent grave bookings
+  if (payable.permanent_grave) {
+    return route('graveyard.permanent-grave-bookings.show', payable.id);
+  }
+  
+  // For temporary grave bookings
+  if (payable.temporary_grave) {
+    return route('graveyard.temporary-grave-bookings.show', payable.id);
+  }
+  
+  // Fallback to graveyard dashboard
+  return route('graveyard.dashboard');
 };
 
 const generateReceipt = () => {
@@ -113,7 +152,7 @@ const generateReceipt = () => {
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <Button variant="outline" size="sm" as-child>
-                  <Link :href="route('graveyard.permanent-grave-bookings.show', payment.payable.id)">
+                  <Link :href="getBookingRoute()">
                     <ArrowLeft class="h-4 w-4" />
                   </Link>
                 </Button>
@@ -224,8 +263,15 @@ const generateReceipt = () => {
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Grave Details</Label>
                       <p class="text-base">
-                        {{ payment.payable.permanent_grave.grave_no }} - Section {{ payment.payable.permanent_grave.section }}, Row
-                        {{ payment.payable.permanent_grave.row_no }}
+                        <template v-if="payment.payable.permanent_grave">
+                          {{ payment.payable.permanent_grave.grave_no }} - Section {{ payment.payable.permanent_grave.section }}, Row {{ payment.payable.permanent_grave.row_no }}
+                        </template>
+                        <template v-else-if="payment.payable.temporary_grave">
+                          {{ payment.payable.temporary_grave.grave_no }} - Section {{ payment.payable.temporary_grave.section }}, Row {{ payment.payable.temporary_grave.row_no }}
+                        </template>
+                        <template v-else>
+                          Grave details not available
+                        </template>
                       </p>
                     </div>
 
@@ -357,7 +403,7 @@ const generateReceipt = () => {
             <!-- Action Buttons -->
             <div class="mt-8 flex justify-between">
               <Button variant="outline" as-child>
-                <Link :href="route('graveyard.permanent-grave-bookings.show', payment.payable.id)"> Back to Booking </Link>
+                <Link :href="getBookingRoute()"> Back to Booking </Link>
               </Button>
 
               <div class="flex space-x-3">

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('intention_for')->nullable();
             $table->decimal('amount', 10, 2)->nullable();
             $table->enum('status', ['pending', 'confirmed', 'completed', 'cancelled'])->default('pending');
-            $table->string('non_member_name')->nullable();
+            $table->string('external_name')->nullable();
             $table->string('phone', 20)->nullable();
             $table->date('mass_date')->nullable();
             $table->foreignId('mass_type_id')->nullable()->constrained('mass_types')->onDelete('set null');

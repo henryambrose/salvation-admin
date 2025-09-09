@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -208,17 +207,16 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
 
               <div>
                 <Label for="status">Status</Label>
-                <Select v-model="status" @update:modelValue="applyFilters">
-                  <SelectTrigger class="mt-1">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  v-model="status"
+                  @change="applyFilters"
+                  class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
 
               <div class="flex items-end">
@@ -296,19 +294,15 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div class="font-medium text-gray-900">
-                            Total: {{ formatCurrency(booking.total_cost) }}
-                          </div>
+                          <div class="font-medium text-gray-900">Total: {{ formatCurrency(booking.total_cost) }}</div>
                           <div v-if="booking.payment_status === 'partial'" class="text-sm">
                             <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
-                            <div class="text-red-600 font-medium">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
+                            <div class="font-medium text-red-600">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
                           </div>
                           <div v-else-if="booking.payment_status === 'paid' || booking.payment_status === 'completed'" class="text-sm text-green-600">
                             Fully Paid
                           </div>
-                          <div v-else class="text-sm text-gray-500">
-                            Not Paid
-                          </div>
+                          <div v-else class="text-sm text-gray-500">Not Paid</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -370,11 +364,11 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                     <div class="flex items-center justify-between pt-2">
                       <div>
                         <div class="font-medium">Total: {{ formatCurrency(booking.total_cost) }}</div>
-                        <div v-if="booking.payment_status === 'partial'" class="text-sm space-y-1">
+                        <div v-if="booking.payment_status === 'partial'" class="space-y-1 text-sm">
                           <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
-                          <div class="text-red-600 font-medium">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
+                          <div class="font-medium text-red-600">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
                         </div>
-                        <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs mt-1">
+                        <Badge :class="paymentStatusColors[booking.payment_status]" class="mt-1 text-xs">
                           {{ booking.payment_status }}
                         </Badge>
                       </div>

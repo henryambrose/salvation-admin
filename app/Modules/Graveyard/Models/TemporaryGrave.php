@@ -21,7 +21,6 @@ class TemporaryGrave extends Model
         'oldno',
         'status',
         'last_burial_date',
-        'duration_months',
         'remarks',
         'plot_size',
         'owner_name',
@@ -38,7 +37,6 @@ class TemporaryGrave extends Model
         'is_active' => 'boolean',
         'row_no' => 'integer',
         'grave_no' => 'integer',
-        'duration_months' => 'integer',
     ];
 
     /**
@@ -113,9 +111,10 @@ class TemporaryGrave extends Model
      */
     public function scopeNeedingTransfer($query)
     {
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
         return $query->where('status', 'unavailable')
             ->whereNotNull('last_burial_date')
-            ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= duration_months * 30');
+            ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= ? * 30', [$monthsFromEnv]);
     }
 
     /**
@@ -143,7 +142,8 @@ class TemporaryGrave extends Model
             return false;
         }
 
-        $transferDate = Carbon::parse($this->last_burial_date)->addMonths($this->duration_months);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $transferDate = Carbon::parse($this->last_burial_date)->addMonths($monthsFromEnv);
         return now()->gte($transferDate);
     }
 
@@ -156,7 +156,8 @@ class TemporaryGrave extends Model
             return null;
         }
 
-        return Carbon::parse($this->last_burial_date)->addMonths($this->duration_months);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        return Carbon::parse($this->last_burial_date)->addMonths($monthsFromEnv);
     }
 
     /**

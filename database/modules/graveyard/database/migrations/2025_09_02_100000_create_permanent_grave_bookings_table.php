@@ -34,7 +34,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
 
             // Applicant details (who is applying for the burial)
-            $table->enum('applicant_type', ['member', 'non_member'])->default('member');
+            $table->enum('applicant_type', ['member', 'external'])->default('member');
             $table->string('applicant_name');
             $table->string('contact_no');
             $table->string('contact_email')->nullable();

@@ -33,6 +33,15 @@
             </button>
           </div>
           <select
+            v-model="filters.status"
+            @change="applyFilters()"
+            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200 min-w-[120px]"
+          >
+            <option value="">All Status</option>
+            <option value="available">Available</option>
+            <option value="unavailable">Unavailable</option>
+          </select>
+          <select
             v-model="filters.perPage"
             @change="applyFilters()"
             class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
@@ -58,6 +67,7 @@
       <div class="text-gray-600">
         Showing <span class="font-semibold">{{ data?.total || 0 }}</span> total niches
         <span v-if="filters.search" class="text-blue-600">for "{{ filters.search }}"</span>
+        <span v-if="filters.status" class="text-green-600">with status "{{ filters.status }}"</span>
       </div>
 
       <!-- Center: Pagination controls -->
@@ -276,7 +286,14 @@ const breadcrumbs = [
 ];
 
 // Reactive state
-const filters = ref({ ...(props.filters || {}) });
+const filters = ref({ 
+  search: '',
+  status: '',
+  perPage: 10,
+  sort: 'location',
+  direction: 'asc',
+  ...(props.filters || {}) 
+});
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
 const nicheToDelete = ref<any>(null);
@@ -361,9 +378,7 @@ const highlightRow = (id: number) => {
 const getStatusClass = (status: string) => {
   const classes = {
     available: 'bg-green-100 text-green-800',
-    occupied: 'bg-red-100 text-red-800',
-    reserved: 'bg-yellow-100 text-yellow-800',
-    maintenance: 'bg-orange-100 text-orange-800',
+    unavailable: 'bg-red-100 text-red-800',
   };
   return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
 };

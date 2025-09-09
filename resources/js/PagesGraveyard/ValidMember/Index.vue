@@ -118,6 +118,7 @@
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
                 <th class="border-b p-3 font-semibold text-gray-700">First Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Last Name</th>
+                <th class="border-b p-3 font-semibold text-gray-700">Owner Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Location</th>
@@ -161,6 +162,11 @@
                       {{ validMember.member ? validMember.member.first_name : validMember.first_name }}
                     </div>
                     <div v-if="validMember.member" class="text-xs text-gray-500">Family: {{ validMember.member.family_no }}</div>
+                  </div>
+                </td>
+                <td class="p-2">
+                  <div class="font-medium">
+                    {{ validMember.member ? validMember.member.last_name : validMember.last_name }}
                   </div>
                 </td>
                 <td class="p-2">

@@ -104,7 +104,7 @@ class NicheController extends Controller
             'size_height' => 'nullable|numeric|min:0',
             'size_depth' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
         ]);
 
         // Validate mutually exclusive fields
@@ -219,7 +219,7 @@ class NicheController extends Controller
             'size_height' => 'nullable|numeric|min:0',
             'size_depth' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
         ]);
 
         // Validate mutually exclusive fields

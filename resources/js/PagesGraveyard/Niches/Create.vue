@@ -85,11 +85,23 @@
                   <label class="mb-2 block text-sm font-medium text-gray-700">Member Type</label>
                   <div class="flex space-x-4">
                     <label class="flex items-center">
-                      <input v-model="form.member_type" type="radio" value="member" class="mr-2 text-blue-600 focus:ring-[#3b82f6]" @change="handleMemberTypeChange" />
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="member"
+                        class="mr-2 text-blue-600 focus:ring-[#3b82f6]"
+                        @change="handleMemberTypeChange"
+                      />
                       <span class="text-sm text-gray-700">Parish Member</span>
                     </label>
                     <label class="flex items-center">
-                      <input v-model="form.member_type" type="radio" value="non_member" class="mr-2 text-blue-600 focus:ring-[#3b82f6]" @change="handleMemberTypeChange" />
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="external"
+                        class="mr-2 text-blue-600 focus:ring-[#3b82f6]"
+                        @change="handleMemberTypeChange"
+                      />
                       <span class="text-sm text-gray-700">Non-Member</span>
                     </label>
                   </div>
@@ -148,7 +160,7 @@
                 </div>
 
                 <!-- Non-Member Input -->
-                <div v-if="form.member_type === 'non_member'" class="mb-4">
+                <div v-if="form.member_type === 'external'" class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Name</label>
                   <input
                     v-model="form.owner_name"

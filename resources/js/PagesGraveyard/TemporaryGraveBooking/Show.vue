@@ -45,7 +45,7 @@ interface TemporaryGraveBooking {
     name: string;
   };
   minister?: string;
-  applicant_type: 'member' | 'non_member';
+  applicant_type: 'member' | 'external';
   applicant_name: string;
   contact_no: string;
   contact_email?: string;
@@ -57,8 +57,7 @@ interface TemporaryGraveBooking {
   total_cost: number;
   paid_amount: number;
   balance_amount: number;
-  payment_status: 'pending' | 'partial' | 'paid';
-  duration_months: number;
+  payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   expected_transfer_date: string;
   transfer_requested: boolean;
   special_requirements?: string;
@@ -161,12 +160,12 @@ const goToPayment = () => {
 };
 
 const canMakePayment = () => {
-  // Can make payment if booking is pending/confirmed AND payment is not completed
+  // Can make payment if booking is active AND payment is not fully completed
+  // For temporary bookings, allow payment even if total_cost is 0 (costs might be added later)
   const isBookingActive = ['pending', 'confirmed'].includes(props.booking.status);
-  const hasCompletedPayment = (props.booking.payments || []).some((payment) => payment.payment_status === 'completed');
   const isPaymentNotCompleted = !['paid', 'completed'].includes(props.booking.payment_status);
 
-  return isBookingActive && !hasCompletedPayment && isPaymentNotCompleted && props.booking.total_cost > 0;
+  return isBookingActive && isPaymentNotCompleted;
 };
 
 const canCancel = () => {
@@ -198,7 +197,7 @@ const cancelBooking = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl sm:px-4 lg:px-6">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -376,11 +375,7 @@ const cancelBooking = () => {
                       </div>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label class="text-sm font-medium text-gray-500">Duration</Label>
-                        <p class="text-base">{{ booking.duration_months }} months</p>
-                      </div>
+                    <div class="grid grid-cols-1 gap-4">
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Transfer Due</Label>
                         <div class="flex items-center space-x-2">
@@ -479,33 +474,31 @@ const cancelBooking = () => {
 
                     <!-- Quick Receipt Access -->
                     <div v-if="booking.payments && booking.payments.length > 0" class="border-t pt-6">
-                      <div class="flex items-center justify-between mb-3">
-                        <Label class="text-sm font-semibold text-gray-700 flex items-center">
+                      <div class="mb-3 flex items-center justify-between">
+                        <Label class="flex items-center text-sm font-semibold text-gray-700">
                           <FileText class="mr-2 h-4 w-4 text-gray-500" />
                           Payment Receipts
                         </Label>
-                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
                           {{ booking.payments.length }} {{ booking.payments.length === 1 ? 'Receipt' : 'Receipts' }}
                         </span>
                       </div>
-                      <div class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                      <div class="space-y-2">
                         <Button
                           v-for="payment in booking.payments"
                           :key="'receipt-' + payment.id"
                           as-child
                           size="sm"
                           variant="outline"
-                          class="h-12 justify-start text-left hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200 group"
+                          class="group h-auto min-h-[3rem] w-full justify-start text-left transition-all duration-200 border-blue-200/60 bg-blue-50/30 hover:border-blue-300 hover:bg-blue-100/60 hover:shadow-sm"
                         >
-                          <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex items-center space-x-3 p-3">
-                            <div class="flex-shrink-0 p-1.5 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                          <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex w-full items-center space-x-3 p-3">
+                            <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>
-                            <div class="min-w-0 flex-1">
-                              <div class="text-sm font-medium text-gray-900">
-                                Receipt #{{ payment.payment_reference }}
-                              </div>
-                              <div class="text-xs text-gray-600 font-medium">
+                            <div class="flex-1">
+                              <div class="text-sm font-medium text-gray-900">Receipt #{{ payment.payment_reference }}</div>
+                              <div class="text-xs font-medium text-gray-600">
                                 {{ formatCurrency(payment.paid_amount) }}
                               </div>
                             </div>

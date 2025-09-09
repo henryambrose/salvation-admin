@@ -26,11 +26,18 @@ class ValidMember extends Model
         'member_id',
         'first_name',
         'last_name',
+        'date_of_birth',
+        'age',
+        'months',
+        'days',
+        'gender_id',
+        'nationality',
+        'parish_id',
         'contact_no',
         'aadhar_no',
         'member_type', // 'member' or 'external'
         'grave_type', // 'permanent_grave' or 'niche'
-        'relationship', // relationship to grave owner
+        'relationship_id', // relationship to grave owner (foreign key)
         'death_date',
         'burial_date',
         'is_active',
@@ -45,6 +52,7 @@ class ValidMember extends Model
      * @var array
      */
     protected $casts = [
+        'date_of_birth' => 'date',
         'death_date' => 'date',
         'burial_date' => 'date',
         'is_active' => 'boolean',
@@ -72,6 +80,30 @@ class ValidMember extends Model
     public function niche()
     {
         return $this->belongsTo(Niche::class);
+    }
+
+    /**
+     * Get the gender associated with the valid member.
+     */
+    public function gender()
+    {
+        return $this->belongsTo(\Modules\Members\Models\Gender::class);
+    }
+
+    /**
+     * Get the parish associated with the valid member.
+     */
+    public function parish()
+    {
+        return $this->belongsTo(\Modules\Members\Models\Parish::class);
+    }
+
+    /**
+     * Get the relationship associated with the valid member.
+     */
+    public function relationship()
+    {
+        return $this->belongsTo(\Modules\Members\Models\Relationship::class);
     }
 
     /**

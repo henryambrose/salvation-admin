@@ -28,9 +28,22 @@ return new class  extends Migration
             // External member fields (for non-parish members)
             $table->string('first_name')->nullable();
             $table->string('last_name')->nullable();
+            $table->date('date_of_birth')->nullable();
+            $table->integer('age')->nullable();
+            $table->integer('months')->nullable();
+            $table->integer('days')->nullable();
+            $table->foreignId('gender_id')->nullable()
+                ->constrained('genders')
+                ->onDelete('set null');
+            $table->string('nationality')->nullable();
+            $table->foreignId('parish_id')->nullable()
+                ->constrained('parishes')
+                ->onDelete('set null');
             $table->string('contact_no')->nullable();
             $table->string('aadhar_no')->nullable();
-            $table->string('relationship', 50)->nullable();
+            $table->foreignId('relationship_id')->nullable()
+                ->constrained('relationships')
+                ->onDelete('set null');
             $table->date('death_date')->nullable();
             $table->date('burial_date')->nullable();
             $table->boolean('is_active')->default(true);

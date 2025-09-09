@@ -28,17 +28,27 @@ interface OriginalPayment {
   payable: {
     id: number;
     booking_reference: string;
-    permanent_grave: {
+    // For permanent graves
+    permanent_grave?: {
       grave_no: string;
       owner_name: string;
       section: string;
       row_no: string;
     };
-    valid_member: {
+    valid_member?: {
       first_name: string;
       last_name: string;
       relationship: string;
     };
+    // For temporary graves
+    temporary_grave?: {
+      grave_no: string;
+      section: string;
+      row_no: string;
+    };
+    dead_first_name?: string;
+    dead_last_name?: string;
+    // Common fields
     applicant_name: string;
     died_on: string;
     buried_on: string;
@@ -93,8 +103,37 @@ const formatDate = (date: string) => {
 };
 
 const getDeceasedName = () => {
-  const validMember = props.originalPayment.payable.valid_member;
-  return `${validMember.first_name} ${validMember.last_name}`;
+  const payable = props.originalPayment.payable;
+  
+  // For permanent graves - use valid_member info
+  if (payable.valid_member) {
+    return `${payable.valid_member.first_name} ${payable.valid_member.last_name}`;
+  }
+  
+  // For temporary graves - use dead_first_name and dead_last_name
+  if (payable.dead_first_name && payable.dead_last_name) {
+    return `${payable.dead_first_name} ${payable.dead_last_name}`;
+  }
+  
+  return 'N/A';
+};
+
+const getGraveDetails = () => {
+  const payable = props.originalPayment.payable;
+  
+  // For permanent graves
+  if (payable.permanent_grave) {
+    const grave = payable.permanent_grave;
+    return `${grave.grave_no} - Section ${grave.section}, Row ${grave.row_no}`;
+  }
+  
+  // For temporary graves
+  if (payable.temporary_grave) {
+    const grave = payable.temporary_grave;
+    return `${grave.grave_no} - Section ${grave.section}, Row ${grave.row_no}`;
+  }
+  
+  return 'N/A';
 };
 
 const setPaymentToBalance = () => {
@@ -204,10 +243,7 @@ const submit = () => {
 
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Grave Details</Label>
-                      <p class="text-base">
-                        {{ originalPayment.payable.permanent_grave.grave_no }} - Section {{ originalPayment.payable.permanent_grave.section }}, Row
-                        {{ originalPayment.payable.permanent_grave.row_no }}
-                      </p>
+                      <p class="text-base">{{ getGraveDetails() }}</p>
                     </div>
 
                     <div>

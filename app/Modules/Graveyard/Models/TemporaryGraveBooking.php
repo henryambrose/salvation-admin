@@ -32,6 +32,7 @@ class TemporaryGraveBooking extends Model
         'months',
         'days',
         'gender_id',
+        'deceased_member_id',
         'nationality',
         'parish_id',
         'cause_of_death',
@@ -52,7 +53,6 @@ class TemporaryGraveBooking extends Model
         'payment_status',
         'payment_method',
         'payment_remarks',
-        'duration_months',
         'expected_transfer_date',
         'transfer_requested',
         'created_by',
@@ -72,7 +72,6 @@ class TemporaryGraveBooking extends Model
         'age' => 'integer',
         'months' => 'integer',
         'days' => 'integer',
-        'duration_months' => 'integer',
         'transfer_requested' => 'boolean',
     ];
 
@@ -90,8 +89,9 @@ class TemporaryGraveBooking extends Model
 
             // Calculate expected transfer date if not set
             if (!$booking->expected_transfer_date && $booking->buried_on) {
+                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
                 $booking->expected_transfer_date = Carbon::parse($booking->buried_on)
-                    ->addMonths($booking->duration_months ?? 12);
+                    ->addMonths($monthsFromEnv);
             }
         });
 
@@ -148,6 +148,14 @@ class TemporaryGraveBooking extends Model
     }
 
     /**
+     * Get the deceased member (if deceased is a member)
+     */
+    public function deceasedMember(): BelongsTo
+    {
+        return $this->belongsTo(Member::class, 'deceased_member_id');
+    }
+
+    /**
      * Get the creator
      */
     public function creator(): BelongsTo
@@ -200,9 +208,10 @@ class TemporaryGraveBooking extends Model
      */
     public function scopeEligibleForTransfer($query)
     {
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
         return $query->where('status', 'confirmed')
             ->where('transfer_requested', false)
-            ->where('expected_transfer_date', '<=', now()->addMonths(2)); // Within 2 months of transfer date
+            ->where('expected_transfer_date', '<=', now()->addMonths($monthsFromEnv)); // Within configured months of transfer date
     }
 
     /**
@@ -275,12 +284,10 @@ class TemporaryGraveBooking extends Model
      */
     public function processConfirmation(): void
     {
-        // Mark temporary grave as occupied
-        $this->temporaryGrave->update([
-            'is_available' => false,
-            'occupied_date' => $this->buried_on,
-            'updated_by' => Auth::id() ?? null
-        ]);
+        // Mark temporary grave as unavailable using the proper method
+        if ($this->temporaryGrave) {
+            $this->temporaryGrave->markAsBooked($this->buried_on);
+        }
     }
 
     /**
@@ -308,7 +315,8 @@ class TemporaryGraveBooking extends Model
             return false;
         }
 
-        return $this->expected_transfer_date <= now()->addMonths(2);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        return $this->expected_transfer_date <= now()->addMonths($monthsFromEnv);
     }
 
     /**

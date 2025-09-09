@@ -135,4 +135,15 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Graveyard Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for the graveyard module.
+    |
+    */
+
+    'graveyard_min_months_before_niche_transfer' => env('GRAVEYARD_MIN_MONTHS_BEFORE_NICHE_TRANSFER', 6),
+
 ];

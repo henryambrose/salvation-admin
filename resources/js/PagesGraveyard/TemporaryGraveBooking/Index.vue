@@ -5,11 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, Clock, Eye, MapPin, Phone, Plus, Search, User } from 'lucide-vue-next';
+import { ArrowRight, Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface TemporaryGraveBooking {
@@ -37,8 +36,9 @@ interface TemporaryGraveBooking {
   applicant_name: string;
   contact_no: string;
   total_cost: number;
-  payment_status: 'pending' | 'partial' | 'paid';
-  duration_months: number;
+  paid_amount: number;
+  balance_amount: number;
+  payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   expected_transfer_date: string;
   transfer_requested: boolean;
   created_at: string;
@@ -66,6 +66,12 @@ const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
 const transferDue = ref(props.filters.transfer_due || 'all');
 
+console.log('Initial filter values:', {
+  search: search.value,
+  status: status.value,
+  transferDue: transferDue.value,
+});
+
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
@@ -76,9 +82,28 @@ const paymentStatusColors = {
   pending: 'bg-orange-100 text-orange-800',
   partial: 'bg-blue-100 text-blue-800',
   paid: 'bg-green-100 text-green-800',
+  completed: 'bg-green-100 text-green-800',
+};
+
+// Debounced search
+let searchTimeout: number;
+const debouncedSearch = () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    // Only search if 2+ characters or empty (to clear results)
+    if (!search.value || search.value.length >= 2) {
+      applyFilters();
+    }
+  }, 500);
 };
 
 const applyFilters = () => {
+  console.log('applyFilters called with values:', {
+    search: search.value,
+    status: status.value,
+    transferDue: transferDue.value,
+  });
+
   router.get(
     route('graveyard.temporary-grave-bookings.index'),
     {
@@ -136,6 +161,29 @@ const isTransferDueSoon = (booking: TemporaryGraveBooking) => {
   return dueDate <= twoMonthsFromNow && dueDate >= new Date();
 };
 
+const canDeleteBooking = (booking: TemporaryGraveBooking) => {
+  return booking.status === 'pending';
+};
+
+const deleteBooking = (booking: TemporaryGraveBooking) => {
+  if (!canDeleteBooking(booking)) {
+    alert('Only pending bookings can be deleted.');
+    return;
+  }
+
+  if (confirm(`Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`)) {
+    router.delete(route('graveyard.temporary-grave-bookings.destroy', booking.id), {
+      onSuccess: () => {
+        // Success message will be shown via flash message
+      },
+      onError: (errors) => {
+        console.error('Failed to delete booking:', errors);
+        alert('Failed to delete booking. Please try again.');
+      },
+    });
+  }
+};
+
 const requestTransfer = (bookingId: number) => {
   router.post(route('graveyard.temporary-grave-bookings.request-transfer', bookingId));
 };
@@ -168,8 +216,8 @@ const requestTransfer = (bookingId: number) => {
 
           <!-- Filters -->
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-5">
-              <div class="sm:col-span-2">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
+              <div class="sm:col-span-1">
                 <Label for="search">Search</Label>
                 <div class="relative mt-1">
                   <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -178,8 +226,9 @@ const requestTransfer = (bookingId: number) => {
                   <Input
                     id="search"
                     v-model="search"
-                    placeholder="Search by deceased name, grave number..."
+                    placeholder="Search by deceased name, grave number, or permit..."
                     class="pl-10"
+                    @input="debouncedSearch"
                     @keyup.enter="applyFilters"
                   />
                 </div>
@@ -187,43 +236,40 @@ const requestTransfer = (bookingId: number) => {
 
               <div>
                 <Label for="status">Status</Label>
-                <Select v-model="status">
-                  <SelectTrigger class="mt-1">
-                    <SelectValue placeholder="All statuses" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All statuses</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  v-model="status"
+                  @change="applyFilters"
+                  class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All statuses</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
               </div>
 
               <div>
                 <Label for="transfer_due">Transfer Status</Label>
-                <Select v-model="transferDue">
-                  <SelectTrigger class="mt-1">
-                    <SelectValue placeholder="All" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="due_soon">Due Soon</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  v-model="transferDue"
+                  @change="applyFilters"
+                  class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All</option>
+                  <option value="due_soon">Due Soon</option>
+                  <option value="overdue">Overdue</option>
+                </select>
               </div>
 
-              <div class="flex items-end space-x-2">
-                <Button @click="applyFilters" class="flex-1"> Apply </Button>
-                <Button variant="outline" @click="clearFilters"> Clear </Button>
+              <div class="flex items-end">
+                <Button variant="outline" @click="clearFilters"> Clear Filters </Button>
               </div>
             </div>
           </div>
 
           <!-- Content -->
           <div class="px-4 py-5 sm:p-6">
-            <div v-if="bookings.data.length === 0" class="py-12 text-center">
+            <div v-if="!bookings?.data?.length" class="py-12 text-center">
               <Calendar class="mx-auto h-12 w-12 text-gray-400" />
               <h3 class="mt-2 text-sm font-medium text-gray-900">No bookings found</h3>
               <p class="mt-1 text-sm text-gray-500">Get started by creating a new temporary grave booking.</p>
@@ -242,19 +288,19 @@ const requestTransfer = (bookingId: number) => {
               <div class="hidden sm:block">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Booking Details</TableHead>
-                      <TableHead>Deceased</TableHead>
-                      <TableHead>Grave</TableHead>
-                      <TableHead>Contact</TableHead>
-                      <TableHead>Transfer Status</TableHead>
-                      <TableHead>Financial</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead class="text-right">Actions</TableHead>
+                    <TableRow class="border-b">
+                      <TableHead class="font-medium text-gray-900">Booking Details</TableHead>
+                      <TableHead class="font-medium text-gray-900">Deceased</TableHead>
+                      <TableHead class="font-medium text-gray-900">Grave</TableHead>
+                      <TableHead class="font-medium text-gray-900">Contact</TableHead>
+                      <TableHead class="font-medium text-gray-900">Transfer Status</TableHead>
+                      <TableHead class="font-medium text-gray-900">Payment Details</TableHead>
+                      <TableHead class="font-medium text-gray-900">Status</TableHead>
+                      <TableHead class="text-right font-medium text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow v-for="booking in bookings.data" :key="booking.id">
+                    <TableRow v-for="booking in bookings?.data || []" :key="booking.id">
                       <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">#{{ booking.booking_reference }}</div>
@@ -280,7 +326,6 @@ const requestTransfer = (bookingId: number) => {
                             {{ booking.temporary_grave.grave_no }}
                           </div>
                           <div class="text-sm text-gray-500">{{ booking.temporary_grave.section }}, Row {{ booking.temporary_grave.row_no }}</div>
-                          <div class="text-xs text-gray-400">{{ booking.duration_months }} months</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -310,12 +355,15 @@ const requestTransfer = (bookingId: number) => {
                       </TableCell>
                       <TableCell>
                         <div>
-                          <div class="font-medium text-gray-900">
-                            {{ formatCurrency(booking.total_cost) }}
+                          <div class="font-medium text-gray-900">Total: {{ formatCurrency(booking.total_cost) }}</div>
+                          <div v-if="booking.payment_status === 'partial'" class="text-sm">
+                            <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
+                            <div class="font-medium text-red-600">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
                           </div>
-                          <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
-                            {{ booking.payment_status }}
-                          </Badge>
+                          <div v-else-if="booking.payment_status === 'paid' || booking.payment_status === 'completed'" class="text-sm text-green-600">
+                            Fully Paid
+                          </div>
+                          <div v-else class="text-sm text-gray-500">Not Paid</div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -324,7 +372,7 @@ const requestTransfer = (bookingId: number) => {
                         </Badge>
                       </TableCell>
                       <TableCell class="text-right">
-                        <div class="flex justify-end space-x-2">
+                        <div class="flex items-center justify-end space-x-2">
                           <Button variant="outline" size="sm" as-child>
                             <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                               <Eye class="h-4 w-4" />
@@ -339,6 +387,15 @@ const requestTransfer = (bookingId: number) => {
                           >
                             <ArrowRight class="h-4 w-4" />
                           </Button>
+                          <Button
+                            v-if="canDeleteBooking(booking)"
+                            variant="outline"
+                            size="sm"
+                            @click="deleteBooking(booking)"
+                            class="text-red-600 hover:bg-red-50 hover:text-red-800"
+                          >
+                            <Trash2 class="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -348,7 +405,7 @@ const requestTransfer = (bookingId: number) => {
 
               <!-- Mobile Cards -->
               <div class="space-y-4 sm:hidden">
-                <Card v-for="booking in bookings.data" :key="booking.id">
+                <Card v-for="booking in bookings?.data || []" :key="booking.id">
                   <CardHeader class="pb-3">
                     <div class="flex items-center justify-between">
                       <CardTitle class="text-base"> #{{ booking.booking_reference }} </CardTitle>
@@ -384,12 +441,16 @@ const requestTransfer = (bookingId: number) => {
                     </div>
                     <div class="flex items-center justify-between pt-2">
                       <div>
-                        <div class="font-medium">{{ formatCurrency(booking.total_cost) }}</div>
-                        <Badge :class="paymentStatusColors[booking.payment_status]" class="text-xs">
+                        <div class="font-medium">Total: {{ formatCurrency(booking.total_cost) }}</div>
+                        <div v-if="booking.payment_status === 'partial'" class="space-y-1 text-sm">
+                          <div class="text-green-600">Paid: {{ formatCurrency(booking.paid_amount) }}</div>
+                          <div class="font-medium text-red-600">Balance: {{ formatCurrency(booking.balance_amount) }}</div>
+                        </div>
+                        <Badge :class="paymentStatusColors[booking.payment_status]" class="mt-1 text-xs">
                           {{ booking.payment_status }}
                         </Badge>
                       </div>
-                      <div class="flex space-x-2">
+                      <div class="flex items-center space-x-2">
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
@@ -404,6 +465,15 @@ const requestTransfer = (bookingId: number) => {
                         >
                           <ArrowRight class="h-4 w-4" />
                         </Button>
+                        <Button
+                          v-if="canDeleteBooking(booking)"
+                          variant="outline"
+                          size="sm"
+                          @click="deleteBooking(booking)"
+                          class="text-red-600 hover:bg-red-50 hover:text-red-800"
+                        >
+                          <Trash2 class="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
@@ -412,6 +482,7 @@ const requestTransfer = (bookingId: number) => {
 
               <!-- Pagination -->
               <Pagination
+                v-if="bookings?.meta"
                 :current-page="bookings.meta.current_page"
                 :last-page="bookings.meta.last_page"
                 :prev-page-url="bookings.meta.prev_page_url"

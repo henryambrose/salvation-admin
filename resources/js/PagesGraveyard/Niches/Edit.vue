@@ -85,11 +85,23 @@
                   <label class="mb-2 block text-sm font-medium text-gray-700">Member Type</label>
                   <div class="flex space-x-4">
                     <label class="flex items-center">
-                      <input v-model="form.member_type" type="radio" value="member" class="mr-2 text-blue-600 focus:ring-blue-500" @change="handleMemberTypeChange" />
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="member"
+                        class="mr-2 text-blue-600 focus:ring-blue-500"
+                        @change="handleMemberTypeChange"
+                      />
                       <span class="text-sm text-gray-700">Parish Member</span>
                     </label>
                     <label class="flex items-center">
-                      <input v-model="form.member_type" type="radio" value="non_member" class="mr-2 text-blue-600 focus:ring-blue-500" @change="handleMemberTypeChange" />
+                      <input
+                        v-model="form.member_type"
+                        type="radio"
+                        value="external"
+                        class="mr-2 text-blue-600 focus:ring-blue-500"
+                        @change="handleMemberTypeChange"
+                      />
                       <span class="text-sm text-gray-700">Non-Member</span>
                     </label>
                   </div>
@@ -132,7 +144,7 @@
                     <div class="flex items-start justify-between">
                       <div>
                         <div class="text-sm text-blue-700">
-                          <div class="font-medium">{{ selectedMember.full_name || (selectedMember.first_name + ' ' + selectedMember.last_name) }}</div>
+                          <div class="font-medium">{{ selectedMember.full_name || selectedMember.first_name + ' ' + selectedMember.last_name }}</div>
                           <div class="text-sm text-gray-500">
                             Community No: {{ selectedMember.community?.name?.split('-')[0]?.trim() }} | Family:
                             {{ selectedMember.family_no || 'N/A' }}
@@ -148,7 +160,7 @@
                 </div>
 
                 <!-- Non-Member Input -->
-                <div v-if="form.member_type === 'non_member'" class="mb-4">
+                <div v-if="form.member_type === 'external'" class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Name</label>
                   <input
                     v-model="form.owner_name"
@@ -335,7 +347,7 @@ const initializeForm = () => {
     }
 
     // Determine member type based on existing data
-    form.member_type = niche.member_id ? 'member' : 'non_member';
+    form.member_type = niche.member_id ? 'member' : 'external';
     form.niche_no = niche.niche_no || '';
     form.sr_no = niche.sr_no || '';
     form.location = niche.location || '';

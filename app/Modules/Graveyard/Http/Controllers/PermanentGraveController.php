@@ -49,8 +49,8 @@ class PermanentGraveController extends Controller
         $sortBy = $request->get('sort', 'section');
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection)
-              ->orderBy('row_no', 'asc')
-              ->orderBy('grave_no', 'asc');
+            ->orderBy('row_no', 'asc')
+            ->orderBy('grave_no', 'asc');
 
         // Pagination
         $perPage = $request->get('perPage', 10);
@@ -104,7 +104,7 @@ class PermanentGraveController extends Controller
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
         ]);
 
         // Validate mutually exclusive fields
@@ -188,7 +188,7 @@ class PermanentGraveController extends Controller
     public function edit(PermanentGrave $permanentGrave)
     {
         $permanentGrave->load(['member', 'member.community']);
-        
+
         $sections = PermanentGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
@@ -218,7 +218,7 @@ class PermanentGraveController extends Controller
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
         ]);
 
         // Validate mutually exclusive fields
@@ -349,7 +349,7 @@ class PermanentGraveController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->get('query');
-        
+
         if (strlen($query) < 2) {
             return response()->json([]);
         }
@@ -357,11 +357,11 @@ class PermanentGraveController extends Controller
         $members = Member::with(['community'])
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
-                  ->orWhere('last_name', 'like', "%{$query}%")
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
-                  ->orWhere('family_no', 'like', "%{$query}%")
-                  ->orWhere('contact_no_1', 'like', "%{$query}%")
-                  ->orWhere('contact_no_2', 'like', "%{$query}%");
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
+                    ->orWhere('family_no', 'like', "%{$query}%")
+                    ->orWhere('contact_no_1', 'like', "%{$query}%")
+                    ->orWhere('contact_no_2', 'like', "%{$query}%");
             })
             ->limit(10)
             ->get()

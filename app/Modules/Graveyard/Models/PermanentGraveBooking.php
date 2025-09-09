@@ -202,17 +202,18 @@ class PermanentGraveBooking extends Model
      */
     public function processConfirmation(): void
     {
-        // Update grave's last burial date
-        $this->permanentGrave->update([
-            'last_burial_date' => $this->buried_on,
-            'updated_by' => Auth::id()
-        ]);
+        // Mark permanent grave as unavailable and update burial date
+        if ($this->permanentGrave) {
+            $this->permanentGrave->markAsBooked($this->buried_on);
+        }
 
         // Mark valid member as deceased
-        $this->validMember->update([
-            'death_date' => $this->died_on,
-            'updated_by' => Auth::id()
-        ]);
+        if ($this->validMember) {
+            $this->validMember->update([
+                'death_date' => $this->died_on,
+                'updated_by' => Auth::id()
+            ]);
+        }
     }
 
     /**
@@ -265,6 +266,15 @@ class PermanentGraveBooking extends Model
             'status' => 'cancelled',
             'remarks' => $reason
         ]);
+
+        // For permanent graves, we might want to reset the grave status if this was a confirmed booking
+        // This depends on business rules - permanent graves might stay unavailable even after cancellation
+        // Uncomment below if graves should be released on cancellation:
+        /*
+        if ($this->permanentGrave && $this->permanentGrave->status === 'unavailable') {
+            $this->permanentGrave->update(['status' => 'available']);
+        }
+        */
 
         return true;
     }

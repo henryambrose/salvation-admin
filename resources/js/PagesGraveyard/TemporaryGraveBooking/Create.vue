@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Calendar, MapPin, Phone, User } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
+import { computed, ref } from 'vue';
 
 interface TemporaryGrave {
   id: number;
@@ -32,6 +32,20 @@ interface Relationship {
   name: string;
 }
 
+interface Member {
+  id: number;
+  name: string;
+  full_name: string;
+  member_no: string;
+  family_no: string;
+  community: {
+    name: string;
+  };
+  current_add1: string;
+  contact_no_1: string;
+  gender: string;
+}
+
 interface Props {
   availableGraves: TemporaryGrave[];
   genders: Gender[];
@@ -43,8 +57,10 @@ const props = defineProps<Props>();
 
 const form = useForm({
   temporary_grave_id: null as number | null,
-  dead_first_name: '',
-  dead_last_name: '',
+  deceased_person_type: '' as '' | 'member' | 'external',
+  deceased_member_id: null as number | null,
+  dead_first_name: '' as string | undefined,
+  dead_last_name: '' as string | undefined,
   date_of_birth: '',
   age: null as number | null,
   months: null as number | null,
@@ -71,14 +87,67 @@ const selectedGrave = computed(() => {
   return props.availableGraves.find((grave) => grave.id === form.temporary_grave_id);
 });
 
+// Member search functionality
+const memberSearchQuery = ref('');
+const memberSearchResults = ref<Member[]>([]);
+const selectedMember = ref<Member | null>(null);
+const isSearchingMembers = ref(false);
+
+// Search members function
+const searchMembers = async () => {
+  if (memberSearchQuery.value.length < 2) {
+    memberSearchResults.value = [];
+    return;
+  }
+
+  isSearchingMembers.value = true;
+  try {
+    const response = await fetch(
+      route('graveyard.temporary-grave-bookings.search-members') + '?query=' + encodeURIComponent(memberSearchQuery.value)
+    );
+    const data = await response.json();
+    memberSearchResults.value = data;
+  } catch (error) {
+    console.error('Error searching members:', error);
+    memberSearchResults.value = [];
+  } finally {
+    isSearchingMembers.value = false;
+  }
+};
+
+// Select member function
+const selectMember = (member: Member) => {
+  selectedMember.value = member;
+  form.deceased_member_id = member.id;
+  memberSearchQuery.value = '';
+  memberSearchResults.value = [];
+};
+
+// Clear selected member
+const clearSelectedMember = () => {
+  selectedMember.value = null;
+  form.deceased_member_id = null;
+};
+
 const submit = () => {
   form
-    .transform((data) => ({
-      ...data,
-      gender_id: data.gender_id ? parseInt(data.gender_id) : null,
-      parish_id: data.parish_id ? parseInt(data.parish_id) : null,
-      relationship_id: data.relationship_id ? parseInt(data.relationship_id) : null,
-    }))
+    .transform((data) => {
+      const transformedData = {
+        ...data,
+        gender_id: data.gender_id ? parseInt(data.gender_id) : null,
+        parish_id: data.parish_id ? parseInt(data.parish_id) : null,
+        relationship_id: data.relationship_id ? parseInt(data.relationship_id) : null,
+        deceased_member_id: data.deceased_member_id || null,
+      };
+
+      // Only include external deceased person fields when person type is external
+      if (data.deceased_person_type !== 'external') {
+        transformedData.dead_first_name = undefined;
+        transformedData.dead_last_name = undefined;
+      }
+
+      return transformedData;
+    })
     .post(route('graveyard.temporary-grave-bookings.store'));
 };
 </script>
@@ -203,6 +272,117 @@ const submit = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent class="space-y-4">
+                <!-- Person Type Selection -->
+                <div>
+                  <Label class="text-base font-medium">Person Type *</Label>
+                  <div class="mt-2 flex items-center space-x-6">
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.deceased_person_type"
+                        type="radio"
+                        value="member"
+                        class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span class="ml-2 text-sm font-medium text-gray-700">Member</span>
+                    </label>
+                    <label class="flex items-center">
+                      <input
+                        v-model="form.deceased_person_type"
+                        type="radio"
+                        value="external"
+                        class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span class="ml-2 text-sm font-medium text-gray-700">External</span>
+                    </label>
+                  </div>
+                  <div v-if="form.errors.deceased_person_type" class="mt-1 text-sm text-red-600">
+                    {{ form.errors.deceased_person_type }}
+                  </div>
+                </div>
+
+                <!-- Member Search (for deceased members) -->
+                <div v-if="form.deceased_person_type === 'member'" class="space-y-4">
+                  <div>
+                    <Label>Search Member *</Label>
+                    <div class="relative mt-1">
+                      <input
+                        v-model="memberSearchQuery"
+                        type="text"
+                        placeholder="Search by name, family number, or phone..."
+                        class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                        :class="form.errors.deceased_member_id && 'border-red-500'"
+                        @input="searchMembers"
+                      />
+
+                      <!-- Search Results Dropdown -->
+                      <div
+                        v-if="memberSearchResults.length > 0 && memberSearchQuery"
+                        class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                      >
+                        <div
+                          v-for="member in memberSearchResults"
+                          :key="member.id"
+                          @click="selectMember(member)"
+                          class="cursor-pointer border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                        >
+                          <div class="font-medium text-gray-900">{{ member.name }}</div>
+                          <div class="text-sm text-gray-500">
+                            Community No: {{ member.community?.name?.split('-')[0]?.trim() || 'N/A' }} | 
+                            Family: {{ member.family_no || 'N/A' }} | 
+                            Member No: {{ member.member_no || 'N/A' }}
+                          </div>
+                          <div class="text-sm text-gray-500">
+                            Address: {{ member.current_add1 || 'N/A' }} | 
+                            Contact: {{ member.contact_no_1 || 'N/A' }}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Loading State -->
+                      <div v-if="isSearchingMembers" class="absolute inset-y-0 right-0 flex items-center pr-3">
+                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent"></div>
+                      </div>
+                    </div>
+
+                    <!-- Search Helper Text -->
+                    <p class="mt-1 text-xs text-gray-500">Start typing to search (minimum 2 characters)</p>
+                    
+                    <div v-if="form.errors.deceased_member_id" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.deceased_member_id }}
+                    </div>
+                  </div>
+
+                  <!-- Selected Member Display -->
+                  <div v-if="selectedMember" class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <h4 class="font-medium text-blue-900">Selected Member</h4>
+                        <div class="mt-2 space-y-1">
+                          <div class="font-medium text-blue-800">{{ selectedMember.name }}</div>
+                          <div class="text-sm text-blue-700">
+                            Community No: {{ selectedMember.community?.name?.split('-')[0]?.trim() || 'N/A' }} | 
+                            Family: {{ selectedMember.family_no || 'N/A' }}
+                          </div>
+                          <div class="text-sm text-blue-700">
+                            Member No: {{ selectedMember.member_no || 'N/A' }}
+                          </div>
+                          <div class="text-sm text-blue-700">
+                            Address: {{ selectedMember.current_add1 || 'N/A' }}
+                          </div>
+                          <div class="text-sm text-blue-700">
+                            Contact: {{ selectedMember.contact_no_1 || 'N/A' }}
+                          </div>
+                        </div>
+                      </div>
+                      <button @click="clearSelectedMember" type="button" class="text-blue-600 hover:text-blue-800">
+                        <X class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Manual Entry for External -->
+                <div v-if="form.deceased_person_type === 'external'" class="space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label for="dead_first_name">First Name *</Label>
@@ -309,6 +489,7 @@ const submit = () => {
                       </option>
                     </select>
                   </div>
+                </div>
                 </div>
               </CardContent>
             </Card>

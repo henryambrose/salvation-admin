@@ -148,7 +148,6 @@
                   </div>
                 </th>
                 <th class="border-b p-3 font-semibold text-gray-700">Owner Name</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Duration</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Plot Size</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Last Burial</th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
@@ -193,7 +192,6 @@
                   </span>
                 </td>
                 <td class="p-2">{{ grave.owner_name || (grave.member ? grave.member.first_name + ' ' + grave.member.last_name : '-') }}</td>
-                <td class="p-2">{{ grave.duration_months ? `${grave.duration_months} months` : '-' }}</td>
                 <td class="p-2">{{ grave.plot_size ? `${grave.plot_size} sq ft` : '-' }}</td>
                 <td class="p-2">{{ grave.last_burial_date ? formatDate(grave.last_burial_date) : '-' }}</td>
                 <td v-if="!serverArchived" class="p-2">

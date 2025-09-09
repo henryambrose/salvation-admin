@@ -364,7 +364,6 @@ class TemporaryGraveSeeder extends Seeder
                 'status' => $temporaryGrave['status'] ?? 'available',
                 'oldno' => $temporaryGrave['oldno'],
                 'last_burial_date' => $lastBurialDate,
-                'duration_months' => 18, // Default duration for temporary graves
                 'buried_name' => $temporaryGrave['buried_name'] ?? null, // Map 'owner' to 'owner_name'
                 'contact_no' => $temporaryGrave['contact_no'] ?? null,
                 'member_id' => $temporaryGrave['member_id'],

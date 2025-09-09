@@ -289,10 +289,10 @@ class NicheTransfer extends Model
             'updated_by' => Auth::id()
         ]);
 
-        // Mark niche as occupied
+        // Mark niche as unavailable
         $this->toNiche->update([
-            'is_available' => false,
-            'occupied_date' => $this->actual_transfer_date,
+            'status' => 'unavailable',
+            'last_occupation_date' => $this->actual_transfer_date,
             'updated_by' => Auth::id()
         ]);
 

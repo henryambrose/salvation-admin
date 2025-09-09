@@ -118,6 +118,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     Route::prefix('graveyard/temporary-grave-bookings')->name('graveyard.temporary-grave-bookings.')->group(function () {
         Route::get('/', [TemporaryGraveBookingController::class, 'index'])->name('index');
         Route::get('/create', [TemporaryGraveBookingController::class, 'create'])->name('create');
+        Route::get('/search-members', [TemporaryGraveBookingController::class, 'searchMembers'])->name('search-members');
         Route::post('/', [TemporaryGraveBookingController::class, 'store'])->name('store');
         Route::get('/eligible-for-transfer', [TemporaryGraveBookingController::class, 'eligibleForTransfer'])->name('eligible-for-transfer');
         Route::get('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'show'])->name('show');

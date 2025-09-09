@@ -68,12 +68,59 @@ class NicheTransferController extends Controller
                 ->findOrFail($bookingId);
         }
 
+        // Get eligible bookings
+        $eligibleBookings = TemporaryGraveBooking::eligibleForTransfer()
+            ->with(['temporaryGrave'])
+            ->get();
+
+        // If a specific booking was requested, include it even if transfer_requested = true
+        if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {
+            // Add the selected booking to the list if it's not already there
+            if ($selectedBooking->status === 'confirmed') {
+                $eligibleBookings->prepend($selectedBooking);
+            }
+        }
+
+        // Format the bookings for the frontend
+        $eligibleBookings = $eligibleBookings->map(function ($booking) {
+            return [
+                'id' => $booking->id,
+                'booking_reference' => $booking->booking_reference,
+                'deceased_full_name' => $booking->deceased_full_name,
+                'grave_no' => $booking->temporaryGrave->grave_no,
+                'buried_on' => $booking->buried_on,
+                'expected_transfer_date' => $booking->expected_transfer_date,
+                'is_overdue' => $booking->isTransferOverdue(),
+                'temporary_grave' => [
+                    'grave_no' => $booking->temporaryGrave->grave_no,
+                    'section' => $booking->temporaryGrave->section,
+                    'row_no' => $booking->temporaryGrave->row_no,
+                ]
+            ];
+        });
+
+        // Format selected booking
+        if ($selectedBooking) {
+            $selectedBooking = [
+                'id' => $selectedBooking->id,
+                'booking_reference' => $selectedBooking->booking_reference,
+                'deceased_full_name' => $selectedBooking->deceased_full_name,
+                'grave_no' => $selectedBooking->temporaryGrave->grave_no,
+                'buried_on' => $selectedBooking->buried_on,
+                'expected_transfer_date' => $selectedBooking->expected_transfer_date,
+                'is_overdue' => $selectedBooking->isTransferOverdue(),
+                'temporary_grave' => [
+                    'grave_no' => $selectedBooking->temporaryGrave->grave_no,
+                    'section' => $selectedBooking->temporaryGrave->section,
+                    'row_no' => $selectedBooking->temporaryGrave->row_no,
+                ]
+            ];
+        }
+
         return Inertia::render('PagesGraveyard/NicheTransfer/Create', [
             'serviceTypes' => ServiceType::active()->byCategory('grave')->get(),
-            'eligibleBookings' => TemporaryGraveBooking::eligibleForTransfer()
-                ->with(['temporaryGrave'])
-                ->get(),
-            'availableNiches' => Niche::where('is_available', true)->get(),
+            'eligibleBookings' => $eligibleBookings,
+            'availableNiches' => Niche::where('status', 'available')->where('is_active', true)->get(),
             'selectedBooking' => $selectedBooking
         ]);
     }
@@ -114,7 +161,7 @@ class NicheTransferController extends Controller
 
             // Check if niche is still available
             $niche = Niche::findOrFail($request->to_niche_id);
-            if (!$niche->is_available) {
+            if (!$niche->isAvailable()) {
                 return back()->withErrors(['niche' => 'This niche is no longer available.']);
             }
 

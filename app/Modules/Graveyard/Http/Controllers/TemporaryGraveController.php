@@ -97,7 +97,6 @@ class TemporaryGraveController extends Controller
             'oldno' => 'nullable|string|max:50',
             'status' => 'required|in:available,unavailable',
             'last_burial_date' => 'nullable|date',
-            'duration_months' => 'nullable|integer|min:1|max:120',
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
@@ -139,7 +138,6 @@ class TemporaryGraveController extends Controller
                 'oldno' => $request->oldno,
                 'status' => $request->status,
                 'last_burial_date' => $request->last_burial_date,
-                'duration_months' => $request->duration_months,
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
@@ -154,7 +152,6 @@ class TemporaryGraveController extends Controller
                 'id' => $temporaryGrave->id,
                 'section' => $temporaryGrave->section,
                 'grave_no' => $temporaryGrave->grave_no,
-                'duration_months' => $temporaryGrave->duration_months,
                 'created_by' => Auth::id(),
             ]);
 
@@ -212,14 +209,13 @@ class TemporaryGraveController extends Controller
             'oldno' => 'nullable|string|max:50',
             'status' => 'required|in:available,occupied,reserved,maintenance',
             'last_burial_date' => 'nullable|date',
-            'duration_months' => 'nullable|integer|min:1|max:120',
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
             'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
         ]);
 
         // Validate mutually exclusive fields
@@ -256,7 +252,6 @@ class TemporaryGraveController extends Controller
                 'oldno' => $request->oldno,
                 'status' => $request->status,
                 'last_burial_date' => $request->last_burial_date,
-                'duration_months' => $request->duration_months,
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
@@ -270,7 +265,6 @@ class TemporaryGraveController extends Controller
                 'id' => $temporaryGrave->id,
                 'section' => $temporaryGrave->section,
                 'grave_no' => $temporaryGrave->grave_no,
-                'duration_months' => $temporaryGrave->duration_months,
                 'updated_by' => Auth::id(),
             ]);
 

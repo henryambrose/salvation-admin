@@ -27,8 +27,8 @@ return new class extends Migration
             $table->date('buried_on');
 
             // Deceased person details (no valid member required for temporary)
-            $table->string('dead_first_name', 100);
-            $table->string('dead_last_name', 100);
+            $table->string('dead_first_name', 100)->nullable();
+            $table->string('dead_last_name', 100)->nullable();
             $table->date('date_of_birth')->nullable();
 
             // Age details (alternative to date of birth)
@@ -38,6 +38,7 @@ return new class extends Migration
 
             // Personal details
             $table->foreignId('gender_id')->nullable()->constrained('genders')->nullOnDelete();
+            $table->foreignId('deceased_member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->string('nationality', 100)->nullable();
             $table->foreignId('parish_id')->nullable()->constrained('parishes')->nullOnDelete();
 
@@ -48,7 +49,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
 
             // Applicant details
-            $table->enum('applicant_type', ['member', 'non_member'])->default('non_member');
+            $table->enum('applicant_type', ['member', 'external'])->default('external');
             $table->foreignId('applicant_member_id')->nullable()->constrained('members')->nullOnDelete();
             $table->string('applicant_name');
             $table->string('contact_no');
@@ -62,12 +63,11 @@ return new class extends Migration
             $table->decimal('total_cost', 10, 2)->default(0);
             $table->decimal('paid_amount', 10, 2)->default(0);
             $table->decimal('balance_amount', 10, 2)->default(0);
-            $table->enum('payment_status', ['pending', 'partial', 'paid'])->default('pending');
+            $table->enum('payment_status', ['pending', 'partial', 'paid', 'completed'])->default('pending');
             $table->string('payment_method')->nullable();
             $table->text('payment_remarks')->nullable();
 
             // Temporary grave specific fields
-            $table->integer('duration_months')->default(12); // Expected duration in months
             $table->date('expected_transfer_date')->nullable(); // When this might be transferred to permanent/niche
             $table->boolean('transfer_requested')->default(false);
 

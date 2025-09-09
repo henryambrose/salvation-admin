@@ -111,7 +111,7 @@
                       <input
                         v-model="form.member_type"
                         type="radio"
-                        value="non_member"
+                        value="external"
                         class="mr-2 text-blue-600 focus:ring-blue-500"
                         @change="handleMemberTypeChange"
                       />
@@ -173,7 +173,7 @@
                 </div>
 
                 <!-- Non-Member Input -->
-                <div v-if="form.member_type === 'non_member'" class="mb-4">
+                <div v-if="form.member_type === 'external'" class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Name</label>
                   <input
                     v-model="form.owner_name"
@@ -201,32 +201,17 @@
               <div class="rounded-lg bg-gray-50 p-6">
                 <h3 class="mb-4 text-lg font-medium text-gray-900">Grave Details</h3>
 
-                <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Plot Size (sq ft)</label>
-                    <input
-                      v-model="form.plot_size"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholder="Enter plot size"
-                    />
-                    <p v-if="errors.plot_size" class="mt-1 text-sm text-red-600">{{ errors.plot_size }}</p>
-                  </div>
-
-                  <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Duration (Months)</label>
-                    <input
-                      v-model="form.duration_months"
-                      type="number"
-                      min="1"
-                      max="120"
-                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholder="Enter duration in months"
-                    />
-                    <p v-if="errors.duration_months" class="mt-1 text-sm text-red-600">{{ errors.duration_months }}</p>
-                  </div>
+                <div>
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Plot Size (sq ft)</label>
+                  <input
+                    v-model="form.plot_size"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Enter plot size"
+                  />
+                  <p v-if="errors.plot_size" class="mt-1 text-sm text-red-600">{{ errors.plot_size }}</p>
                 </div>
 
                 <div class="mt-4">
@@ -317,7 +302,6 @@ const form = useForm({
   oldno: '',
   status: '',
   last_burial_date: '',
-  duration_months: '',
   owner_name: '',
   member_id: null as number | null,
   contact_no: '',
@@ -347,14 +331,13 @@ const initializeForm = () => {
     }
 
     // Determine member type based on existing data
-    form.member_type = grave.member_id ? 'member' : 'non_member';
+    form.member_type = grave.member_id ? 'member' : 'external';
     form.section = grave.section || '';
     form.row_no = grave.row_no || '';
     form.grave_no = grave.grave_no || '';
     form.oldno = grave.oldno || '';
     form.status = grave.status || '';
     form.last_burial_date = formattedDate;
-    form.duration_months = grave.duration_months || '';
     form.owner_name = grave.owner_name || '';
     form.member_id = grave.member_id || null;
     form.contact_no = grave.contact_no || '';

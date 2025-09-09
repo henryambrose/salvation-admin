@@ -132,7 +132,7 @@ class PermanentGraveBookingController extends Controller
                 'buried_on' => 'required|date|after_or_equal:died_on',
                 'cause_of_death' => 'required|string|max:255',
                 'minister' => 'nullable|string|max:255',
-                'applicant_type' => 'required|in:member,non_member',
+                'applicant_type' => 'required|in:member,external',
                 'applicant_name' => 'required|string|max:255',
                 'contact_no' => 'required|string|max:20',
                 'contact_email' => 'nullable|email',

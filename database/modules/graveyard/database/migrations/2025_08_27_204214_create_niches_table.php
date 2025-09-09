@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('niche_no')->unique()->index();
             $table->integer('sr_no')->index();
             $table->string('location')->nullable(); // Wall location, level, etc.
-            $table->enum('status', ['available', 'occupied'])->default('available')->index();
+            $table->enum('status', ['available', 'unavailable'])->default('available')->index();
             $table->date('last_occupation_date')->nullable();
             $table->string('owner_name')->nullable()->index(); // For search functionality
             $table->string('contact_no')->nullable();

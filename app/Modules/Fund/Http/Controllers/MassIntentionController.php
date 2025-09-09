@@ -34,7 +34,7 @@ class MassIntentionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
-                    ->orWhere('non_member_name', 'like', "%{$search}%")
+                    ->orWhere('external_name', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->where('first_name', 'like', "%{$search}%")
                             ->orWhere('middle_name', 'like', "%{$search}%")
@@ -97,7 +97,7 @@ class MassIntentionController extends Controller
                 if ($mass->member) {
                     $displayName = trim($mass->member->first_name . ' ' . $mass->member->last_name) . ' - ' . $mass->member->family_no;
                 } else {
-                    $displayName = $mass->non_member_name;
+                    $displayName = $mass->external_name;
                 }
 
                 return [
@@ -179,9 +179,9 @@ class MassIntentionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'member_type' => 'required|in:member,non_member',
+            'member_type' => 'required|in:member,external',
             'member_id' => 'nullable|exists:members,id',
-            'non_member_name' => 'nullable|string|max:255',
+            'external_name' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:20',
             'mass_date' => 'required|date|after_or_equal:today',
             'mass_type_id' => 'required|exists:mass_types,id',
@@ -198,8 +198,8 @@ class MassIntentionController extends Controller
             return back()->withErrors(['member_id' => 'Member ID is required for parish members.']);
         }
 
-        if ($request->member_type === 'non_member' && !$request->non_member_name) {
-            return back()->withErrors(['non_member_name' => 'Name is required for non-members.']);
+        if ($request->member_type === 'external' && !$request->external_name) {
+            return back()->withErrors(['external_name' => 'Name is required for external.']);
         }
 
         // Check if the mass type exists and is active
@@ -217,7 +217,7 @@ class MassIntentionController extends Controller
         // Create the mass intention
         $massIntention = MassIntention::create([
             'member_id' => $request->member_id,
-            'non_member_name' => $request->member_type === 'non_member' ? $request->non_member_name : null,
+            'external_name' => $request->member_type === 'external' ? $request->external_name : null,
             'phone' => $request->phone,
             'mass_date' => $request->mass_date,
             'mass_type_id' => $request->mass_type_id,
@@ -286,7 +286,7 @@ class MassIntentionController extends Controller
     {
         $request->validate([
             'member_id' => 'nullable|exists:members,id',
-            'non_member_name' => 'nullable|string|max:255',
+            'external_name' => 'nullable|string|max:255',
             'mass_date' => 'required|date',
             'phone' => 'nullable|string|max:20',
             'mass_intention_type_id' => 'required|exists:mass_intention_types,id',
@@ -299,7 +299,7 @@ class MassIntentionController extends Controller
 
         $massIntention->update([
             'member_id' => $request->member_id,
-            'non_member_name' => $request->non_member_name,
+            'external_name' => $request->external_name,
             'mass_date' => $request->mass_date,
             'mass_intention_type_id' => $request->mass_intention_type_id,
             'intention_for' => $request->intention_for,
@@ -410,7 +410,7 @@ class MassIntentionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
-                    ->orWhere('non_member_name', 'like', "%{$search}%")
+                    ->orWhere('external_name', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->where('first_name', 'like', "%{$search}%")
                             ->orWhere('middle_name', 'like', "%{$search}%")
@@ -498,7 +498,7 @@ class MassIntentionController extends Controller
                 fputcsv($file, [
                     $intention->id,
                     $intention->member ? $intention->member->first_name . ' ' . $intention->member->last_name : 'N/A',
-                    $intention->non_member_name ?? 'N/A',
+                    $intention->external_name ?? 'N/A',
                     $intention->mass_date,
                     $intention->massType->name ?? 'N/A',
                     $intention->massIntentionType->name ?? 'N/A',

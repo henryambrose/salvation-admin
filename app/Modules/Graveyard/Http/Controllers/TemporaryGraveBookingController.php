@@ -9,6 +9,7 @@ use Modules\Graveyard\Models\ServiceType;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
+use Modules\Members\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -41,7 +42,8 @@ class TemporaryGraveBookingController extends Controller
 
         if ($request->filled('transfer_due')) {
             if ($request->transfer_due === 'due_soon') {
-                $query->where('expected_transfer_date', '<=', now()->addMonths(2));
+                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+                $query->where('expected_transfer_date', '<=', now()->addMonths($monthsFromEnv));
             } elseif ($request->transfer_due === 'overdue') {
                 $query->where('expected_transfer_date', '<', now());
             }
@@ -70,21 +72,68 @@ class TemporaryGraveBookingController extends Controller
     }
 
     /**
+     * Search members for deceased person selection
+     */
+    public function searchMembers(Request $request)
+    {
+        $query = $request->get('query', '');
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $members = Member::with('community')
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'LIKE', '%' . $query . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $query . '%')
+                    ->orWhere('member_no', 'LIKE', '%' . $query . '%')
+                    ->orWhere('family_no', 'LIKE', '%' . $query . '%')
+                    ->orWhere('contact_no_1', 'LIKE', '%' . $query . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $query . '%']);
+            })
+            ->whereNotNull('first_name')
+            ->whereNotNull('last_name')
+            ->orderBy('first_name')
+            ->limit(20)
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'name' => $member->first_name . ' ' . $member->last_name,
+                    'full_name' => $member->first_name . ' ' . $member->last_name,
+                    'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
+                    'community' => $member->community ? [
+                        'name' => $member->community->name
+                    ] : null,
+                    'current_add1' => $member->current_add1,
+                    'contact_no_1' => $member->contact_no_1,
+                    'gender' => $member->gender,
+                ];
+            });
+
+        return response()->json($members);
+    }
+
+    /**
      * Store temporary grave booking
      */
     public function store(Request $request)
     {
+        Log::info('Creating temporary grave booking', $request->all());
         $request->validate([
             'temporary_grave_id' => 'required|exists:temporary_graves,id',
-            'dead_first_name' => 'required|string|max:100',
-            'dead_last_name' => 'required|string|max:100',
+            'deceased_person_type' => 'required|in:member,external',
+            'deceased_member_id' => 'required_if:deceased_person_type,member|exists:members,id',
+            'dead_first_name' => 'required_if:deceased_person_type,external|string|max:100',
+            'dead_last_name' => 'required_if:deceased_person_type,external|string|max:100',
             'date_of_birth' => 'nullable|date|before:died_on',
             'age' => 'nullable|integer|min:0|max:150',
             'months' => 'nullable|integer|min:0|max:11',
             'days' => 'nullable|integer|min:0|max:30',
             'died_on' => 'required|date|before_or_equal:today',
             'buried_on' => 'required|date|after_or_equal:died_on',
-            'gender_id' => 'required|exists:genders,id',
+            'gender_id' => 'required_if:deceased_person_type,external|nullable|exists:genders,id',
             'cause_of_death' => 'required|string|max:255',
             'nationality' => 'nullable|string|max:100',
             'parish_id' => 'nullable|exists:parishes,id',
@@ -97,30 +146,44 @@ class TemporaryGraveBookingController extends Controller
             'permit_no' => 'nullable|string|max:50',
             'selected_services' => 'nullable|array',
             'selected_services.*' => 'exists:service_types,id',
-            'duration_months' => 'nullable|integer|min:6|max:24'
         ]);
-        Log::info('Creating temporary grave booking', $request->all());
+
         try {
             DB::beginTransaction();
 
             // Check if temporary grave is still available
             $grave = TemporaryGrave::findOrFail($request->temporary_grave_id);
             if (!$grave->status == 'available') {
-                return back()->withErrors(['grave' => 'This temporary grave is no longer available.']);
+                return back()->with('error', 'This temporary grave is no longer available.');
+            }
+
+            // Handle member selection vs manual entry
+            $deadFirstName = $request->dead_first_name;
+            $deadLastName = $request->dead_last_name;
+            $genderId = $request->gender_id;
+
+            if ($request->deceased_person_type === 'member' && $request->deceased_member_id) {
+                $member = Member::findOrFail($request->deceased_member_id);
+                $deadFirstName = $member->first_name;
+                $deadLastName = $member->last_name;
+                // Try to find gender ID based on member gender
+                $gender = Gender::where('name', $member->gender)->first();
+                $genderId = $gender ? $gender->id : null;
             }
 
             // Create the booking
             $booking = TemporaryGraveBooking::create([
                 'temporary_grave_id' => $request->temporary_grave_id,
-                'dead_first_name' => $request->dead_first_name,
-                'dead_last_name' => $request->dead_last_name,
+                'deceased_member_id' => $request->deceased_member_id,
+                'dead_first_name' => $deadFirstName,
+                'dead_last_name' => $deadLastName,
                 'date_of_birth' => $request->date_of_birth,
                 'age' => $request->age,
                 'months' => $request->months,
                 'days' => $request->days,
                 'died_on' => $request->died_on,
                 'buried_on' => $request->buried_on,
-                'gender_id' => $request->gender_id,
+                'gender_id' => $genderId,
                 'cause_of_death' => $request->cause_of_death,
                 'nationality' => $request->nationality,
                 'parish_id' => $request->parish_id,
@@ -132,7 +195,6 @@ class TemporaryGraveBookingController extends Controller
                 'relationship_id' => $request->relationship_id,
                 'permit_no' => $request->permit_no,
                 'selected_services' => $request->selected_services,
-                'duration_months' => $request->duration_months ?? 12,
                 'special_requirements' => $request->special_requirements,
                 'status' => 'pending',
                 'payment_status' => 'pending',
@@ -156,7 +218,7 @@ class TemporaryGraveBookingController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating temporary grave booking', ['error' => $e->getMessage()]);
-            return back()->withErrors(['error' => 'Failed to create booking. Please try again.'])
+            return back()->with('error', 'Failed to create booking. Please try again.')
                 ->withInput();
         }
     }
@@ -173,7 +235,8 @@ class TemporaryGraveBookingController extends Controller
             'applicantMember',
             'creator',
             'updater',
-            'nicheTransfers'
+            'nicheTransfers',
+            'payments'
         ]);
 
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Show', [
@@ -214,12 +277,8 @@ class TemporaryGraveBookingController extends Controller
             ]);
 
             // Free up the temporary grave if it was occupied
-            if ($temporaryGraveBooking->temporaryGrave && !$temporaryGraveBooking->temporaryGrave->is_available) {
-                $temporaryGraveBooking->temporaryGrave->update([
-                    'is_available' => true,
-                    'occupied_date' => null,
-                    'updated_by' => Auth::id()
-                ]);
+            if ($temporaryGraveBooking->temporaryGrave && $temporaryGraveBooking->temporaryGrave->status === 'unavailable') {
+                $temporaryGraveBooking->temporaryGrave->release();
             }
 
             DB::commit();
@@ -242,6 +301,21 @@ class TemporaryGraveBookingController extends Controller
 
         if ($temporaryGraveBooking->transfer_requested) {
             return back()->with('error', 'Transfer has already been requested for this booking.');
+        }
+
+        // Validate minimum time elapsed since death before niche transfer
+        $minMonthsBeforeTransfer = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $diedOn = \Carbon\Carbon::parse($temporaryGraveBooking->died_on);
+        $eligibleDate = $diedOn->addMonths($minMonthsBeforeTransfer);
+
+        if (now()->lt($eligibleDate)) {
+            $formattedEligibleDate = $eligibleDate->format('d M Y');
+            $monthsWord = $minMonthsBeforeTransfer === 1 ? 'month' : 'months';
+            return back()->with(
+                'error',
+                "Transfer to niche is not yet eligible. Minimum {$minMonthsBeforeTransfer} {$monthsWord} must pass after death. " .
+                    "This booking will be eligible for transfer on {$formattedEligibleDate}."
+            );
         }
 
         if ($temporaryGraveBooking->requestTransfer()) {

@@ -59,11 +59,15 @@ class ValidMemberController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
         return Inertia::render('PagesGraveyard/ValidMember/Create', [
-            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'grave_no', 'section', 'row_no')->get(),
+            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'grave_no', 'section', 'row_no', 'owner_name', 'contact_no', 'member_id')->with('member:id,full_name,family_no')->get(),
             'niches' => \Modules\Graveyard\Models\Niche::select('id', 'niche_no', 'location')->get(),
+            'genders' => \Modules\Members\Models\Gender::select('id', 'name')->get(),
+            'parishes' => \Modules\Members\Models\Parish::select('id', 'name')->get(),
+            'relationships' => \Modules\Members\Models\Relationship::select('id', 'name')->get(),
+            'permanent_grave_id' => $request->query('permanent_grave_id') ? (int) $request->query('permanent_grave_id') : null,
         ]);
     }
 
@@ -203,12 +207,23 @@ class ValidMemberController extends Controller
                 $memberToCreate['member_type'] = $memberData['member_type'];
             } else {
                 $memberToCreate['member_id'] = null;
-                $memberToCreate['first_name'] = $memberData['first_name'];
-                $memberToCreate['last_name'] = $memberData['last_name'];
-                $memberToCreate['contact_no'] = $memberData['contact_no'];
-                $memberToCreate['aadhar_no'] = $memberData['aadhar_no'];
+                $memberToCreate['first_name'] = $memberData['first_name'] ?? null;
+                $memberToCreate['last_name'] = $memberData['last_name'] ?? null;
+                $memberToCreate['date_of_birth'] = $memberData['date_of_birth'] ?? null;
+                $memberToCreate['age'] = $memberData['age'] ?? null;
+                $memberToCreate['months'] = $memberData['months'] ?? null;
+                $memberToCreate['days'] = $memberData['days'] ?? null;
+                $memberToCreate['gender_id'] = $memberData['gender_id'] ?? null;
+                $memberToCreate['nationality'] = $memberData['nationality'] ?? null;
+                $memberToCreate['parish_id'] = $memberData['parish_id'] ?? null;
+                $memberToCreate['contact_no'] = $memberData['contact_no'] ?? null;
+                $memberToCreate['aadhar_no'] = $memberData['aadhar_no'] ?? null;
                 $memberToCreate['member_type'] = $memberData['member_type'];
             }
+            
+            // Add relationship_id for both member types
+            $memberToCreate['relationship_id'] = $memberData['relationship_id'] ?? null;
+            $memberToCreate['notes'] = $memberData['notes'] ?? null;
             Log::info('MemberData: ', $memberData);
             Log::info('Member to create: ', $memberToCreate);
             $createdMembers[] = ValidMember::create($memberToCreate);
@@ -357,30 +372,43 @@ class ValidMemberController extends Controller
      */
     public function searchMembers(Request $request)
     {
-        $search = $request->input('search');
+        $query = $request->input('search');
 
-        if (strlen($search) < 2) {
+        if (strlen($query) < 2) {
             return response()->json([]);
         }
 
         // Get members who are not already valid members of any grave
         $existingMemberIds = ValidMember::whereNotNull('member_id')->pluck('member_id');
 
-        $members = \Modules\Members\Models\Member::whereNotIn('id', $existingMemberIds)
-            ->where(function ($query) use ($search) {
-                $query->where('first_name', 'like', "%$search%")
-                    ->orWhere('last_name', 'like', "%$search%")
-                    ->orWhere('family_no', 'like', "%$search%");
+        $members = \Modules\Members\Models\Member::with('community')
+            ->whereNotIn('id', $existingMemberIds)
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'LIKE', '%' . $query . '%')
+                    ->orWhere('last_name', 'LIKE', '%' . $query . '%')
+                    ->orWhere('member_no', 'LIKE', '%' . $query . '%')
+                    ->orWhere('family_no', 'LIKE', '%' . $query . '%')
+                    ->orWhere('contact_no_1', 'LIKE', '%' . $query . '%')
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ['%' . $query . '%']);
             })
-            ->select('id', 'first_name', 'last_name', 'family_no', 'contact_no_1')
+            ->whereNotNull('first_name')
+            ->whereNotNull('last_name')
+            ->orderBy('first_name')
             ->limit(20)
             ->get()
             ->map(function ($member) {
                 return [
                     'id' => $member->id,
                     'name' => $member->first_name . ' ' . $member->last_name,
-                    'family_number' => $member->family_no,
-                    'contact_no' => $member->contact_no_1,
+                    'full_name' => $member->first_name . ' ' . $member->last_name,
+                    'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
+                    'community' => $member->community ? [
+                        'name' => $member->community->name
+                    ] : null,
+                    'current_add1' => $member->current_add1,
+                    'contact_no_1' => $member->contact_no_1,
+                    'gender' => $member->gender,
                 ];
             });
 

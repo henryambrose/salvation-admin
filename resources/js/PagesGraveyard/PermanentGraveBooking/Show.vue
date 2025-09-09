@@ -38,7 +38,7 @@ interface PermanentGraveBooking {
   buried_on: string;
   cause_of_death: string;
   minister?: string;
-  applicant_type: 'member' | 'non_member';
+  applicant_type: 'member' | 'external';
   applicant_name: string;
   contact_no: string;
   contact_email?: string;
@@ -420,12 +420,12 @@ const canCancel = () => {
 
                     <!-- Quick Receipt Access -->
                     <div v-if="booking.payments && booking.payments.length > 0" class="border-t pt-6">
-                      <div class="flex items-center justify-between mb-3">
-                        <Label class="text-sm font-semibold text-gray-700 flex items-center">
+                      <div class="mb-3 flex items-center justify-between">
+                        <Label class="flex items-center text-sm font-semibold text-gray-700">
                           <FileText class="mr-2 h-4 w-4 text-gray-500" />
                           Payment Receipts
                         </Label>
-                        <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">
+                        <span class="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-500">
                           {{ booking.payments.length }} {{ booking.payments.length === 1 ? 'Receipt' : 'Receipts' }}
                         </span>
                       </div>
@@ -436,19 +436,15 @@ const canCancel = () => {
                           as-child
                           size="sm"
                           variant="outline"
-                          class="h-12 justify-start text-left hover:bg-blue-50 hover:border-blue-300 transition-colors duration-200 group"
+                          class="group h-12 justify-start text-left transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50"
                         >
                           <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex items-center space-x-3 p-3">
-                            <div class="flex-shrink-0 p-1.5 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
+                            <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>
                             <div class="min-w-0 flex-1">
-                              <div class="text-sm font-medium text-gray-900">
-                                Receipt #{{ payment.payment_reference }}
-                              </div>
-                              <div class="text-xs text-gray-600 font-medium">
-                                ${{ Number(payment.paid_amount).toFixed(2) }}
-                              </div>
+                              <div class="text-sm font-medium text-gray-900">Receipt #{{ payment.payment_reference }}</div>
+                              <div class="text-xs font-medium text-gray-600">${{ Number(payment.paid_amount).toFixed(2) }}</div>
                             </div>
                           </Link>
                         </Button>

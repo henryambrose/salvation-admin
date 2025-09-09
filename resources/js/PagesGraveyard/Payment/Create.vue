@@ -66,6 +66,10 @@ interface Booking {
   died_on: string;
   buried_on: string;
   selected_services: number[];
+  total_cost: number;
+  paid_amount: number;
+  balance_amount: number;
+  payment_status: string;
 }
 
 interface Props {
@@ -160,10 +164,17 @@ const availableServices = computed(() => {
 });
 
 const hasFreeServices = computed(() => {
-  return form.selected_services.some((service) => {
+  const freeServicesSelected = form.selected_services.some((service) => {
     const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type === 'free';
   });
+  
+  // Auto-set payment amount to 0 for free services
+  if (freeServicesSelected && form.paid_amount !== 0) {
+    form.paid_amount = 0;
+  }
+  
+  return freeServicesSelected;
 });
 
 const hasPaidServices = computed(() => {
@@ -198,24 +209,63 @@ const totalAmount = computed(() => {
   }, 0);
 
   const concessionAmount = Number(form.concession_amount) || 0;
-  return Math.max(0, serviceTotal - concessionAmount);
+  const servicesTotal = Math.max(0, serviceTotal - concessionAmount);
+  
+  // If no services selected, this is a balance payment - show the outstanding balance
+  if (form.selected_services.length === 0 && props.booking.balance_amount > 0) {
+    return Number(props.booking.balance_amount) || 0;
+  }
+  
+  return servicesTotal;
 });
 
 const balanceAmount = computed(() => {
-  const paidAmount = Number(form.paid_amount) || 0;
-  return Math.max(0, totalAmount.value - paidAmount);
+  const currentPaidAmount = Number(form.paid_amount) || 0;
+  
+  // Calculate remaining balance after current payment
+  return Math.max(0, totalAmount.value - currentPaidAmount);
 });
 
 const paymentStatus = computed(() => {
   const paidAmount = Number(form.paid_amount) || 0;
   if (paidAmount === 0) return 'pending';
+  
+  // For balance payments or service payments, check if fully paid
   if (paidAmount >= totalAmount.value) return 'completed';
   return 'partial';
+});
+
+const maxPaymentAmount = computed(() => {
+  // For balance payments, limit to booking's remaining balance
+  if (form.selected_services.length === 0 && props.booking.balance_amount > 0) {
+    return Number(props.booking.balance_amount);
+  }
+  
+  // For service payments, limit to total amount
+  return totalAmount.value;
+});
+
+const paymentAmountError = computed(() => {
+  const paidAmount = Number(form.paid_amount) || 0;
+  if (paidAmount > maxPaymentAmount.value) {
+    const amountType = form.selected_services.length === 0 ? 'balance' : 'total';
+    return `Payment amount cannot exceed the ${amountType} amount of ${formatCurrency(maxPaymentAmount.value)}`;
+  }
+  return null;
 });
 
 // Computed properties for displaying selected values
 const selectedPaymentMethod = computed(() => {
   return props.paymentMethods.find((method) => method.id === parseInt(form.payment_method_id));
+});
+
+const bookingShowRoute = computed(() => {
+  const routes = {
+    permanent: 'graveyard.permanent-grave-bookings.show',
+    temporary: 'graveyard.temporary-grave-bookings.show',
+    niche: 'graveyard.niche-transfers.show'
+  };
+  return routes[props.bookingType as keyof typeof routes] || 'graveyard.dashboard';
 });
 
 // Methods
@@ -272,6 +322,12 @@ const setPaymentToTotal = () => {
   form.paid_amount = totalAmount.value;
 };
 
+const setPaymentToBalance = () => {
+  if (form.selected_services.length === 0 && props.booking.balance_amount > 0) {
+    form.paid_amount = Number(props.booking.balance_amount);
+  }
+};
+
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -298,7 +354,8 @@ const submit = () => {
   // Create a copy of form data with proper types
   const formData = {
     ...form.data(),
-    payment_method_id: parseInt(form.payment_method_id) || null,
+    // For free services, set payment_method_id to null, otherwise parse the selected value
+    payment_method_id: hasFreeServices.value ? null : (parseInt(form.payment_method_id) || null),
   };
 
   form.transform((data) => formData).post(route('graveyard.payments.store'));
@@ -317,7 +374,7 @@ const submit = () => {
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <Button variant="outline" size="sm" as-child>
-                  <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
+                  <Link :href="route(bookingShowRoute, booking.id)">
                     <ArrowLeft class="h-4 w-4" />
                   </Link>
                 </Button>
@@ -326,7 +383,9 @@ const submit = () => {
                   <p class="mt-1 max-w-2xl text-sm text-gray-500">Record payment for grave booking services</p>
                 </div>
               </div>
-              <Badge class="bg-yellow-100 text-yellow-800"> Payment Required </Badge>
+              <Badge :class="hasFreeServices ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'">
+                {{ hasFreeServices ? 'Free Service - No Payment Required' : 'Payment Required' }}
+              </Badge>
             </div>
           </div>
 
@@ -371,6 +430,42 @@ const submit = () => {
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Applicant</Label>
                       <p class="text-base">{{ booking.applicant_name }}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <!-- Existing Payment Status -->
+                <Card v-if="booking.total_cost > 0 || booking.paid_amount > 0">
+                  <CardHeader>
+                    <CardTitle>Payment Status</CardTitle>
+                  </CardHeader>
+                  <CardContent class="space-y-3">
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label class="text-sm font-medium text-gray-500">Total Cost</Label>
+                        <p class="text-base font-medium">{{ formatCurrency(booking.total_cost) }}</p>
+                      </div>
+                      <div>
+                        <Label class="text-sm font-medium text-gray-500">Payment Status</Label>
+                        <Badge :class="{
+                          'bg-yellow-100 text-yellow-800': booking.payment_status === 'pending',
+                          'bg-blue-100 text-blue-800': booking.payment_status === 'partial',
+                          'bg-green-100 text-green-800': ['paid', 'completed'].includes(booking.payment_status)
+                        }">
+                          {{ booking.payment_status }}
+                        </Badge>
+                      </div>
+                    </div>
+                    
+                    <div v-if="booking.paid_amount > 0" class="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label class="text-sm font-medium text-gray-500">Paid Amount</Label>
+                        <p class="text-base font-medium text-green-600">{{ formatCurrency(booking.paid_amount) }}</p>
+                      </div>
+                      <div>
+                        <Label class="text-sm font-medium text-gray-500">Balance Due</Label>
+                        <p class="text-base font-medium text-red-600">{{ formatCurrency(booking.balance_amount) }}</p>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -459,17 +554,23 @@ const submit = () => {
                     </div>
 
                     <div>
-                      <Label for="payment_method_id">Payment Method *</Label>
+                      <Label for="payment_method_id">Payment Method <span v-if="!hasFreeServices">*</span></Label>
                       <select
                         v-model="form.payment_method_id"
                         class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                        required
+                        :class="hasFreeServices ? 'bg-gray-100 text-gray-500' : ''"
+                        :required="!hasFreeServices"
+                        :disabled="hasFreeServices"
                       >
-                        <option value="">Select payment method</option>
-                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id.toString()">
+                        <option value="">{{ hasFreeServices ? 'Not applicable for free services' : 'Select payment method' }}</option>
+                        <option v-for="method in paymentMethods" :key="method.id" :value="method.id.toString()" :disabled="hasFreeServices">
                           {{ method.name }}
                         </option>
                       </select>
+                      <div class="mt-1 text-xs" :class="hasFreeServices ? 'text-green-600' : 'text-gray-500'">
+                        <span v-if="hasFreeServices">Payment method not required for free services</span>
+                        <span v-else>Select how the payment was received</span>
+                      </div>
                       <div v-if="form.errors.payment_method_id" class="mt-1 text-sm text-red-600">
                         {{ form.errors.payment_method_id }}
                       </div>
@@ -501,17 +602,32 @@ const submit = () => {
                           v-model.number="form.paid_amount"
                           type="number"
                           min="0"
+                          :max="maxPaymentAmount"
                           step="0.01"
                           placeholder="0.00"
                           class="flex-1"
+                          :class="paymentAmountError ? 'border-red-500' : ''"
+                          :disabled="hasFreeServices"
+                          :readonly="hasFreeServices"
                         />
-                        <Button @click="setPaymentToTotal" type="button" variant="outline" size="sm" class="whitespace-nowrap">
+                        <Button 
+                          @click="setPaymentToTotal" 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          class="whitespace-nowrap"
+                          :disabled="hasFreeServices"
+                        >
                           <Calculator class="mr-1 h-4 w-4" />
-                          Full
+                          {{ form.selected_services.length === 0 && booking.balance_amount > 0 ? 'Balance' : 'Full' }}
                         </Button>
                       </div>
-                      <div v-if="form.errors.paid_amount" class="mt-1 text-sm text-red-600">
-                        {{ form.errors.paid_amount }}
+                      <div class="mt-1 text-xs" :class="hasFreeServices ? 'text-green-600' : 'text-gray-500'">
+                        <span v-if="hasFreeServices">Free service selected - No payment required</span>
+                        <span v-else>Maximum: {{ formatCurrency(maxPaymentAmount) }}</span>
+                      </div>
+                      <div v-if="paymentAmountError || form.errors.paid_amount" class="mt-1 text-sm text-red-600">
+                        {{ paymentAmountError || form.errors.paid_amount }}
                       </div>
                     </div>
 
@@ -544,6 +660,14 @@ const submit = () => {
                     <CardTitle>Payment Summary</CardTitle>
                   </CardHeader>
                   <CardContent class="space-y-4">
+                    <!-- Free Service Special Notice -->
+                    <div v-if="hasFreeServices" class="p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div class="flex items-center space-x-2">
+                        <span class="text-green-600 font-medium">✓ Free Service Selected</span>
+                      </div>
+                      <div class="text-sm text-green-700 mt-1">This service is provided free of charge as a privilege for community members.</div>
+                    </div>
+                    
                     <div class="grid grid-cols-2 gap-4 text-sm">
                       <!-- Show service subtotal if concession is applied -->
                       <div v-if="showConcessionField && form.concession_amount > 0" class="col-span-2 flex justify-between">
@@ -556,8 +680,16 @@ const submit = () => {
                         <span class="text-orange-600">Concession Discount:</span>
                         <span class="font-medium text-orange-600">- {{ formatCurrency(Number(form.concession_amount) || 0) }}</span>
                       </div>
+                      <!-- Balance Payment Info -->
+                      <div v-if="form.selected_services.length === 0 && booking.balance_amount > 0" class="col-span-2 p-2 bg-blue-50 rounded-md border border-blue-200">
+                        <div class="text-sm text-blue-800 font-medium mb-2">Balance Payment</div>
+                        <div class="text-xs text-blue-700">Outstanding balance from previous payment</div>
+                      </div>
+                      
                       <div class="flex justify-between">
-                        <span class="text-gray-500">Total Amount:</span>
+                        <span class="text-gray-500">
+                          {{ form.selected_services.length > 0 ? 'Service Total:' : 'Outstanding Balance:' }}
+                        </span>
                         <span class="font-medium">{{ formatCurrency(totalAmount) }}</span>
                       </div>
                       <div class="flex justify-between">
@@ -587,11 +719,13 @@ const submit = () => {
                     <Separator />
 
                     <div class="flex space-x-3">
-                      <Button type="submit" :disabled="form.processing || form.selected_services.length === 0" class="flex-1">
-                        {{ form.processing ? 'Recording...' : 'Record Payment' }}
+                      <Button type="submit" :disabled="form.processing || (form.selected_services.length === 0 && booking.balance_amount <= 0) || !!paymentAmountError" class="flex-1">
+                        <span v-if="form.processing">{{ hasFreeServices ? 'Confirming...' : 'Recording...' }}</span>
+                        <span v-else-if="hasFreeServices">Confirm Free Service</span>
+                        <span v-else>Record Payment</span>
                       </Button>
                       <Button type="button" variant="outline" as-child>
-                        <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)"> Cancel </Link>
+                        <Link :href="route(bookingShowRoute, booking.id)"> Cancel </Link>
                       </Button>
                     </div>
                   </CardContent>

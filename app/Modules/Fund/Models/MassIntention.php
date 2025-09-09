@@ -18,7 +18,7 @@ class MassIntention extends Model
 
     protected $fillable = [
         'member_id',
-        'non_member_name',
+        'external_name',
         'phone',
         'mass_date',
         'mass_type_id',
