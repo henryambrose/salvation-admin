@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('buried_name')->nullable()->index(); // For search functionality
             $table->string('contact_no')->nullable();
             $table->foreignId('member_id')->nullable()->references('id')->on('members')->onDelete('set null');
+            $table->foreignId('grave_category_id')->nullable()->default(1)->references('id')->on('grave_categories')->onDelete('set null');
             $table->text('remarks')->nullable();
             $table->decimal('plot_size', 8, 2)->nullable(); // in square feet
             $table->boolean('is_active')->default(true);

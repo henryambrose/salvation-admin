@@ -14,6 +14,7 @@ use Modules\Graveyard\Http\Controllers\PermanentGraveBookingController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
 use Modules\Graveyard\Http\Controllers\NicheTransferController;
 use Modules\Graveyard\Http\Controllers\PaymentController;
+use Modules\Graveyard\Http\Controllers\GraveCategoryController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -149,6 +150,18 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{payment}/balance', [PaymentController::class, 'balancePaymentForm'])->name('balance');
         Route::post('/{payment}/balance', [PaymentController::class, 'storeBalancePayment'])->name('balance.store');
         Route::get('/{payment}/receipt', [PaymentController::class, 'generateReceipt'])->name('receipt');
+    });
+
+    // Grave Categories Management
+    Route::prefix('graveyard/grave-categories')->name('graveyard.grave-categories.')->group(function () {
+        Route::get('/', [GraveCategoryController::class, 'index'])->name('index');
+        Route::get('/create', [GraveCategoryController::class, 'create'])->name('create');
+        Route::post('/', [GraveCategoryController::class, 'store'])->name('store');
+        Route::get('/{graveCategory}', [GraveCategoryController::class, 'show'])->name('show');
+        Route::get('/{graveCategory}/edit', [GraveCategoryController::class, 'edit'])->name('edit');
+        Route::put('/{graveCategory}', [GraveCategoryController::class, 'update'])->name('update');
+        Route::delete('/{graveCategory}', [GraveCategoryController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
     });
 
     // Permission denied route for graveyard

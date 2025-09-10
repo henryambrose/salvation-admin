@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 
 interface TemporaryGrave {
   id: number;
@@ -15,6 +15,12 @@ interface TemporaryGrave {
   section: string;
   row_no: string;
   is_available: boolean;
+  grave_category_id: number;
+}
+
+interface GraveCategory {
+  id: number;
+  name: string;
 }
 
 interface Gender {
@@ -48,6 +54,7 @@ interface Member {
 
 interface Props {
   availableGraves: TemporaryGrave[];
+  graveCategories: GraveCategory[];
   genders: Gender[];
   parishes: Parish[];
   relationships: Relationship[];
@@ -56,6 +63,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const form = useForm({
+  grave_category_id: null as number | null,
   temporary_grave_id: null as number | null,
   deceased_person_type: '' as '' | 'member' | 'external',
   deceased_member_id: null as number | null,
@@ -81,11 +89,43 @@ const form = useForm({
   special_requirements: '',
 });
 
+// Get available graves for selected category
+const availableGravesForCategory = computed(() => {
+  if (!form.grave_category_id) return [];
+  return props.availableGraves.filter((grave) => grave.grave_category_id === form.grave_category_id);
+});
+
 // Get selected grave details
 const selectedGrave = computed(() => {
   if (!form.temporary_grave_id) return null;
   return props.availableGraves.find((grave) => grave.id === form.temporary_grave_id);
 });
+
+// Auto-select first available grave when category changes
+const selectFirstAvailableGrave = () => {
+  const availableGraves = availableGravesForCategory.value;
+  if (availableGraves.length > 0) {
+    form.temporary_grave_id = availableGraves[0].id;
+  } else {
+    form.temporary_grave_id = null;
+  }
+};
+
+// Watch for category changes
+watch(() => form.grave_category_id, () => {
+  selectFirstAvailableGrave();
+});
+
+// Initialize with Normal Graves category if available
+const initializeDefaultCategory = () => {
+  const normalGraveCategory = props.graveCategories.find(cat => cat.name.toLowerCase().includes('normal'));
+  if (normalGraveCategory) {
+    form.grave_category_id = normalGraveCategory.id;
+  } else if (props.graveCategories.length > 0) {
+    // Fallback to first category if Normal Grave not found
+    form.grave_category_id = props.graveCategories[0].id;
+  }
+};
 
 // Member search functionality
 const memberSearchQuery = ref('');
@@ -150,6 +190,11 @@ const submit = () => {
     })
     .post(route('graveyard.temporary-grave-bookings.store'));
 };
+
+// Initialize default category on component mount
+onMounted(() => {
+  initializeDefaultCategory();
+});
 </script>
 
 <template>
@@ -185,79 +230,66 @@ const submit = () => {
               <CardHeader>
                 <CardTitle class="flex items-center space-x-2">
                   <MapPin class="h-5 w-5" />
-                  <span>Select Temporary Grave</span>
+                  <span>Grave Selection</span>
                 </CardTitle>
-                <CardDescription> Choose an available temporary grave </CardDescription>
+                <CardDescription>Select grave category for automatic grave assignment</CardDescription>
               </CardHeader>
               <CardContent>
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                  <!-- Main Selection Area -->
-                  <div class="space-y-4 lg:col-span-2">
-                    <!-- Suggested Grave -->
-                    <div v-if="availableGraves.length > 0" class="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                      <h4 class="mb-2 font-medium text-blue-900">Recommended Available Grave</h4>
-                      <div class="flex items-center justify-between rounded-lg border border-blue-300 bg-white p-3">
-                        <div>
-                          <span class="font-semibold">{{ availableGraves[0].grave_no }}</span>
-                          <span class="ml-2 text-gray-600">Section {{ availableGraves[0].section }}, Row {{ availableGraves[0].row_no }}</span>
-                        </div>
-                        <Button
-                          type="button"
-                          size="sm"
-                          :variant="form.temporary_grave_id === availableGraves[0].id ? 'default' : 'outline'"
-                          @click="form.temporary_grave_id = availableGraves[0].id"
-                        >
-                          {{ form.temporary_grave_id === availableGraves[0].id ? 'Selected' : 'Select This Grave' }}
-                        </Button>
-                      </div>
-                    </div>
-
-                    <!-- Selected Grave Display -->
-                    <div v-if="selectedGrave" class="rounded-lg border border-green-200 bg-green-50 p-4">
-                      <div class="flex items-center justify-between">
-                        <div>
-                          <h4 class="font-medium text-green-900">Selected Grave</h4>
-                          <p class="text-green-700">
-                            <span class="font-semibold">{{ selectedGrave.grave_no }}</span>
-                            - Section {{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}
-                          </p>
-                        </div>
-                        <Button type="button" size="sm" variant="outline" @click="form.temporary_grave_id = null"> Change </Button>
-                      </div>
-                    </div>
-
-                    <!-- Validation Error -->
-                    <div v-if="form.errors.temporary_grave_id" class="text-sm text-red-600">
-                      {{ form.errors.temporary_grave_id }}
+                <div class="space-y-4">
+                  <!-- Grave Category Selection -->
+                  <div>
+                    <Label for="grave_category_id">Grave Category *</Label>
+                    <select
+                      id="grave_category_id"
+                      v-model="form.grave_category_id"
+                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                      :class="form.errors.grave_category_id && 'border-red-500'"
+                    >
+                      <option value="">Select Grave Category</option>
+                      <option v-for="category in graveCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
+                      </option>
+                    </select>
+                    <div v-if="form.errors.grave_category_id" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.grave_category_id }}
                     </div>
                   </div>
 
-                  <!-- Available Graves Sidebar -->
-                  <div class="lg:col-span-1">
-                    <div class="max-h-96 overflow-y-auto rounded-lg border p-4">
-                      <h4 class="mb-3 font-medium text-gray-900">All Available Graves ({{ availableGraves.length }})</h4>
-                      <div class="space-y-2">
-                        <div
-                          v-for="grave in availableGraves"
-                          :key="grave.id"
-                          :class="[
-                            'cursor-pointer rounded-lg border p-3 transition-colors',
-                            form.temporary_grave_id === grave.id
-                              ? 'border-blue-300 bg-blue-100 text-blue-900'
-                              : 'border-gray-200 bg-gray-50 hover:bg-gray-100',
-                          ]"
-                          @click="form.temporary_grave_id = grave.id"
-                        >
-                          <div class="text-sm font-medium">{{ grave.grave_no }}</div>
-                          <div class="text-xs text-gray-600">Sec {{ grave.section }}, Row {{ grave.row_no }}</div>
-                        </div>
-                      </div>
-
-                      <div v-if="availableGraves.length === 0" class="py-4 text-center text-gray-500">
-                        <MapPin class="mx-auto mb-2 h-8 w-8 text-gray-400" />
-                        <p class="text-sm">No graves available</p>
+                  <!-- Auto-assigned Grave Display -->
+                  <div v-if="selectedGrave" class="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <div class="flex items-center justify-between">
+                      <div>
+                        <h4 class="font-medium text-green-900">Auto-assigned Grave</h4>
+                        <p class="text-green-700">
+                          <span class="font-semibold">{{ selectedGrave.grave_no }}</span>
+                          - Section {{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}
+                        </p>
+                        <p class="text-sm text-green-600">
+                          First available grave from selected category
+                        </p>
                       </div>
                     </div>
+                  </div>
+
+                  <!-- No graves available message -->
+                  <div v-if="form.grave_category_id && availableGravesForCategory.length === 0" class="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                    <div class="flex items-center">
+                      <MapPin class="h-5 w-5 text-orange-600 mr-2" />
+                      <div>
+                        <h4 class="font-medium text-orange-900">No Available Graves</h4>
+                        <p class="text-orange-700">No graves are available in the selected category.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Available count info -->
+                  <div v-if="form.grave_category_id && availableGravesForCategory.length > 0" class="text-sm text-gray-600">
+                    {{ availableGravesForCategory.length }} available graves in selected category
+                  </div>
+
+                  <!-- Validation Error -->
+                  <div v-if="form.errors.temporary_grave_id" class="text-sm text-red-600">
+                    {{ form.errors.temporary_grave_id }}
                   </div>
                 </div>
               </CardContent>

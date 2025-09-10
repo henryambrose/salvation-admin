@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\ServiceType;
+use Modules\Graveyard\Models\GraveCategories;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
@@ -65,7 +66,8 @@ class TemporaryGraveBookingController extends Controller
     public function create()
     {
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Create', [
-            'availableGraves' => TemporaryGrave::available()->get(),
+            'availableGraves' => TemporaryGrave::available()->with('graveCategory')->get(),
+            'graveCategories' => GraveCategories::orderBy('name')->get(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
             'relationships' => Relationship::all()
@@ -123,6 +125,7 @@ class TemporaryGraveBookingController extends Controller
     {
 
         $request->validate([
+            'grave_category_id' => 'required|exists:grave_categories,id',
             'temporary_grave_id' => 'required|exists:temporary_graves,id',
             'deceased_person_type' => 'required|in:member,external',
             'deceased_member_id' => [
@@ -158,10 +161,15 @@ class TemporaryGraveBookingController extends Controller
         try {
             DB::beginTransaction();
 
-            // Check if temporary grave is still available
+            // Check if temporary grave is still available and matches selected category
             $grave = TemporaryGrave::findOrFail($request->temporary_grave_id);
             if (!$grave->status == 'available') {
                 return back()->with('error', 'This temporary grave is no longer available.');
+            }
+            
+            // Validate that the selected grave belongs to the selected category
+            if ($grave->grave_category_id != $request->grave_category_id) {
+                return back()->with('error', 'Selected grave does not belong to the selected category.');
             }
 
             // Handle member selection vs manual entry

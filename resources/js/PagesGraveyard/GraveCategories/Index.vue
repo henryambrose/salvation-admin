@@ -1,16 +1,16 @@
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="Temporary Graves" />
+    <Head title="Grave Categories" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">Temporary Graves</h2>
+        <h2 class="text-2xl font-bold text-blue-700">Grave Categories</h2>
         <Button
-          v-if="canCreateGrave"
-          @click="router.visit('/graveyard/temporary-graves/create')"
+          v-if="canCreateCategory"
+          @click="router.visit('/graveyard/grave-categories/create')"
           class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
         >
           <Plus class="h-[1rem] w-[1rem]" />
-          <span>Add Temporary Grave</span>
+          <span>Add Category</span>
         </Button>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
@@ -32,16 +32,6 @@
               ✕
             </button>
           </div>
-          <select
-            v-model="filters.grave_category_id"
-            @change="applyFilters()"
-            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
-          >
-            <option value="">All Categories</option>
-            <option v-for="category in filterOptions?.graveCategories" :key="category.id" :value="category.id">
-              {{ category.name }}
-            </option>
-          </select>
           <select
             v-model="filters.perPage"
             @change="applyFilters()"
@@ -66,7 +56,7 @@
     <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
       <!-- Left side: Total records info -->
       <div class="text-gray-600">
-        Showing <span class="font-semibold">{{ data?.total || 0 }}</span> total temporary graves
+        Showing <span class="font-semibold">{{ data?.total || 0 }}</span> total grave categories
         <span v-if="filters.search" class="text-blue-600">for "{{ filters.search }}"</span>
       </div>
 
@@ -106,77 +96,49 @@
 
       <!-- Right side: Additional info -->
       <div class="text-gray-500">
-        <span class="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium text-teal-800"> Temporary Graves </span>
+        <span class="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium text-teal-800"> Grave Categories </span>
       </div>
     </div>
 
-    <div v-if="canReadAnyGrave">
+    <div v-if="canReadAnyCategory">
       <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('section')">
+                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('name')">
                   <div class="flex items-center">
-                    Section
-                    <ChevronUp v-if="filters.sort === 'section' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'section' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
+                    Name
+                    <ChevronUp v-if="filters.sort === 'name' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
+                    <ChevronDown v-else-if="filters.sort === 'name' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('row_no')">
+                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('created_at')">
                   <div class="flex items-center">
-                    Row
-                    <ChevronUp v-if="filters.sort === 'row_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'row_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
+                    Created Date
+                    <ChevronUp v-if="filters.sort === 'created_at' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
+                    <ChevronDown v-else-if="filters.sort === 'created_at' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('grave_no')">
-                  <div class="flex items-center">
-                    Grave No
-                    <ChevronUp v-if="filters.sort === 'grave_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'grave_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
-                    <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
-                  </div>
-                </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('oldno')">
-                  <div class="flex items-center">
-                    Old No
-                    <ChevronUp v-if="filters.sort === 'oldno' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'oldno' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
-                    <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
-                  </div>
-                </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('status')">
-                  <div class="flex items-center">
-                    Status
-                    <ChevronUp v-if="filters.sort === 'status' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'status' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
-                    <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
-                  </div>
-                </th>
-                <th class="border-b p-3 font-semibold text-gray-700">Category</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Owner Name</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Plot Size</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Last Burial</th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
               <tr
-                v-for="grave in props.data?.data"
-                :key="grave.id"
-                :id="`grave-row-${grave.id}`"
-                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === grave.id ? 'highlight-row' : '']"
+                v-for="category in props.data?.data"
+                :key="category.id"
+                :id="`category-row-${category.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === category.id ? 'highlight-row' : '']"
               >
                 <td class="p-2">
                   <div class="flex items-center gap-2">
                     <template v-if="!serverArchived">
                       <Button
-                        v-if="canUpdateAnyGrave"
-                        @click="router.visit('/graveyard/temporary-graves/' + grave.id + '/edit')"
+                        v-if="canUpdateAnyCategory"
+                        @click="router.visit('/graveyard/grave-categories/' + category.id + '/edit')"
                         class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
                       >
                         <Pencil class="h-[1rem] w-[1rem]" />
@@ -184,8 +146,8 @@
                     </template>
                     <template v-else>
                       <Button
-                        v-if="canRestoreGrave"
-                        @click="restoreGrave(grave.id)"
+                        v-if="canRestoreCategory"
+                        @click="restoreCategory(category.id)"
                         class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200"
                       >
                         <RotateCcw class="h-[1rem] w-[1rem]" />
@@ -193,23 +155,12 @@
                     </template>
                   </div>
                 </td>
-                <td class="p-6">{{ grave.section }}</td>
-                <td class="p-6">{{ grave.row_no }}</td>
-                <td class="p-6">{{ grave.grave_no }}</td>
-                <td class="p-6">{{ grave.oldno }}</td>
-                <td class="p-2">
-                  <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="getStatusClass(grave.status)">
-                    {{ grave.status.charAt(0).toUpperCase() + grave.status.slice(1) }}
-                  </span>
-                </td>
-                <td class="p-2">{{ grave.grave_category?.name || '-' }}</td>
-                <td class="p-2">{{ grave.owner_name || (grave.member ? grave.member.first_name + ' ' + grave.member.last_name : '-') }}</td>
-                <td class="p-2">{{ grave.plot_size ? `${grave.plot_size} sq ft` : '-' }}</td>
-                <td class="p-2">{{ grave.last_burial_date ? formatDate(grave.last_burial_date) : '-' }}</td>
+                <td class="p-6">{{ category.name }}</td>
+                <td class="p-2">{{ formatDate(category.created_at) }}</td>
                 <td v-if="!serverArchived" class="p-2">
-                  <template v-if="canDeleteAnyGrave">
+                  <template v-if="canDeleteAnyCategory">
                     <Button
-                      @click="deleteGrave(grave)"
+                      @click="deleteCategory(category)"
                       variant="destructive"
                       class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
                     >
@@ -223,7 +174,7 @@
         </div>
       </div>
     </div>
-    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view temporary graves.</div>
+    <div v-else class="py-10 text-center text-gray-500">You do not have permission to view grave categories.</div>
 
     <!-- Delete Modal -->
     <transition name="fade">
@@ -231,10 +182,10 @@
         <div class="bg-opacity-50 absolute inset-0 bg-black" @click="showDeleteModal = false"></div>
         <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete Temporary Grave</h3>
+            <h3 class="mb-4 text-xl font-semibold">Delete Grave Category</h3>
             <p>
-              Are you sure you want to delete this temporary grave
-              <span class="font-bold">{{ graveToDelete?.section }}-{{ graveToDelete?.grave_no }}</span>
+              Are you sure you want to delete the category
+              <span class="font-bold">{{ categoryToDelete?.name }}</span>
               ?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
@@ -275,16 +226,15 @@ import { computed, onMounted, ref, watch } from 'vue';
 const { can } = permissionHelpers();
 
 // Permission checks
-const canCreateGrave = can('create-temporary-grave');
-const canReadAnyGrave = can('read-temporary-grave');
-const canUpdateAnyGrave = can('update-temporary-grave');
-const canDeleteAnyGrave = can('delete-temporary-grave');
-const canRestoreGrave = can('restore-temporary-grave');
+const canCreateCategory = can('create-grave-category');
+const canReadAnyCategory = can('read-grave-category');
+const canUpdateAnyCategory = can('update-grave-category');
+const canDeleteAnyCategory = can('delete-grave-category');
+const canRestoreCategory = can('restore-grave-category');
 
 interface Props {
   data: any;
   filters: any;
-  filterOptions: any;
   fetchUrl: string;
 }
 
@@ -294,14 +244,14 @@ const props = defineProps<Props>();
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Graveyard', href: '/graveyard' },
-  { title: 'Temporary Graves', href: '/graveyard/temporary-graves' },
+  { title: 'Grave Categories', href: '/graveyard/grave-categories' },
 ];
 
 // Reactive state
-const filters = ref({ ...(props.filters || 10) });
+const filters = ref({ ...(props.filters || {}) });
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
-const graveToDelete = ref<any>(null);
+const categoryToDelete = ref<any>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
@@ -341,26 +291,26 @@ const toggleSort = (column: string) => {
   applyFilters();
 };
 
-const deleteGrave = (grave: any) => {
-  graveToDelete.value = grave;
+const deleteCategory = (category: any) => {
+  categoryToDelete.value = category;
   showDeleteModal.value = true;
 };
 
 const confirmDelete = () => {
-  if (graveToDelete.value) {
-    router.delete('/graveyard/temporary-graves/' + graveToDelete.value.id, {
+  if (categoryToDelete.value) {
+    router.delete('/graveyard/grave-categories/' + categoryToDelete.value.id, {
       onSuccess: () => {
         showDeleteModal.value = false;
-        graveToDelete.value = null;
-        highlightRow(graveToDelete.value?.id);
+        categoryToDelete.value = null;
+        highlightRow(categoryToDelete.value?.id);
       },
     });
   }
 };
 
-const restoreGrave = (id: number) => {
+const restoreCategory = (id: number) => {
   router.post(
-    '/graveyard/temporary-graves/' + id + '/restore',
+    '/graveyard/grave-categories/' + id + '/restore',
     {},
     {
       preserveScroll: true,
@@ -378,16 +328,6 @@ const highlightRow = (id: number) => {
   setTimeout(() => {
     highlightedRowId.value = null;
   }, 3000);
-};
-
-const getStatusClass = (status: string) => {
-  const classes = {
-    available: 'bg-green-100 text-green-800',
-    occupied: 'bg-red-100 text-red-800',
-    reserved: 'bg-yellow-100 text-yellow-800',
-    maintenance: 'bg-gray-100 text-gray-800',
-  };
-  return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
 };
 
 const formatDate = (dateString: string) => {

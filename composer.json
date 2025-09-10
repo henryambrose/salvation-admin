@@ -38,7 +38,7 @@
             "Database\\Seeders\\": "database/seeders/",
             "Modules\\Members\\Database\\Seeders\\": "database/modules/members/database/seeders/",
             "Modules\\Fund\\Database\\Seeders\\": "database/modules/fund/database/seeders/",
-            "Modules\\Graveyard\\Database\\Seeders\\": "database/modules/graveyard/seeders/"
+            "Modules\\Graveyard\\Database\\Seeders\\": "database/modules/graveyard/database/seeders/"
         },
         "classmap": [
             "database/modules/members/database/seeders/",

@@ -17,6 +17,9 @@ class DatabaseSeeder extends Seeder
         if (class_exists(ServiceTypesSeeder::class)) {
             $seeders[] = ServiceTypesSeeder::class;
         }
+        if (class_exists(GraveCategorySeeder::class)) {
+            $seeders[] = GraveCategorySeeder::class;
+        }
         if (class_exists(PermanentGraveSeeder::class)) {
             $seeders[] = PermanentGraveSeeder::class;
         }
@@ -26,6 +29,7 @@ class DatabaseSeeder extends Seeder
         if (class_exists(NicheSeeder::class)) {
             $seeders[] = NicheSeeder::class;
         }
+
         // Add more seeders here as needed
         // if (class_exists(CemeterySectionsSeeder::class)) { $seeders[] = CemeterySectionsSeeder::class; }
         // if (class_exists(SampleGravesSeeder::class)) { $seeders[] = SampleGravesSeeder::class; }

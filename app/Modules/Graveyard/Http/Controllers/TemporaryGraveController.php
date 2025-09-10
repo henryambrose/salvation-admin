@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\TemporaryGrave;
+use Modules\Graveyard\Models\GraveCategories;
 use Modules\Members\Models\Member;
 
 class TemporaryGraveController extends Controller
@@ -17,7 +18,7 @@ class TemporaryGraveController extends Controller
      */
     public function index(Request $request)
     {
-        $query = TemporaryGrave::query()->with('member');
+        $query = TemporaryGrave::query()->with(['member', 'graveCategory']);
 
         // Archive logic
         if ($request->input('isArchived') === 'true') {
@@ -41,6 +42,10 @@ class TemporaryGraveController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('grave_category_id')) {
+            $query->where('grave_category_id', $request->grave_category_id);
+        }
+
         if ($request->filled('is_active')) {
             $query->where('is_active', $request->is_active === 'true');
         }
@@ -59,13 +64,15 @@ class TemporaryGraveController extends Controller
         // Get filter options
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
+        $graveCategories = GraveCategories::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Index', [
             'data' => $temporaryGraves,
-            'filters' => $request->only(['search', 'section', 'status', 'is_active', 'sort', 'direction', 'perPage', 'isArchived']),
+            'filters' => $request->only(['search', 'section', 'status', 'grave_category_id', 'is_active', 'sort', 'direction', 'perPage', 'isArchived']),
             'filterOptions' => [
                 'sections' => $sections,
                 'statuses' => $statuses,
+                'graveCategories' => $graveCategories,
             ],
             'fetchUrl' => route('graveyard.temporary-graves.index'),
         ]);
@@ -78,10 +85,12 @@ class TemporaryGraveController extends Controller
     {
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
+        $graveCategories = GraveCategories::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Create', [
             'sections' => $sections,
             'statuses' => $statuses,
+            'graveCategories' => $graveCategories,
         ]);
     }
 
@@ -101,6 +110,7 @@ class TemporaryGraveController extends Controller
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
+            'grave_category_id' => 'nullable|exists:grave_categories,id',
             'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
         ]);
@@ -142,6 +152,7 @@ class TemporaryGraveController extends Controller
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
                 'member_id' => $request->member_id,
+                'grave_category_id' => $request->grave_category_id,
                 'contact_no' => $request->contact_no,
                 'is_active' => $request->boolean('is_active', true),
                 'created_by' => Auth::id(),
@@ -185,15 +196,17 @@ class TemporaryGraveController extends Controller
     public function edit(TemporaryGrave $temporaryGrave)
     {
 
-        $temporaryGrave->load(['member', 'member.community']);
+        $temporaryGrave->load(['member', 'member.community', 'graveCategory']);
 
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
+        $graveCategories = GraveCategories::orderBy('name')->get(['id', 'name']);
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Edit', [
             'temporaryGrave' => $temporaryGrave,
             'sections' => $sections,
             'statuses' => $statuses,
+            'graveCategories' => $graveCategories,
         ]);
     }
 
@@ -213,6 +226,7 @@ class TemporaryGraveController extends Controller
             'plot_size' => 'nullable|numeric|min:0',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
+            'grave_category_id' => 'nullable|exists:grave_categories,id',
             'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
             'member_type' => 'required|in:member,external',
@@ -256,6 +270,7 @@ class TemporaryGraveController extends Controller
                 'plot_size' => $request->plot_size,
                 'owner_name' => $request->owner_name,
                 'member_id' => $request->member_id,
+                'grave_category_id' => $request->grave_category_id,
                 'contact_no' => $request->contact_no,
                 'is_active' => $request->boolean('is_active', true),
                 'updated_by' => Auth::id(),

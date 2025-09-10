@@ -276,9 +276,8 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                       <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">
-                            {{ booking.permanent_grave.grave_no }}
+                            {{ booking.permanent_grave.section }} - {{ booking.permanent_grave.row_no }} - {{ booking.permanent_grave.grave_no }}
                           </div>
-                          <div class="text-sm text-gray-500">{{ booking.permanent_grave.section }}, Row {{ booking.permanent_grave.row_no }}</div>
                           <div class="text-xs text-gray-400">Owner: {{ booking.permanent_grave.owner_name }}</div>
                         </div>
                       </TableCell>

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\User;
 use Modules\Members\Models\Member;
+use Modules\Graveyard\Models\GraveCategories;
 use Carbon\Carbon;
 
 class TemporaryGrave extends Model
@@ -25,6 +26,7 @@ class TemporaryGrave extends Model
         'plot_size',
         'owner_name',
         'member_id',
+        'grave_category_id',
         'contact_no',
         'is_active',
         'created_by',
@@ -65,6 +67,14 @@ class TemporaryGrave extends Model
     public function member()
     {
         return $this->belongsTo(Member::class, 'member_id');
+    }
+
+    /**
+     * Get the grave category associated with this grave
+     */
+    public function graveCategory()
+    {
+        return $this->belongsTo(GraveCategories::class, 'grave_category_id');
     }
 
     /**

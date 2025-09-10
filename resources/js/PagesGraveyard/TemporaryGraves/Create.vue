@@ -87,6 +87,22 @@
                     <p v-if="errors.status" class="mt-1 text-sm text-red-600">{{ errors.status }}</p>
                   </div>
                 </div>
+
+                <div class="mt-4">
+                  <div>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Grave Category</label>
+                    <select
+                      v-model="form.grave_category_id"
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
+                      <option value="">Select Category</option>
+                      <option v-for="category in graveCategories" :key="category.id" :value="category.id">
+                        {{ category.name }}
+                      </option>
+                    </select>
+                    <p v-if="errors.grave_category_id" class="mt-1 text-sm text-red-600">{{ errors.grave_category_id }}</p>
+                  </div>
+                </div>
               </div>
 
               <!-- Member Information Section -->
@@ -281,6 +297,7 @@ defineOptions({
 interface Props {
   sections: string[];
   statuses: string[];
+  graveCategories: { id: number; name: string }[];
   errors?: any;
 }
 
@@ -300,6 +317,7 @@ const form = useForm({
   grave_no: '',
   oldno: '',
   status: '',
+  grave_category_id: null as number | null,
   last_burial_date: '',
   owner_name: '',
   member_id: null as number | null,

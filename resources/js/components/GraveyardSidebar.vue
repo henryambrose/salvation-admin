@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, BookOpen, Box, Clock, Cross, Home, Settings, UserCheck, CreditCard } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Box, Clock, CreditCard, Cross, Home, Settings, UserCheck, Tags } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -25,18 +25,26 @@ const graveyardNavigationGroups = computed(() => [
     items: [{ title: 'Dashboard', href: '/graveyard', icon: Home, show: true }],
   },
   {
-    label: 'Bookings',
+    label: 'Register',
     items: [
-      { title: 'Permanent Grave Bookings', href: '/graveyard/permanent-grave-bookings', icon: Cross, show: can('read-permanent-grave-booking') || true },
-      { title: 'Temporary Grave Bookings', href: '/graveyard/temporary-grave-bookings', icon: Clock, show: can('read-temporary-grave-booking') || true },
-      { title: 'Niche Transfers', href: '/graveyard/niche-transfers', icon: BookOpen, show: can('read-niche-transfer') || true },
+      {
+        title: 'Permanent Grave Register',
+        href: '/graveyard/permanent-grave-bookings',
+        icon: Cross,
+        show: can('read-permanent-grave-booking') || true,
+      },
+      {
+        title: 'Temporary Grave Register',
+        href: '/graveyard/temporary-grave-bookings',
+        icon: Clock,
+        show: can('read-temporary-grave-booking') || true,
+      },
+      { title: 'Niche Tra. Register', href: '/graveyard/niche-transfers', icon: BookOpen, show: can('read-niche-transfer') || true },
     ],
   },
   {
     label: 'Payments & Finance',
-    items: [
-      { title: 'All Payments', href: '/graveyard/payments', icon: CreditCard, show: can('read-payment') || true },
-    ],
+    items: [{ title: 'All Payments', href: '/graveyard/payments', icon: CreditCard, show: can('read-payment') || true }],
   },
   {
     label: 'Administration',
@@ -45,6 +53,7 @@ const graveyardNavigationGroups = computed(() => [
       { title: 'Temporary Graves', href: '/graveyard/temporary-graves', icon: Clock, show: can('read-temporary-grave') || true },
       { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
       { title: 'Valid Members', href: '/graveyard/valid-members', icon: UserCheck, show: can('read-valid-member') || true },
+      { title: 'Grave Categories', href: '/graveyard/grave-categories', icon: Tags, show: can('read-grave-category') || true },
       { title: 'Service Types', href: '/graveyard/service-types', icon: Settings, show: can('read-service-type') || true },
     ],
   },

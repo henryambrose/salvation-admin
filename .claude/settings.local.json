@@ -5,7 +5,8 @@
       "Bash(php artisan make:migration:*)",
       "Bash(php artisan config:clear:*)",
       "Bash(php artisan:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(php -l:*)"
     ],
     "deny": [],
     "ask": []
