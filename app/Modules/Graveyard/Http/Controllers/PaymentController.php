@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\Payment;
 use Modules\Graveyard\Models\PermanentGraveBooking;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
+use Modules\Graveyard\Models\NicheTransfer;
 use Modules\Graveyard\Models\ServiceType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -38,8 +39,8 @@ class PaymentController extends Controller
                 case 'temporary':
                     $query->where('payable_type', 'Modules\\Graveyard\\Models\\TemporaryGraveBooking');
                     break;
-                case 'niche':
-                    $query->where('payable_type', 'Modules\\Graveyard\\Models\\NicheBooking');
+                case 'niche-transfer':
+                    $query->where('payable_type', 'Modules\\Graveyard\\Models\\NicheTransfer');
                     break;
             }
         }
@@ -69,7 +70,7 @@ class PaymentController extends Controller
     public function create(Request $request, string $bookingType, int $bookingId)
     {
         // Validate booking type
-        $allowedTypes = ['permanent', 'temporary', 'niche'];
+        $allowedTypes = ['permanent', 'temporary', 'niche', 'niche-transfer'];
         if (!in_array($bookingType, $allowedTypes)) {
             abort(404, 'Invalid booking type');
         }
@@ -81,8 +82,14 @@ class PaymentController extends Controller
         }
 
         // Check if booking is eligible for payment
-        if (!in_array($booking->status, ['pending', 'confirmed'])) {
-            return redirect()->back()->with('error', 'This booking is not eligible for payment.');
+        if ($bookingType === 'niche-transfer') {
+            if (!in_array($booking->status, ['pending', 'approved'])) {
+                return redirect()->back()->with('error', 'This transfer is not eligible for payment.');
+            }
+        } else {
+            if (!in_array($booking->status, ['pending', 'confirmed'])) {
+                return redirect()->back()->with('error', 'This booking is not eligible for payment.');
+            }
         }
 
         // Check if booking already has a completed payment
@@ -134,7 +141,7 @@ class PaymentController extends Controller
         }
 
         $validationRules = [
-            'booking_type' => 'required|in:permanent,temporary,niche',
+            'booking_type' => 'required|in:permanent,temporary,niche-transfer',
             'booking_id' => 'required|integer',
             'selected_services' => 'nullable|array',
             'selected_services.*.service_id' => 'required_with:selected_services|exists:service_types,id',
@@ -161,6 +168,7 @@ class PaymentController extends Controller
             DB::beginTransaction();
 
             // Get the booking
+            Log::info('Fetching booking of type ' . $request->booking_type . ' with ID ' . $request->booking_id);
             $booking = $this->getBookingByType($request->booking_type, $request->booking_id);
             if (!$booking) {
                 return back()->withErrors(['error' => 'Booking not found.']);
@@ -193,11 +201,11 @@ class PaymentController extends Controller
 
             // Apply concession discount (only for service payments)
             $concessionAmount = $isBalancePayment ? 0 : (float)($request->concession_amount ?? 0);
-            
+
             // For balance payments, total amount is the paid amount (no services)
             // For service payments, calculate from services minus concession
-            $totalAmount = $isBalancePayment 
-                ? (float)$request->paid_amount 
+            $totalAmount = $isBalancePayment
+                ? (float)$request->paid_amount
                 : max(0, $serviceSubtotal - $concessionAmount);
 
             // For free services, ensure amounts are set correctly
@@ -231,8 +239,8 @@ class PaymentController extends Controller
                 'concession_amount' => $concessionAmount,
                 'payment_method_id' => $hasFreeServices ? null : $request->payment_method_id,
                 'transaction_reference' => $request->transaction_reference,
-                'payment_notes' => $hasFreeServices ? 
-                    ($request->payment_notes ? $request->payment_notes . ' (Free Service)' : 'Free Service - No Payment Required') : 
+                'payment_notes' => $hasFreeServices ?
+                    ($request->payment_notes ? $request->payment_notes . ' (Free Service)' : 'Free Service - No Payment Required') :
                     $request->payment_notes,
                 'selected_services' => $request->selected_services,
                 'service_charges' => $serviceCharges,
@@ -249,7 +257,7 @@ class PaymentController extends Controller
                 // For balance payments, update payment amounts but keep existing services and total cost
                 $newPaidAmount = $booking->paid_amount + $request->paid_amount;
                 $newBalanceAmount = max(0, $booking->total_cost - $newPaidAmount);
-                
+
                 $booking->update([
                     'paid_amount' => $newPaidAmount,
                     'balance_amount' => $newBalanceAmount,
@@ -257,6 +265,7 @@ class PaymentController extends Controller
                 ]);
             } else {
                 // For service payments, update services and all amounts
+                Log::info('Updating booking ID ' . $booking . ' with new payment details');
                 $booking->update([
                     'selected_services' => array_column($request->selected_services, 'service_id'),
                     'total_cost' => $totalAmount,
@@ -428,10 +437,11 @@ class PaymentController extends Controller
      */
     private function getBookingByType(string $type, int $id)
     {
+        Log::info("Fetching booking of type {$type} with ID {$id}");
         return match ($type) {
             'permanent' => PermanentGraveBooking::find($id),
             'temporary' => TemporaryGraveBooking::find($id),
-            'niche' => null, // TODO: Implement when NicheBooking model exists
+            'niche-transfer' => NicheTransfer::find($id),
             default => null
         };
     }
@@ -445,6 +455,7 @@ class PaymentController extends Controller
             'permanent' => 'Modules\\Graveyard\\Models\\PermanentGraveBooking',
             'temporary' => 'Modules\\Graveyard\\Models\\TemporaryGraveBooking',
             'niche' => 'Modules\\Graveyard\\Models\\NicheBooking',
+            'niche-transfer' => 'Modules\\Graveyard\\Models\\NicheTransfer',
             default => ''
         };
     }
@@ -457,7 +468,7 @@ class PaymentController extends Controller
         return match ($type) {
             'permanent' => 'graveyard.permanent-grave-bookings.show',
             'temporary' => 'graveyard.temporary-grave-bookings.show',
-            'niche' => 'graveyard.niche-transfers.show', // or appropriate niche route
+            'niche-transfer' => 'graveyard.niche-transfers.show', // or appropriate niche route
             default => 'graveyard.dashboard'
         };
     }
@@ -468,7 +479,7 @@ class PaymentController extends Controller
     private function getPaymentRelationships(Payment $payment): array
     {
         $baseRelationships = ['paymentMethod', 'creator', 'updater'];
-        
+
         // Determine payable type from payment
         if (str_contains($payment->payable_type, 'PermanentGraveBooking')) {
             return array_merge($baseRelationships, ['payable.permanentGrave', 'payable.validMember']);
@@ -477,7 +488,7 @@ class PaymentController extends Controller
         } elseif (str_contains($payment->payable_type, 'NicheBooking')) {
             return array_merge($baseRelationships, ['payable.niche']);
         }
-        
+
         return array_merge($baseRelationships, ['payable']);
     }
 }

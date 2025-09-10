@@ -34,17 +34,10 @@ interface NicheTransfer {
   };
   proposed_transfer_date: string;
   transfer_reason: string;
-  transfer_applicant_name: string;
-  transfer_contact_no: string;
-  niche_cost: number;
-  transfer_cost: number;
-  total_cost: number;
-  balance_amount: number;
+  applicant_name: string;
+  contact_no: string;
   created_at: string;
   creator: {
-    name: string;
-  };
-  approver?: {
     name: string;
   };
 }
@@ -218,14 +211,14 @@ const isOverdue = (transfer: NicheTransfer) => {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Transfer Details</TableHead>
-                      <TableHead>From → To</TableHead>
-                      <TableHead>Deceased</TableHead>
-                      <TableHead>Applicant</TableHead>
-                      <TableHead>Transfer Date</TableHead>
-                      <TableHead>Financial</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead class="text-right">Actions</TableHead>
+                      <TableHead class="text-gray-700 font-semibold">Transfer Details</TableHead>
+                      <TableHead class="text-gray-700 font-semibold">From → To</TableHead>
+                      <TableHead class="text-gray-700 font-semibold">Deceased</TableHead>
+                      <TableHead class="text-gray-700 font-semibold">Applicant</TableHead>
+                      <TableHead class="text-gray-700 font-semibold">Transfer Date</TableHead>
+                      <!-- <TableHead>Financial</TableHead> -->
+                      <TableHead class="text-gray-700 font-semibold">Status</TableHead>
+                      <TableHead class="text-right text-gray-700 font-semibold">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -260,10 +253,10 @@ const isOverdue = (transfer: NicheTransfer) => {
                       <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">
-                            {{ transfer.transfer_applicant_name }}
+                            {{ transfer.applicant_name }}
                           </div>
                           <div class="text-sm text-gray-500">
-                            {{ transfer.transfer_contact_no }}
+                            {{ transfer.contact_no }}
                           </div>
                         </div>
                       </TableCell>
@@ -285,7 +278,7 @@ const isOverdue = (transfer: NicheTransfer) => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <!-- <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">
                             {{ formatCurrency(transfer.total_cost) }}
@@ -294,7 +287,7 @@ const isOverdue = (transfer: NicheTransfer) => {
                             Balance: {{ formatCurrency(transfer.balance_amount) }}
                           </div>
                         </div>
-                      </TableCell>
+                      </TableCell> -->
                       <TableCell>
                         <Badge :class="statusColors[transfer.status]">
                           {{ transfer.status }}
@@ -331,11 +324,11 @@ const isOverdue = (transfer: NicheTransfer) => {
                     </div>
                     <div class="flex items-center space-x-2 text-sm">
                       <User class="h-4 w-4 text-gray-400" />
-                      <span>{{ transfer.transfer_applicant_name }}</span>
+                      <span>{{ transfer.applicant_name }}</span>
                     </div>
                     <div class="flex items-center space-x-2 text-sm">
                       <Phone class="h-4 w-4 text-gray-400" />
-                      <span>{{ transfer.transfer_contact_no }}</span>
+                      <span>{{ transfer.contact_no }}</span>
                     </div>
                     <div class="flex items-center space-x-2 text-sm">
                       <Calendar class="h-4 w-4 text-gray-400" />
@@ -343,12 +336,12 @@ const isOverdue = (transfer: NicheTransfer) => {
                       <Badge v-if="isOverdue(transfer) && transfer.status === 'approved'" class="bg-red-100 text-xs text-red-800"> Overdue </Badge>
                     </div>
                     <div class="flex items-center justify-between pt-2">
-                      <div>
+                      <!-- <div>
                         <div class="font-medium">{{ formatCurrency(transfer.total_cost) }}</div>
                         <div v-if="transfer.balance_amount > 0" class="text-sm text-red-600">
                           Balance: {{ formatCurrency(transfer.balance_amount) }}
                         </div>
-                      </div>
+                      </div> -->
                       <Button variant="outline" size="sm" as-child>
                         <Link :href="route('graveyard.niche-transfers.show', transfer.id)">
                           <Eye class="h-4 w-4" />
@@ -361,6 +354,7 @@ const isOverdue = (transfer: NicheTransfer) => {
 
               <!-- Pagination -->
               <Pagination
+                v-if="transfers?.meta"
                 :links="transfers.links"
                 :meta="transfers.meta"
                 :current-page="transfers.meta.current_page"

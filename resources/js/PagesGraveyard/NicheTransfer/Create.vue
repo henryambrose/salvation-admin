@@ -2,7 +2,6 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -11,17 +10,10 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, Calendar, CheckCircle, MapPin, User } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
-interface ServiceType {
-  id: number;
-  name: string;
-  cost: number;
-  description?: string;
-}
-
 interface EligibleBooking {
   id: number;
   booking_reference: string;
-  deceased_full_name: string;
+  full_name: string;
   grave_no: string;
   buried_on: string;
   expected_transfer_date: string;
@@ -38,13 +30,22 @@ interface AvailableNiche {
   niche_no: string;
   section: string;
   row_no: string;
+  location?: string;
+  owner_name?: string;
+  last_occupation_date?: string;
   cost: number;
 }
 
+interface Relationship {
+  id: number;
+  name: string;
+  description?: string;
+}
+
 interface Props {
-  serviceTypes: ServiceType[];
   eligibleBookings: EligibleBooking[];
   availableNiches: AvailableNiche[];
+  relationships: Relationship[];
   selectedBooking?: EligibleBooking;
 }
 
@@ -55,56 +56,51 @@ const form = useForm({
   to_niche_id: null as number | null,
   proposed_transfer_date: '',
   transfer_reason: '',
-  transfer_applicant_name: '',
-  transfer_contact_no: '',
-  transfer_contact_email: '',
-  relationship_to_deceased: '',
+  applicant_name: '',
+  contact_no: '',
+  contact_email: '',
   applicant_address: '',
-  selected_services: [] as number[],
+  relationship_id: null as number | null,
 });
 
 // Pre-select booking if provided
 const selectedBooking = ref<EligibleBooking | null>(props.selectedBooking || null);
 const selectedNiche = ref<AvailableNiche | null>(null);
-const selectedServiceIds = ref<number[]>([]);
 
-// Calculate costs
-const nicheCost = computed(() => {
-  return selectedNiche.value?.cost || 0;
+// Niche search functionality
+const nicheSearch = ref('');
+const showNicheDropdown = ref(false);
+const filteredNiches = computed(() => {
+  if (!nicheSearch.value) return props.availableNiches;
+
+  const search = nicheSearch.value.toLowerCase();
+  return props.availableNiches.filter(
+    (niche) =>
+      niche.niche_no.toLowerCase().includes(search) ||
+      (niche.owner_name && niche.owner_name.toLowerCase().includes(search)) ||
+      (niche.location && niche.location.toLowerCase().includes(search)),
+  );
 });
 
-const servicesCost = computed(() => {
-  return selectedServiceIds.value.reduce((total, serviceId) => {
-    const service = props.serviceTypes.find((s) => s.id === serviceId);
-    return total + (service?.cost || 0);
-  }, 0);
-});
-
-const totalCost = computed(() => {
-  return nicheCost.value + servicesCost.value;
-});
-
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  })
-    .format(amount)
-    .replace('₹', '₹ ');
+const selectNiche = (niche: AvailableNiche) => {
+  selectedNiche.value = niche;
+  form.to_niche_id = niche.id;
+  nicheSearch.value = `${niche.niche_no} - ${niche.location || 'No location'}`;
+  showNicheDropdown.value = false;
 };
+
+const clearNicheSelection = () => {
+  selectedNiche.value = null;
+  form.to_niche_id = null;
+  nicheSearch.value = '';
+  showNicheDropdown.value = false;
+};
+
+// No cost calculations during request creation
 
 const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-IN');
 };
-
-// Watch for service selection changes
-watch(
-  selectedServiceIds,
-  (newIds) => {
-    form.selected_services = newIds;
-  },
-  { deep: true },
-);
 
 // Watch for booking selection
 watch(
@@ -138,6 +134,14 @@ onMounted(() => {
   if (dateInput) {
     dateInput.min = minDate;
   }
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (event) => {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.relative')) {
+      showNicheDropdown.value = false;
+    }
+  });
 });
 
 const submit = () => {
@@ -150,7 +154,7 @@ const submit = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -195,7 +199,8 @@ const submit = () => {
                   >
                     <option value="" disabled>Select a booking</option>
                     <option v-for="booking in eligibleBookings" :key="booking.id" :value="booking.id">
-                      {{ booking.deceased_full_name }} ({{ booking.grave_no }}){{ booking.is_overdue ? ' - Overdue' : '' }}
+                      {{ booking.full_name }} ({{ booking.grave_no }}) - Buried: {{ formatDate(booking.buried_on)
+                      }}{{ booking.is_overdue ? ' - Overdue' : '' }}
                     </option>
                   </select>
                   <div v-if="form.errors.from_booking_id" class="mt-1 text-sm text-red-600">
@@ -207,7 +212,7 @@ const submit = () => {
                     <div class="flex items-start space-x-3">
                       <CheckCircle class="mt-0.5 h-5 w-5 text-blue-600" />
                       <div>
-                        <h4 class="font-medium text-blue-900">{{ selectedBooking.deceased_full_name }}</h4>
+                        <h4 class="font-medium text-blue-900">{{ selectedBooking.full_name }}</h4>
                         <p class="text-sm text-blue-700">
                           From: {{ selectedBooking.temporary_grave.grave_no }} ({{ selectedBooking.temporary_grave.section }}, Row
                           {{ selectedBooking.temporary_grave.row_no }})
@@ -235,35 +240,60 @@ const submit = () => {
               <CardContent>
                 <div>
                   <Label for="to_niche_id">Available Niches *</Label>
-                  <select
-                    v-model="form.to_niche_id"
-                    :class="[
-                      'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
-                      form.errors.to_niche_id && 'border-red-500',
-                    ]"
-                  >
-                    <option value="" disabled>Select a niche</option>
-                    <option v-for="niche in availableNiches" :key="niche.id" :value="niche.id">
-                      {{ niche.niche_no }} - {{ niche.section }}, Row {{ niche.row_no }} ({{ formatCurrency(niche.cost) }})
-                    </option>
-                  </select>
+                  <div class="relative mt-1">
+                    <Input
+                      v-model="nicheSearch"
+                      placeholder="Search by niche number, owner name, or location..."
+                      :class="form.errors.to_niche_id && 'border-red-500'"
+                      @focus="showNicheDropdown = true"
+                      @input="showNicheDropdown = true"
+                    />
+                    <div
+                      v-if="showNicheDropdown && filteredNiches.length > 0"
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                    >
+                      <div
+                        v-for="niche in filteredNiches"
+                        :key="niche.id"
+                        class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
+                        @click="selectNiche(niche)"
+                      >
+                        <div class="font-medium text-gray-900">Niche {{ niche.niche_no }}</div>
+                        <div class="text-sm text-gray-600">Location: {{ niche.location || 'No location specified' }}</div>
+                        <div v-if="niche.owner_name" class="text-sm text-gray-500">Owner: {{ niche.owner_name }}</div>
+                        <div v-if="niche.last_occupation_date" class="text-xs text-gray-400">
+                          Last occupied: {{ formatDate(niche.last_occupation_date) }}
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      v-if="showNicheDropdown && filteredNiches.length === 0 && nicheSearch"
+                      class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 text-center text-gray-500 shadow-lg"
+                    >
+                      No niches found matching your search
+                    </div>
+                  </div>
+                  <!-- Clear button for selected niche -->
+                  <div v-if="selectedNiche" class="mt-2">
+                    <Button type="button" variant="outline" size="sm" @click="clearNicheSelection"> Clear Selection </Button>
+                  </div>
                   <div v-if="form.errors.to_niche_id" class="mt-1 text-sm text-red-600">
                     {{ form.errors.to_niche_id }}
                   </div>
 
                   <!-- Selected Niche Details -->
                   <div v-if="selectedNiche" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                    <div class="flex items-start justify-between">
-                      <div class="flex items-start space-x-3">
-                        <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
-                        <div>
-                          <h4 class="font-medium text-green-900">{{ selectedNiche.niche_no }}</h4>
-                          <p class="text-sm text-green-700">{{ selectedNiche.section }}, Row {{ selectedNiche.row_no }}</p>
-                        </div>
-                      </div>
-                      <div class="text-right">
-                        <p class="text-lg font-bold text-green-800">{{ formatCurrency(selectedNiche.cost) }}</p>
-                        <p class="text-xs text-green-600">Niche Cost</p>
+                    <div class="flex items-start space-x-3">
+                      <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
+                      <div>
+                        <h4 class="font-medium text-green-900">Niche {{ selectedNiche.niche_no }}</h4>
+                        <p class="text-sm text-green-700">
+                          Location: {{ selectedNiche.location || `${selectedNiche.section}, Row ${selectedNiche.row_no}` }}
+                        </p>
+                        <p v-if="selectedNiche.owner_name" class="text-sm text-green-600">Owner: {{ selectedNiche.owner_name }}</p>
+                        <p v-if="selectedNiche.last_occupation_date" class="text-xs text-green-500">
+                          Last occupied: {{ formatDate(selectedNiche.last_occupation_date) }}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -324,109 +354,49 @@ const submit = () => {
               <CardContent class="space-y-4">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <Label for="transfer_applicant_name">Applicant Name *</Label>
-                    <Input
-                      id="transfer_applicant_name"
-                      v-model="form.transfer_applicant_name"
-                      :class="form.errors.transfer_applicant_name && 'border-red-500'"
-                      class="mt-1"
-                    />
-                    <div v-if="form.errors.transfer_applicant_name" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.transfer_applicant_name }}
+                    <Label for="applicant_name">Applicant Name *</Label>
+                    <Input id="applicant_name" v-model="form.applicant_name" :class="form.errors.applicant_name && 'border-red-500'" class="mt-1" />
+                    <div v-if="form.errors.applicant_name" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.applicant_name }}
                     </div>
                   </div>
 
                   <div>
-                    <Label for="transfer_contact_no">Contact Number *</Label>
-                    <Input
-                      id="transfer_contact_no"
-                      v-model="form.transfer_contact_no"
-                      :class="form.errors.transfer_contact_no && 'border-red-500'"
-                      class="mt-1"
-                    />
-                    <div v-if="form.errors.transfer_contact_no" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.transfer_contact_no }}
+                    <Label for="contact_no">Contact Number *</Label>
+                    <Input id="contact_no" v-model="form.contact_no" :class="form.errors.contact_no && 'border-red-500'" class="mt-1" />
+                    <div v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.contact_no }}
                     </div>
                   </div>
 
                   <div>
-                    <Label for="transfer_contact_email">Email</Label>
-                    <Input id="transfer_contact_email" v-model="form.transfer_contact_email" type="email" class="mt-1" />
+                    <Label for="contact_email">Email</Label>
+                    <Input id="contact_email" v-model="form.contact_email" type="email" class="mt-1" />
                   </div>
 
                   <div>
-                    <Label for="relationship_to_deceased">Relationship to Deceased</Label>
-                    <Input id="relationship_to_deceased" v-model="form.relationship_to_deceased" class="mt-1" />
+                    <Label for="relationship_id">Relationship to Deceased *</Label>
+                    <select
+                      id="relationship_id"
+                      v-model="form.relationship_id"
+                      :class="[
+                        'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
+                        form.errors.relationship_id && 'border-red-500',
+                      ]"
+                    >
+                      <option value="" disabled>Select relationship</option>
+                      <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id">
+                        {{ relationship.name }}
+                      </option>
+                    </select>
+                    <div v-if="form.errors.relationship_id" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.relationship_id }}
+                    </div>
                   </div>
 
                   <div class="sm:col-span-2">
                     <Label for="applicant_address">Applicant Address</Label>
                     <Textarea id="applicant_address" v-model="form.applicant_address" rows="2" class="mt-1" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Services Selection -->
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Transfer Services</CardTitle>
-                <CardDescription> Select any additional services required for the transfer </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div class="space-y-3">
-                  <div v-for="service in serviceTypes" :key="service.id" class="flex items-start space-x-3 rounded-lg border p-3">
-                    <Checkbox
-                      :id="`service-${service.id}`"
-                      :checked="selectedServiceIds.includes(service.id)"
-                      @update:checked="
-                        (checked: boolean) => {
-                          if (checked) {
-                            selectedServiceIds.push(service.id);
-                          } else {
-                            const index = selectedServiceIds.indexOf(service.id);
-                            if (index > -1) selectedServiceIds.splice(index, 1);
-                          }
-                        }
-                      "
-                    />
-                    <div class="flex-1">
-                      <Label :for="`service-${service.id}`" class="cursor-pointer">
-                        <div class="flex items-start justify-between">
-                          <div>
-                            <span class="font-medium">{{ service.name }}</span>
-                            <p v-if="service.description" class="mt-1 text-sm text-gray-600">
-                              {{ service.description }}
-                            </p>
-                          </div>
-                          <span class="font-medium text-green-600">
-                            {{ formatCurrency(service.cost) }}
-                          </span>
-                        </div>
-                      </Label>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Cost Summary -->
-                <div v-if="nicheCost > 0 || servicesCost > 0" class="mt-4 space-y-2 border-t pt-4">
-                  <div v-if="nicheCost > 0" class="flex items-center justify-between">
-                    <span class="text-base">Niche Cost:</span>
-                    <span class="text-lg font-medium text-green-600">
-                      {{ formatCurrency(nicheCost) }}
-                    </span>
-                  </div>
-                  <div v-if="servicesCost > 0" class="flex items-center justify-between">
-                    <span class="text-base">Services Cost:</span>
-                    <span class="text-lg font-medium text-green-600">
-                      {{ formatCurrency(servicesCost) }}
-                    </span>
-                  </div>
-                  <div class="flex items-center justify-between border-t pt-2">
-                    <span class="text-lg font-bold">Total Cost:</span>
-                    <span class="text-xl font-bold text-green-600">
-                      {{ formatCurrency(totalCost) }}
-                    </span>
                   </div>
                 </div>
               </CardContent>

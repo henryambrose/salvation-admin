@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\NicheTransfer;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\Niche;
-use Modules\Graveyard\Models\ServiceType;
+use Modules\Members\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -25,7 +25,7 @@ class NicheTransferController extends Controller
             'fromBooking',
             'toNiche',
             'creator',
-            'approver'
+            // 'approver'
         ]);
 
         // Apply filters
@@ -36,8 +36,8 @@ class NicheTransferController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('deceased_first_name', 'like', "%{$search}%")
-                    ->orWhere('deceased_last_name', 'like', "%{$search}%")
+                $q->where('dead_first_name', 'like', "%{$search}%")
+                    ->orWhere('dead_last_name', 'like', "%{$search}%")
                     ->orWhere('transfer_reference', 'like', "%{$search}%");
             });
         }
@@ -72,7 +72,7 @@ class NicheTransferController extends Controller
         $eligibleBookings = TemporaryGraveBooking::eligibleForTransfer()
             ->with(['temporaryGrave'])
             ->get();
-
+        Log::info('Eligible Bookings: ', $eligibleBookings->toArray());
         // If a specific booking was requested, include it even if transfer_requested = true
         if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {
             // Add the selected booking to the list if it's not already there
@@ -86,7 +86,7 @@ class NicheTransferController extends Controller
             return [
                 'id' => $booking->id,
                 'booking_reference' => $booking->booking_reference,
-                'deceased_full_name' => $booking->deceased_full_name,
+                'full_name' => $booking->full_name,
                 'grave_no' => $booking->temporaryGrave->grave_no,
                 'buried_on' => $booking->buried_on,
                 'expected_transfer_date' => $booking->expected_transfer_date,
@@ -104,7 +104,7 @@ class NicheTransferController extends Controller
             $selectedBooking = [
                 'id' => $selectedBooking->id,
                 'booking_reference' => $selectedBooking->booking_reference,
-                'deceased_full_name' => $selectedBooking->deceased_full_name,
+                'full_name' => $selectedBooking->full_name,
                 'grave_no' => $selectedBooking->temporaryGrave->grave_no,
                 'buried_on' => $selectedBooking->buried_on,
                 'expected_transfer_date' => $selectedBooking->expected_transfer_date,
@@ -118,9 +118,9 @@ class NicheTransferController extends Controller
         }
 
         return Inertia::render('PagesGraveyard/NicheTransfer/Create', [
-            'serviceTypes' => ServiceType::active()->byCategory('grave')->get(),
             'eligibleBookings' => $eligibleBookings,
             'availableNiches' => Niche::where('status', 'available')->where('is_active', true)->get(),
+            'relationships' => Relationship::all(),
             'selectedBooking' => $selectedBooking
         ]);
     }
@@ -135,13 +135,11 @@ class NicheTransferController extends Controller
             'to_niche_id' => 'required|exists:niches,id',
             'proposed_transfer_date' => 'required|date|after:today',
             'transfer_reason' => 'required|string|max:500',
-            'transfer_applicant_name' => 'required|string|max:255',
-            'transfer_contact_no' => 'required|string|max:20',
-            'transfer_contact_email' => 'nullable|email',
-            'relationship_to_deceased' => 'nullable|string|max:100',
+            'applicant_name' => 'required|string|max:255',
+            'contact_no' => 'required|string|max:20',
+            'contact_email' => 'nullable|email',
             'applicant_address' => 'nullable|string|max:500',
-            'selected_services' => 'nullable|array',
-            'selected_services.*' => 'exists:service_types,id'
+            'relationship_id' => 'required|exists:relationships,id',
         ]);
 
         try {
@@ -155,8 +153,10 @@ class NicheTransferController extends Controller
                 return back()->withErrors(['booking' => 'Only confirmed bookings can be transferred.']);
             }
 
-            if ($booking->transfer_requested) {
-                return back()->withErrors(['booking' => 'A transfer request already exists for this booking.']);
+            // Check if there's already an existing transfer request for this booking
+            $existingTransfer = NicheTransfer::where('from_booking_id', $request->from_booking_id)->first();
+            if ($existingTransfer) {
+                return back()->withErrors(['from_booking_id' => 'A transfer request already exists for this booking.']);
             }
 
             // Check if niche is still available
@@ -165,34 +165,22 @@ class NicheTransferController extends Controller
                 return back()->withErrors(['niche' => 'This niche is no longer available.']);
             }
 
-            // Create transfer record
+            // Create transfer record (costs will be calculated later when approved/reviewed)
             $transfer = NicheTransfer::create([
                 'from_temporary_grave_id' => $booking->temporary_grave_id,
                 'from_booking_id' => $request->from_booking_id,
                 'to_niche_id' => $request->to_niche_id,
                 'proposed_transfer_date' => $request->proposed_transfer_date,
                 'transfer_reason' => $request->transfer_reason,
-                'transfer_applicant_name' => $request->transfer_applicant_name,
-                'transfer_contact_no' => $request->transfer_contact_no,
-                'transfer_contact_email' => $request->transfer_contact_email,
-                'relationship_to_deceased' => $request->relationship_to_deceased,
+                'applicant_name' => $request->applicant_name,
+                'contact_no' => $request->contact_no,
+                'contact_email' => $request->contact_email,
                 'applicant_address' => $request->applicant_address,
-                'selected_services' => $request->selected_services,
-                'niche_cost' => $niche->cost,
+                'relationship_id' => $request->relationship_id,
                 'status' => 'pending',
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
-
-            // Calculate transfer cost from services
-            if ($request->selected_services) {
-                $serviceCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');
-                $transfer->update([
-                    'transfer_cost' => $serviceCost,
-                    'total_cost' => $transfer->niche_cost + $serviceCost,
-                    'balance_amount' => $transfer->niche_cost + $serviceCost
-                ]);
-            }
 
             // Mark booking as having transfer requested
             $booking->update(['transfer_requested' => true]);
@@ -203,6 +191,7 @@ class NicheTransferController extends Controller
                 ->with('success', 'Niche transfer request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Error creating niche transfer: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to create transfer request.'])->withInput();
         }
     }
@@ -216,11 +205,19 @@ class NicheTransferController extends Controller
             'fromTemporaryGrave',
             'fromBooking.temporaryGrave',
             'toNiche',
+            'relationship',
             'creator',
             'updater',
-            'approver',
-            'rejecter'
+            // 'approver',
+            // 'rejecter',
+            'payments'
         ]);
+
+        // Calculate costs when viewing the transfer (if not already calculated)
+        // if ($nicheTransfer->total_cost == 0) {
+        //     $nicheTransfer->calculateTotalCost();
+        //     $nicheTransfer->save();
+        // }
 
         return Inertia::render('PagesGraveyard/NicheTransfer/Show', [
             'transfer' => $nicheTransfer

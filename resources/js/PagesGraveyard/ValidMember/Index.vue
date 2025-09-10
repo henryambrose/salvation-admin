@@ -118,7 +118,6 @@
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
                 <th class="border-b p-3 font-semibold text-gray-700">First Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Last Name</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Owner Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Type</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Grave Location</th>
@@ -170,11 +169,6 @@
                   </div>
                 </td>
                 <td class="p-2">
-                  <div class="font-medium">
-                    {{ validMember.member ? validMember.member.last_name : validMember.last_name }}
-                  </div>
-                </td>
-                <td class="p-2">
                   <span
                     class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
                     :class="validMember.member_type ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'"
@@ -196,7 +190,17 @@
                       {{ getGraveIdentifier(validMember) }}
                     </div>
                     <div class="text-xs text-gray-500">
-                      {{ getGraveLocation(validMember) }}
+                      <div v-if="validMember.permanent_grave">
+                        Section {{ validMember.permanent_grave.section }}, Row {{ validMember.permanent_grave.row_no }}
+                        <br />
+                        Owner Name {{ validMember.permanent_grave.owner_name }}
+                      </div>
+                      <div v-else-if="validMember.niche">
+                        {{ validMember.niche.location }}
+                        <br />
+                        Owner Name {{ validMember.niche.owner_name }}
+                      </div>
+                      <div v-else>-</div>
                     </div>
                   </div>
                 </td>
@@ -379,7 +383,10 @@ const getGraveIdentifier = (validMember: any) => {
 
 const getGraveLocation = (validMember: any) => {
   if (validMember.permanent_grave) {
-    return `Section ${validMember.permanent_grave.section}, Row ${validMember.permanent_grave.row_no}` || '-';
+    return (
+      `Section ${validMember.permanent_grave.section}, Row ${validMember.permanent_grave.row_no}\n Owner Name ${validMember.permanent_grave.owner_name} ` ||
+      '-'
+    );
   } else if (validMember.niche) {
     return validMember.niche.location || '-';
   }

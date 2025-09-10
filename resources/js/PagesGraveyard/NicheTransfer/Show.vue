@@ -2,14 +2,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight, Calendar, CheckCircle, DollarSign, FileText, ThumbsDown, ThumbsUp, User, XCircle } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { ArrowLeft, ArrowRight, Calendar, CreditCard, FileText, IndianRupee, User } from 'lucide-vue-next';
 
 interface NicheTransfer {
   id: number;
@@ -20,6 +17,7 @@ interface NicheTransfer {
     grave_no: string;
     section: string;
     row_no: string;
+    owner_name?: string;
   };
   from_booking: {
     id: number;
@@ -29,6 +27,10 @@ interface NicheTransfer {
     buried_on: string;
     applicant_name: string;
     contact_no: string;
+    total_cost: number;
+    paid_amount: number;
+    balance_amount: number;
+    payment_status?: 'pending' | 'partial' | 'completed';
     temporary_grave: {
       grave_no: string;
       section: string;
@@ -40,37 +42,33 @@ interface NicheTransfer {
     niche_no: string;
     section: string;
     row_no: string;
+    location?: string;
+    owner_name?: string;
   };
   proposed_transfer_date: string;
   actual_transfer_date?: string;
   transfer_reason: string;
-  transfer_applicant_name: string;
-  transfer_contact_no: string;
-  transfer_contact_email?: string;
-  relationship_to_deceased?: string;
+  applicant_name: string;
+  contact_no: string;
+  contact_email?: string;
   applicant_address?: string;
+  relationship?: {
+    id: number;
+    name: string;
+  };
   niche_cost: number;
   transfer_cost: number;
   total_cost: number;
   paid_amount: number;
   balance_amount: number;
-  admin_notes?: string;
-  rejection_reason?: string;
+  payment_status?: 'pending' | 'partial' | 'completed';
   created_at: string;
   updated_at: string;
-  approved_at?: string;
-  rejected_at?: string;
   completed_at?: string;
   creator: {
     name: string;
   };
   updater?: {
-    name: string;
-  };
-  approver?: {
-    name: string;
-  };
-  rejecter?: {
     name: string;
   };
 }
@@ -81,13 +79,11 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const showApproveDialog = ref(false);
-const showRejectDialog = ref(false);
-const showCancelDialog = ref(false);
-const adminNotes = ref('');
-const rejectionReason = ref('');
-const cancellationReason = ref('');
-const isProcessing = ref(false);
+// const showRejectDialog = ref(false);
+// const showCancelDialog = ref(false);
+// const rejectionReason = ref('');
+// const cancellationReason = ref('');
+// const isProcessing = ref(false);
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -122,82 +118,86 @@ const isOverdue = () => {
   return new Date(props.transfer.proposed_transfer_date) < new Date() && props.transfer.status === 'approved';
 };
 
-const canBeApproved = () => {
-  return props.transfer.status === 'pending';
+const canMakePayment = () => {
+  return props.transfer.status === 'pending' && props.transfer.payment_status !== 'completed';
 };
 
-const canBeRejected = () => {
-  return props.transfer.status === 'pending';
-};
+// const canBeApproved = () => {
+//   return props.transfer.status === 'pending';
+// };
 
-const canBeCompleted = () => {
-  return props.transfer.status === 'approved';
-};
+// const canBeRejected = () => {
+//   return props.transfer.status === 'pending';
+// };
 
-const canBeCancelled = () => {
-  return ['pending', 'approved'].includes(props.transfer.status);
-};
+// const canBeCompleted = () => {
+//   return props.transfer.status === 'approved';
+// };
 
-const approveTransfer = () => {
-  if (adminNotes.value.trim().length === 0) return;
+// const canBeCancelled = () => {
+//   return ['pending', 'approved'].includes(props.transfer.status);
+// };
 
-  isProcessing.value = true;
-  router.post(
-    route('graveyard.niche-transfers.approve', props.transfer.id),
-    {
-      admin_notes: adminNotes.value,
-    },
-    {
-      onFinish: () => {
-        isProcessing.value = false;
-        showApproveDialog.value = false;
-        adminNotes.value = '';
-      },
-    },
-  );
-};
+// const approveTransfer = () => {
+//   if (adminNotes.value.trim().length === 0) return;
 
-const rejectTransfer = () => {
-  if (rejectionReason.value.trim().length === 0) return;
+//   isProcessing.value = true;
+//   router.post(
+//     route('graveyard.niche-transfers.approve', props.transfer.id),
+//     {
+//       admin_notes: adminNotes.value,
+//     },
+//     {
+//       onFinish: () => {
+//         isProcessing.value = false;
+//         showApproveDialog.value = false;
+//         adminNotes.value = '';
+//       },
+//     },
+//   );
+// };
 
-  isProcessing.value = true;
-  router.post(
-    route('graveyard.niche-transfers.reject', props.transfer.id),
-    {
-      rejection_reason: rejectionReason.value,
-    },
-    {
-      onFinish: () => {
-        isProcessing.value = false;
-        showRejectDialog.value = false;
-        rejectionReason.value = '';
-      },
-    },
-  );
-};
+// const rejectTransfer = () => {
+//   if (rejectionReason.value.trim().length === 0) return;
 
-const completeTransfer = () => {
-  router.post(route('graveyard.niche-transfers.complete', props.transfer.id));
-};
+//   isProcessing.value = true;
+//   router.post(
+//     route('graveyard.niche-transfers.reject', props.transfer.id),
+//     {
+//       rejection_reason: rejectionReason.value,
+//     },
+//     {
+//       onFinish: () => {
+//         isProcessing.value = false;
+//         showRejectDialog.value = false;
+//         rejectionReason.value = '';
+//       },
+//     },
+//   );
+// };
 
-const cancelTransfer = () => {
-  if (cancellationReason.value.trim().length === 0) return;
+// const completeTransfer = () => {
+//   router.post(route('graveyard.niche-transfers.complete', props.transfer.id));
+// };
 
-  isProcessing.value = true;
-  router.post(
-    route('graveyard.niche-transfers.cancel', props.transfer.id),
-    {
-      cancellation_reason: cancellationReason.value,
-    },
-    {
-      onFinish: () => {
-        isProcessing.value = false;
-        showCancelDialog.value = false;
-        cancellationReason.value = '';
-      },
-    },
-  );
-};
+// const cancelTransfer = () => {
+//   if (cancellationReason.value.trim().length === 0) return;
+
+//   isProcessing.value = true;
+//   router.post(
+//     route('graveyard.niche-transfers.cancel', props.transfer.id),
+//     {
+//       cancellation_reason: cancellationReason.value,
+//     },
+//     {
+//       onFinish: () => {
+//         isProcessing.value = false;
+//         showCancelDialog.value = false;
+//         cancellationReason.value = '';
+//       },
+//     },
+//   );
+// };
 </script>
 
 <template>
@@ -205,7 +205,7 @@ const cancelTransfer = () => {
 
   <AppLayout>
     <div class="py-12">
-      <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-6xl sm:px-6 lg:px-8">
         <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <!-- Header -->
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
@@ -227,7 +227,15 @@ const cancelTransfer = () => {
                 </Badge>
                 <Badge v-if="isOverdue()" class="bg-red-100 text-red-800"> Overdue </Badge>
                 <div class="flex space-x-2">
-                  <!-- Approve Dialog -->
+                  <!-- Make Payment Button -->
+                  <Button v-if="canMakePayment()" as-child class="bg-green-600 hover:bg-green-700">
+                    <Link :href="route('graveyard.payments.create', ['niche-transfer', transfer.id])">
+                      <CreditCard class="mr-2 h-4 w-4" />
+                      Make Payment
+                    </Link>
+                  </Button>
+                </div>
+                <!-- <div class="flex space-x-2">
                   <Dialog v-if="canBeApproved()" v-model:open="showApproveDialog">
                     <DialogTrigger as-child>
                       <Button class="bg-green-600 hover:bg-green-700">
@@ -259,7 +267,6 @@ const cancelTransfer = () => {
                     </DialogContent>
                   </Dialog>
 
-                  <!-- Reject Dialog -->
                   <Dialog v-if="canBeRejected()" v-model:open="showRejectDialog">
                     <DialogTrigger as-child>
                       <Button variant="outline" class="border-red-200 text-red-600 hover:bg-red-50">
@@ -291,13 +298,11 @@ const cancelTransfer = () => {
                     </DialogContent>
                   </Dialog>
 
-                  <!-- Complete Transfer -->
                   <Button v-if="canBeCompleted()" @click="completeTransfer" class="bg-blue-600 hover:bg-blue-700">
                     <CheckCircle class="mr-2 h-4 w-4" />
                     Complete
                   </Button>
 
-                  <!-- Cancel Dialog -->
                   <Dialog v-if="canBeCancelled()" v-model:open="showCancelDialog">
                     <DialogTrigger as-child>
                       <Button variant="outline" class="border-gray-200 text-gray-600 hover:bg-gray-50">
@@ -328,7 +333,7 @@ const cancelTransfer = () => {
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
-                </div>
+                </div> -->
               </div>
             </div>
           </div>
@@ -345,24 +350,65 @@ const cancelTransfer = () => {
                       <span>Transfer Overview</span>
                     </CardTitle>
                   </CardHeader>
-                  <CardContent class="space-y-4">
-                    <div class="grid grid-cols-1 gap-4">
-                      <div>
-                        <Label class="text-sm font-medium text-gray-500">From (Temporary Grave)</Label>
-                        <p class="text-base font-medium">{{ transfer.from_temporary_grave.grave_no }}</p>
-                        <p class="text-sm text-gray-600">
-                          {{ transfer.from_temporary_grave.section }}, Row {{ transfer.from_temporary_grave.row_no }}
-                        </p>
+                  <CardContent class="space-y-6">
+                    <div class="grid grid-cols-1 gap-6">
+                      <!-- From: Temporary Grave Details -->
+                      <div class="rounded-lg border border-gray-200 p-4">
+                        <Label class="mb-3 block text-sm font-medium text-gray-500">From (Temporary Grave)</Label>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span class="font-medium text-gray-700">Section:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.from_temporary_grave.section }}</span>
+                          </div>
+                          <div>
+                            <span class="font-medium text-gray-700">Row No:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.from_temporary_grave.row_no }}</span>
+                          </div>
+                          <div>
+                            <span class="font-medium text-gray-700">Grave No:</span>
+                            <span class="ml-1 font-semibold text-gray-900">{{ transfer.from_temporary_grave.grave_no }}</span>
+                          </div>
+                          <div v-if="transfer.from_temporary_grave.owner_name">
+                            <span class="font-medium text-gray-700">Owner Name:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.from_temporary_grave.owner_name }}</span>
+                          </div>
+                        </div>
                       </div>
 
+                      <!-- Arrow -->
                       <div class="flex justify-center">
-                        <ArrowRight class="h-6 w-6 text-gray-400" />
+                        <div class="flex items-center space-x-2">
+                          <div class="h-px w-8 bg-gray-300"></div>
+                          <ArrowRight class="h-6 w-6 text-gray-400" />
+                          <div class="h-px w-8 bg-gray-300"></div>
+                        </div>
                       </div>
 
-                      <div>
-                        <Label class="text-sm font-medium text-gray-500">To (Niche)</Label>
-                        <p class="text-base font-medium">{{ transfer.to_niche.niche_no }}</p>
-                        <p class="text-sm text-gray-600">{{ transfer.to_niche.section }}, Row {{ transfer.to_niche.row_no }}</p>
+                      <!-- To: Niche Details -->
+                      <div class="rounded-lg border border-green-200 bg-green-50 p-4">
+                        <Label class="mb-3 block text-sm font-medium text-gray-500">To (Niche)</Label>
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <span class="font-medium text-gray-700">Niche No:</span>
+                            <span class="ml-1 font-semibold text-gray-900">{{ transfer.to_niche.niche_no }}</span>
+                          </div>
+                          <div v-if="transfer.to_niche.location">
+                            <span class="font-medium text-gray-700">Location:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.to_niche.location }}</span>
+                          </div>
+                          <div>
+                            <span class="font-medium text-gray-700">Section:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.to_niche.section }}</span>
+                          </div>
+                          <div>
+                            <span class="font-medium text-gray-700">Row No:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.to_niche.row_no }}</span>
+                          </div>
+                          <div v-if="transfer.to_niche.owner_name" class="col-span-2">
+                            <span class="font-medium text-gray-700">Owner Name:</span>
+                            <span class="ml-1 text-gray-900">{{ transfer.to_niche.owner_name }}</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
 
@@ -404,7 +450,7 @@ const cancelTransfer = () => {
                       <p class="text-base font-medium text-green-600">{{ formatDate(transfer.actual_transfer_date) }}</p>
                     </div>
 
-                    <div v-if="transfer.approved_at">
+                    <!-- <div v-if="transfer.approved_at">
                       <Label class="text-sm font-medium text-gray-500">Approved On</Label>
                       <p class="text-base">{{ formatDateTime(transfer.approved_at) }}</p>
                       <p v-if="transfer.approver" class="text-sm text-gray-600">by {{ transfer.approver.name }}</p>
@@ -414,7 +460,7 @@ const cancelTransfer = () => {
                       <Label class="text-sm font-medium text-gray-500">Rejected On</Label>
                       <p class="text-base">{{ formatDateTime(transfer.rejected_at) }}</p>
                       <p v-if="transfer.rejecter" class="text-sm text-gray-600">by {{ transfer.rejecter.name }}</p>
-                    </div>
+                    </div> -->
 
                     <div v-if="transfer.completed_at">
                       <Label class="text-sm font-medium text-gray-500">Completed On</Label>
@@ -437,22 +483,22 @@ const cancelTransfer = () => {
                   <CardContent class="space-y-4">
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Applicant Name</Label>
-                      <p class="text-base font-medium">{{ transfer.transfer_applicant_name }}</p>
+                      <p class="text-base font-medium">{{ transfer.applicant_name }}</p>
                     </div>
 
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Contact Number</Label>
-                      <p class="text-base">{{ transfer.transfer_contact_no }}</p>
+                      <p class="text-base">{{ transfer.contact_no }}</p>
                     </div>
 
-                    <div v-if="transfer.transfer_contact_email">
+                    <div v-if="transfer.contact_email">
                       <Label class="text-sm font-medium text-gray-500">Email</Label>
-                      <p class="text-base">{{ transfer.transfer_contact_email }}</p>
+                      <p class="text-base">{{ transfer.contact_email }}</p>
                     </div>
 
-                    <div v-if="transfer.relationship_to_deceased">
+                    <div>
                       <Label class="text-sm font-medium text-gray-500">Relationship to Deceased</Label>
-                      <p class="text-base">{{ transfer.relationship_to_deceased }}</p>
+                      <p class="text-base">{{ transfer.relationship?.name }}</p>
                     </div>
 
                     <div v-if="transfer.applicant_address">
@@ -466,38 +512,40 @@ const cancelTransfer = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle class="flex items-center space-x-2">
-                      <DollarSign class="h-5 w-5" />
+                      <IndianRupee class="h-5 w-5" />
                       <span>Financial Details</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-2 gap-4">
                       <div>
-                        <Label class="text-sm font-medium text-gray-500">Niche Cost</Label>
-                        <p class="text-base font-medium">{{ formatCurrency(transfer.niche_cost) }}</p>
-                      </div>
-                      <div>
-                        <Label class="text-sm font-medium text-gray-500">Transfer Cost</Label>
-                        <p class="text-base font-medium">{{ formatCurrency(transfer.transfer_cost) }}</p>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    <div class="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label class="text-sm font-medium text-gray-500">Total Cost</Label>
+                        <Label class="text-sm font-medium text-gray-500">Total Cost </Label>
                         <p class="text-lg font-bold text-gray-900">{{ formatCurrency(transfer.total_cost) }}</p>
                       </div>
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Balance</Label>
                         <p class="text-lg font-bold text-red-600">{{ formatCurrency(transfer.balance_amount) }}</p>
                       </div>
-                    </div>
 
-                    <div v-if="transfer.paid_amount > 0">
-                      <Label class="text-sm font-medium text-gray-500">Paid Amount</Label>
-                      <p class="text-base font-medium text-green-600">{{ formatCurrency(transfer.paid_amount) }}</p>
+                      <div v-if="transfer.paid_amount > 0">
+                        <Label class="text-sm font-medium text-gray-500">Paid Amount</Label>
+                        <p class="text-base font-medium text-green-600">{{ formatCurrency(transfer.paid_amount) }}</p>
+                      </div>
+
+                      <div v-if="transfer.payment_status">
+                        <Label class="text-sm font-medium text-gray-500">Payment Status</Label>
+                        <div class="mt-1">
+                          <Badge
+                            :class="{
+                              'bg-yellow-100 text-yellow-800': transfer.payment_status === 'pending',
+                              'bg-blue-100 text-blue-800': transfer.payment_status === 'partial',
+                              'bg-green-100 text-green-800': transfer.payment_status === 'completed',
+                            }"
+                          >
+                            {{ transfer.payment_status }}
+                          </Badge>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -511,7 +559,7 @@ const cancelTransfer = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent class="space-y-4">
-                    <div v-if="transfer.admin_notes">
+                    <!-- <div v-if="transfer.admin_notes">
                       <Label class="text-sm font-medium text-gray-500">Admin Notes</Label>
                       <p class="text-base">{{ transfer.admin_notes }}</p>
                     </div>
@@ -521,7 +569,7 @@ const cancelTransfer = () => {
                       <p class="text-base text-red-700">{{ transfer.rejection_reason }}</p>
                     </div>
 
-                    <Separator />
+                    <Separator /> -->
 
                     <div class="grid grid-cols-1 gap-2 text-sm text-gray-500">
                       <div class="flex justify-between">

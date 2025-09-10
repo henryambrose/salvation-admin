@@ -4,12 +4,15 @@ namespace Modules\Graveyard\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\Niche;
 use Modules\Graveyard\Models\ServiceType;
+use Modules\Graveyard\Models\Payment;
+use Modules\Members\Models\Relationship;
 use Illuminate\Support\Facades\Auth;
 
 class NicheTransfer extends Model
@@ -26,33 +29,22 @@ class NicheTransfer extends Model
         'proposed_transfer_date',
         'actual_transfer_date',
         'transfer_reason',
-        'deceased_first_name',
-        'deceased_last_name',
-        'deceased_date_of_birth',
-        'deceased_died_on',
-        'deceased_buried_on',
-        'transfer_applicant_name',
-        'transfer_contact_no',
-        'transfer_contact_email',
-        'relationship_to_deceased',
+        'date_of_birth',
+        'died_on',
+        'buried_on',
+        'applicant_name',
+        'contact_no',
+        'contact_email',
         'applicant_address',
-        'selected_services',
-        'transfer_cost',
-        'niche_cost',
-        'total_cost',
+        'relationship_id',
         'paid_amount',
         'balance_amount',
         'payment_status',
         'payment_method',
         'payment_remarks',
-        'admin_notes',
-        'approved_by',
-        'approval_date',
-        'rejection_reason',
-        'rejected_by',
-        'rejection_date',
-        'transfer_permit_no',
-        'required_documents',
+        'selected_services',
+        'total_cost',
+        'permit_no',
         'created_by',
         'updated_by',
     ];
@@ -61,18 +53,10 @@ class NicheTransfer extends Model
         'transfer_request_date' => 'date',
         'proposed_transfer_date' => 'date',
         'actual_transfer_date' => 'date',
-        'deceased_date_of_birth' => 'date',
-        'deceased_died_on' => 'date',
-        'deceased_buried_on' => 'date',
-        'approval_date' => 'date',
-        'rejection_date' => 'date',
-        'selected_services' => 'array',
+        'date_of_birth' => 'date',
+        'died_on' => 'date',
+        'buried_on' => 'date',
         'required_documents' => 'array',
-        'transfer_cost' => 'decimal:2',
-        'niche_cost' => 'decimal:2',
-        'total_cost' => 'decimal:2',
-        'paid_amount' => 'decimal:2',
-        'balance_amount' => 'decimal:2',
     ];
 
     /**
@@ -88,20 +72,18 @@ class NicheTransfer extends Model
             }
 
             // Copy deceased details from original booking if not provided
-            if ($transfer->from_booking_id && !$transfer->deceased_first_name) {
+            if ($transfer->from_booking_id && !$transfer->first_name) {
                 $transfer->copyDeceasedDetails();
             }
 
-            // Calculate costs
-            if (!$transfer->total_cost) {
-                $transfer->calculateTotalCost();
-            }
+            // Costs will be calculated later when approved/reviewed
+            // Not calculating costs during initial request creation
         });
 
         // Handle status changes
         static::updated(function ($transfer) {
             if ($transfer->isDirty('status')) {
-                $transfer->processStatusChange();
+                $transfer->processTransferCompletion();
             }
         });
     }
@@ -161,17 +143,33 @@ class NicheTransfer extends Model
     /**
      * Get the approver
      */
-    public function approver(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
+    // public function approver(): BelongsTo
+    // {
+    //     return $this->belongsTo(User::class, 'approved_by');
+    // }
 
     /**
      * Get the rejecter
      */
-    public function rejecter(): BelongsTo
+    // public function rejecter(): BelongsTo
+    // {
+    //     return $this->belongsTo(User::class, 'rejected_by');
+    // }
+
+    /**
+     * Get the relationship
+     */
+    public function relationship(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'rejected_by');
+        return $this->belongsTo(Relationship::class, 'relationship_id');
+    }
+
+    /**
+     * Get the payments for this transfer
+     */
+    public function payments(): MorphMany
+    {
+        return $this->morphMany(Payment::class, 'payable');
     }
 
     /**
@@ -193,10 +191,10 @@ class NicheTransfer extends Model
     /**
      * Scope for approved transfers
      */
-    public function scopeApproved($query)
-    {
-        return $query->where('status', 'approved');
-    }
+    // public function scopeApproved($query)
+    // {
+    //     return $query->where('status', 'approved');
+    // }
 
     /**
      * Scope for transfers due soon
@@ -214,68 +212,63 @@ class NicheTransfer extends Model
     {
         $booking = $this->fromBooking;
         if ($booking) {
-            $this->deceased_first_name = $booking->dead_first_name;
-            $this->deceased_last_name = $booking->dead_last_name;
-            $this->deceased_date_of_birth = $booking->date_of_birth;
-            $this->deceased_died_on = $booking->died_on;
-            $this->deceased_buried_on = $booking->buried_on;
+            $this->dead_first_name = $booking->dead_first_name;
+            $this->dead_last_name = $booking->dead_last_name;
+            $this->date_of_birth = $booking->date_of_birth;
+            $this->died_on = $booking->died_on;
+            $this->buried_on = $booking->buried_on;
         }
     }
 
     /**
      * Calculate total cost
      */
-    protected function calculateTotalCost(): void
-    {
-        // Get niche cost
-        if ($this->to_niche_id && !$this->niche_cost) {
-            $niche = Niche::find($this->to_niche_id);
-            $this->niche_cost = $niche ? $niche->cost : 0;
-        }
+    // public function calculateTotalCost(): void
+    // {
+    //     // Get niche cost
+    //     if ($this->to_niche_id && !$this->niche_cost) {
+    //         $niche = Niche::find($this->to_niche_id);
+    //         $this->niche_cost = $niche ? $niche->cost : 0;
+    //     }
 
-        // Calculate transfer service cost based on selected services
-        $serviceCost = 0;
-        if ($this->selected_services) {
-            $serviceIds = is_array($this->selected_services) ? $this->selected_services : [];
-            $serviceCost = ServiceType::whereIn('id', $serviceIds)->sum('cost');
-        }
-        $this->transfer_cost = $serviceCost;
+    //     // Set transfer cost to 0 (no additional services)
+    //     $this->transfer_cost = 0;
 
-        // Total cost
-        $this->total_cost = $this->niche_cost + $this->transfer_cost;
-        $this->balance_amount = $this->total_cost - $this->paid_amount;
-    }
+    //     // Total cost is just the niche cost
+    //     $this->total_cost = $this->niche_cost;
+    //     $this->balance_amount = $this->total_cost - $this->paid_amount;
+    // }
 
     /**
      * Get deceased full name
      */
-    public function getDeceasedFullNameAttribute(): string
-    {
-        return trim("{$this->deceased_first_name} {$this->deceased_last_name}");
-    }
+    // public function getDeceasedFullNameAttribute(): string
+    // {
+    //     return trim("{$this->first_name} {$this->last_name}");
+    // }
 
     /**
      * Process status changes
      */
-    protected function processStatusChange(): void
-    {
-        switch ($this->status) {
-            case 'approved':
-                $this->approval_date = now();
-                $this->approved_by = Auth::id();
-                break;
+    // protected function processStatusChange(): void
+    // {
+    //     switch ($this->status) {
+    //         case 'approved':
+    //             $this->approval_date = now();
+    //             $this->approved_by = Auth::id();
+    //             break;
 
-            case 'rejected':
-                $this->rejection_date = now();
-                $this->rejected_by = Auth::id();
-                break;
+    //         case 'rejected':
+    //             $this->rejection_date = now();
+    //             $this->rejected_by = Auth::id();
+    //             break;
 
-            case 'completed':
-                $this->actual_transfer_date = now();
-                $this->processTransferCompletion();
-                break;
-        }
-    }
+    //         case 'completed':
+    //             $this->actual_transfer_date = now();
+    //             $this->processTransferCompletion();
+    //             break;
+    //     }
+    // }
 
     /**
      * Process transfer completion
@@ -284,8 +277,8 @@ class NicheTransfer extends Model
     {
         // Mark temporary grave as available
         $this->fromTemporaryGrave->update([
-            'is_available' => true,
-            'occupied_date' => null,
+            'last_burial_date' => null,
+            'status' => 'available',
             'updated_by' => Auth::id()
         ]);
 
@@ -306,36 +299,36 @@ class NicheTransfer extends Model
     /**
      * Approve the transfer
      */
-    public function approve(string $notes): bool
-    {
-        if ($this->status !== 'pending') {
-            return false;
-        }
+    // public function approve(string $notes): bool
+    // {
+    //     if ($this->status !== 'pending') {
+    //         return false;
+    //     }
 
-        $this->update([
-            'status' => 'approved',
-            'admin_notes' => $notes,
-        ]);
+    //     $this->update([
+    //         'status' => 'approved',
+    //         'admin_notes' => $notes,
+    //     ]);
 
-        return true;
-    }
+    //     return true;
+    // }
 
     /**
      * Reject the transfer
      */
-    public function reject(string $reason): bool
-    {
-        if ($this->status !== 'pending') {
-            return false;
-        }
+    // public function reject(string $reason): bool
+    // {
+    //     if ($this->status !== 'pending') {
+    //         return false;
+    //     }
 
-        $this->update([
-            'status' => 'rejected',
-            'rejection_reason' => $reason,
-        ]);
+    //     $this->update([
+    //         'status' => 'rejected',
+    //         'rejection_reason' => $reason,
+    //     ]);
 
-        return true;
-    }
+    //     return true;
+    // }
 
     /**
      * Complete the transfer
@@ -353,25 +346,25 @@ class NicheTransfer extends Model
     /**
      * Check if transfer can be completed
      */
-    public function canBeCompleted(): bool
-    {
-        return $this->status === 'approved' &&
-            $this->payment_status === 'paid' &&
-            $this->proposed_transfer_date <= now();
-    }
+    // public function canBeCompleted(): bool
+    // {
+    //     return $this->status === 'approved' &&
+    //         $this->payment_status === 'paid' &&
+    //         $this->proposed_transfer_date <= now();
+    // }
 
     /**
      * Get status color for UI
      */
-    public function getStatusColorAttribute(): string
-    {
-        return match ($this->status) {
-            'pending' => 'bg-yellow-100 text-yellow-800',
-            'approved' => 'bg-blue-100 text-blue-800',
-            'rejected' => 'bg-red-100 text-red-800',
-            'completed' => 'bg-green-100 text-green-800',
-            'cancelled' => 'bg-gray-100 text-gray-800',
-            default => 'bg-gray-100 text-gray-800'
-        };
-    }
+    // public function getStatusColorAttribute(): string
+    // {
+    //     return match ($this->status) {
+    //         'pending' => 'bg-yellow-100 text-yellow-800',
+    //         'approved' => 'bg-blue-100 text-blue-800',
+    //         'rejected' => 'bg-red-100 text-red-800',
+    //         'completed' => 'bg-green-100 text-green-800',
+    //         'cancelled' => 'bg-gray-100 text-gray-800',
+    //         default => 'bg-gray-100 text-gray-800'
+    //     };
+    // }
 }

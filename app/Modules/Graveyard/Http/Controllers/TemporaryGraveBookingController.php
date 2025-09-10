@@ -12,6 +12,7 @@ use Modules\Members\Models\Relationship;
 use Modules\Members\Models\Member;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
@@ -120,11 +121,17 @@ class TemporaryGraveBookingController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('Creating temporary grave booking', $request->all());
+
         $request->validate([
             'temporary_grave_id' => 'required|exists:temporary_graves,id',
             'deceased_person_type' => 'required|in:member,external',
-            'deceased_member_id' => 'required_if:deceased_person_type,member|exists:members,id',
+            'deceased_member_id' => [
+                Rule::when(
+                    $request->deceased_person_type === 'member',
+                    ['required', 'exists:members,id'],
+                    ['nullable']
+                )
+            ],
             'dead_first_name' => 'required_if:deceased_person_type,external|string|max:100',
             'dead_last_name' => 'required_if:deceased_person_type,external|string|max:100',
             'date_of_birth' => 'nullable|date|before:died_on',
@@ -170,11 +177,11 @@ class TemporaryGraveBookingController extends Controller
                 $gender = Gender::where('name', $member->gender)->first();
                 $genderId = $gender ? $gender->id : null;
             }
-
+            Log::info('Creating booking for deceased', ['name' => $deadFirstName . ' ' . $deadLastName, 'data' => $request->all()]);
             // Create the booking
             $booking = TemporaryGraveBooking::create([
                 'temporary_grave_id' => $request->temporary_grave_id,
-                'deceased_member_id' => $request->deceased_member_id,
+                'deceased_member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
                 'dead_first_name' => $deadFirstName,
                 'dead_last_name' => $deadLastName,
                 'date_of_birth' => $request->date_of_birth,
@@ -344,7 +351,14 @@ class TemporaryGraveBookingController extends Controller
                     'is_overdue' => $booking->isTransferOverdue()
                 ];
             });
-
+        Log::info('Eligible Bookings: ', $bookings->toArray());
+        // --- IGNORE ---
+        // If a specific booking was requested, include it even if transfer_requested = true
+        // if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {
+        //     // Add the selected booking to the list if it's not already there
+        //     $eligibleBookings->push($selectedBooking);
+        // }
+        // --- IGNORE ---
         return response()->json($bookings);
     }
 }

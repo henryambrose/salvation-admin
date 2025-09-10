@@ -13,6 +13,7 @@ use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class TemporaryGraveBooking extends Model
 {
@@ -210,8 +211,7 @@ class TemporaryGraveBooking extends Model
     {
         $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
         return $query->where('status', 'confirmed')
-            ->where('transfer_requested', false)
-            ->where('expected_transfer_date', '<=', now()->addMonths($monthsFromEnv)); // Within configured months of transfer date
+            ->whereRaw('DATE_ADD(buried_on, INTERVAL ? MONTH) <= CURDATE()', [$monthsFromEnv]);
     }
 
     /**

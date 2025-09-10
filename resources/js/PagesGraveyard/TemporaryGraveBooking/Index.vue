@@ -184,9 +184,6 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
   }
 };
 
-const requestTransfer = (bookingId: number) => {
-  router.post(route('graveyard.temporary-grave-bookings.request-transfer', bookingId));
-};
 </script>
 
 <template>
@@ -379,15 +376,6 @@ const requestTransfer = (bookingId: number) => {
                             </Link>
                           </Button>
                           <Button
-                            v-if="booking.status === 'confirmed' && !booking.transfer_requested"
-                            variant="outline"
-                            size="sm"
-                            @click="requestTransfer(booking.id)"
-                            class="border-blue-200 text-blue-600 hover:bg-blue-50"
-                          >
-                            <ArrowRight class="h-4 w-4" />
-                          </Button>
-                          <Button
                             v-if="canDeleteBooking(booking)"
                             variant="outline"
                             size="sm"
@@ -455,15 +443,6 @@ const requestTransfer = (bookingId: number) => {
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
                           </Link>
-                        </Button>
-                        <Button
-                          v-if="booking.status === 'confirmed' && !booking.transfer_requested"
-                          variant="outline"
-                          size="sm"
-                          @click="requestTransfer(booking.id)"
-                          class="border-blue-200 text-blue-600 hover:bg-blue-50"
-                        >
-                          <ArrowRight class="h-4 w-4" />
                         </Button>
                         <Button
                           v-if="canDeleteBooking(booking)"
