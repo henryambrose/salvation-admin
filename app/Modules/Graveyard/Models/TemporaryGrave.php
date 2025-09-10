@@ -22,11 +22,13 @@ class TemporaryGrave extends Model
         'oldno',
         'status',
         'last_burial_date',
+        'buried_name',
         'remarks',
         'plot_size',
         'owner_name',
         'member_id',
         'grave_category_id',
+        'destination_permanent_grave_id',
         'contact_no',
         'is_active',
         'created_by',
@@ -75,6 +77,14 @@ class TemporaryGrave extends Model
     public function graveCategory()
     {
         return $this->belongsTo(GraveCategories::class, 'grave_category_id');
+    }
+
+    /**
+     * Get the destination permanent grave for bone transfer
+     */
+    public function destinationPermanentGrave()
+    {
+        return $this->belongsTo(PermanentGrave::class, 'destination_permanent_grave_id');
     }
 
     /**
@@ -128,6 +138,30 @@ class TemporaryGrave extends Model
     }
 
     /**
+     * Scope to get graves that need transfer to permanent grave
+     */
+    public function scopeNeedingPermanentTransfer($query)
+    {
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        return $query->where('status', 'unavailable')
+            ->whereNotNull('last_burial_date')
+            ->whereNotNull('destination_permanent_grave_id')
+            ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= ? * 30', [$monthsFromEnv]);
+    }
+
+    /**
+     * Scope to get graves that need transfer to niche (default)
+     */
+    public function scopeNeedingNicheTransfer($query)
+    {
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        return $query->where('status', 'unavailable')
+            ->whereNotNull('last_burial_date')
+            ->whereNull('destination_permanent_grave_id')
+            ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= ? * 30', [$monthsFromEnv]);
+    }
+
+    /**
      * Get the full grave identifier
      */
     public function getFullIdentifierAttribute()
@@ -168,6 +202,43 @@ class TemporaryGrave extends Model
 
         $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
         return Carbon::parse($this->last_burial_date)->addMonths($monthsFromEnv);
+    }
+
+    /**
+     * Get the transfer destination type
+     */
+    public function getTransferDestinationType()
+    {
+        return $this->destination_permanent_grave_id ? 'permanent' : 'niche';
+    }
+
+    /**
+     * Check if bones should be transferred to permanent grave
+     */
+    public function shouldTransferToPermanentGrave()
+    {
+        return !is_null($this->destination_permanent_grave_id);
+    }
+
+    /**
+     * Check if bones should be transferred to niche (default behavior)
+     */
+    public function shouldTransferToNiche()
+    {
+        return is_null($this->destination_permanent_grave_id);
+    }
+
+    /**
+     * Get transfer destination description
+     */
+    public function getTransferDestinationDescription()
+    {
+        if ($this->shouldTransferToPermanentGrave()) {
+            $permanentGrave = $this->destinationPermanentGrave;
+            return "Permanent Grave: {$permanentGrave->full_identifier}";
+        }
+        
+        return "Niche";
     }
 
     /**

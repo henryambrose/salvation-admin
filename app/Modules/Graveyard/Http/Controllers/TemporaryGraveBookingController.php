@@ -7,6 +7,8 @@ use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\ServiceType;
 use Modules\Graveyard\Models\GraveCategories;
+use Modules\Graveyard\Models\PermanentGrave;
+use Modules\Graveyard\Models\ValidMember;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
@@ -68,6 +70,13 @@ class TemporaryGraveBookingController extends Controller
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Create', [
             'availableGraves' => TemporaryGrave::available()->with('graveCategory')->get(),
             'graveCategories' => GraveCategories::orderBy('name')->get(),
+            'permanentGraves' => PermanentGrave::where('status', 'unavailable')
+                ->with(['validMembers' => function($query) {
+                    $query->where('is_active', true)
+                          ->whereNull('death_date') // Only living members
+                          ->with(['member', 'gender', 'parish', 'relationship']);
+                }])
+                ->orderBy('section')->orderBy('row_no')->orderBy('grave_no')->get(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
             'relationships' => Relationship::all()
@@ -154,6 +163,7 @@ class TemporaryGraveBookingController extends Controller
             'contact_email' => 'nullable|email',
             'relationship_id' => 'nullable|exists:relationships,id',
             'permit_no' => 'nullable|string|max:50',
+            'destination_permanent_grave_id' => 'nullable|exists:permanent_graves,id',
             'selected_services' => 'nullable|array',
             'selected_services.*' => 'exists:service_types,id',
         ]);
@@ -217,6 +227,18 @@ class TemporaryGraveBookingController extends Controller
                 'updated_by' => Auth::id(),
             ]);
             Log::info('Temporary grave booking created', ['booking_id' => $booking->id]);
+            
+            // Update the temporary grave with booking details and destination
+            $grave->update([
+                'status' => 'unavailable',
+                'last_burial_date' => $request->buried_on,
+                'buried_name' => $deadFirstName . ' ' . $deadLastName,
+                'contact_no' => $request->contact_no,
+                'member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
+                'destination_permanent_grave_id' => $request->destination_permanent_grave_id,
+                'updated_by' => Auth::id(),
+            ]);
+            
             // Calculate total cost from selected services
             if ($request->selected_services) {
                 $totalCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');

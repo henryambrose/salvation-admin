@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
 
 interface TemporaryGrave {
   id: number;
@@ -52,9 +52,43 @@ interface Member {
   gender: string;
 }
 
+interface ValidMember {
+  id: number;
+  member_id?: number;
+  first_name: string;
+  last_name: string;
+  date_of_birth?: string;
+  age?: number;
+  months?: number;
+  days?: number;
+  gender_id?: number;
+  nationality?: string;
+  parish_id?: number;
+  contact_no?: string;
+  member_type: 'member' | 'external';
+  relationship_id?: number;
+  full_name: string;
+  is_parish_member: boolean;
+  member?: Member;
+  gender?: Gender;
+  parish?: Parish;
+  relationship?: Relationship;
+}
+
+interface PermanentGrave {
+  id: number;
+  grave_no: string;
+  section: string;
+  row_no: string;
+  owner_name: string;
+  status: string;
+  valid_members: ValidMember[];
+}
+
 interface Props {
   availableGraves: TemporaryGrave[];
   graveCategories: GraveCategory[];
+  permanentGraves: PermanentGrave[];
   genders: Gender[];
   parishes: Parish[];
   relationships: Relationship[];
@@ -65,6 +99,7 @@ const props = defineProps<Props>();
 const form = useForm({
   grave_category_id: null as number | null,
   temporary_grave_id: null as number | null,
+  destination_permanent_grave_id: null as number | null,
   deceased_person_type: '' as '' | 'member' | 'external',
   deceased_member_id: null as number | null,
   dead_first_name: '' as string | undefined,
@@ -133,6 +168,16 @@ const memberSearchResults = ref<Member[]>([]);
 const selectedMember = ref<Member | null>(null);
 const isSearchingMembers = ref(false);
 
+// Permanent grave search functionality
+const permanentGraveSearchQuery = ref('');
+const permanentGraveSearchResults = ref<PermanentGrave[]>([]);
+const selectedPermanentGrave = ref<PermanentGrave | null>(null);
+const isPermanentGraveSearchOpen = ref(false);
+
+// Valid member selection functionality
+const selectedValidMember = ref<ValidMember | null>(null);
+const showValidMemberSelection = computed(() => selectedPermanentGrave.value && selectedPermanentGrave.value.valid_members.length > 0);
+
 // Search members function
 const searchMembers = async () => {
   if (memberSearchQuery.value.length < 2) {
@@ -169,6 +214,115 @@ const clearSelectedMember = () => {
   form.deceased_member_id = null;
 };
 
+// Search permanent graves function
+const searchPermanentGraves = () => {
+  if (permanentGraveSearchQuery.value.length < 1) {
+    permanentGraveSearchResults.value = [];
+    return;
+  }
+
+  const query = permanentGraveSearchQuery.value.toLowerCase();
+  permanentGraveSearchResults.value = props.permanentGraves.filter(grave => {
+    const graveIdentifier = `${grave.section}-${grave.row_no}-${grave.grave_no}`.toLowerCase();
+    const ownerName = grave.owner_name.toLowerCase();
+    return graveIdentifier.includes(query) || ownerName.includes(query);
+  });
+};
+
+// Select permanent grave function
+const selectPermanentGrave = (grave: PermanentGrave) => {
+  selectedPermanentGrave.value = grave;
+  form.destination_permanent_grave_id = grave.id;
+  permanentGraveSearchQuery.value = `${grave.section}-${grave.row_no}-${grave.grave_no} (${grave.owner_name})`;
+  permanentGraveSearchResults.value = [];
+  isPermanentGraveSearchOpen.value = false;
+};
+
+// Clear selected permanent grave
+const clearSelectedPermanentGrave = () => {
+  selectedPermanentGrave.value = null;
+  form.destination_permanent_grave_id = null;
+  permanentGraveSearchQuery.value = '';
+  permanentGraveSearchResults.value = [];
+  isPermanentGraveSearchOpen.value = false;
+  
+  // Also clear valid member selection
+  clearSelectedValidMember();
+};
+
+// Handle permanent grave search input
+const handlePermanentGraveInput = () => {
+  if (permanentGraveSearchQuery.value === '') {
+    clearSelectedPermanentGrave();
+  } else {
+    isPermanentGraveSearchOpen.value = true;
+    searchPermanentGraves();
+  }
+};
+
+// Select valid member function
+const selectValidMember = (validMember: ValidMember) => {
+  selectedValidMember.value = validMember;
+  
+  // Auto-populate form fields from valid member
+  form.deceased_person_type = validMember.member_id ? 'member' : 'external';
+  
+  if (validMember.member_id && validMember.member) {
+    // If it's a parish member
+    selectedMember.value = validMember.member;
+    form.deceased_member_id = validMember.member_id;
+    clearManualDeceasePersonFields();
+  } else {
+    // If it's an external person
+    clearSelectedMember();
+    form.deceased_member_id = null;
+    form.dead_first_name = validMember.first_name;
+    form.dead_last_name = validMember.last_name;
+    form.date_of_birth = validMember.date_of_birth || '';
+    form.age = validMember.age;
+    form.months = validMember.months;
+    form.days = validMember.days;
+    form.gender_id = validMember.gender_id?.toString() || '';
+    form.nationality = validMember.nationality || 'Indian';
+    form.parish_id = validMember.parish_id?.toString() || '16';
+  }
+};
+
+// Clear selected valid member
+const clearSelectedValidMember = () => {
+  selectedValidMember.value = null;
+  // Don't clear the form fields, just the selection
+};
+
+// Helper function to clear manual deceased person fields
+const clearManualDeceasePersonFields = () => {
+  form.dead_first_name = '';
+  form.dead_last_name = '';
+  form.date_of_birth = '';
+  form.age = null;
+  form.months = null;
+  form.days = null;
+  form.gender_id = '';
+  form.nationality = 'Indian';
+  form.parish_id = '16';
+};
+
+// Helper function to get display name for valid member
+const getValidMemberDisplayName = (validMember: ValidMember) => {
+  // Try full_name first (computed attribute)
+  if (validMember.full_name) {
+    return validMember.full_name;
+  }
+  
+  // Fallback to member name if it's a parish member
+  if (validMember.member_id && validMember.member) {
+    return `${validMember.member.first_name || ''} ${validMember.member.last_name || ''}`.trim();
+  }
+  
+  // Fallback to first_name and last_name from valid_member record
+  return `${validMember.first_name || ''} ${validMember.last_name || ''}`.trim() || 'Unnamed Member';
+};
+
 const submit = () => {
   form
     .transform((data) => {
@@ -191,9 +345,22 @@ const submit = () => {
     .post(route('graveyard.temporary-grave-bookings.store'));
 };
 
+// Handle click outside to close permanent grave dropdown
+const handleClickOutside = (event: MouseEvent) => {
+  const target = event.target as HTMLElement;
+  if (!target.closest('.permanent-grave-search-container')) {
+    isPermanentGraveSearchOpen.value = false;
+  }
+};
+
 // Initialize default category on component mount
 onMounted(() => {
   initializeDefaultCategory();
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
 });
 </script>
 
@@ -290,6 +457,156 @@ onMounted(() => {
                   <!-- Validation Error -->
                   <div v-if="form.errors.temporary_grave_id" class="text-sm text-red-600">
                     {{ form.errors.temporary_grave_id }}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <!-- Bone Transfer Destination -->
+            <Card>
+              <CardHeader>
+                <CardTitle class="flex items-center space-x-2">
+                  <MapPin class="h-5 w-5" />
+                  <span>Bone Transfer Destination</span>
+                </CardTitle>
+                <CardDescription>
+                  Select an occupied permanent grave where bones should be transferred after 24 months. Only unavailable graves are shown since available graves can be used directly for burial.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div class="permanent-grave-search-container">
+                  <Label for="destination_permanent_grave_id">Transfer to Permanent Grave (Optional)</Label>
+                  <div class="relative mt-1">
+                    <input
+                      v-model="permanentGraveSearchQuery"
+                      type="text"
+                      placeholder="Search occupied permanent graves by section-row-grave or owner name..."
+                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                      @input="handlePermanentGraveInput"
+                      @focus="isPermanentGraveSearchOpen = true"
+                    />
+
+                    <!-- Search Results Dropdown -->
+                    <div
+                      v-if="permanentGraveSearchResults.length > 0 && isPermanentGraveSearchOpen"
+                      class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                    >
+                      <div
+                        v-for="grave in permanentGraveSearchResults"
+                        :key="grave.id"
+                        @click="selectPermanentGrave(grave)"
+                        class="cursor-pointer border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
+                      >
+                        <div class="font-medium text-gray-900">
+                          {{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          Owner: {{ grave.owner_name }}
+                        </div>
+                        <div class="text-sm text-gray-500">
+                          Status: {{ grave.status }} (Occupied)
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Show "No results" when searching but no matches -->
+                    <div
+                      v-if="permanentGraveSearchQuery && permanentGraveSearchResults.length === 0 && isPermanentGraveSearchOpen"
+                      class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 shadow-lg"
+                    >
+                      <p class="text-sm text-gray-500">No occupied permanent graves found matching your search.</p>
+                    </div>
+                  </div>
+
+                  <!-- Selected Permanent Grave Display -->
+                  <div v-if="selectedPermanentGrave" class="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <div class="flex items-start justify-between">
+                      <div>
+                        <h4 class="font-medium text-blue-900">Selected Permanent Grave</h4>
+                        <div class="mt-2 space-y-1">
+                          <div class="font-medium text-blue-800">
+                            {{ selectedPermanentGrave.section }}-{{ selectedPermanentGrave.row_no }}-{{ selectedPermanentGrave.grave_no }}
+                          </div>
+                          <div class="text-sm text-blue-700">
+                            Owner: {{ selectedPermanentGrave.owner_name }}
+                          </div>
+                          <div class="text-sm text-blue-700">
+                            Status: {{ selectedPermanentGrave.status }} (Occupied)
+                          </div>
+                        </div>
+                      </div>
+                      <button @click="clearSelectedPermanentGrave" type="button" class="text-blue-600 hover:text-blue-800">
+                        <X class="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p class="mt-1 text-xs text-gray-500">
+                    If you select an occupied permanent grave, bones will be transferred there when the temporary burial period ends (typically 24 months). 
+                    Leave empty for default niche transfer. Only occupied graves are shown since available graves can be used directly.
+                  </p>
+
+                  <!-- Valid Member Selection -->
+                  <div v-if="showValidMemberSelection" class="mt-4">
+                    <Label class="text-base font-medium">Select Deceased from Valid Members</Label>
+                    <p class="text-xs text-gray-500 mt-1 mb-3">
+                      Choose the deceased person from the valid members of this permanent grave
+                    </p>
+                    
+                    <div class="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                      <div
+                        v-for="validMember in selectedPermanentGrave.valid_members"
+                        :key="validMember.id"
+                        @click="selectValidMember(validMember)"
+                        :class="[
+                          'cursor-pointer rounded-lg border-2 p-3 transition-all',
+                          selectedValidMember?.id === validMember.id
+                            ? 'border-blue-500 bg-blue-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                        ]"
+                      >
+                        <div class="flex items-start justify-between">
+                          <div>
+                            <div class="font-medium text-gray-900">{{ getValidMemberDisplayName(validMember) }}</div>
+                            <div class="text-sm text-gray-600 mt-1">
+                              <span v-if="validMember.is_parish_member" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mr-2">
+                                Parish Member
+                              </span>
+                              <span v-else class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 mr-2">
+                                External
+                              </span>
+                              <span v-if="validMember.relationship?.name">
+                                {{ validMember.relationship.name }}
+                              </span>
+                            </div>
+                            <div v-if="validMember.member?.family_no" class="text-xs text-gray-500 mt-1">
+                              Family No: {{ validMember.member.family_no }} | 
+                              Member No: {{ validMember.member.member_no || 'N/A' }}
+                            </div>
+                            <div v-if="validMember.contact_no" class="text-xs text-gray-500 mt-1">
+                              Contact: {{ validMember.contact_no }}
+                            </div>
+                            <div v-if="validMember.date_of_birth" class="text-xs text-gray-500 mt-1">
+                              DOB: {{ new Date(validMember.date_of_birth).toLocaleDateString() }}
+                            </div>
+                          </div>
+                          <div v-if="selectedValidMember?.id === validMember.id" class="text-blue-600">
+                            ✓
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Clear selection button -->
+                    <div v-if="selectedValidMember" class="mt-3">
+                      <button 
+                        @click="clearSelectedValidMember" 
+                        type="button" 
+                        class="text-sm text-blue-600 hover:text-blue-800"
+                      >
+                        Clear selection and enter manually
+                      </button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

@@ -59,6 +59,17 @@ class ValidMember extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array
+     */
+    protected $appends = [
+        'full_name',
+        'is_parish_member',
+        'is_deceased'
+    ];
+
+    /**
      * Get the member associated with the valid member.
      */
     public function member()
