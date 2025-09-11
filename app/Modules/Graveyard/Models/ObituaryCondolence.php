@@ -11,12 +11,18 @@ class ObituaryCondolence extends Model
         'obituary_page_id',
         'visitor_name',
         'visitor_email',
+        'visitor_phone',
+        'relationship',
         'message',
+        'visitor_ip',
+        'user_agent',
         'is_approved',
+        'submitted_at',
     ];
 
     protected $casts = [
         'is_approved' => 'boolean',
+        'submitted_at' => 'datetime',
     ];
 
     public function obituaryPage(): BelongsTo

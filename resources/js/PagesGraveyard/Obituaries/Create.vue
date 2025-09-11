@@ -93,6 +93,14 @@ const form = useForm({
 // Computed properties
 const selectedServicePrice = computed(() => obituaryPricing[form.service_type]);
 
+const profileImageRef = ref<HTMLInputElement>();
+const galleryImagesRef = ref<HTMLInputElement>();
+const audioMessageRef = ref<HTMLInputElement>();
+
+// Image preview states
+const profileImagePreview = ref<string | null>(null);
+const galleryPreviews = ref<string[]>([]);
+
 // Watch for service type changes to enable/disable premium features
 watch(() => form.service_type, (newType) => {
   if (newType === 'basic') {
@@ -100,6 +108,7 @@ watch(() => form.service_type, (newType) => {
     form.allow_condolences = false;
     form.allow_memory_sharing = false;
     form.gallery_images = [];
+    galleryPreviews.value = []; // Clear gallery previews too
     form.audio_message = null;
     form.theme_color = '#6366f1';
     form.background_style = 'plain';
@@ -110,13 +119,6 @@ watch(() => form.service_type, (newType) => {
   }
 });
 
-const profileImageRef = ref<HTMLInputElement>();
-const galleryImagesRef = ref<HTMLInputElement>();
-const audioMessageRef = ref<HTMLInputElement>();
-
-// Image preview states
-const profileImagePreview = ref<string | null>(null);
-const galleryPreviews = ref<string[]>([]);
 
 // Enhanced file handlers with preview and validation
 const handleProfileImageSelect = (event: Event) => {
@@ -156,10 +158,14 @@ const clearProfileImage = () => {
 
 const handleGalleryImagesSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
+  
   if (target.files) {
     const files = Array.from(target.files);
     const validFiles = files.filter(file => validateImageFile(file));
-    form.gallery_images = [...form.gallery_images, ...validFiles];
+    
+    // Replace existing files instead of adding to them for cleaner behavior
+    form.gallery_images = validFiles;
+    galleryPreviews.value = [];
     
     // Generate previews for new files
     validFiles.forEach(file => {
@@ -167,6 +173,9 @@ const handleGalleryImagesSelect = (event: Event) => {
         galleryPreviews.value.push(preview);
       });
     });
+    
+    // Clear the file input to allow re-selection of same files
+    target.value = '';
   }
 };
 
@@ -176,7 +185,10 @@ const handleGalleryImagesDrop = (event: DragEvent) => {
   if (files) {
     const filesArray = Array.from(files);
     const validFiles = filesArray.filter(file => validateImageFile(file));
-    form.gallery_images = [...form.gallery_images, ...validFiles];
+    
+    // Replace existing files instead of adding to them for cleaner behavior
+    form.gallery_images = validFiles;
+    galleryPreviews.value = [];
     
     // Generate previews for new files
     validFiles.forEach(file => {
@@ -234,6 +246,7 @@ const formatFileSize = (bytes: number): string => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
+
 
 const submit = () => {
   form.post(route('graveyard.obituaries.store'), {
@@ -501,31 +514,40 @@ const goBack = () => {
                   </Label>
                   <p class="text-sm text-gray-600 mb-4">Additional photos for the memorial gallery</p>
                   
+                  
                   <!-- Gallery Previews -->
-                  <div v-if="galleryPreviews.length" class="mb-4">
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div v-if="galleryPreviews.length" style="margin-bottom: 16px;">
+                    <p style="font-size: 14px; font-weight: 600; color: #7c3aed; margin-bottom: 12px;">{{ galleryPreviews.length }} photo{{ galleryPreviews.length > 1 ? 's' : '' }} selected:</p>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; max-width: 100%;">
                       <div 
                         v-for="(preview, index) in galleryPreviews" 
                         :key="`gallery-${index}`"
-                        class="relative group aspect-square"
+                        style="position: relative; aspect-ratio: 1; border-radius: 8px; overflow: hidden; border: 2px solid #a855f7; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);"
                       >
                         <img 
                           :src="preview"
                           :alt="`Gallery ${index + 1}`"
-                          class="w-full h-full object-cover rounded-lg border-2 border-purple-300 shadow-sm"
+                          style="width: 100%; height: 100%; object-fit: cover; display: block;"
                         />
-                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
-                          <button
-                            type="button"
-                            @click="removeGalleryImage(index)"
-                            class="bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700"
-                          >
-                            <X class="w-4 h-4" />
-                          </button>
-                        </div>
-                        <span class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">New</span>
+                        <button
+                          type="button"
+                          @click="removeGalleryImage(index)"
+                          style="position: absolute; top: 4px; right: 4px; background: rgba(239, 68, 68, 0.9); color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center;"
+                          title="Remove image"
+                        >
+                          ×
+                        </button>
+                        <span style="position: absolute; bottom: 4px; left: 4px; background: rgba(0, 0, 0, 0.7); color: white; padding: 2px 6px; font-size: 10px; border-radius: 4px;">
+                          New
+                        </span>
                       </div>
                     </div>
+                  </div>
+                  
+                  <!-- No previews message -->
+                  <div v-else-if="form.gallery_images.length" class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                    Files selected but no previews generated. Check console for errors.
                   </div>
                   
                   <!-- Upload Area -->
@@ -623,16 +645,15 @@ const goBack = () => {
 
                 <div>
                   <Label for="background_style">Background Style</Label>
-                  <Select v-model="form.background_style">
-                    <SelectTrigger>
-                      <SelectValue placeholder="Choose background style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="plain">Plain</SelectItem>
-                      <SelectItem value="gradient">Gradient</SelectItem>
-                      <SelectItem value="pattern">Pattern</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select 
+                    id="background_style"
+                    v-model="form.background_style"
+                    style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; font-size: 14px; margin-top: 4px;"
+                  >
+                    <option value="plain">Plain</option>
+                    <option value="gradient">Gradient</option>
+                    <option value="pattern">Pattern</option>
+                  </select>
                 </div>
               </CardContent>
             </Card>
