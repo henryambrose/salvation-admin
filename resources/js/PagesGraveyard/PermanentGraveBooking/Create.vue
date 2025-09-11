@@ -132,32 +132,31 @@ const navigateToAddValidMember = () => {
 // Modal functions removed - now redirecting to ValidMember/Create.vue
 
 // Add a function to refresh grave data
-const refreshGraveData = async () => {
-  if (!selectedGrave.value) return;
+// const refreshGraveData = async () => {
+//   if (!selectedGrave.value) return;
 
-  try {
-    const response = await fetch(route('graveyard.permanent-grave-bookings.search-permanent-grave'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
-      body: JSON.stringify({
-        search_term: selectedGrave.value.grave_no,
-      }),
-    });
+//   try {
+//     const response = await fetch(route('graveyard.permanent-grave-bookings.search-permanent-grave'), {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+//       },
+//       body: JSON.stringify({
+//         search_term: selectedGrave.value.grave_no,
+//       }),
+//     });
 
-    const data = await response.json();
-    const updatedGrave = data.graves?.find((g: any) => g.id === selectedGrave.value?.id);
+//     const data = await response.json();
+//     const updatedGrave = data.graves?.find((g: any) => g.id === selectedGrave.value?.id);
 
-    if (updatedGrave) {
-      availableValidMembers.value = updatedGrave.valid_members || [];
-      console.log('Refreshed valid members:', availableValidMembers.value.length);
-    }
-  } catch (error) {
-    console.error('Failed to refresh grave data:', error);
-  }
-};
+//     if (updatedGrave) {
+//       availableValidMembers.value = updatedGrave.valid_members || [];
+//     }
+//   } catch (error) {
+//     console.error('Failed to refresh grave data:', error);
+//   }
+// };
 
 // Debounced search
 let searchTimeout: number;
@@ -169,25 +168,20 @@ const debouncedSearchGraves = () => {
 };
 
 // Calculate total cost
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  })
-    .format(amount)
-    .replace('₹', '₹ ');
-};
+// const formatCurrency = (amount: number) => {
+//   return new Intl.NumberFormat('en-IN', {
+//     style: 'currency',
+//     currency: 'INR',
+//   })
+//     .format(amount)
+//     .replace('₹', '₹ ');
+// };
 
 const formatDate = (date: string) => {
   return date ? new Date(date).toLocaleDateString('en-IN') : '';
 };
 
 const submit = () => {
-  console.log('Submit function called');
-  console.log('Form data:', form.data());
-  console.log('Form errors:', form.errors);
-  console.log('Form processing:', form.processing);
-
   // Check if all required fields are filled
   if (!form.permanent_grave_id) {
     alert('Please select a permanent grave');
@@ -204,22 +198,11 @@ const submit = () => {
     return;
   }
 
-  console.log('About to submit form...');
-  console.log('Route URL:', route('graveyard.permanent-grave-bookings.store'));
-
   form.post(route('graveyard.permanent-grave-bookings.store'), {
-    onStart: () => {
-      console.log('Form submission started');
-    },
-    onSuccess: (page) => {
-      console.log('Form submission successful', page);
-    },
-    onError: (errors) => {
-      console.log('Form submission errors:', errors);
-    },
-    onFinish: () => {
-      console.log('Form submission finished');
-    },
+    onStart: () => {},
+    onSuccess: (page) => {},
+    onError: (errors) => {},
+    onFinish: () => {},
   });
 };
 </script>
@@ -263,7 +246,7 @@ const submit = () => {
                       <MapPin class="h-5 w-5" />
                       <span>Select Permanent Grave</span>
                     </CardTitle>
-                    <CardDescription> Search by owner name, contact, grave number, old number, or member details </CardDescription>
+                    <CardDescription> Search by owner name, contact, old number </CardDescription>
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <!-- Selected Grave Display -->

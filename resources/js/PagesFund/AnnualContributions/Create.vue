@@ -546,41 +546,6 @@ const statusOptions = [
 ];
 
 // Methods
-// const searchMembers = async () => {
-  
-//   if (memberSearch.value.length < 2) {
-//     memberSearchResults.value = [];
-//     showMemberResults.value = false;
-//     return;
-//   }
-
-//   try {
-//     const url = `/member/search-members?query=${encodeURIComponent(form.family_no)}`;
-    
-//     const response = await fetch(url, {
-//       method: 'GET',
-//       headers: {
-//         'X-Requested-With': 'XMLHttpRequest',
-//         'Accept': 'application/json',
-//         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
-//       },
-//       credentials: 'same-origin'
-//     });
-    
-//     if (response.ok) {
-//       const data = await response.json();
-//       memberSearchResults.value = data || [];
-//       showMemberResults.value = data && data.length > 0;
-//     } else {
-//       console.error('Response not ok:', response.status, response.statusText);
-//       showMemberResults.value = false;
-//     }
-//   } catch (error) {
-//     console.error('Error searching members:', error);
-//     memberSearchResults.value = [];
-//     showMemberResults.value = false;
-//   }
-// };
 
 const searchMembersForFamily = async () => {
   

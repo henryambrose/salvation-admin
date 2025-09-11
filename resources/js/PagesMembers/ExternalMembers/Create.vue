@@ -72,7 +72,6 @@ const fetchFamilyMembers = async () => {
       });
       
       const data = await response.json();
-      console.log('data', data);
       // Filter only internal members from the same family
       familyMembers.value = data.members
         .filter((member: any) => member.source === 'Member')
@@ -103,7 +102,6 @@ const fetchExternalFamilyMembers = async () => {
       });
       
       const data = await response.json();
-      console.log('data', data);
       // Filter only external members from the same family
       externalFamilyMembers.value = data.members
         .filter((member: any) => member.source === 'External')

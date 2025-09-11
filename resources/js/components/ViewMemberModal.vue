@@ -348,9 +348,7 @@ async function fetchMemberDetails() {
   
   loadingMemberDetails.value = true;
   try {
-    console.log('Fetching member details for ID:', props.member.id);
     const response = await axios.get(`/member/${props.member.id}/details`);
-    console.log('Member details response:', response.data);
     
     if (response.data) {
       memberDetails.value = response.data;

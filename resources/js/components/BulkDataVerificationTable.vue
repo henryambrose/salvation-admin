@@ -540,7 +540,6 @@ const saveSingleRecord = async (item: any) => {
       modifiedRecords.value.splice(index, 1)
     }
     
-    console.log('Record saved successfully:', response.data)
   } catch (error) {
     console.error('Error saving record:', error)
     alert('Failed to save record. Please try again.')
@@ -573,7 +572,6 @@ const saveBulkChanges = async () => {
     modifiedRecords.value = []
     editingData.value = {}
     
-    console.log('Bulk changes saved successfully:', response.data)
     alert(`${changes.length} records updated successfully!`)
     
   } catch (error) {

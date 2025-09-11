@@ -482,7 +482,7 @@ const submit = () => {
   form[method](route(routeName, { id: member?.id }), {
     preserveScroll: true,
     onError: (errors: any) => {
-      console.log('Server validation errors:', errors);
+      // Handle validation errors
     },
   });
 };
@@ -1171,7 +1171,6 @@ onMounted(() => {
                 <span v-if="member?.current_family_no">{{ member.current_family_no }}</span>
                 <span v-else class="mt-1 text-xs text-gray-500"> Managed automatically through marriage and family changes </span>
               </div>
-              <!-- <p class="mt-1 text-xs text-gray-500">Managed automatically through marriage and family changes</p> -->
             </div>
           </div>
 

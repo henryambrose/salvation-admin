@@ -326,12 +326,12 @@ const submit = () => {
                 </div>
 
                 <div>
-                  <Label for="transfer_reason">Reason for Transfer *</Label>
+                  <Label for="transfer_reason">Reason for Transfer</Label>
                   <Textarea
                     id="transfer_reason"
                     v-model="form.transfer_reason"
                     rows="3"
-                    placeholder="Please provide the reason for requesting this transfer..."
+                    placeholder="Optional: Provide the reason for requesting this transfer..."
                     :class="form.errors.transfer_reason && 'border-red-500'"
                     class="mt-1"
                   />

@@ -66,11 +66,6 @@ const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
 const transferDue = ref(props.filters.transfer_due || 'all');
 
-console.log('Initial filter values:', {
-  search: search.value,
-  status: status.value,
-  transferDue: transferDue.value,
-});
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -98,11 +93,6 @@ const debouncedSearch = () => {
 };
 
 const applyFilters = () => {
-  console.log('applyFilters called with values:', {
-    search: search.value,
-    status: status.value,
-    transferDue: transferDue.value,
-  });
 
   router.get(
     route('graveyard.temporary-grave-bookings.index'),

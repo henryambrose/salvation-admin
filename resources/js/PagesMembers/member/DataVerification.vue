@@ -260,17 +260,17 @@ const refreshData = () => {
 
 const focusOnMissingNames = () => {
   // This would filter the table to show only records with missing names
-  console.log('Focus on missing names')
+  // TODO: Implement filtering logic
 }
 
 const focusOnMissingRelationships = () => {
   // This would filter the table to show only records with missing relationships
-  console.log('Focus on missing relationships')
+  // TODO: Implement filtering logic
 }
 
 const focusOnMissingDates = () => {
   // This would filter the table to show only records with missing dates
-  console.log('Focus on missing dates')
+  // TODO: Implement filtering logic
 }
 
 const exportAllData = () => {

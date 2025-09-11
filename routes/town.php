@@ -2,8 +2,6 @@
 
 use Modules\Members\Http\Controllers\TownController;
 use Illuminate\Support\Facades\Route;
-
-// Update any inline references too
 Route::post('/town/{id}/restore', [TownController::class, 'restore'])->name('town.restore');
 
 Route::middleware('auth')->group(function () {

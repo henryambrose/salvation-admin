@@ -287,7 +287,6 @@ const breadcrumbs = [
 ];
 
 // Reactive state
-console.log(props.filters);
 const filters = ref({ 
   perPage: 10, 
   search: '', 

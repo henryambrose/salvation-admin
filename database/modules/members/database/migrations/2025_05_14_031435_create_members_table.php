@@ -72,8 +72,24 @@ return new class extends Migration
             $table->string('father_source')->nullable()->default('Member');
             $table->string('mother_source')->nullable()->default('Member');
             $table->string('spouse_source')->nullable()->default('Member');
+            $table->foreignId('parish_id')->nullable()->constrained('parishes');
+            $table->foreignId('designation_id')->nullable()->constrained('designations');
+            $table->foreignId('gender_id')->nullable()->constrained('genders');
+            $table->foreignId('status_id')->nullable()->constrained('statuses');
+            $table->foreignId('relationship_id')->nullable()->constrained('relationships');
+            $table->foreignId('baptism_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
+            $table->foreignId('confirmation_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
+            $table->foreignId('marriage_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
+            $table->foreignId('death_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
+
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index('family_no');
+            $table->index('member_no');
+            $table->index('created_at');
+            $table->index(['first_name', 'last_name']);
+            $table->index(['community_id', 'deleted_at']);
         });
     }
 

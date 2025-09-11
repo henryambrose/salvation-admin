@@ -578,8 +578,6 @@ function resetPermissions() {
   if (confirm('Are you sure you want to reset all changes? This will restore the original permission state.')) {
     // Restore original permissions to local permissions
     localPermissions.value = JSON.parse(JSON.stringify(originalPermissions.value));
-    
-    console.log('Permissions reset to original state');
   }
 }
 

@@ -2,10 +2,8 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle, FileText, IndianRupee, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
@@ -76,6 +74,7 @@ interface FlashMessage {
 
 interface Props {
   booking: PermanentGraveBooking;
+  canCreateObituary?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -162,6 +161,15 @@ const canMakePayment = () => {
 const canCancel = () => {
   return ['pending', 'confirmed'].includes(props.booking.status);
 };
+
+const goToCreateObituary = () => {
+  router.visit(
+    route('graveyard.obituaries.create', {
+      type: 'permanent',
+      booking_id: props.booking.id,
+    }),
+  );
+};
 </script>
 
 <template>
@@ -194,6 +202,10 @@ const canCancel = () => {
                   {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
                 </Badge>
                 <div class="flex space-x-2">
+                  <Button v-if="canCreateObituary" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700">
+                    <FileText class="mr-2 h-4 w-4" />
+                    Create Obituary
+                  </Button>
                   <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
                     <IndianRupee class="mr-2 h-4 w-4" />
                     Make Payment
@@ -204,7 +216,7 @@ const canCancel = () => {
                   >
                     ✓ Payment completed - Booking confirmed, burial can proceed
                   </div>
-                  <Dialog v-if="canCancel()" v-model:open="showCancelDialog">
+                  <!-- <Dialog v-if="canCancel()" v-model:open="showCancelDialog">
                     <DialogTrigger as-child>
                       <Button variant="outline" class="border-red-200 text-red-600 hover:bg-red-50">
                         <XCircle class="mr-2 h-4 w-4" />
@@ -233,7 +245,7 @@ const canCancel = () => {
                         </Button>
                       </DialogFooter>
                     </DialogContent>
-                  </Dialog>
+                  </Dialog> -->
                 </div>
               </div>
             </div>

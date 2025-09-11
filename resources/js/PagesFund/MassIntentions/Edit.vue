@@ -257,11 +257,9 @@ function initializeForm() {
 function updateIntention() {
   updating.value = true;
 
-  console.log('Submitting form data:', form.value);
 
   router.put(route('fund.mass-intentions.update', props.massIntention.id), form.value, {
     onSuccess: (response) => {
-      console.log('Update successful:', response);
       updating.value = false;
       // Redirect to index page after successful update
       router.visit(route('fund.mass-intentions.index'));
@@ -272,7 +270,6 @@ function updateIntention() {
       }, 1000);
     },
     onError: (errors) => {
-      console.log('Update failed with errors:', errors);
       updating.value = false;
     },
   });

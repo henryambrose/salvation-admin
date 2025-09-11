@@ -15,6 +15,8 @@ use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
 use Modules\Graveyard\Http\Controllers\NicheTransferController;
 use Modules\Graveyard\Http\Controllers\PaymentController;
 use Modules\Graveyard\Http\Controllers\GraveCategoryController;
+use Modules\Graveyard\Http\Controllers\ObituaryController;
+use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -164,6 +166,28 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
     });
 
+    // Obituary Management (Admin Routes)
+    Route::prefix('graveyard/obituaries')->name('graveyard.obituaries.')->group(function () {
+        Route::get('/', [ObituaryManagementController::class, 'index'])->name('index');
+        Route::get('/create', [ObituaryManagementController::class, 'create'])->name('create');
+        Route::post('/', [ObituaryManagementController::class, 'store'])->name('store');
+        Route::get('/{obituary}', [ObituaryManagementController::class, 'show'])->name('show');
+        Route::get('/{obituary}/edit', [ObituaryManagementController::class, 'edit'])->name('edit');
+        Route::put('/{obituary}', [ObituaryManagementController::class, 'update'])->name('update');
+        Route::delete('/{obituary}', [ObituaryManagementController::class, 'destroy'])->name('destroy');
+
+        // Condolence management
+        Route::get('/condolences/manage', [ObituaryManagementController::class, 'condolences'])->name('condolences.index');
+        Route::patch('/condolences/{condolence}/approve', [ObituaryManagementController::class, 'approveCondolence'])->name('condolences.approve');
+        Route::patch('/condolences/{condolence}/reject', [ObituaryManagementController::class, 'rejectCondolence'])->name('condolences.reject');
+
+        // Custom QR code generation
+        Route::post('/{obituary}/generate-qr', [ObituaryManagementController::class, 'generateCustomQr'])->name('qr.generate');
+        
+        // Payment processing
+        Route::post('/{obituary}/payment', [ObituaryManagementController::class, 'processPayment'])->name('payment.process');
+    });
+
     // Permission denied route for graveyard
     Route::get('/graveyard/permission-denied', function () {
         return Inertia::render('errors/PermissionDenied', [
@@ -171,4 +195,58 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
             'user' => \Illuminate\Support\Facades\Auth::user()
         ]);
     })->name('graveyard.permission-denied');
+
+});
+
+// Public Obituary Routes (no auth required) - outside the auth middleware
+Route::prefix('obituary')->name('obituary.')->group(function () {
+    // Public obituary page view
+    Route::get('/{uuid}', [ObituaryController::class, 'show'])->name('show');
+
+    // Submit condolence (no auth required)
+    Route::post('/{uuid}/condolence', [ObituaryController::class, 'storeCondolence'])->name('condolence.store');
+
+    // Download QR code (no auth required but rate limited)
+    Route::get('/{uuid}/qr-download', [ObituaryController::class, 'downloadQrCode'])
+        ->name('qr.download')
+        ->middleware('throttle:10,1'); // 10 downloads per minute
+
+    // Preview (admin only - will be protected in controller)
+    Route::get('/{uuid}/preview', [ObituaryController::class, 'preview'])->name('preview');
+});
+
+// API Routes for integrations
+Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'])->group(function () {
+    // Quick create from booking confirmation
+    Route::post('/create-from-booking', function (\Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'booking_type' => 'required|in:permanent,temporary',
+            'booking_id' => 'required|integer',
+            'service_type' => 'required|in:basic,premium',
+        ]);
+
+        $obituaryService = app(\App\Services\ObituaryService::class);
+
+        if ($validated['booking_type'] === 'permanent') {
+            $booking = \Modules\Graveyard\Models\PermanentGraveBooking::findOrFail($validated['booking_id']);
+        } else {
+            $booking = \Modules\Graveyard\Models\TemporaryGraveBooking::findOrFail($validated['booking_id']);
+        }
+
+        $obituary = $obituaryService->createObituaryFromBooking($booking, [
+            'service_type' => $validated['service_type']
+        ]);
+
+        return response()->json([
+            'obituary' => $obituary,
+            'public_url' => route('obituary.show', $obituary->uuid),
+            'qr_code_url' => $obituary->qr_code_path ? asset('storage/' . $obituary->qr_code_path) : null,
+        ]);
+    })->name('create-from-booking');
+
+    // Get obituary stats
+    Route::get('/{obituary}/stats', function (\Modules\Graveyard\Models\ObituaryPage $obituary) {
+        $obituaryService = app(\App\Services\ObituaryService::class);
+        return response()->json($obituaryService->getObituaryStats($obituary));
+    })->name('stats');
 });

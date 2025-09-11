@@ -206,7 +206,6 @@ function openEditModal(row: any) {
   editForm.sort_order = row.sort_order || 0;
   editForm.is_active = Boolean(row.is_active);
   showEditModal.value = true;
-  console.log('Edit form data:', editForm.data());
 }
 
 function submitEdit() {

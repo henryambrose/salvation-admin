@@ -16,7 +16,7 @@ return new class extends Migration
             $table->integer('niche_no')->unique()->index();
             $table->integer('sr_no')->index();
             $table->string('location')->nullable(); // Wall location, level, etc.
-            $table->enum('status', ['available', 'unavailable'])->default('available')->index();
+            $table->enum('status', ['available', 'unavailable'])->default('available');
             $table->date('last_occupation_date')->nullable();
             $table->string('owner_name')->nullable()->index(); // For search functionality
             $table->string('contact_no')->nullable();
@@ -28,16 +28,18 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
+            // Foreign key constraints
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
+            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+
             $table->timestamps();
             $table->softDeletes();
 
             // Composite index for efficient queries
             $table->index(['niche_no', 'sr_no']);
             $table->index(['status', 'location']);
-
-            // Foreign key constraints
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
+            $table->index('niche_no');
+            $table->index('status');
         });
     }
 

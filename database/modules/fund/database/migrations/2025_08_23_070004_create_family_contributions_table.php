@@ -37,6 +37,9 @@ return new class extends Migration
             $table->index(['start_date']);
             $table->index(['end_date']);
             $table->index('member_id');
+            $table->index('family_no');
+            $table->index(['start_date', 'end_date']);
+            $table->index('created_at');
         });
     }
 

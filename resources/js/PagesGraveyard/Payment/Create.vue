@@ -82,7 +82,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-console.log(props.bookingType);
 // Form setup
 const form = useForm({
   booking_type: props.bookingType,
@@ -340,7 +339,6 @@ const formatDate = (date: string) => {
 };
 
 const getDeceasedName = () => {
-  console.log(props.bookingType);
   if (props.bookingType === 'temporary' || props.bookingType === 'niche-transfer') {
     return `${props.booking.dead_first_name} ${props.booking.dead_last_name}`;
   } else if (props.bookingType === 'permanent') {

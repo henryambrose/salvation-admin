@@ -460,7 +460,6 @@ const displayNameWithNo = (m) => {
 
 const person = computed(() => props.person || null);
 function downloadPdf() {
-  console.log(props.id, props.type);
   window.open(route('family.pdf', { id: props.id, type: props.type }), '_blank');
 }
 // flat list from props.familyTree

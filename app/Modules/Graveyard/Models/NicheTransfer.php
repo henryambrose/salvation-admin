@@ -140,21 +140,7 @@ class NicheTransfer extends Model
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    /**
-     * Get the approver
-     */
-    // public function approver(): BelongsTo
-    // {
-    //     return $this->belongsTo(User::class, 'approved_by');
-    // }
 
-    /**
-     * Get the rejecter
-     */
-    // public function rejecter(): BelongsTo
-    // {
-    //     return $this->belongsTo(User::class, 'rejected_by');
-    // }
 
     /**
      * Get the relationship
@@ -188,13 +174,6 @@ class NicheTransfer extends Model
         return $query->where('status', 'pending');
     }
 
-    /**
-     * Scope for approved transfers
-     */
-    // public function scopeApproved($query)
-    // {
-    //     return $query->where('status', 'approved');
-    // }
 
     /**
      * Scope for transfers due soon
@@ -220,32 +199,7 @@ class NicheTransfer extends Model
         }
     }
 
-    /**
-     * Calculate total cost
-     */
-    // public function calculateTotalCost(): void
-    // {
-    //     // Get niche cost
-    //     if ($this->to_niche_id && !$this->niche_cost) {
-    //         $niche = Niche::find($this->to_niche_id);
-    //         $this->niche_cost = $niche ? $niche->cost : 0;
-    //     }
 
-    //     // Set transfer cost to 0 (no additional services)
-    //     $this->transfer_cost = 0;
-
-    //     // Total cost is just the niche cost
-    //     $this->total_cost = $this->niche_cost;
-    //     $this->balance_amount = $this->total_cost - $this->paid_amount;
-    // }
-
-    /**
-     * Get deceased full name
-     */
-    // public function getDeceasedFullNameAttribute(): string
-    // {
-    //     return trim("{$this->first_name} {$this->last_name}");
-    // }
 
     /**
      * Process status changes

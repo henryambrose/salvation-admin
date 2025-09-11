@@ -482,19 +482,11 @@ onMounted(() => {
 
   // Load contribution history for this family
   if (form.family_no) {
-    console.log('Fetching contribution history for family:', form.family_no);
     fetch(`/fund/family-contributions/${encodeURIComponent(form.family_no)}`)
       .then(r => r.json())
              .then(data => {
-         console.log('Contribution history data:', data);
          contributionHistory.value = data?.contributions || [];
-         console.log('Contribution history array:', contributionHistory.value);
          
-         // Debug: Log the first contribution to see available fields
-         if (contributionHistory.value.length > 0) {
-           console.log('First contribution fields:', Object.keys(contributionHistory.value[0]));
-           console.log('First contribution data:', contributionHistory.value[0]);
-         }
        })
       .catch((error) => {
         console.error('Error fetching contribution history:', error);

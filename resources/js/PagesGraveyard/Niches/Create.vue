@@ -34,18 +34,20 @@
                     <p v-if="errors.niche_no" class="mt-1 text-sm text-red-600">{{ errors.niche_no }}</p>
                   </div>
 
-                  <div>
+                  <!-- <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">Sr No *</label>
                     <input
                       v-model="form.sr_no"
                       type="number"
                       min="1"
+                      value="1"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="Enter serial number"
+                      disabled
                       required
                     />
                     <p v-if="errors.sr_no" class="mt-1 text-sm text-red-600">{{ errors.sr_no }}</p>
-                  </div>
+                  </div> -->
 
                   <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">Location *</label>
@@ -311,7 +313,7 @@ const selectedMember = ref<any>(null);
 const form = useForm({
   member_type: 'member',
   niche_no: '',
-  sr_no: '',
+  sr_no: 1,
   location: '',
   status: '',
   last_occupation_date: '',

@@ -39,7 +39,7 @@
                       <input
                         v-model="memberSearchQuery"
                         type="text"
-                        placeholder="Search by name, family number, or phone..."
+                        placeholder="Search by name or phone..."
                         class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
                         @input="searchMembers"
                       />
@@ -284,14 +284,6 @@
                             {{ mass.intention_type_name }}
                           </div>
                         </div>
-                        <!-- Status badge commented out - status workflow not implemented yet
-                         <span 
-                           :class="getStatusBadgeClass(mass.status)"
-                           class="px-2 py-1 text-xs font-medium rounded-full"
-                         >
-                           {{ mass.status }}
-                         </span>
-                         -->
                       </div>
                     </div>
                   </div>
@@ -445,20 +437,10 @@ function submitForm() {
     return;
   }
 
-  // if (!form.phone) {
-  //   alert('Please enter phone number');
-  //   return;
-  // }
-
   if (!form.intention_for) {
     alert('Please enter what the intention is for');
     return;
   }
-
-  // if (!form.amount || form.amount <= 0) {
-  //   alert('Please enter a valid amount');
-  //   return;
-  // }
 
   if (!form.status) {
     alert('Please select a status');

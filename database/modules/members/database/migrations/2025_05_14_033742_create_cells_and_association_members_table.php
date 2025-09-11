@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('member_id')->constrained('members');
             $table->foreignId('cells_and_association_id')->constrained('cells_and_associations');
+            $table->unique(['member_id', 'cells_and_association_id'], 'unique_member_cell_association');
             $table->timestamps();
             $table->softDeletes();
         });

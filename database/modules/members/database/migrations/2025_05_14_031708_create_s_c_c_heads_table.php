@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('community_id')->constrained('communities');
             $table->timestamps();
             $table->softDeletes();
+
+            $table->index(['community_id', 'deleted_at']);
         });
     }
 

@@ -28,14 +28,16 @@ return new class extends Migration
             $table->string('father_source')->nullable();
             $table->string('mother_source')->nullable();
             $table->string('spouse_source')->nullable();
+            $table->index('external_member_no');
+            $table->foreignId('gender_id')->nullable()->constrained('genders');
+            $table->timestamps();
+            $table->softDeletes();
+
             $table->index('father_id');
             $table->index('mother_id');
             $table->index('spouse_id');
             $table->index('family_no');
             $table->index('community_id');
-            $table->timestamps();
-            $table->softDeletes();
-            $table->index('external_member_no');
         });
     }
 

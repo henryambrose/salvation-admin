@@ -34,6 +34,7 @@ class MassIntentionController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%")
                     ->orWhere('external_name', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->where('first_name', 'like', "%{$search}%")
@@ -358,21 +359,22 @@ class MassIntentionController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->get('query', '');
-        $familyNo = $request->get('family_no', '');
+        // $familyNo = $request->get('family_no', '');
 
-        $members = Member::with('community')->where(function ($q) use ($query, $familyNo) {
-            if ($familyNo) {
-                $q->where('family_no', $familyNo);
-            }
+        $members = Member::with('community')->where(function ($q) use ($query) {
+            // if ($familyNo) {
+            //     $q->where('family_no', $familyNo);
+            // }
             if ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                     ->orWhere('middle_name', 'like', "%{$query}%")
                     ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhere('member_no', 'like', "%{$query}%");
+                    ->orWhere('contact_no_1', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"]);
             }
         })
-            ->limit(10)
-            ->get(['id', 'first_name', 'middle_name', 'last_name', 'member_no', 'family_no', 'community_id', 'current_add1', 'contact_no_1']);
+
+            ->get(['id', 'first_name', 'middle_name', 'last_name',  'family_no', 'family_no', 'community_id', 'current_add1', 'contact_no_1']);
 
         // Add a computed 'name' field for frontend compatibility
         $members = $members->map(function ($member) {

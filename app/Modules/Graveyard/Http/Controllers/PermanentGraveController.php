@@ -151,13 +151,6 @@ class PermanentGraveController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Permanent grave created', [
-                'id' => $permanentGrave->id,
-                'section' => $permanentGrave->section,
-                'grave_no' => $permanentGrave->grave_no,
-                'created_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.permanent-graves.index')
                 ->with('success', 'Permanent grave created successfully.');
         } catch (\Exception $e) {
@@ -360,8 +353,7 @@ class PermanentGraveController extends Controller
                     ->orWhere('last_name', 'like', "%{$query}%")
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$query%"])
                     ->orWhere('family_no', 'like', "%{$query}%")
-                    ->orWhere('contact_no_1', 'like', "%{$query}%")
-                    ->orWhere('contact_no_2', 'like', "%{$query}%");
+                    ->orWhere('contact_no_1', 'like', "%{$query}%");
             })
             ->limit(10)
             ->get()

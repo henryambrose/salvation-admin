@@ -63,7 +63,6 @@ const fetchFamilyMembers = async () => {
       });
 
       const data = await response.json();
-      console.log('data', data);
       // Filter members from the same family and exclude current member
       const currentMemberId = props.externalMember.id;
       familyMembers.value = data.members
@@ -73,7 +72,6 @@ const fetchFamilyMembers = async () => {
           id: member.id,
           name: member.first_name + ' ' + member.last_name,
         }));
-      console.log('Fetched family members:', familyMembers.value);
     } catch (error) {
       console.error('Error fetching family members:', error);
       familyMembers.value = [];

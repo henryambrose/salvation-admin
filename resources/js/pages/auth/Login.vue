@@ -92,13 +92,6 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Our Lady of Salvation';
             <span class="text-sm text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white transition-colors duration-200">Remember me</span>
           </Label>
           
-          <!-- <a 
-            v-if="canResetPassword" 
-            :href="route('password.request')" 
-            class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200 font-medium hover:underline"
-          >
-            Forgot password?
-          </a> -->
         </div>
       </div>
 
@@ -112,14 +105,6 @@ const AppName = import.meta.env.VITE_APP_NAME || 'Our Lady of Salvation';
         {{ form.processing ? 'Signing in...' : 'Sign in to your account' }}
       </Button>
 
-      <!-- <div class="text-center pt-4 border-t border-gray-200 dark:border-gray-700">
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          By signing in, you agree to our 
-          <a href="#" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors duration-200">Terms of Service</a> 
-          and 
-          <a href="#" class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium hover:underline transition-colors duration-200">Privacy Policy</a>
-        </p>
-      </div> -->
     </form>
   </AuthEnhancedLayout>
 </template>

@@ -39,18 +39,6 @@ const resolveIcon = (iconName: string) => {
 
 const page = usePage();
 
-// const modules = computed(() => {
-//   return (page.props.modules as Array<any>).map((module: any) => ({
-//     title: module.name,
-//     href: '/' + module.slug,
-//     icon: resolveIcon(module.icon),
-//     show: can(module.slug),
-//   }));
-// });
-
-// const mainNavItems: NavItem[] = modules.value;
-
-// const filteredMainNavItems = mainNavItems.filter((item) => item.show);
 
 // Organized navigation groups
 const navigationGroups = [

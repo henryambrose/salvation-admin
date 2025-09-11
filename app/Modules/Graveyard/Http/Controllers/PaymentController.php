@@ -282,6 +282,34 @@ class PaymentController extends Controller
                 ]);
             }
 
+            // Update member death_date if the deceased person is a member
+            $member = null;
+            $deathDate = null;
+
+            if ($request->booking_type === 'permanent' && $booking->validMember && $booking->validMember->member) {
+                $member = $booking->validMember->member;
+                $deathDate = $booking->dead_date ?? now()->toDateString();
+            } elseif ($request->booking_type === 'temporary' && $booking->deceasedMember) {
+                $member = $booking->deceasedMember;
+                $deathDate = $booking->died_on ?? now()->toDateString();
+            }
+
+            if ($member && !$member->death_date) {
+                $member->update([
+                    'death_date' => $deathDate,
+                    'status_id' => 4
+                ]);
+
+                Log::info('Updated member death_date', [
+                    'booking_type' => $request->booking_type,
+                    'member_id' => $member->id,
+                    'member_name' => $member->first_name . ' ' . $member->last_name,
+                    'death_date' => $deathDate,
+                    'booking_id' => $booking->id,
+                    'payment_id' => $payment->id
+                ]);
+            }
+
             DB::commit();
 
             // Redirect back to the appropriate booking page

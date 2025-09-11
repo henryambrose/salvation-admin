@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Members\Models\User;
 use Carbon\Carbon;
@@ -256,6 +257,22 @@ class PermanentGraveBooking extends Model
         return $this->buried_on < now()->toDateString() && !in_array($this->status, ['completed', 'cancelled']);
     }
 
+
+    /**
+     * Get the obituary page for this booking
+     */
+    public function obituaryPage(): HasOne
+    {
+        return $this->hasOne(\Modules\Graveyard\Models\ObituaryPage::class);
+    }
+
+    /**
+     * Check if this booking has an obituary page
+     */
+    public function hasObituaryPage(): bool
+    {
+        return $this->obituaryPage()->exists();
+    }
 
     /**
      * Cancel the booking

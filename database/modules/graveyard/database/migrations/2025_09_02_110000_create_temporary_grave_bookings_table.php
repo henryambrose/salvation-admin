@@ -89,6 +89,8 @@ return new class extends Migration
             $table->index(['booking_reference']);
             $table->index(['expected_transfer_date']);
             $table->index(['transfer_requested']);
+            $table->index('status');
+            $table->index('booking_date');
         });
     }
 

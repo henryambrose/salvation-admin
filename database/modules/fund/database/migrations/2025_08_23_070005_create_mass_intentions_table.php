@@ -31,6 +31,10 @@ return new class extends Migration
             // Indexes
             $table->index('member_id');
             $table->index('status');
+            $table->index('mass_date');
+            $table->index(['status', 'mass_date']);
+            $table->index('created_at');
+            $table->index('phone');
         });
     }
 

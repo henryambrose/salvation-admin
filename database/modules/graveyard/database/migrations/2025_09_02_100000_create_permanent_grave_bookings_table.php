@@ -61,10 +61,13 @@ return new class extends Migration
 
             // Indexes
             $table->index(['status', 'booking_date']);
-            $table->index(['buried_on']);
             $table->index(['permanent_grave_id', 'status']);
             $table->index(['valid_member_id']);
             $table->index(['booking_reference']);
+            $table->index('booking_date');
+            $table->index('status');
+            $table->index('died_on');
+            $table->index('buried_on');
         });
     }
 

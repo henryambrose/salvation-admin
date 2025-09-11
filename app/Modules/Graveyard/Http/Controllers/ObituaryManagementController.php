@@ -1,0 +1,393 @@
+<?php
+
+namespace Modules\Graveyard\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+
+use Modules\Graveyard\Models\ObituaryPage;
+use Modules\Graveyard\Models\ObituaryCondolence;
+use Modules\Graveyard\Models\ObituaryPayment;
+use App\Services\ObituaryService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Modules\Graveyard\Models\PermanentGraveBooking;
+use Modules\Graveyard\Models\TemporaryGraveBooking;
+use Modules\Fund\Models\PaymentMethod;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
+
+
+class ObituaryManagementController extends Controller
+{
+    protected $obituaryService;
+
+    public function __construct(ObituaryService $obituaryService)
+    {
+        $this->obituaryService = $obituaryService;
+
+        // Apply authorization middleware
+        $this->middleware('auth');
+
+        // Apply policy-based authorization
+        $this->authorizeResource(ObituaryPage::class, 'obituary');
+    }
+
+
+    public function index(Request $request)
+    {
+        $obituaries = ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking'])
+            ->when($request->search, function ($query, $search) {
+                $query->whereHas('permanentGraveBooking.validMember', function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                        ->orWhere('last_name', 'like', "%{$search}%");
+                })->orWhereHas('temporaryGraveBooking', function ($q) use ($search) {
+                    $q->where('dead_first_name', 'like', "%{$search}%")
+                        ->orWhere('dead_last_name', 'like', "%{$search}%");
+                });
+            })
+            ->when($request->service_type, function ($query, $type) {
+                $query->where('service_type', $type);
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
+        return Inertia::render('PagesGraveyard/Obituaries/Index', [
+            'obituaries' => $obituaries,
+            'filters' => $request->only(['search', 'service_type']),
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        $bookingType = $request->query('type'); // 'permanent' or 'temporary'
+        $bookingId = $request->query('booking_id');
+
+        $booking = null;
+        if ($bookingType === 'permanent' && $bookingId) {
+            $booking = PermanentGraveBooking::with('validMember')->findOrFail($bookingId);
+        } elseif ($bookingType === 'temporary' && $bookingId) {
+            $booking = TemporaryGraveBooking::findOrFail($bookingId);
+        }
+
+        return Inertia::render('PagesGraveyard/Obituaries/Create', [
+            'booking' => $booking,
+            'bookingType' => $bookingType,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'booking_type' => 'required|in:permanent,temporary',
+            'booking_id' => 'required|integer',
+            'service_type' => 'required|in:basic,premium',
+            'biography' => 'nullable|string',
+            'favorite_memory' => 'nullable|string',
+            'achievements' => 'nullable|string',
+            'hobbies_interests' => 'nullable|string',
+            'profile_image' => 'nullable|image|max:2048',
+            'gallery_images.*' => 'nullable|image|max:2048',
+            'audio_message' => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
+            'theme_color' => 'nullable|string|size:7',
+            'background_style' => 'nullable|in:plain,gradient,pattern',
+            'allow_condolences' => 'boolean',
+            'allow_memory_sharing' => 'boolean',
+            'is_public' => 'boolean',
+        ]);
+
+        $booking = null;
+        if ($validated['booking_type'] === 'permanent') {
+            $booking = PermanentGraveBooking::findOrFail($validated['booking_id']);
+        } else {
+            $booking = TemporaryGraveBooking::findOrFail($validated['booking_id']);
+        }
+
+        // Handle file uploads
+        $data = $validated;
+        if ($request->hasFile('profile_image')) {
+            $data['profile_image'] = $request->file('profile_image')->store('obituaries/images', 'public');
+        }
+
+        if ($request->hasFile('gallery_images')) {
+            $galleryImages = [];
+            foreach ($request->file('gallery_images') as $image) {
+                $galleryImages[] = $image->store('obituaries/gallery', 'public');
+            }
+            $data['gallery_images'] = $galleryImages;
+        }
+
+        if ($request->hasFile('audio_message')) {
+            $data['audio_message'] = $request->file('audio_message')->store('obituaries/audio', 'public');
+        }
+
+        $obituary = $this->obituaryService->createObituaryFromBooking($booking, $data);
+
+        // Create payment record for the obituary service
+        $serviceAmount = $validated['service_type'] === 'premium' ? 1500 : 500;
+
+        $payment = \Modules\Graveyard\Models\ObituaryPayment::create([
+            'obituary_page_id' => $obituary->id,
+            'service_type' => $validated['service_type'],
+            'amount' => $serviceAmount,
+            'payment_status' => 'pending',
+            'payment_reference' => 'OBT' . date('Ymd') . str_pad($obituary->id, 4, '0', STR_PAD_LEFT),
+            'created_by' => Auth::id(),
+        ]);
+
+        // Redirect to obituary show page with payment option
+        return redirect()->route('graveyard.obituaries.show', $obituary)
+            ->with('success', 'Obituary page created successfully! Please complete the payment to activate the page.')
+            ->with('payment_required', true)
+            ->with('payment_amount', $serviceAmount)
+            ->with('service_type', $validated['service_type']);
+    }
+
+    public function show(ObituaryPage $obituary)
+    {
+        $obituary->load([
+            'permanentGraveBooking.validMember',
+            'temporaryGraveBooking',
+            'condolences.obituaryPage',
+            'payments' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            }
+        ]);
+
+        $stats = $this->obituaryService->getObituaryStats($obituary);
+        $recommendations = $this->obituaryService->getRecommendedUpgrades($obituary);
+        $shareLinks = $this->obituaryService->generateShareableLink($obituary);
+        $user = Auth::user();
+        // Check if user can edit this obituary using policy
+        $canEdit = Gate::allows('update', $obituary);
+
+        // Get active payment methods
+        $paymentMethods = PaymentMethod::where('is_active', true)
+            ->orderBy('sort_order')
+            ->select('id', 'name', 'description')
+            ->get();
+
+        return Inertia::render('PagesGraveyard/Obituaries/Show', [
+            'obituary' => $obituary,
+            'stats' => $stats,
+            'recommendations' => $recommendations,
+            'shareLinks' => $shareLinks,
+            'canEdit' => $canEdit,
+            'paymentMethods' => $paymentMethods,
+        ]);
+    }
+
+    public function edit(ObituaryPage $obituary)
+    {
+        $obituary->load(['permanentGraveBooking.validMember', 'temporaryGraveBooking']);
+
+        return Inertia::render('PagesGraveyard/Obituaries/Edit', [
+            'obituary' => $obituary,
+        ]);
+    }
+
+    public function update(Request $request, ObituaryPage $obituary)
+    {
+        Log::info('Obituary update method called', [
+            'obituary_id' => $obituary->id,
+            'request_method' => $request->method(),
+            'request_all' => $request->all(),
+            'has_files' => [
+                'profile_image' => $request->hasFile('profile_image'),
+                'gallery_images' => $request->hasFile('gallery_images'),
+                'audio_message' => $request->hasFile('audio_message')
+            ]
+        ]);
+
+        try {
+            $validated = $request->validate([
+                'biography' => 'nullable|string',
+                'favorite_memory' => 'nullable|string',
+                'achievements' => 'nullable|string',
+                'hobbies_interests' => 'nullable|string',
+                'profile_image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
+                'gallery_images' => 'nullable|array',
+                'gallery_images.*' => 'image|mimes:jpeg,jpg,png,gif|max:2048',
+                'audio_message' => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
+                'theme_color' => 'nullable|string',
+                'background_style' => 'nullable|string|in:plain,gradient,pattern',
+                'allow_condolences' => 'nullable|boolean',
+                'allow_memory_sharing' => 'nullable|boolean',
+                'is_public' => 'nullable|boolean',
+            ]);
+
+            Log::info('Obituary update - validation passed', [
+                'obituary_id' => $obituary->id,
+                'validated_data' => $validated,
+                'request_all' => $request->all()
+            ]);
+
+            // Prepare data for update
+            $data = [];
+
+            // Text fields
+            $textFields = ['biography', 'favorite_memory', 'achievements', 'hobbies_interests', 'theme_color', 'background_style'];
+            foreach ($textFields as $field) {
+                if (isset($validated[$field])) {
+                    $data[$field] = $validated[$field];
+                }
+            }
+
+            // Boolean fields - handle form data properly
+            $booleanFields = ['allow_condolences', 'allow_memory_sharing', 'is_public'];
+            foreach ($booleanFields as $field) {
+                if ($request->has($field)) {
+                    $data[$field] = filter_var($request->input($field), FILTER_VALIDATE_BOOLEAN);
+                }
+            }
+
+            // Handle profile image upload
+            if ($request->hasFile('profile_image') && $request->file('profile_image')->isValid()) {
+                $data['profile_image'] = $request->file('profile_image')->store('obituaries/images', 'public');
+            }
+
+            // Handle gallery images upload
+            if ($request->hasFile('gallery_images')) {
+                $existingImages = $obituary->gallery_images ?? [];
+                $newImages = [];
+                foreach ($request->file('gallery_images') as $image) {
+                    if ($image->isValid()) {
+                        $newImages[] = $image->store('obituaries/gallery', 'public');
+                    }
+                }
+                if (!empty($newImages)) {
+                    $data['gallery_images'] = array_merge($existingImages, $newImages);
+                }
+            }
+
+            // Handle audio message upload
+            if ($request->hasFile('audio_message') && $request->file('audio_message')->isValid()) {
+                $data['audio_message'] = $request->file('audio_message')->store('obituaries/audio', 'public');
+            }
+
+            // Update the obituary
+            $obituary->update($data);
+
+            return redirect()->route('graveyard.obituaries.show', $obituary->uuid)
+                ->with('success', 'Obituary page updated successfully!');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Obituary update failed: ' . $e->getMessage(), [
+                'obituary_id' => $obituary->id,
+                'request_data' => $request->all()
+            ]);
+
+            return back()->with('error', 'Failed to update obituary. Please try again.');
+        }
+    }
+
+    public function destroy(ObituaryPage $obituary)
+    {
+        $obituary->delete();
+
+        return redirect()->route('graveyard.obituaries.index')
+            ->with('success', 'Obituary page deleted successfully!');
+    }
+
+    public function condolences(Request $request)
+    {
+        // Check policy authorization for managing condolences
+        $this->authorize('manageCondolences', ObituaryPage::class);
+
+        $condolences = ObituaryCondolence::with('obituaryPage')
+            ->when($request->status, function ($query, $status) {
+                if ($status === 'pending') {
+                    $query->where('is_approved', false);
+                } elseif ($status === 'approved') {
+                    $query->where('is_approved', true);
+                }
+            })
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return Inertia::render('PagesGraveyard/Obituaries/Condolences', [
+            'condolences' => $condolences,
+            'filters' => $request->only(['status']),
+        ]);
+    }
+
+    public function approveCondolence(ObituaryCondolence $condolence)
+    {
+        // Check policy authorization for approving condolences
+        $this->authorize('approveCondolences', ObituaryPage::class);
+
+        $condolence->approve();
+
+        return back()->with('success', 'Condolence approved successfully!');
+    }
+
+    public function rejectCondolence(ObituaryCondolence $condolence)
+    {
+        // Check policy authorization for approving condolences (same permission for reject)
+        $this->authorize('approveCondolences', ObituaryPage::class);
+
+        $condolence->reject();
+
+        return back()->with('success', 'Condolence rejected successfully!');
+    }
+
+    public function generateCustomQr(Request $request, ObituaryPage $obituary)
+    {
+        // Check policy authorization for generating QR codes
+        $this->authorize('generateQrCode', $obituary);
+
+        $validated = $request->validate([
+            'size' => 'nullable|integer|min:100|max:1000',
+            'margin' => 'nullable|integer|min:0|max:10',
+            'color' => 'nullable|array',
+            'color.r' => 'required_with:color|integer|min:0|max:255',
+            'color.g' => 'required_with:color|integer|min:0|max:255',
+            'color.b' => 'required_with:color|integer|min:0|max:255',
+        ]);
+
+        $qrCodeUrl = $this->obituaryService->createCustomQrCode($obituary, $validated);
+
+        return response()->json(['qr_code_url' => $qrCodeUrl]);
+    }
+
+    public function processPayment(Request $request, ObituaryPage $obituary)
+    {
+        // Check policy authorization for processing payments
+        $this->authorize('processPayments', ObituaryPage::class);
+
+        $validated = $request->validate([
+            'payment_method_id' => 'required|exists:payment_methods,id',
+            'amount' => 'required|numeric|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        // Find the pending payment record
+        $payment = \Modules\Graveyard\Models\ObituaryPayment::where('obituary_page_id', $obituary->id)
+            ->where('payment_status', 'pending')
+            ->first();
+
+        if (!$payment) {
+            return back()->with('error', 'No pending payment found for this obituary.');
+        }
+
+        // Get payment method name
+        $paymentMethod = PaymentMethod::find($validated['payment_method_id']);
+
+        // Update payment record
+        $payment->update([
+            'payment_status' => 'completed',
+            'payment_method_id' => $validated['payment_method_id'],
+            'payment_method' => $paymentMethod->name, // Keep the string field for compatibility
+            'paid_amount' => $validated['amount'],
+            'payment_date' => now(),
+            'notes' => $validated['notes'],
+            'updated_by' => Auth::id(),
+        ]);
+
+        // Activate the obituary page
+        $obituary->update(['is_active' => true]);
+
+        return back()->with('success', 'Payment completed successfully! The obituary page is now active.');
+    }
+}

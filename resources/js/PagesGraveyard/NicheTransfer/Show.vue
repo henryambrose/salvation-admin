@@ -138,66 +138,6 @@ const canMakePayment = () => {
 //   return ['pending', 'approved'].includes(props.transfer.status);
 // };
 
-// const approveTransfer = () => {
-//   if (adminNotes.value.trim().length === 0) return;
-
-//   isProcessing.value = true;
-//   router.post(
-//     route('graveyard.niche-transfers.approve', props.transfer.id),
-//     {
-//       admin_notes: adminNotes.value,
-//     },
-//     {
-//       onFinish: () => {
-//         isProcessing.value = false;
-//         showApproveDialog.value = false;
-//         adminNotes.value = '';
-//       },
-//     },
-//   );
-// };
-
-// const rejectTransfer = () => {
-//   if (rejectionReason.value.trim().length === 0) return;
-
-//   isProcessing.value = true;
-//   router.post(
-//     route('graveyard.niche-transfers.reject', props.transfer.id),
-//     {
-//       rejection_reason: rejectionReason.value,
-//     },
-//     {
-//       onFinish: () => {
-//         isProcessing.value = false;
-//         showRejectDialog.value = false;
-//         rejectionReason.value = '';
-//       },
-//     },
-//   );
-// };
-
-// const completeTransfer = () => {
-//   router.post(route('graveyard.niche-transfers.complete', props.transfer.id));
-// };
-
-// const cancelTransfer = () => {
-//   if (cancellationReason.value.trim().length === 0) return;
-
-//   isProcessing.value = true;
-//   router.post(
-//     route('graveyard.niche-transfers.cancel', props.transfer.id),
-//     {
-//       cancellation_reason: cancellationReason.value,
-//     },
-//     {
-//       onFinish: () => {
-//         isProcessing.value = false;
-//         showCancelDialog.value = false;
-//         cancellationReason.value = '';
-//       },
-//     },
-//   );
-// };
 </script>
 
 <template>

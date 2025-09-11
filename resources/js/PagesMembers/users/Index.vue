@@ -231,13 +231,9 @@ function assignRoles() {
   roleForm.email = selectedUser.value.email;
   roleForm.roles = [selectedRoles.value]; // Wrap single role in array for backend compatibility
   
-  // Debug logging
-  console.log('Assigning role for user:', selectedUser.value.name, 'Role:', selectedRoles.value);
-  console.log('Form data being sent:', roleForm.data());
   
   // Add a fallback to close modal after a timeout in case the request hangs
   const modalTimeout = setTimeout(() => {
-    console.log('Modal close timeout triggered');
     showRoleModal.value = false;
     selectedUser.value = null;
     selectedRoles.value = 0;
@@ -245,7 +241,6 @@ function assignRoles() {
   
   roleForm.put(route('users.update', selectedUser.value.id), {
     onSuccess: (response) => {
-      console.log('Role assignment successful:', response);
       clearTimeout(modalTimeout);
       // Close the modal
       showRoleModal.value = false;

@@ -273,11 +273,16 @@ class TemporaryGraveBookingController extends Controller
             'creator',
             'updater',
             'nicheTransfers',
-            'payments'
+            'payments',
+            'obituaryPage'
         ]);
 
+        // Check if obituary page can be created
+        $canCreateObituary = $temporaryGraveBooking->status === 'confirmed' && !$temporaryGraveBooking->hasObituaryPage();
+
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Show', [
-            'booking' => $temporaryGraveBooking
+            'booking' => $temporaryGraveBooking,
+            'canCreateObituary' => $canCreateObituary
         ]);
     }
 
@@ -292,7 +297,20 @@ class TemporaryGraveBookingController extends Controller
 
         $temporaryGraveBooking->update(['status' => 'confirmed']);
 
-        return back()->with('success', 'Booking confirmed successfully.');
+        // Check if we should offer obituary page creation
+        $offerObituary = !$temporaryGraveBooking->hasObituaryPage();
+
+        $message = 'Booking confirmed successfully.';
+        if ($offerObituary) {
+            $message .= ' Would you like to create an obituary page for this booking?';
+        }
+
+        return back()->with([
+            'success' => $message,
+            'offer_obituary' => $offerObituary,
+            'booking_id' => $temporaryGraveBooking->id,
+            'booking_type' => 'temporary'
+        ]);
     }
 
     /**

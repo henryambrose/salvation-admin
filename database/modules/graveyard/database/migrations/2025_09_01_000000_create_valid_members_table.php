@@ -60,6 +60,8 @@ return new class  extends Migration
             // Index for duplicate prevention queries
             $table->index(['member_id', 'deleted_at']);
             $table->index(['aadhar_no', 'deleted_at']);
+            $table->index('member_id');
+            $table->index(['first_name', 'last_name']);
         });
 
         // Constraints to ensure exactly one grave type is selected

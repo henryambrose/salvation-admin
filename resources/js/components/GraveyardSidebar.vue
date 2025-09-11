@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, BookOpen, Box, Clock, CreditCard, Cross, Home, Settings, UserCheck, Tags } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Box, Clock, CreditCard, Cross, FileText, Home, Settings, Tags, UserCheck } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -47,6 +47,13 @@ const graveyardNavigationGroups = computed(() => [
     items: [{ title: 'All Payments', href: '/graveyard/payments', icon: CreditCard, show: can('read-payment') || true }],
   },
   {
+    label: 'Obituary Management',
+    items: [
+      { title: 'All Obituaries', href: '/graveyard/obituaries', icon: FileText, show: true },
+      { title: 'Condolences', href: '/graveyard/obituaries/condolences/manage', icon: BookOpen, show: true },
+    ],
+  },
+  {
     label: 'Administration',
     items: [
       { title: 'Permanent Graves', href: '/graveyard/permanent-graves', icon: Cross, show: can('read-permanent-grave') || true },
@@ -76,7 +83,7 @@ const filteredGraveyardNavigationGroups = computed(() =>
 watch(
   () => page.url,
   (newUrl) => {
-    // console.log('🔄 GraveyardSidebar - Route changed to:', newUrl);
+    // Route change handler - currently no action needed
   },
   { immediate: true },
 );
@@ -94,11 +101,6 @@ watch(
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-
-      <!-- App Switcher on the right side -->
-      <!-- <div class="ml-auto">
-        <AppSwitcher />
-      </div> -->
     </SidebarHeader>
 
     <SidebarContent>

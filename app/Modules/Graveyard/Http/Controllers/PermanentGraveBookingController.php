@@ -79,7 +79,8 @@ class PermanentGraveBookingController extends Controller
         $query = PermanentGrave::with(['validMembers']);
 
         $query->where('owner_name', 'like', '%' . $request->search_term . '%')
-            ->orWhere('grave_no', 'like', '%' . $request->search_term . '%');
+            ->orWhere('oldno', 'like', '%' . $request->search_term . '%')
+            ->orWhere('contact_no', 'like', '%' . $request->search_term . '%');
 
         Log::info('Query Built: ' . $query->toSql());
         $graves = $query->get()->map(function (PermanentGrave $grave) {
@@ -240,11 +241,16 @@ class PermanentGraveBookingController extends Controller
             'validMember.member',
             'creator',
             'updater',
-            'payments'
+            'payments',
+            'obituaryPage'
         ]);
 
+        // Check if obituary page can be created
+        $canCreateObituary = $permanentGraveBooking->status === 'confirmed' && !$permanentGraveBooking->hasObituaryPage();
+
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Show', [
-            'booking' => $permanentGraveBooking
+            'booking' => $permanentGraveBooking,
+            'canCreateObituary' => $canCreateObituary
         ]);
     }
 

@@ -103,7 +103,7 @@ async function assignRole(userId: number, roleId: number) {
   // Prevent retrying failed requests
   const requestKey = `assign-role-${userId}-${roleId}`;
   if (isRequestFailed(requestKey)) {
-    console.log('Skipping failed request to prevent continuous errors');
+    // Skip request to prevent continuous errors
     return;
   }
   

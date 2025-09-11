@@ -10,17 +10,10 @@
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
-
-      <!-- App Switcher on the right side -->
-      <!-- <div class="ml-auto">
-        <AppSwitcher />
-      </div> -->
     </SidebarHeader>
-
     <SidebarContent>
       <NavMainGrouped :groups="filteredFundNavigationGroups" />
     </SidebarContent>
-
     <SidebarFooter>
       <NavUser />
     </SidebarFooter>
@@ -32,20 +25,9 @@ import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
-import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { 
-  Home, 
-  IndianRupee, 
-  BarChart3, 
-  Settings, 
-  FolderOpen, 
-  FileText,
-  Crown, 
-  Bot,
-  Clock
-} from 'lucide-vue-next';
+import { BarChart3, Clock, FileText, FolderOpen, Home, IndianRupee, Settings } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -81,25 +63,26 @@ const fundNavigationGroups = computed(() => [
         icon: FileText,
         show: can('read-mass-intentions') || true, // Default to true for now
       },
-
-    ]
+    ],
   },
   {
     label: 'Reports & Analytics',
     items: [
       {
         title: 'Financial Reports',
-        href: '/fund/reports/financial',
+        // href: '/fund/reports/financial',
+        href: '#',
         icon: BarChart3,
         show: can('read-financial-reports') || true,
       },
       {
         title: 'Contribution History',
-        href: '/fund/reports/contributions',
+        // href: '/fund/reports/contributions',
+        href: '#',
         icon: FileText,
         show: can('read-contribution-reports') || true,
       },
-    ]
+    ],
   },
   {
     label: 'Administration',
@@ -134,19 +117,25 @@ const fundNavigationGroups = computed(() => [
         icon: Settings,
         show: true,
       },
-    ]
-  }
+    ],
+  },
 ]);
 
-const filteredFundNavigationGroups = computed(() => 
-  fundNavigationGroups.value.map(group => ({
-    ...group,
-    items: group.items.filter(item => item.show)
-  })).filter(group => group.items.length > 0)
+const filteredFundNavigationGroups = computed(() =>
+  fundNavigationGroups.value
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => item.show),
+    }))
+    .filter((group) => group.items.length > 0),
 );
 
 // Watch for route changes
-watch(() => page.url, (newUrl) => {
-  // console.log('🔄 FundSidebar - Route changed to:', newUrl);
-}, { immediate: true });
+watch(
+  () => page.url,
+  (newUrl) => {
+    // Route change handler - currently no action needed
+  },
+  { immediate: true },
+);
 </script>

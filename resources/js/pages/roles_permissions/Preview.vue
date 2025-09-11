@@ -71,7 +71,6 @@ function getCategoryName(category: any): string {
 
 // Helper function to get unique models for a category
 function getUniqueModelsForCategory(categoryName: string): string[] {
-  console.log('Category:', categoryName);
   
   if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
     return [];
@@ -105,7 +104,6 @@ function getUniqueModelsForCategory(categoryName: string): string[] {
   });
   
   const result = Array.from(models).sort();
-  console.log('Extracted models:', result);
   return result;
 }
 

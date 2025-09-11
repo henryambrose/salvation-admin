@@ -379,7 +379,6 @@ const fetchFamilyDetails = async (familyNo: string) => {
     
     if (response.ok) {
       const familyDetails = await response.json();
-      console.log('familyDetails', familyDetails);
       // Store the cluster ID before setting community (which triggers the watcher)
       const clusterId = familyDetails.community_cluster_id?.toString() || '';
       
@@ -410,7 +409,6 @@ const fetchFamilyDetails = async (familyNo: string) => {
 // Test authentication by trying to access a simple member route
 const testAuthentication = async () => {
   try {
-    console.log('Testing authentication...');
     const response = await fetch('/member/index', {
       headers: {
         'Accept': 'application/json',
@@ -420,7 +418,6 @@ const testAuthentication = async () => {
       credentials: 'same-origin'
     });
     
-    console.log('Auth test response status:', response.status);
     return response.ok;
   } catch (error) {
     console.error('Auth test error:', error);
@@ -431,7 +428,6 @@ const testAuthentication = async () => {
 // Fetch next available numbers
 const fetchNextNumbers = async () => {
   try {
-    console.log('Fetching next available numbers...');
     
     // Check if user is authenticated
     if (!document.querySelector('meta[name="csrf-token"]')) {
@@ -459,12 +455,9 @@ const fetchNextNumbers = async () => {
       credentials: 'same-origin'
     });
     
-    console.log('Response status:', response.status);
-    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
     
     if (response.ok) {
       const data = await response.json();
-      console.log('Response data:', data);
       previewFamilyNo.value = data.next_family_no;
       previewMemberNo.value = data.next_member_no;
     } else if (response.status === 401) {
@@ -518,7 +511,6 @@ const performFamilySearch = async () => {
     
     if (response.ok) {
       const data = await response.json();
-      console.log('familySearchResults', data);
       if (Array.isArray(data)) {
         familySearchResults.value = data.map(item => ({
           family_no: item.family_no || '',

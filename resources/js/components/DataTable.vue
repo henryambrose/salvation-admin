@@ -250,10 +250,6 @@ const sortDirection = ref(props.filters.direction || 'asc');
 const currentPage = ref(1);
 const perPage = ref(props.filters.perPage || 10);
 
-// const search = ref(props.filters.search || '');
-// const sort = ref(props.filters.sort || '');
-// const direction = ref(props.filters.direction || 'asc');
-// const perPage = ref(props.filters.perPage || 10);
 
 // Sample data for demonstration
 const sampleData = ref([

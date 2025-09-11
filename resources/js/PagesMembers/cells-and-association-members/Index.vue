@@ -190,7 +190,6 @@ function submitEdit() {
     },
     onError: () => {
       // Keep modal open to show errors
-      console.log('Edit form errors:', editForm.errors);
     },
   });
 }
@@ -228,7 +227,6 @@ function submitCreate() {
     },
     onError: () => {
       // Keep modal open to show errors
-      console.log('Create form errors:', createForm.errors);
     },
   });
 }
@@ -263,9 +261,6 @@ function confirmDelete() {
 function restoreItem(id: number) {
   router.post(`/cells-and-association-members/${id}/restore`, {}, {
     preserveScroll: true,
-    // onSuccess: () => {
-    //   fetch();
-    // },
     only: partialOnly,
     onSuccess: () => {
       isArchived.value = false;

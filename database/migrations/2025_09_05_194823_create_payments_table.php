@@ -17,7 +17,6 @@ return new class extends Migration
             // Polymorphic relationship to handle all booking types
             $table->string('payable_type'); // 'PermanentGraveBooking', 'TemporaryGraveBooking', 'NicheBooking'
             $table->unsignedBigInteger('payable_id');
-            $table->index(['payable_type', 'payable_id']);
 
             // Payment amounts
             $table->decimal('total_amount', 10, 2)->default(0);
@@ -60,6 +59,8 @@ return new class extends Migration
             $table->index('payment_status');
             $table->index('payment_date');
             $table->index('created_at');
+            $table->index('payment_reference');
+            $table->index(['payable_type', 'payable_id']);
         });
     }
 

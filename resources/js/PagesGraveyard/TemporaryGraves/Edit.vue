@@ -303,7 +303,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-console.log('Props:', props.temporaryGrave);
 const submitting = ref(false);
 
 // Member search state

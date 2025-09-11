@@ -119,7 +119,7 @@ const columns: Column[] = [
   { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'member_no', label: 'Member No', sortable: true },
   { key: 'contact_no_1', label: 'Contact No 1', sortable: true },
-  { key: 'contact_no_2', label: 'Contact No 2', sortable: true },
+  { key: 'death_date', label: 'Death Date', sortable: true },
   { key: 'community_cluster_id', label: 'Cluster', sortable: true },
   { key: 'community_id', label: 'Community Name', sortable: true },
   { key: 'age', label: 'Age', sortable: false },
@@ -748,7 +748,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   </td>
                   <!-- Main table data -->
                   <td v-for="col in columns" :key="col.key" class="overflow-hidden p-2 whitespace-nowrap">
-                    <template v-if="['created_at', 'updated_at', 'date_of_birth'].includes(col.key)">
+                    <template v-if="['created_at', 'updated_at', 'date_of_birth', 'death_date'].includes(col.key)">
                       {{ formatDate(member[col.key]) }}
                     </template>
                     <template v-else-if="col.key === 'community_cluster_id'">
