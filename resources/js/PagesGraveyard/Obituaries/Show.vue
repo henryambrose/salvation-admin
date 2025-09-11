@@ -436,7 +436,7 @@ const paymentStatusColors = {
                 <div class="p-3 bg-gray-50 rounded">
                   <Label class="text-sm font-medium">Public URL:</Label>
                   <div class="flex items-center space-x-2 mt-1">
-                    <Input :value="publicUrl" readonly class="text-xs" />
+                    <Input :value="publicUrl" readonly class="text-sm text-gray-800 bg-white" />
                     <Button size="sm" variant="outline" @click="copyPublicLink">
                       <Copy class="h-3 w-3" />
                     </Button>

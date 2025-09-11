@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, FileImage, Music, Palette, Upload } from 'lucide-vue-next';
+import { ArrowLeft, FileImage, Music, Palette, Upload, X } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
 interface ValidMember {
@@ -114,18 +114,82 @@ const profileImageRef = ref<HTMLInputElement>();
 const galleryImagesRef = ref<HTMLInputElement>();
 const audioMessageRef = ref<HTMLInputElement>();
 
+// Image preview states
+const profileImagePreview = ref<string | null>(null);
+const galleryPreviews = ref<string[]>([]);
+
+// Enhanced file handlers with preview and validation
 const handleProfileImageSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
-    form.profile_image = target.files[0];
+    const file = target.files[0];
+    if (validateImageFile(file)) {
+      form.profile_image = file;
+      generateImagePreview(file, (preview) => {
+        profileImagePreview.value = preview;
+      });
+    }
+  }
+};
+
+const handleProfileImageDrop = (event: DragEvent) => {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (files && files[0]) {
+    const file = files[0];
+    if (validateImageFile(file)) {
+      form.profile_image = file;
+      generateImagePreview(file, (preview) => {
+        profileImagePreview.value = preview;
+      });
+    }
+  }
+};
+
+const clearProfileImage = () => {
+  form.profile_image = null;
+  profileImagePreview.value = null;
+  if (profileImageRef.value) {
+    profileImageRef.value.value = '';
   }
 };
 
 const handleGalleryImagesSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files) {
-    form.gallery_images = Array.from(target.files);
+    const files = Array.from(target.files);
+    const validFiles = files.filter(file => validateImageFile(file));
+    form.gallery_images = [...form.gallery_images, ...validFiles];
+    
+    // Generate previews for new files
+    validFiles.forEach(file => {
+      generateImagePreview(file, (preview) => {
+        galleryPreviews.value.push(preview);
+      });
+    });
   }
+};
+
+const handleGalleryImagesDrop = (event: DragEvent) => {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (files) {
+    const filesArray = Array.from(files);
+    const validFiles = filesArray.filter(file => validateImageFile(file));
+    form.gallery_images = [...form.gallery_images, ...validFiles];
+    
+    // Generate previews for new files
+    validFiles.forEach(file => {
+      generateImagePreview(file, (preview) => {
+        galleryPreviews.value.push(preview);
+      });
+    });
+  }
+};
+
+const removeGalleryImage = (index: number) => {
+  form.gallery_images.splice(index, 1);
+  galleryPreviews.value.splice(index, 1);
 };
 
 const handleAudioMessageSelect = (event: Event) => {
@@ -133,6 +197,42 @@ const handleAudioMessageSelect = (event: Event) => {
   if (target.files && target.files[0]) {
     form.audio_message = target.files[0];
   }
+};
+
+// Utility functions
+const validateImageFile = (file: File): boolean => {
+  const maxSize = 2 * 1024 * 1024; // 2MB
+  const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+  
+  if (!allowedTypes.includes(file.type)) {
+    alert('Please select a valid image file (JPG, PNG, or GIF)');
+    return false;
+  }
+  
+  if (file.size > maxSize) {
+    alert('File size must be less than 2MB');
+    return false;
+  }
+  
+  return true;
+};
+
+const generateImagePreview = (file: File, callback: (preview: string) => void) => {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    if (e.target?.result) {
+      callback(e.target.result as string);
+    }
+  };
+  reader.readAsDataURL(file);
+};
+
+const formatFileSize = (bytes: number): string => {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
 const submit = () => {
@@ -337,59 +437,138 @@ const goBack = () => {
                   Media & Photos
                 </CardTitle>
               </CardHeader>
-              <CardContent class="space-y-4">
-                <!-- Profile Image -->
+              <CardContent class="space-y-6">
+                <!-- Profile Image Section -->
                 <div>
-                  <Label>Profile Photo</Label>
-                  <div class="mt-1">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      @click="profileImageRef?.click()"
-                      class="w-full justify-start"
-                    >
-                      <Upload class="mr-2 h-4 w-4" />
-                      {{ form.profile_image ? form.profile_image.name : 'Choose profile photo' }}
-                    </Button>
-                    <input
-                      ref="profileImageRef"
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleProfileImageSelect"
-                    />
+                  <Label class="text-base font-semibold">Profile Photo</Label>
+                  <p class="text-sm text-gray-600 mb-3">Main photo for the memorial page</p>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Image Preview -->
+                    <div>
+                      <div class="aspect-square bg-gray-50 rounded-lg overflow-hidden border-2 border-dashed border-gray-200">
+                        <div v-if="profileImagePreview" class="relative h-full">
+                          <img 
+                            :src="profileImagePreview"
+                            alt="Profile preview"
+                            class="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            @click="clearProfileImage"
+                            class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 shadow-md hover:bg-red-700"
+                          >
+                            <X class="w-3 h-3" />
+                          </button>
+                        </div>
+                        <div 
+                          v-else
+                          class="h-full flex flex-col items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors"
+                          @drop="handleProfileImageDrop"
+                          @dragover.prevent
+                          @dragenter.prevent
+                          @click="profileImageRef?.click()"
+                        >
+                          <Upload class="mx-auto h-6 w-6 text-gray-400 mb-2" />
+                          <p class="text-sm text-gray-600">Click or drag image here</p>
+                          <p class="text-xs text-gray-500 mt-1">Max 2MB • JPG, PNG, GIF</p>
+                        </div>
+                      </div>
+                      <input
+                        ref="profileImageRef"
+                        type="file"
+                        accept="image/*"
+                        class="hidden"
+                        @change="handleProfileImageSelect"
+                      />
+                      
+                      <div v-if="form.profile_image" class="bg-green-50 border border-green-200 rounded-lg p-3 mt-2">
+                        <div class="flex items-center">
+                          <FileImage class="h-4 w-4 text-green-600 mr-2" />
+                          <span class="text-sm text-green-700">{{ form.profile_image.name }}</span>
+                          <span class="text-xs text-green-600 ml-auto">{{ formatFileSize(form.profile_image.size) }}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 <!-- Gallery Images (Premium Only) -->
-                <div v-if="form.service_type === 'premium'">
-                  <Label>Gallery Photos <span class="text-purple-600 text-xs font-medium">(Premium Feature)</span></Label>
-                  <div class="mt-1">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      @click="galleryImagesRef?.click()"
-                      class="w-full justify-start"
-                    >
-                      <Upload class="mr-2 h-4 w-4" />
-                      {{ form.gallery_images.length > 0 ? `${form.gallery_images.length} photos selected` : 'Choose gallery photos' }}
-                    </Button>
-                    <input
-                      ref="galleryImagesRef"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      class="hidden"
-                      @change="handleGalleryImagesSelect"
-                    />
+                <div v-if="form.service_type === 'premium'" class="border-t pt-6">
+                  <Label class="text-base font-semibold flex items-center">
+                    Gallery Photos 
+                    <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Premium Feature</span>
+                  </Label>
+                  <p class="text-sm text-gray-600 mb-4">Additional photos for the memorial gallery</p>
+                  
+                  <!-- Gallery Previews -->
+                  <div v-if="galleryPreviews.length" class="mb-4">
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                      <div 
+                        v-for="(preview, index) in galleryPreviews" 
+                        :key="`gallery-${index}`"
+                        class="relative group aspect-square"
+                      >
+                        <img 
+                          :src="preview"
+                          :alt="`Gallery ${index + 1}`"
+                          class="w-full h-full object-cover rounded-lg border-2 border-purple-300 shadow-sm"
+                        />
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                          <button
+                            type="button"
+                            @click="removeGalleryImage(index)"
+                            class="bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700"
+                          >
+                            <X class="w-4 h-4" />
+                          </button>
+                        </div>
+                        <span class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">New</span>
+                      </div>
+                    </div>
                   </div>
-                  <p class="text-xs text-gray-500 mt-1">Upload multiple photos to create a memorial gallery</p>
+                  
+                  <!-- Upload Area -->
+                  <div 
+                    class="border-2 border-dashed border-purple-300 rounded-lg p-8 text-center hover:border-purple-400 hover:bg-purple-50 transition-all cursor-pointer"
+                    @drop="handleGalleryImagesDrop"
+                    @dragover.prevent
+                    @dragenter.prevent
+                    @click="galleryImagesRef?.click()"
+                  >
+                    <Upload class="mx-auto h-8 w-8 text-purple-400 mb-3" />
+                    <p class="text-sm text-gray-600 font-medium">Drop multiple images here or click to browse</p>
+                    <p class="text-xs text-gray-500 mt-2">Max 2MB each • JPG, PNG, GIF • Multiple selection allowed</p>
+                  </div>
+                  <input
+                    ref="galleryImagesRef"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    class="hidden"
+                    @change="handleGalleryImagesSelect"
+                  />
+                  <div v-if="form.gallery_images.length" class="bg-purple-50 border border-purple-200 rounded-lg p-4 mt-3">
+                    <p class="text-sm font-medium text-purple-800 mb-2">{{ form.gallery_images.length }} photos selected:</p>
+                    <div class="space-y-1">
+                      <div v-for="(file, index) in form.gallery_images" :key="index" class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                          <FileImage class="h-3 w-3 text-purple-600 mr-2" />
+                          <span class="text-purple-700">{{ file.name }}</span>
+                        </div>
+                        <span class="text-purple-600 text-xs">{{ formatFileSize(file.size) }}</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
-                <!-- Audio Message -->
+                <!-- Audio Message (Premium Only) -->
                 <div v-if="form.service_type === 'premium'">
-                  <Label>Audio Message</Label>
-                  <div class="mt-1">
+                  <Label class="text-base font-semibold flex items-center">
+                    Audio Message
+                    <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Premium Feature</span>
+                  </Label>
+                  <div class="mt-2">
                     <Button 
                       type="button" 
                       variant="outline" 
@@ -408,6 +587,14 @@ const goBack = () => {
                     />
                   </div>
                   <p class="text-xs text-gray-500 mt-1">Supported formats: MP3, WAV, M4A (max 10MB)</p>
+                  
+                  <div v-if="form.audio_message" class="bg-purple-50 border border-purple-200 rounded-lg p-3 mt-2">
+                    <div class="flex items-center">
+                      <Music class="h-4 w-4 text-purple-600 mr-2" />
+                      <span class="text-sm text-purple-700">{{ form.audio_message.name }}</span>
+                      <span class="text-xs text-purple-600 ml-auto">{{ formatFileSize(form.audio_message.size) }}</span>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
