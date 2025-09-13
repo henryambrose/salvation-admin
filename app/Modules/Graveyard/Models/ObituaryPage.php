@@ -23,6 +23,7 @@ class ObituaryPage extends Model
         'favorite_memory',
         'achievements',
         'hobbies_interests',
+        'notes',
         'profile_image',
         'gallery_images',
         'audio_message',

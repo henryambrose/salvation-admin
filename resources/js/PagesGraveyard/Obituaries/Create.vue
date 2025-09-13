@@ -80,6 +80,7 @@ const form = useForm({
   favorite_memory: '',
   achievements: '',
   hobbies_interests: '',
+  notes: '',
   profile_image: null as File | null,
   gallery_images: [] as File[],
   audio_message: null as File | null,
@@ -438,6 +439,20 @@ const goBack = () => {
                     placeholder="Hobbies, interests, and passions..."
                     rows="3"
                   />
+                </div>
+
+                <div>
+                  <Label for="notes">Family Notes & Messages</Label>
+                  <Textarea
+                    id="notes"
+                    v-model="form.notes"
+                    placeholder="Family thoughts, funeral mass details, months mind mass timing and place, condolence messages from family, etc..."
+                    rows="4"
+                    class="resize-y"
+                  />
+                  <p class="text-sm text-muted-foreground mt-1">
+                    Include funeral service details, family messages, special announcements, or any other important information.
+                  </p>
                 </div>
               </CardContent>
             </Card>

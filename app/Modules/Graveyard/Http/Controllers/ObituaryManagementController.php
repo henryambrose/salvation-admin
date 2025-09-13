@@ -16,6 +16,7 @@ use Modules\Fund\Models\PaymentMethod;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 
 class ObituaryManagementController extends Controller
@@ -86,6 +87,7 @@ class ObituaryManagementController extends Controller
             'favorite_memory' => 'nullable|string',
             'achievements' => 'nullable|string',
             'hobbies_interests' => 'nullable|string',
+            'notes' => 'nullable|string',
             'profile_image' => 'nullable|image|max:2048',
             'gallery_images.*' => 'nullable|image|max:2048',
             'audio_message' => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
@@ -205,6 +207,7 @@ class ObituaryManagementController extends Controller
                 'favorite_memory' => 'nullable|string',
                 'achievements' => 'nullable|string',
                 'hobbies_interests' => 'nullable|string',
+                'notes' => 'nullable|string',
                 'profile_image' => 'nullable|image|mimes:jpeg,jpg,png,gif|max:2048',
                 'gallery_images' => 'nullable|array',
                 'gallery_images.*' => 'image|mimes:jpeg,jpg,png,gif|max:2048',
@@ -226,7 +229,7 @@ class ObituaryManagementController extends Controller
             $data = [];
 
             // Text fields
-            $textFields = ['biography', 'favorite_memory', 'achievements', 'hobbies_interests', 'theme_color', 'background_style'];
+            $textFields = ['biography', 'favorite_memory', 'achievements', 'hobbies_interests', 'notes', 'theme_color', 'background_style'];
             foreach ($textFields as $field) {
                 if (isset($validated[$field])) {
                     $data[$field] = $validated[$field];
@@ -344,11 +347,26 @@ class ObituaryManagementController extends Controller
             'color.r' => 'required_with:color|integer|min:0|max:255',
             'color.g' => 'required_with:color|integer|min:0|max:255',
             'color.b' => 'required_with:color|integer|min:0|max:255',
+            'background_color' => 'nullable|array',
+            'background_color.r' => 'required_with:background_color|integer|min:0|max:255',
+            'background_color.g' => 'required_with:background_color|integer|min:0|max:255',
+            'background_color.b' => 'required_with:background_color|integer|min:0|max:255',
         ]);
 
+        // If no custom options provided, generate standard QR code
+        if (empty(array_filter($validated))) {
+            $qrCodeUrl = $this->obituaryService->generateQrCode($obituary);
+            return back()->with('success', 'Standard QR code generated successfully!');
+        }
+
+        // Generate custom QR code with provided options
         $qrCodeUrl = $this->obituaryService->createCustomQrCode($obituary, $validated);
 
-        return response()->json(['qr_code_url' => $qrCodeUrl]);
+        if ($request->expectsJson()) {
+            return response()->json(['qr_code_url' => $qrCodeUrl]);
+        }
+
+        return back()->with('success', 'Custom QR code generated successfully!');
     }
 
     public function processPayment(Request $request, ObituaryPage $obituary)
@@ -389,5 +407,44 @@ class ObituaryManagementController extends Controller
         $obituary->update(['is_active' => true]);
 
         return back()->with('success', 'Payment completed successfully! The obituary page is now active.');
+    }
+
+    public function downloadQrCode(ObituaryPage $obituary)
+    {
+        // Check policy authorization for downloading QR codes
+        $this->authorize('view', $obituary);
+
+        // If no QR code path or file doesn't exist, generate it automatically
+        if (!$obituary->qr_code_path || !Storage::disk('public')->exists($obituary->qr_code_path)) {
+            $this->obituaryService->generateQrCode($obituary);
+            $obituary->refresh(); // Reload to get updated qr_code_path
+        }
+
+        // Final check - if still no QR code, return error
+        if (!$obituary->qr_code_path || !Storage::disk('public')->exists($obituary->qr_code_path)) {
+            return back()->with('error', 'Failed to generate QR code. Please try again.');
+        }
+
+        // Increment QR scan count
+        $obituary->increment('qr_scan_count');
+
+        // Get file path and return file directly to avoid output buffer issues
+        $filePath = Storage::disk('public')->path($obituary->qr_code_path);
+        $fileName = 'obituary-qr-' . $obituary->uuid . '.png';
+
+        // Ensure file exists at the path
+        if (!file_exists($filePath)) {
+            return back()->with('error', 'QR code file not found on disk. Please regenerate the QR code.');
+        }
+
+        // Clean any output buffers to prevent corruption
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Return file directly using Laravel's download helper
+        return response()->download($filePath, $fileName, [
+            'Content-Type' => 'image/png',
+        ]);
     }
 }

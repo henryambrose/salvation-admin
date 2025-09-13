@@ -198,6 +198,13 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
 });
 
+// Admin QR Download Route (with minimal middleware to avoid response conflicts)
+Route::middleware(['auth', 'verified'])->group(function () {
+    // QR code download (admin) - without nocache middleware to avoid response conflicts
+    Route::get('/graveyard/obituaries/{obituary}/qr-download', [ObituaryManagementController::class, 'downloadQrCode'])->name('graveyard.obituaries.qr.download');
+});
+
+
 // Public Obituary Routes (no auth required) - outside the auth middleware
 Route::prefix('obituary')->name('obituary.')->group(function () {
     // Public obituary page view

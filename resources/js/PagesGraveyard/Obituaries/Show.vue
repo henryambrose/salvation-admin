@@ -5,10 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Copy, CreditCard, Download, Edit, ExternalLink, Eye, QrCode, Share2, Users } from 'lucide-vue-next';
+import { ArrowLeft, Copy, CreditCard, Download, Edit, ExternalLink, Eye, QrCode, Share2, Users, RefreshCw, Settings } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 type PaymentStatus = 'pending' | 'completed' | 'failed';
@@ -27,6 +26,7 @@ interface ObituaryPage {
   favorite_memory?: string;
   achievements?: string;
   hobbies_interests?: string;
+  notes?: string;
   theme_color?: string;
   background_style?: string;
   allow_condolences: boolean;
@@ -115,6 +115,24 @@ const paymentForm = useForm({
 });
 
 const showPaymentDialog = ref(false);
+const showQrDialog = ref(false);
+const isGeneratingQr = ref(false);
+
+// QR generation form
+const qrForm = useForm({
+  size: 300,
+  margin: 2,
+  color: {
+    r: 0,
+    g: 0,
+    b: 0
+  },
+  background_color: {
+    r: 255,
+    g: 255,
+    b: 255
+  }
+});
 
 const processPayment = () => {
   if (pendingPayment.value) {
@@ -137,13 +155,64 @@ const submitPayment = () => {
   });
 };
 
-const copyPublicLink = () => {
-  navigator.clipboard.writeText(publicUrl.value);
-  // Could add toast notification
+const copyPublicLink = async () => {
+  try {
+    await navigator.clipboard.writeText(publicUrl.value);
+    console.log('Link copied to clipboard successfully');
+    // You could add a toast notification here
+  } catch (err) {
+    console.error('Failed to copy link: ', err);
+    // Fallback method for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = publicUrl.value;
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    try {
+      document.execCommand('copy');
+      console.log('Link copied using fallback method');
+    } catch (fallbackErr) {
+      console.error('Fallback copy method failed: ', fallbackErr);
+    }
+    document.body.removeChild(textArea);
+  }
 };
 
 const downloadQRCode = () => {
-  window.open(`/obituary/${props.obituary.uuid}/qr-download`, '_blank');
+  // Create a temporary link element to trigger download
+  const link = document.createElement('a');
+  link.href = `/graveyard/obituaries/${props.obituary.uuid}/qr-download`;
+  link.download = `obituary-qr-${props.obituary.uuid}.png`;
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+const generateStandardQr = () => {
+  isGeneratingQr.value = true;
+  
+  // Use the service class to regenerate the QR code
+  router.post(`/graveyard/obituaries/${props.obituary.uuid}/generate-qr`, {}, {
+    onSuccess: () => {
+      isGeneratingQr.value = false;
+      // Refresh the page to show updated QR
+      router.reload();
+    },
+    onError: () => {
+      isGeneratingQr.value = false;
+    }
+  });
+};
+
+const generateCustomQr = () => {
+  qrForm.post(`/graveyard/obituaries/${props.obituary.uuid}/generate-qr`, {
+    onSuccess: () => {
+      showQrDialog.value = false;
+      qrForm.reset();
+      router.reload();
+    }
+  });
 };
 
 const viewPublicPage = () => {
@@ -307,6 +376,15 @@ const paymentStatusColors = {
               </CardContent>
             </Card>
 
+            <Card v-if="obituary.notes">
+              <CardHeader>
+                <CardTitle>Family Notes & Messages</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p class="text-gray-700 whitespace-pre-line">{{ obituary.notes }}</p>
+              </CardContent>
+            </Card>
+
             <!-- Gallery Images (Premium Feature) -->
             <Card v-if="obituary.gallery_images && obituary.gallery_images.length > 0">
               <CardHeader>
@@ -374,9 +452,19 @@ const paymentStatusColors = {
                   Copy Share Link
                 </Button>
                 
+                <Button @click="generateStandardQr" class="w-full" variant="outline" :disabled="isGeneratingQr">
+                  <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': isGeneratingQr }" />
+                  {{ isGeneratingQr ? 'Generating...' : 'Generate QR Code' }}
+                </Button>
+
                 <Button @click="downloadQRCode" class="w-full" variant="outline">
                   <QrCode class="mr-2 h-4 w-4" />
                   Download QR Code
+                </Button>
+
+                <Button @click="showQrDialog = true" class="w-full" variant="outline">
+                  <Settings class="mr-2 h-4 w-4" />
+                  Custom QR Code
                 </Button>
                 
                 <Button v-if="canEdit" as-child class="w-full" variant="outline">
@@ -436,7 +524,11 @@ const paymentStatusColors = {
                 <div class="p-3 bg-gray-50 rounded">
                   <Label class="text-sm font-medium">Public URL:</Label>
                   <div class="flex items-center space-x-2 mt-1">
-                    <Input :value="publicUrl" readonly class="text-sm text-gray-800 bg-white" />
+                    <input 
+                      :value="publicUrl" 
+                      readonly 
+                      class="w-full px-3 py-2 text-sm text-gray-900 bg-white font-mono border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                    />
                     <Button size="sm" variant="outline" @click="copyPublicLink">
                       <Copy class="h-3 w-3" />
                     </Button>
@@ -465,20 +557,21 @@ const paymentStatusColors = {
               
               <div>
                 <Label>Payment Method</Label>
-                <Select v-model="paymentForm.payment_method_id">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payment method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem 
-                      v-for="method in paymentMethods" 
-                      :key="method.id" 
-                      :value="String(method.id)"
-                    >
-                      {{ method.name }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                <select 
+                  v-model="paymentForm.payment_method_id"
+                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  required
+                >
+                  <option value="">Select payment method</option>
+                  <option 
+                    v-for="method in paymentMethods" 
+                    :key="method.id" 
+                    :value="String(method.id)"
+                  >
+                    {{ method.name }}
+                    <span v-if="method.description"> - {{ method.description }}</span>
+                  </option>
+                </select>
               </div>
               
               <div>
@@ -492,6 +585,164 @@ const paymentStatusColors = {
                 </Button>
                 <Button type="submit" :disabled="paymentForm.processing">
                   {{ paymentForm.processing ? 'Processing...' : 'Complete Payment' }}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <!-- Custom QR Generation Dialog -->
+        <Dialog v-model:open="showQrDialog">
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Generate Custom QR Code</DialogTitle>
+              <DialogDescription>
+                Create a customized QR code for this obituary page
+              </DialogDescription>
+            </DialogHeader>
+            
+            <form @submit.prevent="generateCustomQr" class="space-y-4">
+              <div class="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Size (pixels)</Label>
+                  <input 
+                    v-model.number="qrForm.size" 
+                    type="number" 
+                    min="100" 
+                    max="1000" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <div>
+                  <Label>Margin (pixels)</Label>
+                  <input 
+                    v-model.number="qrForm.margin" 
+                    type="number" 
+                    min="0" 
+                    max="10" 
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>QR Code Color</Label>
+                <div class="flex gap-2 mb-3">
+                  <button 
+                    type="button"
+                    @click="qrForm.color = { r: 0, g: 0, b: 0 }"
+                    class="w-6 h-6 bg-black border border-gray-300 rounded"
+                    title="Black"
+                  ></button>
+                  <button 
+                    type="button"
+                    @click="qrForm.color = { r: 255, g: 0, b: 0 }"
+                    class="w-6 h-6 bg-red-500 border border-gray-300 rounded"
+                    title="Red"
+                  ></button>
+                  <button 
+                    type="button"
+                    @click="qrForm.color = { r: 0, g: 0, b: 255 }"
+                    class="w-6 h-6 bg-blue-500 border border-gray-300 rounded"
+                    title="Blue"
+                  ></button>
+                  <button 
+                    type="button"
+                    @click="qrForm.color = { r: 0, g: 128, b: 0 }"
+                    class="w-6 h-6 bg-green-600 border border-gray-300 rounded"
+                    title="Green"
+                  ></button>
+                  <button 
+                    type="button"
+                    @click="qrForm.color = { r: 128, g: 0, b: 128 }"
+                    class="w-6 h-6 bg-purple-600 border border-gray-300 rounded"
+                    title="Purple"
+                  ></button>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                  <div>
+                    <label class="text-xs text-gray-600">Red (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.color.r" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-600">Green (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.color.g" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-600">Blue (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.color.b" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                </div>
+                <div 
+                  class="w-8 h-8 border border-gray-300 rounded mt-2"
+                  :style="{ backgroundColor: `rgb(${qrForm.color.r}, ${qrForm.color.g}, ${qrForm.color.b})` }"
+                ></div>
+              </div>
+
+              <div>
+                <Label>Background Color</Label>
+                <div class="grid grid-cols-3 gap-2 mt-2">
+                  <div>
+                    <label class="text-xs text-gray-600">Red (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.background_color.r" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-600">Green (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.background_color.g" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label class="text-xs text-gray-600">Blue (0-255)</label>
+                    <input 
+                      v-model.number="qrForm.background_color.b" 
+                      type="number" 
+                      min="0" 
+                      max="255" 
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    />
+                  </div>
+                </div>
+                <div 
+                  class="w-8 h-8 border border-gray-300 rounded mt-2"
+                  :style="{ backgroundColor: `rgb(${qrForm.background_color.r}, ${qrForm.background_color.g}, ${qrForm.background_color.b})` }"
+                ></div>
+              </div>
+              
+              <DialogFooter>
+                <Button type="button" variant="outline" @click="showQrDialog = false">
+                  Cancel
+                </Button>
+                <Button type="submit" :disabled="qrForm.processing">
+                  {{ qrForm.processing ? 'Generating...' : 'Generate QR Code' }}
                 </Button>
               </DialogFooter>
             </form>

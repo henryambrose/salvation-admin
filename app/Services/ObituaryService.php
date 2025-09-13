@@ -22,6 +22,7 @@ class ObituaryService
             'favorite_memory' => $data['favorite_memory'] ?? null,
             'achievements' => $data['achievements'] ?? null,
             'hobbies_interests' => $data['hobbies_interests'] ?? null,
+            'notes' => $data['notes'] ?? null,
             'profile_image' => $data['profile_image'] ?? null,
             'gallery_images' => $data['gallery_images'] ?? null,
             'audio_message' => $data['audio_message'] ?? null,
@@ -58,7 +59,7 @@ class ObituaryService
             ->generate($url);
 
         $fileName = "qr-codes/obituary-{$obituary->uuid}.png";
-        Storage::put($fileName, $qrCodeContent);
+        Storage::disk('public')->put($fileName, $qrCodeContent);
 
         $obituary->update(['qr_code_path' => $fileName]);
 
@@ -118,7 +119,10 @@ class ObituaryService
         $qrCodeContent = $qrCode->generate($url);
 
         $fileName = "qr-codes/custom-obituary-{$obituary->uuid}-" . time() . ".png";
-        Storage::put($fileName, $qrCodeContent);
+        Storage::disk('public')->put($fileName, $qrCodeContent);
+
+        // Update the obituary to point to the new custom QR code
+        $obituary->update(['qr_code_path' => $fileName]);
 
         return Storage::url($fileName);
     }
@@ -188,7 +192,7 @@ class ObituaryService
             ->generate($url);
 
         $fileName = "qr-codes/printable-obituary-{$obituary->uuid}.png";
-        Storage::put($fileName, $qrCodeContent);
+        Storage::disk('public')->put($fileName, $qrCodeContent);
 
         return Storage::url($fileName);
     }

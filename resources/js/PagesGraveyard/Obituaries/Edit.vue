@@ -18,6 +18,7 @@ interface ObituaryPage {
   favorite_memory?: string;
   achievements?: string;
   hobbies_interests?: string;
+  notes?: string;
   profile_image?: string;
   gallery_images?: string[];
   audio_message?: string;
@@ -67,6 +68,7 @@ const form = useForm({
   favorite_memory: props.obituary.favorite_memory || '',
   achievements: props.obituary.achievements || '',
   hobbies_interests: props.obituary.hobbies_interests || '',
+  notes: props.obituary.notes || '',
   profile_image: null as File | null,
   gallery_images: [] as File[],
   audio_message: null as File | null,
@@ -215,6 +217,7 @@ const submit = () => {
     favorite_memory: form.favorite_memory,
     achievements: form.achievements,
     hobbies_interests: form.hobbies_interests,
+    notes: form.notes,
     profile_image: form.profile_image ? form.profile_image.name : null,
     gallery_images: form.gallery_images.length,
     audio_message: form.audio_message ? form.audio_message.name : null,
@@ -233,6 +236,7 @@ const submit = () => {
   formData.append('favorite_memory', form.favorite_memory || '');
   formData.append('achievements', form.achievements || '');
   formData.append('hobbies_interests', form.hobbies_interests || '');
+  formData.append('notes', form.notes || '');
   formData.append('theme_color', form.theme_color || '');
   formData.append('background_style', form.background_style || '');
   
@@ -391,6 +395,20 @@ const goBack = () => {
                   rows="3"
                 />
                 <p class="text-xs text-gray-500 mt-1">What they loved to do in their free time</p>
+              </div>
+
+              <div>
+                <Label for="notes">Family Notes & Messages</Label>
+                <Textarea
+                  id="notes"
+                  v-model="form.notes"
+                  placeholder="Family thoughts, funeral mass details, months mind mass timing and place, condolence messages from family, etc..."
+                  rows="4"
+                  class="resize-y"
+                />
+                <p class="text-xs text-gray-500 mt-1">
+                  Include funeral service details, family messages, special announcements, or any other important information.
+                </p>
               </div>
             </CardContent>
           </Card>

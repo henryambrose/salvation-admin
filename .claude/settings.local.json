@@ -10,7 +10,10 @@
       "Bash(rg:*)",
       "Bash(composer dump-autoload:*)",
       "Bash(composer:*)",
-      "Bash(touch:*)"
+      "Bash(touch:*)",
+      "Bash(php:*)",
+      "Bash(curl:*)",
+      "Bash(xxd:*)"
     ],
     "deny": [],
     "ask": []

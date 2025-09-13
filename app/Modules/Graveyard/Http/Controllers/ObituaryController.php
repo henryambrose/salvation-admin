@@ -240,13 +240,13 @@ class ObituaryController extends Controller
      */
     private function getDeceasedName(ObituaryPage $obituary): string
     {
-        if ($obituary->permanent_grave_booking) {
-            $member = $obituary->permanent_grave_booking->valid_member;
+        if ($obituary->permanentGraveBooking) {
+            $member = $obituary->permanentGraveBooking->validMember;
             return trim($member->first_name . ' ' . $member->last_name);
         }
 
-        if ($obituary->temporary_grave_booking) {
-            $booking = $obituary->temporary_grave_booking;
+        if ($obituary->temporaryGraveBooking) {
+            $booking = $obituary->temporaryGraveBooking;
             return trim($booking->dead_first_name . ' ' . $booking->dead_last_name);
         }
 

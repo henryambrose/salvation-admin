@@ -16,6 +16,7 @@ interface ObituaryPage {
   favorite_memory?: string;
   achievements?: string;
   hobbies_interests?: string;
+  notes?: string;
   theme_color?: string;
   background_style?: string;
   allow_condolences: boolean;
@@ -254,6 +255,14 @@ const shareObituaryPage = () => {
           <h2 class="mb-6 font-serif text-3xl font-bold text-gray-900">Hobbies & Interests</h2>
           <div class="prose prose-lg max-w-none leading-relaxed text-gray-700">
             <p class="whitespace-pre-line">{{ obituary.hobbies_interests }}</p>
+          </div>
+        </section>
+
+        <!-- Family Notes & Messages -->
+        <section v-if="obituary.notes" class="mb-12">
+          <h2 class="mb-6 font-serif text-3xl font-bold text-gray-900">Family Notes & Messages</h2>
+          <div class="prose prose-lg max-w-none leading-relaxed text-gray-700">
+            <p class="whitespace-pre-line">{{ obituary.notes }}</p>
           </div>
         </section>
 
