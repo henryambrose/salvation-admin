@@ -24,6 +24,7 @@ const columns = [
   { key: 'deanery', label: 'Deanery', sortable: true },
   { key: 'name', label: 'Parish Name', sortable: true },
   { key: 'code', label: 'Code', sortable: false },
+  { key: 'town', label: 'Town', sortable: true },
   { key: 'address', label: 'Address', sortable: false },
 ];
 
@@ -42,6 +43,7 @@ const form = useForm({
   name: '',
   deanery: '',
   code: '',
+  town: '',
   address: '',
 });
 
@@ -49,6 +51,7 @@ const editForm = useForm({
   name: '',
   deanery: '',
   code: '',
+  town: '',
   address: '',
 });
 
@@ -139,6 +142,7 @@ function openEditModal(row: any) {
   editForm.name = row.name;
   editForm.deanery = row.deanery;
   editForm.code = row.code;
+  editForm.town = row.town || '';
   editForm.address = row.address;
   showEditModal.value = true;
 }
@@ -470,6 +474,11 @@ watch(
                 <div v-if="form.errors.code" class="mt-1 text-sm text-red-500">{{ form.errors.code }}</div>
               </div>
               <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Town</label>
+                <Input v-model="form.town" type="text" />
+                <div v-if="form.errors.town" class="mt-1 text-sm text-red-500">{{ form.errors.town }}</div>
+              </div>
+              <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Address</label>
                 <Input v-model="form.address" type="text" />
                 <div v-if="form.errors.address" class="mt-1 text-sm text-red-500">{{ form.errors.address }}</div>
@@ -518,6 +527,11 @@ watch(
                 <label class="mb-1 block text-sm font-medium">Code</label>
                 <Input v-model="editForm.code" type="text" />
                 <div v-if="editForm.errors.code" class="mt-1 text-sm text-red-500">{{ editForm.errors.code }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Town</label>
+                <Input v-model="editForm.town" type="text" />
+                <div v-if="editForm.errors.town" class="mt-1 text-sm text-red-500">{{ editForm.errors.town }}</div>
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Address</label>

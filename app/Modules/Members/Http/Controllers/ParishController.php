@@ -37,6 +37,7 @@ class ParishController extends Controller
           COALESCE(deanery, ''),
           COALESCE(name, ''),
           COALESCE(code, ''),
+          COALESCE(town, ''),
           COALESCE(address, '')
           ) LIKE ?",
                 ["%$search%"]
@@ -158,7 +159,7 @@ class ParishController extends Controller
             }
 
             // Validate sort column to prevent SQL injection
-            $allowedSortColumns = ['id', 'name', 'zone.name'];
+            $allowedSortColumns = ['id', 'deanery', 'name', 'town', 'zone.name'];
             $sort = $request->input('sort', 'id');
             $direction = $request->input('direction', 'asc');
 
@@ -184,15 +185,21 @@ class ParishController extends Controller
 
                 fputcsv($out, [
                     'ID',
+                    'Deanery',
                     'Parish Name',
-                    'Zone'
+                    'Code',
+                    'Town',
+                    'Address'
                 ]);
 
                 foreach ($query->cursor() as $item) {
                     fputcsv($out, [
                         $item->id,
+                        $item->deanery ?? '',
                         $item->name ?? '',
-                        $item->zone ? $item->zone->name : '',
+                        $item->code ?? '',
+                        $item->town ?? '',
+                        $item->address ?? '',
                     ]);
                 }
 

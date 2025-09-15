@@ -10,7 +10,7 @@ class Parish extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $fillable = ['deanery', 'name', 'code', 'address'];
+    protected $fillable = ['deanery', 'name', 'code', 'address', 'town'];
 
     protected $casts = [
         'created_at' => 'datetime',

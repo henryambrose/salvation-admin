@@ -476,8 +476,8 @@ class MemberController extends Controller
             'member' => $member,
             'members' => Member::select('id', 'first_name', 'last_name', 'family_no')->with('spouse')->get(), // Only select needed columns
             'communities' => Community::select('id', 'name')->get(), // Only select needed columns
-            'parishes' => Parish::select('id', 'name', 'code')->get()->map(function ($item) {
-                return ['id' => $item->id, 'name' => $item->name, 'code' => $item->code];
+            'parishes' => Parish::select('id', 'name', 'code', 'town')->get()->map(function ($item) {
+                return ['id' => $item->id, 'name' => $item->name, 'code' => $item->code, 'town' => $item->town];
             }),
             'incomeRanges' => $incomeRanges,
             'communityClusters' => CommunityCluster::select('id', 'community_id', 'cluster_id')->with('cluster')->get()->map(function ($item) {

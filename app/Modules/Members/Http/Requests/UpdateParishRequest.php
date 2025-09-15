@@ -25,6 +25,7 @@ class UpdateParishRequest extends FormRequest
             'deanery' => 'required|string|max:255',
             'name' => 'required|string|max:255',
             'code' => 'nullable|string|max:255',
+            'town' => 'nullable|string|max:255',
             'address' => 'nullable|string',
         ];
     }

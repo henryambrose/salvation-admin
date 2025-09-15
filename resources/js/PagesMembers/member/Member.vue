@@ -415,8 +415,6 @@ const form = useForm({
 // Add external family members data
 const externalFamilyMembers = ref<Array<{ id: number; name: string }>>([]);
 
-
-
 // Watch for family_no changes to refetch external family members
 watch(
   () => form.family_no,
@@ -436,7 +434,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 
 watch(
@@ -448,7 +445,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 
 watch(
@@ -460,7 +456,6 @@ watch(
       fetchFamilyMembers();
     }
   },
-  
 );
 
 // Modify the submit function to include debugging:
@@ -876,14 +871,14 @@ const fetchFamilyMembers = async () => {
         },
         credentials: 'same-origin',
       });
-      if(response.ok){
+      if (response.ok) {
         const data = await response.json();
         // Filter members from the same family and exclude current member
         const currentMemberId = member?.id;
 
         familyMembers.value = data.members
           .filter((member: any) => member.id !== currentMemberId && member.source === 'Member')
-          
+
           .map((member: any) => ({
             id: member.id,
             name: member.first_name + ' ' + member.last_name,
@@ -903,37 +898,35 @@ const fetchExternalFamilyMembers = async () => {
   if (form.family_no) {
     try {
       // If we have a family number, fetch external members from the same family
-        const response = await fetch(`/external-member/family-details/${form.family_no}`, {
-          headers: {
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-          },
-          credentials: 'same-origin',
-        });
+      const response = await fetch(`/external-member/family-details/${form.family_no}`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'same-origin',
+      });
 
-        if (response.ok) {
-          const data = await response.json();
-          // Filter only external members from the same family
-          const currentMemberId = member?.id;
+      if (response.ok) {
+        const data = await response.json();
+        // Filter only external members from the same family
+        const currentMemberId = member?.id;
 
-          externalFamilyMembers.value = data.members
+        externalFamilyMembers.value = data.members
           .filter((member: any) => member.id !== currentMemberId && member.source === 'External')
           .map((member: any) => ({
             id: member.id,
             name: member.first_name + ' ' + member.last_name,
           }));
-          
-        }
-    
-      } catch (error) {
-        console.error('Error fetching external family members:', error);
-        externalFamilyMembers.value = [];
       }
-  } else {
-      // If no family number, show empty array
+    } catch (error) {
+      console.error('Error fetching external family members:', error);
       externalFamilyMembers.value = [];
     }
+  } else {
+    // If no family number, show empty array
+    externalFamilyMembers.value = [];
+  }
 };
 // Watch for family_no changes to refetch family members
 watch(
@@ -948,7 +941,7 @@ watch(
 onMounted(() => {
   // Fetch family members since Member is the default
   fetchFamilyMembers();
-  
+
   // Also fetch external members in case they're needed later
   fetchExternalFamilyMembers();
 });
@@ -1250,12 +1243,7 @@ onMounted(() => {
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.spouse_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -1303,12 +1291,7 @@ onMounted(() => {
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.father_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -1356,12 +1339,7 @@ onMounted(() => {
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.mother_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
