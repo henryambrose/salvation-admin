@@ -39,8 +39,18 @@ interface ObituaryPage {
   };
 }
 
+interface BackgroundOption {
+  value: string;
+  label: string;
+  description: string;
+  image?: string;
+  tier: string;
+}
+
 interface Props {
   obituary: ObituaryPage;
+  basicBackgrounds: BackgroundOption[];
+  premiumBackgrounds: BackgroundOption[];
 }
 
 defineOptions({
@@ -88,6 +98,40 @@ const audioMessageRef = ref<HTMLInputElement>();
 const profileImagePreview = ref<string | null>(null);
 const galleryPreviews = ref<string[]>([]);
 
+// Background preview
+const getBackgroundPreview = computed(() => {
+  // Find the selected background configuration
+  const allBackgrounds = [...props.basicBackgrounds, ...props.premiumBackgrounds];
+  const selectedBackground = allBackgrounds.find(bg => bg.value === form.background_style);
+
+  if (selectedBackground?.image) {
+    // Use image-based background
+    return {
+      backgroundImage: `url(${selectedBackground.image})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+      backgroundColor: '#f8f9fa',
+    };
+  } else if (form.background_style === 'gradient') {
+    // Use gradient background
+    return {
+      backgroundImage: `linear-gradient(135deg, ${form.theme_color || '#ffffff'}, #f8f9fa)`,
+    };
+  } else if (form.background_style === 'pattern') {
+    // Use pattern background
+    return {
+      backgroundColor: form.theme_color || '#ffffff',
+      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+    };
+  } else {
+    // Plain background
+    return {
+      backgroundColor: form.theme_color || '#ffffff',
+    };
+  }
+});
+
 // File handlers with preview
 const handleProfileImageSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
@@ -121,6 +165,31 @@ const clearProfileImage = () => {
   profileImagePreview.value = null;
   if (profileImageRef.value) {
     profileImageRef.value.value = '';
+  }
+};
+
+const removeProfileImage = () => {
+  if (confirm('Are you sure you want to remove the profile image?')) {
+    router.delete(`/graveyard/obituaries/${props.obituary.uuid}/profile-image`, {
+      preserveState: false
+    });
+  }
+};
+
+const removeGalleryImage = (imagePath: string) => {
+  if (confirm('Are you sure you want to remove this gallery image?')) {
+    router.delete(`/graveyard/obituaries/${props.obituary.uuid}/gallery-image`, {
+      data: { image_path: imagePath },
+      preserveState: false
+    });
+  }
+};
+
+const removeAudioMessage = () => {
+  if (confirm('Are you sure you want to remove the audio message?')) {
+    router.delete(`/graveyard/obituaries/${props.obituary.uuid}/audio-message`, {
+      preserveState: false
+    });
   }
 };
 
@@ -158,9 +227,10 @@ const handleGalleryImagesDrop = (event: DragEvent) => {
 };
 
 const removeExistingGalleryImage = (index: number) => {
-  // This would need backend implementation to handle removal
-  // For now, just show an alert
-  alert('Removing existing gallery images will be implemented in the backend');
+  const imagePath = props.obituary.gallery_images?.[index];
+  if (imagePath) {
+    removeGalleryImage(imagePath);
+  }
 };
 
 const removeNewGalleryImage = (index: number) => {
@@ -457,15 +527,28 @@ const goBack = () => {
 
                   <!-- Upload Controls -->
                   <div class="space-y-3">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      @click="profileImageRef?.click()"
-                      class="w-full justify-start"
-                    >
-                      <Upload class="mr-2 h-4 w-4" />
-                      {{ form.profile_image ? 'Change Photo' : (obituary.profile_image ? 'Replace Photo' : 'Choose Photo') }}
-                    </Button>
+                    <div class="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        @click="profileImageRef?.click()"
+                        class="flex-1 justify-start"
+                      >
+                        <Upload class="mr-2 h-4 w-4" />
+                        {{ form.profile_image ? 'Change Photo' : (obituary.profile_image ? 'Replace Photo' : 'Choose Photo') }}
+                      </Button>
+
+                      <Button
+                        v-if="obituary.profile_image && !form.profile_image"
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        @click="removeProfileImage"
+                        title="Remove current profile image"
+                      >
+                        <X class="h-4 w-4" />
+                      </Button>
+                    </div>
                     
                     <div 
                       class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
@@ -606,7 +689,19 @@ const goBack = () => {
               <div v-if="obituary.service_type === 'premium'">
                 <!-- Current Audio -->
                 <div v-if="obituary.audio_message">
-                  <Label>Current Audio Message</Label>
+                  <div class="flex justify-between items-center">
+                    <Label>Current Audio Message</Label>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      @click="removeAudioMessage"
+                      title="Remove current audio message"
+                    >
+                      <X class="h-4 w-4 mr-1" />
+                      Remove
+                    </Button>
+                  </div>
                   <div class="mt-2 mb-4">
                     <audio controls class="w-full max-w-md">
                       <source :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`" type="audio/mpeg">
@@ -641,7 +736,63 @@ const goBack = () => {
             </CardContent>
           </Card>
 
-          <!-- Customization Section (Premium only) -->
+          <!-- Basic Background Options (Available for all) -->
+          <Card v-if="obituary.service_type === 'basic'">
+            <CardHeader>
+              <CardTitle class="flex items-center">
+                <Palette class="mr-2 h-5 w-5" />
+                Background Style
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div>
+                <Label for="background_style">Choose Background</Label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div v-for="background in props.basicBackgrounds" :key="background.value"
+                       class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
+                       :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                       @click="form.background_style = background.value">
+                    <div class="flex items-center space-x-3">
+                      <input type="radio"
+                             :value="background.value"
+                             v-model="form.background_style"
+                             class="hidden" />
+                      <div v-if="background.image"
+                           class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                           :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+                      </div>
+                      <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
+                      <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-sm">{{ background.label }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Background Preview -->
+                <div class="mt-3 p-4 rounded-lg border-2 border-dashed border-gray-300 h-20 text-center flex items-center justify-center text-sm text-gray-600" :style="getBackgroundPreview">
+                  Preview: {{ form.background_style || 'plain' }}
+                </div>
+
+                <!-- Upgrade Prompt -->
+                <div class="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                  <div class="flex items-center">
+                    <Palette class="h-5 w-5 text-purple-600 mr-2" />
+                    <div class="flex-1">
+                      <p class="text-sm font-medium text-purple-900">Want more customization options?</p>
+                      <p class="text-xs text-purple-700">Upgrade to Premium for theme colors, gradients, patterns, and more!</p>
+                    </div>
+                    <Button size="sm" variant="outline" class="text-purple-600 border-purple-300 hover:bg-purple-50">
+                      Upgrade
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Premium Customization Section -->
           <Card v-if="obituary.service_type === 'premium'">
             <CardHeader>
               <CardTitle class="flex items-center">
@@ -665,16 +816,34 @@ const goBack = () => {
 
               <div>
                 <Label for="background_style">Background Style</Label>
-                <Select v-model="form.background_style">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choose background style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="plain">Plain</SelectItem>
-                    <SelectItem value="gradient">Gradient</SelectItem>
-                    <SelectItem value="pattern">Pattern</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                  <div v-for="background in props.premiumBackgrounds" :key="background.value"
+                       class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
+                       :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                       @click="form.background_style = background.value">
+                    <div class="flex items-center space-x-3">
+                      <input type="radio"
+                             :value="background.value"
+                             v-model="form.background_style"
+                             class="hidden" />
+                      <div v-if="background.image"
+                           class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                           :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+                      </div>
+                      <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
+                      <div class="flex-1 min-w-0">
+                        <h3 class="font-medium text-sm">{{ background.label }}</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
+                        <span v-if="background.tier === 'premium'" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Premium</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Background Preview -->
+                <div class="mt-3 p-4 rounded-lg border-2 border-dashed border-gray-300 h-20 text-center flex items-center justify-center text-sm text-gray-600" :style="getBackgroundPreview">
+                  Preview: {{ form.background_style || 'plain' }}
+                </div>
               </div>
             </CardContent>
           </Card>

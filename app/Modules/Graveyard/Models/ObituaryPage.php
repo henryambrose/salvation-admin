@@ -33,6 +33,9 @@ class ObituaryPage extends Model
         'allow_memory_sharing',
         'is_public',
         'is_active',
+        'is_published',
+        'published_at',
+        'published_by',
         'service_type',
         'expires_at',
         'view_count',
@@ -46,6 +49,8 @@ class ObituaryPage extends Model
         'allow_memory_sharing' => 'boolean',
         'is_public' => 'boolean',
         'is_active' => 'boolean',
+        'is_published' => 'boolean',
+        'published_at' => 'datetime',
         'expires_at' => 'datetime',
         'view_count' => 'integer',
         'qr_scan_count' => 'integer',
@@ -85,6 +90,16 @@ class ObituaryPage extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(ObituaryPayment::class);
+    }
+
+    public function publishedBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'published_by');
+    }
+
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by');
     }
 
     public function getBookingAttribute()
@@ -177,5 +192,49 @@ class ObituaryPage extends Model
             $q->whereNull('expires_at')
                 ->orWhere('expires_at', '>', now());
         });
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', true);
+    }
+
+    public function scopeUnpublished($query)
+    {
+        return $query->where('is_published', false);
+    }
+
+    public function scopeDraft($query)
+    {
+        return $query->where('is_published', false);
+    }
+
+    // Helper methods for publish/unpublish actions
+    public function publish($userId = null): bool
+    {
+        return $this->update([
+            'is_published' => true,
+            'published_at' => now(),
+            'published_by' => $userId ?: auth()->id(),
+        ]);
+    }
+
+    public function unpublish(): bool
+    {
+        return $this->update([
+            'is_published' => false,
+            'published_at' => null,
+            'published_by' => null,
+        ]);
+    }
+
+    public function isPublished(): bool
+    {
+        return $this->is_published;
+    }
+
+    public function isDraft(): bool
+    {
+        return !$this->is_published;
     }
 }

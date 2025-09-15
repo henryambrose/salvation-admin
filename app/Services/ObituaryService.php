@@ -16,8 +16,10 @@ class ObituaryService
 {
     public function createObituaryFromBooking($booking, array $data = []): ObituaryPage
     {
+        $serviceType = $data['service_type'] ?? 'basic';
+
         $obituaryData = [
-            'service_type' => $data['service_type'] ?? 'basic',
+            'service_type' => $serviceType,
             'biography' => $data['biography'] ?? null,
             'favorite_memory' => $data['favorite_memory'] ?? null,
             'achievements' => $data['achievements'] ?? null,
@@ -31,6 +33,7 @@ class ObituaryService
             'is_public' => $data['is_public'] ?? true,
             'theme_color' => $data['theme_color'] ?? '#000000',
             'background_style' => $data['background_style'] ?? 'plain',
+            'expires_at' => $this->calculateExpirationDate($serviceType),
             'created_by' => Auth::id(),
         ];
 
@@ -46,6 +49,15 @@ class ObituaryService
         $this->generateQrCode($obituary);
 
         return $obituary;
+    }
+
+    /**
+     * Calculate expiration date based on service type
+     */
+    private function calculateExpirationDate(string $serviceType): Carbon
+    {
+        $days = config("obituary.duration.{$serviceType}");
+        return Carbon::now()->addDays($days);
     }
 
     public function generateQrCode(ObituaryPage $obituary): string
@@ -68,12 +80,14 @@ class ObituaryService
 
     public function upgradeToPremiun(ObituaryPage $obituary, float $amount): ObituaryPayment
     {
+        $premiumDays = config('obituary.duration.premium');
+
         $payment = ObituaryPayment::create([
             'obituary_page_id' => $obituary->id,
             'amount' => $amount,
             'service_type' => 'premium',
             'payment_status' => 'pending',
-            'expires_at' => Carbon::now()->addYear(),
+            'expires_at' => Carbon::now()->addDays($premiumDays),
         ]);
 
         return $payment;
@@ -200,17 +214,35 @@ class ObituaryService
     public function cleanupExpiredObitaries(): int
     {
         $expiredCount = 0;
+        $gracePeriodDays = config('obituary.grace_period_days', 30);
+        $graceCutoff = Carbon::now()->subDays($gracePeriodDays);
 
-        $expiredObitaries = ObituaryPage::where('service_type', 'premium')
-            ->where('expires_at', '<', now())
+        // Handle expired obituaries
+        $expiredObitaries = ObituaryPage::where('expires_at', '<', now())
             ->get();
 
         foreach ($expiredObitaries as $obituary) {
-            // Downgrade to basic service
-            $obituary->update([
-                'service_type' => 'basic',
-                'expires_at' => null,
-            ]);
+            // If beyond grace period, deactivate completely
+            if ($obituary->expires_at < $graceCutoff) {
+                $obituary->update([
+                    'is_active' => false,
+                    'is_public' => false,
+                ]);
+            }
+            // Within grace period for premium - downgrade to basic with new expiration
+            elseif ($obituary->service_type === 'premium') {
+                $basicDays = config('obituary.duration.basic');
+                $obituary->update([
+                    'service_type' => 'basic',
+                    'expires_at' => Carbon::now()->addDays($basicDays),
+                ]);
+            }
+            // Basic service expired - deactivate after grace period
+            else {
+                $obituary->update([
+                    'is_active' => false,
+                ]);
+            }
 
             $expiredCount++;
         }

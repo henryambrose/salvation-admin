@@ -42,6 +42,8 @@ interface Member {
   id: number;
   name: string;
   full_name: string;
+  first_name?: string;
+  last_name?: string;
   member_no: string;
   family_no: string;
   community: {
@@ -102,8 +104,8 @@ const form = useForm({
   destination_permanent_grave_id: null as number | null,
   deceased_person_type: '' as '' | 'member' | 'external',
   deceased_member_id: null as number | null,
-  dead_first_name: '' as string | undefined,
-  dead_last_name: '' as string | undefined,
+  dead_first_name: '' as string | null,
+  dead_last_name: '' as string | null,
   date_of_birth: '',
   age: null as number | null,
   months: null as number | null,
@@ -177,6 +179,12 @@ const isPermanentGraveSearchOpen = ref(false);
 // Valid member selection functionality
 const selectedValidMember = ref<ValidMember | null>(null);
 const showValidMemberSelection = computed(() => selectedPermanentGrave.value && selectedPermanentGrave.value.valid_members.length > 0);
+
+// Filter parishes to only show specific ones
+const filteredParishes = computed(() => {
+  const allowedParishIds = [16, 25, 26, 27];
+  return props.parishes.filter(parish => allowedParishIds.includes(parish.id));
+});
 
 // Search members function
 const searchMembers = async () => {
@@ -279,9 +287,9 @@ const selectValidMember = (validMember: ValidMember) => {
     form.dead_first_name = validMember.first_name;
     form.dead_last_name = validMember.last_name;
     form.date_of_birth = validMember.date_of_birth || '';
-    form.age = validMember.age;
-    form.months = validMember.months;
-    form.days = validMember.days;
+    form.age = validMember.age ?? null;
+    form.months = validMember.months ?? null;
+    form.days = validMember.days ?? null;
     form.gender_id = validMember.gender_id?.toString() || '';
     form.nationality = validMember.nationality || 'Indian';
     form.parish_id = validMember.parish_id?.toString() || '16';
@@ -336,8 +344,8 @@ const submit = () => {
 
       // Only include external deceased person fields when person type is external
       if (data.deceased_person_type !== 'external') {
-        transformedData.dead_first_name = undefined;
-        transformedData.dead_last_name = undefined;
+        transformedData.dead_first_name = null;
+        transformedData.dead_last_name = null;
       }
 
       return transformedData;
@@ -555,7 +563,7 @@ onUnmounted(() => {
                     
                     <div class="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
                       <div
-                        v-for="validMember in selectedPermanentGrave.valid_members"
+                        v-for="validMember in selectedPermanentGrave?.valid_members || []"
                         :key="validMember.id"
                         @click="selectValidMember(validMember)"
                         :class="[
@@ -737,7 +745,8 @@ onUnmounted(() => {
                     <Label for="dead_first_name">First Name *</Label>
                     <Input
                       id="dead_first_name"
-                      v-model="form.dead_first_name"
+                      :model-value="form.dead_first_name || ''"
+                      @input="form.dead_first_name = $event.target.value || null"
                       :class="form.errors.dead_first_name && 'border-red-500'"
                       class="mt-1"
                     />
@@ -748,7 +757,13 @@ onUnmounted(() => {
 
                   <div>
                     <Label for="dead_last_name">Last Name *</Label>
-                    <Input id="dead_last_name" v-model="form.dead_last_name" :class="form.errors.dead_last_name && 'border-red-500'" class="mt-1" />
+                    <Input
+                      id="dead_last_name"
+                      :model-value="form.dead_last_name || ''"
+                      @input="form.dead_last_name = $event.target.value || null"
+                      :class="form.errors.dead_last_name && 'border-red-500'"
+                      class="mt-1"
+                    />
                     <div v-if="form.errors.dead_last_name" class="mt-1 text-sm text-red-600">
                       {{ form.errors.dead_last_name }}
                     </div>
@@ -833,7 +848,7 @@ onUnmounted(() => {
                       class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                     >
                       <option value="">Select Parish</option>
-                      <option v-for="parish in parishes" :key="parish.id" :value="parish.id.toString()">
+                      <option v-for="parish in filteredParishes" :key="parish.id" :value="parish.id.toString()">
                         {{ parish.name }}
                       </option>
                     </select>

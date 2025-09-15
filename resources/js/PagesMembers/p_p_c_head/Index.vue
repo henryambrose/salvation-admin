@@ -7,6 +7,8 @@ import {Plus, Download } from 'lucide-vue-next';
 import { nextTick, ref, watch, computed } from 'vue';
 import axios from 'axios';
 import { Checkbox } from '@/components/ui/checkbox';
+import Multiselect from 'vue-multiselect';
+import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const props = defineProps({
   ppcHeads: {
@@ -40,14 +42,14 @@ const highlightedRowId = ref<number|null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
-const editForm = useForm({
+const editForm = useForm<{ id: string | number; member_id: any; community_id: any }>({
   id: '',
-  member_id: '',
-  community_id: '',
+  member_id: null,
+  community_id: null,
 });
-const createForm = useForm({
-  member_id: '',
-  community_id: '',
+const createForm = useForm<{ member_id: any; community_id: any }>({
+  member_id: null,
+  community_id: null,
 });
 
 const search = ref(props.filters?.search || '');
@@ -132,27 +134,30 @@ function fetch(page = 1) {
     );
   
 }
-watch(() => editForm.community_id, async (newVal, oldVal) => {
-  if (newVal) {
-    const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
-    modalMembers.value = data;
-    editForm.member_id = '';
-  } else {
-    modalMembers.value = [];
-    editForm.member_id = '';
-  }
-});
+watch(
+  () => editForm.community_id,
+  async (newVal: any, oldVal) => {
+    if (newVal) {
+      const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
+      modalMembers.value = data;
+      editForm.member_id = null;
+    } else {
+      modalMembers.value = [];
+      editForm.member_id = null;
+    }
+  },
+);
 
 watch(
   () => createForm.community_id,
-  async (newVal) => {
+  async (newVal:any) => {
     if (newVal) {
-      const { data } = await axios.get(`/api/ppc-community/${newVal}/members`);
+      const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
       modalMembers.value = data;
-      createForm.member_id = '';
+      createForm.member_id = null;
     } else {
       modalMembers.value = [];
-      createForm.member_id = '';
+      createForm.member_id = null;
     }
   }
 );
@@ -170,17 +175,18 @@ watch(() => enhancedPPCHeads.value.data, (rows) => {
 
 function openEditModal(row: any) {
   editingPPCHead.value = row;
-  editForm.id = row.id;
-  editForm.community_id = row.community_id;
+  // Set the full community object
+  editForm.community_id = props.communities.find(c => c.id === row.community_id) || null;
   showEditModal.value = true;
   nextTick(async () => {
     if (editForm.community_id) {
-      const { data } = await axios.get(`/api/ppc-community/${editForm.community_id}/members`);
+      const { data } = await axios.get(`/api/ppc-community/${editForm.community_id.id}/members`);
       modalMembers.value = data;
-      editForm.member_id = row.member_id;
+      // Set the full member object
+      editForm.member_id = modalMembers.value.find(m => m.id === row.member_id) || null;
     } else {
       modalMembers.value = [];
-      editForm.member_id = '';
+      editForm.member_id = null;
     }
   });
 }
@@ -188,10 +194,7 @@ function openEditModal(row: any) {
 
 
 function submitEdit() {
-  if (!editForm.member_id) {
-    editForm.errors.member_id = 'Please select a member.';
-    return;
-  }
+  if (!editForm.member_id || !editForm.community_id) return;
   const editedId = editingPPCHead.value?.id;
   editForm.transform(data => ({
     ...data,
@@ -201,14 +204,18 @@ function submitEdit() {
     sort: sort.value,
     direction: direction.value,
     isArchived: isArchived.value ? 'true' : 'false',
+    community_id: editForm.community_id ? editForm.community_id.id : null,
+    member_id: editForm.member_id ? editForm.member_id.id : null,
   }));
-  editForm.put(`/ppc-head/${editForm.id}`, {
+  editForm.put(`/ppc-head/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
       editingPPCHead.value = undefined;
-      highlightedRowId.value = editedId;
-      nextTick(() => scrollToRow(editedId));
+      nextTick(() => {
+        fetch(enhancedPPCHeads.value.current_page);
+        highlightedRowId.value = editedId;
+      });
     },
   });
 }
@@ -224,19 +231,16 @@ function closeCreateModal() {
 }
 
 function submitCreate() {
-  if (!createForm.member_id || !createForm.community_id) return;
-  
   // Check for duplicate community
-  const existingCommunity = enhancedPPCHeads.value.data.some(
-    (head: { community_id: number }) =>
-      head.community_id === Number(createForm.community_id)
+  const existingCommunity = enhancedPPCHeads.value.data.find(
+    (head: any) => head.community_id === createForm.community_id?.id
   );
-  
+
   if (existingCommunity) {
     createForm.setError('community_id', 'This community already has a PPC Head assigned.');
     return;
   }
-  
+
   createForm.transform(data => ({
     ...data,
     perPage: perPage.value,
@@ -245,6 +249,8 @@ function submitCreate() {
     sort: sort.value,
     direction: direction.value,
     isArchived: isArchived.value ? 'true' : 'false',
+    community_id: createForm.community_id ? createForm.community_id.id : null,
+    member_id: createForm.member_id ? createForm.member_id.id : null,
   }));
   createForm.post('/ppc-head', {
     preserveScroll: true,
@@ -475,30 +481,13 @@ function onPageChange(e: Event) {
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit PPC Head</h2>
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
-              <label class="block mb-2 font-medium text-gray-700">Community</label>
-              <select
-                v-model="editForm.community_id"
-                class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="" disabled>Select Community</option>
-                <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
-              <div v-if="editForm.errors.community_id" class="mt-1 text-sm text-red-500">
-                {{ editForm.errors.community_id }}
-              </div>
+              <label class="mb-2 block font-medium text-gray-700">Community</label>
+              <Multiselect v-model="editForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" />
             </div>
             <div class="mb-6">
-              <label class="block mb-2 font-medium text-gray-700">Member</label>
-              <select
-                v-model="editForm.member_id"
-                class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
-              >
-                <option value="" disabled>Select Member</option>
-                <option v-for="m in modalMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
-              </select>
-              <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">
-                Please select a member.
-              </div>
+              <label class="mb-2 block font-medium text-gray-700">Member</label>
+              <Multiselect v-model="editForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!editForm.community_id" />
+              <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
             </div>
             <div class="flex justify-end gap-3">
               <button
@@ -527,20 +516,14 @@ function onPageChange(e: Event) {
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <select v-model.number="createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
-                <option value="" disabled>Select Community</option>
-                <option v-for="c in props.communities" :key="c.id" :value="c.id">{{ c.name }}</option>
-              </select>
-              <div v-if="createForm.errors.community_id" class="mt-1 text-sm text-red-500">
-                {{ createForm.errors.community_id }}
+              <Multiselect v-model="createForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" />
+              <div v-if="createForm.errors.community_id || createForm.errors['community_id']" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.community_id || createForm.errors['community_id'] }}
               </div>
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <select v-model="createForm.member_id" :disabled="!createForm.community_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none">
-                <option value="" disabled>Select Member</option>
-                <option v-for="m in modalMembers" :key="m.id" :value="m.id">{{ m.name }}</option>
-              </select>
+              <Multiselect v-model="createForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!createForm.community_id" />
               <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.member_id }}
               </div>

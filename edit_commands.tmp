@@ -1,0 +1,8 @@
+189a
+                // Clear any output buffers to prevent extra whitespace
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+.
+w
+q

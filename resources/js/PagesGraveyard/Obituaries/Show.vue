@@ -16,6 +16,7 @@ interface ObituaryPage {
   id: number;
   uuid: string;
   service_type: 'basic' | 'premium';
+  expires_at?: string;
   is_public: boolean;
   view_count: number;
   qr_scan_count: number;
@@ -233,6 +234,46 @@ const serviceTypeColors = {
   premium: 'bg-purple-100 text-purple-800',
 };
 
+const expirationInfo = computed(() => {
+  if (!props.obituary.expires_at) return null;
+
+  const expiryDate = new Date(props.obituary.expires_at);
+  const now = new Date();
+  const diffTime = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  let status = 'active';
+  let color = 'bg-green-100 text-green-800';
+  let message = `Expires in ${diffDays} days`;
+
+  if (diffDays < 0) {
+    status = 'expired';
+    color = 'bg-red-100 text-red-800';
+    message = `Expired ${Math.abs(diffDays)} days ago`;
+  } else if (diffDays <= 7) {
+    status = 'expiring';
+    color = 'bg-yellow-100 text-yellow-800';
+    message = `Expires in ${diffDays} day${diffDays === 1 ? '' : 's'}`;
+  }
+
+  return {
+    status,
+    color,
+    message,
+    date: expiryDate.toLocaleDateString(),
+    diffDays
+  };
+});
+
+const extendExpiration = () => {
+  const days = prompt('Extend expiration by how many days?', '30');
+  if (days && !isNaN(parseInt(days))) {
+    router.post(`/graveyard/obituaries/${props.obituary.uuid}/extend-expiration`, {
+      days: parseInt(days)
+    });
+  }
+};
+
 const paymentStatusColors = {
   pending: 'bg-orange-100 text-orange-800',
   completed: 'bg-green-100 text-green-800',
@@ -265,6 +306,9 @@ const paymentStatusColors = {
               </Badge>
               <Badge v-if="isPaymentCompleted" class="bg-green-100 text-green-800">
                 Activated
+              </Badge>
+              <Badge v-if="expirationInfo" :class="expirationInfo.color">
+                {{ expirationInfo.message }}
               </Badge>
               <Badge v-else-if="pendingPayment" class="bg-orange-100 text-orange-800">
                 Payment Pending
@@ -472,6 +516,16 @@ const paymentStatusColors = {
                     <Edit class="mr-2 h-4 w-4" />
                     Edit Content
                   </Link>
+                </Button>
+
+                <Button
+                  v-if="canEdit && expirationInfo"
+                  @click="extendExpiration"
+                  class="w-full"
+                  :variant="expirationInfo.status === 'expired' ? 'destructive' : 'outline'"
+                >
+                  <RefreshCw class="mr-2 h-4 w-4" />
+                  Extend Expiration
                 </Button>
               </CardContent>
             </Card>

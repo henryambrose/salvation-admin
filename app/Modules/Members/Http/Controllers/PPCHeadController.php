@@ -244,6 +244,11 @@ class PPCHeadController extends Controller
 
             // Streamed CSV keeps memory flat
             return response()->streamDownload(function () use ($query) {
+                // Clear any output buffers to prevent extra whitespace
+                while (ob_get_level()) {
+                    ob_end_clean();
+                }
+
                 $out = fopen('php://output', 'w');
 
                 fputcsv($out, [

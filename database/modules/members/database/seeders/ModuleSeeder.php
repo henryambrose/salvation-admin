@@ -25,12 +25,6 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
             [
-                'name' => 'External Members',
-                'slug' => 'external-member',
-                'icon' => 'UserX',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
-            ],
-            [
                 'name' => 'Communities',
                 'slug' => 'community',
                 'icon' => 'UsersRound',
@@ -42,7 +36,12 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Church',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            
+            [
+                'name' => 'External Members',
+                'slug' => 'external-member',
+                'icon' => 'UserX',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
             // Organizational Structure
             [
                 'name' => 'Zones',
@@ -50,12 +49,7 @@ class ModuleSeeder extends Seeder
                 'icon' => 'MapPin',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            [
-                'name' => 'Community Clusters',
-                'slug' => 'community-cluster',
-                'icon' => 'Network',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
-            ],
+
             [
                 'name' => 'Clusters',
                 'slug' => 'cluster',
@@ -74,7 +68,12 @@ class ModuleSeeder extends Seeder
                 'icon' => 'UserCheck',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            
+            [
+                'name' => 'Community Clusters',
+                'slug' => 'community-cluster',
+                'icon' => 'Network',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
             // Leadership
             [
                 'name' => 'SCC Heads',
@@ -88,7 +87,7 @@ class ModuleSeeder extends Seeder
                 'icon' => 'UserCheck',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            
+
             // Member Attributes
             [
                 'name' => 'Relationships',
@@ -132,7 +131,7 @@ class ModuleSeeder extends Seeder
                 'icon' => 'BadgeIndianRupee',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            
+
             // Geographic Data
             [
                 'name' => 'Countries',
@@ -158,7 +157,7 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Home',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            
+
             // System Management
             [
                 'name' => 'Users',
@@ -172,7 +171,149 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Shield',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'], // Full CRUD for role management
             ],
-            
+
+            // Fund Management
+            [
+                'name' => 'Fund Categories',
+                'slug' => 'fund-category',
+                'icon' => 'FolderOpen',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Annual Contributions',
+                'slug' => 'annual-contribution',
+                'icon' => 'BadgeIndianRupee',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Mass Intentions',
+                'slug' => 'mass-intention',
+                'icon' => 'Cross',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Mass Types',
+                'slug' => 'mass-type',
+                'icon' => 'Calendar',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Mass Intention Types',
+                'slug' => 'mass-intention-type',
+                'icon' => 'Tags',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Payment Methods',
+                'slug' => 'payment-method',
+                'icon' => 'CreditCard',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+
+            // Graveyard Management
+            [
+                'name' => 'Graveyard Dashboard',
+                'slug' => 'graveyard-dashboard',
+                'icon' => 'LayoutDashboard',
+                'actions' => ['read'],
+            ],
+            [
+                'name' => 'Permanent Graves',
+                'slug' => 'permanent-grave',
+                'icon' => 'MapPin',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Temporary Graves',
+                'slug' => 'temporary-grave',
+                'icon' => 'MapPin',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Niches',
+                'slug' => 'niche',
+                'icon' => 'Building',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Grave Categories',
+                'slug' => 'grave-category',
+                'icon' => 'Tags',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Permanent Grave Bookings',
+                'slug' => 'permanent-grave-booking',
+                'icon' => 'Calendar',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Temporary Grave Bookings',
+                'slug' => 'temporary-grave-booking',
+                'icon' => 'CalendarClock',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Service Types',
+                'slug' => 'service-type',
+                'icon' => 'Settings',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Obituary Pages',
+                'slug' => 'obituary-page',
+                'icon' => 'FileText',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'publish', 'unpublish'],
+            ],
+            [
+                'name' => 'Obituary Condolences',
+                'slug' => 'obituary-condolence',
+                'icon' => 'MessageSquare',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'approve', 'reject'],
+            ],
+            [
+                'name' => 'Graveyard Payments',
+                'slug' => 'graveyard-payment',
+                'icon' => 'CreditCard',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Obituary Payments',
+                'slug' => 'obituary-payment',
+                'icon' => 'Receipt',
+                'actions' => ['create', 'read', 'update', 'delete', 'list'],
+            ],
+            [
+                'name' => 'Niche Transfers',
+                'slug' => 'niche-transfer',
+                'icon' => 'ArrowRightLeft',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Valid Members',
+                'slug' => 'valid-member',
+                'icon' => 'UserCheck',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Graveyard Reports',
+                'slug' => 'graveyard-reports',
+                'icon' => 'FileBarChart',
+                'actions' => ['view'],
+            ],
+            [
+                'name' => 'Transfer Operations',
+                'slug' => 'transfer-temporary-to-niche',
+                'icon' => 'ArrowUpRight',
+                'actions' => ['transfer'],
+            ],
+            [
+                'name' => 'Transfer to Permanent',
+                'slug' => 'transfer-temporary-to-permanent',
+                'icon' => 'ArrowUp',
+                'actions' => ['transfer'],
+            ],
+
             // Special Pages
             [
                 'name' => 'Dashboard',
@@ -220,7 +361,7 @@ class ModuleSeeder extends Seeder
         $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')->first();
         if ($adminRole) {
             $adminPermissions = ModuleAction::whereNotIn('action', ['delete', 'restore'])
-                ->whereDoesntHave('module', function($query) {
+                ->whereDoesntHave('module', function ($query) {
                     $query->where('slug', 'role');
                 })
                 ->pluck('slug')
@@ -232,7 +373,7 @@ class ModuleSeeder extends Seeder
         $viewerRole = \Spatie\Permission\Models\Role::where('name', 'viewer')->first();
         if ($viewerRole) {
             $viewerPermissions = ModuleAction::whereIn('action', ['read', 'list'])
-                ->whereDoesntHave('module', function($query) {
+                ->whereDoesntHave('module', function ($query) {
                     $query->where('slug', 'role');
                 })
                 ->pluck('slug')
@@ -241,4 +382,3 @@ class ModuleSeeder extends Seeder
         }
     }
 }
-

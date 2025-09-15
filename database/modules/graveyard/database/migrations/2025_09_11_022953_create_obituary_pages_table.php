@@ -25,6 +25,7 @@ return new class extends Migration
             $table->text('favorite_memory')->nullable();
             $table->text('achievements')->nullable();
             $table->text('hobbies_interests')->nullable();
+            $table->text('notes')->nullable();
 
             // Media
             $table->string('profile_image')->nullable();
@@ -33,7 +34,7 @@ return new class extends Migration
 
             // Customization
             $table->string('theme_color', 7)->default('#000000');
-            $table->enum('background_style', ['plain', 'gradient', 'pattern'])->default('plain');
+            $table->string('background_style')->deafult('plain');
 
             // Visitor features
             $table->boolean('allow_condolences')->default(true);

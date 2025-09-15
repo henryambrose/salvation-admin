@@ -6,14 +6,17 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, FileText, Plus, QrCode, Search, Share2 } from 'lucide-vue-next';
+import { Eye, FileText, Plus, QrCode, Search, Share2, Globe, EyeOff } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 
 interface ObituaryPage {
   id: number;
   uuid: string;
   service_type: 'basic' | 'premium';
   is_public: boolean;
+  is_published: boolean;
+  published_at?: string;
   view_count: number;
   qr_scan_count: number;
   created_at: string;
@@ -46,6 +49,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+// Initialize permission helpers
+const { can } = permissionHelpers();
+
+// Permission checks
+const canPublishObituary = can('publish-obituary-page');
+const canUnpublishObituary = can('unpublish-obituary-page');
 
 const search = ref(props.filters?.search || '');
 const serviceType = ref(props.filters?.service_type || 'all');
@@ -106,6 +116,26 @@ const copyShareLink = (uuid: string) => {
   const url = `${window.location.origin}/obituary/${uuid}`;
   navigator.clipboard.writeText(url);
   // Could add toast notification here
+};
+
+const publishObituary = (obituaryId: number) => {
+  router.post(`/graveyard/obituaries/${obituaryId}/publish`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Refresh the current page to show updated status
+      router.reload({ only: ['obituaries'] });
+    }
+  });
+};
+
+const unpublishObituary = (obituaryId: number) => {
+  router.post(`/graveyard/obituaries/${obituaryId}/unpublish`, {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Refresh the current page to show updated status
+      router.reload({ only: ['obituaries'] });
+    }
+  });
 };
 </script>
 
@@ -184,9 +214,16 @@ const copyShareLink = (uuid: string) => {
                       <CardTitle class="text-lg">{{ getDeceasedName(obituary) }}</CardTitle>
                       <p class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</p>
                     </div>
-                    <Badge :class="serviceTypeColors[obituary.service_type]">
-                      {{ obituary.service_type }}
-                    </Badge>
+                    <div class="flex gap-2 flex-wrap">
+                      <Badge :class="serviceTypeColors[obituary.service_type]">
+                        {{ obituary.service_type }}
+                      </Badge>
+                      <Badge :class="obituary.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'">
+                        <Globe v-if="obituary.is_published" class="mr-1 h-3 w-3" />
+                        <EyeOff v-else class="mr-1 h-3 w-3" />
+                        {{ obituary.is_published ? 'Published' : 'Draft' }}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -197,24 +234,24 @@ const copyShareLink = (uuid: string) => {
                     </div>
                     
                     <div class="flex space-x-2">
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         @click="viewObituaryPage(obituary.uuid)"
                         class="flex-1"
                       >
                         <Eye class="mr-1 h-3 w-3" />
                         View Public
                       </Button>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
+                      <Button
+                        size="sm"
+                        variant="outline"
                         @click="copyShareLink(obituary.uuid)"
                       >
                         <Share2 class="h-3 w-3" />
                       </Button>
-                      <Button 
-                        size="sm" 
+                      <Button
+                        size="sm"
                         variant="outline"
                         as-child
                       >
@@ -223,6 +260,37 @@ const copyShareLink = (uuid: string) => {
                           Manage
                         </Link>
                       </Button>
+                    </div>
+
+                    <!-- Publish/Unpublish Actions -->
+                    <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2 pt-2 border-t border-gray-100">
+                      <Button
+                        v-if="!obituary.is_published && canPublishObituary"
+                        size="sm"
+                        variant="default"
+                        @click="publishObituary(obituary.id)"
+                        class="flex-1 bg-green-600 hover:bg-green-700"
+                      >
+                        <Globe class="mr-1 h-3 w-3" />
+                        Publish
+                      </Button>
+                      <Button
+                        v-else-if="obituary.is_published && canUnpublishObituary"
+                        size="sm"
+                        variant="outline"
+                        @click="unpublishObituary(obituary.id)"
+                        class="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50"
+                      >
+                        <EyeOff class="mr-1 h-3 w-3" />
+                        Unpublish
+                      </Button>
+                      <div v-if="obituary.is_published && obituary.published_at" class="text-xs text-gray-500 self-center">
+                        Published {{ new Date(obituary.published_at).toLocaleDateString() }}
+                      </div>
+                      <!-- Show status without buttons if user doesn't have permissions -->
+                      <div v-if="!canPublishObituary && !canUnpublishObituary" class="text-xs text-gray-500 self-center">
+                        Status: {{ obituary.is_published ? 'Published' : 'Draft' }}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

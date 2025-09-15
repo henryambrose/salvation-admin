@@ -3,10 +3,10 @@ import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { nextTick, ref, watch, computed } from 'vue';
-import { Head, router, useForm, usePage} from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Plus, Pencil, Trash, Download } from 'lucide-vue-next';
+import { Download, Pencil, Plus, Trash } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
@@ -21,7 +21,6 @@ const props = defineProps({
 });
 
 const partialOnly = ['cellsAndAssociationMembers', 'filters'];
-
 
 const columns = [
   { key: 'id', label: 'Id', sortable: true },
@@ -80,8 +79,6 @@ const enhancedCellsAndAssociationMembers = computed(() => {
   };
 });
 
-
-
 watch(
   [search, sort, direction, perPage, isArchived],
   () => {
@@ -97,7 +94,7 @@ watch(
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
-    const el = document.getElementById(`cells-association-member-row-${rowId}`);
+    const el = document.getElementById(`cells-and-association-member-row-${rowId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlight-row');
@@ -130,28 +127,28 @@ function fetch(pageNum = 1) {
 function openEditModal(row: any) {
   editingItem.value = row;
   editForm.id = row.id;
-  
+
   // For edit, we need to find the cell association and convert to array format
   const cellAssociation = props.cellsAndAssociations.find((ca: any) => ca.id === row.cells_and_association_id);
   editForm.cells_and_association_id = cellAssociation ? [cellAssociation] : [];
-  
+
   // For edit, we need to fetch the member details and convert to array format
   if (row.member_id) {
-    fetchMemberById(Number(row.member_id)).then(member => {
+    fetchMemberById(Number(row.member_id)).then((member) => {
       if (member) {
         editForm.member_id = member;
       } else {
         // If member not found by search, create a placeholder object
         editForm.member_id = {
           id: row.member_id,
-          name: row.member_name || 'Member not found'
+          name: row.member_name || 'Member not found',
         };
       }
     });
   } else {
     editForm.member_id = null;
   }
-  
+
   // Clear search results when opening modal
   searchResults.value = [];
   showEditModal.value = true;
@@ -169,7 +166,7 @@ function submitEdit() {
   if (!editForm.cells_and_association_id.length || !editForm.member_id) return;
 
   const formData = {
-    cells_and_association_id: editForm.cells_and_association_id.map(ca => ca.id || ca),
+    cells_and_association_id: editForm.cells_and_association_id.map((ca) => ca.id || ca),
     member_id: editForm.member_id.id || editForm.member_id,
     perPage: perPage.value,
     page: enhancedCellsAndAssociationMembers.value.current_page,
@@ -204,7 +201,7 @@ function submitCreate() {
   if (!createForm.cells_and_association_id.length || !createForm.member_id) return;
 
   const formData = {
-    cells_and_association_id: createForm.cells_and_association_id.map(ca => ca.id || ca),
+    cells_and_association_id: createForm.cells_and_association_id.map((ca) => ca.id || ca),
     member_id: createForm.member_id.id || createForm.member_id,
     perPage: perPage.value,
     page: enhancedCellsAndAssociationMembers.value.last_page,
@@ -252,20 +249,24 @@ function confirmDelete() {
     only: partialOnly,
     onSuccess: () => {
       closeDeleteModal();
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreItem(id: number) {
-  router.post(`/cells-and-association-members/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/cells-and-association-members/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -316,12 +317,13 @@ async function searchMembersByName(searchTerm: string) {
   isSearching.value = true;
   try {
     const response = await axios.get('/member/search-members', {
-      params: { query: searchTerm }
+      params: { query: searchTerm },
     });
-    searchResults.value = response.data.map((member: any) => ({
-      id: member.id,
-      name: member.text
-    })) || [];
+    searchResults.value =
+      response.data.map((member: any) => ({
+        id: member.id,
+        name: member.text,
+      })) || [];
   } catch (error) {
     console.error('Error searching members:', error);
     searchResults.value = [];
@@ -339,7 +341,7 @@ async function fetchMemberById(memberId: number) {
     // If direct fetch fails, try search approach
     try {
       const searchResponse = await axios.get('/api/members/search', {
-        params: { search: memberId.toString() }
+        params: { search: memberId.toString() },
       });
       return searchResponse.data.find((member: any) => member.id === memberId) || null;
     } catch (searchError) {
@@ -354,13 +356,13 @@ function handleMemberSearch(searchTerm: string) {
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);
   }
-  
+
   // Clear results if search term is too short
   if (searchTerm.length < 3) {
     searchResults.value = [];
     return;
   }
-  
+
   // Set timeout for search
   searchTimeout.value = setTimeout(() => {
     searchMembersByName(searchTerm);
@@ -379,16 +381,19 @@ function closeDeleteModal() {
   deletingItem.value = undefined;
 }
 
-watch(() => enhancedCellsAndAssociationMembers.value.data, (rows) => {
-  if (highlightedRowId.value !== -1) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedCellsAndAssociationMembers.value.data,
+  (rows) => {
+    if (highlightedRowId.value !== -1) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = -1;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = -1;
-  }
-});
+  },
+);
 
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
@@ -403,36 +408,40 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-         <Head title="Cells Association Members" />
+    <Head title="Cells Association Members" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-                 <h2 class="text-2xl font-bold text-blue-700">Cells Association Members</h2>
-                 <div class="flex gap-2">
-           <Button v-if="canExportCellsAndAssociationMember" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
-             <component :is="Download" />
-             <span>Export CSV</span>
-           </Button>
-           <Button v-if="canCreateCellsAndAssociationMember" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-             <component :is="Plus" />
-             <span>Add Cells Association Member</span>
-           </Button>
-         </div>
+        <h2 class="text-2xl font-bold text-blue-700">Cells Association Members</h2>
+        <div class="flex gap-2">
+          <Button
+            v-if="canExportCellsAndAssociationMember"
+            @click="downloadCsv"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
+            <component :is="Download" />
+            <span>Export CSV</span>
+          </Button>
+          <Button
+            v-if="canCreateCellsAndAssociationMember"
+            @click="openCreateModal"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
+            <component :is="Plus" />
+            <span>Add Cells Association Member</span>
+          </Button>
+        </div>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input 
-              v-model="search" 
-              type="text" 
-              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" 
-              placeholder="Search..." 
+            <input
+              v-model="search"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
               @keydown.escape="clearSearch"
             />
-            <button 
-              v-if="search" 
-              @click="clearSearch" 
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
@@ -449,7 +458,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -459,30 +468,30 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
 
     <div v-if="canReadAnyCellsAndAssociationMember">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedCellsAndAssociationMembers.total || 0 }}</span> total members
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedCellsAndAssociationMembers.prev_page_url" 
-            @click="fetch(enhancedCellsAndAssociationMembers.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedCellsAndAssociationMembers.prev_page_url"
+            @click="fetch(enhancedCellsAndAssociationMembers.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedCellsAndAssociationMembers.last_page && enhancedCellsAndAssociationMembers.last_page > 1"
-              :value="enhancedCellsAndAssociationMembers.current_page" 
+              :value="enhancedCellsAndAssociationMembers.current_page"
               @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedCellsAndAssociationMembers.last_page" :key="page" :value="page">
                 {{ page }}
@@ -490,21 +499,19 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
             </select>
             <span>of {{ enhancedCellsAndAssociationMembers.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedCellsAndAssociationMembers.next_page_url" 
-            @click="fetch(enhancedCellsAndAssociationMembers.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedCellsAndAssociationMembers.next_page_url"
+            @click="fetch(enhancedCellsAndAssociationMembers.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-cyan-100 text-cyan-800 rounded-full text-xs font-medium">
-            Members
-          </span>
+          <span class="rounded-full bg-cyan-100 px-2 py-1 text-xs font-medium text-cyan-800"> Members </span>
         </div>
       </div>
 
@@ -515,8 +522,16 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
-                    @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="cursor-pointer border-b p-3 font-semibold text-gray-700"
+                  @click="
+                    col.sortable
+                      ? (sort === col.key ? (direction = direction === 'asc' ? 'desc' : 'asc') : ((sort = col.key), (direction = 'asc')), fetch())
+                      : null
+                  "
+                >
                   {{ col.label }}
                   <span v-if="col.sortable && sort === col.key">
                     {{ direction === 'asc' ? '▲' : '▼' }}
@@ -526,17 +541,30 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCellsAndAssociationMembers.data" :key="row.id" :id="`cells-association-member-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedCellsAndAssociationMembers.data"
+                :key="row.id"
+                :id="`cells-and-association-member-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <div class="flex gap-2">
                     <template v-if="!serverArchived">
-                      <Button v-if="canUpdateAnyCellsAndAssociationMember" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                      <Button
+                        v-if="canUpdateAnyCellsAndAssociationMember"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                      >
                         <component :is="Pencil" />
                         <span>Edit</span>
                       </Button>
                     </template>
                     <template v-else>
-                      <Button v-if="canRestoreCellsAndAssociationMember" @click="restoreItem(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      <Button
+                        v-if="canRestoreCellsAndAssociationMember"
+                        @click="restoreItem(row.id)"
+                        class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                      >
                         Restore
                       </Button>
                     </template>
@@ -547,7 +575,11 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCellsAndAssociationMember">
-                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       <component :is="Trash" />
                       <span>Delete</span>
                     </Button>
@@ -565,57 +597,59 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
-                         <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
-                         <form @submit.prevent="submitEdit">
-               <div class="mb-4">
-                 <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
-                 <Multiselect 
-                   v-model="editForm.cells_and_association_id" 
-                   :options="props.cellsAndAssociations || []" 
-                   label="name" 
-                   track-by="id" 
-                   placeholder="Select Cell Association(s)"
-                   :searchable="true"
-                   :allow-empty="false"
-                   :multiple="true"
-                   :close-on-select="false"
-                 />
-                 <div v-if="editForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.cells_and_association_id }}</div>
-                 <div v-if="!editForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
-               </div>
+            <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
+            <form @submit.prevent="submitEdit">
+              <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
+                <Multiselect
+                  v-model="editForm.cells_and_association_id"
+                  :options="props.cellsAndAssociations || []"
+                  label="name"
+                  track-by="id"
+                  placeholder="Select Cell Association(s)"
+                  :searchable="true"
+                  :allow-empty="false"
+                  :multiple="true"
+                  :close-on-select="false"
+                />
+                <div v-if="editForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">
+                  {{ editForm.errors.cells_and_association_id }}
+                </div>
+                <div v-if="!editForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
+              </div>
 
-               <div class="mb-4">
-                 <label class="mb-2 block font-medium text-gray-700">Member</label>
-                 <Multiselect 
-                   v-model="editForm.member_id" 
-                   :options="searchResults" 
-                   label="name" 
-                   track-by="id" 
-                   placeholder="Type at least 3 characters to search members..." 
-                   :searchable="true"
-                   :loading="isSearching"
-                   @search-change="handleMemberSearch"
-                   :allow-empty="false"
-                   :multiple="false"
-                   :close-on-select="true"
-                 />
-                 <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
-                 <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
-               </div>
+              <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Member</label>
+                <Multiselect
+                  v-model="editForm.member_id"
+                  :options="searchResults"
+                  label="name"
+                  track-by="id"
+                  placeholder="Type at least 3 characters to search members..."
+                  :searchable="true"
+                  :loading="isSearching"
+                  @search-change="handleMemberSearch"
+                  :allow-empty="false"
+                  :multiple="false"
+                  :close-on-select="true"
+                />
+                <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
+                <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
+              </div>
 
               <div class="flex justify-end space-x-2">
                 <Button
                   variant="destructive"
                   type="button"
                   @click="closeEditModal"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -631,60 +665,62 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       <div v-if="showCreateModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
-                         <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
-                         <form @submit.prevent="submitCreate">
-               <div class="mb-4">
-                 <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
-                 <Multiselect 
-                   v-model="createForm.cells_and_association_id" 
-                   :options="props.cellsAndAssociations || []" 
-                   label="name" 
-                   track-by="id" 
-                   placeholder="Select Cell Association(s)"
-                   :searchable="true"
-                   :allow-empty="false"
-                   :multiple="true"
-                   :close-on-select="false"
-                 />
-                 <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.cells_and_association_id }}</div>
-                 <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
-               </div>
+            <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
+            <form @submit.prevent="submitCreate">
+              <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
+                <Multiselect
+                  v-model="createForm.cells_and_association_id"
+                  :options="props.cellsAndAssociations || []"
+                  label="name"
+                  track-by="id"
+                  placeholder="Select Cell Association(s)"
+                  :searchable="true"
+                  :allow-empty="false"
+                  :multiple="true"
+                  :close-on-select="false"
+                />
+                <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">
+                  {{ createForm.errors.cells_and_association_id }}
+                </div>
+                <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
+              </div>
 
-               <div class="mb-4">
-                 <label class="mb-2 block font-medium text-gray-700">Member</label>
-                 <Multiselect 
-                   v-model="createForm.member_id" 
-                   :options="searchResults" 
-                   label="name" 
-                   track-by="id" 
-                   placeholder="Type at least 3 characters to search members..." 
-                   :searchable="true"
-                   :loading="isSearching"
-                   @search-change="handleMemberSearch"
-                   :allow-empty="false"
-                   :multiple="false"
-                   :close-on-select="true"
-                   :filter-results="false"
-                   :resolve-on-load="false"
-                   :delay="300"
-                 />
-                 <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
-                 <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
-               </div>
+              <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Member</label>
+                <Multiselect
+                  v-model="createForm.member_id"
+                  :options="searchResults"
+                  label="name"
+                  track-by="id"
+                  placeholder="Type at least 3 characters to search members..."
+                  :searchable="true"
+                  :loading="isSearching"
+                  @search-change="handleMemberSearch"
+                  :allow-empty="false"
+                  :multiple="false"
+                  :close-on-select="true"
+                  :filter-results="false"
+                  :resolve-on-load="false"
+                  :delay="300"
+                />
+                <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
+                <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
+              </div>
 
               <div class="flex justify-end space-x-2">
                 <Button
                   variant="destructive"
                   type="button"
                   @click="closeCreateModal"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="createForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ createForm.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -695,25 +731,23 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
       </div>
     </transition>
 
-         <!-- Delete Modal -->
-     <transition name="fade">
-       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-           <div class="rounded-lg bg-[#ffffff] p-6">
-                           <h3 class="mb-4 text-xl font-semibold">Delete Cells Association Member</h3>
-                            <p class="mb-2">
-                 Are you sure you want to delete this Cells Association Member?
-               </p>
-             <div class="mb-4 p-3 bg-gray-50 rounded-lg">
-               <p class="text-sm text-gray-600"><strong>Cell Association:</strong> {{ deletingItem?.cells_and_association_name }}</p>
-               <p class="text-sm text-gray-600"><strong>Member:</strong> {{ deletingItem?.member_name }}</p>
-             </div>
+    <!-- Delete Modal -->
+    <transition name="fade">
+      <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Delete Cells Association Member</h3>
+            <p class="mb-2">Are you sure you want to delete this Cells Association Member?</p>
+            <div class="mb-4 rounded-lg bg-gray-50 p-3">
+              <p class="text-sm text-gray-600"><strong>Cell Association:</strong> {{ deletingItem?.cells_and_association_name }}</p>
+              <p class="text-sm text-gray-600"><strong>Member:</strong> {{ deletingItem?.member_name }}</p>
+            </div>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="closeDeleteModal"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -722,7 +756,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -748,14 +782,18 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -765,7 +803,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -775,7 +813,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -783,7 +821,11 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
-</style> 
+</style>

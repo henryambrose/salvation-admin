@@ -4,6 +4,7 @@ namespace Modules\Members\Policies;
 
 use Modules\Members\Models\ExternalMember;
 use Modules\Members\Models\User;
+use Modules\Members\Models\Member;
 
 class ExternalMemberPolicy
 {
@@ -148,9 +149,9 @@ class ExternalMemberPolicy
             return true;
         }
 
-        if (! $user->can('force-delete-external-member')) {
-            return false;
-        }
+        // if (! $user->can('force-delete-external-member')) {
+        //     return false;
+        // }
         $service = new \Modules\Members\Services\CommunityAccessService;
         $allowed = $service->getAllowedCommunityIds($user);
         if ($allowed === null) {

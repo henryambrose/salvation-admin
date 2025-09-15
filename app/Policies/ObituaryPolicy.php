@@ -228,4 +228,67 @@ class ObituaryPolicy
         // Use the same logic as view for now
         return $this->view($user, $obituary);
     }
+
+    /**
+     * Determine whether the user can publish obituary pages.
+     */
+    public function publish(User $user, ObituaryPage $obituary): bool
+    {
+        // Superadmin can publish all obituaries
+        if ($user->is_superadmin) {
+            return true;
+        }
+
+        // Admin users can publish all obituaries
+        if ($user->hasRole(['admin', 'superadmin', 'super admin'])) {
+            return true;
+        }
+
+        // Check if user has specific publish permission
+        if ($user->can('publish-obituary-page')) {
+            // Can publish if they can also update the obituary
+            return $this->update($user, $obituary);
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can unpublish obituary pages.
+     */
+    public function unpublish(User $user, ObituaryPage $obituary): bool
+    {
+        // Superadmin can unpublish all obituaries
+        if ($user->is_superadmin) {
+            return true;
+        }
+
+        // Admin users can unpublish all obituaries
+        if ($user->hasRole(['admin', 'superadmin', 'super admin'])) {
+            return true;
+        }
+
+        // Check if user has specific unpublish permission
+        if ($user->can('unpublish-obituary-page')) {
+            // Can unpublish if they can also update the obituary
+            return $this->update($user, $obituary);
+        }
+
+        return false;
+    }
+
+    /**
+     * Determine whether the user can reject condolences.
+     */
+    public function rejectCondolences(User $user): bool
+    {
+        // Superadmin can reject all condolences
+        if ($user->is_superadmin) {
+            return true;
+        }
+
+        // Check if user has permission to reject condolences
+        return $user->can('reject-obituary-condolence') ||
+               $user->hasRole(['admin', 'superadmin', 'super admin']);
+    }
 }

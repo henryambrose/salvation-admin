@@ -45,9 +45,19 @@ interface TemporaryGraveBooking {
   minister?: string;
 }
 
+interface BackgroundOption {
+  value: string;
+  label: string;
+  description: string;
+  image?: string;
+  tier: string;
+}
+
 interface Props {
   booking?: PermanentGraveBooking | TemporaryGraveBooking;
   bookingType?: 'permanent' | 'temporary';
+  basicBackgrounds: BackgroundOption[];
+  premiumBackgrounds: BackgroundOption[];
 }
 
 const props = defineProps<Props>();
@@ -85,7 +95,7 @@ const form = useForm({
   gallery_images: [] as File[],
   audio_message: null as File | null,
   theme_color: '#6366f1',
-  background_style: 'plain' as 'plain' | 'gradient' | 'pattern',
+  background_style: 'plain' as string,
   allow_condolences: false as boolean, // Premium feature - disabled by default
   allow_memory_sharing: false as boolean, // Premium feature - disabled by default
   is_public: true,
@@ -636,7 +646,65 @@ const goBack = () => {
               </CardContent>
             </Card>
 
-            <!-- Customization Section (Premium only) -->
+            <!-- Basic Background Options (Available for all) -->
+            <Card v-if="form.service_type === 'basic'">
+              <CardHeader>
+                <CardTitle class="flex items-center">
+                  <Palette class="mr-2 h-5 w-5" />
+                  Background Style
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
+                  <Label for="background_style">Choose Background</Label>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                    <div v-for="background in props.basicBackgrounds" :key="background.value"
+                         class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
+                         :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                         @click="form.background_style = background.value">
+                      <div class="flex items-center space-x-3">
+                        <input type="radio"
+                               :value="background.value"
+                               v-model="form.background_style"
+                               class="hidden" />
+                        <div v-if="background.image"
+                             class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                             :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+                        </div>
+                        <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <h3 class="font-medium text-sm">{{ background.label }}</h3>
+                          <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-3">Choose from our selection of respectful backgrounds</p>
+
+                  <!-- Upgrade Prompt -->
+                  <div class="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
+                    <div class="flex items-center">
+                      <Palette class="h-5 w-5 text-purple-600 mr-2" />
+                      <div class="flex-1">
+                        <p class="text-sm font-medium text-purple-900">Want more customization options?</p>
+                        <p class="text-xs text-purple-700">Premium includes theme colors, gradients, patterns, and more!</p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        class="text-purple-600 border-purple-300 hover:bg-purple-50"
+                        @click="form.service_type = 'premium'"
+                      >
+                        Upgrade
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <!-- Premium Customization Section -->
             <Card v-if="form.service_type === 'premium'">
               <CardHeader>
                 <CardTitle class="flex items-center">
@@ -660,15 +728,29 @@ const goBack = () => {
 
                 <div>
                   <Label for="background_style">Background Style</Label>
-                  <select 
-                    id="background_style"
-                    v-model="form.background_style"
-                    style="width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 6px; background-color: white; font-size: 14px; margin-top: 4px;"
-                  >
-                    <option value="plain">Plain</option>
-                    <option value="gradient">Gradient</option>
-                    <option value="pattern">Pattern</option>
-                  </select>
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+                    <div v-for="background in props.premiumBackgrounds" :key="background.value"
+                         class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
+                         :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                         @click="form.background_style = background.value">
+                      <div class="flex items-center space-x-3">
+                        <input type="radio"
+                               :value="background.value"
+                               v-model="form.background_style"
+                               class="hidden" />
+                        <div v-if="background.image"
+                             class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
+                             :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
+                        </div>
+                        <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
+                        <div class="flex-1 min-w-0">
+                          <h3 class="font-medium text-sm">{{ background.label }}</h3>
+                          <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
+                          <span v-if="background.tier === 'premium'" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Premium</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>

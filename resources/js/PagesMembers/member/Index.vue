@@ -8,7 +8,7 @@ import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column, FamilyStats } from '@/types';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
@@ -508,7 +508,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
             </Button>
 
             <!-- Data Verification Button - Removed tooltip -->
-            <Link
+            <!-- <Link
               v-if="can('read-data-verification') || can('update-data-verification')"
               :href="route('member.data-verification')"
               class="inline-flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
@@ -517,7 +517,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <span>Data Verification</span>
-            </Link>
+            </Link> -->
 
             <!-- Show Archived Checkbox - Kept tooltip as it's useful for understanding the toggle -->
             <label class="flex cursor-pointer items-center gap-2 select-none">

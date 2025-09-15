@@ -74,13 +74,6 @@ class MembersPermissionsSeeder extends Seeder
             'list-cells-and-association',
             'restore-cells-and-association',
 
-            'create-cells-association-member',
-            'read-cells-association-member',
-            'update-cells-association-member',
-            'delete-cells-association-member',
-            'list-cells-association-member',
-            'restore-cells-association-member',
-
             // Leadership
             'create-scc-head',
             'read-scc-head',
@@ -96,19 +89,7 @@ class MembersPermissionsSeeder extends Seeder
             'list-ppc-head',
             'restore-ppc-head',
 
-            'create-s-c-c-head',
-            'read-s-c-c-head',
-            'update-s-c-c-head',
-            'delete-s-c-c-head',
-            'list-s-c-c-head',
-            'restore-s-c-c-head',
 
-            'create-p-p-c-head',
-            'read-p-p-c-head',
-            'update-p-p-c-head',
-            'delete-p-p-c-head',
-            'list-p-p-c-head',
-            'restore-p-p-c-head',
 
             // Member Attributes
             'create-relationship',
@@ -160,12 +141,6 @@ class MembersPermissionsSeeder extends Seeder
             'list-income-range',
             'restore-income-range',
 
-            'create-group',
-            'read-group',
-            'update-group',
-            'delete-group',
-            'list-group',
-            'restore-group',
 
             // Geographic Data
             'create-country',
@@ -211,62 +186,42 @@ class MembersPermissionsSeeder extends Seeder
             'list-role',
             'restore-role',
 
-            'create-audit',
-            'read-audit',
-            'update-audit',
-            'delete-audit',
-            'list-audit',
-            'restore-audit',
-
-            'create-permission',
-            'read-permission',
-            'update-permission',
-            'delete-permission',
-            'list-permission',
-            'restore-permission',
-
-            'create-setting',
-            'read-setting',
-            'update-setting',
-            'delete-setting',
-            'list-setting',
-            'restore-setting',
 
             // Data Management
-            'create-data-verification',
-            'read-data-verification',
-            'update-data-verification',
-            'delete-data-verification',
-            'list-data-verification',
-            'restore-data-verification',
+            // 'create-data-verification',
+            // 'read-data-verification',
+            // 'update-data-verification',
+            // 'delete-data-verification',
+            // 'list-data-verification',
+            // 'restore-data-verification',
 
-            'create-import',
-            'read-import',
-            'update-import',
-            'delete-import',
-            'list-import',
-            'restore-import',
+            // 'create-import',
+            // 'read-import',
+            // 'update-import',
+            // 'delete-import',
+            // 'list-import',
+            // 'restore-import',
 
-            'create-export',
-            'read-export',
-            'update-export',
-            'delete-export',
-            'list-export',
-            'restore-export',
+            // 'create-export',
+            // 'read-export',
+            // 'update-export',
+            // 'delete-export',
+            // 'list-export',
+            // 'restore-export',
 
-            'create-backup',
-            'read-backup',
-            'update-backup',
-            'delete-backup',
-            'list-backup',
-            'restore-backup',
+            // 'create-backup',
+            // 'read-backup',
+            // 'update-backup',
+            // 'delete-backup',
+            // 'list-backup',
+            // 'restore-backup',
 
-            'create-report',
-            'read-report',
-            'update-report',
-            'delete-report',
-            'list-report',
-            'restore-report',
+            // 'create-report',
+            // 'read-report',
+            // 'update-report',
+            // 'delete-report',
+            // 'list-report',
+            // 'restore-report',
 
             // AI Assistance
             'create-chat',
@@ -291,12 +246,12 @@ class MembersPermissionsSeeder extends Seeder
             'restore-assistant',
 
             // Dashboard
-            'create-dashboard',
+            // 'create-dashboard',
             'read-dashboard',
-            'update-dashboard',
-            'delete-dashboard',
+            // 'update-dashboard',
+            // 'delete-dashboard',
             'list-dashboard',
-            'restore-dashboard',
+            // 'restore-dashboard',
         ];
 
         // Create permissions

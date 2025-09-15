@@ -183,9 +183,22 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
         // Custom QR code generation
         Route::post('/{obituary}/generate-qr', [ObituaryManagementController::class, 'generateCustomQr'])->name('qr.generate');
-        
+
         // Payment processing
         Route::post('/{obituary}/payment', [ObituaryManagementController::class, 'processPayment'])->name('payment.process');
+
+        // Image management
+        Route::delete('/{obituary}/profile-image', [ObituaryManagementController::class, 'removeProfileImage'])->name('images.remove-profile');
+        Route::delete('/{obituary}/gallery-image', [ObituaryManagementController::class, 'removeGalleryImage'])->name('images.remove-gallery');
+        Route::delete('/{obituary}/audio-message', [ObituaryManagementController::class, 'removeAudioMessage'])->name('audio.remove');
+        Route::post('/{obituary}/cleanup-files', [ObituaryManagementController::class, 'cleanupOrphanedFiles'])->name('files.cleanup');
+
+        // Expiration management
+        Route::post('/{obituary}/extend-expiration', [ObituaryManagementController::class, 'extendExpiration'])->name('expiration.extend');
+
+        // Publishing management
+        Route::post('/{obituary}/publish', [ObituaryManagementController::class, 'publish'])->name('publish');
+        Route::post('/{obituary}/unpublish', [ObituaryManagementController::class, 'unpublish'])->name('unpublish');
     });
 
     // Permission denied route for graveyard
@@ -257,3 +270,44 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
         return response()->json($obituaryService->getObituaryStats($obituary));
     })->name('stats');
 });
+
+// Public obituary routes (no authentication required)
+Route::get('/obituary/{uuid}', function (string $uuid) {
+    $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences'])
+        ->where('uuid', $uuid)
+        ->where('is_active', true)
+        ->where('is_public', true)
+        ->firstOrFail();
+
+    // Increment view count
+    $obituary->increment('view_count');
+
+    return Inertia::render('Public/Obituary/Show', [
+        'obituary' => $obituary,
+        'backgroundStyle' => \App\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
+    ]);
+})->name('obituary.show');
+
+// Public obituary condolence submission (no authentication required)
+Route::post('/obituary/{uuid}/condolences', function (string $uuid, \Illuminate\Http\Request $request) {
+    $obituary = \Modules\Graveyard\Models\ObituaryPage::where('uuid', $uuid)
+        ->where('is_active', true)
+        ->where('is_public', true)
+        ->where('allow_condolences', true)
+        ->firstOrFail();
+
+    $request->validate([
+        'name' => 'required|string|max:255',
+        'message' => 'required|string|max:1000',
+    ]);
+
+    \Modules\Graveyard\Models\ObituaryCondolence::create([
+        'obituary_page_id' => $obituary->id,
+        'name' => $request->name,
+        'message' => $request->message,
+        'ip_address' => $request->ip(),
+        'user_agent' => $request->userAgent(),
+    ]);
+
+    return response()->json(['message' => 'Condolence submitted successfully']);
+})->name('obituary.condolences.store');

@@ -8,6 +8,7 @@ use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryCondolence;
 use Modules\Graveyard\Models\ObituaryPayment;
 use App\Services\ObituaryService;
+use App\Services\BackgroundService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\PermanentGraveBooking;
@@ -74,6 +75,8 @@ class ObituaryManagementController extends Controller
         return Inertia::render('PagesGraveyard/Obituaries/Create', [
             'booking' => $booking,
             'bookingType' => $bookingType,
+            'basicBackgrounds' => BackgroundService::getBackgroundOptions('basic'),
+            'premiumBackgrounds' => BackgroundService::getBackgroundOptions('premium'),
         ]);
     }
 
@@ -92,11 +95,18 @@ class ObituaryManagementController extends Controller
             'gallery_images.*' => 'nullable|image|max:2048',
             'audio_message' => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
             'theme_color' => 'nullable|string|size:7',
-            'background_style' => 'nullable|in:plain,gradient,pattern',
+            'background_style' => 'nullable|string',
             'allow_condolences' => 'boolean',
             'allow_memory_sharing' => 'boolean',
             'is_public' => 'boolean',
         ]);
+
+        // Validate background style against service type
+        if (isset($validated['background_style']) && $validated['background_style']) {
+            if (!BackgroundService::isValidBackground($validated['background_style'], $validated['service_type'])) {
+                return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
+            }
+        }
 
         $booking = null;
         if ($validated['booking_type'] === 'permanent') {
@@ -185,6 +195,8 @@ class ObituaryManagementController extends Controller
 
         return Inertia::render('PagesGraveyard/Obituaries/Edit', [
             'obituary' => $obituary,
+            'basicBackgrounds' => BackgroundService::getBackgroundOptions('basic'),
+            'premiumBackgrounds' => BackgroundService::getBackgroundOptions('premium'),
         ]);
     }
 
@@ -213,11 +225,18 @@ class ObituaryManagementController extends Controller
                 'gallery_images.*' => 'image|mimes:jpeg,jpg,png,gif|max:2048',
                 'audio_message' => 'nullable|file|mimes:mp3,wav,m4a|max:10240',
                 'theme_color' => 'nullable|string',
-                'background_style' => 'nullable|string|in:plain,gradient,pattern',
+                'background_style' => 'nullable|string',
                 'allow_condolences' => 'nullable|boolean',
                 'allow_memory_sharing' => 'nullable|boolean',
                 'is_public' => 'nullable|boolean',
             ]);
+
+            // Validate background style against service type
+            if (isset($validated['background_style']) && $validated['background_style']) {
+                if (!BackgroundService::isValidBackground($validated['background_style'], $obituary->service_type)) {
+                    return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
+                }
+            }
 
             Log::info('Obituary update - validation passed', [
                 'obituary_id' => $obituary->id,
@@ -327,8 +346,8 @@ class ObituaryManagementController extends Controller
 
     public function rejectCondolence(ObituaryCondolence $condolence)
     {
-        // Check policy authorization for approving condolences (same permission for reject)
-        $this->authorize('approveCondolences', ObituaryPage::class);
+        // Check policy authorization for rejecting condolences
+        $this->authorize('rejectCondolences', ObituaryPage::class);
 
         $condolence->reject();
 
@@ -446,5 +465,163 @@ class ObituaryManagementController extends Controller
         return response()->download($filePath, $fileName, [
             'Content-Type' => 'image/png',
         ]);
+    }
+
+    public function removeProfileImage(ObituaryPage $obituary)
+    {
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        if ($obituary->profile_image) {
+            // Delete the file from storage
+            if (Storage::disk('public')->exists($obituary->profile_image)) {
+                Storage::disk('public')->delete($obituary->profile_image);
+            }
+
+            // Update the database
+            $obituary->update(['profile_image' => null]);
+
+            return back()->with('success', 'Profile image removed successfully!');
+        }
+
+        return back()->with('error', 'No profile image to remove.');
+    }
+
+    public function removeGalleryImage(Request $request, ObituaryPage $obituary)
+    {
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        $validated = $request->validate([
+            'image_path' => 'required|string'
+        ]);
+
+        $imagePath = $validated['image_path'];
+        $galleryImages = $obituary->gallery_images ?? [];
+
+        // Check if image exists in gallery
+        $imageIndex = array_search($imagePath, $galleryImages);
+        if ($imageIndex === false) {
+            return back()->with('error', 'Image not found in gallery.');
+        }
+
+        // Delete the file from storage
+        if (Storage::disk('public')->exists($imagePath)) {
+            Storage::disk('public')->delete($imagePath);
+        }
+
+        // Remove from gallery array
+        unset($galleryImages[$imageIndex]);
+        $galleryImages = array_values($galleryImages); // Re-index array
+
+        // Update the database
+        $obituary->update(['gallery_images' => $galleryImages]);
+
+        return back()->with('success', 'Gallery image removed successfully!');
+    }
+
+    public function removeAudioMessage(ObituaryPage $obituary)
+    {
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        if ($obituary->audio_message) {
+            // Delete the file from storage
+            if (Storage::disk('public')->exists($obituary->audio_message)) {
+                Storage::disk('public')->delete($obituary->audio_message);
+            }
+
+            // Update the database
+            $obituary->update(['audio_message' => null]);
+
+            return back()->with('success', 'Audio message removed successfully!');
+        }
+
+        return back()->with('error', 'No audio message to remove.');
+    }
+
+    public function cleanupOrphanedFiles(ObituaryPage $obituary)
+    {
+        // Check policy authorization for managing obituaries (admin only)
+        $this->authorize('manageFiles', ObituaryPage::class);
+
+        $deletedFiles = [];
+        $obituaryFolders = ['obituaries/images', 'obituaries/gallery', 'obituaries/audio'];
+
+        foreach ($obituaryFolders as $folder) {
+            if (!Storage::disk('public')->exists($folder)) continue;
+
+            $files = Storage::disk('public')->files($folder);
+
+            foreach ($files as $file) {
+                $isReferenced = ObituaryPage::where('profile_image', $file)
+                    ->orWhere('audio_message', $file)
+                    ->orWhereJsonContains('gallery_images', $file)
+                    ->exists();
+
+                if (!$isReferenced) {
+                    Storage::disk('public')->delete($file);
+                    $deletedFiles[] = $file;
+                }
+            }
+        }
+
+        $count = count($deletedFiles);
+        return back()->with('success', "Cleaned up {$count} orphaned files.");
+    }
+
+    public function extendExpiration(Request $request, ObituaryPage $obituary)
+    {
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        $validated = $request->validate([
+            'days' => 'required|integer|min:1|max:365'
+        ]);
+
+        $currentExpiry = $obituary->expires_at ?? now();
+        $newExpiry = \Carbon\Carbon::parse($currentExpiry)->addDays($validated['days']);
+
+        $obituary->update(['expires_at' => $newExpiry]);
+
+        return back()->with('success', "Expiration extended by {$validated['days']} days to {$newExpiry->format('M j, Y')}");
+    }
+
+    public function publish(ObituaryPage $obituary)
+    {
+        // Check if user has permission to publish obituary pages
+        if (!auth()->user()->can('publish-obituary-page')) {
+            abort(403, 'You do not have permission to publish obituary pages.');
+        }
+
+        // Check policy authorization for publishing obituaries
+        $this->authorize('update', $obituary);
+
+        if ($obituary->isPublished()) {
+            return back()->with('error', 'This obituary page is already published.');
+        }
+
+        $obituary->publish(auth()->id());
+
+        return back()->with('success', 'Obituary page has been published successfully.');
+    }
+
+    public function unpublish(ObituaryPage $obituary)
+    {
+        // Check if user has permission to unpublish obituary pages
+        if (!auth()->user()->can('unpublish-obituary-page')) {
+            abort(403, 'You do not have permission to unpublish obituary pages.');
+        }
+
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        if (!$obituary->isPublished()) {
+            return back()->with('error', 'This obituary page is not published.');
+        }
+
+        $obituary->unpublish();
+
+        return back()->with('success', 'Obituary page has been unpublished successfully.');
     }
 }

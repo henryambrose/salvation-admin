@@ -317,8 +317,7 @@ class RoleController extends Controller
             str_contains($permissionName, 'zone') ||
             str_contains($permissionName, 'cluster') ||
             str_contains($permissionName, 'community-cluster') ||
-            str_contains($permissionName, 'cells-and-association') ||
-            str_contains($permissionName, 'cells-association-member')
+            str_contains($permissionName, 'cells-and-association')
         ) {
             return 'Organizational Structure';
         }
@@ -326,9 +325,7 @@ class RoleController extends Controller
         // Leadership
         if (
             str_contains($permissionName, 'scc-head') ||
-            str_contains($permissionName, 'ppc-head') ||
-            str_contains($permissionName, 's-c-c-head') ||
-            str_contains($permissionName, 'p-p-c-head')
+            str_contains($permissionName, 'ppc-head')
         ) {
             return 'Leadership';
         }
