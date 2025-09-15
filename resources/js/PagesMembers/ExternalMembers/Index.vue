@@ -32,23 +32,26 @@ const props = defineProps({
 });
 
 const showFilters = ref(false);
-const search = ref(props.filters?.search || '');
-const familySearch = ref(props.filters?.familySearch || '');
-const sort = ref(props.filters?.sort || 'first_name');
-const direction = ref(props.filters?.direction || 'asc');
-const perPage = ref(props.filters?.perPage || 15);
-const relationship = ref(props.filters?.relationship || '');
-const filterColumnKey = ref(props.filters?.filterColumnKey || '');
-const filterColumnValue = ref(props.filters?.filterColumnValue || '');
-const isArchived = ref(String(props.filters?.isArchived) === 'true');
-const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
+// Ensure filters is an object, not an array
+const filters = Array.isArray(props.filters) ? {} : (props.filters || {});
+
+const search = ref(filters.search || '');
+const familySearch = ref(filters.familySearch || '');
+const sortField = ref(filters.sort || 'first_name');
+const sortDirection = ref(filters.direction || 'asc');
+const perPage = ref(filters.perPage || 15);
+const relationship = ref(filters.relationship || '');
+const filterColumnKey = ref(filters.filterColumnKey || '');
+const filterColumnValue = ref(filters.filterColumnValue || '');
+const isArchived = ref(String(filters.isArchived) === 'true');
+const serverArchived = computed(() => String(filters.isArchived) === 'true');
 const partialOnly = ['externalMembers', 'filters'];
 
 // Debounced search to prevent too many API calls
 let searchTimeout: number;
 
 watch(
-  [search, familySearch, sort, direction, perPage, relationship, filterColumnKey, filterColumnValue, isArchived],
+  [search, familySearch, sortField, sortDirection, perPage, relationship, filterColumnKey, filterColumnValue, isArchived],
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -63,8 +66,8 @@ function fetch(page = 1) {
     const params = {
       search: search.value,
       familySearch: familySearch.value,
-      sort: sort.value,
-      direction: direction.value,
+      sort: sortField.value,
+      direction: sortDirection.value,
       perPage: perPage.value,
       relationship: relationship.value,
       filterColumnKey: filterColumnKey.value,
@@ -82,11 +85,11 @@ function fetch(page = 1) {
 }
 
 function changeSort(field: string) {
-  if (sort.value === field) {
-    direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+  if (sortField.value === field) {
+    sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
   } else {
-    sort.value = field;
-    direction.value = 'asc';
+    sortField.value = field;
+    sortDirection.value = 'asc';
   }
   fetch();
 }
@@ -114,8 +117,8 @@ function clearSearch() {
       {
         search: '',
         familySearch: familySearch.value,
-        sort: sort.value,
-        direction: direction.value,
+        sort: sortField.value,
+        direction: sortDirection.value,
         perPage: perPage.value,
         relationship: relationship.value,
         filterColumnKey: filterColumnKey.value,
@@ -201,13 +204,11 @@ function restoreExternalMember(member: any) {
 function downloadCsv() {
   const params = new URLSearchParams({
     search: search.value || '',
-    sort: String(sort.value || 'id'),
-    direction: String(direction.value || 'asc'),
+    sort: sortField.value || 'first_name',
+    direction: sortDirection.value || 'asc',
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
   });
-
-  // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/external-members/export?${params.toString()}`;
 }
 
@@ -260,8 +261,8 @@ function confirmDelete() {
         search: search.value,
         familySearch: familySearch.value,
         relationship: relationship.value,
-        sort: sort.value,
-        direction: direction.value,
+        sort: sortField.value,
+        direction: sortDirection.value,
         isArchived: isArchived.value ? 'true' : 'false',
       },
       preserveScroll: true,
@@ -490,8 +491,8 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                     class="cursor-pointer border-b p-3 font-semibold whitespace-nowrap text-gray-700 transition hover:bg-blue-100"
                   >
                     {{ col.label }}
-                    <span v-if="col.sortable && sort === col.key">
-                      {{ direction === 'asc' ? '▲' : '▼' }}
+                    <span v-if="col.sortable && sortField === col.key">
+                      {{ sortDirection === 'asc' ? '▲' : '▼' }}
                     </span>
                   </th>
                   <th v-if="!serverArchived" class="border-b p-3 font-semibold whitespace-nowrap text-gray-700">Delete</th>

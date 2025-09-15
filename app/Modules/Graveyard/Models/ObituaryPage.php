@@ -237,4 +237,44 @@ class ObituaryPage extends Model
     {
         return !$this->is_published;
     }
+
+    /**
+     * Check if the associated booking has completed payment
+     */
+    public function hasCompletedPayment(): bool
+    {
+        $booking = $this->getBookingAttribute();
+
+        if (!$booking) {
+            return false;
+        }
+
+        // Check payment status - 'paid' for bookings, 'completed' for some payment records
+        return in_array($booking->payment_status, ['paid', 'completed']);
+    }
+
+    /**
+     * Check if the obituary can be published (payment completed)
+     */
+    public function canBePublished(): bool
+    {
+        return $this->hasCompletedPayment();
+    }
+
+    /**
+     * Check if the obituary can be accessed publicly (payment completed and published)
+     */
+    public function canBeAccessedPublicly(): bool
+    {
+        return $this->hasCompletedPayment() && $this->isPublished() && $this->is_public && $this->is_active;
+    }
+
+    /**
+     * Get payment status from associated booking
+     */
+    public function getPaymentStatus(): ?string
+    {
+        $booking = $this->getBookingAttribute();
+        return $booking?->payment_status;
+    }
 }

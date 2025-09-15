@@ -35,5 +35,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             \Modules\Graveyard\Database\Seeders\DatabaseSeeder::class,
         ]);
+
+        // Call additional seeders
+        $this->call([
+            ObituaryBackgroundThemeSeeder::class,
+        ]);
     }
 }

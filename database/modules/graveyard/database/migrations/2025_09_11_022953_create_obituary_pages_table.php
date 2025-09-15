@@ -42,6 +42,13 @@ return new class extends Migration
             $table->boolean('is_public')->default(true);
             $table->boolean('is_active')->default(true);
 
+            $table->boolean('is_published')->default(false);
+            $table->timestamp('published_at')->nullable();
+            $table->unsignedBigInteger('published_by')->nullable();
+
+            $table->foreign('published_by')->references('id')->on('users')->onDelete('set null');
+            $table->index('is_published');
+
             // Service details
             $table->enum('service_type', ['basic', 'premium'])->default('basic');
             $table->timestamp('expires_at')->nullable();

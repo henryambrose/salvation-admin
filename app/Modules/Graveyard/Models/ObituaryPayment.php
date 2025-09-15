@@ -16,7 +16,6 @@ class ObituaryPayment extends Model
         'payment_status',
         'payment_reference',
         'payment_method_id',
-        'payment_method',
         'paid_amount',
         'payment_date',
         'notes',

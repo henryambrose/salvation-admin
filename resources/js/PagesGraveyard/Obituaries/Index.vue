@@ -118,8 +118,8 @@ const copyShareLink = (uuid: string) => {
   // Could add toast notification here
 };
 
-const publishObituary = (obituaryId: number) => {
-  router.post(`/graveyard/obituaries/${obituaryId}/publish`, {}, {
+const publishObituary = (obituaryUuid: string) => {
+  router.post(`/graveyard/obituaries/${obituaryUuid}/publish`, {}, {
     preserveScroll: true,
     onSuccess: () => {
       // Refresh the current page to show updated status
@@ -128,8 +128,8 @@ const publishObituary = (obituaryId: number) => {
   });
 };
 
-const unpublishObituary = (obituaryId: number) => {
-  router.post(`/graveyard/obituaries/${obituaryId}/unpublish`, {}, {
+const unpublishObituary = (obituaryUuid: string) => {
+  router.post(`/graveyard/obituaries/${obituaryUuid}/unpublish`, {}, {
     preserveScroll: true,
     onSuccess: () => {
       // Refresh the current page to show updated status
@@ -268,7 +268,7 @@ const unpublishObituary = (obituaryId: number) => {
                         v-if="!obituary.is_published && canPublishObituary"
                         size="sm"
                         variant="default"
-                        @click="publishObituary(obituary.id)"
+                        @click="publishObituary(obituary.uuid)"
                         class="flex-1 bg-green-600 hover:bg-green-700"
                       >
                         <Globe class="mr-1 h-3 w-3" />
@@ -278,7 +278,7 @@ const unpublishObituary = (obituaryId: number) => {
                         v-else-if="obituary.is_published && canUnpublishObituary"
                         size="sm"
                         variant="outline"
-                        @click="unpublishObituary(obituary.id)"
+                        @click="unpublishObituary(obituary.uuid)"
                         class="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50"
                       >
                         <EyeOff class="mr-1 h-3 w-3" />

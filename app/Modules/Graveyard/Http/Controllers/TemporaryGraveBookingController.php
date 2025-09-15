@@ -144,15 +144,33 @@ class TemporaryGraveBookingController extends Controller
                     ['nullable']
                 )
             ],
-            'dead_first_name' => 'required_if:deceased_person_type,external|string|max:100',
-            'dead_last_name' => 'required_if:deceased_person_type,external|string|max:100',
+            'dead_first_name' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'string', 'max:100'],
+                    ['nullable', 'string', 'max:100']
+                )
+            ],
+            'dead_last_name' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'string', 'max:100'],
+                    ['nullable', 'string', 'max:100']
+                )
+            ],
             'date_of_birth' => 'nullable|date|before:died_on',
             'age' => 'nullable|integer|min:0|max:150',
             'months' => 'nullable|integer|min:0|max:11',
             'days' => 'nullable|integer|min:0|max:30',
             'died_on' => 'required|date|before_or_equal:today',
             'buried_on' => 'required|date|after_or_equal:died_on',
-            'gender_id' => 'required_if:deceased_person_type,external|nullable|exists:genders,id',
+            'gender_id' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'exists:genders,id'],
+                    ['nullable', 'exists:genders,id']
+                )
+            ],
             'cause_of_death' => 'required|string|max:255',
             'nationality' => 'nullable|string|max:100',
             'parish_id' => 'nullable|exists:parishes,id',

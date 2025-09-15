@@ -17,6 +17,7 @@ use Modules\Graveyard\Http\Controllers\PaymentController;
 use Modules\Graveyard\Http\Controllers\GraveCategoryController;
 use Modules\Graveyard\Http\Controllers\ObituaryController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
+use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -166,6 +167,19 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
     });
 
+    // Obituary Background Themes Management
+    Route::prefix('graveyard/obituary-background-themes')->name('graveyard.obituary-background-themes.')->group(function () {
+        Route::get('/', [ObituaryBackgroundThemeController::class, 'index'])->name('index');
+        Route::get('/create', [ObituaryBackgroundThemeController::class, 'create'])->name('create');
+        Route::post('/', [ObituaryBackgroundThemeController::class, 'store'])->name('store');
+        Route::get('/{theme}', [ObituaryBackgroundThemeController::class, 'show'])->name('show');
+        Route::get('/{theme}/edit', [ObituaryBackgroundThemeController::class, 'edit'])->name('edit');
+        Route::put('/{theme}', [ObituaryBackgroundThemeController::class, 'update'])->name('update');
+        Route::delete('/{theme}', [ObituaryBackgroundThemeController::class, 'destroy'])->name('destroy');
+        Route::patch('/{theme}/toggle-status', [ObituaryBackgroundThemeController::class, 'toggleStatus'])->name('toggle-status');
+        Route::get('/{theme}/preview', [ObituaryBackgroundThemeController::class, 'preview'])->name('preview');
+    });
+
     // Obituary Management (Admin Routes)
     Route::prefix('graveyard/obituaries')->name('graveyard.obituaries.')->group(function () {
         Route::get('/', [ObituaryManagementController::class, 'index'])->name('index');
@@ -175,6 +189,8 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{obituary}/edit', [ObituaryManagementController::class, 'edit'])->name('edit');
         Route::put('/{obituary}', [ObituaryManagementController::class, 'update'])->name('update');
         Route::delete('/{obituary}', [ObituaryManagementController::class, 'destroy'])->name('destroy');
+
+
 
         // Condolence management
         Route::get('/condolences/manage', [ObituaryManagementController::class, 'condolences'])->name('condolences.index');
@@ -208,7 +224,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
             'user' => \Illuminate\Support\Facades\Auth::user()
         ]);
     })->name('graveyard.permission-denied');
-
 });
 
 // Admin QR Download Route (with minimal middleware to avoid response conflicts)
@@ -245,7 +260,7 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
             'service_type' => 'required|in:basic,premium',
         ]);
 
-        $obituaryService = app(\App\Services\ObituaryService::class);
+        $obituaryService = app(\Modules\Graveyard\Services\ObituaryService::class);
 
         if ($validated['booking_type'] === 'permanent') {
             $booking = \Modules\Graveyard\Models\PermanentGraveBooking::findOrFail($validated['booking_id']);
@@ -264,9 +279,12 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
         ]);
     })->name('create-from-booking');
 
+    // API for obituary background themes
+    Route::get('api/obituary-background-themes', [ObituaryBackgroundThemeController::class, 'api'])
+        ->name('api.obituary-background-themes');
     // Get obituary stats
     Route::get('/{obituary}/stats', function (\Modules\Graveyard\Models\ObituaryPage $obituary) {
-        $obituaryService = app(\App\Services\ObituaryService::class);
+        $obituaryService = app(\Modules\Graveyard\Services\ObituaryService::class);
         return response()->json($obituaryService->getObituaryStats($obituary));
     })->name('stats');
 });
@@ -277,14 +295,32 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         ->where('uuid', $uuid)
         ->where('is_active', true)
         ->where('is_public', true)
+        ->where('is_published', true)
         ->firstOrFail();
+
+    // Check if obituary can be accessed publicly (payment completed)
+    if (!$obituary->canBeAccessedPublicly()) {
+        $paymentStatus = $obituary->getPaymentStatus();
+        $message = match($paymentStatus) {
+            'pending' => 'This obituary page is not available yet. Payment is still pending.',
+            'partial' => 'This obituary page is not available yet. Payment is partially completed.',
+            null => 'This obituary page is not available yet. No payment information found.',
+            default => "This obituary page is not available yet. Payment status: {$paymentStatus}."
+        };
+
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => $message,
+            'paymentStatus' => $paymentStatus,
+            'obituaryName' => $obituary->deceased_name
+        ]);
+    }
 
     // Increment view count
     $obituary->increment('view_count');
 
     return Inertia::render('Public/Obituary/Show', [
         'obituary' => $obituary,
-        'backgroundStyle' => \App\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
+        'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
     ]);
 })->name('obituary.show');
 
@@ -293,8 +329,17 @@ Route::post('/obituary/{uuid}/condolences', function (string $uuid, \Illuminate\
     $obituary = \Modules\Graveyard\Models\ObituaryPage::where('uuid', $uuid)
         ->where('is_active', true)
         ->where('is_public', true)
+        ->where('is_published', true)
         ->where('allow_condolences', true)
         ->firstOrFail();
+
+    // Check if obituary can be accessed publicly (payment completed)
+    if (!$obituary->canBeAccessedPublicly()) {
+        return response()->json([
+            'error' => 'Condolences cannot be submitted. Payment is not completed.',
+            'payment_status' => $obituary->getPaymentStatus()
+        ], 403);
+    }
 
     $request->validate([
         'name' => 'required|string|max:255',

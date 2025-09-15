@@ -102,6 +102,11 @@ class TemporaryGraveBooking extends Model
             if ($booking->isDirty('status') && $booking->status === 'confirmed') {
                 $booking->processConfirmation();
             }
+
+            // Fire event when payment status changes to paid/completed
+            if ($booking->isDirty('payment_status') && in_array($booking->payment_status, ['paid', 'completed'])) {
+                event(new \App\Events\PaymentCompleted($booking));
+            }
         });
     }
 

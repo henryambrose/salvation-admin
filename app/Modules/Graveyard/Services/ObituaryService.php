@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace Modules\Graveyard\Services;
 
 use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryPayment;

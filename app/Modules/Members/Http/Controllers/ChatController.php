@@ -66,7 +66,12 @@ class ChatController extends Controller
             $response = Http::withHeaders([
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->post('https://categpt.chat/api/question', $requestData);
+            ])
+            ->withOptions([
+                'verify' => config('app.env') === 'production', // Only verify SSL in production
+                'timeout' => 30,
+            ])
+            ->post('https://categpt.chat/api/question', $requestData);
 
             Log::info('CatéGPT API Response', [
                 'status' => $response->status(),
@@ -190,7 +195,12 @@ class ChatController extends Controller
             $response = Http::withHeaders([
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
-            ])->timeout(30)->get("https://categpt.chat/api/post/{$request->uniqueID}");
+            ])
+            ->withOptions([
+                'verify' => config('app.env') === 'production', // Only verify SSL in production
+                'timeout' => 30,
+            ])
+            ->get("https://categpt.chat/api/post/{$request->uniqueID}");
 
             if ($response->successful()) {
                 $data = $response->json();

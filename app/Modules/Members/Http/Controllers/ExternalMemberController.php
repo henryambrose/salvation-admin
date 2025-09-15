@@ -532,9 +532,26 @@ class ExternalMemberController extends Controller
     public function export(Request $request)
     {
         try {
+            // Clear any output buffers to prevent extra whitespace
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+
             $this->authorize('viewAny', ExternalMember::class);
 
             $query = ExternalMember::with(['community', 'relationship']);
+
+            // Apply community-scoped filtering like in index method
+            $allowedCommunityIds = $this->allowedCommunityIdsFor(Auth::user());
+            if ($allowedCommunityIds !== null) {
+                // Use whereExists to check if any member with this family_no is in allowed communities
+                $query->whereExists(function ($subquery) use ($allowedCommunityIds) {
+                    $subquery->select(DB::raw(1))
+                        ->from('members')
+                        ->whereColumn('members.family_no', 'external_members.family_no')
+                        ->whereIn('members.community_id', $allowedCommunityIds);
+                });
+            }
 
             if ($request->boolean('isArchived')) {
                 $query->onlyTrashed();

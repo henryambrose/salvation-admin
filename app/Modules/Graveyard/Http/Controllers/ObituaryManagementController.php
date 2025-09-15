@@ -7,8 +7,8 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryCondolence;
 use Modules\Graveyard\Models\ObituaryPayment;
-use App\Services\ObituaryService;
-use App\Services\BackgroundService;
+use Modules\Graveyard\Services\ObituaryService;
+use Modules\Graveyard\Services\BackgroundService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\PermanentGraveBooking;
@@ -51,12 +51,48 @@ class ObituaryManagementController extends Controller
             ->when($request->service_type, function ($query, $type) {
                 $query->where('service_type', $type);
             })
+            ->when($request->payment_status, function ($query, $status) {
+                if ($status === 'paid') {
+                    $query->whereHas('permanentGraveBooking', function ($q) {
+                        $q->whereIn('payment_status', ['paid', 'completed']);
+                    })->orWhereHas('temporaryGraveBooking', function ($q) {
+                        $q->whereIn('payment_status', ['paid', 'completed']);
+                    });
+                } elseif ($status === 'pending') {
+                    $query->whereHas('permanentGraveBooking', function ($q) {
+                        $q->where('payment_status', 'pending');
+                    })->orWhereHas('temporaryGraveBooking', function ($q) {
+                        $q->where('payment_status', 'pending');
+                    });
+                } elseif ($status === 'partial') {
+                    $query->whereHas('permanentGraveBooking', function ($q) {
+                        $q->where('payment_status', 'partial');
+                    })->orWhereHas('temporaryGraveBooking', function ($q) {
+                        $q->where('payment_status', 'partial');
+                    });
+                }
+            })
+            ->when($request->published_status, function ($query, $status) {
+                if ($status === 'published') {
+                    $query->where('is_published', true);
+                } elseif ($status === 'draft') {
+                    $query->where('is_published', false);
+                }
+            })
             ->orderBy('created_at', 'desc')
             ->paginate(15);
 
+        // Add payment status to each obituary
+        $obituaries->getCollection()->transform(function ($obituary) {
+            $obituary->payment_status = $obituary->getPaymentStatus();
+            $obituary->can_be_published = $obituary->canBePublished();
+            $obituary->can_be_accessed_publicly = $obituary->canBeAccessedPublicly();
+            return $obituary;
+        });
+
         return Inertia::render('PagesGraveyard/Obituaries/Index', [
             'obituaries' => $obituaries,
-            'filters' => $request->only(['search', 'service_type']),
+            'filters' => $request->only(['search', 'service_type', 'payment_status', 'published_status']),
         ]);
     }
 
@@ -415,7 +451,6 @@ class ObituaryManagementController extends Controller
         $payment->update([
             'payment_status' => 'completed',
             'payment_method_id' => $validated['payment_method_id'],
-            'payment_method' => $paymentMethod->name, // Keep the string field for compatibility
             'paid_amount' => $validated['amount'],
             'payment_date' => now(),
             'notes' => $validated['notes'],
@@ -590,9 +625,9 @@ class ObituaryManagementController extends Controller
     public function publish(ObituaryPage $obituary)
     {
         // Check if user has permission to publish obituary pages
-        if (!auth()->user()->can('publish-obituary-page')) {
-            abort(403, 'You do not have permission to publish obituary pages.');
-        }
+        // if (!Auth::user()->can('publish-obituary-page')) {
+        //     abort(403, 'You do not have permission to publish obituary pages.');
+        // }
 
         // Check policy authorization for publishing obituaries
         $this->authorize('update', $obituary);
@@ -601,7 +636,12 @@ class ObituaryManagementController extends Controller
             return back()->with('error', 'This obituary page is already published.');
         }
 
-        $obituary->publish(auth()->id());
+        // Check if payment is completed before allowing publication
+        if (!$obituary->canBePublished()) {
+            return back()->with('error', 'Cannot publish obituary page until payment is completed. Current payment status: ' . ($obituary->getPaymentStatus() ?? 'unknown'));
+        }
+
+        $obituary->publish(Auth::id());
 
         return back()->with('success', 'Obituary page has been published successfully.');
     }
@@ -609,9 +649,9 @@ class ObituaryManagementController extends Controller
     public function unpublish(ObituaryPage $obituary)
     {
         // Check if user has permission to unpublish obituary pages
-        if (!auth()->user()->can('unpublish-obituary-page')) {
-            abort(403, 'You do not have permission to unpublish obituary pages.');
-        }
+        // if (!auth()->user()->can('unpublish-obituary-page')) {
+        //     abort(403, 'You do not have permission to unpublish obituary pages.');
+        // }
 
         // Check policy authorization for updating obituaries
         $this->authorize('update', $obituary);

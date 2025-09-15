@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Services\ObituaryService;
+use Modules\Graveyard\Services\ObituaryService;
 use Modules\Graveyard\Models\ObituaryPage;
 
 class GenerateObituaryQrCode extends Command

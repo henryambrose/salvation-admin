@@ -4,6 +4,7 @@ use Modules\Members\Http\Controllers\DashboardController;
 use Modules\Members\Http\Controllers\RolePermissionController;
 use Modules\Members\Http\Controllers\ChatController;
 use Modules\Members\Http\Controllers\CatholicCalendarController;
+use Modules\Graveyard\Http\Controllers\Admin\ObituaryBackgroundThemeController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
@@ -53,6 +54,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         ->name('roles.permissions.update-permissions');
     Route::get('/roles-permissions/preview/{groupId}', [RolePermissionController::class, 'preview'])
         ->name('roles.permissions.preview');
+
 
     // Comprehensive Role Management Routes
     Route::resource('roles', \Modules\Members\Http\Controllers\RoleController::class);
