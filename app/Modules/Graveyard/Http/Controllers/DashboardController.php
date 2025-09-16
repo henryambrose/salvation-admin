@@ -8,6 +8,11 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:read-graveyard-dashboard');
+    }
+
     /**
      * Display the graveyard dashboard
      */

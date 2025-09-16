@@ -3,7 +3,6 @@
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use Modules\Graveyard\Http\Controllers\DashboardController;
-
 use Modules\Graveyard\Http\Controllers\GraveController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveController;
@@ -25,7 +24,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
     // Graveyard Dashboard
     Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
-
 
     // Graves Management
     Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
@@ -50,7 +48,6 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::delete('/{niche}', [NicheController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [NicheController::class, 'restore'])->name('restore');
     });
-
 
     // Permanent Graves Management
     Route::prefix('graveyard/permanent-graves')->name('graveyard.permanent-graves.')->group(function () {
@@ -301,7 +298,7 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
     // Check if obituary can be accessed publicly (payment completed)
     if (!$obituary->canBeAccessedPublicly()) {
         $paymentStatus = $obituary->getPaymentStatus();
-        $message = match($paymentStatus) {
+        $message = match ($paymentStatus) {
             'pending' => 'This obituary page is not available yet. Payment is still pending.',
             'partial' => 'This obituary page is not available yet. Payment is partially completed.',
             null => 'This obituary page is not available yet. No payment information found.',
