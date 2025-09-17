@@ -464,6 +464,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { SelectInput } from '@/components/ui/select';
+import { useToast } from '@/composables/useToast';
 
 defineOptions({
     layout: AppLayout
@@ -477,6 +478,8 @@ const props = withDefaults(defineProps<{
     payment_methods: []
   })
 });
+
+const { success, error } = useToast();
 
 // Form handling
 const form = useForm({
@@ -743,27 +746,29 @@ const submitForm = () => {
 
   // Validate that either member_id or paid_by_name is provided
   if (!form.member_id && !form.paid_by_name) {
-    alert('Please either select a member or enter the payer\'s name.');
+    error('Please either select a member or enter the payer\'s name.');
     return;
   }
 
   // Validate amount
   if (!form.amount || parseFloat(form.amount) <= 0) {
-    alert('Please enter a valid amount for the contribution.');
+    error('Please enter a valid amount for the contribution.');
     return;
   }
 
   if (!form.start_date || !form.end_date) {
-    alert('Please select start and end dates.');
+    error('Please select start and end dates.');
     return;
   }
 
   form.post('/fund/annual-contributions', {
     onSuccess: () => {
+      success('Annual contribution created successfully!');
       // Form will redirect on success
     },
     onError: (errors) => {
       console.error('Form validation errors:', errors);
+      error('Please check the form for errors and try again.');
     }
   });
 };

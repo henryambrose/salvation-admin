@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, BookOpen, Box, Clock, CreditCard, Cross, FileText, Home, Palette, Settings, Tags, UserCheck } from 'lucide-vue-next';
+import { BarChart3, BookOpen, Box, Clock, CreditCard, Cross, FileText, Home, Palette, Settings, Tags, UserCheck, Trash2 } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -51,6 +51,7 @@ const graveyardNavigationGroups = computed(() => [
     items: [
       { title: 'All Obituaries', href: '/graveyard/obituaries', icon: FileText, show: true },
       { title: 'Condolences', href: '/graveyard/obituaries/condolences/manage', icon: BookOpen, show: true },
+      { title: 'File Cleanup', href: '/graveyard/obituaries/cleanup', icon: Trash2, show: true },
     ],
   },
   {

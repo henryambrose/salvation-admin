@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Roles, Modules, Permissions } from '@/types';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { useToast } from '@/composables/useToast';
 
 const { can } = permissionHelpers();
+const { success, error } = useToast();
 
 interface Props {
   roles: Roles;
@@ -461,18 +463,19 @@ async function applyPermissionGroup(groupId: string) {
       {
         preserveState: true,
         onSuccess: () => {
+          success('Permission group applied successfully!');
           // Reload the page to get updated permissions
           router.reload();
         },
         onError: (errors) => {
           console.error('Error applying permission group:', errors);
-          alert('Failed to apply permission group. Please try again.');
+          error('Failed to apply permission group. Please try again.');
         },
       },
     );
-  } catch (error) {
-    console.error('Error applying permission group:', error);
-    alert('Failed to apply permission group. Please try again.');
+  } catch (err) {
+    console.error('Error applying permission group:', err);
+    error('Failed to apply permission group. Please try again.');
   } finally {
     isApplyingGroup.value = false;
   }
@@ -481,7 +484,7 @@ async function applyPermissionGroup(groupId: string) {
 // Save permissions
 async function savePermissions() {
   if (!selectedRoleId.value) {
-    alert('Please select a role first');
+    error('Please select a role first');
     return;
   }
 
@@ -489,7 +492,7 @@ async function savePermissions() {
   const hasChanges = JSON.stringify(localPermissions.value[selectedRoleId.value]) !== JSON.stringify(originalPermissions.value[selectedRoleId.value]);
 
   if (!hasChanges) {
-    alert('No changes to save');
+    error('No changes to save');
     return;
   }
 
@@ -537,16 +540,17 @@ async function savePermissions() {
         showSuccessMessage.value = false;
       }, 3000);
 
+      success('Permissions saved successfully!');
       // Reload the page to get the latest data
       router.reload();
     } else {
       const errorData = await response.json();
       console.error('Error saving permissions:', errorData);
-      alert('Failed to save permissions. Please try again.');
+      error('Failed to save permissions. Please try again.');
     }
-  } catch (error) {
-    console.error('Error saving permissions:', error);
-    alert('Failed to save permissions. Please try again.');
+  } catch (err) {
+    console.error('Error saving permissions:', err);
+    error('Failed to save permissions. Please try again.');
   } finally {
     // Reset button state
     const saveButton = document.querySelector('[data-save-permissions]') as HTMLButtonElement;
@@ -591,7 +595,7 @@ function closeAddRoleModal() {
 
 function createRole() {
   if (!newRoleForm.value.name.trim()) {
-    alert('Role name is required');
+    error('Role name is required');
     return;
   }
 
@@ -602,14 +606,15 @@ function createRole() {
     },
     {
       onSuccess: () => {
+        success('Role created successfully!');
         closeAddRoleModal();
         router.reload();
       },
       onError: (errors) => {
         if (errors.name) {
-          alert(errors.name);
+          error(errors.name);
         } else {
-          alert('Failed to create role. Please try again.');
+          error('Failed to create role. Please try again.');
         }
       },
     },

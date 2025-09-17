@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
+import { Column } from '@/types';
 
 const { can } = permissionHelpers();
 
@@ -23,6 +24,17 @@ const canReadAnyMassIntention = can('read-fund-mass-intention') || true;
 const canUpdateAnyMassIntention = can('update-fund-mass-intention') || true;
 const canDeleteAnyMassIntention = can('delete-fund-mass-intention') || true;
 const canRestoreMassIntention = can('restore-fund-mass-intention') || true;
+
+// Define columns for sorting
+const columns: Column[] = [
+  { key: 'external_name', label: 'Person', sortable: true },
+  { key: 'member_id', label: 'Family No', sortable: false },
+  { key: 'mass_date', label: 'Mass Date & Type', sortable: true },
+  { key: 'mass_intention_type_id', label: 'Intention Type', sortable: false },
+  { key: 'amount', label: 'Amount', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'created_at', label: 'Created', sortable: true },
+];
 
 const showDeleteModal = ref(false);
 const deletingIntention = ref<Record<string, any> | null>(null);
@@ -49,6 +61,8 @@ const massIntentionTypeId = ref(props.filters?.mass_intention_type_id || '');
 const startDate = ref(props.filters?.start_date || '');
 const endDate = ref(props.filters?.end_date || '');
 const perPage = ref(props.filters?.per_page || 10);
+const sort = ref(props.filters?.sort || '');
+const direction = ref(props.filters?.direction || 'asc');
 
 const partialOnly = ['massIntentions', 'filters'];
 const searchTimeout = ref<number | null>(null);
@@ -87,6 +101,8 @@ function fetch(page = 1) {
       start_date: startDate.value,
       end_date: endDate.value,
       per_page: perPage.value,
+      sort: sort.value,
+      direction: direction.value,
       isArchived: isArchived.value ? 'true' : 'false',
       page,
     },
@@ -94,8 +110,19 @@ function fetch(page = 1) {
   );
 }
 
+// Add sortBy function
+function sortBy(column: string) {
+  if (sort.value === column) {
+    direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sort.value = column;
+    direction.value = 'asc';
+  }
+  fetch();
+}
+
 watch(
-  [search, status, massTypeId, massIntentionTypeId, startDate, endDate, perPage, isArchived],
+  [search, status, massTypeId, massIntentionTypeId, startDate, endDate, perPage, sort, direction, isArchived],
   () => {
     if (searchTimeout.value) {
       clearTimeout(searchTimeout.value);
@@ -235,7 +262,7 @@ const breadcrumbs = [
             <input
               v-model="search"
               type="text"
-              placeholder="Search intentions..."
+              placeholder="name, fly_no..."
               class="w-full rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
               @keydown.escape="clearSearch"
             />
@@ -361,13 +388,23 @@ const breadcrumbs = [
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Person</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Family No</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Mass Date & Type</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Intention Type</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Amount</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Status</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Created</th>
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="border-b p-3 font-semibold text-gray-700"
+                  :class="col.sortable ? 'cursor-pointer hover:bg-blue-100' : ''"
+                  @click="col.sortable ? sortBy(col.key) : null"
+                >
+                  <div class="flex items-center gap-1">
+                    {{ col.label }}
+                    <template v-if="col.sortable">
+                      <span v-if="sort === col.key" class="text-blue-600">
+                        {{ direction === 'asc' ? '↑' : '↓' }}
+                      </span>
+                      <span v-else class="text-gray-400">↕</span>
+                    </template>
+                  </div>
+                </th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>

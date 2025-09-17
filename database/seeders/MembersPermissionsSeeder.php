@@ -260,7 +260,7 @@ class MembersPermissionsSeeder extends Seeder
         }
 
         // Optionally assign these permissions to a super admin role if it exists
-        $superAdminRole = Role::where('name', 'super-admin')->first();
+        $superAdminRole = Role::where('name', 'super admin')->first();
         if ($superAdminRole) {
             $superAdminRole->givePermissionTo($membersPermissions);
         }

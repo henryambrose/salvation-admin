@@ -2,79 +2,98 @@
 import { Head } from '@inertiajs/vue3';
 import { Clock, CreditCard, AlertCircle } from 'lucide-vue-next';
 
-defineProps({
-  message: String,
-  paymentStatus: String,
-  obituaryName: String,
-});
+interface Props {
+  message?: string;
+  paymentStatus?: string;
+  obituaryName?: string;
+  issueType?: 'payment' | 'review' | 'private' | 'inactive';
+}
 
-const getStatusIcon = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return Clock;
-    case 'partial':
-      return CreditCard;
-    default:
-      return AlertCircle;
+const props = defineProps<Props>();
+
+const getStatusIcon = (issueType?: string, status?: string) => {
+  if (issueType === 'payment') {
+    return status === 'partial' ? CreditCard : Clock;
+  } else if (issueType === 'review') {
+    return Clock;
+  } else {
+    return AlertCircle;
   }
 };
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return 'text-amber-600';
-    case 'partial':
-      return 'text-blue-600';
-    default:
-      return 'text-red-600';
+const getStatusColor = (issueType?: string, status?: string) => {
+  if (issueType === 'payment') {
+    return status === 'partial' ? 'text-blue-600' : 'text-amber-600';
+  } else if (issueType === 'review') {
+    return 'text-green-600';
+  } else if (issueType === 'private') {
+    return 'text-gray-600';
+  } else {
+    return 'text-red-600';
   }
 };
 
-const getStatusBgColor = (status: string) => {
-  switch (status) {
-    case 'pending':
-      return 'bg-amber-50 border-amber-200';
-    case 'partial':
-      return 'bg-blue-50 border-blue-200';
+const getStatusBgColor = (issueType?: string, status?: string) => {
+  if (issueType === 'payment') {
+    return status === 'partial' ? 'bg-blue-50 border-blue-200' : 'bg-amber-50 border-amber-200';
+  } else if (issueType === 'review') {
+    return 'bg-green-50 border-green-200';
+  } else if (issueType === 'private') {
+    return 'bg-gray-50 border-gray-200';
+  } else {
+    return 'bg-red-50 border-red-200';
+  }
+};
+
+const getPageTitle = (issueType?: string) => {
+  switch (issueType) {
+    case 'payment':
+      return 'Payment Required - Obituary Page';
+    case 'review':
+      return 'Under Review - Obituary Page';
+    case 'private':
+      return 'Private Page - Obituary';
+    case 'inactive':
+      return 'Page Unavailable - Obituary';
     default:
-      return 'bg-red-50 border-red-200';
+      return 'Not Available - Obituary Page';
   }
 };
 </script>
 
 <template>
-  <Head title="Payment Required - Obituary Page" />
+  <Head :title="getPageTitle(props.issueType || 'payment')" />
 
   <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
       <div class="text-center">
         <!-- Status Icon -->
         <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6"
-             :class="getStatusBgColor(paymentStatus)">
-          <component :is="getStatusIcon(paymentStatus)"
+             :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)">
+          <component :is="getStatusIcon(props.issueType || 'payment', props.paymentStatus)"
                      class="h-8 w-8"
-                     :class="getStatusColor(paymentStatus)" />
+                     :class="getStatusColor(props.issueType || 'payment', props.paymentStatus)" />
         </div>
 
         <!-- Title -->
         <h1 class="text-2xl font-bold text-gray-900 mb-4">
-          Payment Required
+          {{ props.issueType === 'review' ? 'Under Review' : props.issueType === 'payment' ? 'Payment Required' : 'Page Unavailable' }}
         </h1>
 
         <!-- Obituary Name -->
-        <div v-if="obituaryName" class="mb-6">
+        <div v-if="props.obituaryName" class="mb-6">
           <p class="text-lg text-gray-700">
             Obituary for
           </p>
           <p class="text-xl font-semibold text-gray-900">
-            {{ obituaryName }}
+            {{ props.obituaryName }}
           </p>
         </div>
 
         <!-- Message -->
-        <div class="mb-8 p-4 rounded-lg border" :class="getStatusBgColor(paymentStatus)">
-          <p class="text-gray-800" :class="getStatusColor(paymentStatus)">
-            {{ message }}
+        <div class="mb-8 p-4 rounded-lg border" :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)">
+          <p class="text-gray-800" :class="getStatusColor(props.issueType || 'payment', props.paymentStatus)">
+            {{ props.message }}
           </p>
         </div>
 
@@ -82,7 +101,7 @@ const getStatusBgColor = (status: string) => {
         <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
           <h3 class="text-lg font-medium text-gray-900 mb-4">What's happening?</h3>
 
-          <div v-if="paymentStatus === 'pending'" class="space-y-3 text-left">
+          <div v-if="props.paymentStatus === 'pending'" class="space-y-3 text-left">
             <div class="flex items-start gap-3">
               <div class="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
               <p class="text-gray-600">This obituary page is waiting for payment to be completed</p>
@@ -97,7 +116,7 @@ const getStatusBgColor = (status: string) => {
             </div>
           </div>
 
-          <div v-else-if="paymentStatus === 'partial'" class="space-y-3 text-left">
+          <div v-else-if="props.paymentStatus === 'partial'" class="space-y-3 text-left">
             <div class="flex items-start gap-3">
               <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
               <p class="text-gray-600">This obituary page has a partial payment</p>
@@ -140,11 +159,11 @@ const getStatusBgColor = (status: string) => {
         <!-- Status Badge -->
         <div class="mt-8">
           <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize"
-                :class="getStatusBgColor(paymentStatus)">
-            <component :is="getStatusIcon(paymentStatus)"
+                :class="getStatusBgColor(props.paymentStatus)">
+            <component :is="getStatusIcon(props.paymentStatus)"
                        class="h-4 w-4 mr-2"
-                       :class="getStatusColor(paymentStatus)" />
-            Payment {{ paymentStatus || 'Unknown' }}
+                       :class="getStatusColor(props.paymentStatus)" />
+            Payment {{ props.paymentStatus || 'Unknown' }}
           </span>
         </div>
       </div>

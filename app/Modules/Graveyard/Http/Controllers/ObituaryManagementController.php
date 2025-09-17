@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 
 
 class ObituaryManagementController extends Controller
@@ -32,7 +33,9 @@ class ObituaryManagementController extends Controller
         $this->middleware('auth');
 
         // Apply policy-based authorization
-        $this->authorizeResource(ObituaryPage::class, 'obituary');
+        $this->authorizeResource(ObituaryPage::class, 'obituary', [
+            'except' => ['rephraseText']
+        ]);
     }
 
 
@@ -203,7 +206,6 @@ class ObituaryManagementController extends Controller
         ]);
 
         $stats = $this->obituaryService->getObituaryStats($obituary);
-        $recommendations = $this->obituaryService->getRecommendedUpgrades($obituary);
         $shareLinks = $this->obituaryService->generateShareableLink($obituary);
         $user = Auth::user();
         // Check if user can edit this obituary using policy
@@ -218,7 +220,6 @@ class ObituaryManagementController extends Controller
         return Inertia::render('PagesGraveyard/Obituaries/Show', [
             'obituary' => $obituary,
             'stats' => $stats,
-            'recommendations' => $recommendations,
             'shareLinks' => $shareLinks,
             'canEdit' => $canEdit,
             'paymentMethods' => $paymentMethods,
@@ -575,6 +576,100 @@ class ObituaryManagementController extends Controller
         return back()->with('error', 'No audio message to remove.');
     }
 
+    public function cleanupPage()
+    {
+        // Check policy authorization for managing files (admin only)
+        $this->authorize('manageFiles', ObituaryPage::class);
+
+        return Inertia::render('PagesGraveyard/Obituaries/Cleanup');
+    }
+
+    public function scanOrphanedFiles()
+    {
+        // Check policy authorization for managing files (admin only)
+        $this->authorize('manageFiles', ObituaryPage::class);
+
+        $orphanedFiles = [];
+        $totalSize = 0;
+        $obituaryFolders = ['obituaries/images', 'obituaries/gallery', 'obituaries/audio', 'qr-codes'];
+
+        foreach ($obituaryFolders as $folder) {
+            if (!Storage::disk('public')->exists($folder)) continue;
+
+            $files = Storage::disk('public')->files($folder);
+
+            foreach ($files as $file) {
+                $isReferenced = ObituaryPage::where('profile_image', $file)
+                    ->orWhere('audio_message', $file)
+                    ->orWhereJsonContains('gallery_images', $file)
+                    ->orWhere('qr_code_path', $file)
+                    ->exists();
+
+                if (!$isReferenced) {
+                    $size = Storage::disk('public')->size($file);
+                    $orphanedFiles[] = [
+                        'path' => $file,
+                        'name' => basename($file),
+                        'size' => $size,
+                        'size_human' => $this->formatFileSize($size),
+                        'folder' => $folder,
+                        'last_modified' => Storage::disk('public')->lastModified($file),
+                    ];
+                    $totalSize += $size;
+                }
+            }
+        }
+
+        return response()->json([
+            'files' => $orphanedFiles,
+            'count' => count($orphanedFiles),
+            'total_size' => $totalSize,
+            'total_size_human' => $this->formatFileSize($totalSize),
+        ]);
+    }
+
+    public function executeCleanup(Request $request)
+    {
+        // Check policy authorization for managing files (admin only)
+        $this->authorize('manageFiles', ObituaryPage::class);
+
+        $validated = $request->validate([
+            'files' => 'required|array',
+            'files.*' => 'string'
+        ]);
+
+        $deletedFiles = [];
+        $deletedSize = 0;
+
+        foreach ($validated['files'] as $file) {
+            if (Storage::disk('public')->exists($file)) {
+                // Double-check the file is not referenced before deletion
+                $isReferenced = ObituaryPage::where('profile_image', $file)
+                    ->orWhere('audio_message', $file)
+                    ->orWhereJsonContains('gallery_images', $file)
+                    ->orWhere('qr_code_path', $file)
+                    ->exists();
+
+                if (!$isReferenced) {
+                    $size = Storage::disk('public')->size($file);
+                    Storage::disk('public')->delete($file);
+                    $deletedFiles[] = $file;
+                    $deletedSize += $size;
+                }
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'deleted_count' => count($deletedFiles),
+            'deleted_size' => $deletedSize,
+            'deleted_size_human' => $this->formatFileSize($deletedSize),
+            'message' => count($deletedFiles) > 0
+                ? "Successfully cleaned up " . count($deletedFiles) . " orphaned files (" . $this->formatFileSize($deletedSize) . ")"
+                : "No files were deleted"
+        ]);
+    }
+
     public function cleanupOrphanedFiles(ObituaryPage $obituary)
     {
         // Check policy authorization for managing obituaries (admin only)
@@ -592,6 +687,7 @@ class ObituaryManagementController extends Controller
                 $isReferenced = ObituaryPage::where('profile_image', $file)
                     ->orWhere('audio_message', $file)
                     ->orWhereJsonContains('gallery_images', $file)
+                    ->orWhere('qr_code_path', $file)
                     ->exists();
 
                 if (!$isReferenced) {
@@ -603,6 +699,15 @@ class ObituaryManagementController extends Controller
 
         $count = count($deletedFiles);
         return back()->with('success', "Cleaned up {$count} orphaned files.");
+    }
+
+    private function formatFileSize(int $bytes): string
+    {
+        if ($bytes === 0) return '0 Bytes';
+        $k = 1024;
+        $sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        $i = floor(log($bytes) / log($k));
+        return round($bytes / pow($k, $i), 2) . ' ' . $sizes[$i];
     }
 
     public function extendExpiration(Request $request, ObituaryPage $obituary)
@@ -663,5 +768,220 @@ class ObituaryManagementController extends Controller
         $obituary->unpublish();
 
         return back()->with('success', 'Obituary page has been unpublished successfully.');
+    }
+
+    public function rephraseText(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'text' => 'required|string|max:2000',
+                'field_type' => 'required|string|in:biography,favorite_memory,achievements,hobbies_interests,notes'
+            ]);
+
+            $apiKey = env('OPENAI_API_KEY');
+
+            if (!$apiKey) {
+                return response()->json([
+                    'error' => 'OpenAI API key is not configured. Please contact the administrator.'
+                ], 500);
+            }
+
+            // Test mode - return mock response if key starts with 'test-'
+            if (str_starts_with($apiKey, 'test-')) {
+                return response()->json([
+                    'original_text' => $validated['text'],
+                    'rephrased_text' => 'TEST MODE: This is a test rephrased version of your text: ' . $validated['text'],
+                    'field_type' => $validated['field_type']
+                ]);
+            }
+
+            // Hugging Face free model option
+            if (str_starts_with($apiKey, 'hf-free')) {
+                return $this->rephraseWithHuggingFace($validated);
+            }
+
+            // Simple rules only (completely free)
+            if (str_starts_with($apiKey, 'simple-free')) {
+                return $this->simpleRephrase($validated);
+            }
+
+            // Real OpenAI API call
+            $fieldPrompts = [
+                'biography' => 'Please rephrase this biography text to be more eloquent, respectful, and well-written while maintaining all personal details and the same meaning. Keep it suitable for an obituary page:',
+                'favorite_memory' => 'Please rephrase this favorite memory text to be more touching, eloquent, and well-written while preserving all the personal details and emotional significance:',
+                'achievements' => 'Please rephrase this achievements text to be more professionally written and respectful while maintaining all accomplishments and details:',
+                'hobbies_interests' => 'Please rephrase this hobbies and interests text to be more eloquent and well-written while preserving all the personal interests and activities mentioned:',
+                'notes' => 'Please rephrase this family notes and messages text to be more respectful, well-written, and appropriate for an obituary page while maintaining all important information:'
+            ];
+
+            $prompt = $fieldPrompts[$validated['field_type']] ?? $fieldPrompts['biography'];
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])->withOptions([
+                'verify' => false, // Disable SSL verification for development
+            ])->timeout(30)->post('https://api.openai.com/v1/chat/completions', [
+                'model' => 'gpt-5',
+                'input' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'You are a helpful assistant that specializes in writing respectful, eloquent obituary content. Always maintain the same meaning and all personal details while improving the writing quality.'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt . "\n\n" . $validated['text']
+                    ]
+                ],
+                'max_tokens' => 500,
+                'temperature' => 0.7,
+            ]);
+
+            if (!$response->successful()) {
+                return response()->json([
+                    'error' => 'Failed to rephrase text. Please try again later.',
+                    'api_status' => $response->status(),
+                    'api_error' => $response->body()
+                ], 500);
+            }
+
+            $data = $response->json();
+            $rephrasedText = $data['choices'][0]['message']['content'] ?? '';
+
+            if (empty($rephrasedText)) {
+                return response()->json([
+                    'error' => 'No rephrased text was generated. Please try again.'
+                ], 500);
+            }
+
+            return response()->json([
+                'original_text' => $validated['text'],
+                'rephrased_text' => trim($rephrasedText),
+                'field_type' => $validated['field_type']
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'error' => 'An error occurred while rephrasing the text. Please try again later.',
+                'debug_message' => $e->getMessage(),
+                'debug_line' => $e->getLine()
+            ], 500);
+        }
+    }
+
+    private function rephraseWithHuggingFace($validated)
+    {
+        try {
+            $fieldPrompts = [
+                'biography' => 'Rephrase this biography to be more eloquent and respectful:',
+                'favorite_memory' => 'Rephrase this memory to be more touching and well-written:',
+                'achievements' => 'Rephrase these achievements to be more professional:',
+                'hobbies_interests' => 'Rephrase these hobbies and interests to be more eloquent:',
+                'notes' => 'Rephrase this family message to be more respectful:'
+            ];
+
+            $prompt = $fieldPrompts[$validated['field_type']] ?? $fieldPrompts['biography'];
+            $inputText = $prompt . " " . $validated['text'];
+
+            // Using Hugging Face Inference API (free tier)
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+            ])->withOptions([
+                'verify' => false,
+            ])->timeout(30)->post('https://api-inference.huggingface.co/models/facebook/bart-large-cnn', [
+                'inputs' => $inputText,
+                'parameters' => [
+                    'max_length' => 300,
+                    'min_length' => 50,
+                    'do_sample' => true,
+                    'temperature' => 0.7
+                ]
+            ]);
+
+            if (!$response->successful()) {
+                // Fallback to simple text processing
+                return $this->simpleRephrase($validated);
+            }
+
+            $data = $response->json();
+            $rephrasedText = $data[0]['generated_text'] ?? '';
+
+            if (empty($rephrasedText)) {
+                return $this->simpleRephrase($validated);
+            }
+
+            return response()->json([
+                'original_text' => $validated['text'],
+                'rephrased_text' => trim($rephrasedText),
+                'field_type' => $validated['field_type'],
+                'method' => 'huggingface'
+            ]);
+        } catch (\Exception $e) {
+            // Fallback to simple rephrase
+            return $this->simpleRephrase($validated);
+        }
+    }
+
+    private function simpleRephrase($validated)
+    {
+        // Simple rule-based text improvement (completely free)
+        $text = $validated['text'];
+
+        // Basic improvements
+        $text = trim($text);
+        $text = ucfirst($text); // Capitalize first letter
+        $text = preg_replace('/\s+/', ' ', $text); // Remove extra spaces
+        $text = str_replace(' i ', ' I ', $text); // Capitalize 'I'
+        $text = preg_replace('/\. +([a-z])/', '. ' . strtoupper('$1'), $text); // Capitalize after periods
+
+        // Add period if missing
+        if (!str_ends_with($text, '.') && !str_ends_with($text, '!') && !str_ends_with($text, '?')) {
+            $text .= '.';
+        }
+
+        // Field-specific improvements
+        $improvements = [
+            'biography' => [
+                'was a' => 'was a beloved',
+                'worked as' => 'served as',
+                'very' => 'deeply',
+                'good' => 'wonderful',
+                'nice' => 'kind',
+                'loved' => 'cherished'
+            ],
+            'favorite_memory' => [
+                'remember' => 'fondly remember',
+                'always' => 'will always',
+                'happy' => 'joyful',
+                'fun' => 'delightful'
+            ],
+            'achievements' => [
+                'got' => 'received',
+                'did' => 'accomplished',
+                'won' => 'achieved'
+            ],
+            'hobbies_interests' => [
+                'liked' => 'enjoyed',
+                'loved' => 'was passionate about',
+                'did' => 'pursued'
+            ],
+            'notes' => [
+                'family' => 'loving family',
+                'friends' => 'dear friends',
+                'miss' => 'deeply miss'
+            ]
+        ];
+
+        $fieldImprovements = $improvements[$validated['field_type']] ?? $improvements['biography'];
+
+        foreach ($fieldImprovements as $from => $to) {
+            $text = str_ireplace($from, $to, $text);
+        }
+
+        return response()->json([
+            'original_text' => $validated['text'],
+            'rephrased_text' => $text,
+            'field_type' => $validated['field_type'],
+            'method' => 'simple_rules'
+        ]);
     }
 }

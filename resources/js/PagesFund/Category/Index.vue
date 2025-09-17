@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
-import { computed, ref, watch, nextTick } from 'vue';
-import { permissionHelpers } from '@/composables/permissionHelpers';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
@@ -26,11 +26,11 @@ const canDeleteAnyCategory = can('delete-fund-category');
 const canRestoreCategory = can('restore-fund-category');
 
 const columns: Column[] = [
-  { key: 'id', label: 'Id', sortable: true },
+  // { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
   { key: 'description', label: 'Description', sortable: false },
-  { key: 'is_active', label: 'Status', sortable: true },
-  { key: 'sort_order', label: 'Sort Order', sortable: true },
+  // { key: 'is_active', label: 'Status', sortable: true },
+  // { key: 'sort_order', label: 'Sort Order', sortable: true },
 ];
 
 const showModal = ref(false);
@@ -48,7 +48,7 @@ const editingCategory = ref<Record<string, any>>();
 const deletingCategory = ref<Record<string, any> | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -80,13 +80,13 @@ const validateCategoryName = (name: string, excludeId?: number) => {
   if (!name || name.trim() === '') {
     return 'The category name cannot be empty.';
   }
-  
+
   const existingCategories = enhancedCategory.value.data;
   const duplicate = existingCategories.find((category: any) => {
     if (excludeId && category.id === excludeId) return false;
     return category.name.toLowerCase() === name.toLowerCase();
   });
-  
+
   return duplicate ? 'A category with this name already exists.' : null;
 };
 
@@ -120,19 +120,23 @@ function clearSearch() {
 }
 
 function restoreCategory(id: number) {
-  router.post(route('fund.categories.restore', id), {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    route('fund.categories.restore', id),
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function fetch(page = 1) {
-  if (!props.fetchUrl) return;
+  const url = props.fetchUrl || '/fund/categories';
   router.get(
-    props.fetchUrl,
+    url,
     {
       search: search.value,
       sort: sort.value,
@@ -143,6 +147,17 @@ function fetch(page = 1) {
     },
     { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
   );
+}
+
+// Add sortBy function
+function sortBy(column: string) {
+  if (sort.value === column) {
+    direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sort.value = column;
+    direction.value = 'asc';
+  }
+  fetch();
 }
 
 watch(
@@ -168,36 +183,42 @@ watch(showModal, (newValue) => {
 });
 
 // Watch for changes in category name to validate duplicates
-watch(() => form.name, () => {
-  // Don't validate if the form is empty (during reset)
-  if (!form.name || form.name.trim() === '') {
-    if (form.errors.name) form.clearErrors('name');
-    return;
-  }
-  
-  const error = validateCategoryName(form.name);
-  if (error) {
-    form.setError('name', error);
-  } else {
-    if (form.errors.name) form.clearErrors('name');
-  }
-});
+watch(
+  () => form.name,
+  () => {
+    // Don't validate if the form is empty (during reset)
+    if (!form.name || form.name.trim() === '') {
+      if (form.errors.name) form.clearErrors('name');
+      return;
+    }
+
+    const error = validateCategoryName(form.name);
+    if (error) {
+      form.setError('name', error);
+    } else {
+      if (form.errors.name) form.clearErrors('name');
+    }
+  },
+);
 
 // Watch for changes in edit form category name
-watch(() => editForm.name, () => {
-  // Don't validate if the form is empty (during reset)
-  if (!editForm.name || editForm.name.trim() === '') {
-    if (editForm.errors.name) form.clearErrors('name');
-    return;
-  }
-  
-  const error = validateCategoryName(editForm.name, editingCategory.value?.id);
-  if (error) {
-    editForm.setError('name', error);
-  } else {
-    if (editForm.errors.name) editForm.clearErrors('name');
-  }
-});
+watch(
+  () => editForm.name,
+  () => {
+    // Don't validate if the form is empty (during reset)
+    if (!editForm.name || editForm.name.trim() === '') {
+      if (editForm.errors.name) form.clearErrors('name');
+      return;
+    }
+
+    const error = validateCategoryName(editForm.name, editingCategory.value?.id);
+    if (error) {
+      editForm.setError('name', error);
+    } else {
+      if (editForm.errors.name) editForm.clearErrors('name');
+    }
+  },
+);
 
 const enhancedCategory = computed(() => {
   const c = props.categories || {};
@@ -211,7 +232,7 @@ const enhancedCategory = computed(() => {
 });
 
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCategory.value.last_page,
@@ -248,7 +269,7 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingCategory.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCategory.value.current_page,
@@ -306,7 +327,7 @@ function handlePageChange(event: Event) {
 
 const breadcrumbs = [
   { title: 'Fund', href: '/fund' },
-  { title: 'Categories', href: '/fund/categories' }
+  { title: 'Categories', href: '/fund/categories' },
 ];
 </script>
 
@@ -316,16 +337,29 @@ const breadcrumbs = [
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Fund Categories</h2>
-        <Button v-if="canCreateCategory" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
-          <Plus class="w-[1rem] h-[1rem]" />
+        <Button
+          v-if="canCreateCategory"
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+        >
+          <Plus class="h-[1rem] w-[1rem]" />
           <span>Add Category</span>
         </Button>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
@@ -335,40 +369,40 @@ const breadcrumbs = [
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
         </div>
       </div>
     </DatatableHeader>
-    
+
     <div v-if="canReadAnyCategory">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ categories?.total || 0 }}</span> total categories
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="categories?.prev_page_url" 
-            @click="fetch(categories.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="categories?.prev_page_url"
+            @click="fetch(categories.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="categories?.last_page && categories.last_page > 1"
-              :value="categories?.current_page" 
+              :value="categories?.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in categories.last_page" :key="page" :value="page">
                 {{ page }}
@@ -376,21 +410,19 @@ const breadcrumbs = [
             </select>
             <span>of {{ categories?.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="categories?.next_page_url" 
-            @click="fetch(categories.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="categories?.next_page_url"
+            @click="fetch(categories.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">
-            Categories
-          </span>
+          <span class="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium text-teal-800"> Categories </span>
         </div>
       </div>
 
@@ -401,36 +433,63 @@ const breadcrumbs = [
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                  {{ col.label }}
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="border-b p-3 font-semibold text-gray-700"
+                  :class="col.sortable ? 'cursor-pointer hover:bg-blue-100' : ''"
+                  @click="col.sortable ? sortBy(col.key) : null"
+                >
+                  <div class="flex items-center gap-1">
+                    {{ col.label }}
+                    <template v-if="col.sortable">
+                      <span v-if="sort === col.key" class="text-blue-600">
+                        {{ direction === 'asc' ? '↑' : '↓' }}
+                      </span>
+                      <span v-else class="text-gray-400">↕</span>
+                    </template>
+                  </div>
                 </th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCategory.data" :key="row.id" :id="`category-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedCategory.data"
+                :key="row.id"
+                :id="`category-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
                     <div class="flex items-center gap-2">
-                      <Button v-if="canUpdateAnyCategory" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition p-2">
-                        <Pencil class="w-[1rem] h-[1rem]" />
+                      <Button
+                        v-if="canUpdateAnyCategory"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
+                      >
+                        <Pencil class="h-[1rem] w-[1rem]" />
                       </Button>
                     </div>
                   </template>
                   <template v-else>
-                    <Button v-if="canRestoreCategory" @click="restoreCategory(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition p-2">
-                      <RotateCcw class="w-[1rem] h-[1rem]" />
+                    <Button
+                      v-if="canRestoreCategory"
+                      @click="restoreCategory(row.id)"
+                      class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200"
+                    >
+                      <RotateCcw class="h-[1rem] w-[1rem]" />
                     </Button>
                   </template>
                 </td>
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   <template v-if="col.key === 'is_active'">
-                    <span :class="[
-                      'px-2 py-1 rounded-full text-xs font-medium',
-                      row[col.key] 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    ]">
+                    <span
+                      :class="[
+                        'rounded-full px-2 py-1 text-xs font-medium',
+                        row[col.key] ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800',
+                      ]"
+                    >
                       {{ row[col.key] ? 'Active' : 'Inactive' }}
                     </span>
                   </template>
@@ -440,8 +499,12 @@ const breadcrumbs = [
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyCategory">
-                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition p-2">
-                      <Trash class="w-[1rem] h-[1rem]" />
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
+                    >
+                      <Trash class="h-[1rem] w-[1rem]" />
                     </Button>
                   </template>
                 </td>
@@ -456,8 +519,17 @@ const breadcrumbs = [
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
+        <div
+          class="bg-opacity-50 absolute inset-0 bg-black"
+          @click="
+            () => {
+              showModal = false;
+              form.reset();
+              form.clearErrors();
+            }
+          "
+        ></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Fund Category</h3>
             <form @submit.prevent="submit">
@@ -468,7 +540,11 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
-                <textarea v-model="form.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <textarea
+                  v-model="form.description"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+                  rows="3"
+                ></textarea>
                 <div v-if="form.errors.description" class="mt-1 text-sm text-red-500">{{ form.errors.description }}</div>
               </div>
               <div class="mb-3">
@@ -486,15 +562,21 @@ const breadcrumbs = [
                 <Button
                   variant="destructive"
                   type="button"
-                  @click="() => { showModal = false; form.reset(); form.clearErrors(); }"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  @click="
+                    () => {
+                      showModal = false;
+                      form.reset();
+                      form.clearErrors();
+                    }
+                  "
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing || form.errors.name"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -519,7 +601,11 @@ const breadcrumbs = [
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Description</label>
-                <textarea v-model="editForm.description" class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200" rows="3"></textarea>
+                <textarea
+                  v-model="editForm.description"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-200"
+                  rows="3"
+                ></textarea>
                 <div v-if="editForm.errors.description" class="mt-1 text-sm text-red-500">{{ editForm.errors.description }}</div>
               </div>
               <div class="mb-3">
@@ -538,14 +624,14 @@ const breadcrumbs = [
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing || editForm.errors.name"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -563,14 +649,15 @@ const breadcrumbs = [
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Fund Category</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingCategory?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingCategory?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -579,7 +666,7 @@ const breadcrumbs = [
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -605,14 +692,18 @@ const breadcrumbs = [
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444;
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -622,7 +713,7 @@ const breadcrumbs = [
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -632,7 +723,7 @@ const breadcrumbs = [
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -640,7 +731,11 @@ const breadcrumbs = [
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

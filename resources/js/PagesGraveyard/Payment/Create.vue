@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { useToast } from '@/composables/useToast';
 
 interface ServiceType {
   id: number;
@@ -82,6 +83,9 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { success, error } = useToast();
+
 // Form setup
 const form = useForm({
   booking_type: props.bookingType,
@@ -277,12 +281,12 @@ const addService = (serviceId: number) => {
   const isServicePaid = service.type !== 'free';
 
   if (isServiceFree && hasPaidServices.value) {
-    alert('You cannot add free services when paid services are selected. Please remove all paid services first.');
+    error('You cannot add free services when paid services are selected. Please remove all paid services first.');
     return;
   }
 
   if (isServicePaid && hasFreeServices.value) {
-    alert('You cannot add paid services when free services are selected. Please remove all free services first.');
+    error('You cannot add paid services when free services are selected. Please remove all free services first.');
     return;
   }
 
@@ -355,7 +359,19 @@ const submit = () => {
     payment_method_id: hasFreeServices.value ? null : parseInt(form.payment_method_id) || null,
   };
 
-  form.transform((data) => formData).post(route('graveyard.payments.store'));
+  form.transform((data) => formData).post(route('graveyard.payments.store'), {
+    onSuccess: () => {
+      if (hasFreeServices.value) {
+        success('Free service confirmed successfully!');
+      } else {
+        success('Payment recorded successfully!');
+      }
+    },
+    onError: (errors) => {
+      console.error('Payment submission error:', errors);
+      error('Failed to record payment. Please check the form and try again.');
+    },
+  });
 };
 </script>
 

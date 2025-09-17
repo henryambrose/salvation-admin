@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, FileText, Plus, QrCode, Search, Share2, Globe, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
-import { permissionHelpers } from '@/composables/permissionHelpers';
+import { useToast } from '@/composables/useToast';
 
 interface ObituaryPage {
   id: number;
@@ -20,6 +21,8 @@ interface ObituaryPage {
   view_count: number;
   qr_scan_count: number;
   created_at: string;
+  can_be_accessed_publicly: boolean;
+  payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
   permanent_grave_booking?: {
     id: number;
     booking_reference: string;
@@ -50,6 +53,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { success, error, warning } = useToast();
+
 // Initialize permission helpers
 const { can } = permissionHelpers();
 
@@ -64,11 +69,11 @@ const performSearch = () => {
   const params: any = {
     search: search.value,
   };
-  
+
   if (serviceType.value && serviceType.value !== 'all') {
     params.service_type = serviceType.value;
   }
-  
+
   router.get('/graveyard/obituaries', params, {
     preserveState: true,
     replace: true,
@@ -98,9 +103,7 @@ const getDeceasedName = (obituary: ObituaryPage): string => {
 };
 
 const getBookingReference = (obituary: ObituaryPage): string => {
-  return obituary.permanent_grave_booking?.booking_reference || 
-         obituary.temporary_grave_booking?.booking_reference || 
-         'N/A';
+  return obituary.permanent_grave_booking?.booking_reference || obituary.temporary_grave_booking?.booking_reference || 'N/A';
 };
 
 const serviceTypeColors = {
@@ -112,30 +115,55 @@ const viewObituaryPage = (uuid: string) => {
   window.open(`/obituary/${uuid}`, '_blank');
 };
 
-const copyShareLink = (uuid: string) => {
+const copyShareLink = (uuid: string, obituary?: any) => {
   const url = `${window.location.origin}/obituary/${uuid}`;
   navigator.clipboard.writeText(url);
-  // Could add toast notification here
+
+  if (obituary && !obituary.can_be_accessed_publicly) {
+    warning(
+      `Link copied! Note: This obituary page requires payment completion before it can be viewed publicly. Current status: ${obituary.payment_status}`,
+    );
+  } else {
+    success('Share link copied to clipboard!');
+  }
 };
 
 const publishObituary = (obituaryUuid: string) => {
-  router.post(`/graveyard/obituaries/${obituaryUuid}/publish`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Refresh the current page to show updated status
-      router.reload({ only: ['obituaries'] });
-    }
-  });
+  router.post(
+    `/graveyard/obituaries/${obituaryUuid}/publish`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        success('Obituary published successfully!');
+        // Refresh the current page to show updated status
+        router.reload({ only: ['obituaries'] });
+      },
+      onError: (errors) => {
+        console.error('Error publishing obituary:', errors);
+        error('Failed to publish obituary. Please try again.');
+      },
+    },
+  );
 };
 
 const unpublishObituary = (obituaryUuid: string) => {
-  router.post(`/graveyard/obituaries/${obituaryUuid}/unpublish`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      // Refresh the current page to show updated status
-      router.reload({ only: ['obituaries'] });
-    }
-  });
+  router.post(
+    `/graveyard/obituaries/${obituaryUuid}/unpublish`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        success('Obituary unpublished successfully!');
+        // Refresh the current page to show updated status
+        router.reload({ only: ['obituaries'] });
+      },
+      onError: (errors) => {
+        console.error('Error unpublishing obituary:', errors);
+        error('Failed to unpublish obituary. Please try again.');
+      },
+    },
+  );
 };
 </script>
 
@@ -150,10 +178,8 @@ const unpublishObituary = (obituaryUuid: string) => {
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-base font-semibold leading-6 text-gray-900">Obituary Management</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">
-                  Manage all obituary pages and memorial content
-                </p>
+                <h3 class="text-base leading-6 font-semibold text-gray-900">Obituary Management</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage all obituary pages and memorial content</p>
               </div>
               <Button as-child class="bg-purple-600 hover:bg-purple-700">
                 <Link href="/graveyard/obituaries/create">
@@ -168,13 +194,9 @@ const unpublishObituary = (obituaryUuid: string) => {
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-1 items-center space-x-4">
-                <div class="relative flex-1 max-w-md">
-                  <Search class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    v-model="search"
-                    placeholder="Search by name or booking reference..."
-                    class="pl-10"
-                  />
+                <div class="relative max-w-md flex-1">
+                  <Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input v-model="search" placeholder="Search by name or booking reference..." class="pl-10" />
                 </div>
                 <Select v-model="serviceType">
                   <SelectTrigger class="w-[180px]">
@@ -192,7 +214,7 @@ const unpublishObituary = (obituaryUuid: string) => {
 
           <!-- Obituary List -->
           <div class="p-6">
-            <div v-if="!obituaries?.data?.length" class="text-center py-12">
+            <div v-if="!obituaries?.data?.length" class="py-12 text-center">
               <FileText class="mx-auto h-12 w-12 text-gray-400" />
               <h3 class="mt-2 text-sm font-medium text-gray-900">No obituaries found</h3>
               <p class="mt-1 text-sm text-gray-500">Get started by creating a new obituary page.</p>
@@ -207,14 +229,14 @@ const unpublishObituary = (obituaryUuid: string) => {
             </div>
 
             <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Card v-for="obituary in obituaries?.data || []" :key="obituary.id" class="hover:shadow-md transition-shadow">
+              <Card v-for="obituary in obituaries?.data || []" :key="obituary.id" class="transition-shadow hover:shadow-md">
                 <CardHeader class="pb-3">
                   <div class="flex items-start justify-between">
                     <div>
                       <CardTitle class="text-lg">{{ getDeceasedName(obituary) }}</CardTitle>
                       <p class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</p>
                     </div>
-                    <div class="flex gap-2 flex-wrap">
+                    <div class="flex flex-wrap gap-2">
                       <Badge :class="serviceTypeColors[obituary.service_type]">
                         {{ obituary.service_type }}
                       </Badge>
@@ -232,29 +254,27 @@ const unpublishObituary = (obituaryUuid: string) => {
                       <span>Views: {{ obituary.view_count }}</span>
                       <span>QR Scans: {{ obituary.qr_scan_count }}</span>
                     </div>
-                    
+
                     <div class="flex space-x-2">
                       <Button
                         size="sm"
                         variant="outline"
                         @click="viewObituaryPage(obituary.uuid)"
-                        class="flex-1"
+                        :disabled="!obituary.can_be_accessed_publicly"
+                        :class="obituary.can_be_accessed_publicly ? 'flex-1' : 'flex-1 cursor-not-allowed opacity-50'"
+                        :title="
+                          obituary.can_be_accessed_publicly
+                            ? 'View public obituary page'
+                            : `Cannot view public page - Status: ${obituary.payment_status}`
+                        "
                       >
                         <Eye class="mr-1 h-3 w-3" />
-                        View Public
+                        {{ obituary.can_be_accessed_publicly ? 'View Public' : 'Not Available' }}
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        @click="copyShareLink(obituary.uuid)"
-                      >
+                      <Button size="sm" variant="outline" @click="copyShareLink(obituary.uuid, obituary)">
                         <Share2 class="h-3 w-3" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        as-child
-                      >
+                      <Button size="sm" variant="outline" as-child>
                         <Link :href="`/graveyard/obituaries/${obituary.uuid}`">
                           <QrCode class="mr-1 h-3 w-3" />
                           Manage
@@ -263,7 +283,7 @@ const unpublishObituary = (obituaryUuid: string) => {
                     </div>
 
                     <!-- Publish/Unpublish Actions -->
-                    <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2 pt-2 border-t border-gray-100">
+                    <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2 border-t border-gray-100 pt-2">
                       <Button
                         v-if="!obituary.is_published && canPublishObituary"
                         size="sm"
@@ -284,11 +304,11 @@ const unpublishObituary = (obituaryUuid: string) => {
                         <EyeOff class="mr-1 h-3 w-3" />
                         Unpublish
                       </Button>
-                      <div v-if="obituary.is_published && obituary.published_at" class="text-xs text-gray-500 self-center">
+                      <div v-if="obituary.is_published && obituary.published_at" class="self-center text-xs text-gray-500">
                         Published {{ new Date(obituary.published_at).toLocaleDateString() }}
                       </div>
                       <!-- Show status without buttons if user doesn't have permissions -->
-                      <div v-if="!canPublishObituary && !canUnpublishObituary" class="text-xs text-gray-500 self-center">
+                      <div v-if="!canPublishObituary && !canUnpublishObituary" class="self-center text-xs text-gray-500">
                         Status: {{ obituary.is_published ? 'Published' : 'Draft' }}
                       </div>
                     </div>
@@ -303,8 +323,8 @@ const unpublishObituary = (obituaryUuid: string) => {
                 Showing {{ obituaries?.meta?.from }} to {{ obituaries?.meta?.to }} of {{ obituaries?.meta?.total }} results
               </div>
               <div class="flex space-x-1">
-                <Button 
-                  v-for="link in obituaries?.links || []" 
+                <Button
+                  v-for="link in obituaries?.links || []"
                   :key="link.label"
                   size="sm"
                   :variant="link.active ? 'default' : 'outline'"

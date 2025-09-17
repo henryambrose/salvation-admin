@@ -10,6 +10,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useToast } from '@/composables/useToast';
 
 interface TemporaryGraveBooking {
   id: number;
@@ -62,6 +63,8 @@ interface Props {
 
 const props = defineProps<Props>();
 
+const { success, error, warning } = useToast();
+
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
 const transferDue = ref(props.filters.transfer_due || 'all');
@@ -113,6 +116,7 @@ const clearFilters = () => {
   status.value = 'all';
   transferDue.value = 'all';
   applyFilters();
+  success('Filters cleared successfully!');
 };
 
 const formatCurrency = (amount: number) => {
@@ -157,18 +161,18 @@ const canDeleteBooking = (booking: TemporaryGraveBooking) => {
 
 const deleteBooking = (booking: TemporaryGraveBooking) => {
   if (!canDeleteBooking(booking)) {
-    alert('Only pending bookings can be deleted.');
+    error('Only pending bookings can be deleted.');
     return;
   }
 
   if (confirm(`Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`)) {
     router.delete(route('graveyard.temporary-grave-bookings.destroy', booking.id), {
       onSuccess: () => {
-        // Success message will be shown via flash message
+        success('Temporary grave booking deleted successfully!');
       },
       onError: (errors) => {
         console.error('Failed to delete booking:', errors);
-        alert('Failed to delete booking. Please try again.');
+        error('Failed to delete booking. Please try again.');
       },
     });
   }

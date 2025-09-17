@@ -327,8 +327,10 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { permissionHelpers } from '@/composables/permissionHelpers'
+import { useToast } from '@/composables/useToast'
 
 const { can } = permissionHelpers()
+const { success, error } = useToast()
 
 interface Column {
   key: string
@@ -539,10 +541,12 @@ const saveSingleRecord = async (item: any) => {
     if (index > -1) {
       modifiedRecords.value.splice(index, 1)
     }
-    
-  } catch (error) {
-    console.error('Error saving record:', error)
-    alert('Failed to save record. Please try again.')
+
+    success('Record saved successfully!')
+
+  } catch (err) {
+    console.error('Error saving record:', err)
+    error('Failed to save record. Please try again.')
   } finally {
     saving.value = false
   }
@@ -572,11 +576,11 @@ const saveBulkChanges = async () => {
     modifiedRecords.value = []
     editingData.value = {}
     
-    alert(`${changes.length} records updated successfully!`)
-    
-  } catch (error) {
-    console.error('Error saving bulk changes:', error)
-    alert('Failed to save changes. Please try again.')
+    success(`${changes.length} records updated successfully!`)
+
+  } catch (err) {
+    console.error('Error saving bulk changes:', err)
+    error('Failed to save changes. Please try again.')
   } finally {
     saving.value = false
   }
@@ -586,16 +590,23 @@ const discardChanges = () => {
   selectedRecords.value = []
   modifiedRecords.value = []
   editingData.value = {}
+  success('Changes discarded successfully!')
 }
 
 const exportSelected = () => {
+  if (selectedRecords.value.length === 0) {
+    error('Please select records to export.')
+    return
+  }
+
   const dataToExport = selectedRecords.value.map(id => {
     const item = props.data.find(item => item.id === id)
     return editingData.value[id] || item
   })
-  
+
   const csv = convertToCSV(dataToExport)
   downloadCSV(csv, `member_data_export_${new Date().toISOString().split('T')[0]}.csv`)
+  success(`${selectedRecords.value.length} records exported successfully!`)
 }
 
 const convertToCSV = (data: any[]) => {

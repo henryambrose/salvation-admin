@@ -302,6 +302,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { useForm } from '@inertiajs/vue3';
 import { Calendar, CheckCircle, X } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
+import { useToast } from '@/composables/useToast';
 
 defineOptions({
   layout: AppLayout,
@@ -314,6 +315,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { success, error } = useToast();
 
 // Form state
 const form = useForm({
@@ -423,27 +426,27 @@ async function fetchBookedMasses() {
 function submitForm() {
   // Validate form
   if (!form.mass_date || !form.mass_type_id || !form.mass_intention_type_id || !form.payment_method_id) {
-    alert('Please fill in all required fields');
+    error('Please fill in all required fields');
     return;
   }
 
   if (form.member_type === 'member' && !form.member_id) {
-    alert('Please select a member');
+    error('Please select a member');
     return;
   }
 
   if (form.member_type === 'external' && !form.external_name) {
-    alert('Please enter the name for non-member');
+    error('Please enter the name for non-member');
     return;
   }
 
   if (!form.intention_for) {
-    alert('Please enter what the intention is for');
+    error('Please enter what the intention is for');
     return;
   }
 
   if (!form.status) {
-    alert('Please select a status');
+    error('Please select a status');
     return;
   }
 
@@ -452,13 +455,16 @@ function submitForm() {
   // Submit the form
   form.post(route('fund.mass-intentions.store'), {
     onSuccess: () => {
+      success('Mass intention booked successfully!');
       // Reset form and show success message
       form.reset();
       selectedMember.value = null;
       bookedMasses.value = [];
       isSubmitting.value = false;
     },
-    onError: () => {
+    onError: (errors) => {
+      console.error('Form submission errors:', errors);
+      error('Please check the form for errors and try again.');
       isSubmitting.value = false;
     },
   });

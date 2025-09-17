@@ -225,7 +225,22 @@ class ObituaryPolicy
      */
     public function preview(User $user, ObituaryPage $obituary): bool
     {
-        // Use the same logic as view for now
+        // Superadmin can preview all obituaries
+        if ($user->is_superadmin) {
+            return true;
+        }
+
+        // Admin users can preview all obituaries
+        if ($user->hasRole(['admin', 'superadmin', 'super admin'])) {
+            return true;
+        }
+
+        // If user can view any obituaries (has access to management interface)
+        if ($this->viewAny($user)) {
+            return true;
+        }
+
+        // Fallback to specific obituary view permission
         return $this->view($user, $obituary);
     }
 

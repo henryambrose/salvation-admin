@@ -179,6 +179,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
     // Obituary Management (Admin Routes)
     Route::prefix('graveyard/obituaries')->name('graveyard.obituaries.')->group(function () {
+        Route::get('/cleanup', [ObituaryManagementController::class, 'cleanupPage'])->name('cleanup');
         Route::get('/', [ObituaryManagementController::class, 'index'])->name('index');
         Route::get('/create', [ObituaryManagementController::class, 'create'])->name('create');
         Route::post('/', [ObituaryManagementController::class, 'store'])->name('store');
@@ -186,6 +187,11 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{obituary}/edit', [ObituaryManagementController::class, 'edit'])->name('edit');
         Route::put('/{obituary}', [ObituaryManagementController::class, 'update'])->name('update');
         Route::delete('/{obituary}', [ObituaryManagementController::class, 'destroy'])->name('destroy');
+
+        // File cleanup management
+
+        Route::post('/cleanup/scan', [ObituaryManagementController::class, 'scanOrphanedFiles'])->name('cleanup.scan');
+        Route::post('/cleanup/execute', [ObituaryManagementController::class, 'executeCleanup'])->name('cleanup.execute');
 
 
 
@@ -212,6 +218,9 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         // Publishing management
         Route::post('/{obituary}/publish', [ObituaryManagementController::class, 'publish'])->name('publish');
         Route::post('/{obituary}/unpublish', [ObituaryManagementController::class, 'unpublish'])->name('unpublish');
+
+        // Text rephrasing API
+        Route::post('/rephrase-text', [ObituaryManagementController::class, 'rephraseText'])->name('rephrase-text');
     });
 
     // Permission denied route for graveyard
@@ -290,13 +299,37 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
 Route::get('/obituary/{uuid}', function (string $uuid) {
     $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences'])
         ->where('uuid', $uuid)
-        ->where('is_active', true)
-        ->where('is_public', true)
-        ->where('is_published', true)
-        ->firstOrFail();
+        ->first();
 
-    // Check if obituary can be accessed publicly (payment completed)
-    if (!$obituary->canBeAccessedPublicly()) {
+    // If obituary doesn't exist at all
+    if (!$obituary) {
+        return Inertia::render('Public/Obituary/NotFound', [
+            'message' => 'The requested obituary page could not be found.',
+        ]);
+    }
+
+    // Check if obituary is inactive
+    if (!$obituary->is_active) {
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => 'This obituary page has been deactivated.',
+            'paymentStatus' => 'inactive',
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'inactive'
+        ]);
+    }
+
+    // Check if obituary is not public
+    if (!$obituary->is_public) {
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => 'This obituary page is set to private and cannot be accessed publicly.',
+            'paymentStatus' => 'private',
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'private'
+        ]);
+    }
+
+    // First check payment status - this is the primary blocker
+    if (!$obituary->hasCompletedPayment()) {
         $paymentStatus = $obituary->getPaymentStatus();
         $message = match ($paymentStatus) {
             'pending' => 'This obituary page is not available yet. Payment is still pending.',
@@ -308,7 +341,18 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         return Inertia::render('Public/Obituary/PaymentPending', [
             'message' => $message,
             'paymentStatus' => $paymentStatus,
-            'obituaryName' => $obituary->deceased_name
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'payment'
+        ]);
+    }
+
+    // If payment is complete but not published - this is an admin/review issue
+    if (!$obituary->is_published) {
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => 'This obituary page is under review and will be published shortly. Payment has been received.',
+            'paymentStatus' => 'paid_but_unpublished',
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'review'
         ]);
     }
 

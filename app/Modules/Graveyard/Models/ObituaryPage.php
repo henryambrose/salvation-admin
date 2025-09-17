@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Graveyard\Models\PermanentGraveBooking;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
+use Illuminate\Support\Facades\Auth;
 
 class ObituaryPage extends Model
 {
@@ -215,7 +216,7 @@ class ObituaryPage extends Model
         return $this->update([
             'is_published' => true,
             'published_at' => now(),
-            'published_by' => $userId ?: auth()->id(),
+            'published_by' => $userId ?: Auth::id(),
         ]);
     }
 

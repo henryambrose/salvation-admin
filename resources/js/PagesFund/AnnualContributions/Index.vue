@@ -7,6 +7,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
+import { Column } from '@/types';
 
 const { can } = permissionHelpers();
 
@@ -35,6 +36,16 @@ const canUpdateAnyAnnualContribution = can('update-fund-annual-contribution') ||
 const canDeleteAnyAnnualContribution = can('delete-fund-annual-contribution') || true;
 const canRestoreAnnualContribution = can('restore-fund-annual-contribution') || true;
 
+// Define columns for sorting
+const columns: Column[] = [
+  { key: 'family_no', label: 'Family & Name', sortable: true },
+  { key: 'start_date', label: 'Period', sortable: true },
+  { key: 'fund_category_id', label: 'Category', sortable: false },
+  { key: 'amount', label: 'Amount', sortable: true },
+  { key: 'payment_method_id', label: 'Payment', sortable: false },
+  { key: 'created_at', label: 'Date', sortable: true },
+];
+
 const showDeleteModal = ref(false);
 const deletingContribution = ref<Record<string, any> | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
@@ -60,6 +71,8 @@ const endDate = ref(props.filters?.end_date || '');
 const categoryId = ref(props.filters?.category_id || '');
 const paymentMethodId = ref(props.filters?.payment_method_id || '');
 const perPage = ref(props.filters?.per_page || 10);
+const sort = ref(props.filters?.sort || '');
+const direction = ref(props.filters?.direction || 'asc');
 
 const partialOnly = ['annualContributions', 'filters'];
 const searchTimeout = ref<number | null>(null);
@@ -98,6 +111,8 @@ function fetch(page = 1) {
       category_id: categoryId.value,
       payment_method_id: paymentMethodId.value,
       per_page: perPage.value,
+      sort: sort.value,
+      direction: direction.value,
       isArchived: isArchived.value ? 'true' : 'false',
       page,
     },
@@ -105,8 +120,19 @@ function fetch(page = 1) {
   );
 }
 
+// Add sortBy function
+function sortBy(column: string) {
+  if (sort.value === column) {
+    direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sort.value = column;
+    direction.value = 'asc';
+  }
+  fetch();
+}
+
 watch(
-  [search, familyNo, startDate, endDate, categoryId, paymentMethodId, perPage, isArchived],
+  [search, familyNo, startDate, endDate, categoryId, paymentMethodId, perPage, sort, direction, isArchived],
   () => {
     if (searchTimeout.value) {
       clearTimeout(searchTimeout.value);
@@ -382,12 +408,23 @@ const breadcrumbs = [
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Family & Name</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Period</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Category</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Amount</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Payment</th>
-                <th class="border-b p-3 font-semibold text-gray-700">Date</th>
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="border-b p-3 font-semibold text-gray-700"
+                  :class="col.sortable ? 'cursor-pointer hover:bg-blue-100' : ''"
+                  @click="col.sortable ? sortBy(col.key) : null"
+                >
+                  <div class="flex items-center gap-1">
+                    {{ col.label }}
+                    <template v-if="col.sortable">
+                      <span v-if="sort === col.key" class="text-blue-600">
+                        {{ direction === 'asc' ? '↑' : '↓' }}
+                      </span>
+                      <span v-else class="text-gray-400">↕</span>
+                    </template>
+                  </div>
+                </th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>

@@ -312,11 +312,14 @@ import { router } from '@inertiajs/vue3';
 import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
 import { computed } from 'vue';
+import { useToast } from '@/composables/useToast';
+
+const { success, error } = useToast();
 
 async function downloadPNG(full = false) {
   try {
     const node = document.getElementById('family-root');
-    if (!node) return alert('Capture root not found');
+    if (!node) return error('Capture root not found');
 
     // Optional: wait for webfonts/icons to load so glyphs don’t disappear
     if (document.fonts?.ready) await document.fonts.ready;
@@ -335,9 +338,10 @@ async function downloadPNG(full = false) {
 
     cleanup?.();
     saveAs(dataUrl, `family-${props.type}-${props.id}.png`);
+    success('Family tree image downloaded successfully!');
   } catch (e) {
     console.error(e);
-    alert('Failed to capture image. See console for details.');
+    error('Failed to capture image. Please try again.');
   }
 }
 /** Make the snapshot stable: pause animations, un-sticky, etc. */

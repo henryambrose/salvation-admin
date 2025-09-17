@@ -9,6 +9,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, CheckCircle, MapPin, Phone, Search, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useToast } from '@/composables/useToast';
 
 interface ValidMember {
   id: number;
@@ -46,6 +47,8 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const { success, error } = useToast();
 
 const form = useForm({
   permanent_grave_id: null as number | null,
@@ -92,8 +95,9 @@ const searchGraves = async () => {
 
     const data = await response.json();
     searchResults.value = data.graves;
-  } catch (error) {
-    console.error('Search failed:', error);
+  } catch (err) {
+    console.error('Search failed:', err);
+    error('Failed to search graves. Please try again.');
   } finally {
     isSearching.value = false;
   }
@@ -184,24 +188,29 @@ const formatDate = (date: string) => {
 const submit = () => {
   // Check if all required fields are filled
   if (!form.permanent_grave_id) {
-    alert('Please select a permanent grave');
+    error('Please select a permanent grave');
     return;
   }
 
   if (!form.valid_member_id) {
-    alert('Please select a valid member');
+    error('Please select a valid member');
     return;
   }
 
   if (!form.died_on || !form.buried_on || !form.cause_of_death || !form.applicant_name || !form.contact_no) {
-    alert('Please fill in all required fields');
+    error('Please fill in all required fields');
     return;
   }
 
   form.post(route('graveyard.permanent-grave-bookings.store'), {
     onStart: () => {},
-    onSuccess: (page) => {},
-    onError: (errors) => {},
+    onSuccess: (page) => {
+      success('Permanent grave booking created successfully!');
+    },
+    onError: (errors) => {
+      console.error('Booking creation error:', errors);
+      error('Failed to create permanent grave booking. Please check the form and try again.');
+    },
     onFinish: () => {},
   });
 };

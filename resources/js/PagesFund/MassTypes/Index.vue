@@ -26,12 +26,12 @@ const canDeleteAnyMassType = can('delete-fund-mass-type') || true;
 const canRestoreMassType = can('restore-fund-mass-type') || true;
 
 const columns: Column[] = [
-  { key: 'id', label: 'Id', sortable: true },
+  // { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
   { key: 'description', label: 'Description', sortable: false },
   { key: 'default_time', label: 'Default Time', sortable: true },
-  { key: 'sort_order', label: 'Sort Order', sortable: true },
-  { key: 'is_active', label: 'Status', sortable: true },
+  // { key: 'sort_order', label: 'Sort Order', sortable: true },
+  // { key: 'is_active', label: 'Status', sortable: true },
 ];
 
 const showModal = ref(false);
@@ -134,9 +134,9 @@ function restoreMassType(id: number) {
 }
 
 function fetch(page = 1) {
-  if (!props.fetchUrl) return;
+  const url = props.fetchUrl || '/fund/mass-types';
   router.get(
-    props.fetchUrl,
+    url,
     {
       search: search.value,
       sort: sort.value,
@@ -147,6 +147,17 @@ function fetch(page = 1) {
     },
     { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
   );
+}
+
+// Add sortBy function
+function sortBy(column: string) {
+  if (sort.value === column) {
+    direction.value = direction.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sort.value = column;
+    direction.value = 'asc';
+  }
+  fetch();
 }
 
 watch(
@@ -363,8 +374,22 @@ const breadcrumbs = [
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                  {{ col.label }}
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="border-b p-3 font-semibold text-gray-700"
+                  :class="col.sortable ? 'cursor-pointer hover:bg-blue-100' : ''"
+                  @click="col.sortable ? sortBy(col.key) : null"
+                >
+                  <div class="flex items-center gap-1">
+                    {{ col.label }}
+                    <template v-if="col.sortable">
+                      <span v-if="sort === col.key" class="text-blue-600">
+                        {{ direction === 'asc' ? '↑' : '↓' }}
+                      </span>
+                      <span v-else class="text-gray-400">↕</span>
+                    </template>
+                  </div>
                 </th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>

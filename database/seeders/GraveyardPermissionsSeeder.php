@@ -180,7 +180,7 @@ class GraveyardPermissionsSeeder extends Seeder
         }
 
         // Assign all permissions to super admin role
-        $superAdminRole = Role::where('name', 'super-admin')->first();
+        $superAdminRole = Role::where('name', 'super admin')->first();
         if ($superAdminRole) {
             $superAdminRole->givePermissionTo($graveyardPermissions);
         }

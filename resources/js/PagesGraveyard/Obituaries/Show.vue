@@ -105,8 +105,11 @@ const isPaymentCompleted = computed(() => {
   return props.obituary.payments?.some(p => p.payment_status === 'completed');
 });
 
-// Public URL
+// Public URL for sharing
 const publicUrl = computed(() => `${window.location.origin}/obituary/${props.obituary.uuid}`);
+
+// Preview URL for admin viewing (bypasses access restrictions)
+const previewUrl = computed(() => `${window.location.origin}/obituary/${props.obituary.uuid}/preview`);
 
 // Payment form
 const paymentForm = useForm({
@@ -217,7 +220,7 @@ const generateCustomQr = () => {
 };
 
 const viewPublicPage = () => {
-  window.open(publicUrl.value, '_blank');
+  window.open(previewUrl.value, '_blank');
 };
 
 const goBack = () => {
@@ -488,7 +491,7 @@ const paymentStatusColors = {
               <CardContent class="space-y-3">
                 <Button @click="viewPublicPage" class="w-full" variant="outline">
                   <Eye class="mr-2 h-4 w-4" />
-                  View Public Page
+                  Preview Page
                 </Button>
                 
                 <Button @click="copyPublicLink" class="w-full" variant="outline">

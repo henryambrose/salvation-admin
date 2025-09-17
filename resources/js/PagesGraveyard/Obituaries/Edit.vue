@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, FileImage, Music, Palette, Upload, X } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
+import { useToast } from '@/composables/useToast';
 
 interface ObituaryPage {
   id: number;
@@ -54,10 +54,12 @@ interface Props {
 }
 
 defineOptions({
-  layout: AppLayout
+  layout: AppLayout,
 });
 
 const props = defineProps<Props>();
+
+const { success, error } = useToast();
 
 // Get deceased person's name
 const deceasedName = computed(() => {
@@ -102,7 +104,7 @@ const galleryPreviews = ref<string[]>([]);
 const getBackgroundPreview = computed(() => {
   // Find the selected background configuration
   const allBackgrounds = [...props.basicBackgrounds, ...props.premiumBackgrounds];
-  const selectedBackground = allBackgrounds.find(bg => bg.value === form.background_style);
+  const selectedBackground = allBackgrounds.find((bg) => bg.value === form.background_style);
 
   if (selectedBackground?.image) {
     // Use image-based background
@@ -122,7 +124,7 @@ const getBackgroundPreview = computed(() => {
     // Use pattern background
     return {
       backgroundColor: form.theme_color || '#ffffff',
-      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
     };
   } else {
     // Plain background
@@ -142,6 +144,7 @@ const handleProfileImageSelect = (event: Event) => {
       generateImagePreview(file, (preview) => {
         profileImagePreview.value = preview;
       });
+      success('Profile image selected successfully!');
     }
   }
 };
@@ -156,6 +159,7 @@ const handleProfileImageDrop = (event: DragEvent) => {
       generateImagePreview(file, (preview) => {
         profileImagePreview.value = preview;
       });
+      success('Profile image uploaded successfully!');
     }
   }
 };
@@ -171,7 +175,7 @@ const clearProfileImage = () => {
 const removeProfileImage = () => {
   if (confirm('Are you sure you want to remove the profile image?')) {
     router.delete(`/graveyard/obituaries/${props.obituary.uuid}/profile-image`, {
-      preserveState: false
+      preserveState: false,
     });
   }
 };
@@ -180,7 +184,7 @@ const removeGalleryImage = (imagePath: string) => {
   if (confirm('Are you sure you want to remove this gallery image?')) {
     router.delete(`/graveyard/obituaries/${props.obituary.uuid}/gallery-image`, {
       data: { image_path: imagePath },
-      preserveState: false
+      preserveState: false,
     });
   }
 };
@@ -188,7 +192,7 @@ const removeGalleryImage = (imagePath: string) => {
 const removeAudioMessage = () => {
   if (confirm('Are you sure you want to remove the audio message?')) {
     router.delete(`/graveyard/obituaries/${props.obituary.uuid}/audio-message`, {
-      preserveState: false
+      preserveState: false,
     });
   }
 };
@@ -197,15 +201,19 @@ const handleGalleryImagesSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
   if (target.files) {
     const files = Array.from(target.files);
-    const validFiles = files.filter(file => validateImageFile(file));
+    const validFiles = files.filter((file) => validateImageFile(file));
     form.gallery_images = [...form.gallery_images, ...validFiles];
-    
+
     // Generate previews for new files
-    validFiles.forEach(file => {
+    validFiles.forEach((file) => {
       generateImagePreview(file, (preview) => {
         galleryPreviews.value.push(preview);
       });
     });
+
+    if (validFiles.length > 0) {
+      success(`${validFiles.length} gallery image(s) selected successfully!`);
+    }
   }
 };
 
@@ -214,11 +222,11 @@ const handleGalleryImagesDrop = (event: DragEvent) => {
   const files = event.dataTransfer?.files;
   if (files) {
     const filesArray = Array.from(files);
-    const validFiles = filesArray.filter(file => validateImageFile(file));
+    const validFiles = filesArray.filter((file) => validateImageFile(file));
     form.gallery_images = [...form.gallery_images, ...validFiles];
-    
+
     // Generate previews for new files
-    validFiles.forEach(file => {
+    validFiles.forEach((file) => {
       generateImagePreview(file, (preview) => {
         galleryPreviews.value.push(preview);
       });
@@ -249,17 +257,17 @@ const handleAudioMessageSelect = (event: Event) => {
 const validateImageFile = (file: File): boolean => {
   const maxSize = 2 * 1024 * 1024; // 2MB
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-  
+
   if (!allowedTypes.includes(file.type)) {
-    alert('Please select a valid image file (JPG, PNG, or GIF)');
+    error('Please select a valid image file (JPG, PNG, or GIF)');
     return false;
   }
-  
+
   if (file.size > maxSize) {
-    alert('File size must be less than 2MB');
+    error('File size must be less than 2MB');
     return false;
   }
-  
+
   return true;
 };
 
@@ -300,7 +308,7 @@ const submit = () => {
 
   // Create a manual FormData object to ensure proper data transmission
   const formData = new FormData();
-  
+
   // Add text fields
   formData.append('biography', form.biography || '');
   formData.append('favorite_memory', form.favorite_memory || '');
@@ -309,27 +317,27 @@ const submit = () => {
   formData.append('notes', form.notes || '');
   formData.append('theme_color', form.theme_color || '');
   formData.append('background_style', form.background_style || '');
-  
+
   // Add boolean fields
   formData.append('allow_condolences', form.allow_condolences ? '1' : '0');
   formData.append('allow_memory_sharing', form.allow_memory_sharing ? '1' : '0');
   formData.append('is_public', form.is_public ? '1' : '0');
-  
+
   // Add files
   if (form.profile_image) {
     formData.append('profile_image', form.profile_image);
   }
-  
+
   if (form.gallery_images && form.gallery_images.length > 0) {
     form.gallery_images.forEach((file, index) => {
       formData.append(`gallery_images[${index}]`, file);
     });
   }
-  
+
   if (form.audio_message) {
     formData.append('audio_message', form.audio_message);
   }
-  
+
   // Add method spoofing for PUT
   formData.append('_method', 'PUT');
 
@@ -338,26 +346,27 @@ const submit = () => {
     method: 'POST',
     headers: {
       'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      'X-Requested-With': 'XMLHttpRequest'
+      'X-Requested-With': 'XMLHttpRequest',
     },
-    body: formData
+    body: formData,
   })
-  .then(response => {
-    if (response.redirected) {
-      window.location.href = response.url;
-    } else if (response.ok) {
-      router.visit(route('graveyard.obituaries.show', props.obituary.uuid));
-    } else {
-      return response.text().then(text => {
-        console.error('Server response:', text);
-        throw new Error('Server error');
-      });
-    }
-  })
-  .catch(error => {
-    console.error('Form submission failed:', error);
-    alert('Update failed. Please try again.');
-  });
+    .then((response) => {
+      if (response.redirected) {
+        window.location.href = response.url;
+      } else if (response.ok) {
+        success('Obituary updated successfully!');
+        router.visit(route('graveyard.obituaries.show', props.obituary.uuid));
+      } else {
+        return response.text().then((text) => {
+          console.error('Server response:', text);
+          throw new Error('Server error');
+        });
+      }
+    })
+    .catch((err) => {
+      console.error('Form submission failed:', err);
+      error('Update failed. Please try again.');
+    });
 };
 
 const goBack = () => {
@@ -392,12 +401,12 @@ const goBack = () => {
               <p class="font-medium text-gray-900">{{ obituary.service_type.charAt(0).toUpperCase() + obituary.service_type.slice(1) }} Service</p>
               <p class="text-sm text-gray-600">Some features may be limited based on your service type</p>
             </div>
-            <span :class="[
-              'px-3 py-1 rounded-full text-sm font-medium',
-              obituary.service_type === 'premium' 
-                ? 'bg-purple-100 text-purple-800' 
-                : 'bg-blue-100 text-blue-800'
-            ]">
+            <span
+              :class="[
+                'rounded-full px-3 py-1 text-sm font-medium',
+                obituary.service_type === 'premium' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800',
+              ]"
+            >
               {{ obituary.service_type.toUpperCase() }}
             </span>
           </div>
@@ -405,9 +414,9 @@ const goBack = () => {
       </Card>
 
       <!-- Error Display -->
-      <div v-if="form.hasErrors" class="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 class="text-red-800 font-semibold mb-2">Please fix the following errors:</h3>
-        <ul class="text-red-700 text-sm space-y-1">
+      <div v-if="form.hasErrors" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+        <h3 class="mb-2 font-semibold text-red-800">Please fix the following errors:</h3>
+        <ul class="space-y-1 text-sm text-red-700">
           <li v-for="(error, field) in form.errors" :key="field">
             <strong>{{ field }}:</strong> {{ Array.isArray(error) ? error[0] : error }}
           </li>
@@ -425,46 +434,26 @@ const goBack = () => {
             <CardContent class="space-y-4">
               <div>
                 <Label for="biography">Biography</Label>
-                <Textarea
-                  id="biography"
-                  v-model="form.biography"
-                  placeholder="Write a brief biography of the deceased..."
-                  rows="4"
-                />
-                <p class="text-xs text-gray-500 mt-1">Share the life story and background</p>
+                <Textarea id="biography" v-model="form.biography" placeholder="Write a brief biography of the deceased..." :rows="5" />
+                <p class="mt-1 text-xs text-gray-500">Share the life story and background</p>
               </div>
 
               <div>
                 <Label for="favorite_memory">Favorite Memory</Label>
-                <Textarea
-                  id="favorite_memory"
-                  v-model="form.favorite_memory"
-                  placeholder="Share a favorite memory..."
-                  rows="3"
-                />
-                <p class="text-xs text-gray-500 mt-1">A cherished memory to remember them by</p>
+                <Textarea id="favorite_memory" v-model="form.favorite_memory" placeholder="Share a favorite memory..." :rows="5" />
+                <p class="mt-1 text-xs text-gray-500">A cherished memory to remember them by</p>
               </div>
 
               <div>
                 <Label for="achievements">Achievements</Label>
-                <Textarea
-                  id="achievements"
-                  v-model="form.achievements"
-                  placeholder="Notable achievements and accomplishments..."
-                  rows="3"
-                />
-                <p class="text-xs text-gray-500 mt-1">Professional achievements, awards, and accomplishments</p>
+                <Textarea id="achievements" v-model="form.achievements" placeholder="Notable achievements and accomplishments..." :rows="5" />
+                <p class="mt-1 text-xs text-gray-500">Professional achievements, awards, and accomplishments</p>
               </div>
 
               <div>
                 <Label for="hobbies_interests">Hobbies & Interests</Label>
-                <Textarea
-                  id="hobbies_interests"
-                  v-model="form.hobbies_interests"
-                  placeholder="Hobbies, interests, and passions..."
-                  rows="3"
-                />
-                <p class="text-xs text-gray-500 mt-1">What they loved to do in their free time</p>
+                <Textarea id="hobbies_interests" v-model="form.hobbies_interests" placeholder="Hobbies, interests, and passions..." :rows="5" />
+                <p class="mt-1 text-xs text-gray-500">What they loved to do in their free time</p>
               </div>
 
               <div>
@@ -473,10 +462,10 @@ const goBack = () => {
                   id="notes"
                   v-model="form.notes"
                   placeholder="Family thoughts, funeral mass details, months mind mass timing and place, condolence messages from family, etc..."
-                  rows="4"
+                  :rows="5"
                   class="resize-y"
                 />
-                <p class="text-xs text-gray-500 mt-1">
+                <p class="mt-1 text-xs text-gray-500">
                   Include funeral service details, family messages, special announcements, or any other important information.
                 </p>
               </div>
@@ -495,28 +484,31 @@ const goBack = () => {
               <!-- Profile Image Section -->
               <div>
                 <Label class="text-base font-semibold">Profile Photo</Label>
-                <p class="text-sm text-gray-600 mb-3">Main photo for the memorial page</p>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <p class="mb-3 text-sm text-gray-600">Main photo for the memorial page</p>
+
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <!-- Current Image Preview -->
                   <div>
-                    <div class="aspect-square bg-gray-50 rounded-lg overflow-hidden border-2 border-dashed border-gray-200">
+                    <div class="aspect-square overflow-hidden rounded-lg border-2 border-dashed border-gray-200 bg-gray-50">
                       <div v-if="profileImagePreview || obituary.profile_image" class="relative h-full">
-                        <img 
-                          :src="profileImagePreview || (obituary.profile_image?.startsWith('http') ? obituary.profile_image : `/storage/${obituary.profile_image}`)"
+                        <img
+                          :src="
+                            profileImagePreview ||
+                            (obituary.profile_image?.startsWith('http') ? obituary.profile_image : `/storage/${obituary.profile_image}`)
+                          "
                           :alt="deceasedName"
-                          class="w-full h-full object-cover"
+                          class="h-full w-full object-cover"
                         />
                         <button
                           v-if="profileImagePreview"
                           type="button"
                           @click="clearProfileImage"
-                          class="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1 shadow-md hover:bg-red-700"
+                          class="absolute top-2 right-2 rounded-full bg-red-600 p-1 text-white shadow-md hover:bg-red-700"
                         >
-                          <X class="w-4 h-4" />
+                          <X class="h-4 w-4" />
                         </button>
                       </div>
-                      <div v-else class="h-full flex items-center justify-center">
+                      <div v-else class="flex h-full items-center justify-center">
                         <div class="text-center">
                           <FileImage class="mx-auto h-12 w-12 text-gray-400" />
                           <p class="mt-2 text-sm text-gray-500">No photo selected</p>
@@ -528,14 +520,9 @@ const goBack = () => {
                   <!-- Upload Controls -->
                   <div class="space-y-3">
                     <div class="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        @click="profileImageRef?.click()"
-                        class="flex-1 justify-start"
-                      >
+                      <Button type="button" variant="outline" @click="profileImageRef?.click()" class="flex-1 justify-start">
                         <Upload class="mr-2 h-4 w-4" />
-                        {{ form.profile_image ? 'Change Photo' : (obituary.profile_image ? 'Replace Photo' : 'Choose Photo') }}
+                        {{ form.profile_image ? 'Change Photo' : obituary.profile_image ? 'Replace Photo' : 'Choose Photo' }}
                       </Button>
 
                       <Button
@@ -549,32 +536,26 @@ const goBack = () => {
                         <X class="h-4 w-4" />
                       </Button>
                     </div>
-                    
-                    <div 
-                      class="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+
+                    <div
+                      class="cursor-pointer rounded-lg border-2 border-dashed border-gray-300 p-4 text-center transition-colors hover:border-gray-400"
                       @drop="handleProfileImageDrop"
                       @dragover.prevent
                       @dragenter.prevent
                       @click="profileImageRef?.click()"
                     >
-                      <Upload class="mx-auto h-6 w-6 text-gray-400 mb-2" />
+                      <Upload class="mx-auto mb-2 h-6 w-6 text-gray-400" />
                       <p class="text-sm text-gray-600">Click or drag image here</p>
-                      <p class="text-xs text-gray-500 mt-1">Max 2MB • JPG, PNG, GIF</p>
+                      <p class="mt-1 text-xs text-gray-500">Max 2MB • JPG, PNG, GIF</p>
                     </div>
 
-                    <input
-                      ref="profileImageRef"
-                      type="file"
-                      accept="image/*"
-                      class="hidden"
-                      @change="handleProfileImageSelect"
-                    />
-                    
-                    <div v-if="form.profile_image" class="bg-green-50 border border-green-200 rounded-lg p-3">
+                    <input ref="profileImageRef" type="file" accept="image/*" class="hidden" @change="handleProfileImageSelect" />
+
+                    <div v-if="form.profile_image" class="rounded-lg border border-green-200 bg-green-50 p-3">
                       <div class="flex items-center">
-                        <FileImage class="h-4 w-4 text-green-600 mr-2" />
+                        <FileImage class="mr-2 h-4 w-4 text-green-600" />
                         <span class="text-sm text-green-700">{{ form.profile_image.name }}</span>
-                        <span class="text-xs text-green-600 ml-2">({{ formatFileSize(form.profile_image.size) }})</span>
+                        <span class="ml-2 text-xs text-green-600">({{ formatFileSize(form.profile_image.size) }})</span>
                       </div>
                     </div>
                   </div>
@@ -583,102 +564,90 @@ const goBack = () => {
 
               <!-- Gallery Images (Premium Only) -->
               <div v-if="obituary.service_type === 'premium'" class="border-t pt-6">
-                <Label class="text-base font-semibold flex items-center">
-                  Gallery Photos 
-                  <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Premium Feature</span>
+                <Label class="flex items-center text-base font-semibold">
+                  Gallery Photos
+                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span>
                 </Label>
-                <p class="text-sm text-gray-600 mb-4">Additional photos for the memorial gallery</p>
+                <p class="mb-4 text-sm text-gray-600">Additional photos for the memorial gallery</p>
 
                 <!-- Current Gallery Grid -->
                 <div v-if="obituary.gallery_images?.length || galleryPreviews.length" class="mb-4">
-                  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                  <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
                     <!-- Existing Images -->
-                    <div 
-                      v-for="(image, index) in obituary.gallery_images || []" 
-                      :key="`existing-${index}`"
-                      class="relative group aspect-square"
-                    >
-                      <img 
-                        :src="image.startsWith('http') ? image : `/storage/${image}`" 
+                    <div v-for="(image, index) in obituary.gallery_images || []" :key="`existing-${index}`" class="group relative aspect-square">
+                      <img
+                        :src="image.startsWith('http') ? image : `/storage/${image}`"
                         :alt="`Gallery ${index + 1}`"
-                        class="w-full h-full object-cover rounded-lg border shadow-sm"
+                        class="h-full w-full rounded-lg border object-cover shadow-sm"
                       />
-                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <div
+                        class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center rounded-lg bg-black transition-all duration-200"
+                      >
                         <button
                           type="button"
                           @click="removeExistingGalleryImage(index)"
-                          class="bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700"
+                          class="rounded-full bg-red-600 p-2 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
                         >
-                          <X class="w-4 h-4" />
+                          <X class="h-4 w-4" />
                         </button>
                       </div>
-                      <span class="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded">Existing</span>
+                      <span class="bg-opacity-60 absolute bottom-1 left-1 rounded bg-black px-2 py-1 text-xs text-white">Existing</span>
                     </div>
 
                     <!-- New Images Preview -->
-                    <div 
-                      v-for="(preview, index) in galleryPreviews" 
-                      :key="`new-${index}`"
-                      class="relative group aspect-square"
-                    >
-                      <img 
+                    <div v-for="(preview, index) in galleryPreviews" :key="`new-${index}`" class="group relative aspect-square">
+                      <img
                         :src="preview"
                         :alt="`New Gallery ${index + 1}`"
-                        class="w-full h-full object-cover rounded-lg border-2 border-green-300 shadow-sm"
+                        class="h-full w-full rounded-lg border-2 border-green-300 object-cover shadow-sm"
                       />
-                      <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 rounded-lg flex items-center justify-center">
+                      <div
+                        class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center rounded-lg bg-black transition-all duration-200"
+                      >
                         <button
                           type="button"
                           @click="removeNewGalleryImage(index)"
-                          class="bg-red-600 text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity shadow-lg hover:bg-red-700"
+                          class="rounded-full bg-red-600 p-2 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
                         >
-                          <X class="w-4 h-4" />
+                          <X class="h-4 w-4" />
                         </button>
                       </div>
-                      <span class="absolute bottom-1 left-1 bg-green-600 text-white text-xs px-2 py-1 rounded">New</span>
+                      <span class="absolute bottom-1 left-1 rounded bg-green-600 px-2 py-1 text-xs text-white">New</span>
                     </div>
                   </div>
                 </div>
 
                 <!-- Upload Area -->
                 <div class="space-y-3">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    @click="galleryImagesRef?.click()"
-                    class="w-full justify-start"
-                  >
+                  <Button type="button" variant="outline" @click="galleryImagesRef?.click()" class="w-full justify-start">
                     <Upload class="mr-2 h-4 w-4" />
                     {{ form.gallery_images.length > 0 ? `Add More Photos (${form.gallery_images.length} selected)` : 'Add Gallery Photos' }}
                   </Button>
 
-                  <div 
-                    class="border-2 border-dashed border-purple-300 rounded-lg p-6 text-center cursor-pointer hover:border-purple-400 hover:bg-purple-50 transition-colors"
+                  <div
+                    class="cursor-pointer rounded-lg border-2 border-dashed border-purple-300 p-6 text-center transition-colors hover:border-purple-400 hover:bg-purple-50"
                     @drop="handleGalleryImagesDrop"
                     @dragover.prevent
                     @dragenter.prevent
                     @click="galleryImagesRef?.click()"
                   >
-                    <Upload class="mx-auto h-8 w-8 text-purple-400 mb-3" />
-                    <p class="text-sm text-gray-600 font-medium">Drop multiple images here or click to browse</p>
-                    <p class="text-xs text-gray-500 mt-2">Max 2MB each • JPG, PNG, GIF • Multiple selection allowed</p>
+                    <Upload class="mx-auto mb-3 h-8 w-8 text-purple-400" />
+                    <p class="text-sm font-medium text-gray-600">Drop multiple images here or click to browse</p>
+                    <p class="mt-2 text-xs text-gray-500">Max 2MB each • JPG, PNG, GIF • Multiple selection allowed</p>
                   </div>
 
-                  <input
-                    ref="galleryImagesRef"
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    class="hidden"
-                    @change="handleGalleryImagesSelect"
-                  />
+                  <input ref="galleryImagesRef" type="file" accept="image/*" multiple class="hidden" @change="handleGalleryImagesSelect" />
 
-                  <div v-if="form.gallery_images.length" class="bg-purple-50 border border-purple-200 rounded-lg p-4">
-                    <p class="text-sm font-medium text-purple-800 mb-2">{{ form.gallery_images.length }} new photos selected:</p>
+                  <div v-if="form.gallery_images.length" class="rounded-lg border border-purple-200 bg-purple-50 p-4">
+                    <p class="mb-2 text-sm font-medium text-purple-800">{{ form.gallery_images.length }} new photos selected:</p>
                     <div class="space-y-1">
-                      <div v-for="(file, index) in form.gallery_images" :key="index" class="flex items-center justify-between text-xs text-purple-700">
+                      <div
+                        v-for="(file, index) in form.gallery_images"
+                        :key="index"
+                        class="flex items-center justify-between text-xs text-purple-700"
+                      >
                         <span class="truncate">{{ file.name }}</span>
-                        <span class="text-purple-600 ml-2">{{ formatFileSize(file.size) }}</span>
+                        <span class="ml-2 text-purple-600">{{ formatFileSize(file.size) }}</span>
                       </div>
                     </div>
                   </div>
@@ -689,22 +658,19 @@ const goBack = () => {
               <div v-if="obituary.service_type === 'premium'">
                 <!-- Current Audio -->
                 <div v-if="obituary.audio_message">
-                  <div class="flex justify-between items-center">
+                  <div class="flex items-center justify-between">
                     <Label>Current Audio Message</Label>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      @click="removeAudioMessage"
-                      title="Remove current audio message"
-                    >
-                      <X class="h-4 w-4 mr-1" />
+                    <Button type="button" variant="destructive" size="sm" @click="removeAudioMessage" title="Remove current audio message">
+                      <X class="mr-1 h-4 w-4" />
                       Remove
                     </Button>
                   </div>
                   <div class="mt-2 mb-4">
                     <audio controls class="w-full max-w-md">
-                      <source :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`" type="audio/mpeg">
+                      <source
+                        :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
+                        type="audio/mpeg"
+                      />
                       Your browser does not support the audio element.
                     </audio>
                   </div>
@@ -713,24 +679,13 @@ const goBack = () => {
                 <div>
                   <Label>{{ obituary.audio_message ? 'Replace Audio Message' : 'Audio Message' }}</Label>
                   <div class="mt-1">
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      @click="audioMessageRef?.click()"
-                      class="w-full justify-start"
-                    >
+                    <Button type="button" variant="outline" @click="audioMessageRef?.click()" class="w-full justify-start">
                       <Music class="mr-2 h-4 w-4" />
                       {{ form.audio_message ? form.audio_message.name : 'Choose new audio message' }}
                     </Button>
-                    <input
-                      ref="audioMessageRef"
-                      type="file"
-                      accept="audio/*"
-                      class="hidden"
-                      @change="handleAudioMessageSelect"
-                    />
+                    <input ref="audioMessageRef" type="file" accept="audio/*" class="hidden" @change="handleAudioMessageSelect" />
                   </div>
-                  <p class="text-xs text-gray-500 mt-1">Supported formats: MP3, WAV, M4A (max 10MB)</p>
+                  <p class="mt-1 text-xs text-gray-500">Supported formats: MP3, WAV, M4A (max 10MB)</p>
                 </div>
               </div>
             </CardContent>
@@ -747,46 +702,36 @@ const goBack = () => {
             <CardContent>
               <div>
                 <Label for="background_style">Choose Background</Label>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                  <div v-for="background in props.basicBackgrounds" :key="background.value"
-                       class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
-                       :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                       @click="form.background_style = background.value">
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div
+                    v-for="background in props.basicBackgrounds"
+                    :key="background.value"
+                    class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
+                    :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                    @click="form.background_style = background.value"
+                  >
                     <div class="flex items-center space-x-3">
-                      <input type="radio"
-                             :value="background.value"
-                             v-model="form.background_style"
-                             class="hidden" />
-                      <div v-if="background.image"
-                           class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
-                           :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
-                      </div>
-                      <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
-                      <div class="flex-1 min-w-0">
-                        <h3 class="font-medium text-sm">{{ background.label }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
+                      <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
+                      <div
+                        v-if="background.image"
+                        class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
+                        :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
+                      ></div>
+                      <div v-else class="h-12 w-12 flex-shrink-0 rounded border bg-gray-100"></div>
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-medium">{{ background.label }}</h3>
+                        <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Background Preview -->
-                <div class="mt-3 p-4 rounded-lg border-2 border-dashed border-gray-300 h-20 text-center flex items-center justify-center text-sm text-gray-600" :style="getBackgroundPreview">
+                <div
+                  class="mt-3 flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-4 text-center text-sm text-gray-600"
+                  :style="getBackgroundPreview"
+                >
                   Preview: {{ form.background_style || 'plain' }}
-                </div>
-
-                <!-- Upgrade Prompt -->
-                <div class="mt-4 p-3 bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-lg">
-                  <div class="flex items-center">
-                    <Palette class="h-5 w-5 text-purple-600 mr-2" />
-                    <div class="flex-1">
-                      <p class="text-sm font-medium text-purple-900">Want more customization options?</p>
-                      <p class="text-xs text-purple-700">Upgrade to Premium for theme colors, gradients, patterns, and more!</p>
-                    </div>
-                    <Button size="sm" variant="outline" class="text-purple-600 border-purple-300 hover:bg-purple-50">
-                      Upgrade
-                    </Button>
-                  </div>
                 </div>
               </div>
             </CardContent>
@@ -803,45 +748,48 @@ const goBack = () => {
             <CardContent class="space-y-4">
               <div>
                 <Label for="theme_color">Theme Color</Label>
-                <div class="flex items-center space-x-2 mt-1">
-                  <input
-                    id="theme_color"
-                    v-model="form.theme_color"
-                    type="color"
-                    class="h-10 w-20 border border-gray-300 rounded cursor-pointer"
-                  />
+                <div class="mt-1 flex items-center space-x-2">
+                  <input id="theme_color" v-model="form.theme_color" type="color" class="h-10 w-20 cursor-pointer rounded border border-gray-300" />
                   <Input v-model="form.theme_color" class="flex-1" />
                 </div>
               </div>
 
               <div>
                 <Label for="background_style">Background Style</Label>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                  <div v-for="background in props.premiumBackgrounds" :key="background.value"
-                       class="relative border rounded-lg p-3 cursor-pointer transition-colors hover:border-primary/50"
-                       :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                       @click="form.background_style = background.value">
+                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <div
+                    v-for="background in props.premiumBackgrounds"
+                    :key="background.value"
+                    class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
+                    :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                    @click="form.background_style = background.value"
+                  >
                     <div class="flex items-center space-x-3">
-                      <input type="radio"
-                             :value="background.value"
-                             v-model="form.background_style"
-                             class="hidden" />
-                      <div v-if="background.image"
-                           class="w-12 h-12 rounded border overflow-hidden flex-shrink-0"
-                           :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }">
-                      </div>
-                      <div v-else class="w-12 h-12 rounded border bg-gray-100 flex-shrink-0"></div>
-                      <div class="flex-1 min-w-0">
-                        <h3 class="font-medium text-sm">{{ background.label }}</h3>
-                        <p class="text-xs text-gray-500 mt-1">{{ background.description }}</p>
-                        <span v-if="background.tier === 'premium'" class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mt-1">Premium</span>
+                      <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
+                      <div
+                        v-if="background.image"
+                        class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
+                        :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
+                      ></div>
+                      <div v-else class="h-12 w-12 flex-shrink-0 rounded border bg-gray-100"></div>
+                      <div class="min-w-0 flex-1">
+                        <h3 class="text-sm font-medium">{{ background.label }}</h3>
+                        <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
+                        <span
+                          v-if="background.tier === 'premium'"
+                          class="mt-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800"
+                          >Premium</span
+                        >
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <!-- Background Preview -->
-                <div class="mt-3 p-4 rounded-lg border-2 border-dashed border-gray-300 h-20 text-center flex items-center justify-center text-sm text-gray-600" :style="getBackgroundPreview">
+                <div
+                  class="mt-3 flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-4 text-center text-sm text-gray-600"
+                  :style="getBackgroundPreview"
+                >
                   Preview: {{ form.background_style || 'plain' }}
                 </div>
               </div>
@@ -858,31 +806,27 @@ const goBack = () => {
               <div v-if="obituary.service_type === 'premium'" class="space-y-4">
                 <div class="flex items-center justify-between">
                   <div>
-                    <Label>Allow Condolences <span class="text-purple-600 text-xs font-medium">(Premium Feature)</span></Label>
+                    <Label>Allow Condolences <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
                     <p class="text-sm text-gray-600">Allow visitors to leave condolence messages</p>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      v-model="form.allow_condolences" 
-                      class="sr-only peer"
-                    >
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  <label class="relative inline-flex cursor-pointer items-center">
+                    <input type="checkbox" v-model="form.allow_condolences" class="peer sr-only" />
+                    <div
+                      class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-purple-600 peer-focus:ring-4 peer-focus:ring-purple-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                    ></div>
                   </label>
                 </div>
 
                 <div class="flex items-center justify-between">
                   <div>
-                    <Label>Allow Memory Sharing <span class="text-purple-600 text-xs font-medium">(Premium Feature)</span></Label>
+                    <Label>Allow Memory Sharing <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
                     <p class="text-sm text-gray-600">Allow visitors to share memories</p>
                   </div>
-                  <label class="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      v-model="form.allow_memory_sharing" 
-                      class="sr-only peer"
-                    >
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
+                  <label class="relative inline-flex cursor-pointer items-center">
+                    <input type="checkbox" v-model="form.allow_memory_sharing" class="peer sr-only" />
+                    <div
+                      class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-purple-600 peer-focus:ring-4 peer-focus:ring-purple-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                    ></div>
                   </label>
                 </div>
               </div>
@@ -893,27 +837,23 @@ const goBack = () => {
                   <Label>Public Page</Label>
                   <p class="text-sm text-gray-600">Make the obituary page publicly accessible</p>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input 
-                    type="checkbox" 
-                    v-model="form.is_public" 
-                    class="sr-only peer"
-                  >
-                  <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                <label class="relative inline-flex cursor-pointer items-center">
+                  <input type="checkbox" v-model="form.is_public" class="peer sr-only" />
+                  <div
+                    class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                  ></div>
                 </label>
               </div>
             </CardContent>
           </Card>
 
           <!-- Submit Section -->
-          <div class="flex justify-between items-center">
-            <Button type="button" variant="outline" @click="goBack">
-              Cancel
-            </Button>
-            <Button 
-              type="submit" 
+          <div class="flex items-center justify-between">
+            <Button type="button" variant="outline" @click="goBack"> Cancel </Button>
+            <Button
+              type="submit"
               :disabled="form.processing"
-              class="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-8 py-3"
+              class="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-3 text-white hover:from-purple-700 hover:to-blue-700"
             >
               {{ form.processing ? 'Updating...' : 'Update Obituary' }}
             </Button>

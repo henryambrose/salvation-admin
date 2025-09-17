@@ -35,6 +35,7 @@ class MassIntentionController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('special_instructions', 'like', "%{$search}%")
                     ->orWhere('phone', 'like', "%{$search}%")
+                    ->orWhere('family_no', 'like', "%{$search}%")
                     ->orWhere('external_name', 'like', "%{$search}%")
                     ->orWhereHas('member', function ($memberQuery) use ($search) {
                         $memberQuery->where('first_name', 'like', "%{$search}%")
