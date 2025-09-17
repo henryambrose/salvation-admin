@@ -100,7 +100,7 @@ const parishOptions = computed(() => {
     { id: '', name: 'Select a parish...' },
     ...props.parishes.map((parish) => ({
       id: parish.id,
-      name: parish.code ? `${parish.code} - ${parish.name} - ${parish.town}` : parish.name,
+      name: parish.code ? `${parish.code} - ${parish.name}${parish.town ? ' - ' + parish.town : ''}` : parish.name,
     })),
   ];
 });

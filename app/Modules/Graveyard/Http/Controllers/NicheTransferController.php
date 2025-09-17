@@ -86,7 +86,7 @@ class NicheTransferController extends Controller
             return [
                 'id' => $booking->id,
                 'booking_reference' => $booking->booking_reference,
-                'full_name' => $booking->full_name,
+                'full_name' => $booking->dead_first_name . ' ' . $booking->dead_last_name,
                 'grave_no' => $booking->temporaryGrave->grave_no,
                 'buried_on' => $booking->buried_on,
                 'expected_transfer_date' => $booking->expected_transfer_date,
@@ -117,9 +117,43 @@ class NicheTransferController extends Controller
             ];
         }
 
+        // Get available niches with their valid members
+        $availableNiches = Niche::where('status', 'available')
+            ->where('is_active', true)
+            ->with(['validMembers' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            }])
+            ->get()
+            ->map(function ($niche) {
+                return [
+                    'id' => $niche->id,
+                    'niche_no' => $niche->niche_no,
+                    'section' => $niche->section,
+                    'row_no' => $niche->row_no,
+                    'location' => $niche->location,
+                    'owner_name' => $niche->owner_name,
+                    'last_occupation_date' => $niche->last_occupation_date,
+                    'cost' => $niche->cost,
+                    'valid_members' => $niche->validMembers->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'full_name' => $member->full_name,
+                            'first_name' => $member->first_name,
+                            'last_name' => $member->last_name,
+                            'relationship' => $member->relationship,
+                            'member_type' => $member->member_type,
+                            'is_deceased' => $member->is_deceased,
+                            'death_date' => $member->death_date,
+                            'burial_date' => $member->burial_date,
+                        ];
+                    }),
+                    'has_valid_members' => $niche->validMembers->count() > 0,
+                ];
+            });
+
         return Inertia::render('PagesGraveyard/NicheTransfer/Create', [
             'eligibleBookings' => $eligibleBookings,
-            'availableNiches' => Niche::where('status', 'available')->where('is_active', true)->get(),
+            'availableNiches' => $availableNiches,
             'relationships' => Relationship::all(),
             'selectedBooking' => $selectedBooking
         ]);
@@ -237,11 +271,13 @@ class NicheTransferController extends Controller
             return back()->with('error', 'Only pending transfers can be approved.');
         }
 
-        if ($nicheTransfer->approve($request->admin_notes)) {
-            return back()->with('success', 'Transfer approved successfully.');
-        }
+        $nicheTransfer->update([
+            'status' => 'approved',
+            'admin_notes' => $request->admin_notes,
+            'updated_by' => Auth::id()
+        ]);
 
-        return back()->with('error', 'Failed to approve transfer.');
+        return back()->with('success', 'Transfer approved successfully.');
     }
 
     /**
@@ -261,10 +297,14 @@ class NicheTransferController extends Controller
             DB::beginTransaction();
 
             // Reject the transfer
-            if ($nicheTransfer->reject($request->rejection_reason)) {
-                // Reset transfer requested flag on original booking
-                $nicheTransfer->fromBooking->update(['transfer_requested' => false]);
-            }
+            $nicheTransfer->update([
+                'status' => 'rejected',
+                'rejection_reason' => $request->rejection_reason,
+                'updated_by' => Auth::id()
+            ]);
+
+            // Reset transfer requested flag on original booking
+            $nicheTransfer->fromBooking->update(['transfer_requested' => false]);
 
             DB::commit();
 

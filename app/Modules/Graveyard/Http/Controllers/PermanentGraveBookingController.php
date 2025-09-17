@@ -24,7 +24,8 @@ class PermanentGraveBookingController extends Controller
         $query = PermanentGraveBooking::with([
             'permanentGrave',
             'validMember.member',
-            'creator'
+            'creator',
+            'obituaryPage'
         ]);
 
         // Apply filters
@@ -44,11 +45,20 @@ class PermanentGraveBookingController extends Controller
                     $q->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
+                })
+                ->orWhereHas('permanentGrave', function ($q) use ($search) {
+                    $q->where("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"]);
                 });
         }
 
         // Pagination
         $bookings = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        // Add has_obituary attribute to each booking
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->has_obituary = $booking->obituaryPage !== null;
+            return $booking;
+        });
 
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Index', [
             'bookings' => $bookings,

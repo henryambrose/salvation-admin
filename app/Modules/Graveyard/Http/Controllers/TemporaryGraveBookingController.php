@@ -32,7 +32,8 @@ class TemporaryGraveBookingController extends Controller
             'gender',
             'parish',
             'applicantMember',
-            'creator'
+            'creator',
+            'obituaryPage'
         ]);
 
         // Apply filters
@@ -56,6 +57,13 @@ class TemporaryGraveBookingController extends Controller
         // Pagination
         $bookings = $query->orderBy('created_at', 'desc')->paginate(10);
 
+        // Add has_obituary attribute to each booking
+        $bookings->getCollection()->transform(function ($booking) {
+            $booking->has_obituary = $booking->obituaryPage !== null;
+            Log::info('Booking Has Obituary', ['booking_id' => $booking->id, 'has_obituary' => $booking->has_obituary]);
+            return $booking;
+        });
+
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Index', [
             'bookings' => $bookings,
             'filters' => $request->only(['status', 'search', 'transfer_due'])
@@ -71,10 +79,10 @@ class TemporaryGraveBookingController extends Controller
             'availableGraves' => TemporaryGrave::available()->with('graveCategory')->get(),
             'graveCategories' => GraveCategories::orderBy('name')->get(),
             'permanentGraves' => PermanentGrave::where('status', 'unavailable')
-                ->with(['validMembers' => function($query) {
+                ->with(['validMembers' => function ($query) {
                     $query->where('is_active', true)
-                          ->whereNull('death_date') // Only living members
-                          ->with(['member', 'gender', 'parish', 'relationship']);
+                        ->whereNull('death_date') // Only living members
+                        ->with(['member', 'gender', 'parish', 'relationship']);
                 }])
                 ->orderBy('section')->orderBy('row_no')->orderBy('grave_no')->get(),
             'genders' => Gender::all(),
@@ -194,7 +202,7 @@ class TemporaryGraveBookingController extends Controller
             if (!$grave->status == 'available') {
                 return back()->with('error', 'This temporary grave is no longer available.');
             }
-            
+
             // Validate that the selected grave belongs to the selected category
             if ($grave->grave_category_id != $request->grave_category_id) {
                 return back()->with('error', 'Selected grave does not belong to the selected category.');
@@ -245,7 +253,7 @@ class TemporaryGraveBookingController extends Controller
                 'updated_by' => Auth::id(),
             ]);
             Log::info('Temporary grave booking created', ['booking_id' => $booking->id]);
-            
+
             // Update the temporary grave with booking details and destination
             $grave->update([
                 'status' => 'unavailable',
@@ -256,7 +264,7 @@ class TemporaryGraveBookingController extends Controller
                 'destination_permanent_grave_id' => $request->destination_permanent_grave_id,
                 'updated_by' => Auth::id(),
             ]);
-            
+
             // Calculate total cost from selected services
             if ($request->selected_services) {
                 $totalCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');

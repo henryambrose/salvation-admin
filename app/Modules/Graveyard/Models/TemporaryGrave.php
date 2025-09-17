@@ -117,6 +117,7 @@ class TemporaryGrave extends Model
                 ->orWhere('grave_no', 'like', "%{$search}%")
                 ->orWhere('oldno', 'like', "%{$search}%")
                 ->orWhere('owner_name', 'like', "%{$search}%")
+                ->orWhereRaw("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"])
                 ->orWhereHas('member', function ($memberQuery) use ($search) {
                     $memberQuery->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
                         ->orWhere('family_no', 'like', "%{$search}%")

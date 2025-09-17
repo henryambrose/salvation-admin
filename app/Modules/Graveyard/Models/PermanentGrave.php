@@ -107,6 +107,7 @@ class PermanentGrave extends Model
                 ->orWhere('grave_no', 'like', "%{$search}%")
                 ->orWhere('section', 'like', "%{$search}%")
                 ->orWhere('oldno', 'like', "%{$search}%")
+                ->orWhere(DB::raw("CONCAT(section, '-', row_no, '-', grave_no)"), 'like', "%{$search}%")
                 ->orWhereHas('member', function ($memberQuery) use ($search) {
                     $memberQuery->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")

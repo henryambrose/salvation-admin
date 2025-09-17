@@ -58,7 +58,7 @@ class NicheController extends Controller
 
         // Get filter options
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/Niches/Index', [
             'data' => $niches,
@@ -77,7 +77,7 @@ class NicheController extends Controller
     public function create()
     {
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/Niches/Create', [
             'locations' => $locations,
@@ -94,7 +94,7 @@ class NicheController extends Controller
             'niche_no' => 'required|integer|min:1',
             'sr_no' => 'required|integer|min:1',
             'location' => 'required|string|max:100',
-            'status' => 'required|in:available,occupied',
+            'status' => 'required|in:available,unavailable',
             'last_occupation_date' => 'nullable|date',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
@@ -191,7 +191,7 @@ class NicheController extends Controller
         $niche->load(['member', 'member.community']);
 
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
-        $statuses = ['available', 'occupied', 'reserved', 'maintenance'];
+        $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/Niches/Edit', [
             'niche' => $niche,
@@ -209,7 +209,7 @@ class NicheController extends Controller
             'niche_no' => 'required|integer|min:1',
             'sr_no' => 'required|integer|min:1',
             'location' => 'required|string|max:100',
-            'status' => 'required|in:available,occupied,reserved,maintenance',
+            'status' => 'required|in:available,unavailable',
             'last_occupation_date' => 'nullable|date',
             'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',

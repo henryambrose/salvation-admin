@@ -432,6 +432,14 @@ watch(isArchived, () => {
   applyFilters();
 });
 
+// Watch for search changes with debounce
+watch(
+  () => filters.value.search,
+  () => {
+    debouncedSearch();
+  }
+);
+
 onMounted(() => {
   // Any initialization logic
 });

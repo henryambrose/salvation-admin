@@ -245,67 +245,39 @@ class NicheTransfer extends Model
 
         // Mark original booking as completed
         $this->fromBooking->update([
-            'status' => 'completed',
+            // 'status' => 'completed',
             'updated_by' => Auth::id()
         ]);
     }
 
     /**
-     * Approve the transfer
+     * Get the full name of the deceased
      */
-    // public function approve(string $notes): bool
-    // {
-    //     if ($this->status !== 'pending') {
-    //         return false;
-    //     }
-
-    //     $this->update([
-    //         'status' => 'approved',
-    //         'admin_notes' => $notes,
-    //     ]);
-
-    //     return true;
-    // }
-
-    /**
-     * Reject the transfer
-     */
-    // public function reject(string $reason): bool
-    // {
-    //     if ($this->status !== 'pending') {
-    //         return false;
-    //     }
-
-    //     $this->update([
-    //         'status' => 'rejected',
-    //         'rejection_reason' => $reason,
-    //     ]);
-
-    //     return true;
-    // }
+    public function getFullNameAttribute(): string
+    {
+        return $this->dead_first_name . ' ' . $this->dead_last_name;
+    }
 
     /**
      * Complete the transfer
      */
     public function complete(): bool
     {
-        if ($this->status !== 'approved') {
-            return false;
-        }
-
-        $this->update(['status' => 'completed']);
+        $this->update([
+            'status' => 'completed',
+            'actual_transfer_date' => now(),
+            'updated_by' => Auth::id()
+        ]);
         return true;
     }
 
     /**
      * Check if transfer can be completed
      */
-    // public function canBeCompleted(): bool
-    // {
-    //     return $this->status === 'approved' &&
-    //         $this->payment_status === 'paid' &&
-    //         $this->proposed_transfer_date <= now();
-    // }
+    public function canBeCompleted(): bool
+    {
+        return true; // Allow completion without restrictions for now
+    }
 
     /**
      * Get status color for UI

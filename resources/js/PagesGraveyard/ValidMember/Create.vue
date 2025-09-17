@@ -432,18 +432,13 @@
                         </div>
 
                         <div>
-                          <label class="mb-1 block text-sm font-medium text-gray-700">Parish</label>
-                          <div class="mt-1">
-                            <select
-                              v-model="member.parish_id"
-                              class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            >
-                              <option value="">Select Parish</option>
-                              <option v-for="parish in parishes" :key="parish.id" :value="parish.id.toString()">
-                                {{ parish.name }}
-                              </option>
-                            </select>
-                          </div>
+                          <ParishSelection
+                            :id="`parish_${index}`"
+                            label="Parish"
+                            :model-value="{ parishId: member.parish_id ? parseInt(member.parish_id) : null, parishName: null }"
+                            :parishes="parishes"
+                            @update:model-value="(value) => updateParishSelection(index, value)"
+                          />
                         </div>
 
                         <div>
@@ -525,6 +520,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import ParishSelection from '@/components/ParishSelection.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, MapPin, Plus, Users, X } from 'lucide-vue-next';
@@ -991,6 +987,15 @@ const handlePreSelectedGrave = async () => {
     } catch (error) {
       console.error('Failed to load pre-selected grave:', error);
     }
+  }
+};
+
+// Handle parish selection updates
+const updateParishSelection = (memberIndex: number, value: { parishId?: number | null; parishName?: string | null }) => {
+  if (value.parishId) {
+    formData.members[memberIndex].parish_id = value.parishId.toString();
+  } else {
+    formData.members[memberIndex].parish_id = '';
   }
 };
 

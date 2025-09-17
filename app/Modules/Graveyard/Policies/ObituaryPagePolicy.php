@@ -75,6 +75,14 @@ class ObituaryPagePolicy
     }
 
     /**
+     * Determine whether the user can preview obituary pages.
+     */
+    public function preview(User $user, ObituaryPage $obituaryPage): bool
+    {
+        return $user->hasPermissionTo('read-obituary-page');
+    }
+
+    /**
      * Determine whether the user can manage files for obituary pages.
      */
     public function manageFiles(User $user): bool

@@ -119,25 +119,9 @@
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
                 <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('section')">
                   <div class="flex items-center">
-                    Section
+                    Grave Position
                     <ChevronUp v-if="filters.sort === 'section' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
                     <ChevronDown v-else-if="filters.sort === 'section' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
-                    <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
-                  </div>
-                </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('row_no')">
-                  <div class="flex items-center">
-                    Row
-                    <ChevronUp v-if="filters.sort === 'row_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'row_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
-                    <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
-                  </div>
-                </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('grave_no')">
-                  <div class="flex items-center">
-                    Grave No
-                    <ChevronUp v-if="filters.sort === 'grave_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'grave_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
@@ -193,9 +177,7 @@
                     </template>
                   </div>
                 </td>
-                <td class="p-6">{{ grave.section }}</td>
-                <td class="p-6">{{ grave.row_no }}</td>
-                <td class="p-6">{{ grave.grave_no }}</td>
+                <td class="p-6">{{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}</td>
                 <td class="p-6">{{ grave.oldno }}</td>
                 <td class="p-2">
                   <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="getStatusClass(grave.status)">
@@ -234,7 +216,7 @@
             <h3 class="mb-4 text-xl font-semibold">Delete Temporary Grave</h3>
             <p>
               Are you sure you want to delete this temporary grave
-              <span class="font-bold">{{ graveToDelete?.section }}-{{ graveToDelete?.grave_no }}</span>
+              <span class="font-bold">{{ graveToDelete?.section }}-{{ graveToDelete?.row_no }}-{{ graveToDelete?.grave_no }}</span>
               ?
             </p>
             <div class="mt-6 flex justify-end space-x-2">

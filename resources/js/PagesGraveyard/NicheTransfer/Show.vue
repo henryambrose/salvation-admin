@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, Calendar, CreditCard, FileText, IndianRupee, Use
 interface NicheTransfer {
   id: number;
   transfer_reference: string;
-  status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
+  status: 'pending' | 'completed';
   from_temporary_grave: {
     id: number;
     grave_no: string;
@@ -115,7 +115,7 @@ const getDeceasedName = () => {
 };
 
 const isOverdue = () => {
-  return new Date(props.transfer.proposed_transfer_date) < new Date() && props.transfer.status === 'approved';
+  return new Date(props.transfer.proposed_transfer_date) < new Date();
 };
 
 const canMakePayment = () => {
@@ -137,7 +137,6 @@ const canMakePayment = () => {
 // const canBeCancelled = () => {
 //   return ['pending', 'approved'].includes(props.transfer.status);
 // };
-
 </script>
 
 <template>

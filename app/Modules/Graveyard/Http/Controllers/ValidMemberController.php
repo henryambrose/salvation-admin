@@ -65,7 +65,7 @@ class ValidMemberController extends Controller
             'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'grave_no', 'section', 'row_no', 'owner_name', 'contact_no', 'member_id')->with('member:id,full_name,family_no')->get(),
             'niches' => \Modules\Graveyard\Models\Niche::select('id', 'niche_no', 'location')->get(),
             'genders' => \Modules\Members\Models\Gender::select('id', 'name')->get(),
-            'parishes' => \Modules\Members\Models\Parish::select('id', 'name')->get(),
+            'parishes' => \Modules\Members\Models\Parish::all(),
             'relationships' => \Modules\Members\Models\Relationship::select('id', 'name')->get(),
             'permanent_grave_id' => $request->query('permanent_grave_id') ? (int) $request->query('permanent_grave_id') : null,
         ]);
@@ -220,7 +220,7 @@ class ValidMemberController extends Controller
                 $memberToCreate['aadhar_no'] = $memberData['aadhar_no'] ?? null;
                 $memberToCreate['member_type'] = $memberData['member_type'];
             }
-            
+
             // Add relationship_id for both member types
             $memberToCreate['relationship_id'] = $memberData['relationship_id'] ?? null;
             $memberToCreate['notes'] = $memberData['notes'] ?? null;
