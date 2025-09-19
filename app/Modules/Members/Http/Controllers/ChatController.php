@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Controllers;
+
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\JsonResponse;
@@ -57,26 +58,15 @@ class ChatController extends Controller
                 }
             }
 
-            Log::info('Sending request to CatéGPT', [
-                'question' => $request->message,
-                'lang' => $requestData['lang'],
-                'modechat' => $requestData['modechat'],
-            ]);
-
             $response = Http::withHeaders([
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
             ])
-            ->withOptions([
-                'verify' => config('app.env') === 'production', // Only verify SSL in production
-                'timeout' => 30,
-            ])
-            ->post('https://categpt.chat/api/question', $requestData);
-
-            Log::info('CatéGPT API Response', [
-                'status' => $response->status(),
-                'successful' => $response->successful(),
-            ]);
+                ->withOptions([
+                    'verify' => config('app.env') === 'production', // Only verify SSL in production
+                    'timeout' => 30,
+                ])
+                ->post('https://categpt.chat/api/question', $requestData);
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -127,7 +117,6 @@ class ChatController extends Controller
                     'error' => $errorMessage,
                 ], 500);
             }
-
         } catch (\Exception $e) {
             Log::error('Chat API Error', [
                 'message' => $e->getMessage(),
@@ -137,7 +126,7 @@ class ChatController extends Controller
             ]);
 
             return response()->json([
-                'error' => 'An error occurred while processing your request: '.$e->getMessage(),
+                'error' => 'An error occurred while processing your request: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -196,11 +185,11 @@ class ChatController extends Controller
                 'Authorization' => $apiKey,
                 'Content-Type' => 'application/json',
             ])
-            ->withOptions([
-                'verify' => config('app.env') === 'production', // Only verify SSL in production
-                'timeout' => 30,
-            ])
-            ->get("https://categpt.chat/api/post/{$request->uniqueID}");
+                ->withOptions([
+                    'verify' => config('app.env') === 'production', // Only verify SSL in production
+                    'timeout' => 30,
+                ])
+                ->get("https://categpt.chat/api/post/{$request->uniqueID}");
 
             if ($response->successful()) {
                 $data = $response->json();
@@ -220,7 +209,6 @@ class ChatController extends Controller
                     'error' => 'Failed to retrieve the specific answer',
                 ], 500);
             }
-
         } catch (\Exception $e) {
             Log::error('Get Specific Answer Error', [
                 'message' => $e->getMessage(),

@@ -294,8 +294,6 @@ class AnnualContributionController extends Controller
 
     public function export(Request $request)
     {
-        Log::info('Export method called with parameters:', $request->all());
-
         $query = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
             ->orderBy('created_at', 'desc');
 
@@ -340,8 +338,6 @@ class AnnualContributionController extends Controller
         }
 
         $contributions = $query->get();
-
-        Log::info('Export query returned ' . $contributions->count() . ' records');
 
         $filename = 'annual-contributions-' . date('Y-m-d-H-i-s') . '.csv';
 

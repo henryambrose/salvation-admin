@@ -43,7 +43,7 @@ const getStatusBadgeColor = (isActive: boolean) => {
 
 // Get type badge color
 const getTypeBadgeColor = (type: string) => {
-  const colors = {
+  const colors: Record<string, string> = {
     'color': 'bg-purple-100 text-purple-800',
     'gradient': 'bg-pink-100 text-pink-800',
     'pattern': 'bg-indigo-100 text-indigo-800',

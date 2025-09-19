@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Copy, CreditCard, Download, Edit, ExternalLink, Eye, QrCode, Share2, Users, RefreshCw, Settings } from 'lucide-vue-next';
+import { ArrowLeft, Copy, CreditCard, Edit, Eye, Key, Lock, QrCode, RefreshCw, Settings, Unlock, UserPlus, UserX } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 type PaymentStatus = 'pending' | 'completed' | 'failed';
@@ -53,6 +53,15 @@ interface ObituaryPage {
     amount: number;
     payment_reference: string;
   }[];
+  obituary_manager?: {
+    id: number;
+    name: string;
+    email: string;
+    is_active: boolean;
+    last_login_at?: string;
+    access_granted_at: string;
+    access_granted_by: number;
+  };
 }
 
 interface PaymentMethod {
@@ -91,18 +100,16 @@ const deceasedName = computed(() => {
 
 // Get booking reference
 const bookingReference = computed(() => {
-  return props.obituary.permanent_grave_booking?.booking_reference || 
-         props.obituary.temporary_grave_booking?.booking_reference || 
-         'N/A';
+  return props.obituary.permanent_grave_booking?.booking_reference || props.obituary.temporary_grave_booking?.booking_reference || 'N/A';
 });
 
 // Payment status
 const pendingPayment = computed(() => {
-  return props.obituary.payments?.find(p => p.payment_status === 'pending');
+  return props.obituary.payments?.find((p) => p.payment_status === 'pending');
 });
 
 const isPaymentCompleted = computed(() => {
-  return props.obituary.payments?.some(p => p.payment_status === 'completed');
+  return props.obituary.payments?.some((p) => p.payment_status === 'completed');
 });
 
 // Public URL for sharing
@@ -129,13 +136,13 @@ const qrForm = useForm({
   color: {
     r: 0,
     g: 0,
-    b: 0
+    b: 0,
   },
   background_color: {
     r: 255,
     g: 255,
-    b: 255
-  }
+    b: 255,
+  },
 });
 
 const processPayment = () => {
@@ -148,21 +155,22 @@ const processPayment = () => {
 const submitPayment = () => {
   const formData = {
     ...paymentForm.data(),
-    payment_method_id: parseInt(paymentForm.payment_method_id as string)
+    payment_method_id: parseInt(paymentForm.payment_method_id as string),
   };
-  
-  paymentForm.transform(() => formData).post(`/graveyard/obituaries/${props.obituary.uuid}/payment`, {
-    onSuccess: () => {
-      showPaymentDialog.value = false;
-      paymentForm.reset();
-    },
-  });
+
+  paymentForm
+    .transform(() => formData)
+    .post(`/graveyard/obituaries/${props.obituary.uuid}/payment`, {
+      onSuccess: () => {
+        showPaymentDialog.value = false;
+        paymentForm.reset();
+      },
+    });
 };
 
 const copyPublicLink = async () => {
   try {
     await navigator.clipboard.writeText(publicUrl.value);
-    console.log('Link copied to clipboard successfully');
     // You could add a toast notification here
   } catch (err) {
     console.error('Failed to copy link: ', err);
@@ -174,7 +182,6 @@ const copyPublicLink = async () => {
     textArea.select();
     try {
       document.execCommand('copy');
-      console.log('Link copied using fallback method');
     } catch (fallbackErr) {
       console.error('Fallback copy method failed: ', fallbackErr);
     }
@@ -195,18 +202,22 @@ const downloadQRCode = () => {
 
 const generateStandardQr = () => {
   isGeneratingQr.value = true;
-  
+
   // Use the service class to regenerate the QR code
-  router.post(`/graveyard/obituaries/${props.obituary.uuid}/generate-qr`, {}, {
-    onSuccess: () => {
-      isGeneratingQr.value = false;
-      // Refresh the page to show updated QR
-      router.reload();
+  router.post(
+    `/graveyard/obituaries/${props.obituary.uuid}/generate-qr`,
+    {},
+    {
+      onSuccess: () => {
+        isGeneratingQr.value = false;
+        // Refresh the page to show updated QR
+        router.reload();
+      },
+      onError: () => {
+        isGeneratingQr.value = false;
+      },
     },
-    onError: () => {
-      isGeneratingQr.value = false;
-    }
-  });
+  );
 };
 
 const generateCustomQr = () => {
@@ -215,7 +226,7 @@ const generateCustomQr = () => {
       showQrDialog.value = false;
       qrForm.reset();
       router.reload();
-    }
+    },
   });
 };
 
@@ -264,7 +275,7 @@ const expirationInfo = computed(() => {
     color,
     message,
     date: expiryDate.toLocaleDateString(),
-    diffDays
+    diffDays,
   };
 });
 
@@ -272,9 +283,89 @@ const extendExpiration = () => {
   const days = prompt('Extend expiration by how many days?', '30');
   if (days && !isNaN(parseInt(days))) {
     router.post(`/graveyard/obituaries/${props.obituary.uuid}/extend-expiration`, {
-      days: parseInt(days)
+      days: parseInt(days),
     });
   }
+};
+
+// External Member Management
+const showExternalMemberDialog = ref(false);
+const showResetPasswordDialog = ref(false);
+
+const externalMemberForm = useForm({
+  name: '',
+  email: '',
+  password: '',
+  password_confirmation: '',
+});
+
+const resetPasswordForm = useForm({
+  password: '',
+  password_confirmation: '',
+});
+
+const grantExternalAccess = () => {
+  externalMemberForm.post(`/graveyard/obituaries/${props.obituary.uuid}/grant-external-access`, {
+    onSuccess: (page) => {
+      showExternalMemberDialog.value = false;
+      externalMemberForm.reset();
+      // Update the obituary data with the new external member
+      const flash = page.props.flash as any;
+      if (flash?.external_member) {
+        props.obituary.obituary_manager = flash.external_member;
+      }
+    },
+  });
+};
+
+const toggleExternalAccess = () => {
+  const action = props.obituary.obituary_manager?.is_active ? 'disable' : 'enable';
+  if (confirm(`Are you sure you want to ${action} external access?`)) {
+    router.patch(
+      `/graveyard/obituaries/${props.obituary.uuid}/toggle-external-access`,
+      {},
+      {
+        onSuccess: () => {
+          // Toggle the local state
+          if (props.obituary.obituary_manager) {
+            props.obituary.obituary_manager.is_active = !props.obituary.obituary_manager.is_active;
+          }
+        },
+      },
+    );
+  }
+};
+
+const revokeExternalAccess = () => {
+  if (confirm('Are you sure you want to completely revoke external access? This will delete the external member account.')) {
+    router.delete(`/graveyard/obituaries/${props.obituary.uuid}/revoke-external-access`, {
+      onSuccess: () => {
+        // Remove the external member from local state
+        props.obituary.obituary_manager = undefined;
+      },
+    });
+  }
+};
+
+const resetExternalPassword = () => {
+  resetPasswordForm.patch(`/graveyard/obituaries/${props.obituary.uuid}/reset-external-password`, {
+    onSuccess: () => {
+      showResetPasswordDialog.value = false;
+      resetPasswordForm.reset();
+    },
+  });
+};
+
+const getExternalAccessUrl = computed(() => {
+  if (typeof window !== 'undefined') {
+    return `${window.location.origin}/obituary/${props.obituary.uuid}/manage/login`;
+  }
+  return '';
+});
+
+const copyExternalAccessUrl = () => {
+  navigator.clipboard.writeText(getExternalAccessUrl.value);
+  // You might want to show a toast message here
 };
 
 const paymentStatusColors = {
@@ -304,18 +395,12 @@ const paymentStatusColors = {
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <Badge :class="serviceTypeColors[obituary.service_type]">
-                {{ obituary.service_type }} Service
-              </Badge>
-              <Badge v-if="isPaymentCompleted" class="bg-green-100 text-green-800">
-                Activated
-              </Badge>
+              <Badge :class="serviceTypeColors[obituary.service_type]"> {{ obituary.service_type }} Service </Badge>
+              <Badge v-if="isPaymentCompleted" class="bg-green-100 text-green-800"> Activated </Badge>
               <Badge v-if="expirationInfo" :class="expirationInfo.color">
                 {{ expirationInfo.message }}
               </Badge>
-              <Badge v-else-if="pendingPayment" class="bg-orange-100 text-orange-800">
-                Payment Pending
-              </Badge>
+              <Badge v-else-if="pendingPayment" class="bg-orange-100 text-orange-800"> Payment Pending </Badge>
             </div>
           </div>
         </div>
@@ -331,9 +416,7 @@ const paymentStatusColors = {
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="font-semibold text-orange-800">Payment Required</h3>
-                <p class="text-orange-700">
-                  Complete the payment of ₹{{ pendingPayment.amount }} to activate this obituary page.
-                </p>
+                <p class="text-orange-700">Complete the payment of ₹{{ pendingPayment.amount }} to activate this obituary page.</p>
               </div>
               <Button @click="processPayment" class="bg-orange-600 hover:bg-orange-700">
                 <CreditCard class="mr-2 h-4 w-4" />
@@ -343,28 +426,24 @@ const paymentStatusColors = {
           </CardContent>
         </Card>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Main Content -->
-          <div class="lg:col-span-2 space-y-6">
+          <div class="space-y-6 lg:col-span-2">
             <!-- Basic Information -->
             <Card>
               <CardHeader>
                 <CardTitle>Memorial Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
                     <p class="font-medium text-gray-900">{{ deceasedName }}</p>
                     <p class="text-sm text-gray-600">Booking: {{ bookingReference }}</p>
                     <p class="text-sm text-gray-600">Created: {{ new Date(obituary.created_at).toLocaleDateString() }}</p>
                   </div>
                   <div class="text-right">
-                    <Badge :class="serviceTypeColors[obituary.service_type]" class="mb-2">
-                      {{ obituary.service_type }} Service
-                    </Badge>
-                    <p class="text-sm text-gray-600">
-                      Status: {{ obituary.is_public ? 'Public' : 'Private' }}
-                    </p>
+                    <Badge :class="serviceTypeColors[obituary.service_type]" class="mb-2"> {{ obituary.service_type }} Service </Badge>
+                    <p class="text-sm text-gray-600">Status: {{ obituary.is_public ? 'Public' : 'Private' }}</p>
                   </div>
                 </div>
               </CardContent>
@@ -378,10 +457,10 @@ const paymentStatusColors = {
               </CardHeader>
               <CardContent>
                 <div class="flex justify-center">
-                  <img 
+                  <img
                     :src="obituary.profile_image.startsWith('http') ? obituary.profile_image : `/storage/${obituary.profile_image}`"
                     :alt="deceasedName"
-                    class="w-64 h-64 object-cover rounded-lg shadow-lg border-2 border-gray-200"
+                    class="h-64 w-64 rounded-lg border-2 border-gray-200 object-cover shadow-lg"
                   />
                 </div>
               </CardContent>
@@ -392,7 +471,7 @@ const paymentStatusColors = {
                 <CardTitle>Biography</CardTitle>
               </CardHeader>
               <CardContent>
-                <p class="text-gray-700 whitespace-pre-line">{{ obituary.biography }}</p>
+                <p class="whitespace-pre-line text-gray-700">{{ obituary.biography }}</p>
               </CardContent>
             </Card>
 
@@ -401,7 +480,7 @@ const paymentStatusColors = {
                 <CardTitle>Favorite Memory</CardTitle>
               </CardHeader>
               <CardContent>
-                <p class="text-gray-700 whitespace-pre-line">{{ obituary.favorite_memory }}</p>
+                <p class="whitespace-pre-line text-gray-700">{{ obituary.favorite_memory }}</p>
               </CardContent>
             </Card>
 
@@ -410,7 +489,7 @@ const paymentStatusColors = {
                 <CardTitle>Achievements</CardTitle>
               </CardHeader>
               <CardContent>
-                <p class="text-gray-700 whitespace-pre-line">{{ obituary.achievements }}</p>
+                <p class="whitespace-pre-line text-gray-700">{{ obituary.achievements }}</p>
               </CardContent>
             </Card>
 
@@ -419,7 +498,7 @@ const paymentStatusColors = {
                 <CardTitle>Hobbies & Interests</CardTitle>
               </CardHeader>
               <CardContent>
-                <p class="text-gray-700 whitespace-pre-line">{{ obituary.hobbies_interests }}</p>
+                <p class="whitespace-pre-line text-gray-700">{{ obituary.hobbies_interests }}</p>
               </CardContent>
             </Card>
 
@@ -428,7 +507,7 @@ const paymentStatusColors = {
                 <CardTitle>Family Notes & Messages</CardTitle>
               </CardHeader>
               <CardContent>
-                <p class="text-gray-700 whitespace-pre-line">{{ obituary.notes }}</p>
+                <p class="whitespace-pre-line text-gray-700">{{ obituary.notes }}</p>
               </CardContent>
             </Card>
 
@@ -437,25 +516,25 @@ const paymentStatusColors = {
               <CardHeader>
                 <CardTitle class="flex items-center">
                   Gallery Photos
-                  <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Premium</span>
+                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  <div 
-                    v-for="(image, index) in obituary.gallery_images" 
+                <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  <div
+                    v-for="(image, index) in obituary.gallery_images"
                     :key="index"
-                    class="aspect-square group cursor-pointer"
+                    class="group aspect-square cursor-pointer"
                     @click="viewFullImage(image)"
                   >
-                    <img 
+                    <img
                       :src="image.startsWith('http') ? image : `/storage/${image}`"
                       :alt="`Gallery photo ${index + 1}`"
-                      class="w-full h-full object-cover rounded-lg shadow-md hover:shadow-xl transition-shadow duration-200 border border-gray-200"
+                      class="h-full w-full rounded-lg border border-gray-200 object-cover shadow-md transition-shadow duration-200 hover:shadow-xl"
                     />
                   </div>
                 </div>
-                <p class="text-sm text-gray-500 mt-3">{{ obituary.gallery_images.length }} photos • Click to view full size</p>
+                <p class="mt-3 text-sm text-gray-500">{{ obituary.gallery_images.length }} photos • Click to view full size</p>
               </CardContent>
             </Card>
 
@@ -464,18 +543,27 @@ const paymentStatusColors = {
               <CardHeader>
                 <CardTitle class="flex items-center">
                   Audio Message
-                  <span class="ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full font-medium">Premium</span>
+                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="bg-gray-50 rounded-lg p-4">
+                <div class="rounded-lg bg-gray-50 p-4">
                   <audio controls class="w-full max-w-md">
-                    <source :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`" type="audio/mpeg">
-                    <source :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`" type="audio/wav">
-                    <source :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`" type="audio/mp4">
+                    <source
+                      :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
+                      type="audio/mpeg"
+                    />
+                    <source
+                      :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
+                      type="audio/wav"
+                    />
+                    <source
+                      :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
+                      type="audio/mp4"
+                    />
                     Your browser does not support the audio element.
                   </audio>
-                  <p class="text-sm text-gray-600 mt-2">Memorial audio message</p>
+                  <p class="mt-2 text-sm text-gray-600">Memorial audio message</p>
                 </div>
               </CardContent>
             </Card>
@@ -493,12 +581,12 @@ const paymentStatusColors = {
                   <Eye class="mr-2 h-4 w-4" />
                   Preview Page
                 </Button>
-                
+
                 <Button @click="copyPublicLink" class="w-full" variant="outline">
                   <Copy class="mr-2 h-4 w-4" />
                   Copy Share Link
                 </Button>
-                
+
                 <Button @click="generateStandardQr" class="w-full" variant="outline" :disabled="isGeneratingQr">
                   <RefreshCw class="mr-2 h-4 w-4" :class="{ 'animate-spin': isGeneratingQr }" />
                   {{ isGeneratingQr ? 'Generating...' : 'Generate QR Code' }}
@@ -513,7 +601,7 @@ const paymentStatusColors = {
                   <Settings class="mr-2 h-4 w-4" />
                   Custom QR Code
                 </Button>
-                
+
                 <Button v-if="canEdit" as-child class="w-full" variant="outline">
                   <Link :href="`/graveyard/obituaries/${obituary.uuid}/edit`">
                     <Edit class="mr-2 h-4 w-4" />
@@ -552,6 +640,70 @@ const paymentStatusColors = {
               </CardContent>
             </Card>
 
+            <!-- External Member Management -->
+            <Card v-if="canEdit">
+              <CardHeader>
+                <CardTitle>External Access Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div v-if="!obituary.obituary_manager" class="space-y-3">
+                  <p class="text-sm text-gray-600">No external member access has been granted yet.</p>
+                  <Button @click="showExternalMemberDialog = true" class="w-full">
+                    <UserPlus class="mr-2 h-4 w-4" />
+                    Grant External Access
+                  </Button>
+                </div>
+
+                <div v-else class="space-y-4">
+                  <!-- External Member Info -->
+                  <div class="rounded bg-gray-50 p-3">
+                    <div class="mb-2 flex items-center justify-between">
+                      <h4 class="font-medium">{{ obituary.obituary_manager.name }}</h4>
+                      <Badge :class="obituary.obituary_manager.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                        {{ obituary.obituary_manager.is_active ? 'Active' : 'Disabled' }}
+                      </Badge>
+                    </div>
+                    <p class="text-sm text-gray-600">{{ obituary.obituary_manager.email }}</p>
+                    <p class="mt-1 text-xs text-gray-500">
+                      Access granted: {{ new Date(obituary.obituary_manager.access_granted_at).toLocaleDateString() }}
+                    </p>
+                    <p v-if="obituary.obituary_manager.last_login_at" class="text-xs text-gray-500">
+                      Last login: {{ new Date(obituary.obituary_manager.last_login_at).toLocaleDateString() }}
+                    </p>
+                  </div>
+
+                  <!-- Management URL -->
+                  <div class="rounded bg-blue-50 p-3">
+                    <Label class="text-sm font-medium text-blue-800">Management URL:</Label>
+                    <div class="mt-1 flex items-center space-x-2">
+                      <Input :value="getExternalAccessUrl" readonly class="bg-white text-xs" />
+                      <Button @click="copyExternalAccessUrl" size="sm" variant="outline">
+                        <Copy class="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <!-- Action Buttons -->
+                  <div class="space-y-2">
+                    <Button @click="toggleExternalAccess" class="w-full" :variant="obituary.obituary_manager.is_active ? 'destructive' : 'default'">
+                      <component :is="obituary.obituary_manager.is_active ? Lock : Unlock" class="mr-2 h-4 w-4" />
+                      {{ obituary.obituary_manager.is_active ? 'Disable Access' : 'Enable Access' }}
+                    </Button>
+
+                    <Button @click="showResetPasswordDialog = true" class="w-full" variant="outline">
+                      <Key class="mr-2 h-4 w-4" />
+                      Reset Password
+                    </Button>
+
+                    <Button @click="revokeExternalAccess" class="w-full" variant="outline">
+                      <UserX class="mr-2 h-4 w-4" />
+                      Revoke Access
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             <!-- Payment Information -->
             <Card v-if="obituary.payments?.length">
               <CardHeader>
@@ -559,7 +711,7 @@ const paymentStatusColors = {
               </CardHeader>
               <CardContent>
                 <div class="space-y-3">
-                  <div v-for="payment in obituary.payments" :key="payment.id" class="flex justify-between items-center p-3 bg-gray-50 rounded">
+                  <div v-for="payment in obituary.payments" :key="payment.id" class="flex items-center justify-between rounded bg-gray-50 p-3">
                     <div>
                       <p class="font-medium">₹{{ payment.amount }}</p>
                       <p class="text-xs text-gray-600">{{ payment.payment_reference }}</p>
@@ -578,13 +730,13 @@ const paymentStatusColors = {
                 <CardTitle>Public Access</CardTitle>
               </CardHeader>
               <CardContent>
-                <div class="p-3 bg-gray-50 rounded">
+                <div class="rounded bg-gray-50 p-3">
                   <Label class="text-sm font-medium">Public URL:</Label>
-                  <div class="flex items-center space-x-2 mt-1">
-                    <input 
-                      :value="publicUrl" 
-                      readonly 
-                      class="w-full px-3 py-2 text-sm text-gray-900 bg-white font-mono border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  <div class="mt-1 flex items-center space-x-2">
+                    <input
+                      :value="publicUrl"
+                      readonly
+                      class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 focus:ring-1 focus:ring-blue-500 focus:outline-none"
                     />
                     <Button size="sm" variant="outline" @click="copyPublicLink">
                       <Copy class="h-3 w-3" />
@@ -601,45 +753,37 @@ const paymentStatusColors = {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Complete Payment</DialogTitle>
-              <DialogDescription>
-                Process the payment for {{ obituary.service_type }} obituary service
-              </DialogDescription>
+              <DialogDescription> Process the payment for {{ obituary.service_type }} obituary service </DialogDescription>
             </DialogHeader>
-            
+
             <form @submit.prevent="submitPayment" class="space-y-4">
               <div>
                 <Label>Amount</Label>
                 <Input v-model="paymentForm.amount" type="number" readonly />
               </div>
-              
+
               <div>
                 <Label>Payment Method</Label>
-                <select 
+                <select
                   v-model="paymentForm.payment_method_id"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+                  class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                   required
                 >
                   <option value="">Select payment method</option>
-                  <option 
-                    v-for="method in paymentMethods" 
-                    :key="method.id" 
-                    :value="String(method.id)"
-                  >
+                  <option v-for="method in paymentMethods" :key="method.id" :value="String(method.id)">
                     {{ method.name }}
                     <span v-if="method.description"> - {{ method.description }}</span>
                   </option>
                 </select>
               </div>
-              
+
               <div>
                 <Label>Notes (Optional)</Label>
                 <Input v-model="paymentForm.notes" placeholder="Payment notes..." />
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="outline" @click="showPaymentDialog = false">
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" @click="showPaymentDialog = false"> Cancel </Button>
                 <Button type="submit" :disabled="paymentForm.processing">
                   {{ paymentForm.processing ? 'Processing...' : 'Complete Payment' }}
                 </Button>
@@ -653,153 +797,255 @@ const paymentStatusColors = {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Generate Custom QR Code</DialogTitle>
-              <DialogDescription>
-                Create a customized QR code for this obituary page
-              </DialogDescription>
+              <DialogDescription> Create a customized QR code for this obituary page </DialogDescription>
             </DialogHeader>
-            
+
             <form @submit.prevent="generateCustomQr" class="space-y-4">
-              <div class="grid md:grid-cols-2 gap-4">
+              <div class="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>Size (pixels)</Label>
-                  <input 
-                    v-model.number="qrForm.size" 
-                    type="number" 
-                    min="100" 
-                    max="1000" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                  <input v-model.number="qrForm.size" type="number" min="100" max="1000" class="w-full rounded-md border border-gray-300 px-3 py-2" />
                 </div>
                 <div>
                   <Label>Margin (pixels)</Label>
-                  <input 
-                    v-model.number="qrForm.margin" 
-                    type="number" 
-                    min="0" 
-                    max="10" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  />
+                  <input v-model.number="qrForm.margin" type="number" min="0" max="10" class="w-full rounded-md border border-gray-300 px-3 py-2" />
                 </div>
               </div>
 
               <div>
                 <Label>QR Code Color</Label>
-                <div class="flex gap-2 mb-3">
-                  <button 
+                <div class="mb-3 flex gap-2">
+                  <button
                     type="button"
                     @click="qrForm.color = { r: 0, g: 0, b: 0 }"
-                    class="w-6 h-6 bg-black border border-gray-300 rounded"
+                    class="h-6 w-6 rounded border border-gray-300 bg-black"
                     title="Black"
                   ></button>
-                  <button 
+                  <button
                     type="button"
                     @click="qrForm.color = { r: 255, g: 0, b: 0 }"
-                    class="w-6 h-6 bg-red-500 border border-gray-300 rounded"
+                    class="h-6 w-6 rounded border border-gray-300 bg-red-500"
                     title="Red"
                   ></button>
-                  <button 
+                  <button
                     type="button"
                     @click="qrForm.color = { r: 0, g: 0, b: 255 }"
-                    class="w-6 h-6 bg-blue-500 border border-gray-300 rounded"
+                    class="h-6 w-6 rounded border border-gray-300 bg-blue-500"
                     title="Blue"
                   ></button>
-                  <button 
+                  <button
                     type="button"
                     @click="qrForm.color = { r: 0, g: 128, b: 0 }"
-                    class="w-6 h-6 bg-green-600 border border-gray-300 rounded"
+                    class="h-6 w-6 rounded border border-gray-300 bg-green-600"
                     title="Green"
                   ></button>
-                  <button 
+                  <button
                     type="button"
                     @click="qrForm.color = { r: 128, g: 0, b: 128 }"
-                    class="w-6 h-6 bg-purple-600 border border-gray-300 rounded"
+                    class="h-6 w-6 rounded border border-gray-300 bg-purple-600"
                     title="Purple"
                   ></button>
                 </div>
-                <div class="grid grid-cols-3 gap-2 mt-2">
+                <div class="mt-2 grid grid-cols-3 gap-2">
                   <div>
                     <label class="text-xs text-gray-600">Red (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.color.r" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.color.r"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                   <div>
                     <label class="text-xs text-gray-600">Green (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.color.g" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.color.g"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                   <div>
                     <label class="text-xs text-gray-600">Blue (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.color.b" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.color.b"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                 </div>
-                <div 
-                  class="w-8 h-8 border border-gray-300 rounded mt-2"
+                <div
+                  class="mt-2 h-8 w-8 rounded border border-gray-300"
                   :style="{ backgroundColor: `rgb(${qrForm.color.r}, ${qrForm.color.g}, ${qrForm.color.b})` }"
                 ></div>
               </div>
 
               <div>
                 <Label>Background Color</Label>
-                <div class="grid grid-cols-3 gap-2 mt-2">
+                <div class="mt-2 grid grid-cols-3 gap-2">
                   <div>
                     <label class="text-xs text-gray-600">Red (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.background_color.r" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.background_color.r"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                   <div>
                     <label class="text-xs text-gray-600">Green (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.background_color.g" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.background_color.g"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                   <div>
                     <label class="text-xs text-gray-600">Blue (0-255)</label>
-                    <input 
-                      v-model.number="qrForm.background_color.b" 
-                      type="number" 
-                      min="0" 
-                      max="255" 
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                    <input
+                      v-model.number="qrForm.background_color.b"
+                      type="number"
+                      min="0"
+                      max="255"
+                      class="w-full rounded border border-gray-300 px-2 py-1 text-sm"
                     />
                   </div>
                 </div>
-                <div 
-                  class="w-8 h-8 border border-gray-300 rounded mt-2"
+                <div
+                  class="mt-2 h-8 w-8 rounded border border-gray-300"
                   :style="{ backgroundColor: `rgb(${qrForm.background_color.r}, ${qrForm.background_color.g}, ${qrForm.background_color.b})` }"
                 ></div>
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="outline" @click="showQrDialog = false">
-                  Cancel
-                </Button>
+                <Button type="button" variant="outline" @click="showQrDialog = false"> Cancel </Button>
                 <Button type="submit" :disabled="qrForm.processing">
                   {{ qrForm.processing ? 'Generating...' : 'Generate QR Code' }}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <!-- Grant External Access Dialog -->
+        <Dialog v-model:open="showExternalMemberDialog">
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Grant External Access</DialogTitle>
+              <DialogDescription> Create an account for a family member to manage this obituary page. </DialogDescription>
+            </DialogHeader>
+            <form @submit.prevent="grantExternalAccess" class="space-y-4">
+              <div>
+                <Label for="external_name">Full Name</Label>
+                <Input
+                  id="external_name"
+                  v-model="externalMemberForm.name"
+                  type="text"
+                  placeholder="Enter full name"
+                  required
+                  :class="{ 'border-red-500': externalMemberForm.errors.name }"
+                />
+                <p v-if="externalMemberForm.errors.name" class="mt-1 text-sm text-red-600">{{ externalMemberForm.errors.name }}</p>
+              </div>
+
+              <div>
+                <Label for="external_email">Email Address</Label>
+                <Input
+                  id="external_email"
+                  v-model="externalMemberForm.email"
+                  type="email"
+                  placeholder="Enter email address"
+                  required
+                  :class="{ 'border-red-500': externalMemberForm.errors.email }"
+                />
+                <p v-if="externalMemberForm.errors.email" class="mt-1 text-sm text-red-600">{{ externalMemberForm.errors.email }}</p>
+              </div>
+
+              <div>
+                <Label for="external_password">Password</Label>
+                <Input
+                  id="external_password"
+                  v-model="externalMemberForm.password"
+                  type="password"
+                  placeholder="Enter password (minimum 8 characters)"
+                  required
+                  :class="{ 'border-red-500': externalMemberForm.errors.password }"
+                />
+                <p v-if="externalMemberForm.errors.password" class="mt-1 text-sm text-red-600">{{ externalMemberForm.errors.password }}</p>
+              </div>
+
+              <div>
+                <Label for="external_password_confirmation">Confirm Password</Label>
+                <Input
+                  id="external_password_confirmation"
+                  v-model="externalMemberForm.password_confirmation"
+                  type="password"
+                  placeholder="Confirm password"
+                  required
+                  :class="{ 'border-red-500': externalMemberForm.errors.password_confirmation }"
+                />
+                <p v-if="externalMemberForm.errors.password_confirmation" class="mt-1 text-sm text-red-600">
+                  {{ externalMemberForm.errors.password_confirmation }}
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" @click="showExternalMemberDialog = false"> Cancel </Button>
+                <Button type="submit" :disabled="externalMemberForm.processing">
+                  {{ externalMemberForm.processing ? 'Creating...' : 'Grant Access' }}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
+
+        <!-- Reset Password Dialog -->
+        <Dialog v-model:open="showResetPasswordDialog">
+          <DialogContent class="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reset External Member Password</DialogTitle>
+              <DialogDescription> Set a new password for {{ obituary.obituary_manager?.name }}. </DialogDescription>
+            </DialogHeader>
+            <form @submit.prevent="resetExternalPassword" class="space-y-4">
+              <div>
+                <Label for="reset_password">New Password</Label>
+                <Input
+                  id="reset_password"
+                  v-model="resetPasswordForm.password"
+                  type="password"
+                  placeholder="Enter new password (minimum 8 characters)"
+                  required
+                  :class="{ 'border-red-500': resetPasswordForm.errors.password }"
+                />
+                <p v-if="resetPasswordForm.errors.password" class="mt-1 text-sm text-red-600">{{ resetPasswordForm.errors.password }}</p>
+              </div>
+
+              <div>
+                <Label for="reset_password_confirmation">Confirm New Password</Label>
+                <Input
+                  id="reset_password_confirmation"
+                  v-model="resetPasswordForm.password_confirmation"
+                  type="password"
+                  placeholder="Confirm new password"
+                  required
+                  :class="{ 'border-red-500': resetPasswordForm.errors.password_confirmation }"
+                />
+                <p v-if="resetPasswordForm.errors.password_confirmation" class="mt-1 text-sm text-red-600">
+                  {{ resetPasswordForm.errors.password_confirmation }}
+                </p>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" @click="showResetPasswordDialog = false"> Cancel </Button>
+                <Button type="submit" :disabled="resetPasswordForm.processing">
+                  {{ resetPasswordForm.processing ? 'Resetting...' : 'Reset Password' }}
                 </Button>
               </DialogFooter>
             </form>

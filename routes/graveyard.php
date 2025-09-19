@@ -17,6 +17,7 @@ use Modules\Graveyard\Http\Controllers\GraveCategoryController;
 use Modules\Graveyard\Http\Controllers\ObituaryController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
+use Modules\Graveyard\Http\Controllers\ObituaryManagerController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -177,6 +178,18 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{theme}/preview', [ObituaryBackgroundThemeController::class, 'preview'])->name('preview');
     });
 
+    // Obituary Managers Management
+    Route::prefix('graveyard/obituary-managers')->name('graveyard.obituary-managers.')->group(function () {
+        Route::get('/', [ObituaryManagerController::class, 'index'])->name('index');
+        Route::get('/create', [ObituaryManagerController::class, 'create'])->name('create');
+        Route::post('/', [ObituaryManagerController::class, 'store'])->name('store');
+        Route::get('/{obituaryManager}', [ObituaryManagerController::class, 'show'])->name('show');
+        Route::get('/{obituaryManager}/edit', [ObituaryManagerController::class, 'edit'])->name('edit');
+        Route::put('/{obituaryManager}', [ObituaryManagerController::class, 'update'])->name('update');
+        Route::delete('/{obituaryManager}', [ObituaryManagerController::class, 'destroy'])->name('destroy');
+        Route::patch('/{obituaryManager}/toggle-active', [ObituaryManagerController::class, 'toggleActive'])->name('toggle-active');
+    });
+
     // Obituary Management (Admin Routes)
     Route::prefix('graveyard/obituaries')->name('graveyard.obituaries.')->group(function () {
         Route::get('/cleanup', [ObituaryManagementController::class, 'cleanupPage'])->name('cleanup');
@@ -196,7 +209,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
 
         // Condolence management
-        Route::get('/condolences/manage', [ObituaryManagementController::class, 'condolences'])->name('condolences.index');
+        Route::get('/condolences/manage', [ObituaryManagementController::class, 'condolences'])->name('condolences.manage');
         Route::patch('/condolences/{condolence}/approve', [ObituaryManagementController::class, 'approveCondolence'])->name('condolences.approve');
         Route::patch('/condolences/{condolence}/reject', [ObituaryManagementController::class, 'rejectCondolence'])->name('condolences.reject');
 
@@ -221,6 +234,15 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
         // Text rephrasing API
         Route::post('/rephrase-text', [ObituaryManagementController::class, 'rephraseText'])->name('rephrase-text');
+
+        // Plan upgrade
+        Route::post('/{obituary}/upgrade-to-premium', [ObituaryManagementController::class, 'upgradeToPremium'])->name('upgrade-to-premium');
+
+        // External member management
+        Route::post('/{obituary}/grant-external-access', [ObituaryManagementController::class, 'grantExternalAccess'])->name('grant-external-access');
+        Route::delete('/{obituary}/revoke-external-access', [ObituaryManagementController::class, 'revokeExternalAccess'])->name('revoke-external-access');
+        Route::patch('/{obituary}/toggle-external-access', [ObituaryManagementController::class, 'toggleExternalAccess'])->name('toggle-external-access');
+        Route::patch('/{obituary}/reset-external-password', [ObituaryManagementController::class, 'resetExternalPassword'])->name('reset-external-password');
     });
 
     // Permission denied route for graveyard
@@ -359,8 +381,24 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
     // Increment view count
     $obituary->increment('view_count');
 
+    // Get deceased person's name
+    $deceasedName = '';
+    if ($obituary->permanentGraveBooking) {
+        $member = $obituary->permanentGraveBooking->validMember;
+        $deceasedName = trim($member->first_name . ' ' . $member->last_name);
+    } elseif ($obituary->temporaryGraveBooking) {
+        $booking = $obituary->temporaryGraveBooking;
+        $deceasedName = trim($booking->dead_first_name . ' ' . $booking->dead_last_name);
+    } else {
+        $deceasedName = 'Unknown';
+    }
+
     return Inertia::render('Public/Obituary/Show', [
         'obituary' => $obituary,
+        'deceasedName' => $deceasedName,
+        'condolences' => $obituary->condolences, // Explicitly pass approved condolences
+        'canSubmitCondolence' => $obituary->allow_condolences && $obituary->service_type === 'premium',
+        'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
         'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
     ]);
 })->name('obituary.show');
@@ -397,3 +435,21 @@ Route::post('/obituary/{uuid}/condolences', function (string $uuid, \Illuminate\
 
     return response()->json(['message' => 'Condolence submitted successfully']);
 })->name('obituary.condolences.store');
+
+// Obituary Manager Authentication Routes
+Route::prefix('obituary/{uuid}/manage')->name('obituary.external.')->group(function () {
+    // Login routes (no auth required)
+    Route::get('/login', [ObituaryManagerController::class, 'showLogin'])->name('login');
+    Route::post('/login', [ObituaryManagerController::class, 'login'])->name('login.submit');
+
+    // Protected routes (obituary manager auth required)
+    Route::middleware(['auth:external'])->group(function () {
+        Route::get('/dashboard', [ObituaryManagerController::class, 'dashboard'])->name('dashboard');
+        Route::get('/edit', [ObituaryManagerController::class, 'editObituary'])->name('edit');
+        Route::put('/update', [ObituaryManagerController::class, 'updateObituary'])->name('update');
+        Route::get('/condolences', [ObituaryManagerController::class, 'condolences'])->name('condolences');
+        Route::patch('/condolences/{condolence}/approve', [ObituaryManagerController::class, 'approveCondolence'])->name('condolences.approve');
+        Route::patch('/condolences/{condolence}/reject', [ObituaryManagerController::class, 'rejectCondolence'])->name('condolences.reject');
+        Route::post('/logout', [ObituaryManagerController::class, 'logout'])->name('logout');
+    });
+});

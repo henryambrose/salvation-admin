@@ -442,4 +442,28 @@ class Member extends Model
     {
         return $query->where('status_id', $statusId);
     }
+
+    /**
+     * Scope to get only alive members (no death_date)
+     */
+    public function scopeAlive($query)
+    {
+        return $query->whereNull('death_date');
+    }
+
+    /**
+     * Scope to get only deceased members (has death_date)
+     */
+    public function scopeDeceased($query)
+    {
+        return $query->whereNotNull('death_date');
+    }
+
+    /**
+     * Scope to conditionally exclude deceased members
+     */
+    public function scopeExcludeDeceasedIf($query, $condition)
+    {
+        return $condition ? $query->alive() : $query;
+    }
 }

@@ -27,6 +27,7 @@ return new class extends Migration
             $table->foreign('obituary_page_id')->references('id')->on('obituary_pages')->onDelete('cascade');
             $table->text('notes')->nullable()->comment('Family thoughts, funeral mass details, months mind mass timing and place, condolence messages from family etc.');
             $table->index('is_approved');
+            $table->boolean('is_rejected')->default(false);
             $table->timestamps();
         });
     }

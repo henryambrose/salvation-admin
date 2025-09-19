@@ -1,21 +1,21 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Save } from 'lucide-vue-next';
-import { ref, watch, computed } from 'vue';
+import { ArrowLeft, Save, Upload, X } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 defineOptions({
-  layout: AppLayout
+  layout: AppLayout,
 });
 
 const breadcrumbs = [
   { title: 'Graveyard', href: '#' },
   { title: 'Background Themes', href: route('graveyard.obituary-background-themes.index') },
-  { title: 'Create Theme', href: '#' }
+  { title: 'Create Theme', href: '#' },
 ];
 
 const form = useForm({
@@ -29,7 +29,12 @@ const form = useForm({
   style_properties: {},
   is_active: true,
   sort_order: 0,
+  image_file: null as File | null,
 });
+
+// Image upload state
+const imagePreview = ref<string | null>(null);
+const imageInputRef = ref<HTMLInputElement>();
 
 // Custom style properties based on type
 const customStyle = ref({
@@ -42,52 +47,124 @@ const customStyle = ref({
 });
 
 // Watch type changes to reset style properties
-watch(() => form.type, (newType) => {
-  customStyle.value = {
-    backgroundColor: '#ffffff',
-    background: '',
-    backgroundImage: '',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-  };
+watch(
+  () => form.type,
+  (newType) => {
+    customStyle.value = {
+      backgroundColor: '#ffffff',
+      background: '',
+      backgroundImage: '',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    };
 
-  if (newType === 'gradient') {
-    customStyle.value.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
-  } else if (newType === 'pattern') {
-    customStyle.value.backgroundColor = '#f8f9fa';
-    customStyle.value.backgroundImage = 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.5) 10px, rgba(255,255,255,.5) 20px)';
-  }
-});
+    if (newType === 'gradient') {
+      customStyle.value.background = 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)';
+    } else if (newType === 'pattern') {
+      customStyle.value.backgroundColor = '#f8f9fa';
+      customStyle.value.backgroundImage =
+        'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.5) 10px, rgba(255,255,255,.5) 20px)';
+    }
+  },
+);
 
 // Watch for style changes and update form
-watch(() => customStyle.value, (newStyle) => {
-  form.style_properties = { ...newStyle };
-}, { deep: true });
+watch(
+  () => customStyle.value,
+  (newStyle) => {
+    form.style_properties = { ...newStyle };
+  },
+  { deep: true },
+);
 
 // Preview style computed
 const previewStyle = computed(() => {
   const style = { ...customStyle.value };
 
-  if (form.type === 'image' && form.image_path) {
-    style.backgroundImage = `url('${form.image_path}')`;
+  if (form.type === 'image') {
+    if (imagePreview.value) {
+      // Use uploaded image preview
+      style.backgroundImage = `url('${imagePreview.value}')`;
+    } else if (form.image_path) {
+      // Use existing image path
+      style.backgroundImage = `url('${form.image_path}')`;
+    }
   }
 
   return style;
 });
 
 // Generate key from name
-watch(() => form.name, (newName) => {
-  if (newName && !form.key) {
-    form.key = newName.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/\s+/g, '_')
-      .trim();
+watch(
+  () => form.name,
+  (newName) => {
+    if (newName && !form.key) {
+      form.key = newName
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\s+/g, '_')
+        .trim();
+    }
+  },
+);
+
+// Image upload functions
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
+
+  if (file) {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file.');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size must be less than 5MB.');
+      return;
+    }
+
+    form.image_file = file;
+
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      imagePreview.value = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
   }
-});
+};
+
+const removeImage = () => {
+  form.image_file = null;
+  imagePreview.value = null;
+  form.image_path = '';
+  if (imageInputRef.value) {
+    imageInputRef.value.value = '';
+  }
+};
 
 const submit = () => {
-  form.post(route('graveyard.obituary-background-themes.store'));
+  if (form.image_file) {
+    // When file upload is involved, we need to transform the form data
+    const transformedData = {
+      ...form.data(),
+      is_active: form.is_active ? 1 : 0,
+    };
+
+    // Submit with form data transformation
+    form
+      .transform(() => transformedData)
+      .post(route('graveyard.obituary-background-themes.store'), {
+        forceFormData: true,
+      });
+  } else {
+    // Regular form submission
+    form.post(route('graveyard.obituary-background-themes.store'));
+  }
 };
 </script>
 
@@ -95,15 +172,12 @@ const submit = () => {
   <Head title="Create Background Theme" />
 
   <div class="py-6">
-    <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+    <div class="mx-auto max-w-4xl sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
+      <div class="mb-6 overflow-hidden bg-white shadow-sm sm:rounded-lg">
         <div class="p-6">
           <div class="flex items-center gap-4">
-            <Link
-              :href="route('graveyard.obituary-background-themes.index')"
-              class="text-gray-600 hover:text-gray-800"
-            >
+            <Link :href="route('graveyard.obituary-background-themes.index')" class="text-gray-600 hover:text-gray-800">
               <ArrowLeft class="h-5 w-5" />
             </Link>
             <div>
@@ -114,9 +188,9 @@ const submit = () => {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <!-- Form -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <div class="p-6">
             <form @submit.prevent="submit" class="space-y-6">
               <!-- Basic Info -->
@@ -125,13 +199,7 @@ const submit = () => {
 
                 <div>
                   <Label for="name">Theme Name *</Label>
-                  <Input
-                    id="name"
-                    v-model="form.name"
-                    type="text"
-                    required
-                    placeholder="e.g., Memorial Sunset"
-                  />
+                  <Input id="name" v-model="form.name" type="text" required placeholder="e.g., Memorial Sunset" />
                   <div v-if="form.errors.name" class="mt-1 text-sm text-red-600">
                     {{ form.errors.name }}
                   </div>
@@ -139,16 +207,8 @@ const submit = () => {
 
                 <div>
                   <Label for="key">Theme Key *</Label>
-                  <Input
-                    id="key"
-                    v-model="form.key"
-                    type="text"
-                    required
-                    placeholder="e.g., memorial_sunset"
-                  />
-                  <p class="mt-1 text-xs text-gray-500">
-                    Unique identifier for the theme (auto-generated from name)
-                  </p>
+                  <Input id="key" v-model="form.key" type="text" required placeholder="e.g., memorial_sunset" />
+                  <p class="mt-1 text-xs text-gray-500">Unique identifier for the theme (auto-generated from name)</p>
                   <div v-if="form.errors.key" class="mt-1 text-sm text-red-600">
                     {{ form.errors.key }}
                   </div>
@@ -156,12 +216,7 @@ const submit = () => {
 
                 <div>
                   <Label for="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    v-model="form.description"
-                    placeholder="Brief description of the theme"
-                    rows="3"
-                  />
+                  <Textarea id="description" v-model="form.description" placeholder="Brief description of the theme" :rows="3" />
                   <div v-if="form.errors.description" class="mt-1 text-sm text-red-600">
                     {{ form.errors.description }}
                   </div>
@@ -175,12 +230,7 @@ const submit = () => {
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <Label for="type">Type *</Label>
-                    <select
-                      id="type"
-                      v-model="form.type"
-                      class="w-full rounded-md border-gray-300"
-                      required
-                    >
+                    <select id="type" v-model="form.type" class="w-full rounded-md border-gray-300" required>
                       <option value="color">Solid Color</option>
                       <option value="gradient">Gradient</option>
                       <option value="pattern">Pattern</option>
@@ -193,12 +243,7 @@ const submit = () => {
 
                   <div>
                     <Label for="tier">Tier *</Label>
-                    <select
-                      id="tier"
-                      v-model="form.tier"
-                      class="w-full rounded-md border-gray-300"
-                      required
-                    >
+                    <select id="tier" v-model="form.tier" class="w-full rounded-md border-gray-300" required>
                       <option value="basic">Basic</option>
                       <option value="premium">Premium</option>
                     </select>
@@ -213,18 +258,8 @@ const submit = () => {
                   <div>
                     <Label for="background_color">Background Color</Label>
                     <div class="flex gap-3">
-                      <Input
-                        id="background_color"
-                        v-model="customStyle.backgroundColor"
-                        type="color"
-                        class="w-16"
-                      />
-                      <Input
-                        v-model="customStyle.backgroundColor"
-                        type="text"
-                        placeholder="#ffffff"
-                        class="flex-1"
-                      />
+                      <Input id="background_color" v-model="customStyle.backgroundColor" type="color" class="w-16" />
+                      <Input v-model="customStyle.backgroundColor" type="text" placeholder="#ffffff" class="flex-1" />
                     </div>
                   </div>
                 </div>
@@ -236,7 +271,7 @@ const submit = () => {
                       id="gradient"
                       v-model="customStyle.background"
                       placeholder="linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)"
-                      rows="2"
+                      :rows="2"
                     />
                   </div>
                 </div>
@@ -245,39 +280,55 @@ const submit = () => {
                   <div>
                     <Label for="pattern_bg">Base Color</Label>
                     <div class="flex gap-3">
-                      <Input
-                        v-model="customStyle.backgroundColor"
-                        type="color"
-                        class="w-16"
-                      />
-                      <Input
-                        v-model="customStyle.backgroundColor"
-                        type="text"
-                        placeholder="#f8f9fa"
-                        class="flex-1"
-                      />
+                      <Input v-model="customStyle.backgroundColor" type="color" class="w-16" />
+                      <Input v-model="customStyle.backgroundColor" type="text" placeholder="#f8f9fa" class="flex-1" />
                     </div>
                   </div>
                   <div>
                     <Label for="pattern_image">Pattern CSS</Label>
-                    <Textarea
-                      id="pattern_image"
-                      v-model="customStyle.backgroundImage"
-                      placeholder="repeating-linear-gradient(...)"
-                      rows="2"
-                    />
+                    <Textarea id="pattern_image" v-model="customStyle.backgroundImage" placeholder="repeating-linear-gradient(...)" :rows="2" />
                   </div>
                 </div>
 
                 <div v-if="form.type === 'image'" class="space-y-4">
                   <div>
-                    <Label for="image_path">Image Path</Label>
-                    <Input
-                      id="image_path"
-                      v-model="form.image_path"
-                      type="text"
-                      placeholder="/images/backgrounds/memorial-sunset.png"
-                    />
+                    <Label for="image_upload">Upload Background Image</Label>
+                    <div class="mt-2">
+                      <div v-if="!imagePreview" class="rounded-lg border-2 border-dashed border-gray-300 p-6 text-center">
+                        <Upload class="mx-auto h-12 w-12 text-gray-400" />
+                        <div class="mt-4">
+                          <label for="image_upload" class="cursor-pointer">
+                            <span class="mt-2 block text-sm font-medium text-gray-900"> Click to upload background image </span>
+                            <span class="mt-1 block text-xs text-gray-500"> PNG, JPG, GIF up to 5MB </span>
+                          </label>
+                          <input id="image_upload" ref="imageInputRef" type="file" accept="image/*" class="sr-only" @change="handleImageUpload" />
+                        </div>
+                      </div>
+
+                      <div v-else class="relative inline-block">
+                        <img :src="imagePreview" alt="Background preview" class="h-32 w-48 rounded-lg border object-cover" />
+                        <button
+                          type="button"
+                          @click="removeImage"
+                          class="absolute -top-2 -right-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
+                        >
+                          <X class="h-4 w-4" />
+                        </button>
+                        <div class="mt-2">
+                          <label for="image_upload_replace" class="cursor-pointer text-sm text-blue-600 hover:text-blue-800"> Replace image </label>
+                          <input id="image_upload_replace" type="file" accept="image/*" class="sr-only" @change="handleImageUpload" />
+                        </div>
+                      </div>
+                    </div>
+                    <div v-if="form.errors.image_file" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.image_file }}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label for="image_path">Or Image Path</Label>
+                    <Input id="image_path" v-model="form.image_path" type="text" placeholder="/images/backgrounds/memorial-sunset.png" />
+                    <p class="mt-1 text-xs text-gray-500">Alternatively, enter a direct path to an existing image</p>
                     <div v-if="form.errors.image_path" class="mt-1 text-sm text-red-600">
                       {{ form.errors.image_path }}
                     </div>
@@ -286,11 +337,7 @@ const submit = () => {
                   <div class="grid grid-cols-2 gap-4">
                     <div>
                       <Label for="bg_size">Background Size</Label>
-                      <select
-                        id="bg_size"
-                        v-model="customStyle.backgroundSize"
-                        class="w-full rounded-md border-gray-300"
-                      >
+                      <select id="bg_size" v-model="customStyle.backgroundSize" class="w-full rounded-md border-gray-300">
                         <option value="cover">Cover</option>
                         <option value="contain">Contain</option>
                         <option value="100% 100%">Stretch</option>
@@ -299,11 +346,7 @@ const submit = () => {
                     </div>
                     <div>
                       <Label for="bg_position">Background Position</Label>
-                      <select
-                        id="bg_position"
-                        v-model="customStyle.backgroundPosition"
-                        class="w-full rounded-md border-gray-300"
-                      >
+                      <select id="bg_position" v-model="customStyle.backgroundPosition" class="w-full rounded-md border-gray-300">
                         <option value="center">Center</option>
                         <option value="top">Top</option>
                         <option value="bottom">Bottom</option>
@@ -316,17 +359,8 @@ const submit = () => {
                   <div>
                     <Label for="fallback_color">Fallback Color</Label>
                     <div class="flex gap-3">
-                      <Input
-                        v-model="customStyle.backgroundColor"
-                        type="color"
-                        class="w-16"
-                      />
-                      <Input
-                        v-model="customStyle.backgroundColor"
-                        type="text"
-                        placeholder="#ffffff"
-                        class="flex-1"
-                      />
+                      <Input v-model="customStyle.backgroundColor" type="color" class="w-16" />
+                      <Input v-model="customStyle.backgroundColor" type="text" placeholder="#ffffff" class="flex-1" />
                     </div>
                   </div>
                 </div>
@@ -339,39 +373,24 @@ const submit = () => {
                 <div class="grid grid-cols-2 gap-4">
                   <div>
                     <Label for="sort_order">Sort Order</Label>
-                    <Input
-                      id="sort_order"
-                      v-model="form.sort_order"
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                    />
+                    <Input id="sort_order" v-model="form.sort_order" type="number" min="0" placeholder="0" />
                   </div>
                   <div class="flex items-center">
-                    <input
-                      id="is_active"
-                      v-model="form.is_active"
-                      type="checkbox"
-                      class="rounded border-gray-300"
-                    />
+                    <input id="is_active" v-model="form.is_active" type="checkbox" class="rounded border-gray-300" />
                     <Label for="is_active" class="ml-2">Active</Label>
                   </div>
                 </div>
               </div>
 
               <!-- Form Actions -->
-              <div class="flex items-center justify-end gap-4 pt-6 border-t">
+              <div class="flex items-center justify-end gap-4 border-t pt-6">
                 <Link
                   :href="route('graveyard.obituary-background-themes.index')"
-                  class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                  class="rounded-lg bg-gray-100 px-4 py-2 text-gray-700 hover:bg-gray-200"
                 >
                   Cancel
                 </Link>
-                <Button
-                  type="submit"
-                  :disabled="form.processing"
-                  class="flex items-center gap-2"
-                >
+                <Button type="submit" :disabled="form.processing" class="flex items-center gap-2">
                   <Save class="h-4 w-4" />
                   {{ form.processing ? 'Creating...' : 'Create Theme' }}
                 </Button>
@@ -381,19 +400,16 @@ const submit = () => {
         </div>
 
         <!-- Preview -->
-        <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+        <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
           <div class="p-6">
-            <h3 class="text-lg font-medium text-gray-900 mb-4">Preview</h3>
+            <h3 class="mb-4 text-lg font-medium text-gray-900">Preview</h3>
 
             <div class="space-y-4">
               <!-- Theme Preview -->
-              <div class="border-2 border-gray-200 rounded-lg p-4">
-                <div
-                  class="h-48 rounded-lg border"
-                  :style="previewStyle"
-                >
-                  <div class="h-full flex items-center justify-center">
-                    <div class="text-center text-gray-600 bg-white/80 p-4 rounded">
+              <div class="rounded-lg border-2 border-gray-200 p-4">
+                <div class="h-48 rounded-lg border" :style="previewStyle">
+                  <div class="flex h-full items-center justify-center">
+                    <div class="rounded bg-white/80 p-4 text-center text-gray-600">
                       <h4 class="font-semibold">{{ form.name || 'Theme Preview' }}</h4>
                       <p class="text-sm">{{ form.description || 'Theme description' }}</p>
                     </div>
@@ -402,7 +418,7 @@ const submit = () => {
               </div>
 
               <!-- Theme Info -->
-              <div class="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div class="space-y-2 rounded-lg bg-gray-50 p-4">
                 <div class="flex justify-between">
                   <span class="text-sm font-medium">Key:</span>
                   <span class="text-sm text-gray-600">{{ form.key || 'auto-generated' }}</span>
@@ -422,9 +438,9 @@ const submit = () => {
               </div>
 
               <!-- Style Properties -->
-              <div class="bg-gray-50 rounded-lg p-4">
-                <h4 class="text-sm font-medium mb-2">Generated CSS Properties:</h4>
-                <pre class="text-xs text-gray-600 overflow-auto">{{ JSON.stringify(previewStyle, null, 2) }}</pre>
+              <div class="rounded-lg bg-gray-50 p-4">
+                <h4 class="mb-2 text-sm font-medium">Generated CSS Properties:</h4>
+                <pre class="overflow-auto text-xs text-gray-600">{{ JSON.stringify(previewStyle, null, 2) }}</pre>
               </div>
             </div>
           </div>

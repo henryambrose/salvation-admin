@@ -136,8 +136,6 @@ class FamilyTreeService
             if ($p1->spouse) {
 
                 if ($this->isUncleOrAunt($p1->spouse, $p2)) {
-                    // \Log::info('p1->spouse468', [$p1->spouse]);
-                    // \Log::info('p2->spouse468', [$p2]);
                     return $p2->gender_id == 1 ? 'Uncle-in-Law' : 'Aunt-in-Law';
                 }
                 if ($this->isSpouseOfUncleOrAunt($p1->spouse, $p2)) {
@@ -389,7 +387,6 @@ class FamilyTreeService
                     foreach ($p2->spouse->father->getSiblings() as $uncleAunt) {
                         foreach ($uncleAunt->getChildren() as $cousin) {
                             if ($cousin->uid === $p1->uid) {
-                                Log::info('p1->spouse468', [$p2->spouse]);
                                 return $p2->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
                             }
                         }
@@ -477,7 +474,6 @@ class FamilyTreeService
                     foreach ($p2->spouse->father->getSiblings() as $uncleAunt) {
                         foreach ($uncleAunt->getChildren() as $cousin) {
                             if ($cousin->uid === $p1->uid) {
-                                Log::info('p1->spouse468', [$p2->spouse]);
                                 return $p2->gender_id == 1 ? 'Cousin Brother-in-Law' : 'Cousin Sister-in-Law';
                             }
                         }

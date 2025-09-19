@@ -29,7 +29,10 @@ class PPCHeadController extends Controller
             $query->withoutTrashed();
         }
         $query->select('p_p_c_heads.*');
-        $query->join('members', 'p_p_c_heads.member_id', '=', 'members.id');
+        $query->join('members', function($join) {
+            $join->on('p_p_c_heads.member_id', '=', 'members.id')
+                 ->whereNull('members.death_date');
+        });
         $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
         $query->select(
             'p_p_c_heads.*',
@@ -78,7 +81,7 @@ class PPCHeadController extends Controller
     {
         return Inertia::render('p_p_c_head/PPCHead', [
             'communities' => Community::all(),
-            'members' => Member::all(),
+            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -121,7 +124,7 @@ class PPCHeadController extends Controller
         return Inertia::render('p_p_c_head/PPCHead', [
             'PPCHead' => $ppcHead,
             'communities' => Community::all(),
-            'members' => Member::all(),
+            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -180,6 +183,7 @@ class PPCHeadController extends Controller
     {
         try {
             $members = Member::where('community_id', $communityId)
+                ->alive()
                 ->select('id', 'first_name', 'middle_name', 'last_name')
                 ->get()
                 ->map(function ($m) {

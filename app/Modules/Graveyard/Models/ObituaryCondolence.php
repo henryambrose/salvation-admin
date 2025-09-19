@@ -17,11 +17,13 @@ class ObituaryCondolence extends Model
         'visitor_ip',
         'user_agent',
         'is_approved',
+        'is_rejected',
         'submitted_at',
     ];
 
     protected $casts = [
         'is_approved' => 'boolean',
+        'is_rejected' => 'boolean',
         'submitted_at' => 'datetime',
     ];
 
@@ -32,12 +34,18 @@ class ObituaryCondolence extends Model
 
     public function approve(): void
     {
-        $this->update(['is_approved' => true]);
+        $this->update([
+            'is_approved' => true,
+            'is_rejected' => false
+        ]);
     }
 
     public function reject(): void
     {
-        $this->update(['is_approved' => false]);
+        $this->update([
+            'is_approved' => false,
+            'is_rejected' => true
+        ]);
     }
 
     public function scopeApproved($query)
@@ -47,6 +55,22 @@ class ObituaryCondolence extends Model
 
     public function scopePending($query)
     {
-        return $query->where('is_approved', false);
+        return $query->where('is_approved', false)->where('is_rejected', false);
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('is_rejected', true);
+    }
+
+    public function getStatusAttribute(): string
+    {
+        if ($this->is_approved) {
+            return 'approved';
+        } elseif ($this->is_rejected) {
+            return 'rejected';
+        } else {
+            return 'pending';
+        }
     }
 }

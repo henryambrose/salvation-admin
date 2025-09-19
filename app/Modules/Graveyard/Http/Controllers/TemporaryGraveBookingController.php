@@ -60,7 +60,6 @@ class TemporaryGraveBookingController extends Controller
         // Add has_obituary attribute to each booking
         $bookings->getCollection()->transform(function ($booking) {
             $booking->has_obituary = $booking->obituaryPage !== null;
-            Log::info('Booking Has Obituary', ['booking_id' => $booking->id, 'has_obituary' => $booking->has_obituary]);
             return $booking;
         });
 
@@ -103,6 +102,7 @@ class TemporaryGraveBookingController extends Controller
         }
 
         $members = Member::with('community')
+            ->alive() // Only select alive members for booking new graves
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'LIKE', '%' . $query . '%')
                     ->orWhere('last_name', 'LIKE', '%' . $query . '%')
@@ -221,7 +221,6 @@ class TemporaryGraveBookingController extends Controller
                 $gender = Gender::where('name', $member->gender)->first();
                 $genderId = $gender ? $gender->id : null;
             }
-            Log::info('Creating booking for deceased', ['name' => $deadFirstName . ' ' . $deadLastName, 'data' => $request->all()]);
             // Create the booking
             $booking = TemporaryGraveBooking::create([
                 'temporary_grave_id' => $request->temporary_grave_id,
@@ -252,7 +251,6 @@ class TemporaryGraveBookingController extends Controller
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),
             ]);
-            Log::info('Temporary grave booking created', ['booking_id' => $booking->id]);
 
             // Update the temporary grave with booking details and destination
             $grave->update([
@@ -425,7 +423,7 @@ class TemporaryGraveBookingController extends Controller
                     'is_overdue' => $booking->isTransferOverdue()
                 ];
             });
-        Log::info('Eligible Bookings: ', $bookings->toArray());
+
         // --- IGNORE ---
         // If a specific booking was requested, include it even if transfer_requested = true
         // if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {

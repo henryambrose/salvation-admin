@@ -69,12 +69,6 @@ class GraveCategoryController extends Controller
                 'name' => $request->name,
             ]);
 
-            Log::info('Grave category created', [
-                'id' => $graveCategory->id,
-                'name' => $graveCategory->name,
-                'created_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.grave-categories.index')
                 ->with('success', 'Grave category created successfully.');
         } catch (\Exception $e) {
@@ -105,7 +99,7 @@ class GraveCategoryController extends Controller
     public function edit($id)
     {
         $graveCategory = GraveCategories::findOrFail($id);
-        
+
         return Inertia::render('PagesGraveyard/GraveCategories/Edit', [
             'graveCategory' => $graveCategory,
         ]);
@@ -124,12 +118,6 @@ class GraveCategoryController extends Controller
         try {
             $graveCategory->update([
                 'name' => $request->name,
-            ]);
-
-            Log::info('Grave category updated', [
-                'id' => $graveCategory->id,
-                'name' => $graveCategory->name,
-                'updated_by' => Auth::id(),
             ]);
 
             return redirect()->route('graveyard.grave-categories.index')
@@ -160,12 +148,6 @@ class GraveCategoryController extends Controller
 
             $graveCategory->delete();
 
-            Log::info('Grave category deleted', [
-                'id' => $graveCategory->id,
-                'name' => $graveCategory->name,
-                'deleted_by' => Auth::id(),
-            ]);
-
             return back()->with('success', 'Grave category deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete grave category', [
@@ -184,12 +166,6 @@ class GraveCategoryController extends Controller
         try {
             $graveCategory = GraveCategories::onlyTrashed()->findOrFail($id);
             $graveCategory->restore();
-
-            Log::info('Grave category restored', [
-                'id' => $graveCategory->id,
-                'name' => $graveCategory->name,
-                'restored_by' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Grave category restored successfully.');
         } catch (\Exception $e) {

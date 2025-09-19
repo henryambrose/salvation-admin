@@ -457,12 +457,10 @@ class RoleController extends Controller
         if (str_contains($permissionName, 'cells-and-association')) {
             return 'Cells and Association';
         }
-        Log::info('Permission Name442: ' . $permissionName);
         $parts = explode('-', $permissionName);
 
         if (count($parts) >= 2) {
             $module = $parts[1];
-            Log::info('Module447: ' . $module);
             // Handle compound words
             if (isset($parts[2])) {
                 $module .= ' ' . $parts[2];
@@ -471,7 +469,6 @@ class RoleController extends Controller
             // Capitalize and clean up
             $module = str_replace(['_', '-'], ' ', $module);
             // $module = ucwords($module);
-            Log::info('Module456: ' . $module);
             // Handle special cases
             $moduleMapping = [
                 'Member' => 'Members',

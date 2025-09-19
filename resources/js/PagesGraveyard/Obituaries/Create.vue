@@ -120,6 +120,17 @@ const form = useForm({
 // Computed properties
 const selectedServicePrice = computed(() => obituaryPricing[form.service_type]);
 
+// Available backgrounds based on service type
+const availableBackgrounds = computed(() => {
+  if (form.service_type === 'premium') {
+    // For premium service, show both basic and premium backgrounds
+    return [...props.basicBackgrounds, ...props.premiumBackgrounds];
+  } else {
+    // For basic service, show only basic backgrounds
+    return props.basicBackgrounds;
+  }
+});
+
 const profileImageRef = ref<HTMLInputElement>();
 const galleryImagesRef = ref<HTMLInputElement>();
 const audioMessageRef = ref<HTMLInputElement>();
@@ -784,56 +795,19 @@ const goBack = () => {
               </CardContent>
             </Card>
 
-            <!-- Basic Background Options (Available for all) -->
-            <Card v-if="form.service_type === 'basic'">
+            <!-- Background & Customization Section -->
+            <Card>
               <CardHeader>
                 <CardTitle class="flex items-center">
                   <Palette class="mr-2 h-5 w-5" />
-                  Background Style
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div>
-                  <Label for="background_style">Choose Background</Label>
-                  <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div
-                      v-for="background in props.basicBackgrounds"
-                      :key="background.value"
-                      class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
-                      :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                      @click="form.background_style = background.value"
-                    >
-                      <div class="flex items-center space-x-3">
-                        <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
-                        <div
-                          v-if="background.image"
-                          class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
-                          :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
-                        ></div>
-                        <div v-else class="h-12 w-12 flex-shrink-0 rounded border bg-gray-100"></div>
-                        <div class="min-w-0 flex-1">
-                          <h3 class="text-sm font-medium">{{ background.label }}</h3>
-                          <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="mt-3 text-xs text-gray-500">Choose from our selection of respectful backgrounds</p>
-
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Premium Customization Section -->
-            <Card v-if="form.service_type === 'premium'">
-              <CardHeader>
-                <CardTitle class="flex items-center">
-                  <Palette class="mr-2 h-5 w-5" />
-                  Customization
+                  <span v-if="form.service_type === 'basic'">Background Style</span>
+                  <span v-else>Customization & Backgrounds</span>
+                  <span v-if="form.service_type === 'premium'" class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Features</span>
                 </CardTitle>
               </CardHeader>
               <CardContent class="space-y-4">
-                <div>
+                <!-- Theme Color (Premium Only) -->
+                <div v-if="form.service_type === 'premium'">
                   <Label for="theme_color">Theme Color</Label>
                   <div class="mt-1 flex items-center space-x-2">
                     <input id="theme_color" v-model="form.theme_color" type="color" class="h-10 w-20 cursor-pointer rounded border border-gray-300" />
@@ -841,11 +815,15 @@ const goBack = () => {
                   </div>
                 </div>
 
+                <!-- Background Selection -->
                 <div>
-                  <Label for="background_style">Background Style</Label>
-                  <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  <Label for="background_style">
+                    <span v-if="form.service_type === 'basic'">Choose Background</span>
+                    <span v-else>Background Style</span>
+                  </Label>
+                  <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2" :class="form.service_type === 'premium' ? 'lg:grid-cols-3' : ''">
                     <div
-                      v-for="background in props.premiumBackgrounds"
+                      v-for="background in availableBackgrounds"
                       :key="background.value"
                       class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
                       :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
@@ -863,14 +841,21 @@ const goBack = () => {
                           <h3 class="text-sm font-medium">{{ background.label }}</h3>
                           <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
                           <span
-                            v-if="background.tier === 'premium'"
-                            class="mt-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800"
-                            >Premium</span
+                            class="mt-1 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
+                            :class="background.tier === 'premium'
+                              ? 'bg-purple-100 text-purple-800'
+                              : 'bg-blue-100 text-blue-800'"
                           >
+                            {{ background.tier === 'premium' ? 'Premium' : 'Basic' }}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
+                  <p class="mt-3 text-xs text-gray-500">
+                    <span v-if="form.service_type === 'basic'">Choose from our selection of respectful backgrounds</span>
+                    <span v-else>Premium service includes access to both basic and premium background options</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>

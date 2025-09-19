@@ -43,14 +43,6 @@ class FamilyNumberingService
             // Format: SAL-XXX (3 digits)
             $familyGroupSequence = str_pad($nextSequence, 3, '0', STR_PAD_LEFT);
             $result = "{$churchCode}-{$familyGroupSequence}";
-
-            Log::info('Generated family group number', [
-                'church_code' => $churchCode,
-                'highest_family' => $highestFamily ? $highestFamily->family_no : 'none',
-                'next_sequence' => $nextSequence,
-                'result' => $result
-            ]);
-
             return $result;
         } catch (\Exception $e) {
             Log::error('Error generating family group number: ' . $e->getMessage());
@@ -100,14 +92,6 @@ class FamilyNumberingService
             // Format: YYYY-SAL-MNNNNN
             $memberSequence = str_pad($nextSequence, 6, '0', STR_PAD_LEFT);
             $result = "{$year}-{$churchCode}-M{$memberSequence}";
-
-            Log::info('Generated member number', [
-                'year' => $year,
-                'church_code' => $churchCode,
-                'highest_member' => $highestMember ? $highestMember->member_no : 'none',
-                'next_sequence' => $nextSequence,
-                'result' => $result
-            ]);
 
             return $result;
         } catch (\Exception $e) {

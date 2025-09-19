@@ -159,13 +159,6 @@ class TemporaryGraveController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Temporary grave created', [
-                'id' => $temporaryGrave->id,
-                'section' => $temporaryGrave->section,
-                'grave_no' => $temporaryGrave->grave_no,
-                'created_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.temporary-graves.index')
                 ->with('success', 'Temporary grave created successfully.');
         } catch (\Exception $e) {
@@ -276,13 +269,6 @@ class TemporaryGraveController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Temporary grave updated', [
-                'id' => $temporaryGrave->id,
-                'section' => $temporaryGrave->section,
-                'grave_no' => $temporaryGrave->grave_no,
-                'updated_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.temporary-graves.index')
                 ->with('success', 'Temporary grave updated successfully.');
         } catch (\Exception $e) {
@@ -311,13 +297,6 @@ class TemporaryGraveController extends Controller
 
             $temporaryGrave->delete();
 
-            Log::info('Temporary grave deleted', [
-                'id' => $temporaryGrave->id,
-                'section' => $temporaryGrave->section,
-                'grave_no' => $temporaryGrave->grave_no,
-                'deleted_by' => Auth::id(),
-            ]);
-
             return back()->with('success', 'Temporary grave deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete temporary grave', [
@@ -336,13 +315,6 @@ class TemporaryGraveController extends Controller
         try {
             $temporaryGrave = TemporaryGrave::onlyTrashed()->findOrFail($id);
             $temporaryGrave->restore();
-
-            Log::info('Temporary grave restored', [
-                'id' => $temporaryGrave->id,
-                'section' => $temporaryGrave->section,
-                'grave_no' => $temporaryGrave->grave_no,
-                'restored_by' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Temporary grave restored successfully.');
         } catch (\Exception $e) {

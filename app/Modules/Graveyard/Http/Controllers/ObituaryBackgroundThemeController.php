@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\ObituaryBackgroundTheme;
 use Modules\Graveyard\Services\ObituaryBackgroundService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -87,6 +88,7 @@ class ObituaryBackgroundThemeController extends Controller
             'type' => 'required|in:color,gradient,pattern,image',
             'tier' => 'required|in:basic,premium',
             'image_path' => 'nullable|string|max:500',
+            'image_file' => 'nullable|file|image|max:5120', // 5MB max
             'style_properties' => 'nullable|array',
             'background_color' => 'nullable|string|max:7',
             'is_active' => 'boolean',
@@ -95,6 +97,28 @@ class ObituaryBackgroundThemeController extends Controller
 
         $validated['is_active'] = $validated['is_active'] ?? true;
         $validated['sort_order'] = $validated['sort_order'] ?? ObituaryBackgroundTheme::max('sort_order') + 1;
+
+        // Handle file upload
+        if ($request->hasFile('image_file')) {
+            $file = $request->file('image_file');
+            $filename = time() . '_' . str_replace(' ', '_', $validated['key']) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('backgrounds', $filename, 'public');
+            $validated['image_path'] = '/storage/' . $path;
+
+            // Update style_properties for image type
+            if ($validated['type'] === 'image') {
+                $validated['style_properties'] = array_merge($validated['style_properties'] ?? [], [
+                    'backgroundImage' => "url('{$validated['image_path']}')",
+                    'backgroundSize' => 'cover',
+                    'backgroundPosition' => 'center',
+                    'backgroundRepeat' => 'no-repeat',
+                    'backgroundColor' => $validated['background_color'] ?? '#ffffff',
+                ]);
+            }
+        }
+
+        // Remove image_file from validated data as it's not a database column
+        unset($validated['image_file']);
 
         $theme = $this->backgroundService->createTheme($validated);
 
@@ -134,11 +158,39 @@ class ObituaryBackgroundThemeController extends Controller
             'type' => 'required|in:color,gradient,pattern,image',
             'tier' => 'required|in:basic,premium',
             'image_path' => 'nullable|string|max:500',
+            'image_file' => 'nullable|file|image|max:5120', // 5MB max
             'style_properties' => 'nullable|array',
             'background_color' => 'nullable|string|max:7',
             'is_active' => 'boolean',
             'sort_order' => 'integer|min:0',
         ]);
+
+        // Handle file upload
+        if ($request->hasFile('image_file')) {
+            // Delete old file if exists
+            if ($theme->image_path && file_exists(public_path($theme->image_path))) {
+                unlink(public_path($theme->image_path));
+            }
+
+            $file = $request->file('image_file');
+            $filename = time() . '_' . str_replace(' ', '_', $validated['key']) . '.' . $file->getClientOriginalExtension();
+            $path = $file->storeAs('backgrounds', $filename, 'public');
+            $validated['image_path'] = '/storage/' . $path;
+
+            // Update style_properties for image type
+            if ($validated['type'] === 'image') {
+                $validated['style_properties'] = array_merge($validated['style_properties'] ?? [], [
+                    'backgroundImage' => "url('{$validated['image_path']}')",
+                    'backgroundSize' => 'cover',
+                    'backgroundPosition' => 'center',
+                    'backgroundRepeat' => 'no-repeat',
+                    'backgroundColor' => $validated['background_color'] ?? '#ffffff',
+                ]);
+            }
+        }
+
+        // Remove image_file from validated data as it's not a database column
+        unset($validated['image_file']);
 
         $theme->update($validated);
 

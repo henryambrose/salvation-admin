@@ -6,11 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 interface ServiceType {
   id: number;
@@ -359,19 +359,21 @@ const submit = () => {
     payment_method_id: hasFreeServices.value ? null : parseInt(form.payment_method_id) || null,
   };
 
-  form.transform((data) => formData).post(route('graveyard.payments.store'), {
-    onSuccess: () => {
-      if (hasFreeServices.value) {
-        success('Free service confirmed successfully!');
-      } else {
-        success('Payment recorded successfully!');
-      }
-    },
-    onError: (errors) => {
-      console.error('Payment submission error:', errors);
-      error('Failed to record payment. Please check the form and try again.');
-    },
-  });
+  form
+    .transform((data) => formData)
+    .post(route('graveyard.payments.store'), {
+      onSuccess: () => {
+        if (hasFreeServices.value) {
+          success('Free service confirmed successfully!');
+        } else {
+          success('Payment recorded successfully!');
+        }
+      },
+      onError: (errors) => {
+        console.error('Payment submission error:', errors);
+        error('Failed to record payment. Please check the form and try again.');
+      },
+    });
 };
 </script>
 
@@ -666,7 +668,7 @@ const submit = () => {
 
                     <div>
                       <Label for="payment_notes">Notes</Label>
-                      <Textarea id="payment_notes" v-model="form.payment_notes" placeholder="Additional payment notes..." rows="3" />
+                      <Textarea id="payment_notes" v-model="form.payment_notes" placeholder="Additional payment notes..." :rows="3" />
                     </div>
                   </CardContent>
                 </Card>

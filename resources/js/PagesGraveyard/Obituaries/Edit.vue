@@ -4,11 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, FileImage, Music, Palette, Upload, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 interface ObituaryPage {
   id: number;
@@ -100,11 +100,24 @@ const audioMessageRef = ref<HTMLInputElement>();
 const profileImagePreview = ref<string | null>(null);
 const galleryPreviews = ref<string[]>([]);
 
+// Available backgrounds computed property
+const availableBackgrounds = computed(() => {
+  if (props.obituary.service_type === 'premium') {
+    // Combine both arrays and remove duplicates based on 'value' property
+    const combined = [...props.basicBackgrounds, ...props.premiumBackgrounds];
+    const unique = combined.filter((bg, index, self) =>
+      index === self.findIndex(item => item.value === bg.value)
+    );
+    return unique;
+  } else {
+    return props.basicBackgrounds;
+  }
+});
+
 // Background preview
 const getBackgroundPreview = computed(() => {
   // Find the selected background configuration
-  const allBackgrounds = [...props.basicBackgrounds, ...props.premiumBackgrounds];
-  const selectedBackground = allBackgrounds.find((bg) => bg.value === form.background_style);
+  const selectedBackground = availableBackgrounds.value.find((bg) => bg.value === form.background_style);
 
   if (selectedBackground?.image) {
     // Use image-based background
@@ -115,19 +128,26 @@ const getBackgroundPreview = computed(() => {
       backgroundRepeat: 'no-repeat',
       backgroundColor: '#f8f9fa',
     };
-  } else if (form.background_style === 'gradient') {
-    // Use gradient background
-    return {
-      backgroundImage: `linear-gradient(135deg, ${form.theme_color || '#ffffff'}, #f8f9fa)`,
-    };
-  } else if (form.background_style === 'pattern') {
-    // Use pattern background
-    return {
-      backgroundColor: form.theme_color || '#ffffff',
-      backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-    };
+  } else if (selectedBackground && form.background_style) {
+    // For themes without images, create a styled preview based on theme type
+    if (form.background_style.includes('gradient') || selectedBackground.label.toLowerCase().includes('gradient')) {
+      return {
+        backgroundImage: `linear-gradient(135deg, ${form.theme_color || '#667eea'}, ${form.theme_color || '#764ba2'})`,
+      };
+    } else if (form.background_style.includes('pattern') || selectedBackground.label.toLowerCase().includes('pattern')) {
+      return {
+        backgroundColor: form.theme_color || '#f8f9fa',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e0e0e0' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+      };
+    } else {
+      // Plain background with theme color
+      return {
+        backgroundColor: form.theme_color || '#ffffff',
+        backgroundImage: 'none',
+      };
+    }
   } else {
-    // Plain background
+    // Fallback plain background
     return {
       backgroundColor: form.theme_color || '#ffffff',
     };
@@ -290,22 +310,6 @@ const formatFileSize = (bytes: number): string => {
 };
 
 const submit = () => {
-  console.log('Submitting form with data:', {
-    biography: form.biography,
-    favorite_memory: form.favorite_memory,
-    achievements: form.achievements,
-    hobbies_interests: form.hobbies_interests,
-    notes: form.notes,
-    profile_image: form.profile_image ? form.profile_image.name : null,
-    gallery_images: form.gallery_images.length,
-    audio_message: form.audio_message ? form.audio_message.name : null,
-    theme_color: form.theme_color,
-    background_style: form.background_style,
-    allow_condolences: form.allow_condolences,
-    allow_memory_sharing: form.allow_memory_sharing,
-    is_public: form.is_public,
-  });
-
   // Create a manual FormData object to ensure proper data transmission
   const formData = new FormData();
 
@@ -572,46 +576,70 @@ const goBack = () => {
 
                 <!-- Current Gallery Grid -->
                 <div v-if="obituary.gallery_images?.length || galleryPreviews.length" class="mb-4">
-                  <div class="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px">
                     <!-- Existing Images -->
-                    <div v-for="(image, index) in obituary.gallery_images || []" :key="`existing-${index}`" class="group relative aspect-square">
+                    <div
+                      v-for="(image, index) in obituary.gallery_images || []"
+                      :key="`existing-${index}`"
+                      style="position: relative; width: 150px; height: 150px"
+                      class="group"
+                    >
                       <img
                         :src="image.startsWith('http') ? image : `/storage/${image}`"
                         :alt="`Gallery ${index + 1}`"
-                        class="h-full w-full rounded-lg border object-cover shadow-sm"
+                        style="
+                          width: 150px;
+                          height: 150px;
+                          object-fit: cover;
+                          border-radius: 8px;
+                          border: 2px solid #e5e7eb;
+                          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                        "
                       />
-                      <div
-                        class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center rounded-lg bg-black transition-all duration-200"
+                      <!-- Delete button positioned at top-right corner -->
+                      <button
+                        type="button"
+                        @click="removeExistingGalleryImage(index)"
+                        class="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
+                        style="z-index: 10"
+                        title="Remove image"
                       >
-                        <button
-                          type="button"
-                          @click="removeExistingGalleryImage(index)"
-                          class="rounded-full bg-red-600 p-2 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
-                        >
-                          <X class="h-4 w-4" />
-                        </button>
-                      </div>
+                        <X class="h-3 w-3" />
+                      </button>
+                      <!-- Existing label -->
                       <span class="bg-opacity-60 absolute bottom-1 left-1 rounded bg-black px-2 py-1 text-xs text-white">Existing</span>
                     </div>
 
                     <!-- New Images Preview -->
-                    <div v-for="(preview, index) in galleryPreviews" :key="`new-${index}`" class="group relative aspect-square">
+                    <div
+                      v-for="(preview, index) in galleryPreviews"
+                      :key="`new-${index}`"
+                      style="position: relative; width: 150px; height: 150px"
+                      class="group"
+                    >
                       <img
                         :src="preview"
                         :alt="`New Gallery ${index + 1}`"
-                        class="h-full w-full rounded-lg border-2 border-green-300 object-cover shadow-sm"
+                        style="
+                          width: 150px;
+                          height: 150px;
+                          object-fit: cover;
+                          border-radius: 8px;
+                          border: 2px solid #10b981;
+                          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+                        "
                       />
-                      <div
-                        class="bg-opacity-0 group-hover:bg-opacity-30 absolute inset-0 flex items-center justify-center rounded-lg bg-black transition-all duration-200"
+                      <!-- Delete button positioned at top-right corner -->
+                      <button
+                        type="button"
+                        @click="removeNewGalleryImage(index)"
+                        class="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
+                        style="z-index: 10"
+                        title="Remove image"
                       >
-                        <button
-                          type="button"
-                          @click="removeNewGalleryImage(index)"
-                          class="rounded-full bg-red-600 p-2 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"
-                        >
-                          <X class="h-4 w-4" />
-                        </button>
-                      </div>
+                        <X class="h-3 w-3" />
+                      </button>
+                      <!-- New label -->
                       <span class="absolute bottom-1 left-1 rounded bg-green-600 px-2 py-1 text-xs text-white">New</span>
                     </div>
                   </div>
@@ -691,62 +719,17 @@ const goBack = () => {
             </CardContent>
           </Card>
 
-          <!-- Basic Background Options (Available for all) -->
-          <Card v-if="obituary.service_type === 'basic'">
+          <!-- Customization Section -->
+          <Card>
             <CardHeader>
               <CardTitle class="flex items-center">
                 <Palette class="mr-2 h-5 w-5" />
-                Background Style
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label for="background_style">Choose Background</Label>
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <div
-                    v-for="background in props.basicBackgrounds"
-                    :key="background.value"
-                    class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
-                    :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                    @click="form.background_style = background.value"
-                  >
-                    <div class="flex items-center space-x-3">
-                      <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
-                      <div
-                        v-if="background.image"
-                        class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
-                        :style="{ backgroundImage: `url(${background.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }"
-                      ></div>
-                      <div v-else class="h-12 w-12 flex-shrink-0 rounded border bg-gray-100"></div>
-                      <div class="min-w-0 flex-1">
-                        <h3 class="text-sm font-medium">{{ background.label }}</h3>
-                        <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Background Preview -->
-                <div
-                  class="mt-3 flex h-20 items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-4 text-center text-sm text-gray-600"
-                  :style="getBackgroundPreview"
-                >
-                  Preview: {{ form.background_style || 'plain' }}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <!-- Premium Customization Section -->
-          <Card v-if="obituary.service_type === 'premium'">
-            <CardHeader>
-              <CardTitle class="flex items-center">
-                <Palette class="mr-2 h-5 w-5" />
-                Customization
+                {{ obituary.service_type === 'premium' ? 'Customization' : 'Background Style' }}
               </CardTitle>
             </CardHeader>
             <CardContent class="space-y-4">
-              <div>
+              <!-- Theme Color (Premium Only) -->
+              <div v-if="obituary.service_type === 'premium'">
                 <Label for="theme_color">Theme Color</Label>
                 <div class="mt-1 flex items-center space-x-2">
                   <input id="theme_color" v-model="form.theme_color" type="color" class="h-10 w-20 cursor-pointer rounded border border-gray-300" />
@@ -754,11 +737,14 @@ const goBack = () => {
                 </div>
               </div>
 
+              <!-- Background Style -->
               <div>
-                <Label for="background_style">Background Style</Label>
-                <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <Label for="background_style">{{ obituary.service_type === 'premium' ? 'Background Style' : 'Choose Background' }}</Label>
+
+                <!-- Responsive Grid for Background Options -->
+                <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div
-                    v-for="background in props.premiumBackgrounds"
+                    v-for="background in availableBackgrounds"
                     :key="background.value"
                     class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
                     :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
@@ -795,6 +781,7 @@ const goBack = () => {
               </div>
             </CardContent>
           </Card>
+
 
           <!-- Settings Section -->
           <Card>

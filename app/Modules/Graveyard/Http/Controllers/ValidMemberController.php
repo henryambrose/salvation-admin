@@ -224,8 +224,6 @@ class ValidMemberController extends Controller
             // Add relationship_id for both member types
             $memberToCreate['relationship_id'] = $memberData['relationship_id'] ?? null;
             $memberToCreate['notes'] = $memberData['notes'] ?? null;
-            Log::info('MemberData: ', $memberData);
-            Log::info('Member to create: ', $memberToCreate);
             $createdMembers[] = ValidMember::create($memberToCreate);
         }
 
@@ -382,6 +380,7 @@ class ValidMemberController extends Controller
         $existingMemberIds = ValidMember::whereNotNull('member_id')->pluck('member_id');
 
         $members = \Modules\Members\Models\Member::with('community')
+            ->alive() // Only show alive members for grave booking
             ->whereNotIn('id', $existingMemberIds)
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'LIKE', '%' . $query . '%')

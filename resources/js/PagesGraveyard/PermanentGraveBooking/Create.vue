@@ -5,11 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, CheckCircle, MapPin, Phone, Search, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 interface ValidMember {
   id: number;
@@ -456,7 +456,7 @@ const submit = () => {
                       <Textarea
                         id="special_requirements"
                         v-model="form.special_requirements"
-                        rows="3"
+                        :rows="3"
                         placeholder="Any special requirements or notes..."
                         class="mt-1"
                       />

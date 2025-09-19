@@ -89,4 +89,44 @@ class ObituaryPagePolicy
     {
         return $user->hasPermissionTo('update-obituary-page') || $user->hasRole('admin');
     }
+
+    /**
+     * Determine whether the user can process payments for obituary pages.
+     */
+    public function processPayments(User $user): bool
+    {
+        return $user->hasPermissionTo('update-obituary-page');
+    }
+
+    /**
+     * Determine whether the user can manage condolences.
+     */
+    public function manageCondolences(User $user): bool
+    {
+        return $user->hasPermissionTo('update-obituary-page');
+    }
+
+    /**
+     * Determine whether the user can approve condolences.
+     */
+    public function approveCondolences(User $user): bool
+    {
+        return $user->hasPermissionTo('update-obituary-page');
+    }
+
+    /**
+     * Determine whether the user can reject condolences.
+     */
+    public function rejectCondolences(User $user): bool
+    {
+        return $user->hasPermissionTo('update-obituary-page');
+    }
+
+    /**
+     * Determine whether the user can generate QR codes.
+     */
+    public function generateQrCode(User $user, ObituaryPage $obituaryPage): bool
+    {
+        return $user->hasPermissionTo('read-obituary-page');
+    }
 }

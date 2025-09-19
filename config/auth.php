@@ -40,6 +40,10 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'external' => [
+            'driver' => 'session',
+            'provider' => 'obituary_managers',
+        ],
     ],
 
     /*
@@ -63,6 +67,10 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL',Modules\Members\Models\User::class),
+        ],
+        'obituary_managers' => [
+            'driver' => 'eloquent',
+            'model' => Modules\Graveyard\Models\ObituaryManager::class,
         ],
 
         // 'users' => [

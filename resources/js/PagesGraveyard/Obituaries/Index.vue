@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2 } from 'lucide-vue-next';
+import { ArrowUp, Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 interface ObituaryPage {
   id: number;
@@ -165,6 +163,23 @@ const unpublishObituary = (obituaryUuid: string) => {
     },
   );
 };
+
+const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
+  router.post(
+    `/graveyard/obituaries/${obituary.uuid}/upgrade-to-premium`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        success('Upgrade initiated! Redirecting to payment...');
+      },
+      onError: (errors) => {
+        console.error('Error upgrading obituary:', errors);
+        error('Failed to initiate upgrade. Please try again.');
+      },
+    },
+  );
+};
 </script>
 
 <template>
@@ -198,16 +213,14 @@ const unpublishObituary = (obituaryUuid: string) => {
                   <Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input v-model="search" placeholder="Search by name or booking reference..." class="pl-10" />
                 </div>
-                <Select v-model="serviceType">
-                  <SelectTrigger class="w-[180px]">
-                    <SelectValue placeholder="Service Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="basic">Basic</SelectItem>
-                    <SelectItem value="premium">Premium</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  v-model="serviceType"
+                  class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-[180px] items-center justify-between rounded-md border px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <option value="all">All Types</option>
+                  <option value="basic">Basic</option>
+                  <option value="premium">Premium</option>
+                </select>
               </div>
             </div>
           </div>
@@ -228,93 +241,126 @@ const unpublishObituary = (obituaryUuid: string) => {
               </div>
             </div>
 
-            <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              <Card v-for="obituary in obituaries?.data || []" :key="obituary.id" class="transition-shadow hover:shadow-md">
-                <CardHeader class="pb-3">
-                  <div class="flex items-start justify-between">
-                    <div>
-                      <CardTitle class="text-lg">{{ getDeceasedName(obituary) }}</CardTitle>
-                      <p class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
+            <div v-else class="overflow-hidden rounded-lg border border-gray-200">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Deceased Person</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Service Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Statistics</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 bg-white">
+                  <tr v-for="obituary in obituaries?.data || []" :key="obituary.id" class="hover:bg-gray-50">
+                    <!-- Deceased Person -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div class="text-sm font-medium text-gray-900">{{ getDeceasedName(obituary) }}</div>
+                        <div class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</div>
+                      </div>
+                    </td>
+
+                    <!-- Service Type -->
+                    <td class="px-6 py-4 whitespace-nowrap">
                       <Badge :class="serviceTypeColors[obituary.service_type]">
                         {{ obituary.service_type }}
                       </Badge>
-                      <Badge :class="obituary.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'">
-                        <Globe v-if="obituary.is_published" class="mr-1 h-3 w-3" />
-                        <EyeOff v-else class="mr-1 h-3 w-3" />
-                        {{ obituary.is_published ? 'Published' : 'Draft' }}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div class="space-y-3">
-                    <div class="flex items-center justify-between text-sm text-gray-600">
-                      <span>Views: {{ obituary.view_count }}</span>
-                      <span>QR Scans: {{ obituary.qr_scan_count }}</span>
-                    </div>
+                    </td>
 
-                    <div class="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        @click="viewObituaryPage(obituary.uuid)"
-                        :disabled="!obituary.can_be_accessed_publicly"
-                        :class="obituary.can_be_accessed_publicly ? 'flex-1' : 'flex-1 cursor-not-allowed opacity-50'"
-                        :title="
-                          obituary.can_be_accessed_publicly
-                            ? 'View public obituary page'
-                            : `Cannot view public page - Status: ${obituary.payment_status}`
-                        "
-                      >
-                        <Eye class="mr-1 h-3 w-3" />
-                        {{ obituary.can_be_accessed_publicly ? 'View Public' : 'Not Available' }}
-                      </Button>
-                      <Button size="sm" variant="outline" @click="copyShareLink(obituary.uuid, obituary)">
-                        <Share2 class="h-3 w-3" />
-                      </Button>
-                      <Button size="sm" variant="outline" as-child>
-                        <Link :href="`/graveyard/obituaries/${obituary.uuid}`">
-                          <QrCode class="mr-1 h-3 w-3" />
-                          Manage
-                        </Link>
-                      </Button>
-                    </div>
+                    <!-- Status -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="space-y-2">
+                        <Badge :class="obituary.is_published ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'">
+                          <Globe v-if="obituary.is_published" class="mr-1 h-3 w-3" />
+                          <EyeOff v-else class="mr-1 h-3 w-3" />
+                          {{ obituary.is_published ? 'Published' : 'Draft' }}
+                        </Badge>
+                        <div v-if="obituary.is_published && obituary.published_at" class="text-xs text-gray-500">
+                          Published {{ new Date(obituary.published_at).toLocaleDateString() }}
+                        </div>
+                      </div>
+                    </td>
 
-                    <!-- Publish/Unpublish Actions -->
-                    <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2 border-t border-gray-100 pt-2">
-                      <Button
-                        v-if="!obituary.is_published && canPublishObituary"
-                        size="sm"
-                        variant="default"
-                        @click="publishObituary(obituary.uuid)"
-                        class="flex-1 bg-green-600 hover:bg-green-700"
-                      >
-                        <Globe class="mr-1 h-3 w-3" />
-                        Publish
-                      </Button>
-                      <Button
-                        v-else-if="obituary.is_published && canUnpublishObituary"
-                        size="sm"
-                        variant="outline"
-                        @click="unpublishObituary(obituary.uuid)"
-                        class="flex-1 border-orange-200 text-orange-700 hover:bg-orange-50"
-                      >
-                        <EyeOff class="mr-1 h-3 w-3" />
-                        Unpublish
-                      </Button>
-                      <div v-if="obituary.is_published && obituary.published_at" class="self-center text-xs text-gray-500">
-                        Published {{ new Date(obituary.published_at).toLocaleDateString() }}
+                    <!-- Statistics -->
+                    <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
+                      <div class="space-y-1">
+                        <div>Views: {{ obituary.view_count }}</div>
+                        <div>QR Scans: {{ obituary.qr_scan_count }}</div>
                       </div>
-                      <!-- Show status without buttons if user doesn't have permissions -->
-                      <div v-if="!canPublishObituary && !canUnpublishObituary" class="self-center text-xs text-gray-500">
-                        Status: {{ obituary.is_published ? 'Published' : 'Draft' }}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <div class="space-y-2">
+                        <!-- Main Actions -->
+                        <div class="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            @click="viewObituaryPage(obituary.uuid)"
+                            :disabled="!obituary.can_be_accessed_publicly"
+                            :class="obituary.can_be_accessed_publicly ? '' : 'cursor-not-allowed opacity-50'"
+                            :title="
+                              obituary.can_be_accessed_publicly
+                                ? 'View public obituary page'
+                                : `Cannot view public page - Status: ${obituary.payment_status}`
+                            "
+                          >
+                            <Eye class="h-3 w-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" @click="copyShareLink(obituary.uuid, obituary)" title="Copy share link">
+                            <Share2 class="h-3 w-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" as-child title="Manage obituary">
+                            <Link :href="`/graveyard/obituaries/${obituary.uuid}`">
+                              <QrCode class="h-3 w-3" />
+                            </Link>
+                          </Button>
+                        </div>
+
+                        <!-- Upgrade to Premium -->
+                        <div v-if="obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            @click="upgradeObituaryToPremium(obituary)"
+                            class="w-full border-purple-200 text-purple-600 hover:bg-purple-50"
+                          >
+                            <ArrowUp class="mr-1 h-3 w-3" />
+                            Upgrade to Premium
+                          </Button>
+                        </div>
+
+                        <!-- Publish/Unpublish Actions -->
+                        <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2">
+                          <Button
+                            v-if="!obituary.is_published && canPublishObituary"
+                            size="sm"
+                            variant="default"
+                            @click="publishObituary(obituary.uuid)"
+                            class="bg-green-600 hover:bg-green-700"
+                          >
+                            <Globe class="mr-1 h-3 w-3" />
+                            Publish
+                          </Button>
+                          <Button
+                            v-else-if="obituary.is_published && canUnpublishObituary"
+                            size="sm"
+                            variant="outline"
+                            @click="unpublishObituary(obituary.uuid)"
+                            class="border-orange-200 text-orange-700 hover:bg-orange-50"
+                          >
+                            <EyeOff class="mr-1 h-3 w-3" />
+                            Unpublish
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
 
             <!-- Pagination -->

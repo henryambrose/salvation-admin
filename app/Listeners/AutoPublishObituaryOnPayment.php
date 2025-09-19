@@ -36,13 +36,6 @@ class AutoPublishObituaryOnPayment
         // Auto-publish obituary if it's not already published and payment is completed
         if (!$obituary->isPublished() && $obituary->canBePublished()) {
             $obituary->publish();
-
-            Log::info("Auto-published obituary page {$obituary->uuid} for {$obituary->deceased_name} after payment completion", [
-                'obituary_id' => $obituary->id,
-                'booking_type' => get_class($booking),
-                'booking_id' => $booking->id,
-                'payment_status' => $booking->payment_status
-            ]);
         }
     }
 }

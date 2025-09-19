@@ -151,14 +151,6 @@ class NicheController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Niche created', [
-                'id' => $niche->id,
-                'location' => $niche->location,
-                'niche_no' => $niche->niche_no,
-                'sr_no' => $niche->sr_no,
-                'created_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.niches.index')
                 ->with('success', 'Niche created successfully.');
         } catch (\Exception $e) {
@@ -266,14 +258,6 @@ class NicheController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Niche updated', [
-                'id' => $niche->id,
-                'location' => $niche->location,
-                'niche_no' => $niche->niche_no,
-                'sr_no' => $niche->sr_no,
-                'updated_by' => Auth::id(),
-            ]);
-
             return redirect()->route('graveyard.niches.index')
                 ->with('success', 'Niche updated successfully.');
         } catch (\Exception $e) {
@@ -292,7 +276,6 @@ class NicheController extends Controller
      */
     public function destroy(Niche $niche)
     {
-        Log::info('Attempting to delete niche', $niche->toArray());
         try {
             // Check if niche is occupied
             if ($niche->status === 'occupied') {
@@ -300,14 +283,6 @@ class NicheController extends Controller
             }
 
             $niche->delete();
-
-            Log::info('Niche deleted', [
-                'id' => $niche->id,
-                'location' => $niche->location,
-                'niche_no' => $niche->niche_no,
-                'sr_no' => $niche->sr_no,
-                'deleted_by' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Niche deleted successfully.');
         } catch (\Exception $e) {
@@ -328,14 +303,6 @@ class NicheController extends Controller
         try {
             $niche = Niche::onlyTrashed()->findOrFail($id);
             $niche->restore();
-
-            Log::info('Niche restored', [
-                'id' => $niche->id,
-                'location' => $niche->location,
-                'niche_no' => $niche->niche_no,
-                'sr_no' => $niche->sr_no,
-                'restored_by' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Niche restored successfully.');
         } catch (\Exception $e) {

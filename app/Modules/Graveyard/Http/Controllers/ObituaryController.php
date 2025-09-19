@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryCondolence;
+use Modules\Graveyard\Services\ObituaryBackgroundService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -15,6 +16,13 @@ use Inertia\Inertia;
 
 class ObituaryController extends Controller
 {
+    protected ObituaryBackgroundService $backgroundService;
+
+    public function __construct(ObituaryBackgroundService $backgroundService)
+    {
+        $this->backgroundService = $backgroundService;
+    }
+
     /**
      * Display the public obituary page
      */
@@ -43,11 +51,22 @@ class ObituaryController extends Controller
         // Get deceased person's name
         $deceasedName = $this->getDeceasedName($obituary);
 
+        // Get background style using the background service
+        $backgroundStyle = [];
+        if ($obituary->background_style) {
+            $backgroundStyle = $this->backgroundService->getThemeStyle($obituary->background_style);
+        }
+
+        // Debug logging with detailed type information
+        $canSubmitCondolence = $obituary->allow_condolences && $obituary->service_type === 'premium';
+
         return Inertia::render('Public/Obituary/Show', [
             'obituary' => $obituary,
             'deceasedName' => $deceasedName,
-            'canSubmitCondolence' => $obituary->allow_condolences && $obituary->service_type === 'premium',
+            'condolences' => $obituary->condolences, // Explicitly pass approved condolences
+            'canSubmitCondolence' => $canSubmitCondolence,
             'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
+            'backgroundStyle' => $backgroundStyle, // Pass the processed background style
         ]);
     }
 
@@ -94,10 +113,19 @@ class ObituaryController extends Controller
                 'regex:/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/'
             ],
             'visitor_phone' => [
-                'nullable',
+                'required',
                 'string',
-                'max:20',
-                'regex:/^[\+]?[0-9\-\(\)\s]{10,20}$/'
+                'regex:/^[6-9]\d{9}$/', // Indian mobile number format: starts with 6,7,8,9 and exactly 10 digits
+                function ($attribute, $value, $fail) use ($obituary) {
+                    // Check for duplicate phone number for this obituary
+                    $exists = ObituaryCondolence::where('obituary_page_id', $obituary->id)
+                        ->where('visitor_phone', $value)
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('A condolence has already been submitted with this phone number for this obituary.');
+                    }
+                },
             ],
             'relationship' => [
                 'nullable',
@@ -116,7 +144,8 @@ class ObituaryController extends Controller
             'visitor_name.required' => 'Please enter your name',
             'visitor_name.regex' => 'Name can only contain letters, spaces, hyphens, apostrophes, and dots',
             'visitor_email.email' => 'Please enter a valid email address',
-            'visitor_phone.regex' => 'Please enter a valid phone number',
+            'visitor_phone.required' => 'Phone number is required to submit a condolence',
+            'visitor_phone.regex' => 'Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, or 9)',
             'message.required' => 'Please enter your condolence message',
             'message.min' => 'Your message must be at least 10 characters long',
             'message.max' => 'Your message cannot exceed 500 characters',
@@ -226,12 +255,23 @@ class ObituaryController extends Controller
 
         $deceasedName = $this->getDeceasedName($obituary);
 
+        // Get background style using the background service
+        $backgroundStyle = [];
+        if ($obituary->background_style) {
+            $backgroundStyle = $this->backgroundService->getThemeStyle($obituary->background_style);
+        }
+
+        // For preview, show condolences if they would be available publicly
+        $wouldShowCondolences = $obituary->allow_condolences && $obituary->service_type === 'premium';
+
         return Inertia::render('Public/Obituary/Show', [
             'obituary' => $obituary,
             'deceasedName' => $deceasedName,
+            'condolences' => $obituary->condolences, // Show condolences in preview
             'isPreview' => true,
-            'canSubmitCondolence' => false, // Disable in preview mode
-            'canShareMemory' => false, // Disable in preview mode
+            'canSubmitCondolence' => $wouldShowCondolences, // Show what it would look like publicly
+            'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
+            'backgroundStyle' => $backgroundStyle, // Pass the processed background style
         ]);
     }
 

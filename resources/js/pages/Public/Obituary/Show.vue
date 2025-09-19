@@ -106,8 +106,15 @@ const submitCondolence = async () => {
     return;
   }
 
-  if (!condolenceForm.value.visitor_name.trim() || !condolenceForm.value.message.trim()) {
-    condolenceError.value = 'Please provide your name and message.';
+  if (!condolenceForm.value.visitor_name.trim() || !condolenceForm.value.message.trim() || !condolenceForm.value.visitor_phone.trim()) {
+    condolenceError.value = 'Please provide your name, phone number, and message.';
+    return;
+  }
+
+  // Validate Indian phone number format
+  const phoneRegex = /^[6-9]\d{9}$/;
+  if (!phoneRegex.test(condolenceForm.value.visitor_phone.trim())) {
+    condolenceError.value = 'Please enter a valid Indian mobile number (10 digits starting with 6, 7, 8, or 9).';
     return;
   }
 
@@ -171,7 +178,7 @@ const getBackgroundStyle = computed(() => {
     style.backgroundImage =
       "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")";
   } else if (props.obituary.background_style === 'floral' || props.obituary.background_style === 'memorial') {
-    style.backgroundImage = `url('/images/backgrounds/memorial-sunset.png')`;
+    style.backgroundImage = `url('/storage/backgrounds/memorial-sunset.png')`;
     style.backgroundSize = 'cover';
     style.backgroundPosition = 'center';
     style.backgroundRepeat = 'no-repeat';
@@ -305,6 +312,7 @@ const shareObituaryPage = () => {
           </audio>
         </section>
 
+
         <!-- Condolences Section -->
         <section v-if="obituary.allow_condolences && canSubmitCondolence" class="mb-12">
           <h2 class="mb-6 flex items-center font-serif text-3xl font-bold text-gray-900">
@@ -353,14 +361,18 @@ const shareObituaryPage = () => {
 
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <label class="mb-2 block text-sm font-medium text-gray-700">Phone (Optional)</label>
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number *</label>
                   <input
                     type="tel"
                     v-model="condolenceForm.visitor_phone"
                     class="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500"
-                    placeholder="+1234567890"
+                    placeholder="9876543210"
+                    maxlength="10"
+                    pattern="[6-9][0-9]{9}"
+                    required
                     :disabled="isSubmittingCondolence"
                   />
+                  <div class="mt-1 text-xs text-gray-500">Enter 10-digit Indian mobile number (starting with 6, 7, 8, or 9)</div>
                 </div>
                 <div>
                   <label class="mb-2 block text-sm font-medium text-gray-700">Relationship (Optional)</label>
@@ -409,7 +421,7 @@ const shareObituaryPage = () => {
           <div v-if="condolences?.length" class="space-y-6">
             <div v-for="condolence in condolences" :key="condolence.id" class="rounded-lg border-l-4 border-blue-500 bg-white p-6 shadow-md">
               <div class="mb-3 flex items-start justify-between">
-                <h4 class="font-semibold text-gray-900">{{ condolence.name }}</h4>
+                <h4 class="font-semibold text-gray-900">{{ condolence.visitor_name }}</h4>
                 <span class="text-sm text-gray-500">
                   {{ new Date(condolence.created_at).toLocaleDateString() }}
                 </span>

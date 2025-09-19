@@ -258,12 +258,6 @@ class PermanentGraveController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Permanent grave updated', [
-                'id' => $permanentGrave->id,
-                'section' => $permanentGrave->section,
-                'grave_no' => $permanentGrave->grave_no,
-                'updated_by' => Auth::id(),
-            ]);
 
             return redirect()->route('graveyard.permanent-graves.index')
                 ->with('success', 'Permanent grave updated successfully.');
@@ -291,13 +285,6 @@ class PermanentGraveController extends Controller
 
             $permanentGrave->delete();
 
-            Log::info('Permanent grave deleted', [
-                'id' => $permanentGrave->id,
-                'section' => $permanentGrave->section,
-                'grave_no' => $permanentGrave->grave_no,
-                'deleted_by' => Auth::id(),
-            ]);
-
             return back()->with('success', 'Permanent grave deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Failed to delete permanent grave', [
@@ -317,13 +304,6 @@ class PermanentGraveController extends Controller
         try {
             $permanentGrave = PermanentGrave::onlyTrashed()->findOrFail($id);
             $permanentGrave->restore();
-
-            Log::info('Permanent grave restored', [
-                'id' => $permanentGrave->id,
-                'section' => $permanentGrave->section,
-                'grave_no' => $permanentGrave->grave_no,
-                'restored_by' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Permanent grave restored successfully.');
         } catch (\Exception $e) {

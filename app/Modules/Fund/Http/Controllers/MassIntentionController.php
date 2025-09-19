@@ -362,7 +362,7 @@ class MassIntentionController extends Controller
         $query = $request->get('query', '');
         // $familyNo = $request->get('family_no', '');
 
-        $members = Member::with('community')->where(function ($q) use ($query) {
+        $members = Member::with('community')->alive()->where(function ($q) use ($query) {
             // if ($familyNo) {
             //     $q->where('family_no', $familyNo);
             // }

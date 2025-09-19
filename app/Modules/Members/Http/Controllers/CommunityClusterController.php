@@ -28,7 +28,10 @@ class CommunityClusterController extends Controller
         $query->select('community_clusters.*');
         $query->join('communities', 'community_clusters.community_id', '=', 'communities.id');
         $query->join('clusters', 'community_clusters.cluster_id', '=', 'clusters.id');
-        $query->leftJoin('members', 'community_clusters.member_id', '=', 'members.id');
+        $query->leftJoin('members', function($join) {
+            $join->on('community_clusters.member_id', '=', 'members.id')
+                 ->whereNull('members.death_date');
+        });
         $query->select('community_clusters.*', 'communities.name as community_name', 'clusters.name as cluster_name', 'members.first_name', 'members.last_name');
         $query->selectRaw('CONCAT(members.first_name, " ", members.last_name) as member_name');
 
@@ -56,7 +59,8 @@ class CommunityClusterController extends Controller
             'communityClusters' => $query->paginate($perPage)->appends($request->query()),
             'communities' => Community::all(),
             'clusters' => Cluster::all(),
-            'members' => Member::select('id', 'first_name', 'last_name', 'community_id')
+            'members' => Member::alive()
+                ->select('id', 'first_name', 'last_name', 'community_id')
                 ->get()
                 ->map(function ($member) {
                     return [

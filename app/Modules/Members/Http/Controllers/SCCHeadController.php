@@ -29,7 +29,10 @@ class SCCHeadController extends Controller
             $query->withoutTrashed();
         }
         $query->select('s_c_c_heads.*');
-        $query->join('members', 's_c_c_heads.member_id', '=', 'members.id');
+        $query->join('members', function($join) {
+            $join->on('s_c_c_heads.member_id', '=', 'members.id')
+                 ->whereNull('members.death_date');
+        });
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
         $query->select(
             's_c_c_heads.*',
@@ -78,7 +81,7 @@ class SCCHeadController extends Controller
     {
         return Inertia::render('s_c_c_head/SCCHead', [
             'communities' => Community::all(),
-            'members' => Member::all(),
+            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -124,7 +127,7 @@ class SCCHeadController extends Controller
         return Inertia::render('s_c_c_head/Index', [
             'sccHead' => $sCCHead,
             'communities' => Community::all(),
-            'members' => Member::all(),
+            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -187,6 +190,7 @@ class SCCHeadController extends Controller
     {
         try {
             $members = Member::where('community_id', $communityId)
+                ->alive()
                 ->select('id', 'first_name', 'middle_name', 'last_name')
                 ->get()
                 ->map(function ($m) {

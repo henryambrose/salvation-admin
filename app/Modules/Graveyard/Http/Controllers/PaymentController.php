@@ -168,7 +168,6 @@ class PaymentController extends Controller
             DB::beginTransaction();
 
             // Get the booking
-            Log::info('Fetching booking of type ' . $request->booking_type . ' with ID ' . $request->booking_id);
             $booking = $this->getBookingByType($request->booking_type, $request->booking_id);
             if (!$booking) {
                 return back()->withErrors(['error' => 'Booking not found.']);
@@ -265,7 +264,6 @@ class PaymentController extends Controller
                 ]);
             } else {
                 // For service payments, update services and all amounts
-                Log::info('Updating booking ID ' . $booking . ' with new payment details');
                 $booking->update([
                     'selected_services' => array_column($request->selected_services, 'service_id'),
                     'total_cost' => $totalAmount,
@@ -298,15 +296,6 @@ class PaymentController extends Controller
                 $member->update([
                     'death_date' => $deathDate,
                     'status_id' => 4
-                ]);
-
-                Log::info('Updated member death_date', [
-                    'booking_type' => $request->booking_type,
-                    'member_id' => $member->id,
-                    'member_name' => $member->first_name . ' ' . $member->last_name,
-                    'death_date' => $deathDate,
-                    'booking_id' => $booking->id,
-                    'payment_id' => $payment->id
                 ]);
             }
 
@@ -465,7 +454,6 @@ class PaymentController extends Controller
      */
     private function getBookingByType(string $type, int $id)
     {
-        Log::info("Fetching booking of type {$type} with ID {$id}");
         return match ($type) {
             'permanent' => PermanentGraveBooking::find($id),
             'temporary' => TemporaryGraveBooking::find($id),

@@ -104,35 +104,35 @@ const formatDate = (date: string) => {
 
 const getDeceasedName = () => {
   const payable = props.originalPayment.payable;
-  
+
   // For permanent graves - use valid_member info
   if (payable.valid_member) {
     return `${payable.valid_member.first_name} ${payable.valid_member.last_name}`;
   }
-  
+
   // For temporary graves - use dead_first_name and dead_last_name
   if (payable.dead_first_name && payable.dead_last_name) {
     return `${payable.dead_first_name} ${payable.dead_last_name}`;
   }
-  
+
   return 'N/A';
 };
 
 const getGraveDetails = () => {
   const payable = props.originalPayment.payable;
-  
+
   // For permanent graves
   if (payable.permanent_grave) {
     const grave = payable.permanent_grave;
     return `${grave.grave_no} - Section ${grave.section}, Row ${grave.row_no}`;
   }
-  
+
   // For temporary graves
   if (payable.temporary_grave) {
     const grave = payable.temporary_grave;
     return `${grave.grave_no} - Section ${grave.section}, Row ${grave.row_no}`;
   }
-  
+
   return 'N/A';
 };
 
@@ -324,7 +324,7 @@ const submit = () => {
 
                     <div>
                       <Label for="payment_notes">Notes</Label>
-                      <Textarea id="payment_notes" v-model="form.payment_notes" placeholder="Additional payment notes..." rows="3" />
+                      <Textarea id="payment_notes" v-model="form.payment_notes" placeholder="Additional payment notes..." :rows="3" />
                     </div>
                   </CardContent>
                 </Card>

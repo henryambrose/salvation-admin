@@ -72,7 +72,6 @@ class NicheTransferController extends Controller
         $eligibleBookings = TemporaryGraveBooking::eligibleForTransfer()
             ->with(['temporaryGrave'])
             ->get();
-        Log::info('Eligible Bookings: ', $eligibleBookings->toArray());
         // If a specific booking was requested, include it even if transfer_requested = true
         if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {
             // Add the selected booking to the list if it's not already there

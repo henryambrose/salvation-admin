@@ -81,7 +81,6 @@ class PermanentGraveBookingController extends Controller
      */
     public function searchPermanentGrave(Request $request)
     {
-        Log::info('Search Term: ' . $request->search_term . ', Search Type: ' . $request->search_type);
         $request->validate([
             'search_term' => 'required|string|min:2',
         ]);
@@ -92,7 +91,6 @@ class PermanentGraveBookingController extends Controller
             ->orWhere('oldno', 'like', '%' . $request->search_term . '%')
             ->orWhere('contact_no', 'like', '%' . $request->search_term . '%');
 
-        Log::info('Query Built: ' . $query->toSql());
         $graves = $query->get()->map(function (PermanentGrave $grave) {
             return [
                 'id' => $grave->id,
@@ -120,7 +118,6 @@ class PermanentGraveBookingController extends Controller
                 'available_members_count' => $grave->validMembers->whereNull('death_date')->values()
             ];
         });
-        Log::info('Found Graves: ' . $graves->count());
         return response()->json([
             'graves' => $graves,
             'found' => $graves->count()
@@ -132,9 +129,6 @@ class PermanentGraveBookingController extends Controller
      */
     public function store(Request $request)
     {
-        Log::info('PermanentGraveBooking store method called');
-        Log::info('Request data:', $request->all());
-
         try {
             $request->validate([
                 'permanent_grave_id' => 'required|exists:permanent_graves,id',
@@ -152,7 +146,6 @@ class PermanentGraveBookingController extends Controller
                 'selected_services.*' => 'exists:service_types,id',
                 'special_requirements' => 'nullable|string|max:1000'
             ]);
-            Log::info('Validation passed successfully');
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed: ', $e->errors());
             throw $e;
@@ -163,14 +156,12 @@ class PermanentGraveBookingController extends Controller
 
             // Get the permanent grave
             $grave = PermanentGrave::findOrFail($request->permanent_grave_id);
-            Log::info('Found grave: ' . $grave->id . ' - ' . $grave->grave_no);
 
             // Double-check eligibility
             if (!$this->checkGraveEligibility($grave)) {
                 Log::warning('Grave not eligible for burial');
                 return back()->withErrors(['permanent_grave_id' => 'This grave is not eligible for burial yet.']);
             }
-            Log::info('Grave eligibility check passed');
 
             // Check for existing active bookings for this grave
             $existingBooking = PermanentGraveBooking::where('permanent_grave_id', $request->permanent_grave_id)
@@ -181,18 +172,15 @@ class PermanentGraveBookingController extends Controller
                 Log::warning('Grave already has an active booking');
                 return back()->withErrors(['permanent_grave_id' => 'This grave already has a pending or confirmed booking. Cannot create duplicate booking.']);
             }
-            Log::info('No existing active bookings found');
 
             // Get the valid member
             $validMember = ValidMember::findOrFail($request->valid_member_id);
-            Log::info('Found valid member: ' . $validMember->id . ' - ' . $validMember->full_name);
 
             // Check if valid member is already deceased
             if ($validMember->death_date) {
                 Log::warning('Valid member already deceased');
                 return back()->withErrors(['valid_member_id' => 'This valid member is already marked as deceased.']);
             }
-            Log::info('Valid member eligibility check passed');
 
             // Create the booking
             $booking = PermanentGraveBooking::create([
@@ -214,7 +202,6 @@ class PermanentGraveBookingController extends Controller
                 'created_by' => Auth::id() ?: 1, // Default to user ID 1 if not authenticated
                 'updated_by' => Auth::id() ?: 1, // Default to user ID 1 if not authenticated
             ]);
-            Log::info('Booking created successfully with ID: ' . $booking->id);
 
             // Calculate total cost from selected services
             if ($request->selected_services) {
@@ -223,11 +210,9 @@ class PermanentGraveBookingController extends Controller
                     'total_cost' => $totalCost,
                     'balance_amount' => $totalCost
                 ]);
-                Log::info('Total cost calculated and updated: ' . $totalCost);
             }
 
             DB::commit();
-            Log::info('Transaction committed successfully');
 
             return redirect()->route('graveyard.permanent-grave-bookings.show', $booking->id)
                 ->with('success', 'Permanent grave booking created successfully.');

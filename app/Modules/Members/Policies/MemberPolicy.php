@@ -12,17 +12,8 @@ class MemberPolicy
      */
     public function viewAny(User $user): bool
     {
-        \Log::info('MemberPolicy viewAny called for user: ' . $user->id);
-        \Log::info('User permissions: ' . $user->getAllPermissions()->pluck('name'));
-        
-        if ($user->hasRole('superadmin')) {
-            \Log::info('User has superadmin role');
-            return true;
-        }
 
         $canList = $user->can('list-member');
-        \Log::info('User can list-member: ' . ($canList ? 'true' : 'false'));
-        
         return $canList;
     }
 

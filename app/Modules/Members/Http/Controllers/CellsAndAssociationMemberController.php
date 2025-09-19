@@ -232,63 +232,63 @@ class CellsAndAssociationMemberController extends Controller
         return redirect()->route('cells-and-association-members.index')->with('success', 'Cells Association Member restored successfully.');
     }
 
-    public function searchMembers(Request $request)
-    {
-        $search = $request->input('search');
+    // public function searchMembers(Request $request)
+    // {
+    //     $search = $request->input('search');
 
-        if (strlen($search) < 3) {
-            return response()->json([]);
-        }
+    //     if (strlen($search) < 3) {
+    //         return response()->json([]);
+    //     }
 
-        $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
-            ->with('community:id,name')
-            ->where(function ($query) use ($search) {
-                $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
-                    ->orWhere('first_name', 'like', "%{$search}%")
-                    ->orWhere('last_name', 'like', "%{$search}%")
-                    ->orWhere('member_no', 'like', "%{$search}%")
-                    ->orWhere('family_no', 'like', "%{$search}%")
-                    ->orWhereHas('community', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    });
-            })
-            ->limit(20)
-            ->get()
-            ->map(function ($member) {
-                return [
-                    'id' => $member->id,
-                    'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
-                    'first_name' => $member->first_name,
-                    'last_name' => $member->last_name,
-                    'member_no' => $member->member_no,
-                    'family_no' => $member->family_no,
-                    'community_name' => $member->community->name ?? 'N/A'
-                ];
-            });
+    //     $members = Member::select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
+    //         ->with('community:id,name')->alive()
+    //         ->where(function ($query) use ($search) {
+    //             $query->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"])
+    //                 ->orWhere('first_name', 'like', "%{$search}%")
+    //                 ->orWhere('last_name', 'like', "%{$search}%")
+    //                 ->orWhere('member_no', 'like', "%{$search}%")
+    //                 ->orWhere('family_no', 'like', "%{$search}%")
+    //                 ->orWhereHas('community', function ($q) use ($search) {
+    //                     $q->where('name', 'like', "%{$search}%");
+    //                 });
+    //         })
+    //         ->limit(20)
+    //         ->get()
+    //         ->map(function ($member) {
+    //             return [
+    //                 'id' => $member->id,
+    //                 'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+    //                 'first_name' => $member->first_name,
+    //                 'last_name' => $member->last_name,
+    //                 'member_no' => $member->member_no,
+    //                 'family_no' => $member->family_no,
+    //                 'community_name' => $member->community->name ?? 'N/A'
+    //             ];
+    //         });
 
-        return response()->json($members);
-    }
+    //     return response()->json($members);
+    // }
 
-    public function getMemberById($id)
-    {
-        $member = Member::with('community:id,name')
-            ->select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
-            ->find($id);
+    // public function getMemberById($id)
+    // {
+    //     $member = Member::with('community:id,name')
+    //         ->select('id', 'first_name', 'last_name', 'member_no', 'family_no', 'community_id')
+    //         ->find($id);
 
-        if (! $member) {
-            return response()->json(null);
-        }
+    //     if (! $member) {
+    //         return response()->json(null);
+    //     }
 
-        return response()->json([
-            'id' => $member->id,
-            'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
-            'first_name' => $member->first_name,
-            'last_name' => $member->last_name,
-            'member_no' => $member->member_no,
-            'family_no' => $member->family_no,
-            'community_name' => $member->community->name ?? 'N/A'
-        ]);
-    }
+    //     return response()->json([
+    //         'id' => $member->id,
+    //         'name' => trim($member->first_name . ' ' . $member->last_name) . ' - ' . ($member->community->name ?? 'N/A') . ' - ' . ($member->member_no ?? 'N/A'),
+    //         'first_name' => $member->first_name,
+    //         'last_name' => $member->last_name,
+    //         'member_no' => $member->member_no,
+    //         'family_no' => $member->family_no,
+    //         'community_name' => $member->community->name ?? 'N/A'
+    //     ]);
+    // }
 
     /**
      * Get all cell associations for a specific member

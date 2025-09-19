@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Graveyard\Models\PermanentGraveBooking;
@@ -101,6 +102,11 @@ class ObituaryPage extends Model
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(\App\Models\User::class, 'created_by');
+    }
+
+    public function obituaryManager(): HasOne
+    {
+        return $this->hasOne(ObituaryManager::class);
     }
 
     public function getBookingAttribute()

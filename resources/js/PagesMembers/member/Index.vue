@@ -53,6 +53,7 @@ const status = ref(props.filters?.status || '');
 const filterColumnKey = ref(props.filters?.filterColumnKey || '');
 const filterColumnValue = ref(props.filters?.filterColumnValue || '');
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const excludeDeceased = ref(String(props.filters?.excludeDeceased) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const partialOnly = ['members', 'familyStats', 'filters', 'totalCount'];
 // Debounced search to prevent too many API calls
@@ -74,6 +75,7 @@ watch(
     filterColumnKey,
     filterColumnValue,
     isArchived,
+    excludeDeceased,
   ],
   (newValues, oldValues) => {
     clearTimeout(searchTimeout);
@@ -172,6 +174,7 @@ function confirmDelete() {
       filterColumnKey: filterColumnKey.value,
       filterColumnValue: filterColumnValue.value,
       isArchived: isArchived.value ? 'true' : 'false',
+      excludeDeceased: excludeDeceased.value ? 'true' : 'false',
     },
     preserveScroll: true,
     only: partialOnly,
@@ -206,6 +209,7 @@ function clearSearch() {
         filterColumnKey: filterColumnKey.value,
         filterColumnValue: filterColumnValue.value,
         isArchived: isArchived.value ? 'true' : 'false',
+        excludeDeceased: excludeDeceased.value ? 'true' : 'false',
         page: 1,
       },
       {
@@ -243,6 +247,7 @@ function downloadExcel() {
     direction: String(direction.value || 'asc'),
     perPage: 'all',
     isArchived: isArchived.value ? 'true' : 'false',
+    excludeDeceased: excludeDeceased.value ? 'true' : 'false',
   });
 
   // Use window.location.href for direct download
@@ -285,6 +290,7 @@ function fetch(page = 1) {
       filterColumnKey: filterColumnKey.value,
       filterColumnValue: filterColumnValue.value,
       isArchived: isArchived.value ? 'true' : 'false',
+      excludeDeceased: excludeDeceased.value ? 'true' : 'false',
       page,
     },
     { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
@@ -331,6 +337,7 @@ function clearFamilySearch() {
         filterColumnKey: filterColumnKey.value,
         filterColumnValue: filterColumnValue.value,
         isArchived: isArchived.value ? 'true' : 'false',
+        excludeDeceased: excludeDeceased.value ? 'true' : 'false',
         page: 1,
       },
       {
@@ -530,6 +537,19 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                 </TooltipContent>
               </Tooltip>
               <span class="text-sm font-medium">Show Archived</span>
+            </label>
+
+            <!-- Exclude Deceased Checkbox -->
+            <label class="flex cursor-pointer items-center gap-2 select-none">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Checkbox v-model="excludeDeceased" class="switch-checkbox" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Exclude members who have died (have death_date)</p>
+                </TooltipContent>
+              </Tooltip>
+              <span class="text-sm font-medium">Exclude Deceased</span>
             </label>
           </div>
         </div>

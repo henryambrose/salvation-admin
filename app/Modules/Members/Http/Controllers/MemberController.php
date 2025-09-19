@@ -221,6 +221,11 @@ class MemberController extends Controller
             }
         }
 
+        // Exclude deceased members filter
+        if ($request->boolean('excludeDeceased')) {
+            $query->whereNull('death_date');
+        }
+
         // Legacy filter support (unchanged)
         if (($filterColumnKey = $request->input('filterColumnKey')) !== null) {
             $filterColumnValue = $request->input('filterColumnValue');
@@ -615,7 +620,6 @@ class MemberController extends Controller
             $relation = $service->calculateRelationship($person, $familyMember);
             $familyMember->relation = $relation;
         }
-        Log::info($allFamilyMembers);
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
             'person' => $person,
@@ -849,12 +853,6 @@ class MemberController extends Controller
             ];
         })->sortBy([['generation', 'asc'], ['date_of_birth', 'asc']])->values();
 
-        Log::info('Family members with generations:', $enhanced->map(fn($x) => [
-            'name' => $x['first_name'] . ' ' . $x['last_name'],
-            'generation' => $x['generation'],
-            'date_of_birth' => $x['date_of_birth'],
-        ])->toArray());
-
         return response()->json($enhanced);
     }
 
@@ -1060,13 +1058,6 @@ class MemberController extends Controller
             $nextFamilyNo = $numberingService->generateMemberNumberInFamily($nextFamilyGroup);
             $nextMemberNo = $numberingService->generateMemberNumber();
 
-            Log::info('Generated next available numbers', [
-                'church_code' => $churchCode,
-                'next_family_group' => $nextFamilyGroup,
-                'next_family_no' => $nextFamilyNo,
-                'next_member_no' => $nextMemberNo
-            ]);
-
             return response()->json([
                 'next_family_no' => $nextFamilyNo,
                 'next_member_no' => $nextMemberNo,
@@ -1104,7 +1095,7 @@ class MemberController extends Controller
             return response()->json([]);
         }
 
-        $members = Member::with(['community', 'relationship', 'gender']);
+        $members = Member::with(['community', 'relationship', 'gender'])->alive();
 
         // Check if query is a numeric ID
         if (is_numeric($query)) {
@@ -1207,8 +1198,6 @@ class MemberController extends Controller
             abort(403, 'Access denied. You do not have permission to view data verification.');
         }
 
-        Log::info('User accessing data verification page', ['user_id' => $user->id, 'email' => $user->email]);
-
         // Load data directly instead of via AJAX
         $members = Member::with([
             'community:id,name',
@@ -1280,8 +1269,6 @@ class MemberController extends Controller
             ]);
             return response()->json(['error' => 'Access denied. You do not have permission to update data verification.'], 403);
         }
-
-        Log::info('User authenticated for bulk update', ['user_id' => $user->id, 'email' => $user->email]);
 
         $request->validate([
             'changes' => 'required|array',

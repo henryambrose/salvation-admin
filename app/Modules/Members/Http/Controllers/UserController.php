@@ -92,14 +92,6 @@ class UserController extends Controller
     {
         $this->authorize('update', $user);
 
-        // Debug logging for role updates
-        if ($request->has('roles')) {
-            Log::info('Role update request', [
-                'user_id' => $user->id,
-                'roles' => $request->input('roles')
-            ]);
-        }
-
         $data = [
             'name' => $request->name,
             'email' => $request->email,
@@ -114,11 +106,6 @@ class UserController extends Controller
         // Handle role updates if provided
         if ($request->input('roles')) {
             $user->syncRoles($request->input('roles'));
-
-            Log::info('Roles synced successfully', [
-                'user_id' => $user->id,
-                'new_roles' => $user->fresh()->roles->pluck('name')
-            ]);
         }
 
         // For Inertia requests, return a proper Inertia response

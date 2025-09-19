@@ -198,18 +198,7 @@ class ServiceTypeController extends Controller
         try {
             $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
 
-            Log::info('Attempting to permanently delete service type', [
-                'service_type_id' => $serviceType->id,
-                'name' => $serviceType->name,
-                'user_id' => Auth::id(),
-            ]);
-
             $serviceType->forceDelete();
-
-            Log::info('Service type permanently deleted', [
-                'service_type_id' => $id,
-                'user_id' => Auth::id(),
-            ]);
 
             return back()->with('success', 'Service type permanently deleted.');
         } catch (\Exception $e) {
