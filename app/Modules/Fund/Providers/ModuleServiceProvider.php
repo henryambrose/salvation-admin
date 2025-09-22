@@ -12,6 +12,9 @@ class ModuleServiceProvider extends ServiceProvider
     public function register(): void
     {
         // Register any bindings or singletons here
+
+        // Register the Fund module's AuthServiceProvider
+        $this->app->register(AuthServiceProvider::class);
     }
 
     /**

@@ -29,31 +29,48 @@ interface CommunityContribution {
 }
 
 const props = defineProps<{
-  communityContribution: CommunityContribution;
+  contribution?: CommunityContribution;
   contributionTypes: ContributionType[];
   users: User[];
   statusOptions: Record<string, string>;
 }>();
 
 const breadcrumbs = [
-  { label: 'Fund Management', href: '/fund' },
-  { label: 'Community Contributions', href: '/fund/community-contributions' },
-  { label: 'Edit', href: null },
+  { title: 'Fund Management', href: '/fund' },
+  { title: 'Community Contributions', href: '/fund/community-contributions' },
+  { title: 'Edit', href: null },
 ];
 
+// Helper function to format date for HTML input
+const formatDateForInput = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
+  } catch {
+    return '';
+  }
+};
+
 const form = useForm({
-  contribution_type_id: props.communityContribution.contribution_type_id,
-  collection_date: props.communityContribution.collection_date,
-  amount: props.communityContribution.amount,
-  description: props.communityContribution.description || '',
-  location: props.communityContribution.location || '',
-  collected_by_user_id: props.communityContribution.collected_by_user_id || '',
-  notes: props.communityContribution.notes || '',
-  status: props.communityContribution.status,
+  contribution_type_id: props.contribution?.contribution_type_id || '',
+  collection_date: formatDateForInput(props.contribution?.collection_date),
+  amount: props.contribution?.amount || '',
+  description: props.contribution?.description || '',
+  location: props.contribution?.location || '',
+  collected_by_user_id: props.contribution?.collected_by_user_id || '',
+  notes: props.contribution?.notes || '',
+  status: props.contribution?.status || '',
 });
 
 const submitForm = () => {
-  form.put(`/fund/community-contributions/${props.communityContribution.id}`, {
+  if (!props.contribution?.id) {
+    console.error('Community contribution ID is missing');
+    return;
+  }
+
+  form.put(`/fund/community-contributions/${props.contribution.id}`, {
     onSuccess: () => {
       // Success handled by redirect
     },
