@@ -312,7 +312,6 @@ const shareObituaryPage = () => {
           </audio>
         </section>
 
-
         <!-- Condolences Section -->
         <section v-if="obituary.allow_condolences && canSubmitCondolence" class="mb-12">
           <h2 class="mb-6 flex items-center font-serif text-3xl font-bold text-gray-900">
@@ -419,14 +418,24 @@ const shareObituaryPage = () => {
 
           <!-- Existing Condolences -->
           <div v-if="condolences?.length" class="space-y-6">
-            <div v-for="condolence in condolences" :key="condolence.id" class="rounded-lg border-l-4 border-blue-500 bg-white p-6 shadow-md">
-              <div class="mb-3 flex items-start justify-between">
-                <h4 class="font-semibold text-gray-900">{{ condolence.visitor_name }}</h4>
-                <span class="text-sm text-gray-500">
-                  {{ new Date(condolence.created_at).toLocaleDateString() }}
-                </span>
+            <div class="flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900">Messages of Love ({{ condolences.length }})</h3>
+            </div>
+            <div
+              :class="[
+                'space-y-6',
+                condolences.length > 5 ? 'scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 max-h-96 overflow-y-auto pr-2' : '',
+              ]"
+            >
+              <div v-for="condolence in condolences" :key="condolence.id" class="rounded-lg border-l-4 border-blue-500 bg-white p-6 shadow-md">
+                <div class="mb-3 flex items-start justify-between">
+                  <h4 class="font-semibold text-gray-900">{{ condolence.visitor_name }}</h4>
+                  <span class="text-sm text-gray-500">
+                    {{ new Date(condolence.created_at).toLocaleDateString() }}
+                  </span>
+                </div>
+                <p class="leading-relaxed text-gray-700">{{ condolence.message }}</p>
               </div>
-              <p class="leading-relaxed text-gray-700">{{ condolence.message }}</p>
             </div>
           </div>
         </section>

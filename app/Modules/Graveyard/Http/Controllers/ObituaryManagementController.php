@@ -313,8 +313,17 @@ class ObituaryManagementController extends Controller
             // Update the obituary
             $obituary->update($data);
 
+            // Check if it's an AJAX request (from the Vue component)
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Obituary updated successfully!',
+                    'redirect_url' => route('graveyard.obituaries.show', $obituary->uuid)
+                ]);
+            }
+
             return redirect()->route('graveyard.obituaries.show', $obituary->uuid)
-                ->with('success', 'Obituary page updated successfully!');
+                ->with('success', 'Obituary updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
@@ -1067,50 +1076,76 @@ class ObituaryManagementController extends Controller
                 'access_granted_at' => now(),
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'External access granted successfully',
-                'external_member' => $obituaryManager,
-                'access_url' => route('obituary.external.login', $obituary->uuid)
-            ]);
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'External access granted successfully',
+                    'external_member' => $obituaryManager,
+                    'access_url' => route('obituary.external.login', $obituary->uuid)
+                ]);
+            }
+
+            return back()->with('success', 'External access granted successfully');
         } catch (\Exception $e) {
             Log::error('Failed to grant external access: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to grant external access. Please try again.'
-            ], 500);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'error' => 'Failed to grant external access. Please try again.'
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to grant external access. Please try again.');
         }
     }
 
     /**
      * Revoke external member access
      */
-    public function revokeExternalAccess(ObituaryPage $obituary)
+    public function revokeExternalAccess(Request $request, ObituaryPage $obituary)
     {
         try {
             $obituary->obituaryManager()->delete();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'External access revoked successfully'
-            ]);
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'External access revoked successfully'
+                ]);
+            }
+
+            return back()->with('success', 'External access revoked successfully');
         } catch (\Exception $e) {
             Log::error('Failed to revoke external access: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to revoke external access. Please try again.'
-            ], 500);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'error' => 'Failed to revoke external access. Please try again.'
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to revoke external access. Please try again.');
         }
     }
 
     /**
      * Toggle external member active status
      */
-    public function toggleExternalAccess(ObituaryPage $obituary)
+    public function toggleExternalAccess(Request $request, ObituaryPage $obituary)
     {
         try {
             $obituaryManager = $obituary->obituaryManager;
 
             if (!$obituaryManager) {
-                return response()->json(['error' => 'No external member found'], 404);
+                // Check if it's an AJAX request
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'No external member found'], 404);
+                }
+                return back()->with('error', 'No external member found');
             }
 
             $obituaryManager->update([
@@ -1120,16 +1155,27 @@ class ObituaryManagementController extends Controller
 
             $status = $obituaryManager->is_active ? 'enabled' : 'disabled';
 
-            return response()->json([
-                'success' => true,
-                'message' => "External access {$status} successfully",
-                'is_active' => $obituaryManager->is_active
-            ]);
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "External access {$status} successfully",
+                    'is_active' => $obituaryManager->is_active
+                ]);
+            }
+
+            return back()->with('success', "External access {$status} successfully");
         } catch (\Exception $e) {
             Log::error('Failed to toggle external access: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to toggle external access. Please try again.'
-            ], 500);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'error' => 'Failed to toggle external access. Please try again.'
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to toggle external access. Please try again.');
         }
     }
 
@@ -1146,7 +1192,11 @@ class ObituaryManagementController extends Controller
             $obituaryManager = $obituary->obituaryManager;
 
             if (!$obituaryManager) {
-                return response()->json(['error' => 'No external member found'], 404);
+                // Check if it's an AJAX request
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['error' => 'No external member found'], 404);
+                }
+                return back()->with('error', 'No external member found');
             }
 
             $obituaryManager->update([
@@ -1155,15 +1205,26 @@ class ObituaryManagementController extends Controller
                 'blocked_until' => null,
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Password reset successfully'
-            ]);
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Password reset successfully'
+                ]);
+            }
+
+            return back()->with('success', 'Password reset successfully');
         } catch (\Exception $e) {
             Log::error('Failed to reset external password: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to reset password. Please try again.'
-            ], 500);
+
+            // Check if it's an AJAX request
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'error' => 'Failed to reset password. Please try again.'
+                ], 500);
+            }
+
+            return back()->with('error', 'Failed to reset password. Please try again.');
         }
     }
 }

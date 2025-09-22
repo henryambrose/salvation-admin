@@ -357,14 +357,21 @@ const resetExternalPassword = () => {
 };
 
 const getExternalAccessUrl = computed(() => {
+  // Use route helper if available, otherwise construct URL
   if (typeof window !== 'undefined') {
     return `${window.location.origin}/obituary/${props.obituary.uuid}/manage/login`;
   }
-  return '';
+  // Fallback for SSR - construct relative URL
+  return `/obituary/${props.obituary.uuid}/manage/login`;
 });
 
 const copyExternalAccessUrl = () => {
-  navigator.clipboard.writeText(getExternalAccessUrl.value);
+  let urlToCopy = getExternalAccessUrl.value;
+  // If it's a relative URL, make it absolute
+  if (urlToCopy.startsWith('/') && typeof window !== 'undefined') {
+    urlToCopy = `${window.location.origin}${urlToCopy}`;
+  }
+  navigator.clipboard.writeText(urlToCopy);
   // You might want to show a toast message here
 };
 
@@ -672,15 +679,23 @@ const paymentStatusColors = {
                     </p>
                   </div>
 
-                  <!-- Management URL -->
+                  <!-- Management URL - Always show if external manager exists -->
                   <div class="rounded bg-blue-50 p-3">
                     <Label class="text-sm font-medium text-blue-800">Management URL:</Label>
                     <div class="mt-1 flex items-center space-x-2">
-                      <Input :value="getExternalAccessUrl" readonly class="bg-white text-xs" />
-                      <Button @click="copyExternalAccessUrl" size="sm" variant="outline">
+                      <input
+                        :value="getExternalAccessUrl"
+                        readonly
+                        class="placeholder:text-muted-foreground focus-visible:ring-ring flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 font-mono text-xs shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-1 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        style="min-height: 36px"
+                        :placeholder="getExternalAccessUrl || 'Loading...'"
+                      />
+                      <Button @click="copyExternalAccessUrl" size="sm" variant="outline" title="Copy Management URL">
                         <Copy class="h-3 w-3" />
                       </Button>
                     </div>
+                    <p class="mt-1 text-xs text-blue-600">Share this URL with the external member to access their dashboard</p>
+                    <!-- Show the actual URL in case Input component has issues -->
                   </div>
 
                   <!-- Action Buttons -->
