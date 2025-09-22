@@ -2,10 +2,12 @@
 
 namespace Modules\Members\Console\Commands;
 
-use App\Helpers\AuditHelper;
+use Modules\Members\Helpers\AuditHelper;
 
 use Modules\Members\Models\Member;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+
 
 class TestAuditSystem extends Command
 {
@@ -43,7 +45,7 @@ class TestAuditSystem extends Command
         $member->delete();
 
         // Check audit logs
-        $logs = \DB::table('audit_logs')->where('table_name', 'members')->orderBy('created_at', 'desc')->limit(3)->get();
+        $logs = DB::table('audit_logs')->where('table_name', 'members')->orderBy('created_at', 'desc')->limit(3)->get();
 
         $this->info('Audit logs created:');
         foreach ($logs as $log) {
