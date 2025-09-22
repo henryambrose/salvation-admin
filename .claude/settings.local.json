@@ -18,7 +18,10 @@
       "Bash(find:*)",
       "Bash(npm run dev:*)",
       "Bash(cat:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(dir:*)",
+      "Bash(cmd /c:*)",
+      "Bash(del verify_audit_coverage.php)"
     ],
     "deny": [],
     "ask": []

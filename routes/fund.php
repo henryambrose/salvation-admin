@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Fund\Http\Controllers\AnnualContributionController;
+use Modules\Fund\Http\Controllers\CommunityContributionController;
+use Modules\Fund\Http\Controllers\CommunityContributionTypeController;
 use Modules\Fund\Http\Controllers\FundCategoryController;
 use Modules\Fund\Http\Controllers\MassIntentionController;
 use Modules\Fund\Http\Controllers\MassIntentionTypeController;
@@ -66,6 +68,21 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     Route::resource('annual-contributions', AnnualContributionController::class);
     Route::post('annual-contributions/bulk-update', [AnnualContributionController::class, 'bulkUpdate'])->name('annual-contributions.bulk-update');
     Route::post('annual-contributions/{id}/restore', [AnnualContributionController::class, 'restore'])->name('annual-contributions.restore');
+
+    // Community Contributions
+    Route::get('community-contributions/stats', [CommunityContributionController::class, 'getStats'])->name('community-contributions.stats');
+    Route::resource('community-contributions', CommunityContributionController::class);
+    Route::post('community-contributions/{id}/restore', [CommunityContributionController::class, 'restore'])->name('community-contributions.restore');
+    Route::put('community-contributions/{communityContribution}/status', [CommunityContributionController::class, 'updateStatus'])->name('community-contributions.update-status');
+
+    // Community Contribution Types
+    Route::get('community-contribution-types', [CommunityContributionTypeController::class, 'index'])->name('community-contribution-types.index');
+    Route::post('community-contribution-types', [CommunityContributionTypeController::class, 'store'])->name('community-contribution-types.store');
+    Route::get('community-contribution-types/{contributionType}', [CommunityContributionTypeController::class, 'show'])->name('community-contribution-types.show');
+    Route::put('community-contribution-types/{contributionType}', [CommunityContributionTypeController::class, 'update'])->name('community-contribution-types.update');
+    Route::delete('community-contribution-types/{contributionType}', [CommunityContributionTypeController::class, 'destroy'])->name('community-contribution-types.destroy');
+    Route::post('community-contribution-types/{id}/restore', [CommunityContributionTypeController::class, 'restore'])->name('community-contribution-types.restore');
+    Route::delete('community-contribution-types/{id}/force-delete', [CommunityContributionTypeController::class, 'forceDelete'])->name('community-contribution-types.force-delete');
 
     // Mass Intentions
     Route::get('mass-intentions/export', [MassIntentionController::class, 'export'])->name('mass-intentions.export');

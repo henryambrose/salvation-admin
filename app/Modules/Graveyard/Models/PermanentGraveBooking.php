@@ -2,6 +2,7 @@
 
 namespace Modules\Graveyard\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -14,7 +15,7 @@ use Modules\Graveyard\Models\ValidMember;
 
 class PermanentGraveBooking extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, Auditable;
 
     protected $fillable = [
         'booking_reference',

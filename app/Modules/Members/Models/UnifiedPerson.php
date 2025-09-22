@@ -2,6 +2,8 @@
 
 namespace Modules\Members\Models;
 
+use App\Traits\Auditable;
+
 use Illuminate\Database\Eloquent\Model;
 
 class UnifiedPerson extends Model

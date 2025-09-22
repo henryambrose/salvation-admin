@@ -2,6 +2,7 @@
 
 namespace Modules\Members\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +12,7 @@ use Modules\Members\Services\FamilyNumberingService;
 class Member extends Model
 {
     /** @use HasFactory<\Database\Factories\MemberFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
         'community_id',
@@ -115,7 +116,7 @@ class Member extends Model
      */
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name.' '.($this->middle_name ? $this->middle_name.' ' : '').($this->last_name ?? ''));
+        return trim($this->first_name . ' ' . ($this->middle_name ? $this->middle_name . ' ' : '') . ($this->last_name ?? ''));
     }
 
     public function community()
@@ -198,7 +199,7 @@ class Member extends Model
         $display = $this->effective_family_number;
 
         if ($this->family_no !== $this->effective_family_number) {
-            $display .= ' (née '.$this->family_no.')';
+            $display .= ' (née ' . $this->family_no . ')';
         }
 
         return $display;
@@ -354,7 +355,7 @@ class Member extends Model
 
     public function getUidAttribute(): string
     {
-        return 'M-'.$this->id;
+        return 'M-' . $this->id;
     }
 
     // Add these query scopes
@@ -362,9 +363,9 @@ class Member extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('first_name', 'like', "%{$search}%")
-              ->orWhere('last_name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%")
-              ->orWhere('contact_no_1', 'like', "%{$search}%");
+                ->orWhere('last_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%")
+                ->orWhere('contact_no_1', 'like', "%{$search}%");
         });
     }
 
@@ -459,6 +460,11 @@ class Member extends Model
         return $query->whereNotNull('death_date');
     }
 
+    public function scopeWithValidFamilyNo($query)
+    {
+        return $query->whereNotNull('family_no')
+            ->whereRaw('TRIM(family_no) != ?', ['']);
+    }
     /**
      * Scope to conditionally exclude deceased members
      */

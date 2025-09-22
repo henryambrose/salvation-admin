@@ -63,6 +63,12 @@ const fundNavigationGroups = computed(() => [
         icon: FileText,
         show: can('read-mass-intentions') || true, // Default to true for now
       },
+      {
+        title: 'Community Contributions',
+        href: '/fund/community-contributions',
+        icon: IndianRupee,
+        show: can('read-community-contributions') || true, // Default to true for now
+      },
     ],
   },
   {
@@ -110,6 +116,12 @@ const fundNavigationGroups = computed(() => [
         href: '/fund/payment-methods',
         icon: IndianRupee,
         show: can('read-payment-methods') || true,
+      },
+      {
+        title: 'Community Contribution Types',
+        href: '/fund/community-contribution-types',
+        icon: FolderOpen,
+        show: can('read-community-contribution-types') || true,
       },
       {
         title: 'Settings',

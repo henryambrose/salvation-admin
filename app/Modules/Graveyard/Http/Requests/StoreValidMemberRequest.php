@@ -51,17 +51,16 @@ class StoreValidMemberRequest extends FormRequest
                 'exists:members,id',
             ],
 
-            // External member: names required; parish must NOT provide names
+            // External member: names required; parish members should NOT provide names
             'members.*.first_name' => [
                 'required_if:members.*.member_type,external',
                 'nullable', 'string', 'max:255',
-                // Optionally forbid this for parish to avoid confusing payloads:
-                // 'prohibited_unless:members.*.member_type,external',
+                'prohibited_if:members.*.member_type,member', // Prevent sending names for parish members
             ],
             'members.*.last_name' => [
                 'required_if:members.*.member_type,external',
                 'nullable', 'string', 'max:255',
-                // 'prohibited_unless:members.*.member_type,external',
+                'prohibited_if:members.*.member_type,member', // Prevent sending names for parish members
             ],
 
             // Optional fields for either type
@@ -81,7 +80,7 @@ class StoreValidMemberRequest extends FormRequest
             'members.required' => 'At least one member must be added.',
             'members.max' => 'Maximum 5 members can be added per grave.',
             'members.*.member_type.required' => 'Member type is required.',
-            'members.*.member_type.in' => 'Member type must be either parish or external.',
+            'members.*.member_type.in' => 'Member type must be either member or external.',
             'members.*.member_id.required_if' => 'Parish member selection is required.',
             'members.*.first_name.required_if' => 'First name is required for external members.',
             'members.*.last_name.required_if' => 'Last name is required for external members.',

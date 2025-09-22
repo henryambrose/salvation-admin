@@ -5,7 +5,7 @@ namespace Modules\Fund\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Modules\Fund\Models\FundCategory;
 use Modules\Fund\Models\PaymentMethod;
-use Modules\Fund\Models\MassIntentionType;
+
 
 class FundSeeder extends Seeder
 {
@@ -46,21 +46,21 @@ class FundSeeder extends Seeder
             );
         }
 
-        // Seed Intention Types with default amounts
-        $intentionTypes = [
-            ['name' => 'Regular Mass', 'description' => 'Standard mass intention', 'default_amount' => 50.00, 'sort_order' => 1],
-            ['name' => 'Special Intention', 'description' => 'Special prayer requests', 'default_amount' => 30.00, 'sort_order' => 2],
-            ['name' => 'Anniversary Mass', 'description' => 'Wedding or birthday anniversaries', 'default_amount' => 40.00, 'sort_order' => 3],
-            ['name' => 'Birthday Mass', 'description' => 'Birthday celebrations', 'default_amount' => 25.00, 'sort_order' => 4],
-            ['name' => 'Death Anniversary Mass', 'description' => 'Memorial masses', 'default_amount' => 35.00, 'sort_order' => 5],
-            ['name' => 'Thanksgiving Mass', 'description' => 'Gratitude masses', 'default_amount' => 45.00, 'sort_order' => 6],
-        ];
+        // // Seed Intention Types with default amounts
+        // $intentionTypes = [
+        //     ['name' => 'Regular Mass', 'description' => 'Standard mass intention', 'default_amount' => 50.00, 'sort_order' => 1],
+        //     ['name' => 'Special Intention', 'description' => 'Special prayer requests', 'default_amount' => 30.00, 'sort_order' => 2],
+        //     ['name' => 'Anniversary Mass', 'description' => 'Wedding or birthday anniversaries', 'default_amount' => 40.00, 'sort_order' => 3],
+        //     ['name' => 'Birthday Mass', 'description' => 'Birthday celebrations', 'default_amount' => 25.00, 'sort_order' => 4],
+        //     ['name' => 'Death Anniversary Mass', 'description' => 'Memorial masses', 'default_amount' => 35.00, 'sort_order' => 5],
+        //     ['name' => 'Thanksgiving Mass', 'description' => 'Gratitude masses', 'default_amount' => 45.00, 'sort_order' => 6],
+        // ];
 
-        foreach ($intentionTypes as $type) {
-            MassIntentionType::updateOrCreate(
-                ['name' => $type['name']],
-                $type
-            );
-        }
+        // foreach ($intentionTypes as $type) {
+        //     MassIntentionType::updateOrCreate(
+        //         ['name' => $type['name']],
+        //         $type
+        //     );
+        // }
     }
 }

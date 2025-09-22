@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             AddLinkHeadersForPreloadedAssets::class,
             \Modules\Members\Http\Middleware\RefreshSession::class,
             \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+            \App\Http\Middleware\AuditMiddleware::class,
         ]);
 
         $middleware->alias([

@@ -23,7 +23,7 @@ interface PaymentMethod {
 
 const props = defineProps<{
   annualContributions: any;
-  years: any[];
+  years?: any[];
   categories: Category[];
   paymentMethods: PaymentMethod[];
   filters: any;

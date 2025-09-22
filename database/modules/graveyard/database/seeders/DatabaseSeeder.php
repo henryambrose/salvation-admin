@@ -29,6 +29,9 @@ class DatabaseSeeder extends Seeder
         if (class_exists(NicheSeeder::class)) {
             $seeders[] = NicheSeeder::class;
         }
+        if (class_exists(ObituaryBackgroundThemeSeeder::class)) {
+            $seeders[] = ObituaryBackgroundThemeSeeder::class;
+        }
 
         // Add more seeders here as needed
         // if (class_exists(CemeterySectionsSeeder::class)) { $seeders[] = CemeterySectionsSeeder::class; }

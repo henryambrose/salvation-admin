@@ -199,11 +199,11 @@ class ValidMemberController extends Controller
 
             if ($memberData['member_type'] === 'member') {
                 $memberToCreate['member_id'] = $memberData['member_id'];
-                // Get parish member data for external fields
-                $parishMember = \Modules\Members\Models\Member::find($memberData['member_id']);
-                $memberToCreate['first_name'] = $parishMember->first_name;
-                $memberToCreate['last_name'] = $parishMember->last_name;
-                $memberToCreate['contact_no'] = $memberData['contact_no'] ?? $parishMember->contact_no_1;
+                // For parish members, don't store first_name/last_name directly
+                // The relationship will handle name display via the member table
+                $memberToCreate['first_name'] = null;
+                $memberToCreate['last_name'] = null;
+                $memberToCreate['contact_no'] = $memberData['contact_no'] ?? null;
                 $memberToCreate['member_type'] = $memberData['member_type'];
             } else {
                 $memberToCreate['member_id'] = null;
@@ -314,12 +314,21 @@ class ValidMemberController extends Controller
         ];
 
         if ($validatedData['member_type'] === 'member') {
-            $parishMember = \Modules\Members\Models\Member::find($validatedData['member_id']);
             $updateData['member_id'] = $validatedData['member_id'];
-            $updateData['first_name'] = $parishMember->first_name;
-            $updateData['last_name'] = $parishMember->last_name;
-            $updateData['contact_no'] = $validatedData['contact_no'] ?? $parishMember->contact_no;
+            // For parish members, don't store first_name/last_name directly
+            // The relationship will handle name display via the member table
+            $updateData['first_name'] = null;
+            $updateData['last_name'] = null;
+            $updateData['contact_no'] = $validatedData['contact_no'] ?? null;
             $updateData['aadhar_no'] = null; // Clear external member data
+            // Clear other external member fields
+            $updateData['date_of_birth'] = null;
+            $updateData['age'] = null;
+            $updateData['months'] = null;
+            $updateData['days'] = null;
+            $updateData['gender_id'] = null;
+            $updateData['nationality'] = null;
+            $updateData['parish_id'] = null;
         } else {
             $updateData['member_id'] = null;
             $updateData['first_name'] = $validatedData['first_name'];

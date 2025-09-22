@@ -13,9 +13,10 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             FundSeeder::class,
-            SampleContributionsSeeder::class,
+            // SampleContributionsSeeder::class,
             MassIntentionTypeSeeder::class,
             MassTypeSeeder::class,
+            CommunityContributionTypeSeeder::class,
         ]);
     }
 }

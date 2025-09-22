@@ -23,20 +23,20 @@ class DashboardController extends Controller
     public function index(): Response
     {
         $communityCount = Community::count();
-        $memberCount = Member::count();
-        $familyCount = DB::table('members')
-            ->whereNotNull('family_no')
-            ->whereRaw('TRIM(family_no) != ?', [''])
+        $memberCount = Member::alive()->count();
+        $memberCountDeceased = Member::deceased()->count();
+        $familyCount = Member::alive()
+            ->withValidFamilyNo()
             ->distinct('family_no')
-            ->count('family_no');
-        $genders = Gender::all()->pluck('name', 'id')->map(function ($gender) {
-            return ucfirst($gender);
-        })->toArray();
-        $genderData = Member::select(['gender_id', DB::raw("count('gender_id') AS total")])->groupBy('gender_id')
+            ->count('*');
+
+        $genders = Gender::all()->pluck('name', 'id')->map(fn($g) => ucfirst($g))->toArray();
+
+        $genderData = Member::alive()
+            ->select(['gender_id', DB::raw('COUNT(*) AS total')])
+            ->groupBy('gender_id')
             ->get()
-            ->mapWithKeys(function ($item) use ($genders) {
-                return [$genders[$item->gender_id] ?? 'Unknown' => $item->total];
-            })
+            ->mapWithKeys(fn($row) => [$genders[$row->gender_id] ?? 'Unknown' => $row->total])
             ->toArray();
 
         $ageSql = 'SELECT
@@ -51,7 +51,7 @@ class DashboardController extends Controller
                             WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
                             ELSE NULL
                         END AS age
-                    FROM members
+                    FROM members WHERE death_date IS NULL
                 ) AS t1
                 JOIN age_groups ag
                 ON t1.age IS NOT NULL AND t1.age BETWEEN ag.min_age AND ag.max_age
@@ -76,45 +76,62 @@ class DashboardController extends Controller
         $tomorrow = Carbon::tomorrow();
         $dayAfterTomorrow = Carbon::today()->addDays(2);
 
-        $birthdays = Member::select(['id', 'first_name', 'middle_name', 'last_name', 'date_of_birth', DB::raw('CASE
-                            WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
-                            ELSE NULL
-                        END AS age'), 'contact_no_1', 'email'])->where(function ($query) use ($today) {
-            $query->whereMonth('date_of_birth', $today->month)
-                ->whereDay('date_of_birth', $today->day);
-        })->orWhere(function ($query) use ($tomorrow) {
-            $query->whereMonth('date_of_birth', $tomorrow->month)
-                ->whereDay('date_of_birth', $tomorrow->day);
-        })->orWhere(function ($query) use ($dayAfterTomorrow) {
-            $query->whereMonth('date_of_birth', $dayAfterTomorrow->month)
-                ->whereDay('date_of_birth', $dayAfterTomorrow->day);
-        })
-            ->with('community')->addSelect(['community_id'])
+        $birthdays = Member::alive()
+            ->select([
+                'id',
+                'first_name',
+                'middle_name',
+                'last_name',
+                'date_of_birth',
+                DB::raw('CASE WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW()) END AS age'),
+                'contact_no_1',
+                'email'
+            ])
+            ->where(function ($q) use ($today) {
+                $q->whereMonth('date_of_birth', $today->month)
+                    ->whereDay('date_of_birth', $today->day);
+            })
+            ->orWhere(function ($q) use ($tomorrow) {
+                $q->whereMonth('date_of_birth', $tomorrow->month)
+                    ->whereDay('date_of_birth', $tomorrow->day);
+            })
+            ->orWhere(function ($q) use ($dayAfterTomorrow) {
+                $q->whereMonth('date_of_birth', $dayAfterTomorrow->month)
+                    ->whereDay('date_of_birth', $dayAfterTomorrow->day);
+            })
+            ->with('community')
+            ->addSelect(['community_id'])
             ->orderByRaw('MONTH(date_of_birth), DAY(date_of_birth)')
-            ->get(['name', 'date_of_birth']);
+            ->get();
+
 
         /** COMMUNITY WISE STATISTICS (MEMBERS AND FAMILIES) */
-        $communityWiseStats = Community::with('members')
+        $communityWiseStats = Community::select('id', 'name')
+            // members count (alive)
+            ->withCount([
+                'members as members_count' => fn($q) => $q->alive(),
+            ])
+            // families count = COUNT(DISTINCT TRIM(family_no)) for alive members
+            ->addSelect([
+                'families_count' => Member::selectRaw('COUNT(DISTINCT TRIM(family_no))')
+                    ->whereColumn('community_id', 'communities.id')
+                    ->whereNull('death_date')
+                    ->whereNotNull('family_no')
+                    ->whereRaw("TRIM(family_no) <> ''"),
+            ])
             ->get()
-            ->mapWithKeys(function ($community) {
-                $memberCount = $community->members->count();
-                $familyCount = $community->members
-                    ->filter(fn ($m) => ! is_null($m->family_no) && trim($m->family_no) !== '')
-                    ->pluck('family_no')
-                    ->unique()
-                    ->count();
-
-                return [$community->name => [
-                    'members' => $memberCount,
-                    'families' => $familyCount,
-                ]];
-            })
-            ->filter(function ($stats) {
-                return $stats['members'] > 0 || $stats['families'] > 0; // Only show communities with data
-            });
+            ->mapWithKeys(fn($c) => [
+                $c->name => [
+                    'members'  => (int) $c->members_count,
+                    'families' => (int) $c->families_count,
+                ],
+            ])
+            ->filter(fn($stats) => $stats['members'] > 0 || $stats['families'] > 0);
 
         // ZONE WISE STATISTICS (MEMBERS AND FAMILIES)
-        $zoneWiseStats = Zone::with('communities.members')
+        $zoneWiseStats = Zone::with(['communities.members' => function ($query) {
+            $query->alive();
+        }])
             ->get()
             ->mapWithKeys(function ($zone) {
                 $memberCount = $zone->communities->sum(function ($community) {
@@ -123,7 +140,7 @@ class DashboardController extends Controller
 
                 $familyCount = $zone->communities->flatMap(function ($community) {
                     return $community->members
-                        ->filter(fn ($m) => ! is_null($m->family_no) && trim($m->family_no) !== '')
+                        ->filter(fn($m) => ! is_null($m->family_no) && trim($m->family_no) !== '')
                         ->pluck('family_no');
                 })->unique()->count();
 
@@ -141,7 +158,8 @@ class DashboardController extends Controller
         $statuses = Status::all()->pluck('name', 'id')->map(function ($status) {
             return ucfirst($status);
         })->toArray();
-        $statusWiseMembers = Member::select(['status_id', DB::raw("count('status_id') AS total")])
+        $statusWiseMembers = Member::alive()
+            ->select(['status_id', DB::raw("count('status_id') AS total")])
             ->groupBy('status_id')
             ->get()
             ->mapWithKeys(function ($item) use ($statuses) {
@@ -153,7 +171,8 @@ class DashboardController extends Controller
         $designations = Designation::all()->pluck('name', 'id')->map(function ($status) {
             return ucfirst($status);
         })->toArray();
-        $designationWiseMembers = Member::select(['designation_id', DB::raw("count('designation_id') AS total")])
+        $designationWiseMembers = Member::alive()
+            ->select(['designation_id', DB::raw("count('designation_id') AS total")])
             ->groupBy('designation_id')
             ->get()
             ->mapWithKeys(function ($item) use ($designations) {
@@ -162,14 +181,15 @@ class DashboardController extends Controller
             ->toArray();
 
         // latest_qualifications wise members
-        $latestQualificationsWiseMembers = Member::select(['latest_qualifications', DB::raw("count('latest_qualifications') AS total")])
+        $latestQualificationsWiseMembers = Member::alive()
+            ->select(['latest_qualifications', DB::raw("count('latest_qualifications') AS total")])
             ->groupBy('latest_qualifications')
             ->get()
             ->mapWithKeys(function ($item) {
                 return [$item->latest_qualifications => $item->total];
             })
             ->toArray();
-       
+
         // relationship wise members
         $relationships = Relationship::all()->pluck('name', 'id')->map(function ($relationship) {
             return ucfirst($relationship);
@@ -181,7 +201,7 @@ class DashboardController extends Controller
                 return [$relationships[$item->relationship_id] ?? 'Unknown' => $item->total];
             })
             ->toArray();
-      
+
         $statCards = [
             [
                 'title' => 'Communities',

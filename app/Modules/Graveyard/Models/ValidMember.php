@@ -2,6 +2,8 @@
 
 namespace Modules\Graveyard\Models;
 
+use App\Traits\Auditable;
+
 use \Modules\Members\Models\Member;
 use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Graveyard\Models\Niche;
@@ -11,7 +13,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class ValidMember extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Auditable;
 
     /**
      * The attributes that are mass assignable.

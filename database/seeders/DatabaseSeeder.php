@@ -37,8 +37,8 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Call additional seeders
-        $this->call([
-            ObituaryBackgroundThemeSeeder::class,
-        ]);
+        // $this->call([
+        //     ObituaryBackgroundThemeSeeder::class,
+        // ]);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Database\Seeders;
+namespace Modules\Graveyard\Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Modules\Graveyard\Models\ObituaryBackgroundTheme;

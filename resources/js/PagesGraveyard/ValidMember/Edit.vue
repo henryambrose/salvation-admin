@@ -79,7 +79,7 @@
             <label class="mb-2 block text-sm font-medium text-gray-700">Member Type</label>
             <div class="flex gap-4">
               <label class="flex items-center">
-                <input v-model="form.member_type" type="radio" value="parish" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                <input v-model="form.member_type" type="radio" value="member" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
                 <span class="ml-2 text-sm text-gray-700">Parish Member</span>
               </label>
               <label class="flex items-center">
@@ -93,7 +93,7 @@
           </div>
 
           <!-- Parish Member Selection -->
-          <div v-if="form.member_type === 'parish'" class="space-y-4">
+          <div v-if="form.member_type === 'member'" class="space-y-4">
             <div>
               <label class="mb-1 block text-sm font-medium text-gray-700">Search Parish Member</label>
               <div class="relative">
@@ -329,7 +329,7 @@ const form = useForm({
   grave_type: props.validMember.permanent_grave_id ? 'permanent_grave' : 'niche',
   permanent_grave_id: props.validMember.permanent_grave_id || '',
   niche_id: props.validMember.niche_id || '',
-  member_type: props.validMember.member_id ? 'parish' : 'external',
+  member_type: props.validMember.member_id ? 'member' : 'external',
   member_id: props.validMember.member_id || '',
   first_name: props.validMember.first_name || '',
   last_name: props.validMember.last_name || '',
@@ -414,7 +414,7 @@ const submitForm = () => {
     permanent_grave_id: form.grave_type === 'permanent_grave' ? form.permanent_grave_id : null,
     niche_id: form.grave_type === 'niche' ? form.niche_id : null,
     member_type: form.member_type,
-    member_id: form.member_type === 'parish' ? form.member_id : null,
+    member_id: form.member_type === 'member' ? form.member_id : null,
     first_name: form.member_type === 'external' ? form.first_name : '',
     last_name: form.member_type === 'external' ? form.last_name : '',
     contact_no: form.contact_no || null,
