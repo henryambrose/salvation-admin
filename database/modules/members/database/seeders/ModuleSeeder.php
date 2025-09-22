@@ -186,6 +186,18 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
             [
+                'name' => 'Community Contributions',
+                'slug' => 'community-contribution',
+                'icon' => 'BadgeIndianRupee',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Community Contributions Types',
+                'slug' => 'community-contribution-type',
+                'icon' => 'BadgeIndianRupee',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
                 'name' => 'Mass Intentions',
                 'slug' => 'mass-intention',
                 'icon' => 'Cross',

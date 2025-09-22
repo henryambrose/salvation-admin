@@ -22,9 +22,9 @@ class SecurityService
             return ['valid' => false, 'error' => 'No file uploaded'];
         }
 
-        // Check file size (max 10MB)
-        if ($file->getSize() > 10 * 1024 * 1024) {
-            return ['valid' => false, 'error' => 'File size exceeds 10MB limit'];
+        // Check file size (max 20MB for gallery photos)
+        if ($file->getSize() > 20 * 1024 * 1024) {
+            return ['valid' => false, 'error' => 'File size exceeds 20MB limit'];
         }
 
         // Define allowed file types

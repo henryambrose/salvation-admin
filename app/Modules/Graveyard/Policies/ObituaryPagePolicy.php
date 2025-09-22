@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Policies;
 use Modules\Members\Models\User;
 use Modules\Graveyard\Models\ObituaryPage;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\Log;
 
 class ObituaryPagePolicy
 {
@@ -15,6 +16,11 @@ class ObituaryPagePolicy
      */
     public function viewAny(User $user): bool
     {
+        // Super admins can always view obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('read-obituary-page');
     }
 
@@ -23,6 +29,11 @@ class ObituaryPagePolicy
      */
     public function view(User $user, ObituaryPage $obituaryPage): bool
     {
+        // Super admins can always view obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('read-obituary-page');
     }
 
@@ -31,6 +42,11 @@ class ObituaryPagePolicy
      */
     public function create(User $user): bool
     {
+        // Super admins can always create obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('create-obituary-page');
     }
 
@@ -39,6 +55,11 @@ class ObituaryPagePolicy
      */
     public function update(User $user, ObituaryPage $obituaryPage): bool
     {
+        // Super admins can always update obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('update-obituary-page');
     }
 
@@ -47,6 +68,11 @@ class ObituaryPagePolicy
      */
     public function delete(User $user, ObituaryPage $obituaryPage): bool
     {
+        // Super admins can always delete obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('delete-obituary-page');
     }
 
@@ -71,6 +97,11 @@ class ObituaryPagePolicy
      */
     public function publish(User $user, ObituaryPage $obituaryPage): bool
     {
+        // Super admins can always publish obituary pages
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('publish-obituary-page');
     }
 
@@ -87,6 +118,11 @@ class ObituaryPagePolicy
      */
     public function manageFiles(User $user): bool
     {
+        // Super admins can always manage files
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('update-obituary-page') || $user->hasRole('admin');
     }
 
@@ -95,6 +131,11 @@ class ObituaryPagePolicy
      */
     public function processPayments(User $user): bool
     {
+        // Super admins can always process payments
+        if ($user->is_superadmin) {
+            return true;
+        }
+
         return $user->hasPermissionTo('update-obituary-page');
     }
 

@@ -30,7 +30,7 @@ class ParishValidation implements ValidationRule
         $parishName = trim($value);
 
         // Check for exact match (case-insensitive)
-        $exactMatch = Parish::whereRaw('LOWER(name) = ?', [Str::lower($parishName)])->first();
+        $exactMatch = Parish::where('name', $parishName)->first();
 
         if ($exactMatch) {
             $fail("Parish '{$parishName}' already exists. Please select it from the dropdown instead.");
@@ -40,10 +40,10 @@ class ParishValidation implements ValidationRule
 
         // Check for similar names (fuzzy matching)
         $similarParishes = Parish::where(function ($query) use ($parishName) {
-            $query->whereRaw('LOWER(name) LIKE ?', ['%'.Str::lower($parishName).'%'])
-                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.Str::lower(str_replace(' ', '%', $parishName)).'%'])
-                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.Str::lower(str_replace(['St.', 'St '], 'Saint ', $parishName)).'%'])
-                ->orWhereRaw('LOWER(name) LIKE ?', ['%'.Str::lower(str_replace('Saint ', 'St. ', $parishName)).'%']);
+            $query->whereRaw('LOWER(name) LIKE ?', ['%' . Str::lower($parishName) . '%'])
+                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . Str::lower(str_replace(' ', '%', $parishName)) . '%'])
+                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . Str::lower(str_replace(['St.', 'St '], 'Saint ', $parishName)) . '%'])
+                ->orWhereRaw('LOWER(name) LIKE ?', ['%' . Str::lower(str_replace('Saint ', 'St. ', $parishName)) . '%']);
         })->limit(5)->get();
 
         if ($similarParishes->count() > 0) {

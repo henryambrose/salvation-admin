@@ -163,12 +163,36 @@ class PermissionCategorySeeder extends Seeder
                 ]
             ],
             [
+                'name' => 'Community Contributions',
+                'slug' => 'community-contributions',
+                'description' => 'Community contribution management permissions ',
+                'app' => 'Fund',
+                'color' => '#F59E0B',
+                'sort_order' => 12,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'community-contribution', 'priority' => 10],
+                    // ['rule_type' => 'contains', 'rule_value' => 'annual_contribution', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Community Contributions Type',
+                'slug' => 'community-contributions-type',
+                'description' => 'Community contribution type management permissions ',
+                'app' => 'Fund',
+                'color' => '#F59E0B',
+                'sort_order' => 13,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'community-contribution-type', 'priority' => 10],
+                    // ['rule_type' => 'contains', 'rule_value' => 'annual_contribution', 'priority' => 10],
+                ]
+            ],
+            [
                 'name' => 'Mass Intentions',
                 'slug' => 'mass-intentions',
                 'description' => 'Mass intention management permissions',
                 'app' => 'Fund',
                 'color' => '#8B5CF6',
-                'sort_order' => 12,
+                'sort_order' => 14,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'mass-intention', 'priority' => 10],
                     // ['rule_type' => 'contains', 'rule_value' => 'mass_intention', 'priority' => 10],
@@ -180,7 +204,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Mass type management permissions',
                 'app' => 'Fund',
                 'color' => '#EC4899',
-                'sort_order' => 13,
+                'sort_order' => 15,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'mass-type', 'priority' => 10],
                     // ['rule_type' => 'contains', 'rule_value' => 'mass_type', 'priority' => 10],
@@ -192,7 +216,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Mass intention type management permissions',
                 'app' => 'Fund',
                 'color' => '#06B6D4',
-                'sort_order' => 14,
+                'sort_order' => 16,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'mass-intention-type', 'priority' => 10],
                     // ['rule_type' => 'contains', 'rule_value' => 'mass_intention_type', 'priority' => 10],
@@ -204,7 +228,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Payment method management permissions',
                 'app' => 'Fund',
                 'color' => '#EF4444',
-                'sort_order' => 15,
+                'sort_order' => 17,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'payment-method', 'priority' => 10],
                     // ['rule_type' => 'contains', 'rule_value' => 'payment_method', 'priority' => 10],
@@ -216,7 +240,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Core graveyard management permissions',
                 'app' => 'Graveyard',
                 'color' => '#374151',
-                'sort_order' => 16,
+                'sort_order' => 18,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'graveyard-dashboard', 'priority' => 15],
                     // ['rule_type' => 'contains', 'rule_value' => 'graveyard-settings', 'priority' => 15],
@@ -231,7 +255,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Permanent grave management permissions',
                 'app' => 'Graveyard',
                 'color' => '#059669',
-                'sort_order' => 17,
+                'sort_order' => 19,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'permanent-grave', 'priority' => 15],
                     // ['rule_type' => 'contains', 'rule_value' => 'permanent_grave', 'priority' => 15],
@@ -243,7 +267,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Temporary grave management permissions',
                 'app' => 'Graveyard',
                 'color' => '#D97706',
-                'sort_order' => 18,
+                'sort_order' => 20,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'temporary-grave', 'priority' => 15],
                     // ['rule_type' => 'contains', 'rule_value' => 'temporary_grave', 'priority' => 15],
@@ -255,7 +279,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Niche management permissions',
                 'app' => 'Graveyard',
                 'color' => '#7C3AED',
-                'sort_order' => 19,
+                'sort_order' => 21,
                 'rules' => [
                     // ['rule_type' => 'exact', 'rule_value' => 'niche', 'priority' => 15],
                     // ['rule_type' => 'starts_with', 'rule_value' => 'niche-', 'priority' => 15],
@@ -269,7 +293,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Grave booking management permissions',
                 'app' => 'Graveyard',
                 'color' => '#DC2626',
-                'sort_order' => 20,
+                'sort_order' => 22,
                 'rules' => [
                     // ['rule_type' => 'contains', 'rule_value' => 'grave-booking', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'permanent-grave-booking', 'priority' => 20],
@@ -282,7 +306,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Obituary page and condolence management',
                 'app' => 'Graveyard',
                 'color' => '#1F2937',
-                'sort_order' => 21,
+                'sort_order' => 23,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'obituary-page', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'obituary-condolence', 'priority' => 15],
@@ -295,7 +319,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Graveyard setup and configuration permissions',
                 'app' => 'Graveyard',
                 'color' => '#0891B2',
-                'sort_order' => 22,
+                'sort_order' => 24,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'grave-category', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'service-type', 'priority' => 15],
@@ -323,7 +347,7 @@ class PermissionCategorySeeder extends Seeder
                 'description' => 'Graveyard payment processing permissions',
                 'app' => 'Graveyard',
                 'color' => '#BE185D',
-                'sort_order' => 24,
+                'sort_order' => 25,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'graveyard-payment', 'priority' => 15],
                     // ['rule_type' => 'starts_with', 'rule_value' => 'process-', 'priority' => 10],

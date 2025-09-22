@@ -32,6 +32,22 @@ class FundPermissionsSeeder extends Seeder
             'list-annual-contribution',
             'restore-annual-contribution',
 
+            // Community Contributions
+            'create-community-contribution',
+            'read-community-contribution',
+            'update-community-contribution',
+            'delete-community-contribution',
+            'list-community-contribution',
+            'restore-community-contribution',
+
+            // Community Contributions Type 
+            'create-community-contribution-type',
+            'read-community-contribution-type',
+            'update-community-contribution-type',
+            'delete-community-contribution-type',
+            'list-community-contribution-type',
+            'restore-community-contribution-type',
+
             // Mass Intentions
             'create-mass-intention',
             'read-mass-intention',

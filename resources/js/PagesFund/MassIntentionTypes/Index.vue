@@ -19,11 +19,11 @@ const props = defineProps({
 });
 
 // Permission checks (you can adjust these based on your actual permissions)
-const canCreateMassIntentionType = can('create-fund-mass-intention-type') || true;
-const canReadAnyMassIntentionType = can('read-fund-mass-intention-type') || true;
-const canUpdateAnyMassIntentionType = can('update-fund-mass-intention-type') || true;
-const canDeleteAnyMassIntentionType = can('delete-fund-mass-intention-type') || true;
-const canRestoreMassIntentionType = can('restore-fund-mass-intention-type') || true;
+const canCreateMassIntentionType = can('create-mass-intention-type') || true;
+const canReadAnyMassIntentionType = can('read-mass-intention-type') || true;
+const canUpdateAnyMassIntentionType = can('update-mass-intention-type') || true;
+const canDeleteAnyMassIntentionType = can('delete-mass-intention-type') || true;
+const canRestoreMassIntentionType = can('restore-mass-intention-type') || true;
 
 const columns: Column[] = [
   // { key: 'id', label: 'Id', sortable: true },

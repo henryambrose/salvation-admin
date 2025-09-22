@@ -435,8 +435,11 @@ class ObituaryManagementController extends Controller
 
     public function processPayment(Request $request, ObituaryPage $obituary)
     {
-        // Check policy authorization for processing payments
-        $this->authorize('processPayments', ObituaryPage::class);
+
+        // Check if user is super admin or has permission to process payments
+        if (!Auth::user()->is_superadmin && !Gate::allows('update', $obituary)) {
+            abort(403, 'You do not have permission to process payments for obituary pages.');
+        }
 
         $validated = $request->validate([
             'payment_method_id' => 'required|exists:payment_methods,id',

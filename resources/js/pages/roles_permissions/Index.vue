@@ -156,6 +156,8 @@ function getModuleForModel(modelName: string): string {
     'mass-type': 'Fund',
     'payment-method': 'Fund',
     'annual-contribution': 'Fund',
+    'community-contribution': 'Fund',
+    'community-contribution-type': 'Fund',
 
     // Graveyard
     'obituary-page': 'Graveyard',

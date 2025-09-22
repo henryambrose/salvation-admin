@@ -18,6 +18,7 @@ class CommunityContributionController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('viewAny', CommunityContribution::class);
         $query = CommunityContribution::with(['contributionType', 'collectedBy', 'creator'])
             ->orderBy('collection_date', 'desc');
 
@@ -112,7 +113,6 @@ class CommunityContributionController extends Controller
 
             return redirect()->route('fund.community-contributions.index')
                 ->with('success', 'Community contribution recorded successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error creating community contribution: ' . $e->getMessage());
@@ -158,7 +158,6 @@ class CommunityContributionController extends Controller
 
             return redirect()->route('fund.community-contributions.index')
                 ->with('success', 'Community contribution updated successfully.');
-
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating community contribution: ' . $e->getMessage());
@@ -181,7 +180,6 @@ class CommunityContributionController extends Controller
                 $request->only(['search', 'contribution_type_id', 'status', 'start_date', 'end_date', 'year']),
                 ['page' => $page, 'perPage' => $perPage]
             ))->with('success', 'Community contribution deleted successfully.');
-
         } catch (\Exception $e) {
             Log::error('Error deleting community contribution: ' . $e->getMessage());
 
@@ -198,7 +196,6 @@ class CommunityContributionController extends Controller
 
             return redirect()->route('fund.community-contributions.index')
                 ->with('success', 'Community contribution restored successfully.');
-
         } catch (\Exception $e) {
             Log::error('Error restoring community contribution: ' . $e->getMessage());
 
@@ -224,7 +221,6 @@ class CommunityContributionController extends Controller
 
             return redirect()->back()
                 ->with('success', 'Contribution status updated successfully.');
-
         } catch (\Exception $e) {
             Log::error('Error updating contribution status: ' . $e->getMessage());
 
