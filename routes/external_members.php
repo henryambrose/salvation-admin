@@ -12,6 +12,4 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Resource route comes last to avoid conflicts
     Route::resource('external-members', ExternalMemberController::class);
-
-    // Route::delete('/external-members/{id}/force-delete', [ExternalMemberController::class, 'forceDelete'])->name('external-members.force-delete');
 });
