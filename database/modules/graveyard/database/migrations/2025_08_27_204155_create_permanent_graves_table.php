@@ -26,6 +26,9 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->decimal('plot_size', 8, 2)->nullable(); // in square feet
             $table->boolean('is_active')->default(true);
+            $table->decimal('pending_amount', 10, 2)->default(0);
+            $table->integer('last_payment_year')->nullable();
+            $table->json('partial_payment_months')->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->unsignedBigInteger('updated_by')->nullable();
             $table->timestamps();
@@ -34,7 +37,7 @@ return new class extends Migration
             // Composite indexes for efficient queries
             $table->index(['section', 'row_no', 'grave_no']);
             $table->index(['status', 'section']);
-            
+
             // Unique constraint to prevent duplicate graves
             $table->unique(['section', 'row_no', 'grave_no']);
 

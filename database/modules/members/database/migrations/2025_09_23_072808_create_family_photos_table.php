@@ -24,12 +24,8 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            // Index for family_no for performance (no unique constraint to allow soft delete/re-upload)
-            $table->index('family_no');
-
-            // Additional indexes for performance
             $table->index('uploaded_by');
-            $table->index(['family_no', 'is_active']);
+            $table->index('is_active');
         });
     }
 
