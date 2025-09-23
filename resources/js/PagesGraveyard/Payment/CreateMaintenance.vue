@@ -27,6 +27,38 @@
           </div>
         </div>
 
+        <!-- Months Selection for Partial Payment -->
+        <div v-if="availableMonths.length > 0" class="mb-6 rounded-lg bg-blue-50 p-4">
+          <div class="mb-3 flex items-center justify-between">
+            <h4 class="text-lg font-semibold text-blue-800">Select Months for Payment ({{ currentYear }})</h4>
+            <label class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                v-model="selectAllMonths"
+                @change="toggleAllMonths"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-sm font-medium text-blue-800">Select All</span>
+            </label>
+          </div>
+          <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
+            <label v-for="month in availableMonths" :key="month.value"
+                   class="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                :value="month.value"
+                v-model="form.months_paying_for"
+                class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-sm font-medium">{{ month.label }}</span>
+            </label>
+          </div>
+          <p class="mt-2 text-sm text-blue-600">
+            Selected: {{ form.months_paying_for.length }} months =
+            ₹{{ Number(calculateRoundedAmount(form.months_paying_for.length * monthlyFee)).toLocaleString('en-IN') }}
+          </p>
+        </div>
+
         <!-- Payment Form -->
         <form @submit.prevent="submitPayment" class="space-y-6">
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -140,38 +172,6 @@
                 placeholder="Reference number, cheque number, etc."
               />
             </div>
-          </div>
-
-          <!-- Months Selection for Partial Payment -->
-          <div v-if="availableMonths.length > 0" class="rounded-lg bg-blue-50 p-4">
-            <div class="mb-3 flex items-center justify-between">
-              <h4 class="text-lg font-semibold text-blue-800">Select Months for Payment ({{ currentYear }})</h4>
-              <label class="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  v-model="selectAllMonths"
-                  @change="toggleAllMonths"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span class="text-sm font-medium text-blue-800">Select All</span>
-              </label>
-            </div>
-            <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-              <label v-for="month in availableMonths" :key="month.value"
-                     class="flex items-center space-x-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  :value="month.value"
-                  v-model="form.months_paying_for"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span class="text-sm font-medium">{{ month.label }}</span>
-              </label>
-            </div>
-            <p class="mt-2 text-sm text-blue-600">
-              Selected: {{ form.months_paying_for.length }} months =
-              ₹{{ Number(calculateRoundedAmount(form.months_paying_for.length * monthlyFee)).toLocaleString('en-IN') }}
-            </p>
           </div>
 
           <!-- Payment Notes -->
