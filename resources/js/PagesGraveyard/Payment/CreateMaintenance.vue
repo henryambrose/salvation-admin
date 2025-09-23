@@ -100,7 +100,18 @@
 
           <!-- Months Selection for Partial Payment -->
           <div v-if="availableMonths.length > 0" class="rounded-lg bg-blue-50 p-4">
-            <h4 class="mb-3 text-lg font-semibold text-blue-800">Select Months for Payment ({{ currentYear }})</h4>
+            <div class="mb-3 flex items-center justify-between">
+              <h4 class="text-lg font-semibold text-blue-800">Select Months for Payment ({{ currentYear }})</h4>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  v-model="selectAllMonths"
+                  @change="toggleAllMonths"
+                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span class="text-sm font-medium text-blue-800">Select All</span>
+              </label>
+            </div>
             <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
               <label v-for="month in availableMonths" :key="month.value"
                      class="flex items-center space-x-2 cursor-pointer">
@@ -115,7 +126,7 @@
             </div>
             <p class="mt-2 text-sm text-blue-600">
               Selected: {{ form.months_paying_for.length }} months =
-              ₹{{ Number(form.months_paying_for.length * monthlyFee).toLocaleString('en-IN') }}
+              ₹{{ Number(calculateRoundedAmount(form.months_paying_for.length * monthlyFee)).toLocaleString('en-IN') }}
             </p>
           </div>
 
@@ -190,7 +201,7 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed, watch, ref } from 'vue';
 
 interface Props {
   grave: any;
@@ -213,10 +224,22 @@ const breadcrumbs = [
   { title: 'Maintenance Payment', href: '#' },
 ];
 
+// Select all months functionality
+const selectAllMonths = ref(false);
+
+// Round up partial payment amounts (e.g., 488.33 -> 489)
+const calculateRoundedAmount = (amount: number): number => {
+  if (amount < props.pendingAmount) {
+    // For partial payments, round up to next whole number
+    return Math.ceil(amount);
+  }
+  return amount;
+};
+
 // Form setup
 const form = useForm({
   grave_id: props.grave.id,
-  payment_amount: props.pendingAmount,
+  payment_amount: calculateRoundedAmount(props.pendingAmount),
   payment_method_id: '',
   payment_date: new Date().toISOString().split('T')[0],
   months_paying_for: [] as number[],
@@ -224,11 +247,24 @@ const form = useForm({
   payment_notes: '',
 });
 
+// Toggle all months selection
+const toggleAllMonths = () => {
+  if (selectAllMonths.value) {
+    form.months_paying_for = props.availableMonths.map(m => m.value);
+  } else {
+    form.months_paying_for = [];
+  }
+};
+
 // Watch months selection and update amount
 watch(() => form.months_paying_for, (newMonths) => {
   if (newMonths.length > 0) {
-    form.payment_amount = newMonths.length * props.monthlyFee;
+    const rawAmount = newMonths.length * props.monthlyFee;
+    form.payment_amount = calculateRoundedAmount(rawAmount);
   }
+
+  // Update select all checkbox state
+  selectAllMonths.value = newMonths.length === props.availableMonths.length;
 }, { deep: true });
 
 // Watch payment amount and suggest months
