@@ -570,6 +570,9 @@ class PaymentController extends Controller
     {
         $request->validate([
             'grave_id' => 'required|exists:permanent_graves,id',
+            'payer_name' => 'required|string|max:255',
+            'payer_phone' => 'required|string|max:20',
+            'payer_email' => 'nullable|email|max:255',
             'payment_amount' => 'required|numeric|min:0.01',
             'payment_method_id' => 'required|exists:payment_methods,id',
             'payment_date' => 'required|date',
@@ -585,6 +588,17 @@ class PaymentController extends Controller
             $grave = \Modules\Graveyard\Models\PermanentGrave::findOrFail($request->grave_id);
             $annualFee = config('graveyard.annual_maintenance_fee', 5000);
 
+            // Prepare payment notes with payer information
+            $paymentNotes = 'Annual Maintenance Fee Payment';
+            $paymentNotes .= "\nPaid by: {$request->payer_name}";
+            $paymentNotes .= "\nPhone: {$request->payer_phone}";
+            if ($request->payer_email) {
+                $paymentNotes .= "\nEmail: {$request->payer_email}";
+            }
+            if ($request->payment_notes) {
+                $paymentNotes .= "\nNotes: {$request->payment_notes}";
+            }
+
             // Create payment record
             $payment = Payment::create([
                 'payable_type' => 'Modules\\Graveyard\\Models\\PermanentGrave',
@@ -595,7 +609,7 @@ class PaymentController extends Controller
                 'payment_status' => 'completed',
                 'payment_method_id' => $request->payment_method_id,
                 'transaction_reference' => $request->transaction_reference,
-                'payment_notes' => 'Annual Maintenance Fee Payment - ' . ($request->payment_notes ?: ''),
+                'payment_notes' => $paymentNotes,
                 'payment_date' => $request->payment_date,
                 'created_by' => Auth::id(),
                 'updated_by' => Auth::id(),

@@ -30,6 +30,50 @@
         <!-- Payment Form -->
         <form @submit.prevent="submitPayment" class="space-y-6">
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <!-- Payer Name -->
+            <div>
+              <label for="payer_name" class="block text-sm font-medium text-gray-700 mb-2">
+                Name of Person Making Payment <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="payer_name"
+                v-model="form.payer_name"
+                type="text"
+                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Full name of the person making payment"
+                required
+              />
+            </div>
+
+            <!-- Payer Phone -->
+            <div>
+              <label for="payer_phone" class="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="payer_phone"
+                v-model="form.payer_phone"
+                type="tel"
+                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Contact number"
+                required
+              />
+            </div>
+
+            <!-- Payer Email -->
+            <div>
+              <label for="payer_email" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <input
+                id="payer_email"
+                v-model="form.payer_email"
+                type="email"
+                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                placeholder="Email address (optional)"
+              />
+            </div>
+
             <!-- Payment Amount -->
             <div>
               <label for="payment_amount" class="block text-sm font-medium text-gray-700 mb-2">
@@ -239,6 +283,9 @@ const calculateRoundedAmount = (amount: number): number => {
 // Form setup
 const form = useForm({
   grave_id: props.grave.id,
+  payer_name: '',
+  payer_phone: '',
+  payer_email: '',
   payment_amount: calculateRoundedAmount(props.pendingAmount),
   payment_method_id: '',
   payment_date: new Date().toISOString().split('T')[0],
