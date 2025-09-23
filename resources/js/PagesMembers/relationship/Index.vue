@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ref, watch, computed, nextTick } from 'vue';
-import { Pencil, Plus, Trash, Download } from 'lucide-vue-next';
+import { Download, Pencil, Plus, Trash } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps({
   relationships: {
@@ -18,7 +18,6 @@ const props = defineProps({
 });
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Relationship Name', sortable: true },
   // { key: 'description', label: 'Description', sortable: false },
 ];
@@ -31,7 +30,7 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingRelationship = ref<Record<string, any>>();
 const deletingRelationship = ref<Record<string, any>>();
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
@@ -105,7 +104,7 @@ function fetch(page = 1) {
 }
 
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedRelationships.value.last_page,
@@ -135,7 +134,7 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingRelationship.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedRelationships.value.current_page,
@@ -177,20 +176,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingRelationship.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreRelationship(id: number) {
-  router.post(`/relationship/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/relationship/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -241,16 +244,19 @@ const canDeleteAnyRelationship = can('delete-relationship');
 const canExportRelationship = can('read-relationship');
 const canRestoreRelationship = can('restore-relationship');
 
-watch(() => enhancedRelationships.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedRelationships.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
@@ -267,11 +273,19 @@ function handlePageChange(event: Event) {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Relationships</h2>
         <div class="btn-group flex space-x-2">
-          <Button v-if="canExportRelationship" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button
+            v-if="canExportRelationship"
+            @click="downloadCsv"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
             <component :is="Download" />
             <span>Export CSV</span>
           </Button>
-          <Button v-if="canCreateRelationship" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+          <Button
+            v-if="canCreateRelationship"
+            @click="showModal = true"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
             <component :is="Plus" />
             <span>Add Relationship</span>
           </Button>
@@ -280,18 +294,14 @@ function handlePageChange(event: Event) {
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input 
-              v-model="search" 
-              type="text" 
-              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" 
-              placeholder="Search..." 
+            <input
+              v-model="search"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
               @keydown.escape="clearSearch"
             />
-            <button 
-              v-if="search" 
-              @click="clearSearch" 
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
@@ -304,7 +314,7 @@ function handlePageChange(event: Event) {
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -314,30 +324,30 @@ function handlePageChange(event: Event) {
 
     <div v-if="canReadAnyRelationship">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedRelationships.total || 0 }}</span> total relationships
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedRelationships.prev_page_url" 
-            @click="fetch(enhancedRelationships.current_page! - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedRelationships.prev_page_url"
+            @click="fetch(enhancedRelationships.current_page! - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedRelationships.last_page && enhancedRelationships.last_page > 1"
-              :value="enhancedRelationships.current_page" 
+              :value="enhancedRelationships.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedRelationships.last_page" :key="page" :value="page">
                 {{ page }}
@@ -345,21 +355,19 @@ function handlePageChange(event: Event) {
             </select>
             <span>of {{ enhancedRelationships.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedRelationships.next_page_url" 
-            @click="fetch(enhancedRelationships.current_page! + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedRelationships.next_page_url"
+            @click="fetch(enhancedRelationships.current_page! + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-rose-100 text-rose-800 rounded-full text-xs font-medium">
-            Relationships
-          </span>
+          <span class="rounded-full bg-rose-100 px-2 py-1 text-xs font-medium text-rose-800"> Relationships </span>
         </div>
       </div>
 
@@ -370,8 +378,16 @@ function handlePageChange(event: Event) {
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700 cursor-pointer"
-                    @click="col.sortable ? (sort === col.key ? direction = (direction === 'asc' ? 'desc' : 'asc') : (sort = col.key, direction = 'asc'), fetch()) : null">
+                <th
+                  v-for="col in columns"
+                  :key="col.key"
+                  class="cursor-pointer border-b p-3 font-semibold text-gray-700"
+                  @click="
+                    col.sortable
+                      ? (sort === col.key ? (direction = direction === 'asc' ? 'desc' : 'asc') : ((sort = col.key), (direction = 'asc')), fetch())
+                      : null
+                  "
+                >
                   {{ col.label }}
                   <span v-if="col.sortable && sort === col.key">
                     {{ direction === 'asc' ? '▲' : '▼' }}
@@ -381,17 +397,30 @@ function handlePageChange(event: Event) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedRelationships.data" :key="row.id" :id="`relationship-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedRelationships.data"
+                :key="row.id"
+                :id="`relationship-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <div class="flex gap-2">
                     <template v-if="!serverArchived">
-                      <Button v-if="canUpdateAnyRelationship" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                      <Button
+                        v-if="canUpdateAnyRelationship"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                      >
                         <component :is="Pencil" />
                         <span>Edit</span>
                       </Button>
                     </template>
                     <template v-else>
-                      <Button v-if="canRestoreRelationship" @click="restoreRelationship(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      <Button
+                        v-if="canRestoreRelationship"
+                        @click="restoreRelationship(row.id)"
+                        class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                      >
                         Restore
                       </Button>
                     </template>
@@ -402,7 +431,11 @@ function handlePageChange(event: Event) {
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyRelationship">
-                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       <component :is="Trash" />
                       <span>Delete</span>
                     </Button>
@@ -432,14 +465,14 @@ function handlePageChange(event: Event) {
                   variant="destructive"
                   type="button"
                   @click="showModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -467,14 +500,14 @@ function handlePageChange(event: Event) {
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -492,14 +525,15 @@ function handlePageChange(event: Event) {
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Relationship</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingRelationship?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingRelationship?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -508,7 +542,7 @@ function handlePageChange(event: Event) {
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -534,14 +568,18 @@ function handlePageChange(event: Event) {
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -551,7 +589,7 @@ function handlePageChange(event: Event) {
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -561,7 +599,7 @@ function handlePageChange(event: Event) {
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -569,7 +607,11 @@ function handlePageChange(event: Event) {
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

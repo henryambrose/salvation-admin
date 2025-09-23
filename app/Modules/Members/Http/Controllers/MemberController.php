@@ -25,6 +25,9 @@ use Modules\Members\Models\Town;
 use Modules\Members\Models\UnifiedPerson;
 use Modules\Members\Services\FamilyNumberingService;
 use Modules\Members\Services\FamilyTreeService;
+use Modules\Members\Services\FamilyPhotoService;
+use Modules\Members\Models\FamilyPhoto;
+use Modules\Members\Http\Requests\FamilyPhotoUploadRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -1318,6 +1321,84 @@ class MemberController extends Controller
             'total_changes' => count($request->changes),
             'errors' => $errors,
             'message' => "Successfully updated {$updatedCount} out of " . count($request->changes) . " records"
+        ]);
+    }
+
+    /**
+     * Upload a family photo
+     */
+    public function uploadFamilyPhoto(FamilyPhotoUploadRequest $request, string $familyNo)
+    {
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $result = $familyPhotoService->uploadFamilyPhoto($familyNo, $request->file('photo'));
+
+        if ($result['success']) {
+            return response()->json($result, 200);
+        }
+
+        return response()->json($result, 400);
+    }
+
+    /**
+     * Delete a family photo
+     */
+    public function deleteFamilyPhoto(string $familyNo)
+    {
+        // Get a member from the family to check authorization
+        $member = Member::where('family_no', $familyNo)->firstOrFail();
+        $this->authorize('update', $member);
+
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $result = $familyPhotoService->deleteFamilyPhoto($familyNo);
+
+        if ($result['success']) {
+            return response()->json($result, 200);
+        }
+
+        return response()->json($result, 400);
+    }
+
+    /**
+     * Get family photo
+     */
+    public function getFamilyPhoto(string $familyNo)
+    {
+        // Get a member from the family to check authorization
+        $member = Member::where('family_no', $familyNo)->firstOrFail();
+        $this->authorize('view', $member);
+
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $photo = $familyPhotoService->getFamilyPhoto($familyNo);
+
+        if ($photo) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'photo' => $photo,
+                    'url' => $photo->photo_url
+                ]
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No family photo found'
+        ], 404);
+    }
+
+    /**
+     * Get family photo statistics
+     */
+    public function getFamilyPhotoStatistics()
+    {
+        $this->authorize('viewAny', Member::class);
+
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $statistics = $familyPhotoService->getPhotoStatistics();
+
+        return response()->json([
+            'success' => true,
+            'data' => $statistics
         ]);
     }
 }

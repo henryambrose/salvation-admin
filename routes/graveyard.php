@@ -146,6 +146,8 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     Route::prefix('graveyard/payments')->name('graveyard.payments.')->group(function () {
         Route::get('/', [PaymentController::class, 'index'])->name('index');
         Route::get('/create/{bookingType}/{bookingId}', [PaymentController::class, 'create'])->name('create');
+        Route::get('/create/maintenance/{graveId}', [PaymentController::class, 'createMaintenancePayment'])->name('create.maintenance');
+        Route::post('/maintenance', [PaymentController::class, 'storeMaintenancePayment'])->name('store.maintenance');
         Route::post('/', [PaymentController::class, 'store'])->name('store');
         Route::get('/{payment}', [PaymentController::class, 'show'])->name('show');
         Route::get('/{payment}/balance', [PaymentController::class, 'balancePaymentForm'])->name('balance');

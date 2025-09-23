@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch, computed, nextTick, onMounted } from 'vue';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
@@ -26,7 +26,6 @@ const canExportState = can('read-state');
 const canRestoreState = can('restore-state');
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'State Name', sortable: true },
   { key: 'abbr', label: 'Abbreviation', sortable: true },
   { key: 'country', label: 'Country Name', sortable: true },
@@ -42,7 +41,7 @@ const editingState = ref<Record<string, any>>();
 const deletingState = ref<Record<string, any>>();
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 
 const form = useForm({
   name: '',
@@ -63,24 +62,23 @@ const direction = ref(props.filters?.direction || 'asc');
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
-    router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-        only: partialOnly,
-      },
-    );
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    {
+      preserveState: true,
+      replace: true,
+      only: partialOnly,
+    },
+  );
 }
-
 
 watch(
   [search, sort, direction, perPage, isArchived],
@@ -125,7 +123,7 @@ function scrollToRow(rowId: number) {
 }
 
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedStates.value.last_page,
@@ -190,20 +188,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingState.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreState(id: number) {
-  router.post(`/state/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/state/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -211,34 +213,37 @@ function clearSearch() {
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value);
   }
-    router.get(
-      props.fetchUrl,
-      {
-        search: '',
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page: 1,
-      },
-      {
-        preserveState: false,
-        replace: true,
-        only: partialOnly,
-      },
-    );
+  router.get(
+    props.fetchUrl,
+    {
+      search: '',
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page: 1,
+    },
+    {
+      preserveState: false,
+      replace: true,
+      only: partialOnly,
+    },
+  );
 }
 
-watch(() => enhancedStates.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedStates.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 onMounted(() => {
   // Check for highlightId in query string
@@ -258,26 +263,26 @@ onMounted(() => {
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">States</h2>
-        <Button v-if="canCreateState" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button
+          v-if="canCreateState"
+          @click="showModal = true"
+          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+        >
           <span>➕ Add State</span>
-          </Button>
-        </div>
+        </Button>
+      </div>
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input 
-              v-model="search" 
-              @keyup.enter="fetch()" 
-              type="text" 
-              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" 
-              placeholder="Search..." 
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
               @keydown.escape="clearSearch"
             />
-            <button 
-              v-if="search" 
-              @click="clearSearch" 
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
@@ -288,7 +293,7 @@ onMounted(() => {
             <option :value="100">100</option>
           </select>
         </div>
-        <label class="flex items-center gap-2 cursor-pointer select-none">
+        <label class="flex cursor-pointer items-center gap-2 select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
         </label>
@@ -297,30 +302,30 @@ onMounted(() => {
 
     <div v-if="canReadAnyState">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedStates.total || 0 }}</span> total states
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedStates.prev_page_url" 
-            @click="fetch(enhancedStates.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedStates.prev_page_url"
+            @click="fetch(enhancedStates.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedStates.last_page && enhancedStates.last_page > 1"
-              :value="enhancedStates.current_page" 
+              :value="enhancedStates.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedStates.last_page" :key="page" :value="page">
                 {{ page }}
@@ -328,71 +333,84 @@ onMounted(() => {
             </select>
             <span>of {{ enhancedStates.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedStates.next_page_url" 
-            @click="fetch(enhancedStates.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedStates.next_page_url"
+            @click="fetch(enhancedStates.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            States
-          </span>
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"> States </span>
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
-        <table class="w-full border-collapse text-left">
-          <thead>
-            <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                {{ col.label }}
-              </th>
-              <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in enhancedStates.data" :key="row.id" :id="`state-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
-              <td class="p-2">
-                <template v-if="!serverArchived">
-                  <Button v-if="canUpdateAnyState" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    Edit 
-                  </Button>
-                </template>
-                <template v-else>
-                  <Button v-if="canRestoreState" @click="restoreState(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                    Restore
-                  </Button>
-                </template>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                <span>
-                  {{ col.key === 'country' ? (row.country?.name || '') : row[col.key] }}
-                </span>
-              </td>
-              <td v-if="!serverArchived" class="p-2">
-                <template v-if="canDeleteAnyState">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    Delete
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+          <table class="w-full border-collapse text-left">
+            <thead>
+              <tr class="bg-blue-50">
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                  {{ col.label }}
+                </th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="row in enhancedStates.data"
+                :key="row.id"
+                :id="`state-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
+                <td class="p-2">
+                  <template v-if="!serverArchived">
+                    <Button
+                      v-if="canUpdateAnyState"
+                      @click="openEditModal(row)"
+                      class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                    >
+                      Edit
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <Button
+                      v-if="canRestoreState"
+                      @click="restoreState(row.id)"
+                      class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                    >
+                      Restore
+                    </Button>
+                  </template>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  <span>
+                    {{ col.key === 'country' ? row.country?.name || '' : row[col.key] }}
+                  </span>
+                </td>
+                <td v-if="!serverArchived" class="p-2">
+                  <template v-if="canDeleteAnyState">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
+                      Delete
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
     <div v-else class="py-10 text-center text-gray-500">You do not have permission to view states.</div>
-
-
 
     <!-- Create Modal -->
     <transition name="fade">
@@ -413,7 +431,10 @@ onMounted(() => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Country</label>
-                <select v-model="form.country_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <select
+                  v-model="form.country_id"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                >
                   <option value="" disabled>Select Country</option>
                   <option v-for="c in props.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
@@ -424,14 +445,14 @@ onMounted(() => {
                   variant="destructive"
                   type="button"
                   @click="showModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -461,7 +482,10 @@ onMounted(() => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Country</label>
-                <select v-model="editForm.country_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
+                <select
+                  v-model="editForm.country_id"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                >
                   <option value="" disabled>Select Country</option>
                   <option v-for="c in props.countries" :key="c.id" :value="c.id">{{ c.name }}</option>
                 </select>
@@ -472,14 +496,14 @@ onMounted(() => {
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -497,26 +521,27 @@ onMounted(() => {
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete State</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingState?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingState?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
-          </Button>
+              </Button>
               <Button
                 variant="destructive"
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
-          </Button>
+              </Button>
             </div>
           </div>
         </div>
@@ -539,14 +564,18 @@ onMounted(() => {
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -556,7 +585,7 @@ onMounted(() => {
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -566,7 +595,7 @@ onMounted(() => {
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -574,7 +603,11 @@ onMounted(() => {
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

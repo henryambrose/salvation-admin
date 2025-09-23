@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/AppLayout.vue';
-import {Plus, Download } from 'lucide-vue-next';
-import { nextTick, ref, watch, computed } from 'vue';
-import axios from 'axios';
 import { Checkbox } from '@/components/ui/checkbox';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
+import { Download, Plus } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
@@ -23,10 +23,8 @@ const props = defineProps({
   fetchUrl: String,
 });
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },
   { key: 'member_full_name', label: 'Member Name', sortable: true },
-
 ];
 
 const partialOnly = ['ppcHeads', 'filters'];
@@ -38,7 +36,7 @@ const showCreateModal = ref(false);
 const editingPPCHead = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
 const modalMembers = ref<any[]>([]);
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
@@ -116,23 +114,22 @@ function scrollToRow(rowId: number) {
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
-    router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value,
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-        only: partialOnly,
-      },
-    );
-  
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value,
+      page,
+    },
+    {
+      preserveState: true,
+      replace: true,
+      only: partialOnly,
+    },
+  );
 }
 watch(
   () => editForm.community_id,
@@ -150,7 +147,7 @@ watch(
 
 watch(
   () => createForm.community_id,
-  async (newVal:any) => {
+  async (newVal: any) => {
     if (newVal) {
       const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
       modalMembers.value = data;
@@ -159,31 +156,34 @@ watch(
       modalMembers.value = [];
       createForm.member_id = null;
     }
-  }
+  },
 );
 
-watch(() => enhancedPPCHeads.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedPPCHeads.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 function openEditModal(row: any) {
   editingPPCHead.value = row;
   // Set the full community object
-  editForm.community_id = props.communities.find(c => c.id === row.community_id) || null;
+  editForm.community_id = props.communities.find((c) => c.id === row.community_id) || null;
   showEditModal.value = true;
   nextTick(async () => {
     if (editForm.community_id) {
       const { data } = await axios.get(`/api/ppc-community/${editForm.community_id.id}/members`);
       modalMembers.value = data;
       // Set the full member object
-      editForm.member_id = modalMembers.value.find(m => m.id === row.member_id) || null;
+      editForm.member_id = modalMembers.value.find((m) => m.id === row.member_id) || null;
     } else {
       modalMembers.value = [];
       editForm.member_id = null;
@@ -191,12 +191,10 @@ function openEditModal(row: any) {
   });
 }
 
-
-
 function submitEdit() {
   if (!editForm.member_id || !editForm.community_id) return;
   const editedId = editingPPCHead.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedPPCHeads.value.current_page,
@@ -232,16 +230,14 @@ function closeCreateModal() {
 
 function submitCreate() {
   // Check for duplicate community
-  const existingCommunity = enhancedPPCHeads.value.data.find(
-    (head: any) => head.community_id === createForm.community_id?.id
-  );
+  const existingCommunity = enhancedPPCHeads.value.data.find((head: any) => head.community_id === createForm.community_id?.id);
 
   if (existingCommunity) {
     createForm.setError('community_id', 'This community already has a PPC Head assigned.');
     return;
   }
 
-  createForm.transform(data => ({
+  createForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedPPCHeads.value.last_page,
@@ -287,20 +283,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restorePPCHead(id: number) {
-  router.post(`/ppc-head/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/ppc-head/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function downloadCsv() {
@@ -330,7 +330,6 @@ function onPageChange(e: Event) {
   if (!target) return;
   fetch(Number(target.value));
 }
-
 </script>
 
 <template>
@@ -340,11 +339,19 @@ function onPageChange(e: Event) {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">PPC Heads</h2>
         <div class="btn-group flex space-x-2">
-          <Button v-if="canExportPPCHead" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button
+            v-if="canExportPPCHead"
+            @click="downloadCsv"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
             <component :is="Download" />
             <span>Export CSV</span>
           </Button>
-          <Button v-if="canCreatePPCHead" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+          <Button
+            v-if="canCreatePPCHead"
+            @click="openCreateModal"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
             <component :is="Plus" />
             <span>Add PPC Head</span>
           </Button>
@@ -353,8 +360,17 @@ function onPageChange(e: Event) {
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
@@ -364,7 +380,7 @@ function onPageChange(e: Event) {
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -374,30 +390,30 @@ function onPageChange(e: Event) {
 
     <div v-if="canReadAnyPPCHead">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedPPCHeads.total || 0 }}</span> total PPC heads
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedPPCHeads.prev_page_url" 
-            @click="fetch(enhancedPPCHeads.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedPPCHeads.prev_page_url"
+            @click="fetch(enhancedPPCHeads.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedPPCHeads.last_page && enhancedPPCHeads.last_page > 1"
-              :value="enhancedPPCHeads.current_page" 
+              :value="enhancedPPCHeads.current_page"
               @change="onPageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedPPCHeads.last_page" :key="page" :value="page">
                 {{ page }}
@@ -405,21 +421,19 @@ function onPageChange(e: Event) {
             </select>
             <span>of {{ enhancedPPCHeads.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedPPCHeads.next_page_url" 
-            @click="fetch(enhancedPPCHeads.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedPPCHeads.next_page_url"
+            @click="fetch(enhancedPPCHeads.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-pink-100 text-pink-800 rounded-full text-xs font-medium">
-            PPC Heads
-          </span>
+          <span class="rounded-full bg-pink-100 px-2 py-1 text-xs font-medium text-pink-800"> PPC Heads </span>
         </div>
       </div>
 
@@ -437,29 +451,33 @@ function onPageChange(e: Event) {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedPPCHeads.data" :key="row.id" :id="`ppc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedPPCHeads.data"
+                :key="row.id"
+                :id="`ppc-head-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200">
                       Edit
                     </Button>
                   </template>
                   <template v-else>
-                    <Button  @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
                       Restore
                     </Button>
                   </template>
                 </td>
                 <td v-for="col in columns" :key="col.key" class="p-2">
-                    {{ row[col.key] }}
-
+                  {{ row[col.key] }}
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="!serverArchived">
                     <Button
                       @click="openDeleteModal(row)"
                       variant="destructive"
-                      class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
                     >
                       Delete
                     </Button>
@@ -477,7 +495,7 @@ function onPageChange(e: Event) {
     <!-- bg-black bg-opacity-20 -->
     <transition name="fade">
       <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="bg-[#ffffff] rounded-2xl shadow-2xl p-8 min-w-[400px] max-w-full w-full sm:w-[420px]">
+        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit PPC Head</h2>
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
@@ -486,21 +504,28 @@ function onPageChange(e: Event) {
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <Multiselect v-model="editForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!editForm.community_id" />
+              <Multiselect
+                v-model="editForm.member_id"
+                :options="modalMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Member"
+                :disabled="!editForm.community_id"
+              />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
             </div>
             <div class="flex justify-end gap-3">
               <button
                 type="button"
                 @click="showEditModal = false"
-                class="rounded-full bg-red-100 text-red-700 px-6 py-2 font-semibold hover:bg-red-200 transition"
+                class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 :disabled="editForm.processing"
-                class="rounded-full bg-blue-600 text-white px-6 py-2 font-semibold hover:bg-blue-700 transition"
+                class="rounded-full bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700"
               >
                 Save
               </button>
@@ -523,13 +548,26 @@ function onPageChange(e: Event) {
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <Multiselect v-model="createForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!createForm.community_id" />
+              <Multiselect
+                v-model="createForm.member_id"
+                :options="modalMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Member"
+                :disabled="!createForm.community_id"
+              />
               <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.member_id }}
               </div>
             </div>
             <div class="flex justify-end gap-3">
-              <button type="button" @click="closeCreateModal" class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200">Cancel</button>
+              <button
+                type="button"
+                @click="closeCreateModal"
+                class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200"
+              >
+                Cancel
+              </button>
               <button type="submit" class="rounded-full bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">Create</button>
             </div>
           </form>
@@ -541,15 +579,13 @@ function onPageChange(e: Event) {
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete PPC Head</h3>
-            <p>
-              Are you sure you want to delete this PPC Head?
-            </p>
+            <p>Are you sure you want to delete this PPC Head?</p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -557,7 +593,7 @@ function onPageChange(e: Event) {
                 variant="destructive"
                 type="button"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -575,14 +611,18 @@ function onPageChange(e: Event) {
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -592,7 +632,7 @@ function onPageChange(e: Event) {
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -602,7 +642,7 @@ function onPageChange(e: Event) {
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -610,7 +650,11 @@ function onPageChange(e: Event) {
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

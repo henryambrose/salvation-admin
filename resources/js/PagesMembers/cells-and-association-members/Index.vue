@@ -23,7 +23,6 @@ const props = defineProps({
 const partialOnly = ['cellsAndAssociationMembers', 'filters'];
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'cells_and_association_name', label: 'Cell Association Name', sortable: true },
   { key: 'member_name', label: 'Member Name', sortable: true },
 ];

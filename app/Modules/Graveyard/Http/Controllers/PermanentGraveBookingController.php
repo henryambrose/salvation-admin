@@ -163,6 +163,26 @@ class PermanentGraveBookingController extends Controller
                 return back()->withErrors(['permanent_grave_id' => 'This grave is not eligible for burial yet.']);
             }
 
+            // Check for pending maintenance fees
+            $pendingMaintenanceFee = $grave->calculatePendingAmount();
+            if ($pendingMaintenanceFee > 0) {
+                Log::warning('Grave has pending maintenance fees', [
+                    'grave_id' => $grave->id,
+                    'pending_amount' => $pendingMaintenanceFee
+                ]);
+
+                $gravePosition = "{$grave->section}-{$grave->row_no}-{$grave->grave_no}";
+                $pendingAmount = '₹' . number_format($pendingMaintenanceFee, 2);
+
+                return back()->withErrors([
+                    'permanent_grave_id' => "Cannot create booking for grave {$gravePosition}. There are pending maintenance fees of {$pendingAmount}. Please clear the maintenance fees before proceeding with the burial booking."
+                ])->with('maintenance_fee_warning', [
+                    'grave_id' => $grave->id,
+                    'pending_amount' => $pendingMaintenanceFee,
+                    'grave_position' => $gravePosition
+                ]);
+            }
+
             // Check for existing active bookings for this grave
             $existingBooking = PermanentGraveBooking::where('permanent_grave_id', $request->permanent_grave_id)
                 ->whereIn('status', ['pending', 'confirmed'])

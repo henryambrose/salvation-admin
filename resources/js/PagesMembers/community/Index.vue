@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch, computed, nextTick, onMounted } from 'vue';
-import { Plus, Download } from 'lucide-vue-next';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Zone } from '@/types';
-
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { Download, Plus } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const props = defineProps({
   communities: {
@@ -24,7 +23,6 @@ const props = defineProps({
 });
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Community Name', sortable: true },
   { key: 'zone', label: 'Zone', sortable: true },
   { key: 'ppchead.member', label: 'PPC Head', sortable: true },
@@ -39,7 +37,7 @@ const editingCommunity = ref<Record<string, any>>();
 const deletingCommunity = ref<Record<string, any>>();
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 const partialOnly = ['communities', 'filters'];
 const form = useForm({
   name: '',
@@ -77,14 +75,18 @@ const enhancedCommunities = computed(() => {
 });
 
 // Add debouncing to search
-watch([search, sort, direction, perPage, isArchived], () => {
-  if (searchTimeout.value) {
-    clearTimeout(searchTimeout.value);
-  }
-  searchTimeout.value = window.setTimeout(() => {
-    fetch();
-  }, 300); // 300ms debounce
-}, { immediate: false, deep: false });
+watch(
+  [search, sort, direction, perPage, isArchived],
+  () => {
+    if (searchTimeout.value) {
+      clearTimeout(searchTimeout.value);
+    }
+    searchTimeout.value = window.setTimeout(() => {
+      fetch();
+    }, 300); // 300ms debounce
+  },
+  { immediate: false, deep: false },
+);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -98,12 +100,12 @@ function scrollToRow(rowId: number) {
 }
 
 function fetch(page = 1) {
-   if (!props.fetchUrl) return;
-  
+  if (!props.fetchUrl) return;
+
   // Show loading state
   const loadingElement = document.getElementById('loading-indicator');
   if (loadingElement) loadingElement.style.display = 'block';
-  
+
   router.get(
     props.fetchUrl || '',
     {
@@ -121,13 +123,13 @@ function fetch(page = 1) {
       onFinish: () => {
         // Hide loading state
         if (loadingElement) loadingElement.style.display = 'none';
-      }
+      },
     },
   );
 }
 
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCommunities.value.last_page,
@@ -158,7 +160,7 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingCommunity.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCommunities.value.current_page,
@@ -199,20 +201,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCommunity.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreCommunity(id: number) {
-  router.post(`/community/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/community/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -260,24 +266,27 @@ const canUpdateAnyCommunity = can('update-community');
 const canDeleteAnyCommunity = can('delete-community');
 const canExportCommunity = can('read-community');
 
-watch(() => enhancedCommunities.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedCommunities.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Communities" />
-    
+
     <!-- Add loading indicator -->
-    <div id="loading-indicator" class="fixed top-4 right-4 bg-blue-500 text-white px-4 py-2 rounded-lg shadow-lg z-50" style="display: none;">
+    <div id="loading-indicator" class="fixed top-4 right-4 z-50 rounded-lg bg-blue-500 px-4 py-2 text-white shadow-lg" style="display: none">
       Loading...
     </div>
 
@@ -288,32 +297,32 @@ watch(() => enhancedCommunities.value.data, (rows) => {
           <Button
             v-if="canExportCommunity"
             @click="downloadCsv"
-            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
           >
             <component :is="Download" />
             <span>Export CSV</span>
           </Button>
-          <Button v-if="canCreateCommunity" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+          <Button
+            v-if="canCreateCommunity"
+            @click="showModal = true"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
             <component :is="Plus" />
             <span>Add Community</span>
           </Button>
         </div>
-        </div>
+      </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input 
-              v-model="search" 
-              type="text" 
-              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" 
-              placeholder="Search..." 
+            <input
+              v-model="search"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
               @keydown.escape="clearSearch"
             />
-            <button 
-              v-if="search" 
-              @click="clearSearch" 
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
@@ -326,7 +335,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -336,30 +345,30 @@ watch(() => enhancedCommunities.value.data, (rows) => {
 
     <div v-if="canReadAnyCommunity">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedCommunities.total || 0 }}</span> total communities
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedCommunities.prev_page_url" 
-            @click="fetch(enhancedCommunities.current_page! - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedCommunities.prev_page_url"
+            @click="fetch(enhancedCommunities.current_page! - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedCommunities.last_page && enhancedCommunities.last_page > 1"
-              :value="enhancedCommunities.current_page" 
+              :value="enhancedCommunities.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedCommunities.last_page" :key="page" :value="page">
                 {{ page }}
@@ -367,25 +376,23 @@ watch(() => enhancedCommunities.value.data, (rows) => {
             </select>
             <span>of {{ enhancedCommunities.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedCommunities.next_page_url" 
-            @click="fetch(enhancedCommunities.current_page! + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedCommunities.next_page_url"
+            @click="fetch(enhancedCommunities.current_page! + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            Communities
-          </span>
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"> Communities </span>
         </div>
       </div>
 
-      <div class="datatable2 rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
+      <div class="datatable2 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -399,15 +406,28 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCommunities.data" :key="row.id" :id="`community-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedCommunities.data"
+                :key="row.id"
+                :id="`community-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button v-if="canUpdateAnyCommunity" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    <Button
+                      v-if="canUpdateAnyCommunity"
+                      @click="openEditModal(row)"
+                      class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                    >
                       Edit
                     </Button>
                   </template>
                   <template v-else>
-                    <Button v-if="canUpdateAnyCommunity" @click="restoreCommunity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button
+                      v-if="canUpdateAnyCommunity"
+                      @click="restoreCommunity(row.id)"
+                      class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                    >
                       Restore
                     </Button>
                   </template>
@@ -428,7 +448,12 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="!serverArchived">
-                    <Button v-if="canDeleteAnyCommunity" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <Button
+                      v-if="canDeleteAnyCommunity"
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       Delete
                     </Button>
                   </template>
@@ -455,7 +480,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
               </div>
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Zone</label>
-                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500" >
+                <select v-model="form.zone_id" class="w-full rounded border-gray-300 focus:border-blue-500">
                   <option value="">Select Zone</option>
                   <option v-for="zone in props.zones as Zone[]" :key="zone.id" :value="zone.id">{{ zone.name }}</option>
                 </select>
@@ -466,14 +491,14 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                   variant="destructive"
                   type="button"
                   @click="showModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -509,14 +534,14 @@ watch(() => enhancedCommunities.value.data, (rows) => {
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -534,26 +559,27 @@ watch(() => enhancedCommunities.value.data, (rows) => {
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Community</h3>
             <p>
-              Are you sure you want to delete <span class="font-bold">{{ deletingCommunity?.name }}</span>?
+              Are you sure you want to delete <span class="font-bold">{{ deletingCommunity?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
-          </Button>
+              </Button>
               <Button
                 variant="destructive"
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
-          </Button>
+              </Button>
             </div>
           </div>
         </div>
@@ -576,14 +602,18 @@ watch(() => enhancedCommunities.value.data, (rows) => {
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -593,7 +623,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -603,7 +633,7 @@ watch(() => enhancedCommunities.value.data, (rows) => {
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -611,7 +641,11 @@ watch(() => enhancedCommunities.value.data, (rows) => {
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

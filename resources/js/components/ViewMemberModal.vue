@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
+import FamilyPhotoUpload from '@/components/FamilyPhotoUpload.vue';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -136,6 +137,14 @@ const enhancedIncomeRanges = computed(() => {
     current_page: c.current_page ?? c.meta?.current_page,
     last_page: c.last_page ?? c.meta?.last_page,
   };
+});
+
+// Family photo permissions - assuming member edit permissions
+const canEditMember = computed(() => {
+  // Check if user has permission to edit members
+  // This should match the permission check from the member index page
+  return page.props.auth?.permissions?.includes('update-member') ||
+         page.props.auth?.user?.roles?.includes('super admin');
 });
 
 function calculateAge(dateStr: string) {
@@ -365,6 +374,12 @@ function closeModal() {
   emit('update:modelValue', false);
 }
 
+function onFamilyPhotoUpdated() {
+  // Refresh family members data if needed
+  // For now, just emit an event that could be caught by parent components
+  console.log('Family photo updated for family:', props.member?.family_no);
+}
+
 function handleTab(e: KeyboardEvent) {
   if (!modalRef.value || !props.modelValue) return;
 
@@ -528,6 +543,18 @@ watch(() => currentTab.value, (newTab) => {
             <!-- Family Members Table for Community tab -->
             <div v-if="tab.key === 'community' && member.family_no" class="mt-8">
               <div class="border-t border-gray-200 pt-6">
+                <!-- Family Photo Section -->
+                <div class="mb-6">
+                  <h4 class="mb-4 text-lg font-semibold text-gray-800">Family Photo</h4>
+                  <FamilyPhotoUpload
+                    :family-no="member.family_no"
+                    :can-edit="canEditMember"
+                    :can-delete="canEditMember"
+                    @photo-uploaded="onFamilyPhotoUpdated"
+                    @photo-deleted="onFamilyPhotoUpdated"
+                  />
+                </div>
+
                 <h4 class="mb-4 text-lg font-semibold text-gray-800">Family Members</h4>
                 <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p class="text-sm text-blue-800">

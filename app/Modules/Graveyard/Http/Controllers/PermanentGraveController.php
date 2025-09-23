@@ -45,6 +45,47 @@ class PermanentGraveController extends Controller
             $query->where('is_active', $request->is_active === 'true');
         }
 
+        // Apply maintenance status filter
+        if ($request->filled('maintenance_status')) {
+            $query->byMaintenanceStatus($request->maintenance_status);
+        }
+
+        // Calculate pending amounts for all graves
+        $graves = $query->get();
+        foreach ($graves as $grave) {
+            $grave->pending_amount = $grave->calculatePendingAmount();
+        }
+
+        // Re-apply the query with updated pending amounts
+        $query = PermanentGrave::query()->with('member');
+
+        // Reapply all filters
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        if ($request->filled('search')) {
+            $query->search($request->search);
+        }
+
+        if ($request->filled('section')) {
+            $query->bySection($request->section);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('is_active')) {
+            $query->where('is_active', $request->is_active === 'true');
+        }
+
+        if ($request->filled('maintenance_status')) {
+            $query->byMaintenanceStatus($request->maintenance_status);
+        }
+
         // Apply sorting
         $sortBy = $request->get('sort', 'section');
         $sortDirection = $request->get('direction', 'asc');
@@ -52,9 +93,19 @@ class PermanentGraveController extends Controller
             ->orderBy('row_no', 'asc')
             ->orderBy('grave_no', 'asc');
 
+        // Handle CSV export
+        if ($request->get('export') === 'csv') {
+            return $this->exportToCSV($query, $request);
+        }
+
         // Pagination
         $perPage = $request->get('perPage', 10);
         $permanentGraves = $query->paginate($perPage);
+
+        // Calculate pending amounts for paginated results
+        foreach ($permanentGraves as $grave) {
+            $grave->pending_amount = $grave->calculatePendingAmount();
+        }
 
         // Get filter options
         $sections = PermanentGrave::distinct()->pluck('section')->filter()->sort()->values();
@@ -62,7 +113,7 @@ class PermanentGraveController extends Controller
 
         return Inertia::render('PagesGraveyard/PermanentGraves/Index', [
             'data' => $permanentGraves,
-            'filters' => $request->only(['search', 'section', 'status', 'is_active', 'sort', 'direction', 'perPage', 'isArchived']),
+            'filters' => $request->only(['search', 'section', 'status', 'is_active', 'maintenance_status', 'sort', 'direction', 'perPage', 'isArchived']),
             'filterOptions' => [
                 'sections' => $sections,
                 'statuses' => $statuses,
@@ -351,5 +402,64 @@ class PermanentGraveController extends Controller
             });
 
         return response()->json($members);
+    }
+
+    /**
+     * Export permanent graves to CSV
+     */
+    protected function exportToCSV($query, Request $request)
+    {
+        $graves = $query->get();
+
+        // Calculate pending amounts
+        foreach ($graves as $grave) {
+            $grave->pending_amount = $grave->calculatePendingAmount();
+        }
+
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="permanent_graves_' . date('Y-m-d_H-i-s') . '.csv"',
+        ];
+
+        $callback = function () use ($graves) {
+            $file = fopen('php://output', 'w');
+
+            // Add CSV headers
+            fputcsv($file, [
+                'Grave Position',
+                'Old No',
+                'Status',
+                'Owner Name',
+                'Plot Size',
+                'Last Burial Date',
+                'Pending Amount',
+                'Last Payment Year',
+                'Contact No',
+                'Remarks'
+            ]);
+
+            // Add data rows
+            foreach ($graves as $grave) {
+                $ownerName = $grave->owner_name ?:
+                    ($grave->member ? $grave->member->first_name . ' ' . $grave->member->last_name : '-');
+
+                fputcsv($file, [
+                    $grave->section . '-' . $grave->row_no . '-' . $grave->grave_no,
+                    $grave->oldno ?: '-',
+                    ucfirst($grave->status),
+                    $ownerName,
+                    $grave->plot_size ? $grave->plot_size . ' sq ft' : '-',
+                    $grave->last_burial_date ? $grave->last_burial_date->format('d/m/Y') : '-',
+                    $grave->pending_amount > 0 ? '₹' . number_format($grave->pending_amount, 2) : 'Paid',
+                    $grave->last_payment_year ?: '-',
+                    $grave->contact_no ?: '-',
+                    $grave->remarks ?: '-'
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

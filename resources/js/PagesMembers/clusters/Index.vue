@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { Head, usePage, Link, router, useForm } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { Input } from '@/components/ui/input';
-import { Pencil, Trash, RotateCcw, Plus } from 'lucide-vue-next';
-import { computed, ref, watch, nextTick } from 'vue';
-import { permissionHelpers } from '@/composables/permissionHelpers';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
@@ -26,10 +25,7 @@ const canDeleteAnyCluster = can('delete-cluster');
 const canExportCluster = can('read-cluster');
 const canRestoreCluster = can('restore-cluster');
 
-const columns: Column[] = [
-  { key: 'id', label: 'Id', sortable: true },
-  { key: 'name', label: 'Name', sortable: true },
-];
+const columns: Column[] = [{ key: 'name', label: 'Name', sortable: true }];
 
 const showModal = ref(false);
 const showEditModal = ref(false);
@@ -45,7 +41,7 @@ const editingCluster = ref<Record<string, any>>();
 const deletingCluster = ref<Record<string, any> | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
@@ -71,13 +67,13 @@ const validateClusterName = (name: string, excludeId?: number) => {
   if (!name || name.trim() === '') {
     return 'The cluster name cannot be empty.';
   }
-  
+
   const existingClusters = enhancedCluster.value.data;
   const duplicate = existingClusters.find((cluster: any) => {
     if (excludeId && cluster.id === excludeId) return false;
     return cluster.name.toLowerCase() === name.toLowerCase();
   });
-  
+
   return duplicate ? 'A cluster with this name already exists.' : null;
 };
 
@@ -110,15 +106,18 @@ function clearSearch() {
   }
 }
 
-
 function restoreCluster(id: number) {
-  router.post(route('cluster.restore', id), {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    route('cluster.restore', id),
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function fetch(page = 1) {
@@ -160,36 +159,42 @@ watch(showModal, (newValue) => {
 });
 
 // Watch for changes in cluster name to validate duplicates
-watch(() => form.name, () => {
-  // Don't validate if the form is empty (during reset)
-  if (!form.name || form.name.trim() === '') {
-    if (form.errors.name) form.clearErrors('name');
-    return;
-  }
-  
-  const error = validateClusterName(form.name);
-  if (error) {
-    form.setError('name', error);
-  } else {
-    if (form.errors.name) form.clearErrors('name');
-  }
-});
+watch(
+  () => form.name,
+  () => {
+    // Don't validate if the form is empty (during reset)
+    if (!form.name || form.name.trim() === '') {
+      if (form.errors.name) form.clearErrors('name');
+      return;
+    }
+
+    const error = validateClusterName(form.name);
+    if (error) {
+      form.setError('name', error);
+    } else {
+      if (form.errors.name) form.clearErrors('name');
+    }
+  },
+);
 
 // Watch for changes in edit form cluster name
-watch(() => editForm.name, () => {
-  // Don't validate if the form is empty (during reset)
-  if (!editForm.name || editForm.name.trim() === '') {
-    if (editForm.errors.name) editForm.clearErrors('name');
-    return;
-  }
-  
-  const error = validateClusterName(editForm.name, editingCluster.value?.id);
-  if (error) {
-    editForm.setError('name', error);
-  } else {
-    if (editForm.errors.name) editForm.clearErrors('name');
-  }
-});
+watch(
+  () => editForm.name,
+  () => {
+    // Don't validate if the form is empty (during reset)
+    if (!editForm.name || editForm.name.trim() === '') {
+      if (editForm.errors.name) editForm.clearErrors('name');
+      return;
+    }
+
+    const error = validateClusterName(editForm.name, editingCluster.value?.id);
+    if (error) {
+      editForm.setError('name', error);
+    } else {
+      if (editForm.errors.name) editForm.clearErrors('name');
+    }
+  },
+);
 
 const enhancedCluster = computed(() => {
   const c = props.clusters || {};
@@ -203,7 +208,7 @@ const enhancedCluster = computed(() => {
 });
 
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCluster.value.last_page,
@@ -237,7 +242,7 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingCluster.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCluster.value.current_page,
@@ -296,18 +301,31 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Clusters" />
-     <DatatableHeader>
+    <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Cluster</h2>
-        <Button v-if="canCreateCluster" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button
+          v-if="canCreateCluster"
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+        >
           <span>➕ Add Cluster</span>
         </Button>
       </div>
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
@@ -317,7 +335,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -326,30 +344,30 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
     </DatatableHeader>
     <div v-if="canReadAnyCluster">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ clusters?.total || 0 }}</span> total clusters
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="clusters?.prev_page_url" 
-            @click="fetch(clusters.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="clusters?.prev_page_url"
+            @click="fetch(clusters.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="clusters?.last_page && clusters.last_page > 1"
-              :value="clusters?.current_page" 
+              :value="clusters?.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in clusters.last_page" :key="page" :value="page">
                 {{ page }}
@@ -357,21 +375,19 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
             </select>
             <span>of {{ clusters?.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="clusters?.next_page_url" 
-            @click="fetch(clusters.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="clusters?.next_page_url"
+            @click="fetch(clusters.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium">
-            Clusters
-          </span>
+          <span class="rounded-full bg-teal-100 px-2 py-1 text-xs font-medium text-teal-800"> Clusters </span>
         </div>
       </div>
 
@@ -381,39 +397,56 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
           <table class="w-full border-collapse text-left">
             <thead>
               <tr class="bg-blue-50">
-              <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-              <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
-                {{ col.label }}
-              </th>
-              <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete </th>
-            </tr>
+                <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
+                <th v-for="col in columns" :key="col.key" class="border-b p-3 font-semibold text-gray-700">
+                  {{ col.label }}
+                </th>
+                <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              </tr>
             </thead>
             <tbody>
-            <tr v-for="row in enhancedCluster.data" :key="row.id" :id="`cluster-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
-              <td class="p-2">
-                <template v-if="!serverArchived">
-                  <Button v-if="canUpdateAnyCluster" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                    Edit
-                  </Button>
-                </template>
-                <template v-else>
-                  <Button v-if="canRestoreCluster" @click="restoreCluster(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
-                    Restore
-                  </Button>
-                </template>
-              </td>
-              <td v-for="col in columns" :key="col.key" class="p-2">
-                {{ row[col.key] }}
-              </td>
-              <td v-if="!serverArchived" class="p-2">
-                <template v-if="canDeleteAnyCluster">
-                  <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
-                    Delete
-                  </Button>
-                </template>
-              </td>
-            </tr>
-          </tbody>
+              <tr
+                v-for="row in enhancedCluster.data"
+                :key="row.id"
+                :id="`cluster-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
+                <td class="p-2">
+                  <template v-if="!serverArchived">
+                    <Button
+                      v-if="canUpdateAnyCluster"
+                      @click="openEditModal(row)"
+                      class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                    >
+                      Edit
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <Button
+                      v-if="canRestoreCluster"
+                      @click="restoreCluster(row.id)"
+                      class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                    >
+                      Restore
+                    </Button>
+                  </template>
+                </td>
+                <td v-for="col in columns" :key="col.key" class="p-2">
+                  {{ row[col.key] }}
+                </td>
+                <td v-if="!serverArchived" class="p-2">
+                  <template v-if="canDeleteAnyCluster">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
+                      Delete
+                    </Button>
+                  </template>
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
       </div>
@@ -423,8 +456,17 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="absolute inset-0 bg-black bg-opacity-50" @click="() => { showModal = false; form.reset(); form.clearErrors(); }"></div>
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg relative z-10">
+        <div
+          class="bg-opacity-50 absolute inset-0 bg-black"
+          @click="
+            () => {
+              showModal = false;
+              form.reset();
+              form.clearErrors();
+            }
+          "
+        ></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Cluster</h3>
             <form @submit.prevent="submit">
@@ -437,15 +479,21 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 <Button
                   variant="destructive"
                   type="button"
-                  @click="() => { showModal = false; form.reset(); form.clearErrors(); }"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  @click="
+                    () => {
+                      showModal = false;
+                      form.reset();
+                      form.clearErrors();
+                    }
+                  "
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="form.processing || form.errors.name"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
@@ -472,14 +520,14 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                   variant="destructive"
                   type="button"
                   @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
                   :disabled="editForm.processing || editForm.errors.name"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
                 >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
@@ -505,7 +553,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -514,7 +562,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
                 type="button"
                 :disabled="false"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -540,14 +588,18 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444;
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -557,7 +609,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -567,7 +619,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -575,7 +627,11 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
-</style> 
+</style>

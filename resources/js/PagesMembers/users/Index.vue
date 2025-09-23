@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch, computed, nextTick } from 'vue';
-import { Pencil, Plus, Trash, Shield } from 'lucide-vue-next';
-import { router } from '@inertiajs/vue3';
-import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
+import { Pencil, Shield } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 
 // Type definitions
 interface Role {
@@ -54,7 +53,6 @@ const canRestoreUser = can('restore-user');
 const canExportUser = can('read-user');
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Name', sortable: true },
   { key: 'email', label: 'Email', sortable: true },
   { key: 'roles', label: 'Roles', sortable: false },
@@ -75,7 +73,6 @@ const showSuccessMessage = ref(false);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(props.filters?.isArchived === 'true');
 
-
 const form = useForm({
   name: '',
   email: '',
@@ -91,7 +88,7 @@ const editForm = useForm({
 const roleForm = useForm({
   name: '',
   email: '',
-  roles: [] as number[]
+  roles: [] as number[],
 });
 
 const search = ref(props.filters?.search || '');
@@ -102,10 +99,10 @@ const direction = ref(props.filters?.direction || 'asc');
 const enhancedUsers = computed(() => {
   const c = props.users || {};
   const usersData = c.data || [];
-  
+
   // Filter out the current logged-in user
   const filteredUsers = usersData.filter((user: any) => user.id !== currentUserId);
-  
+
   return {
     data: filteredUsers,
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -159,7 +156,7 @@ function openCreateModal() {
 }
 
 function submitCreate() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedUsers.value.last_page,
@@ -191,7 +188,7 @@ function openEditModal(row: any) {
 
 function submitEdit() {
   const editedId = editingItem.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedUsers.value.last_page,
@@ -225,20 +222,19 @@ function openRoleModal(user: any) {
 
 function assignRoles() {
   if (!selectedUser.value) return;
-  
+
   // Set all required user data, not just roles
   roleForm.name = selectedUser.value.name;
   roleForm.email = selectedUser.value.email;
   roleForm.roles = [selectedRoles.value]; // Wrap single role in array for backend compatibility
-  
-  
+
   // Add a fallback to close modal after a timeout in case the request hangs
   const modalTimeout = setTimeout(() => {
     showRoleModal.value = false;
     selectedUser.value = null;
     selectedRoles.value = 0;
   }, 10000); // 10 second timeout
-  
+
   roleForm.put(route('users.update', selectedUser.value.id), {
     onSuccess: (response) => {
       clearTimeout(modalTimeout);
@@ -246,13 +242,13 @@ function assignRoles() {
       showRoleModal.value = false;
       selectedUser.value = null;
       selectedRoles.value = 0;
-      
+
       // Show success message briefly
       showSuccessMessage.value = true;
       setTimeout(() => {
         showSuccessMessage.value = false;
       }, 3000);
-      
+
       // Refresh the user data without page reload
       fetch();
     },
@@ -261,7 +257,7 @@ function assignRoles() {
       clearTimeout(modalTimeout);
       // Keep modal open on error so user can fix and retry
       // Error handling is already built into the form
-    }
+    },
   });
 }
 
@@ -281,20 +277,24 @@ function confirmDelete() {
       onSuccess: () => {
         showDeleteModal.value = false;
         deletingItem.value = null;
-        highlightedRowId.value = deletedId+1;
-        nextTick(() => scrollToRow(deletedId+1));
+        highlightedRowId.value = deletedId + 1;
+        nextTick(() => scrollToRow(deletedId + 1));
       },
     });
   }
 }
 
 function restoreUser(id: string) {
-  router.post(`/users/${id}/restore`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      fetch();
+  router.post(
+    `/users/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        fetch();
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -325,8 +325,6 @@ function formatDate(dateStr: string) {
   return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
 }
 
-
-
 function handlePageChange(event: Event) {
   const target = event.target as HTMLSelectElement;
   if (target) {
@@ -339,57 +337,71 @@ function closeRoleModal() {
   selectedUser.value = null;
   selectedRoles.value = 0;
 }
-
-
 </script>
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-
     <Head title="Users" />
     <DatatableHeader>
       <!-- Success Message -->
-      <div v-if="showSuccessMessage" class="mb-4 p-4 bg-green-100 border border-green-400 text-green-700 rounded-lg flex items-center justify-between">
+      <div
+        v-if="showSuccessMessage"
+        class="mb-4 flex items-center justify-between rounded-lg border border-green-400 bg-green-100 p-4 text-green-700"
+      >
         <div class="flex items-center">
-          <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+          <svg class="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clip-rule="evenodd"
+            ></path>
           </svg>
           <span class="font-medium">User roles updated successfully!</span>
         </div>
         <button @click="showSuccessMessage = false" class="text-green-500 hover:text-green-700">
-          <svg class="w-[1rem] h-[1rem]" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+          <svg class="h-[1rem] w-[1rem]" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            ></path>
           </svg>
         </button>
       </div>
-      
+
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">Users</h2>
-        <Button v-if="canCreateUser" @click="openCreateModal"
-          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+        <Button
+          v-if="canCreateUser"
+          @click="openCreateModal"
+          class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+        >
           <span>➕ Add User</span>
         </Button>
       </div>
       <div class="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text"
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
               class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
-              placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
-          <select v-model="perPage" @change="handlePageChange"
-            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
+          <select v-model="perPage" @change="handlePageChange" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
             <option :value="25">25</option>
             <option :value="50">50</option>
             <option :value="100">100</option>
           </select>
         </div>
-        <label class="flex items-center gap-2 cursor-pointer select-none">
+        <label class="flex cursor-pointer items-center gap-2 select-none">
           <Checkbox v-model="isArchived" class="switch-checkbox" />
           <span class="text-sm font-medium">Show Archived</span>
         </label>
@@ -397,8 +409,7 @@ function closeRoleModal() {
     </DatatableHeader>
     <div v-if="canReadAnyUser">
       <!-- Compact pagination with inline stats above the table -->
-      <div
-        class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedUsers.total || 0 }}</span> total users
@@ -407,16 +418,22 @@ function closeRoleModal() {
 
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button v-if="enhancedUsers.prev_page_url" @click="fetch(enhancedUsers.current_page - 1)"
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
+          <button
+            v-if="enhancedUsers.prev_page_url"
+            @click="fetch(enhancedUsers.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+          >
             ← Prev
           </button>
 
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select v-if="enhancedUsers.last_page && enhancedUsers.last_page > 1" :value="enhancedUsers.current_page"
+            <select
+              v-if="enhancedUsers.last_page && enhancedUsers.last_page > 1"
+              :value="enhancedUsers.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500">
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
+            >
               <option v-for="page in enhancedUsers.last_page" :key="page" :value="page">
                 {{ page }}
               </option>
@@ -424,21 +441,22 @@ function closeRoleModal() {
             <span>of {{ enhancedUsers.last_page }}</span>
           </div>
 
-          <button v-if="enhancedUsers.next_page_url" @click="fetch(enhancedUsers.current_page + 1)"
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition">
+          <button
+            v-if="enhancedUsers.next_page_url"
+            @click="fetch(enhancedUsers.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
+          >
             Next →
           </button>
         </div>
 
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            Users
-          </span>
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"> Users </span>
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
@@ -452,24 +470,34 @@ function closeRoleModal() {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedUsers.data" :key="row.id" :id="`user-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedUsers.data"
+                :key="row.id"
+                :id="`user-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <div class="flex gap-2">
                     <template v-if="!isArchived">
-                      <Button v-if="canUpdateAnyUser" @click="openEditModal(row)"
-                        class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                      <Button
+                        v-if="canUpdateAnyUser"
+                        @click="openEditModal(row)"
+                        class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                      >
                         <component :is="Pencil" />
                         Edit
                       </Button>
-                      <Button @click="openRoleModal(row)"
-                        class="rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+                      <Button @click="openRoleModal(row)" class="rounded-full bg-blue-100 text-blue-700 transition hover:bg-blue-200">
                         <component :is="Shield" />
                         Roles
                       </Button>
                     </template>
                     <template v-else>
-                      <Button v-if="canRestoreUser" @click="restoreUser(row.id)"
-                        class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      <Button
+                        v-if="canRestoreUser"
+                        @click="restoreUser(row.id)"
+                        class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                      >
                         Restore
                       </Button>
                     </template>
@@ -481,12 +509,17 @@ function closeRoleModal() {
                   </template>
                   <template v-else-if="col.key === 'roles'">
                     <div class="flex flex-wrap gap-1">
-                      <span v-if="!row.roles || row.roles.length === 0" 
-                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
+                      <span
+                        v-if="!row.roles || row.roles.length === 0"
+                        class="inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600"
+                      >
                         No roles
                       </span>
-                      <span v-for="role in row.roles" :key="role.id"
-                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span
+                        v-for="role in row.roles"
+                        :key="role.id"
+                        class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
+                      >
                         {{ role.name }}
                       </span>
                     </div>
@@ -497,13 +530,15 @@ function closeRoleModal() {
                 </td>
                 <td v-if="!isArchived" class="p-2">
                   <template v-if="canDeleteAnyUser">
-                    <Button @click="openDeleteModal(row)" variant="destructive"
-                      class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       Delete
                     </Button>
                   </template>
                 </td>
-
               </tr>
             </tbody>
           </table>
@@ -514,8 +549,7 @@ function closeRoleModal() {
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div
-          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Add User</h3>
             <form @submit.prevent="submitCreate">
@@ -535,10 +569,18 @@ function closeRoleModal() {
                 <div v-if="form.errors.password" class="mt-1 text-sm text-red-500">{{ form.errors.password }}</div>
               </div>
               <div class="flex justify-end space-x-2">
-                <Button type="button" variant="destructive" @click="showModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2">Cancel</Button>
-                <Button type="submit" :disabled="form.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  @click="showModal = false"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                  >Cancel</Button
+                >
+                <Button
+                  type="submit"
+                  :disabled="form.processing"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                >
                   {{ form.processing ? 'Creating...' : 'Create' }}
                 </Button>
               </div>
@@ -549,10 +591,8 @@ function closeRoleModal() {
     </transition>
     <!-- Edit Modal -->
     <transition name="fade">
-      <div v-if="showEditModal"
-        class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div
-          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+      <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit User</h3>
             <form @submit.prevent="submitEdit">
@@ -569,14 +609,21 @@ function closeRoleModal() {
               <div class="mb-3">
                 <Label for="edit-password">New Password (leave blank to keep current)</Label>
                 <Input id="edit-password" v-model="editForm.password" type="password" />
-                <div v-if="editForm.errors.password" class="mt-1 text-sm text-red-500">{{ editForm.errors.password }}
-                </div>
+                <div v-if="editForm.errors.password" class="mt-1 text-sm text-red-500">{{ editForm.errors.password }}</div>
               </div>
               <div class="flex justify-end space-x-2">
-                <Button type="button" variant="destructive" @click="showEditModal = false"
-                  class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2">Cancel</Button>
-                <Button type="submit" :disabled="editForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="destructive"
+                  @click="showEditModal = false"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                  >Cancel</Button
+                >
+                <Button
+                  type="submit"
+                  :disabled="editForm.processing"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                >
                   {{ editForm.processing ? 'Saving...' : 'Save' }}
                 </Button>
               </div>
@@ -587,56 +634,75 @@ function closeRoleModal() {
     </transition>
     <!-- Delete Modal -->
     <transition name="fade">
-      <div v-if="showDeleteModal"
-        class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div
-          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+      <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete User</h3>
-            <p>Are you sure you want to delete <span class="font-bold">{{ deletingItem?.name }}</span>?</p>
+            <p>
+              Are you sure you want to delete <span class="font-bold">{{ deletingItem?.name }}</span
+              >?
+            </p>
             <div class="mt-6 flex justify-end space-x-2">
-              <Button type="button" variant="secondary" @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">Cancel</Button>
-              <Button type="button" variant="destructive" :disabled="false" @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2">Delete</Button>
+              <Button
+                type="button"
+                variant="secondary"
+                @click="showDeleteModal = false"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
+                >Cancel</Button
+              >
+              <Button
+                type="button"
+                variant="destructive"
+                :disabled="false"
+                @click="confirmDelete"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
+                >Delete</Button
+              >
             </div>
           </div>
         </div>
       </div>
     </transition>
-    
+
     <!-- Role Management Modal -->
     <transition name="fade">
-      <div v-if="showRoleModal"
-        class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div
-          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+      <div v-if="showRoleModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Manage Role for {{ selectedUser?.name }}</h3>
             <p class="mb-4 text-sm text-gray-600">Assign a single role for this user</p>
-            
+
             <!-- Current Role Display -->
             <div class="mb-4">
-              <h4 class="text-sm font-medium text-gray-700 mb-2">Current Role:</h4>
+              <h4 class="mb-2 text-sm font-medium text-gray-700">Current Role:</h4>
               <div class="flex flex-wrap gap-2">
-                <span v-if="!selectedUser?.roles || selectedUser?.roles.length === 0" 
-                      class="text-gray-500 text-sm">No role assigned</span>
-                <span v-for="role in selectedUser?.roles" :key="role.id"
-                      class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {{ role.name }}
-                    </span>
+                <span v-if="!selectedUser?.roles || selectedUser?.roles.length === 0" class="text-sm text-gray-500">No role assigned</span>
+                <span
+                  v-for="role in selectedUser?.roles"
+                  :key="role.id"
+                  class="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"
+                >
+                  {{ role.name }}
+                </span>
               </div>
             </div>
-            
+
             <!-- Role Assignment Form -->
             <form @submit.prevent="assignRoles">
               <div class="mb-4">
                 <Label for="roles">Select Role:</Label>
-                <div class="mt-2 space-y-2 max-h-40 overflow-y-auto">
-                  <label v-for="role in availableRoles" :key="role.id" 
-                         class="flex items-center space-x-3 p-2 rounded border border-gray-200 hover:bg-gray-50">
-                    <input type="radio" :value="role.id" v-model="selectedRoles" 
-                           class="h-[1rem] w-[1rem] text-blue-600 focus:ring-[#3b82f6] border-gray-300" />
+                <div class="mt-2 max-h-40 space-y-2 overflow-y-auto">
+                  <label
+                    v-for="role in availableRoles"
+                    :key="role.id"
+                    class="flex items-center space-x-3 rounded border border-gray-200 p-2 hover:bg-gray-50"
+                  >
+                    <input
+                      type="radio"
+                      :value="role.id"
+                      v-model="selectedRoles"
+                      class="h-[1rem] w-[1rem] border-gray-300 text-blue-600 focus:ring-[#3b82f6]"
+                    />
                     <div>
                       <span class="text-sm font-medium text-gray-900">{{ role.name }}</span>
                       <p class="text-xs text-gray-500">{{ role.permissions?.length || 0 }} permissions</p>
@@ -644,15 +710,22 @@ function closeRoleModal() {
                   </label>
                 </div>
               </div>
-              
+
               <div class="flex justify-end space-x-2">
-                <Button type="button" variant="secondary" @click="closeRoleModal"
+                <Button
+                  type="button"
+                  variant="secondary"
+                  @click="closeRoleModal"
                   :disabled="roleForm.processing"
-                  class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2">
+                  class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
+                >
                   {{ roleForm.processing ? 'Processing...' : 'Cancel' }}
                 </Button>
-                <Button type="submit" :disabled="roleForm.processing"
-                  class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2">
+                <Button
+                  type="submit"
+                  :disabled="roleForm.processing"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                >
                   {{ roleForm.processing ? 'Saving...' : 'Save Role' }}
                 </Button>
               </div>
@@ -671,16 +744,20 @@ function closeRoleModal() {
   border-radius: 9999px;
   background: #ef4444;
   /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0, 0, 0, 0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
 
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -691,7 +768,7 @@ function closeRoleModal() {
   cursor: pointer;
 }
 
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -702,7 +779,7 @@ function closeRoleModal() {
   transition: left 0.2s;
 }
 
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -710,7 +787,11 @@ function closeRoleModal() {
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
 </style>

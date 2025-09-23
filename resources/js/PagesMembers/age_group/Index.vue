@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Pencil, Plus, Trash } from 'lucide-vue-next';
@@ -18,7 +18,6 @@ const props = defineProps({
 });
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'Age Group Name', sortable: true },
   { key: 'description', label: 'Description', sortable: false },
   { key: 'min_age', label: 'Min Age', sortable: true },
@@ -54,18 +53,18 @@ const editForm = useForm({
 // Validation function to check for duplicate age ranges
 const validateAgeRange = (minAge: string, maxAge: string, excludeId?: number) => {
   if (!minAge || !maxAge) return null;
-  
+
   const min = parseInt(minAge);
   const max = parseInt(maxAge);
-  
+
   if (isNaN(min) || isNaN(max)) return null;
-  
+
   const existingAgeGroups = enhancedAgeGroups.value.data;
   const duplicate = existingAgeGroups.find((ageGroup: any) => {
     if (excludeId && ageGroup.id === excludeId) return false;
     return ageGroup.min_age === min && ageGroup.max_age === max;
   });
-  
+
   return duplicate ? 'An age group with this min age and max age combination already exists.' : null;
 };
 
@@ -232,20 +231,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingAgeGroup.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreAgeGroup(id: number) {
-  router.post(`/age-group/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/age-group/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function clearSearch() {
@@ -280,7 +283,7 @@ const canCreateAgeGroup = can('create-age-group');
 const canReadAnyAgeGroup = can('read-age-group');
 const canUpdateAnyAgeGroup = can('update-age-group');
 const canDeleteAnyAgeGroup = can('delete-age-group');
-const canRestoreAgeGroup = can('restore-age-group'); 
+const canRestoreAgeGroup = can('restore-age-group');
 
 watch(
   () => enhancedAgeGroups.value.data,
@@ -302,7 +305,6 @@ function handlePageChange(event: Event) {
     fetch(Number(target.value));
   }
 }
-
 </script>
 
 <template>
@@ -330,11 +332,7 @@ function handlePageChange(event: Event) {
               placeholder="Search..."
               @keydown.escape="clearSearch"
             />
-            <button
-              v-if="search"
-              @click="clearSearch"
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
@@ -347,7 +345,7 @@ function handlePageChange(event: Event) {
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -357,30 +355,30 @@ function handlePageChange(event: Event) {
 
     <div v-if="canReadAnyAgeGroup">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedAgeGroups.total || 0 }}</span> total age groups
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedAgeGroups.prev_page_url" 
-            @click="fetch(enhancedAgeGroups.current_page! - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedAgeGroups.prev_page_url"
+            @click="fetch(enhancedAgeGroups.current_page! - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedAgeGroups.last_page && enhancedAgeGroups.last_page > 1"
-              :value="enhancedAgeGroups.current_page" 
+              :value="enhancedAgeGroups.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedAgeGroups.last_page" :key="page" :value="page">
                 {{ page }}
@@ -388,21 +386,19 @@ function handlePageChange(event: Event) {
             </select>
             <span>of {{ enhancedAgeGroups.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedAgeGroups.next_page_url" 
-            @click="fetch(enhancedAgeGroups.current_page! + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedAgeGroups.next_page_url"
+            @click="fetch(enhancedAgeGroups.current_page! + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-lime-100 text-lime-800 rounded-full text-xs font-medium">
-            Age Groups
-          </span>
+          <span class="rounded-full bg-lime-100 px-2 py-1 text-xs font-medium text-lime-800"> Age Groups </span>
         </div>
       </div>
 
@@ -436,7 +432,8 @@ function handlePageChange(event: Event) {
                 v-for="row in enhancedAgeGroups.data"
                 :key="row.id"
                 :id="`agegroup-row-${row.id}`"
-                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']">
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <div class="flex gap-2">
                     <template v-if="!serverArchived">
@@ -450,7 +447,11 @@ function handlePageChange(event: Event) {
                       </Button>
                     </template>
                     <template v-else>
-                      <Button v-if="canRestoreAgeGroup" @click="restoreAgeGroup(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                      <Button
+                        v-if="canRestoreAgeGroup"
+                        @click="restoreAgeGroup(row.id)"
+                        class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                      >
                         Restore
                       </Button>
                     </template>
@@ -632,14 +633,18 @@ function handlePageChange(event: Event) {
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -649,7 +654,7 @@ function handlePageChange(event: Event) {
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -659,7 +664,7 @@ function handlePageChange(event: Event) {
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {

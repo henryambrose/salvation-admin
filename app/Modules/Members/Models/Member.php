@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Members\Models\Relationship;
+use Modules\Members\Models\FamilyPhoto;
 use Modules\Members\Services\FamilyNumberingService;
 
 class Member extends Model
@@ -351,6 +352,14 @@ class Member extends Model
     public function clusterHeads()
     {
         return $this->hasMany(CommunityCluster::class, 'member_id');
+    }
+
+    /**
+     * Get the family photo for this member's family
+     */
+    public function familyPhoto()
+    {
+        return $this->hasOne(FamilyPhoto::class, 'family_no', 'family_no');
     }
 
     public function getUidAttribute(): string

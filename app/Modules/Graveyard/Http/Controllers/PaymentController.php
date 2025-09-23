@@ -507,4 +507,119 @@ class PaymentController extends Controller
 
         return array_merge($baseRelationships, ['payable']);
     }
+
+    /**
+     * Show maintenance fee payment form for a permanent grave
+     */
+    public function createMaintenancePayment(Request $request, int $graveId)
+    {
+        $grave = \Modules\Graveyard\Models\PermanentGrave::with(['member', 'maintenancePayments'])
+            ->findOrFail($graveId);
+
+        // Calculate pending amount
+        $pendingAmount = $grave->calculatePendingAmount();
+
+        if ($pendingAmount <= 0) {
+            return redirect()->route('graveyard.permanent-graves.index')
+                ->with('error', 'This grave has no pending maintenance fees.');
+        }
+
+        // Get available payment methods
+        $paymentMethods = \Modules\Fund\Models\PaymentMethod::active()->get();
+
+        // Get payment history for this grave
+        $paymentHistory = $grave->maintenancePayments()
+            ->with(['paymentMethod', 'creator'])
+            ->latest()
+            ->get();
+
+        $annualFee = config('graveyard.annual_maintenance_fee', 5000);
+        $monthlyFee = $annualFee / 12;
+        $currentYear = now()->year;
+
+        // Calculate available months for partial payment
+        $paidMonths = $grave->partial_payment_months[$currentYear] ?? [];
+        $availableMonths = [];
+
+        for ($month = 1; $month <= 12; $month++) {
+            if (!in_array($month, $paidMonths)) {
+                $availableMonths[] = [
+                    'value' => $month,
+                    'label' => date('F', mktime(0, 0, 0, $month, 1)),
+                    'amount' => $monthlyFee
+                ];
+            }
+        }
+
+        return Inertia::render('PagesGraveyard/Payment/CreateMaintenance', [
+            'grave' => $grave,
+            'pendingAmount' => $pendingAmount,
+            'paymentMethods' => $paymentMethods,
+            'paymentHistory' => $paymentHistory,
+            'annualFee' => $annualFee,
+            'monthlyFee' => $monthlyFee,
+            'availableMonths' => $availableMonths,
+            'currentYear' => $currentYear,
+        ]);
+    }
+
+    /**
+     * Store maintenance fee payment
+     */
+    public function storeMaintenancePayment(Request $request)
+    {
+        $request->validate([
+            'grave_id' => 'required|exists:permanent_graves,id',
+            'payment_amount' => 'required|numeric|min:0.01',
+            'payment_method_id' => 'required|exists:payment_methods,id',
+            'payment_date' => 'required|date',
+            'months_paying_for' => 'nullable|array',
+            'months_paying_for.*' => 'integer|min:1|max:12',
+            'transaction_reference' => 'nullable|string|max:100',
+            'payment_notes' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $grave = \Modules\Graveyard\Models\PermanentGrave::findOrFail($request->grave_id);
+            $annualFee = config('graveyard.annual_maintenance_fee', 5000);
+
+            // Create payment record
+            $payment = Payment::create([
+                'payable_type' => 'Modules\\Graveyard\\Models\\PermanentGrave',
+                'payable_id' => $grave->id,
+                'total_amount' => $request->payment_amount,
+                'paid_amount' => $request->payment_amount,
+                'balance_amount' => 0,
+                'payment_status' => 'completed',
+                'payment_method_id' => $request->payment_method_id,
+                'transaction_reference' => $request->transaction_reference,
+                'payment_notes' => 'Annual Maintenance Fee Payment - ' . ($request->payment_notes ?: ''),
+                'payment_date' => $request->payment_date,
+                'created_by' => Auth::id(),
+                'updated_by' => Auth::id(),
+            ]);
+
+            // Generate receipt
+            $payment->generateReceipt();
+
+            // Record maintenance payment in grave
+            $monthsFor = $request->months_paying_for ?? [];
+            $grave->recordMaintenancePayment($request->payment_amount, $monthsFor);
+
+            DB::commit();
+
+            return redirect()->route('graveyard.payments.show', $payment->id)
+                ->with('success', 'Maintenance fee payment recorded successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to create maintenance payment: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return back()->withErrors(['error' => 'Failed to record maintenance payment. Please try again.'])
+                ->withInput();
+        }
+    }
 }

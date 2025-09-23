@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import { useScrollRestoration } from '@/composables/useScrollRestoration';
 import { type NavItem, type SharedData } from '@/types';
 import { router, usePage } from '@inertiajs/vue3';
 import { nextTick, onUnmounted, ref } from 'vue';
@@ -15,6 +16,7 @@ defineProps<{
 
 const page = usePage<SharedData>();
 const isComponentMounted = ref(true);
+const { saveScrollPosition, restoreScrollPosition } = useScrollRestoration();
 
 // Cleanup on unmount
 onUnmounted(() => {
@@ -57,7 +59,16 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
   }
 
   if (itemHref.startsWith('/graveyard/')) {
-    // Any nested graveyard route should highlight its parent link
+    // Handle specific graveyard route conflicts
+    if (itemHref === '/graveyard/obituaries') {
+      // For "All Obituaries", only match exact route or its direct children, not nested subroutes
+      return currentUrl === itemHref ||
+             currentUrl.startsWith(itemHref + '/') &&
+             !currentUrl.includes('/condolences/') &&
+             !currentUrl.includes('/cleanup');
+    }
+
+    // For other graveyard routes, use standard nested route detection
     return currentUrl.startsWith(itemHref);
   }
 
@@ -113,9 +124,8 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
 };
 
 const handleNavigation = (href: string) => {
-  // Store the current sidebar scroll position before navigation
-  const sidebarContent = document.querySelector('[data-slot="sidebar-content"]');
-  const scrollPosition = sidebarContent?.scrollTop || 0;
+  // Save the current sidebar scroll position before navigation
+  saveScrollPosition();
 
   // Navigate to the new page
   router.visit(href, {
@@ -125,15 +135,15 @@ const handleNavigation = (href: string) => {
       // Only execute if component is still mounted
       if (!isComponentMounted.value) return;
 
-      // Use nextTick to ensure DOM is updated
+      // Use nextTick and additional delay to ensure DOM is fully updated
       nextTick(() => {
         if (!isComponentMounted.value) return;
 
-        // Restore the sidebar scroll position after the page loads
-        const newSidebarContent = document.querySelector('[data-slot="sidebar-content"]');
-        if (newSidebarContent && scrollPosition > 0) {
-          newSidebarContent.scrollTop = scrollPosition;
-        }
+        // Wait a bit more for the DOM to stabilize
+        setTimeout(() => {
+          if (!isComponentMounted.value) return;
+          restoreScrollPosition();
+        }, 150);
       });
     },
   });

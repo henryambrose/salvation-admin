@@ -5,8 +5,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
-import { Plus, Download } from 'lucide-vue-next';
-import { nextTick, ref, watch, computed } from 'vue';
+import { Download, Plus } from 'lucide-vue-next';
+import { computed, nextTick, ref, watch } from 'vue';
 import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
@@ -24,10 +24,8 @@ const props = defineProps({
 });
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'community_name', label: 'Community Name', sortable: true },
   { key: 'member_full_name', label: 'Member Name', sortable: true },
-
 ];
 
 const partialOnly = ['s_c_c_heads', 'filters'];
@@ -39,7 +37,7 @@ const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
 const modalMembers = ref<any[]>([]);
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const editForm = useForm<{ id: string | number; member_id: any; community_id: any }>({
@@ -51,7 +49,6 @@ const createForm = useForm<{ member_id: any; community_id: any }>({
   member_id: null,
   community_id: null,
 });
-
 
 const search = ref(props.filters?.search || '');
 const perPage = ref(props.filters?.perPage || 10);
@@ -117,25 +114,23 @@ function scrollToRow(rowId: number) {
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
-    router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-        only: partialOnly,
-      },
-    );
-  }
-
-
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    {
+      preserveState: true,
+      replace: true,
+      only: partialOnly,
+    },
+  );
+}
 
 watch(
   () => editForm.community_id,
@@ -153,7 +148,7 @@ watch(
 
 watch(
   () => createForm.community_id,
-  async (newVal:any) => {
+  async (newVal: any) => {
     if (newVal) {
       const { data } = await axios.get(`/api/community/${newVal.id}/members`);
       modalMembers.value = data;
@@ -162,31 +157,34 @@ watch(
       modalMembers.value = [];
       createForm.member_id = null;
     }
-  }
+  },
 );
 
-watch(() => enhancedSCCHeads.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedSCCHeads.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 function openEditModal(row: any) {
   editingSCCHead.value = row;
   // Set the full community object
-  editForm.community_id = props.communities.find(c => c.id === row.community_id) || null;
+  editForm.community_id = props.communities.find((c) => c.id === row.community_id) || null;
   showEditModal.value = true;
   nextTick(async () => {
     if (editForm.community_id) {
       const { data } = await axios.get(`/api/community/${editForm.community_id.id}/members`);
       modalMembers.value = data;
       // Set the full member object
-      editForm.member_id = modalMembers.value.find(m => m.id === row.member_id) || null;
+      editForm.member_id = modalMembers.value.find((m) => m.id === row.member_id) || null;
     } else {
       modalMembers.value = [];
       editForm.member_id = null;
@@ -197,7 +195,7 @@ function openEditModal(row: any) {
 function submitEdit() {
   if (!editForm.member_id || !editForm.community_id) return;
   const editedId = editingSCCHead.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedSCCHeads.value.current_page,
@@ -232,16 +230,14 @@ function closeCreateModal() {
 
 function submitCreate() {
   // Check for duplicate community
-  const existingCommunity = enhancedSCCHeads.value.data.find(
-    (head: any) => head.community_id === createForm.community_id?.id
-  );
-  
+  const existingCommunity = enhancedSCCHeads.value.data.find((head: any) => head.community_id === createForm.community_id?.id);
+
   if (existingCommunity) {
     createForm.setError('community_id', 'This community already has an SCC Head assigned.');
     return;
   }
-  
-  createForm.transform(data => ({
+
+  createForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedSCCHeads.value.last_page,
@@ -265,8 +261,6 @@ function submitCreate() {
   });
 }
 
-
-
 function openDeleteModal(row: any) {
   deletingItem.value = row;
   showDeleteModal.value = true;
@@ -289,20 +283,24 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingItem.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 
 function restoreSCCHead(id: number) {
-  router.post(`/scc-head/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/scc-head/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
   isArchived.value = false;
 }
 
@@ -336,11 +334,19 @@ const canExportSCCHead = can('read-scc-head');
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold">SCC Head</h2>
         <div class="btn-group flex space-x-2">
-          <Button v-if="canExportSCCHead" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+          <Button
+            v-if="canExportSCCHead"
+            @click="downloadCsv"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
             <component :is="Download" />
             <span>Export CSV</span>
           </Button>
-          <Button v-if="canCreateSCCHead" @click="openCreateModal" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700">
+          <Button
+            v-if="canCreateSCCHead"
+            @click="openCreateModal"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
             <component :is="Plus" />
             <span>Add SCC Head</span>
           </Button>
@@ -349,8 +355,17 @@ const canExportSCCHead = can('read-scc-head');
       <div class="mb-4 flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
         <div class="flex flex-wrap items-center gap-3">
           <div class="relative">
-            <input v-model="search" @keyup.enter="fetch()" type="text" class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200" placeholder="Search..." @keydown.escape="clearSearch" />
-            <button v-if="search" @click="clearSearch" class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600">✕</button>
+            <input
+              v-model="search"
+              @keyup.enter="fetch()"
+              type="text"
+              class="rounded-full border border-gray-300 px-3 py-1 pr-8 focus:ring-2 focus:ring-blue-200"
+              placeholder="Search..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
+              ✕
+            </button>
           </div>
           <select v-model="perPage" @change="fetch()" class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200">
             <option :value="10">10</option>
@@ -360,7 +375,7 @@ const canExportSCCHead = can('read-scc-head');
           </select>
         </div>
         <div class="flex items-center gap-4">
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
@@ -370,30 +385,30 @@ const canExportSCCHead = can('read-scc-head');
 
     <div v-if="canReadAnySCCHead">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedSCCHeads.total || 0 }}</span> total SCC heads
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedSCCHeads.prev_page_url" 
-            @click="fetch(enhancedSCCHeads.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedSCCHeads.prev_page_url"
+            @click="fetch(enhancedSCCHeads.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedSCCHeads.last_page && enhancedSCCHeads.last_page > 1"
-              :value="enhancedSCCHeads.current_page" 
+              :value="enhancedSCCHeads.current_page"
               @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedSCCHeads.last_page" :key="page" :value="page">
                 {{ page }}
@@ -401,21 +416,19 @@ const canExportSCCHead = can('read-scc-head');
             </select>
             <span>of {{ enhancedSCCHeads.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedSCCHeads.next_page_url" 
-            @click="fetch(enhancedSCCHeads.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedSCCHeads.next_page_url"
+            @click="fetch(enhancedSCCHeads.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-violet-100 text-violet-800 rounded-full text-xs font-medium">
-            SCC Heads
-          </span>
+          <span class="rounded-full bg-violet-100 px-2 py-1 text-xs font-medium text-violet-800"> SCC Heads </span>
         </div>
       </div>
 
@@ -433,15 +446,20 @@ const canExportSCCHead = can('read-scc-head');
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedSCCHeads.data" :key="row.id" :id="`scc-head-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedSCCHeads.data"
+                :key="row.id"
+                :id="`scc-head-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
+                    <Button @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200">
                       Edit
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restoreSCCHead(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button @click="restoreSCCHead(row.id)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
                       Restore
                     </Button>
                   </template>
@@ -453,11 +471,11 @@ const canExportSCCHead = can('read-scc-head');
                 </td>
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                  <Button
-                    @click="openDeleteModal(row)"
-                    variant="destructive"
-                    class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition"
-                  >
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       Delete
                     </Button>
                   </template>
@@ -482,7 +500,14 @@ const canExportSCCHead = can('read-scc-head');
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <Multiselect v-model="editForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!editForm.community_id" />
+              <Multiselect
+                v-model="editForm.member_id"
+                :options="modalMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Member"
+                :disabled="!editForm.community_id"
+              />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
             </div>
             <div class="flex justify-end gap-3">
@@ -519,17 +544,31 @@ const canExportSCCHead = can('read-scc-head');
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <Multiselect v-model="createForm.member_id" :options="modalMembers" label="name" track-by="id" placeholder="Select Member" :disabled="!createForm.community_id" />
+              <Multiselect
+                v-model="createForm.member_id"
+                :options="modalMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Member"
+                :disabled="!createForm.community_id"
+              />
               <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.member_id }}
               </div>
             </div>
             <div class="flex justify-end gap-3">
-              <button type="button" @click="closeCreateModal" class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200">Cancel</button>
+              <button
+                type="button"
+                @click="closeCreateModal"
+                class="rounded-full bg-red-100 px-6 py-2 font-semibold text-red-700 transition hover:bg-red-200"
+              >
+                Cancel
+              </button>
               <button type="submit" class="rounded-full bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">Create</button>
             </div>
           </form>
-        </div>s
+        </div>
+        s
       </div>
     </transition>
     <transition name="fade">
@@ -537,15 +576,13 @@ const canExportSCCHead = can('read-scc-head');
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete SCC Member</h3>
-            <p>
-              Are you sure you want to delete this SCC Head?
-            </p>
+            <p>Are you sure you want to delete this SCC Head?</p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
                 type="button"
                 @click="showDeleteModal = false"
-                class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
               >
                 Cancel
               </Button>
@@ -553,7 +590,7 @@ const canExportSCCHead = can('read-scc-head');
                 variant="destructive"
                 type="button"
                 @click="confirmDelete"
-                class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
               >
                 Delete
               </Button>
@@ -571,9 +608,13 @@ const canExportSCCHead = can('read-scc-head');
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 .switch-checkbox[data-state='checked'] {
   background: #2563eb;

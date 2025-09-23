@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import AppLayout from '@/layouts/AppLayout.vue';
-import { ref, watch, computed, nextTick, onMounted } from 'vue';
-import { Plus, Download } from 'lucide-vue-next';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { Download, Plus } from 'lucide-vue-next';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 
@@ -19,7 +19,6 @@ const props = defineProps<{
 }>();
 
 const columns = [
-  { key: 'id', label: 'Id', sortable: true },
   { key: 'name', label: 'City Name', sortable: true },
   { key: 'state', label: 'State Name', sortable: true },
 ];
@@ -31,7 +30,7 @@ const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const editingCity = ref<Record<string, any>>();
 const deletingCity = ref<Record<string, any>>();
-const highlightedRowId = ref<number|null>(null);
+const highlightedRowId = ref<number | null>(null);
 const partialOnly = ['cities', 'filters'];
 const searchTimeout = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
@@ -90,29 +89,27 @@ function scrollToRow(rowId: number) {
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
-     router.get(
-      props.fetchUrl,
-      {
-        search: search.value,
-        stateId: stateId.value,
-        sort: sort.value,
-        direction: direction.value,
-        perPage: perPage.value,
-        isArchived: isArchived.value ? 'true' : 'false',
-        page,
-      },
-      {
-        preserveState: true,
-        replace: true,
-        only: partialOnly,
-      },
-    );
+  router.get(
+    props.fetchUrl,
+    {
+      search: search.value,
+      stateId: stateId.value,
+      sort: sort.value,
+      direction: direction.value,
+      perPage: perPage.value,
+      isArchived: isArchived.value ? 'true' : 'false',
+      page,
+    },
+    {
+      preserveState: true,
+      replace: true,
+      only: partialOnly,
+    },
+  );
 }
 
-
-
 function submit() {
-  form.transform(data => ({
+  form.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCities.value.last_page,
@@ -143,7 +140,7 @@ function openEditModal(city: any) {
 
 function submitEdit() {
   const editedId = editingCity.value?.id;
-  editForm.transform(data => ({
+  editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
     page: enhancedCities.value.last_page,
@@ -163,14 +160,10 @@ function submitEdit() {
   });
 }
 
-
-
-
 function openDeleteModal(city: any) {
   deletingCity.value = city;
   showDeleteModal.value = true;
 }
-
 
 function confirmDelete() {
   if (!deletingCity.value) return;
@@ -190,19 +183,23 @@ function confirmDelete() {
     onSuccess: () => {
       showDeleteModal.value = false;
       deletingCity.value = undefined;
-      highlightedRowId.value = deletedId+1;
-      nextTick(() => scrollToRow(deletedId+1));
+      highlightedRowId.value = deletedId + 1;
+      nextTick(() => scrollToRow(deletedId + 1));
     },
   });
 }
 function restoreCity(id: number) {
-  router.post(`/city/${id}/restore`, {}, {
-    preserveScroll: true,
-    only: partialOnly,
-    onSuccess: () => {
-      isArchived.value = false;
+  router.post(
+    `/city/${id}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      only: partialOnly,
+      onSuccess: () => {
+        isArchived.value = false;
+      },
     },
-  });
+  );
 }
 
 function handlePageChange(event: Event) {
@@ -245,16 +242,19 @@ function downloadCsv() {
   window.location.href = `${window.location.origin}/city/export?${params.toString()}`;
 }
 
-watch(() => enhancedCities.value.data, (rows) => {
-  if (highlightedRowId.value) {
-    let rowId = highlightedRowId.value;
-    if (rowId === -1 && rows.length) {
-      rowId = rows[rows.length - 1].id;
+watch(
+  () => enhancedCities.value.data,
+  (rows) => {
+    if (highlightedRowId.value) {
+      let rowId = highlightedRowId.value;
+      if (rowId === -1 && rows.length) {
+        rowId = rows[rows.length - 1].id;
+      }
+      scrollToRow(rowId);
+      highlightedRowId.value = null;
     }
-    scrollToRow(rowId);
-    highlightedRowId.value = null;
-  }
-});
+  },
+);
 
 onMounted(() => {
   // Check for highlightId in query string
@@ -279,38 +279,31 @@ const canExportCity = can('read-city');
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Cities" />
     <DatatableHeader>
-      <div class="mb-2 flex flex-wrap items-center gap-2 justify-between">
+      <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div class="flex flex-1 items-center gap-2">
-          <div class="flex-1 relative">
-                         <input 
-               v-model="search" 
-               type="text" 
-               class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8" 
-               placeholder="Search city or state..." 
-               @keydown.escape="clearSearch"
-             />
-            <button 
-              v-if="search" 
-              @click="clearSearch"  
-              class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            >
+          <div class="relative flex-1">
+            <input
+              v-model="search"
+              type="text"
+              class="w-full rounded-full border border-gray-300 px-3 py-2 pr-8"
+              placeholder="Search city or state..."
+              @keydown.escape="clearSearch"
+            />
+            <button v-if="search" @click="clearSearch" class="absolute top-1/2 right-2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600">
               ✕
             </button>
           </div>
-          
+
           <!-- State Filter Dropdown -->
           <div class="relative">
-                         <select 
-               v-model="stateId" 
-               class="rounded-full border border-gray-300 px-3 py-2 pr-8 appearance-none bg-[#ffffff]"
-             >
+            <select v-model="stateId" class="appearance-none rounded-full border border-gray-300 bg-[#ffffff] px-3 py-2 pr-8">
               <option value="">All States</option>
               <option v-for="state in states" :key="state.id" :value="state.id">
                 {{ state.name }}
               </option>
             </select>
-            <div class="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
-              <svg class="w-[1rem] h-[1rem] text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 transform">
+              <svg class="h-[1rem] w-[1rem] text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
               </svg>
             </div>
@@ -318,17 +311,25 @@ const canExportCity = can('read-city');
         </div>
 
         <div class="flex items-center gap-2">
-          <Button v-if="canCreateCity" @click="showModal = true" class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow hover:bg-blue-700 transition">
+          <Button
+            v-if="canCreateCity"
+            @click="showModal = true"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
             <component :is="Plus" />
             <span>Add New City</span>
           </Button>
-          
-          <Button v-if="canExportCity" @click="downloadCsv" class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow hover:bg-green-700 transition">
+
+          <Button
+            v-if="canExportCity"
+            @click="downloadCsv"
+            class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
+          >
             <component :is="Download" />
             <span>Export CSV</span>
           </Button>
-          
-          <label class="flex items-center gap-2 cursor-pointer select-none">
+
+          <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm text-gray-600">Show Archived</span>
           </label>
@@ -338,31 +339,31 @@ const canExportCity = can('read-city');
 
     <div v-if="canReadAnyCity">
       <!-- Compact pagination with inline stats above the table -->
-      <div class="mb-2 flex items-center justify-between gap-3 bg-gray-50 px-3 py-1.5 rounded border border-gray-100 text-xs">
+      <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
           Showing <span class="font-semibold">{{ enhancedCities.total || 0 }}</span> total cities
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
-          <span v-if="stateId" class="text-blue-600">in {{ states.find(s => s.id == stateId)?.name }}</span>
+          <span v-if="stateId" class="text-blue-600">in {{ states.find((s) => s.id == stateId)?.name }}</span>
         </div>
-        
+
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
-          <button 
-            v-if="enhancedCities.prev_page_url" 
-            @click="fetch(enhancedCities.current_page - 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+          <button
+            v-if="enhancedCities.prev_page_url"
+            @click="fetch(enhancedCities.current_page - 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
           </button>
-          
+
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
-            <select 
+            <select
               v-if="enhancedCities.last_page && enhancedCities.last_page > 1"
-              :value="enhancedCities.current_page" 
+              :value="enhancedCities.current_page"
               @change="handlePageChange"
-              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition focus:ring-1 focus:ring-[#3b82f6] focus:border-blue-500"
+              class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
               <option v-for="page in enhancedCities.last_page" :key="page" :value="page">
                 {{ page }}
@@ -370,25 +371,23 @@ const canExportCity = can('read-city');
             </select>
             <span>of {{ enhancedCities.last_page }}</span>
           </div>
-          
-          <button 
-            v-if="enhancedCities.next_page_url" 
-            @click="fetch(enhancedCities.current_page + 1)" 
-            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 hover:bg-blue-50 transition"
+
+          <button
+            v-if="enhancedCities.next_page_url"
+            @click="fetch(enhancedCities.current_page + 1)"
+            class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
           </button>
         </div>
-        
+
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-            Cities
-          </span>
+          <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800"> Cities </span>
         </div>
       </div>
 
-      <div class="mt-4 rounded-2xl bg-[#ffffff] p-6 shadow-xl border border-gray-100">
+      <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
             <thead>
@@ -401,27 +400,45 @@ const canExportCity = can('read-city');
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedCities.data" :key="row.id" :id="`city-row-${row.id}`" :class="['even:bg-gray-50 hover:bg-blue-50 transition', highlightedRowId === row.id ? 'highlight-row' : '']">
+              <tr
+                v-for="row in enhancedCities.data"
+                :key="row.id"
+                :id="`city-row-${row.id}`"
+                :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button v-if="canUpdateAnyCity" @click="openEditModal(row)" class="rounded-full bg-yellow-100 text-yellow-700 hover:bg-yellow-200 transition">
-                      Edit 
+                    <Button
+                      v-if="canUpdateAnyCity"
+                      @click="openEditModal(row)"
+                      class="rounded-full bg-yellow-100 text-yellow-700 transition hover:bg-yellow-200"
+                    >
+                      Edit
                     </Button>
                   </template>
                   <template v-else>
-                    <Button v-if="canUpdateAnyCity" @click="restoreCity(row.id)" class="rounded-full bg-green-100 text-green-700 hover:bg-green-200 transition">
+                    <Button
+                      v-if="canUpdateAnyCity"
+                      @click="restoreCity(row.id)"
+                      class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200"
+                    >
                       Restore
                     </Button>
                   </template>
                 </td>
                 <td v-for="col in columns" :key="col.key" class="p-2">
                   <span>
-                    {{ col.key === 'state' ? (row.state?.name || '') : row[col.key] }}
+                    {{ col.key === 'state' ? row.state?.name || '' : row[col.key] }}
                   </span>
                 </td>
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button v-if="canDeleteAnyCity" @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition">
+                    <Button
+                      v-if="canDeleteAnyCity"
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       Delete
                     </Button>
                   </template>
@@ -434,124 +451,131 @@ const canExportCity = can('read-city');
     </div>
     <div v-else class="py-10 text-center text-gray-500">You do not have permission to view cities.</div>
 
-         <!-- Create Modal -->
-     <transition name="fade">
-       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-           <div class="rounded-lg bg-[#ffffff] p-6">
-             <h3 class="mb-4 text-xl font-semibold">Create City</h3>
-             <form @submit.prevent="submit">
-               <div class="mb-3">
-                 <label class="mb-1 block text-sm font-medium">Name</label>
-                 <Input v-model="form.name" type="text" />
-                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
-               </div>
-               <div class="mb-3">
-                 <label class="mb-1 block text-sm font-medium">State</label>
-                 <select v-model="form.state_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                   <option value="" disabled>Select State</option>
-                   <option v-for="state in states" :key="state.id" :value="state.id">{{ state.name }}</option>
-                 </select>
-                 <div v-if="form.errors.state_id" class="mt-1 text-sm text-red-500">{{ form.errors.state_id }}</div>
-               </div>
-               <div class="flex justify-end space-x-2">
-                 <Button
-                   variant="destructive"
-                   type="button"
-                   @click="showModal = false"
-                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
-                 >
-                   Cancel
-                 </Button>
-                 <Button
-                   type="submit"
-                   :disabled="form.processing"
-                   class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
-                 >
-                   {{ form.processing ? 'Creating...' : 'Create' }}
-                 </Button>
-               </div>
-             </form>
-           </div>
-         </div>
-       </div>
-     </transition>
+    <!-- Create Modal -->
+    <transition name="fade">
+      <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Create City</h3>
+            <form @submit.prevent="submit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="form.name" type="text" />
+                <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">State</label>
+                <select
+                  v-model="form.state_id"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                >
+                  <option value="" disabled>Select State</option>
+                  <option v-for="state in states" :key="state.id" :value="state.id">{{ state.name }}</option>
+                </select>
+                <div v-if="form.errors.state_id" class="mt-1 text-sm text-red-500">{{ form.errors.state_id }}</div>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showModal = false"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="form.processing"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                >
+                  {{ form.processing ? 'Creating...' : 'Create' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-         <!-- Edit Modal -->
-     <transition name="fade">
-       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-           <div class="rounded-lg bg-[#ffffff] p-6">
-             <h3 class="mb-4 text-xl font-semibold">Edit City</h3>
-             <form @submit.prevent="submitEdit">
-               <div class="mb-3">
-                 <label class="mb-1 block text-sm font-medium">Name</label>
-                 <Input v-model="editForm.name" type="text" />
-                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
-               </div>
-               <div class="mb-3">
-                 <label class="mb-1 block text-sm font-medium">State</label>
-                 <select v-model="editForm.state_id" class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:outline-none focus:ring-2 focus:ring-blue-200">
-                   <option value="" disabled>Select State</option>
-                   <option v-for="state in states" :key="state.id" :value="state.id">{{ state.name }}</option>
-                 </select>
-                 <div v-if="editForm.errors.state_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.state_id }}</div>
-               </div>
-               <div class="flex justify-end space-x-2">
-                 <Button
-                   variant="destructive"
-                   type="button"
-                   @click="showEditModal = false"
-                   class="rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition px-6 py-2"
-                 >
-                   Cancel
-                 </Button>
-                 <Button
-                   type="submit"
-                   :disabled="editForm.processing"
-                   class="rounded-full bg-blue-600 text-white shadow hover:bg-blue-700 transition px-6 py-2 flex items-center gap-2"
-                 >
-                   {{ editForm.processing ? 'Saving...' : 'Save' }}
-                 </Button>
-               </div>
-             </form>
-           </div>
-         </div>
-       </div>
-     </transition>
+    <!-- Edit Modal -->
+    <transition name="fade">
+      <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Edit City</h3>
+            <form @submit.prevent="submitEdit">
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">Name</label>
+                <Input v-model="editForm.name" type="text" />
+                <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
+              </div>
+              <div class="mb-3">
+                <label class="mb-1 block text-sm font-medium">State</label>
+                <select
+                  v-model="editForm.state_id"
+                  class="w-full rounded-lg border border-gray-200 px-4 py-2 text-lg focus:ring-2 focus:ring-blue-200 focus:outline-none"
+                >
+                  <option value="" disabled>Select State</option>
+                  <option v-for="state in states" :key="state.id" :value="state.id">{{ state.name }}</option>
+                </select>
+                <div v-if="editForm.errors.state_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.state_id }}</div>
+              </div>
+              <div class="flex justify-end space-x-2">
+                <Button
+                  variant="destructive"
+                  type="button"
+                  @click="showEditModal = false"
+                  class="rounded-full bg-red-100 px-6 py-2 text-red-700 transition hover:bg-red-200"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  :disabled="editForm.processing"
+                  class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+                >
+                  {{ editForm.processing ? 'Saving...' : 'Save' }}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </transition>
 
-         <!-- Delete Modal -->
-     <transition name="fade">
-       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
-           <div class="rounded-lg bg-[#ffffff] p-6">
-             <h3 class="mb-4 text-xl font-semibold">Delete City</h3>
-             <p>
-               Are you sure you want to delete <span class="font-bold">{{ deletingCity?.name }}</span>?
-             </p>
-             <div class="mt-6 flex justify-end space-x-2">
-               <Button
-                 variant="secondary"
-                 type="button"
-                 @click="showDeleteModal = false"
-                 class="rounded-full bg-gray-100 text-gray-700 hover:bg-gray-200 transition px-6 py-2"
-               >
-                 Cancel
-               </Button>
-               <Button
-                 variant="destructive"
-                 type="button"
-                 :disabled="false"
-                 @click="confirmDelete"
-                 class="rounded-full bg-red-600 text-white shadow hover:bg-red-700 transition px-6 py-2 flex items-center gap-2"
-               >
-                 Delete
-               </Button>
-             </div>
-           </div>
-         </div>
-       </div>
-     </transition>
+    <!-- Delete Modal -->
+    <transition name="fade">
+      <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <h3 class="mb-4 text-xl font-semibold">Delete City</h3>
+            <p>
+              Are you sure you want to delete <span class="font-bold">{{ deletingCity?.name }}</span
+              >?
+            </p>
+            <div class="mt-6 flex justify-end space-x-2">
+              <Button
+                variant="secondary"
+                type="button"
+                @click="showDeleteModal = false"
+                class="rounded-full bg-gray-100 px-6 py-2 text-gray-700 transition hover:bg-gray-200"
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                type="button"
+                :disabled="false"
+                @click="confirmDelete"
+                class="flex items-center gap-2 rounded-full bg-red-600 px-6 py-2 text-white shadow transition hover:bg-red-700"
+              >
+                Delete
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </transition>
   </AppLayout>
 </template>
 
@@ -569,14 +593,18 @@ const canExportCity = can('read-city');
   height: 1.25rem;
   border-radius: 9999px;
   background: #ef4444; /* Tailwind red-500 */
-  box-shadow: 0 2px 8px 0 rgba(239, 68, 68, 0.25), 0 1.5px 4px 0 rgba(0,0,0,0.10);
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
   position: relative;
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
-.switch-checkbox[data-state="checked"] {
+.switch-checkbox[data-state='checked'] {
   background: #2563eb;
 }
-.switch-checkbox input[type="checkbox"] {
+.switch-checkbox input[type='checkbox'] {
   opacity: 0;
   width: 100%;
   height: 100%;
@@ -586,7 +614,7 @@ const canExportCity = can('read-city');
   margin: 0;
   cursor: pointer;
 }
-.switch-checkbox [data-slot="checkbox-indicator"] {
+.switch-checkbox [data-slot='checkbox-indicator'] {
   position: absolute;
   left: 0.125rem;
   top: 0.125rem;
@@ -596,7 +624,7 @@ const canExportCity = can('read-city');
   background: #fff;
   transition: left 0.2s;
 }
-.switch-checkbox[data-state="checked"] [data-slot="checkbox-indicator"] {
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
   left: 1.375rem;
 }
 .highlight-row {
@@ -604,7 +632,11 @@ const canExportCity = can('read-city');
   background-color: #fef08a !important; /* Tailwind yellow-200 */
 }
 @keyframes highlight-fade {
-  0% { background-color: #fde047; }
-  100% { background-color: inherit; }
+  0% {
+    background-color: #fde047;
+  }
+  100% {
+    background-color: inherit;
+  }
 }
-</style> 
+</style>

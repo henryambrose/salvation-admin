@@ -25,6 +25,7 @@ import NavMainGrouped from '@/components/NavMainGrouped.vue';
 import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { permissionHelpers } from '@/composables/permissionHelpers';
+import { useScrollRestoration } from '@/composables/useScrollRestoration';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import { BarChart3, Clock, FileText, FolderOpen, Home, IndianRupee, Settings } from 'lucide-vue-next';
@@ -32,6 +33,9 @@ import { computed, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
 const { can } = permissionHelpers();
+
+// Initialize scroll restoration for the sidebar
+useScrollRestoration();
 
 const resolveIcon = (iconName: string) => {
   return (Icons as any)[iconName] || Icons.HelpCircle; // fallback icon

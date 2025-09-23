@@ -43,8 +43,24 @@
             <option :value="50">50</option>
             <option :value="100">100</option>
           </select>
+          <select
+            v-model="filters.maintenance_status"
+            @change="applyFilters"
+            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
+          >
+            <option value="">All Payment Status</option>
+            <option value="pending">Pending Payment</option>
+            <option value="partial">Partial Payment</option>
+            <option value="paid">Paid Up</option>
+          </select>
         </div>
         <div class="flex items-center gap-4">
+          <Button
+            @click="exportToCSV"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
+          >
+            <span class="text-sm">Export CSV</span>
+          </Button>
           <label class="flex cursor-pointer items-center gap-2 select-none">
             <Checkbox v-model="isArchived" class="switch-checkbox" />
             <span class="text-sm font-medium">Show Archived</span>
@@ -135,6 +151,8 @@
                 <th class="border-b p-3 font-semibold text-gray-700">Owner Name</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Plot Size</th>
                 <th class="border-b p-3 font-semibold text-gray-700">Last Burial</th>
+                <th class="border-b p-3 font-semibold text-gray-700">Pending Amount</th>
+                <th class="border-b p-3 font-semibold text-gray-700">Last Payment</th>
                 <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
               </tr>
             </thead>
@@ -148,6 +166,14 @@
                 <td class="p-2">
                   <div class="flex items-center gap-2">
                     <template v-if="!serverArchived">
+                      <Button
+                        v-if="grave.pending_amount > 0"
+                        @click="payMaintenanceFee(grave)"
+                        class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200"
+                        title="Pay Maintenance Fee"
+                      >
+                        <span class="text-xs font-medium">Pay ₹{{ Number(grave.pending_amount).toLocaleString('en-IN') }}</span>
+                      </Button>
                       <Button
                         v-if="canUpdateAnyGrave"
                         @click="router.visit('/graveyard/permanent-graves/' + grave.id + '/edit')"
@@ -177,6 +203,13 @@
                 <td class="p-2">{{ grave.owner_name || (grave.member ? grave.member.first_name + ' ' + grave.member.last_name : '-') }}</td>
                 <td class="p-2">{{ grave.plot_size ? `${grave.plot_size} sq ft` : '-' }}</td>
                 <td class="p-2">{{ grave.last_burial_date ? formatDate(grave.last_burial_date) : '-' }}</td>
+                <td class="p-2">
+                  <span v-if="grave.pending_amount > 0" class="font-semibold text-red-600">
+                    ₹{{ Number(grave.pending_amount).toLocaleString('en-IN') }}
+                  </span>
+                  <span v-else class="text-green-600">Paid</span>
+                </td>
+                <td class="p-2">{{ grave.last_payment_year || '-' }}</td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyGrave">
                     <Button
@@ -269,12 +302,13 @@ const breadcrumbs = [
 ];
 
 // Reactive state
-const filters = ref({ 
-  perPage: 10, 
-  search: '', 
-  sort: 'section', 
+const filters = ref({
+  perPage: 10,
+  search: '',
+  sort: 'section',
   direction: 'asc',
-  ...(props.filters || {}) 
+  maintenance_status: '',
+  ...(props.filters || {})
 });
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
@@ -355,6 +389,27 @@ const restoreGrave = (id: number) => {
       },
     },
   );
+};
+
+const payMaintenanceFee = (grave: any) => {
+  // Navigate to maintenance fee payment page
+  router.visit(`/graveyard/payments/create/maintenance/${grave.id}`);
+};
+
+const exportToCSV = () => {
+  // Create CSV export with current filters
+  const exportParams = {
+    ...filters.value,
+    isArchived: isArchived.value ? 'true' : 'false',
+    export: 'csv',
+  };
+
+  // Create download link
+  const queryString = new URLSearchParams(exportParams).toString();
+  const exportUrl = `${props.fetchUrl}/export?${queryString}`;
+
+  // Trigger download
+  window.open(exportUrl, '_blank');
 };
 
 const highlightRow = (id: number) => {

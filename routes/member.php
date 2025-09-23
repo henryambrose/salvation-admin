@@ -35,6 +35,17 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('member.search-members');
     Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
         ->name('member.handle-marriage');
+
+    // Family photo routes
+    Route::post('member/family-photo/upload/{familyNo}', [MemberController::class, 'uploadFamilyPhoto'])
+        ->name('member.family-photo.upload');
+    Route::delete('member/family-photo/{familyNo}', [MemberController::class, 'deleteFamilyPhoto'])
+        ->name('member.family-photo.delete');
+    Route::get('member/family-photo/{familyNo}', [MemberController::class, 'getFamilyPhoto'])
+        ->name('member.family-photo.get');
+    Route::get('member/family-photo-statistics', [MemberController::class, 'getFamilyPhotoStatistics'])
+        ->name('member.family-photo.statistics');
+
     Route::resource('member', MemberController::class)->except(['index']);
     Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
     Route::get('/member/{id}/details', [MemberController::class, 'getMemberDetails'])->name('member.details');
