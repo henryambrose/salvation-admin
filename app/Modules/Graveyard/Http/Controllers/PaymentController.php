@@ -599,14 +599,24 @@ class PaymentController extends Controller
                 $paymentNotes .= "\nNotes: {$request->payment_notes}";
             }
 
+            // Calculate total pending amount and balance after payment
+            $totalPendingAmount = $grave->calculatePendingAmount();
+            $paidAmount = $request->payment_amount;
+
+            // Round up the balance amount for partial payments
+            $balanceAmount = $totalPendingAmount - $paidAmount;
+            if ($balanceAmount > 0) {
+                $balanceAmount = ceil($balanceAmount);
+            }
+
             // Create payment record
             $payment = Payment::create([
                 'payable_type' => 'Modules\\Graveyard\\Models\\PermanentGrave',
                 'payable_id' => $grave->id,
-                'total_amount' => $request->payment_amount,
-                'paid_amount' => $request->payment_amount,
-                'balance_amount' => 0,
-                'payment_status' => 'completed',
+                'total_amount' => $totalPendingAmount,
+                'paid_amount' => $paidAmount,
+                'balance_amount' => max(0, $balanceAmount),
+                'payment_status' => $balanceAmount <= 0 ? 'completed' : 'partial',
                 'payment_method_id' => $request->payment_method_id,
                 'transaction_reference' => $request->transaction_reference,
                 'payment_notes' => $paymentNotes,

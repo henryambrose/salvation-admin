@@ -182,7 +182,14 @@ class PermanentGrave extends Model
             $totalPending -= $currentYearPartialPayments;
         }
 
-        return max(0, $totalPending);
+        $pendingAmount = max(0, $totalPending);
+
+        // Round up partial amounts (amounts less than full year fee)
+        if ($pendingAmount > 0 && $pendingAmount < $annualFee) {
+            $pendingAmount = ceil($pendingAmount);
+        }
+
+        return $pendingAmount;
     }
 
     /**
@@ -242,11 +249,13 @@ class PermanentGrave extends Model
             unset($partialPayments[$currentYear]);
         }
 
-        // Update the model
+        // Update the model with rounded pending amount
+        $newPendingAmount = $this->calculatePendingAmount();
+
         $this->update([
             'partial_payment_months' => $partialPayments,
             'last_payment_year' => $this->last_payment_year,
-            'pending_amount' => $this->calculatePendingAmount(),
+            'pending_amount' => $newPendingAmount,
         ]);
     }
 
