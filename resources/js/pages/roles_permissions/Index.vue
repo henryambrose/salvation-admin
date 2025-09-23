@@ -1026,7 +1026,7 @@ function formatSpecialPermissionName(permissionSlug: string): string {
 
       <!-- No Role Selected Message -->
       <div v-else class="py-12 text-center">
-        <div class="mx-auto max-w-md">
+        <div class="mx-auto max-w-[448px]">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               stroke-linecap="round"
@@ -1045,7 +1045,7 @@ function formatSpecialPermissionName(permissionSlug: string): string {
 
     <!-- Add Role Modal -->
     <div v-if="showAddRoleModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black p-4">
-      <div class="w-full max-w-md rounded-xl bg-[#ffffff] p-6 shadow-2xl">
+      <div class="w-full max-w-[448px] rounded-xl bg-[#ffffff] p-6 shadow-2xl">
         <div class="mb-4 flex items-center justify-between">
           <h3 class="text-lg font-semibold text-gray-900">Add New Role</h3>
           <button @click="closeAddRoleModal" class="text-gray-400 hover:text-gray-600">

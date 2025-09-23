@@ -60,12 +60,16 @@ const canToggleManager = can('toggle-obituary-manager') ?? true;
 const search = ref('');
 
 const performSearch = () => {
-  router.get('/graveyard/obituary-managers', {
-    search: search.value,
-  }, {
-    preserveState: true,
-    replace: true,
-  });
+  router.get(
+    '/graveyard/obituary-managers',
+    {
+      search: search.value,
+    },
+    {
+      preserveState: true,
+      replace: true,
+    },
+  );
 };
 
 // Debounced search function
@@ -91,25 +95,27 @@ const getDeceasedName = (obituaryPage: ObituaryManager['obituary_page']): string
 };
 
 const getBookingReference = (obituaryPage: ObituaryManager['obituary_page']): string => {
-  return obituaryPage.permanent_grave_booking?.booking_reference ||
-         obituaryPage.temporary_grave_booking?.booking_reference ||
-         'N/A';
+  return obituaryPage.permanent_grave_booking?.booking_reference || obituaryPage.temporary_grave_booking?.booking_reference || 'N/A';
 };
 
 const toggleActive = (manager: ObituaryManager) => {
-  router.post(`/graveyard/obituary-managers/${manager.id}/toggle-active`, {}, {
-    preserveScroll: true,
-    onSuccess: () => {
-      const status = !manager.is_active ? 'activated' : 'deactivated';
-      success(`Obituary manager ${status} successfully.`);
-      // Refresh the current page to show updated status
-      router.reload({ only: ['obituaryManagers'] });
+  router.post(
+    `/graveyard/obituary-managers/${manager.id}/toggle-active`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        const status = !manager.is_active ? 'activated' : 'deactivated';
+        success(`Obituary manager ${status} successfully.`);
+        // Refresh the current page to show updated status
+        router.reload({ only: ['obituaryManagers'] });
+      },
+      onError: (errors) => {
+        console.error('Error toggling obituary manager status:', errors);
+        error('Failed to update manager status. Please try again.');
+      },
     },
-    onError: (errors) => {
-      console.error('Error toggling obituary manager status:', errors);
-      error('Failed to update manager status. Please try again.');
-    },
-  });
+  );
 };
 
 const viewObituaryPage = (uuid: string) => {
@@ -144,7 +150,7 @@ const viewObituaryPage = (uuid: string) => {
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-1 items-center space-x-4">
-                <div class="relative max-w-md flex-1">
+                <div class="relative max-w-[448px] flex-1">
                   <Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input v-model="search" placeholder="Search by name, email, or deceased person..." class="pl-10" />
                 </div>
@@ -184,8 +190,8 @@ const viewObituaryPage = (uuid: string) => {
                     <!-- Manager Info -->
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="flex items-center">
-                        <div class="flex-shrink-0 h-8 w-8">
-                          <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center">
+                        <div class="h-8 w-8 flex-shrink-0">
+                          <div class="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
                             <User class="h-4 w-4 text-purple-600" />
                           </div>
                         </div>
@@ -214,7 +220,7 @@ const viewObituaryPage = (uuid: string) => {
                     </td>
 
                     <!-- Access Info -->
-                    <td class="px-6 py-4 text-sm text-gray-600 whitespace-nowrap">
+                    <td class="px-6 py-4 text-sm whitespace-nowrap text-gray-600">
                       <div class="space-y-1">
                         <div>Granted by: {{ manager.access_granted_by.name }}</div>
                         <div>On: {{ new Date(manager.access_granted_at).toLocaleDateString() }}</div>
@@ -234,12 +240,7 @@ const viewObituaryPage = (uuid: string) => {
                             <User class="h-3 w-3" />
                           </Link>
                         </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          @click="viewObituaryPage(manager.obituary_page.uuid)"
-                          title="View obituary page"
-                        >
+                        <Button size="sm" variant="outline" @click="viewObituaryPage(manager.obituary_page.uuid)" title="View obituary page">
                           <Shield class="h-3 w-3" />
                         </Button>
                         <Button

@@ -534,7 +534,7 @@ const breadcrumbs = [
             }
           "
         ></div>
-        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Mass Intention Type</h3>
             <form @submit.prevent="submit">
@@ -600,7 +600,7 @@ const breadcrumbs = [
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Mass Intention Type</h3>
             <form @submit.prevent="submitEdit">
@@ -660,7 +660,7 @@ const breadcrumbs = [
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Mass Intention Type</h3>
             <p>

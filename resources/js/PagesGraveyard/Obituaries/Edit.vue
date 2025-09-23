@@ -105,9 +105,7 @@ const availableBackgrounds = computed(() => {
   if (props.obituary.service_type === 'premium') {
     // Combine both arrays and remove duplicates based on 'value' property
     const combined = [...props.basicBackgrounds, ...props.premiumBackgrounds];
-    const unique = combined.filter((bg, index, self) =>
-      index === self.findIndex(item => item.value === bg.value)
-    );
+    const unique = combined.filter((bg, index, self) => index === self.findIndex((item) => item.value === bg.value));
     return unique;
   } else {
     return props.basicBackgrounds;
@@ -694,7 +692,7 @@ const goBack = () => {
                     </Button>
                   </div>
                   <div class="mt-2 mb-4">
-                    <audio controls class="w-full max-w-md">
+                    <audio controls class="w-full max-w-[448px]">
                       <source
                         :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
                         type="audio/mpeg"
@@ -781,7 +779,6 @@ const goBack = () => {
               </div>
             </CardContent>
           </Card>
-
 
           <!-- Settings Section -->
           <Card>

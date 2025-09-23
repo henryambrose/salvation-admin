@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { Clock, CreditCard, AlertCircle } from 'lucide-vue-next';
+import { AlertCircle, Clock, CreditCard } from 'lucide-vue-next';
 
 interface Props {
   message?: string;
@@ -64,91 +64,91 @@ const getPageTitle = (issueType?: string) => {
 <template>
   <Head :title="getPageTitle(props.issueType || 'payment')" />
 
-  <div class="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8">
+  <div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
+    <div class="w-full max-w-[448px] space-y-8">
       <div class="text-center">
         <!-- Status Icon -->
-        <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6"
-             :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)">
-          <component :is="getStatusIcon(props.issueType || 'payment', props.paymentStatus)"
-                     class="h-8 w-8"
-                     :class="getStatusColor(props.issueType || 'payment', props.paymentStatus)" />
+        <div
+          class="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full"
+          :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)"
+        >
+          <component
+            :is="getStatusIcon(props.issueType || 'payment', props.paymentStatus)"
+            class="h-8 w-8"
+            :class="getStatusColor(props.issueType || 'payment', props.paymentStatus)"
+          />
         </div>
 
         <!-- Title -->
-        <h1 class="text-2xl font-bold text-gray-900 mb-4">
+        <h1 class="mb-4 text-2xl font-bold text-gray-900">
           {{ props.issueType === 'review' ? 'Under Review' : props.issueType === 'payment' ? 'Payment Required' : 'Page Unavailable' }}
         </h1>
 
         <!-- Obituary Name -->
         <div v-if="props.obituaryName" class="mb-6">
-          <p class="text-lg text-gray-700">
-            Obituary for
-          </p>
+          <p class="text-lg text-gray-700">Obituary for</p>
           <p class="text-xl font-semibold text-gray-900">
             {{ props.obituaryName }}
           </p>
         </div>
 
         <!-- Message -->
-        <div class="mb-8 p-4 rounded-lg border" :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)">
+        <div class="mb-8 rounded-lg border p-4" :class="getStatusBgColor(props.issueType || 'payment', props.paymentStatus)">
           <p class="text-gray-800" :class="getStatusColor(props.issueType || 'payment', props.paymentStatus)">
             {{ props.message }}
           </p>
         </div>
 
         <!-- Payment Status Details -->
-        <div class="bg-white rounded-lg shadow-sm border p-6 mb-8">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">What's happening?</h3>
+        <div class="mb-8 rounded-lg border bg-white p-6 shadow-sm">
+          <h3 class="mb-4 text-lg font-medium text-gray-900">What's happening?</h3>
 
           <div v-if="props.paymentStatus === 'pending'" class="space-y-3 text-left">
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-amber-400"></div>
               <p class="text-gray-600">This obituary page is waiting for payment to be completed</p>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-amber-400"></div>
               <p class="text-gray-600">Once payment is processed, the page will become publicly available</p>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-amber-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-amber-400"></div>
               <p class="text-gray-600">Please contact the administrator if you have questions about payment</p>
             </div>
           </div>
 
           <div v-else-if="props.paymentStatus === 'partial'" class="space-y-3 text-left">
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"></div>
               <p class="text-gray-600">This obituary page has a partial payment</p>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"></div>
               <p class="text-gray-600">The remaining balance needs to be paid before publication</p>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-blue-400"></div>
               <p class="text-gray-600">Please contact the administrator to complete the payment</p>
             </div>
           </div>
 
           <div v-else class="space-y-3 text-left">
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-red-400"></div>
               <p class="text-gray-600">There is an issue with the payment for this obituary page</p>
             </div>
             <div class="flex items-start gap-3">
-              <div class="w-2 h-2 bg-red-400 rounded-full mt-2 flex-shrink-0"></div>
+              <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-red-400"></div>
               <p class="text-gray-600">Please contact the administrator for assistance</p>
             </div>
           </div>
         </div>
 
         <!-- Contact Information -->
-        <div class="bg-gray-100 rounded-lg p-6">
-          <h3 class="text-md font-medium text-gray-900 mb-3">Need Help?</h3>
-          <p class="text-sm text-gray-600 mb-4">
-            If you believe this is an error or need assistance with payment, please contact our support team.
-          </p>
+        <div class="rounded-lg bg-gray-100 p-6">
+          <h3 class="text-md mb-3 font-medium text-gray-900">Need Help?</h3>
+          <p class="mb-4 text-sm text-gray-600">If you believe this is an error or need assistance with payment, please contact our support team.</p>
           <div class="space-y-2 text-sm text-gray-700">
             <p>📧 Contact the administrator</p>
             <p>📞 Call for immediate assistance</p>
@@ -158,11 +158,8 @@ const getPageTitle = (issueType?: string) => {
 
         <!-- Status Badge -->
         <div class="mt-8">
-          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize"
-                :class="getStatusBgColor(props.paymentStatus)">
-            <component :is="getStatusIcon(props.paymentStatus)"
-                       class="h-4 w-4 mr-2"
-                       :class="getStatusColor(props.paymentStatus)" />
+          <span class="inline-flex items-center rounded-full px-3 py-1 text-sm font-medium capitalize" :class="getStatusBgColor(props.paymentStatus)">
+            <component :is="getStatusIcon(props.paymentStatus)" class="mr-2 h-4 w-4" :class="getStatusColor(props.paymentStatus)" />
             Payment {{ props.paymentStatus || 'Unknown' }}
           </span>
         </div>

@@ -549,7 +549,7 @@ function closeRoleModal() {
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Add User</h3>
             <form @submit.prevent="submitCreate">
@@ -592,7 +592,7 @@ function closeRoleModal() {
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit User</h3>
             <form @submit.prevent="submitEdit">
@@ -635,7 +635,7 @@ function closeRoleModal() {
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete User</h3>
             <p>
@@ -667,7 +667,7 @@ function closeRoleModal() {
     <!-- Role Management Modal -->
     <transition name="fade">
       <div v-if="showRoleModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Manage Role for {{ selectedUser?.name }}</h3>
             <p class="mb-4 text-sm text-gray-600">Assign a single role for this user</p>

@@ -1,15 +1,12 @@
 // tailwind.config.js
 module.exports = {
-  content: [
-    "./resources/**/*.blade.php",
-    "./resources/**/*.js", 
-    "./resources/**/*.vue",
-    "./resources/js/**/*.vue",
-  ],
+  content: ['./resources/**/*.blade.php', './resources/**/*.js', './resources/**/*.vue', './resources/js/**/*.vue'],
   theme: {
     extend: {
-      // Your custom extensions here
+      maxWidth: {
+        md: '28rem',
+      },
     },
   },
   plugins: [],
-}
+};

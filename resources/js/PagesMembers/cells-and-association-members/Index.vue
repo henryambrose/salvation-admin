@@ -594,7 +594,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
             <form @submit.prevent="submitEdit">
@@ -662,7 +662,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showCreateModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
             <form @submit.prevent="submitCreate">
@@ -733,7 +733,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Cells Association Member</h3>
             <p class="mb-2">Are you sure you want to delete this Cells Association Member?</p>

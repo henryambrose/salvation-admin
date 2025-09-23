@@ -4,10 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
-import { Column } from '@/types';
 
 const { can } = permissionHelpers();
 
@@ -493,7 +493,7 @@ const breadcrumbs = [
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Mass Intention</h3>
             <p>

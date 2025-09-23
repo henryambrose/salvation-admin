@@ -303,7 +303,7 @@ const shareObituaryPage = () => {
         <!-- Audio Message -->
         <section v-if="obituary.audio_message" class="mb-12">
           <h2 class="mb-6 font-serif text-3xl font-bold text-gray-900">Audio Message</h2>
-          <audio controls class="w-full max-w-md">
+          <audio controls class="w-full max-w-[448px]">
             <source
               :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
               type="audio/mpeg"

@@ -887,7 +887,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
     <!-- Delete Modal with tooltip -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
-        <div class="w-full max-w-md rounded-lg bg-[#ffffff] p-6 shadow-xl">
+        <div class="w-full max-w-[448px] rounded-lg bg-[#ffffff] p-6 shadow-xl">
           <h3 class="mb-4 text-xl font-semibold">Delete Member</h3>
           <p class="mb-2">Are you sure you want to delete this member?</p>
           <div class="mb-4 rounded-lg bg-gray-50 p-3">

@@ -482,7 +482,7 @@ function handlePageChange(event: Event) {
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Create Age Group</h3>
             <form @submit.prevent="submit">
@@ -534,7 +534,7 @@ function handlePageChange(event: Event) {
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Age Group</h3>
             <form @submit.prevent="submitEdit">
@@ -586,7 +586,7 @@ function handlePageChange(event: Event) {
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Age Group</h3>
             <p>

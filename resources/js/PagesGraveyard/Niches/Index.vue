@@ -35,7 +35,7 @@
           <select
             v-model="filters.status"
             @change="applyFilters()"
-            class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200 min-w-[120px]"
+            class="min-w-[120px] rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
           >
             <option value="">All Status</option>
             <option value="available">Available</option>
@@ -218,12 +218,13 @@
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="bg-opacity-50 absolute inset-0 bg-black" @click="showDeleteModal = false"></div>
-        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-md rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Niche</h3>
             <p>
               Are you sure you want to delete this niche
-              <span class="font-bold">N{{ nicheToDelete?.niche_no }}-{{ nicheToDelete?.sr_no }}</span>?
+              <span class="font-bold">N{{ nicheToDelete?.niche_no }}-{{ nicheToDelete?.sr_no }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -286,13 +287,13 @@ const breadcrumbs = [
 ];
 
 // Reactive state
-const filters = ref({ 
+const filters = ref({
   search: '',
   status: '',
   perPage: 10,
   sort: 'location',
   direction: 'asc',
-  ...(props.filters || {}) 
+  ...(props.filters || {}),
 });
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
@@ -437,7 +438,7 @@ watch(
   () => filters.value.search,
   () => {
     debouncedSearch();
-  }
+  },
 );
 
 onMounted(() => {

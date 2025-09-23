@@ -152,7 +152,7 @@ onMounted(() => {
             <Bot class="h-8 w-8 text-white" />
           </div>
           <h3 class="mb-2 text-lg font-semibold text-gray-900 dark:text-white">Welcome to Catholic AI Chat Assistant</h3>
-          <p class="max-w-md text-gray-500 dark:text-gray-400">
+          <p class="max-w-[448px] text-gray-500 dark:text-gray-400">
             I'm here to help you with questions about Catholic teachings, prayers, and spiritual guidance. How can I assist you today?
           </p>
         </div>

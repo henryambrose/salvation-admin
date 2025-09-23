@@ -209,7 +209,7 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div class="flex flex-1 items-center space-x-4">
-                <div class="relative max-w-md flex-1">
+                <div class="relative max-w-[448px] flex-1">
                   <Search class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input v-model="search" placeholder="Search by name or booking reference..." class="pl-10" />
                 </div>

@@ -555,7 +555,7 @@ const paymentStatusColors = {
               </CardHeader>
               <CardContent>
                 <div class="rounded-lg bg-gray-50 p-4">
-                  <audio controls class="w-full max-w-md">
+                  <audio controls class="w-full max-w-[448px]">
                     <source
                       :src="obituary.audio_message.startsWith('http') ? obituary.audio_message : `/storage/${obituary.audio_message}`"
                       type="audio/mpeg"
@@ -951,7 +951,7 @@ const paymentStatusColors = {
 
         <!-- Grant External Access Dialog -->
         <Dialog v-model:open="showExternalMemberDialog">
-          <DialogContent class="max-w-md">
+          <DialogContent class="max-w-[448px]">
             <DialogHeader>
               <DialogTitle>Grant External Access</DialogTitle>
               <DialogDescription> Create an account for a family member to manage this obituary page. </DialogDescription>
@@ -1023,7 +1023,7 @@ const paymentStatusColors = {
 
         <!-- Reset Password Dialog -->
         <Dialog v-model:open="showResetPasswordDialog">
-          <DialogContent class="max-w-md">
+          <DialogContent class="max-w-[448px]">
             <DialogHeader>
               <DialogTitle>Reset External Member Password</DialogTitle>
               <DialogDescription> Set a new password for {{ obituary.obituary_manager?.name }}. </DialogDescription>

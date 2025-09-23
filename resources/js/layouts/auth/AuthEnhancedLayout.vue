@@ -586,7 +586,7 @@ onMounted(() => {
         <div class="bg-dots-pattern absolute inset-0 opacity-30"></div>
       </div>
 
-      <div class="relative z-10 w-full max-w-md">
+      <div class="relative z-10 w-full max-w-[448px]">
         <!-- Mobile Logo -->
         <div class="mb-12 flex flex-col items-center gap-8 lg:hidden">
           <Link :href="route('home')" class="group flex flex-col items-center gap-6">
