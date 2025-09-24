@@ -101,7 +101,7 @@ const tabs = [
       { key: 'registration_year', label: 'Registration Year' },
       { key: 'church_code', label: 'Church Code' },
       { key: 'marital_status', label: 'Marital Status' },
-      { key: 'current_family_no', label: 'Current Family No' },
+      { key: 'birth_family_no', label: 'Birth Family No' },
     ],
   },
   {

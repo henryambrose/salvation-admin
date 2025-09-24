@@ -52,7 +52,7 @@ export interface Member {
   family_sequence?: number | null;
   member_sequence?: number | null;
   marital_status?: 'single' | 'married' | 'divorced' | 'widowed';
-  current_family_no?: string | null;
+  birth_family_no?: string | null;
   // relation_member_id?: number | null;
   mother_id?: number | null;
   father_id?: number | null;

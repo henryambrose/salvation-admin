@@ -286,6 +286,7 @@ class MemberController extends Controller
     {
         $this->authorize('create', Member::class);
 
+
         return Inertia::render('member/Member', [
             'communities' => Community::all(),
             // 'incomeRanges' => IncomeRange::all()->map(function ($item) {
@@ -411,7 +412,35 @@ class MemberController extends Controller
                 $data['registration_year'] = date('Y');
             }
 
+            // Handle marriage logic for new members
+            if (isset($data['spouse_id']) && $data['spouse_id']) {
+                $this->handleMarriageTransitionForNew($data);
+            }
+
+            // Store external member creation info before creating member
+            $externalMemberInfo = $data['_create_external_member'] ?? null;
+            unset($data['_create_external_member']); // Remove from data before creating member
+
             $member = Member::create($data);
+
+            // Create external member record if needed (for new married females)
+            if ($externalMemberInfo && $externalMemberInfo['transition_type'] === 'female_joins_male') {
+                $this->createExternalMemberRecord(
+                    $member,
+                    $externalMemberInfo['birth_family_no'],
+                    $externalMemberInfo['spouse']
+                );
+            }
+
+            // Set bidirectional spouse relationship for new member with spouse
+            if (isset($member->spouse_id) && $member->spouse_id) {
+                $spouse = Member::find($member->spouse_id);
+                if ($spouse && !$spouse->spouse_id) {
+                    $spouse->spouse_id = $member->id;
+                    $spouse->spouse_source = 'Member';
+                    $spouse->save();
+                }
+            }
 
             // Create audit log for the creation
             AuditLog::create([
@@ -480,6 +509,7 @@ class MemberController extends Controller
             return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
 
+
         return Inertia::render('member/Member', [
             'member' => $member,
             'members' => Member::select('id', 'first_name', 'last_name', 'family_no')->with('spouse')->get(), // Only select needed columns
@@ -536,7 +566,22 @@ class MemberController extends Controller
         $oldValues = $member->toArray();
 
         $validated = $request->validated();
+
+        // Check if spouse_id changed and handle family transition
+        $shouldCallTransition = isset($validated['spouse_id']) &&
+            $validated['spouse_id'] !== null &&
+            $validated['spouse_id'] != '' &&
+            (string)$validated['spouse_id'] != (string)$member->spouse_id;
+
         $member->update($validated);
+
+        if ($shouldCallTransition) {
+            $this->handleMarriageTransition($member, $validated);
+        } else {
+            Log::info('Not calling handleMarriageTransition - condition not met');
+        }
+
+
 
         // Create audit log for the update
         AuditLog::create([
@@ -875,7 +920,8 @@ class MemberController extends Controller
                     'source',
                     'father_uid',
                     'mother_uid',
-                    'spouse_uid'
+                    'spouse_uid',
+                    'gender_id'
                 ])
                 ->get();
 
@@ -980,6 +1026,16 @@ class MemberController extends Controller
                     ];
                 };
 
+                // Map gender_id to gender name
+                $genderName = '';
+                if ($p->gender_id == 1) {
+                    $genderName = 'Male';
+                } elseif ($p->gender_id == 2) {
+                    $genderName = 'Female';
+                } else {
+                    $genderName = 'Other';
+                }
+
                 return [
                     'id'          => (int) $p->original_id,
                     'uid'         => $p->uid,
@@ -989,6 +1045,7 @@ class MemberController extends Controller
                     'date_of_birth' => $dateOfBirth,
                     'generation'  => $calcGen($p->uid),
                     'source'      => $p->source,
+                    'gender_name' => $genderName,
                     'father'      => $mapRelative($p->father_uid),
                     'mother'      => $mapRelative($p->mother_uid),
                     'spouse'      => $mapRelative($p->spouse_uid),
@@ -1093,12 +1150,19 @@ class MemberController extends Controller
         $query = $request->input('query', $request->input('q', '')); // Accept both 'query' and 'q'
         $limit = $request->input('limit', 10);
         $familyNo = $request->input('familyNo'); // Add this parameter
+        $excludeGender = $request->input('exclude_gender'); // New parameter for gender filtering
+        $includeDeceased = $request->input('include_deceased', false); // New parameter to include deceased members
 
         if (empty($query)) {
             return response()->json([]);
         }
 
-        $members = Member::with(['community', 'relationship', 'gender'])->alive();
+        $members = Member::with(['community', 'relationship', 'gender']);
+
+        // Only apply alive() scope if not including deceased members
+        if (!$includeDeceased) {
+            $members = $members->alive();
+        }
 
         // Check if query is a numeric ID
         if (is_numeric($query)) {
@@ -1124,8 +1188,19 @@ class MemberController extends Controller
             $members = $members->where('family_no', $familyNo);
         }
 
-        $members = $members->where('id', '!=', $request->input('exclude_id')) // Exclude current member
-            ->limit($limit)
+        // Apply gender filter if provided (for spouse search)
+        if ($excludeGender) {
+            $members = $members->whereHas('gender', function ($q) use ($excludeGender) {
+                $q->where('name', '!=', $excludeGender);
+            });
+        }
+
+        // Only exclude member if exclude_id is provided
+        if ($request->has('exclude_id') && $request->input('exclude_id')) {
+            $members = $members->where('id', '!=', $request->input('exclude_id'));
+        }
+
+        $members = $members->limit($limit)
             ->get()
             ->map(function ($member) {
                 return [
@@ -1400,5 +1475,515 @@ class MemberController extends Controller
             'success' => true,
             'data' => $statistics
         ]);
+    }
+
+    /**
+     * Handle family transition for new members with spouse (gender-based)
+     */
+    private function handleMarriageTransitionForNew(array &$data)
+    {
+        if (!$data['spouse_id']) {
+            return;
+        }
+
+        // Get the spouse with their gender
+        $spouse = Member::with('gender')->find($data['spouse_id']);
+        if (!$spouse) {
+            return;
+        }
+
+        // Get genders - for new members, we need to get gender from the data
+        $newMemberGenderId = $data['gender_id'] ?? null;
+        $newMemberGender = null;
+        if ($newMemberGenderId) {
+            $gender = \Modules\Members\Models\Gender::find($newMemberGenderId);
+            $newMemberGender = $gender->name ?? null;
+        }
+        $spouseGender = $spouse->gender->name ?? null;
+
+        // Apply gender-based family transition logic
+        if ($newMemberGender === 'Female' && ($spouseGender === 'Male' || $spouseGender === 'Other')) {
+            // Female new member joins male/other spouse's family
+            $this->processNewMemberFamilyTransition($data, $spouse, 'female_joins_male');
+        } elseif ($newMemberGender === 'Male' && $spouseGender === 'Female') {
+            // Male new member keeps his family, female spouse joins his family
+            $this->updateSpouseToJoinNewMemberFamily($spouse, $data);
+            // Male new member keeps his original family assignment
+            $data['marital_status'] = 'married';
+        } elseif ($newMemberGender === 'Other' && $spouseGender === 'Female') {
+            // Other gender new member keeps family, female spouse joins
+            $this->updateSpouseToJoinNewMemberFamily($spouse, $data);
+            $data['marital_status'] = 'married';
+        } else {
+            // Same gender or other combinations - default to new member joining spouse's family
+            $this->processNewMemberFamilyTransition($data, $spouse, 'default');
+        }
+
+        // Update spouse's marital status to married
+        $spouse->marital_status = 'married';
+        $spouse->save();
+    }
+
+    private function processNewMemberFamilyTransition(array &$data, Member $spouse, string $transitionType)
+    {
+        // Store birth family (will be the family they would have been assigned)
+        $birthFamilyNo = $data['family_no'] ?? null;
+        $data['birth_family_no'] = $birthFamilyNo;
+
+        // Join spouse's family
+        $data['family_no'] = $spouse->family_no;
+
+        // Don't set birth family relationships for new members joining spouse
+        $data['father_id'] = null;
+        $data['mother_id'] = null;
+
+        // Set marital status to married
+        $data['marital_status'] = 'married';
+
+        // Set appropriate relationship based on gender
+        $this->setNewMemberSpouseRelationship($data);
+
+        // Note: External member record will be created after the member is saved
+        // Store the birth family info for later use
+        $data['_create_external_member'] = [
+            'birth_family_no' => $birthFamilyNo,
+            'spouse' => $spouse,
+            'transition_type' => $transitionType
+        ];
+    }
+
+    /**
+     * Create external member record for family tree genealogy
+     */
+    private function createExternalMemberRecord(Member $personJoining, string $birthFamilyNo, Member $spouse)
+    {
+        try {
+            // 1. Create external member record for the person joining (existing logic)
+            $personJoiningExternal = $this->createPersonJoiningExternalRecord($personJoining, $birthFamilyNo, $spouse);
+
+            // 2. Create external member record for the spouse in the birth family (new bidirectional logic)
+            $spouseExternal = $this->createSpouseExternalRecord($spouse, $birthFamilyNo, $personJoining);
+
+            // 3. Update spouse_id references to point to external member IDs for proper family tree relationships
+            $this->updateExternalSpouseReferences($personJoiningExternal, $spouseExternal);
+        } catch (\Exception $e) {
+            Log::error('Failed to create external member records', [
+                'member_id' => $personJoining->id,
+                'birth_family_no' => $birthFamilyNo,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Create external member record for the person joining another family
+     */
+    private function createPersonJoiningExternalRecord(Member $personJoining, string $birthFamilyNo, Member $spouse): ?ExternalMember
+    {
+        // Check if external member record already exists
+        $existingExternal = ExternalMember::where('family_no', $birthFamilyNo)
+            ->where('first_name', $personJoining->first_name)
+            ->where('last_name', $personJoining->last_name)
+            ->first();
+
+        // Get current address from the member
+        $address = collect([
+            $personJoining->current_add1,
+            $personJoining->current_add2,
+            $personJoining->current_add3
+        ])->filter()->implode(', ');
+
+        // Create external member record (spouse_id will be updated later to point to external member)
+        $externalMember = ExternalMember::create([
+            'first_name' => $personJoining->first_name,
+            'last_name' => $personJoining->last_name,
+            'address' => $address ?: 'Married to ' . $spouse->first_name . ' ' . $spouse->last_name,
+            'family_no' => $birthFamilyNo, // The birth family can see her in their tree
+            'community_id' => $personJoining->community_id,
+            'relationship_id' => $personJoining->relationship_id, // Keep original relationship in birth family
+            'gender_id' => $personJoining->gender_id,
+            'spouse_id' => null, // Will be updated to external member ID after spouse external record is created
+            'spouse_source' => 'External', // Spouse will be external member
+            'father_id' => $personJoining->father_id, // Original birth parents
+            'mother_id' => $personJoining->mother_id,
+            'father_source' => $personJoining->father_source ?? 'Member',
+            'mother_source' => $personJoining->mother_source ?? 'Member',
+        ]);
+
+        return $externalMember;
+    }
+
+    /**
+     * Create external member record for the spouse in the birth family (bidirectional relationship)
+     */
+    private function createSpouseExternalRecord(Member $spouse, string $birthFamilyNo, Member $personJoining): ?ExternalMember
+    {
+        // Only add spouse as external member if they're from a different family_no
+        // This prevents creating external records for couples who were already in the same family from bulk data
+        if ($spouse->family_no === $birthFamilyNo) {
+            Log::info('Skipping spouse external member creation - same family_no', [
+                'spouse_family_no' => $spouse->family_no,
+                'birth_family_no' => $birthFamilyNo,
+                'spouse_id' => $spouse->id,
+                'person_joining_id' => $personJoining->id
+            ]);
+            return null;
+        }
+        // Check if external member record already exists for the spouse in the birth family
+        $existingSpouseExternal = ExternalMember::where('family_no', $birthFamilyNo)
+            ->where('first_name', $spouse->first_name)
+            ->where('last_name', $spouse->last_name)
+            ->first();
+
+        // Get spouse's current address
+        $spouseAddress = collect([
+            $spouse->current_add1,
+            $spouse->current_add2,
+            $spouse->current_add3
+        ])->filter()->implode(', ');
+
+        // Determine spouse relationship in birth family context
+        $spouseGender = $spouse->gender->name ?? null;
+        $spouseRelationshipName = null;
+
+        if ($spouseGender === 'Male') {
+            $spouseRelationshipName = 'Son-in-law';
+        } elseif ($spouseGender === 'Female') {
+            $spouseRelationshipName = 'Daughter-in-law';
+        } else {
+            $spouseRelationshipName = 'In-law';
+        }
+
+        // Find the appropriate relationship
+        $spouseRelationship = Relationship::where('name', 'LIKE', "%{$spouseRelationshipName}%")
+            ->orWhere('name', 'LIKE', '%in-law%')
+            ->first();
+
+        // Create external member record for spouse in the birth family (spouse_id will be updated later)
+        $spouseExternalMember = ExternalMember::create([
+            'first_name' => $spouse->first_name,
+            'last_name' => $spouse->last_name,
+            'address' => $spouseAddress ?: 'Married to ' . $personJoining->first_name . ' ' . $personJoining->last_name,
+            'family_no' => $birthFamilyNo, // Birth family can see the spouse in their tree
+            'community_id' => $spouse->community_id,
+            'relationship_id' => $spouseRelationship?->id, // Son-in-law/Daughter-in-law/In-law relationship
+            'gender_id' => $spouse->gender_id,
+            'spouse_id' => null, // Will be updated to external member ID after person joining external record is created
+            'spouse_source' => 'External', // Person joining will be external member
+            'father_id' => null, // Spouse's parents are not part of this birth family tree
+            'mother_id' => null,
+            'father_source' => null,
+            'mother_source' => null,
+        ]);
+        return $spouseExternalMember;
+    }
+
+    /**
+     * Update spouse_id references in external members to point to their respective external member IDs
+     */
+    private function updateExternalSpouseReferences(?ExternalMember $personJoiningExternal, ?ExternalMember $spouseExternal): void
+    {
+        try {
+            // Update person joining external member to point to spouse external member ID
+            $personJoiningExternal->spouse_id = $spouseExternal->id;
+            $personJoiningExternal->save();
+
+            // Update spouse external member to point to person joining external member ID
+            $spouseExternal->spouse_id = $personJoiningExternal->id;
+            $spouseExternal->save();
+        } catch (\Exception $e) {
+            Log::error('Failed to update external spouse references', [
+                'person_joining_external_id' => $personJoiningExternal->id,
+                'spouse_external_id' => $spouseExternal->id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    private function updateSpouseToJoinNewMemberFamily(Member $spouse, array &$data)
+    {
+        // Store spouse's birth family if not already stored
+        $birthFamilyNo = $spouse->family_no;
+        if (!$spouse->birth_family_no) {
+            $spouse->birth_family_no = $birthFamilyNo;
+        }
+
+        // Create external member record for the spouse's birth family
+        $spouseGender = $spouse->gender->name ?? null;
+        if ($spouseGender === 'Female') {
+            // Create a temporary Member object for the new member to pass to createExternalMemberRecord
+            $newMember = new Member($data);
+            $newMember->id = null; // Will be set after save
+            $this->createExternalMemberRecord($spouse, $birthFamilyNo, $newMember);
+        }
+
+        // Spouse joins the new member's family
+        $spouse->family_no = $data['family_no'];
+        $spouse->father_id = null;
+        $spouse->mother_id = null;
+        $spouse->marital_status = 'married';
+
+        // Set bidirectional spouse relationship (spouse will be updated after member is created)
+        // Note: The new member's spouse_id will be set in the $data array
+
+        // Set spouse's relationship
+        if ($spouseGender === 'Female') {
+            $relationshipName = 'Wife';
+        } else {
+            $relationshipName = 'Spouse';
+        }
+
+        $spouseRelationship = Relationship::where('name', 'LIKE', "%{$relationshipName}%")
+            ->orWhere('name', 'LIKE', '%spouse%')
+            ->first();
+
+        if ($spouseRelationship) {
+            $spouse->relationship_id = $spouseRelationship->id;
+        }
+
+        $spouse->save();
+    }
+
+    private function setNewMemberSpouseRelationship(array &$data)
+    {
+        $newMemberGenderId = $data['gender_id'] ?? null;
+        $newMemberGender = null;
+        if ($newMemberGenderId) {
+            $gender = \Modules\Members\Models\Gender::find($newMemberGenderId);
+            $newMemberGender = $gender->name ?? null;
+        }
+
+        // Set relationship based on gender
+        if ($newMemberGender === 'Female') {
+            $relationshipName = 'Wife';
+        } elseif ($newMemberGender === 'Male') {
+            $relationshipName = 'Husband';
+        } else {
+            $relationshipName = 'Spouse';
+        }
+
+        $spouseRelationship = Relationship::where('name', 'LIKE', "%{$relationshipName}%")
+            ->orWhere('name', 'LIKE', '%spouse%')
+            ->first();
+
+        if ($spouseRelationship) {
+            $data['relationship_id'] = $spouseRelationship->id;
+        }
+    }
+
+    /**
+     * Handle family transition when spouse is assigned
+     */
+    private function handleMarriageTransition(Member $member, array &$validated)
+    {
+
+        // Get the spouse with their gender
+        $spouse = Member::with('gender')->find($validated['spouse_id']);
+        if (!$spouse) {
+            return;
+        }
+
+        // If both spouses already have the same family_no, no family transition needed
+        // This handles cases where data was bulk uploaded with correct family_no relationships
+        if ($member->family_no === $spouse->family_no) {
+            Log::info('Skipping family transition - both spouses already have same family_no', [
+                'member_id' => $member->id,
+                'member_family_no' => $member->family_no,
+                'spouse_id' => $spouse->id,
+                'spouse_family_no' => $spouse->family_no,
+                'reason' => 'Bulk uploaded data with correct family relationships'
+            ]);
+
+            // Just set marital status for both members - no family changes or external members needed
+            $validated['marital_status'] = 'married';
+
+            // Also update the current member's marital status immediately in the database
+            $member->marital_status = 'married';
+            $member->save();
+
+            // Update spouse's marital status and bidirectional relationship
+            $spouse->spouse_id = $member->id;
+            $spouse->spouse_source = 'Member';
+            $spouse->marital_status = 'married';
+            $spouse->save();
+
+            return;
+        }
+
+        // Get current member's gender
+        $memberGender = $member->gender->name ?? null;
+        $spouseGender = $spouse->gender->name ?? null;
+
+        // Determine who joins whose family based on gender
+        $femaleJoinsMaleFamily = true; // Traditional approach
+
+        if ($memberGender === 'Female' && ($spouseGender === 'Male' || $spouseGender === 'Other')) {
+            // Female member joins male/other spouse's family
+            $this->processFamilyTransition($member, $spouse, $validated, 'female_joins_male');
+        } elseif ($memberGender === 'Male' && $spouseGender === 'Female') {
+            // Male member stays in his family, female spouse joins his family
+            $this->processSpouseJoinsFamily($spouse, $member, 'female_joins_male');
+            // Male member only gets marital status change - no family change
+            $validated['marital_status'] = 'married';
+        } elseif ($memberGender === 'Other' && $spouseGender === 'Female') {
+            // Other gender member stays, female spouse joins
+            $this->processSpouseJoinsFamily($spouse, $member, 'female_joins_male');
+            $validated['marital_status'] = 'married';
+        } else {
+            // Same gender or other combinations - default to member joining spouse's family
+            $this->processFamilyTransition($member, $spouse, $validated, 'default');
+        }
+
+        // Note: Spouse marital status and bidirectional relationship is handled in the specific transition methods
+    }
+
+    private function processFamilyTransition(Member $personJoining, Member $personStaying, array &$validated, string $transitionType)
+    {
+        // Store birth family if not already stored (only for the person joining)
+        $birthFamilyNo = $personJoining->family_no;
+        if (!$personJoining->birth_family_no) {
+            $personJoining->birth_family_no = $birthFamilyNo;
+            $personJoining->save(); // Save immediately to persist birth family
+        }
+        // Create external member record in the birth family for genealogy tracking
+        if ($transitionType === 'female_joins_male') {
+            $this->createExternalMemberRecord($personJoining, $birthFamilyNo, $personStaying);
+        }
+
+        // If this is the current member being updated, modify their validated data
+        if ($transitionType === 'female_joins_male' || $transitionType === 'default') {
+            $personJoining['family_no'] = $personStaying->family_no;
+            $personJoining['father_id'] = null; // Clear birth family relationships
+            $personJoining['mother_id'] = null;
+            $personJoining['marital_status'] = 'married';
+            $personJoining->save();
+
+            // Set appropriate relationship
+            $this->setSpouseRelationship($validated, $personJoining);
+        }
+
+        // Set bidirectional spouse relationship for the person staying
+        $personStaying->spouse_id = $personJoining->id;
+        $personStaying->spouse_source = 'Member';
+        $personStaying->marital_status = 'married';
+        $personStaying->save();
+    }
+
+    /**
+     * Process spouse joining family (when spouse needs to be updated, not the current member)
+     */
+    private function processSpouseJoinsFamily(Member $spouse, Member $memberStaying, string $transitionType)
+    {
+        // Store spouse's birth family if not already stored
+        $birthFamilyNo = $spouse->family_no;
+        if (!$spouse->birth_family_no) {
+            $spouse->birth_family_no = $birthFamilyNo;
+        }
+
+        // Create external member record in the spouse's birth family for genealogy tracking
+        if ($transitionType === 'female_joins_male') {
+            $this->createExternalMemberRecord($spouse, $birthFamilyNo, $memberStaying);
+        }
+
+        // Spouse joins the member's family
+        $spouse->family_no = $memberStaying->family_no;
+        $spouse->father_id = null; // Clear birth family relationships
+        $spouse->mother_id = null;
+        $spouse->marital_status = 'married';
+
+        // Set bidirectional spouse relationship
+        $spouse->spouse_id = $memberStaying->id;
+        $spouse->spouse_source = 'Member';
+
+        // Set appropriate relationship for spouse
+        $spouseGender = $spouse->gender->name ?? null;
+        if ($spouseGender === 'Female') {
+            $relationshipName = 'Wife';
+        } elseif ($spouseGender === 'Male') {
+            $relationshipName = 'Husband';
+        } else {
+            $relationshipName = 'Spouse';
+        }
+
+        $spouseRelationship = Relationship::where('name', 'LIKE', "%{$relationshipName}%")
+            ->orWhere('name', 'LIKE', '%spouse%')
+            ->first();
+
+        if ($spouseRelationship) {
+            $spouse->relationship_id = $spouseRelationship->id;
+        }
+
+        $spouse->save();
+
+        // Update the member staying (male member) - set marital status and bidirectional relationship
+        $memberStaying->spouse_id = $spouse->id;
+        $memberStaying->spouse_source = 'Member';
+        $memberStaying->marital_status = 'married';
+        $memberStaying->save();
+
+        Log::info('Spouse joined family and updated member staying', [
+            'spouse_id' => $spouse->id,
+            'spouse_gender' => $spouseGender,
+            'old_family_no' => $birthFamilyNo,
+            'new_family_no' => $spouse->family_no,
+            'member_staying_id' => $memberStaying->id,
+            'member_staying_marital_status' => $memberStaying->marital_status
+        ]);
+    }
+
+    private function setSpouseRelationship(array &$validated, Member $member)
+    {
+        $memberGender = $member->gender->name ?? null;
+
+        // Set relationship based on gender
+        if ($memberGender === 'Female') {
+            $relationshipName = 'Wife';
+        } elseif ($memberGender === 'Male') {
+            $relationshipName = 'Husband';
+        } else {
+            $relationshipName = 'Spouse';
+        }
+
+        $spouseRelationship = Relationship::where('name', 'LIKE', "%{$relationshipName}%")
+            ->orWhere('name', 'LIKE', '%spouse%')
+            ->first();
+
+        if ($spouseRelationship) {
+            $validated['relationship_id'] = $spouseRelationship->id;
+        }
+    }
+
+    /**
+     * Handle marriage between two members
+     */
+    public function handleMarriage(Request $request)
+    {
+        $request->validate([
+            'bride_id' => 'required|integer|exists:members,id',
+            'groom_id' => 'required|integer|exists:members,id',
+            'bride_joins_groom' => 'boolean'
+        ]);
+
+        try {
+            $churchCode = config('app.church_code', 'SAL');
+            $familyNumberingService = new \Modules\Members\Services\FamilyNumberingService($churchCode);
+
+            $result = $familyNumberingService->handleMarriage(
+                $request->bride_id,
+                $request->groom_id,
+                $request->bride_joins_groom ?? true
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Marriage recorded successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to record marriage: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

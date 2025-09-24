@@ -20,6 +20,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'update:modelValue', payload: string | number): void
+  (e: 'search', payload: string): void
 }>()
 
 const modelValue = useVModel(props, 'modelValue', emits, {
@@ -40,6 +41,11 @@ const displayOptions = computed(() => {
   if (!search.value) return allOptions;
   return allOptions.filter(opt => opt.name.toLowerCase().includes(search.value.toLowerCase()));
 })
+
+// Emit search event when user types
+watch(search, (val) => {
+  emits('search', val)
+}, { immediate: false })
 
 // watch(search, async (val) => {
 //   if (props.fetchUrl) {
@@ -88,7 +94,7 @@ function fetchOption(page = 1) {
           'Select Option'
         }}
       </span>
-      <svg class="absolute top-[2px] right-[15px] h-full w-[1rem] h-[1rem] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="absolute top-[2px] right-[15px] h-[1rem] w-[1rem] text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>

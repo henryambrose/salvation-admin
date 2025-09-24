@@ -22,12 +22,15 @@ class UpdateExternalMemberRequest extends FormRequest
         return [
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'gender_id' => 'required|exists:genders,id', // Changed from nullable to required
+            'gender_id' => 'required|exists:genders,id',
             'family_no' => 'required|string|max:255',
             'father_id' => 'nullable|integer',
             'mother_id' => 'nullable|integer',
             'spouse_id' => 'nullable|integer',
-            'address' => 'nullable|string',
+            'father_source' => 'nullable|string|max:255',
+            'mother_source' => 'nullable|string|max:255',
+            'spouse_source' => 'nullable|string|max:255',
+            'address' => 'nullable|string|max:500',
             'relationship_id' => 'required|exists:relationships,id',
         ];
     }

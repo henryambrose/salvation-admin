@@ -92,13 +92,6 @@ class FamilyPhotoService
             ]);
 
             DB::commit();
-
-            Log::info('Family photo uploaded successfully', [
-                'family_no' => $familyNo,
-                'file_path' => $storedPath,
-                'uploaded_by' => Auth::id(),
-            ]);
-
             return [
                 'success' => true,
                 'message' => 'Family photo uploaded successfully',
@@ -107,7 +100,6 @@ class FamilyPhotoService
                     'url' => $familyPhoto->photo_url
                 ]
             ];
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -142,17 +134,10 @@ class FamilyPhotoService
             // Soft delete the record (this will also delete the file via model event)
             $photo->delete();
 
-            Log::info('Family photo deleted successfully', [
-                'family_no' => $familyNo,
-                'file_path' => $photo->file_path,
-                'deleted_by' => Auth::id(),
-            ]);
-
             return [
                 'success' => true,
                 'message' => 'Family photo deleted successfully'
             ];
-
         } catch (\Exception $e) {
             Log::error('Family photo deletion failed', [
                 'family_no' => $familyNo,
@@ -243,16 +228,11 @@ class FamilyPhotoService
                 $deletedCount++;
             }
 
-            Log::info('Orphaned family photos cleanup completed', [
-                'deleted_count' => $deletedCount,
-            ]);
-
             return [
                 'success' => true,
                 'message' => "Cleaned up {$deletedCount} orphaned family photos",
                 'deleted_count' => $deletedCount
             ];
-
         } catch (\Exception $e) {
             Log::error('Orphaned family photos cleanup failed', [
                 'error' => $e->getMessage(),

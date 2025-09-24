@@ -1,6 +1,7 @@
 <?php
 
 namespace Modules\Members\Http\Requests;
+
 use Modules\Members\Rules\NotFutureDate;
 use Modules\Members\Rules\IndianPhoneValidation;
 use Modules\Members\Rules\EmailValidation;
@@ -37,7 +38,7 @@ class UpdateMemberRequest extends FormRequest
             'family_sequence' => 'nullable|integer',
             'member_sequence' => 'nullable|integer',
             'marital_status' => 'nullable|in:single,married,divorced,widowed',
-            // 'current_family_no' => 'nullable|string|max:255', // Managed by business logic
+            'birth_family_no' => 'nullable|string|max:255',
             'relation_member_id' => 'nullable|exists:members,id',
             'mother_id' => 'nullable|exists:members,id',
             'father_id' => 'nullable|exists:members,id',

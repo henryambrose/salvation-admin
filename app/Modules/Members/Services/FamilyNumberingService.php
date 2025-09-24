@@ -201,33 +201,82 @@ class FamilyNumberingService
         return $members;
     }
 
-    public function handleMarriage($memberId, $spouseId)
+    public function handleMarriage($brideId, $groomId, $brideJoinsGroom = true)
     {
-        $member = Member::findOrFail($memberId);
-        $spouse = Member::findOrFail($spouseId);
+        $bride = Member::findOrFail($brideId);
+        $groom = Member::findOrFail($groomId);
 
-        // Determine which family group to use (use spouse's family group)
-        $spouseFamilyGroup = $this->getFamilyGroupFromNumber($spouse->family_no);
+        // Import ExternalMember model
+        $externalMemberClass = \Modules\Members\Models\ExternalMember::class;
 
-        // Generate new member number for the marrying member in spouse's family
-        $newMemberNumber = $this->generateMemberNumberInFamily($spouseFamilyGroup);
+        DB::transaction(function () use ($bride, $groom, $brideJoinsGroom, $externalMemberClass) {
+            if ($brideJoinsGroom) {
+                // Traditional: Bride joins groom's family
+                $this->createExternalMemberRecord($bride, $bride->family_no, $externalMemberClass);
 
-        // Update marital status
-        $member->update([
-            'marital_status' => 'married',
-            'relation_member_id' => $spouseId,
-            'family_no' => $newMemberNumber,
-        ]);
+                // Update bride to join groom's family
+                $bride->update([
+                    'birth_family_no' => $bride->family_no,  // Save birth family
+                    'family_no' => $groom->family_no,        // Join groom's family
+                    'father_id' => null,                     // Clear parent links
+                    'mother_id' => null,                     // Clear parent links
+                    'spouse_id' => $groom->id,               // Link to groom
+                    'marital_status' => 'married'
+                ]);
 
-        $spouse->update([
-            'marital_status' => 'married',
-            'relation_member_id' => $memberId,
-        ]);
+                // Update groom
+                $groom->update([
+                    'spouse_id' => $bride->id,
+                    'marital_status' => 'married'
+                ]);
+
+            } else {
+                // Rare case: Groom joins bride's family
+                $this->createExternalMemberRecord($groom, $groom->family_no, $externalMemberClass);
+
+                // Update groom to join bride's family
+                $groom->update([
+                    'birth_family_no' => $groom->family_no,  // Save birth family
+                    'family_no' => $bride->family_no,        // Join bride's family
+                    'father_id' => null,                     // Clear parent links
+                    'mother_id' => null,                     // Clear parent links
+                    'spouse_id' => $bride->id,               // Link to bride
+                    'marital_status' => 'married'
+                ]);
+
+                // Update bride
+                $bride->update([
+                    'spouse_id' => $groom->id,
+                    'marital_status' => 'married'
+                ]);
+            }
+        });
 
         return [
-            'member' => $member->fresh(),
-            'spouse' => $spouse->fresh(),
+            'bride' => $bride->fresh(),
+            'groom' => $groom->fresh(),
         ];
+    }
+
+    /**
+     * Create external member record in birth family
+     */
+    private function createExternalMemberRecord($member, $birthFamilyNo, $externalMemberClass)
+    {
+        $externalMemberClass::create([
+            'family_no' => $birthFamilyNo,
+            'first_name' => $member->first_name,
+            'last_name' => $member->last_name,
+            'father_id' => $member->father_id,           // Preserve parent links
+            'mother_id' => $member->mother_id,           // Preserve parent links
+            'spouse_id' => null,                         // Will be set after marriage
+            'relationship_id' => $member->relationship_id,
+            'gender_id' => $member->gender_id,
+            'community_id' => $member->community_id,
+            'father_source' => $member->father_source ?? 'Member',
+            'mother_source' => $member->mother_source ?? 'Member',
+            'spouse_source' => 'Member',
+        ]);
     }
 
     public function getFamilyGroupFromNumber($familyNo)

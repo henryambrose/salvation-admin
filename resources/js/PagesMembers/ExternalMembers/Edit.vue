@@ -48,6 +48,8 @@ const form = useForm({
 // Reactive variables to store family members
 const familyMembers = ref<Array<{ id: number; name: string }>>([]);
 const externalFamilyMembers = ref<Array<{ id: number; name: string }>>([]);
+// Parish-wide members for spouse search (spouses are typically from different families)
+const parishMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string }>>([]);
 
 // Function to fetch family members
 const fetchFamilyMembers = async () => {
@@ -112,6 +114,37 @@ const fetchExternalFamilyMembers = async () => {
   }
 };
 
+// Function to fetch parish members for spouse search
+const fetchParishMembers = async (query: string) => {
+  if (!query || query.length < 2) {
+    return;
+  }
+
+  try {
+    const response = await fetch(`/member/search-members?q=${encodeURIComponent(query)}&limit=10&include_deceased=1`, {
+      headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const members = await response.json();
+      parishMembers.value = members.map((member: any) => ({
+        id: member.id,
+        name: `${member.first_name} ${member.last_name} (${member.family_no || 'N/A'})`,
+        family_no: member.family_no || '',
+        full_name: `${member.first_name} ${member.last_name}`,
+        community: member.community || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Error fetching parish members:', error);
+  }
+};
+
 // Watch for family_no changes to refetch family members
 watch(
   () => form.family_no,
@@ -153,10 +186,58 @@ watch(
     }
   },
 );
+// Function to load current relationships (spouse only) for editing
+const loadCurrentRelationships = async () => {
+  const relationshipsToLoad = [];
+
+  // Add spouse if exists and source is Member
+  if (props.externalMember.spouse_id && form.spouse_source === 'Member') {
+    relationshipsToLoad.push({ id: props.externalMember.spouse_id, type: 'spouse' });
+  }
+
+  // Load all relationships at once
+  const loadedMembers = [];
+
+  for (const relationship of relationshipsToLoad) {
+    try {
+      const response = await fetch(`/member/search-members?q=${relationship.id}&limit=1&include_deceased=1`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'same-origin',
+      });
+
+      if (response.ok) {
+        const memberArray = await response.json();
+        if (memberArray && memberArray.length > 0) {
+          const member = memberArray[0];
+          loadedMembers.push({
+            id: member.id,
+            name: `${member.first_name} ${member.last_name} (${member.family_no || 'N/A'})`,
+            family_no: member.family_no || '',
+            full_name: `${member.first_name} ${member.last_name}`,
+            community: member.community || '',
+          });
+        }
+      }
+    } catch (error) {
+      console.error(`Error loading current ${relationship.type}:`, error);
+    }
+  }
+
+  // Update parishMembers with all loaded relationships
+  if (loadedMembers.length > 0) {
+    parishMembers.value = loadedMembers;
+  }
+};
+
 // Fetch family members on mount
 onMounted(() => {
   fetchFamilyMembers();
   fetchExternalFamilyMembers();
+  loadCurrentRelationships();
 });
 
 const genderOptions = computed(() =>
@@ -340,8 +421,10 @@ const cancel = () => {
                   <SearchDropdown
                     :model-value="form.spouse_id || undefined"
                     @update:model-value="(value) => (form.spouse_id = Number(value))"
-                    :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    :options="form.spouse_source === 'Member' ? parishMembers : externalFamilyMembers"
+                    @search="form.spouse_source === 'Member' ? fetchParishMembers : () => {}"
                     class="mt-1 block w-full rounded-full"
+                    :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (parish member)...' : 'Search for spouse (external)...'"
                   />
                   <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
@@ -388,7 +471,9 @@ const cancel = () => {
                     :model-value="form.father_id || undefined"
                     @update:model-value="(value) => (form.father_id = Number(value))"
                     :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    @search="() => {}"
                     class="mt-1 block w-full rounded-full"
+                    :placeholder="form.father_source === 'Member' ? 'Select father from family members...' : 'Select father from external family members...'"
                   />
                   <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
@@ -435,8 +520,9 @@ const cancel = () => {
                     :model-value="form.mother_id || undefined"
                     @update:model-value="(value) => (form.mother_id = Number(value))"
                     :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    @search="() => {}"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
+                    :placeholder="form.mother_source === 'Member' ? 'Select mother from family members...' : 'Select mother from external family members...'"
                   />
                   <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear

@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('old_family_no')->nullable();
             $table->string('old_sal_id')->nullable();
             $table->string('aadhar')->nullable();
-            $table->string('current_family_no')->nullable();
+            $table->string('birth_family_no')->nullable();
             $table->string('family_no')->nullable();
             $table->string('member_no')->nullable();
             $table->string('registration_year')->nullable();

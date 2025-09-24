@@ -20,7 +20,7 @@ class Member extends Model
         'community_cluster_id',
         'old_family_no',
         'aadhar',
-        'current_family_no',
+        'birth_family_no',
         'family_no',
         'member_no',
         'registration_year',
@@ -215,14 +215,14 @@ class Member extends Model
         return $familyInfo['church_name'];
     }
 
-    public function birthFamily()
+    public function currentFamily()
     {
         return $this->belongsTo(Member::class, 'family_no', 'family_no');
     }
 
-    public function currentFamily()
+    public function birthFamily()
     {
-        return $this->belongsTo(Member::class, 'current_family_no', 'family_no');
+        return $this->belongsTo(Member::class, 'birth_family_no', 'family_no');
     }
 
     /**

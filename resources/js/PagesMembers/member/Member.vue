@@ -413,7 +413,89 @@ const form = useForm({
 });
 
 // Add external family members data
-const externalFamilyMembers = ref<Array<{ id: number; name: string }>>([]);
+const externalFamilyMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string }>>([]);
+
+// Add parish-wide members for spouse search
+const parishMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string }>>([]);
+
+// Function to load current spouse data for editing
+const loadCurrentSpouse = async () => {
+  console.log('loadCurrentSpouse called', {
+    member_spouse_id: member?.spouse_id,
+    form_spouse_source: form.spouse_source,
+    form_spouse_id: form.spouse_id
+  });
+
+  if (member?.spouse_id && form.spouse_source === 'Member') {
+    try {
+      console.log('Making API call to load spouse by ID:', member.spouse_id);
+      // Use search API with include_deceased parameter to find spouse even if dead
+      const response = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'same-origin',
+      });
+
+      console.log('Response status:', response.status);
+
+      if (response.ok) {
+        const spouseArray = await response.json();
+        console.log('Spouse API response:', spouseArray);
+
+        if (spouseArray && spouseArray.length > 0) {
+          const spouse = spouseArray[0]; // Get first (and should be only) result
+          parishMembers.value = [{
+            id: spouse.id,
+            name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
+            family_no: spouse.family_no || '',
+            full_name: `${spouse.first_name} ${spouse.last_name}`,
+            community: spouse.community || '',
+          }];
+          console.log('Updated parishMembers with current spouse:', parishMembers.value);
+        } else {
+          console.log('No spouse data found in response');
+        }
+      } else {
+        console.error('Failed to load spouse:', response.status, response.statusText);
+
+        // Fallback to search API in case direct lookup doesn't work
+        console.log('Trying fallback search API');
+        const fallbackResponse = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (fallbackResponse.ok) {
+          const data = await fallbackResponse.json();
+          if (data.length > 0) {
+            const spouse = data[0];
+            parishMembers.value = [{
+              id: spouse.id,
+              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
+              family_no: spouse.family_no,
+              full_name: `${spouse.first_name} ${spouse.last_name}`,
+              community: spouse.community || '',
+            }];
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading current spouse:', error);
+    }
+  } else {
+    console.log('Conditions not met for loading spouse:', {
+      has_member_spouse_id: !!member?.spouse_id,
+      spouse_source_is_member: form.spouse_source === 'Member'
+    });
+  }
+};
 
 // Watch for family_no changes to refetch external family members
 watch(
@@ -431,7 +513,9 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      fetchFamilyMembers();
+      // Clear parish members when switching to Member source
+      // User will need to type to search
+      parishMembers.value = [];
     }
   },
 );
@@ -442,7 +526,8 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      fetchFamilyMembers();
+      // Clear parish members when switching to Member source
+      parishMembers.value = [];
     }
   },
 );
@@ -453,7 +538,8 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      fetchFamilyMembers();
+      // Clear parish members when switching to Member source
+      parishMembers.value = [];
     }
   },
 );
@@ -802,6 +888,11 @@ onMounted(() => {
   }
 });
 
+// Load current spouse data when editing a member
+onMounted(() => {
+  loadCurrentSpouse();
+});
+
 function cancel() {
   window.location.href = '/member/index';
 }
@@ -857,7 +948,7 @@ const fetchMemberDetails = async (memberId: number) => {
 };
 
 // Reactive variables to store family members
-const familyMembers = ref<Array<{ id: number; name: string }>>([]);
+const familyMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string; gender_name?: string }>>([]);
 
 // Function to fetch family members
 const fetchFamilyMembers = async () => {
@@ -882,6 +973,7 @@ const fetchFamilyMembers = async () => {
           .map((member: any) => ({
             id: member.id,
             name: member.first_name + ' ' + member.last_name,
+            gender_name: member.gender_name,
           }));
       }
     } catch (error) {
@@ -928,6 +1020,60 @@ const fetchExternalFamilyMembers = async () => {
     externalFamilyMembers.value = [];
   }
 };
+
+// Function to fetch parish-wide members for spouse search
+const fetchParishMembers = async (searchQuery: string = '') => {
+  if (!searchQuery || searchQuery.length < 2) {
+    parishMembers.value = [];
+    return;
+  }
+
+  try {
+    const currentMemberId = member?.id;
+
+    // Get current member's gender name for filtering
+    let excludeGender = '';
+    if (form.gender_id && props.genders) {
+      const currentGender = props.genders.find(g => g.id == form.gender_id);
+      if (currentGender) {
+        excludeGender = currentGender.name;
+      }
+    }
+
+    // Build the URL with gender filter
+    let url = `/member/search-members?q=${encodeURIComponent(searchQuery)}&exclude_id=${currentMemberId}&limit=15`;
+    if (excludeGender) {
+      url += `&exclude_gender=${encodeURIComponent(excludeGender)}`;
+    }
+
+    const response = await fetch(url, {
+      headers: {
+        Accept: 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      parishMembers.value = data.map((member: any) => ({
+        id: member.id,
+        name: `${member.first_name} ${member.last_name} (${member.family_no})`,
+        family_no: member.family_no,
+        full_name: `${member.first_name} ${member.last_name}`,
+        community: member.community || '',
+      }));
+      console.log('parishMembers updated:', parishMembers.value);
+    } else {
+      parishMembers.value = [];
+    }
+  } catch (error) {
+    console.error('Error fetching parish members:', error);
+    parishMembers.value = [];
+  }
+};
+
 // Watch for family_no changes to refetch family members
 watch(
   () => form.family_no,
@@ -1159,11 +1305,12 @@ onMounted(() => {
               <InputError class="mt-2" :message="form.errors.marital_status" />
             </div>
             <div class="grid gap-2">
-              <Label for="current_family_no">Current Family No</Label>
+              <Label for="birth_family_no">Birth Family No</Label>
               <div class="mt-1 block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-gray-600">
-                <span v-if="member?.current_family_no">{{ member.current_family_no }}</span>
-                <span v-else class="mt-1 text-xs text-gray-500"> Managed automatically through marriage and family changes </span>
+                <span v-if="member?.birth_family_no">{{ member.birth_family_no }}</span>
+                <span v-else class="mt-1 text-xs text-gray-500"> Shows original family before marriage </span>
               </div>
+              <p class="text-xs text-gray-500">This preserves genealogical records of birth family</p>
             </div>
           </div>
 
@@ -1238,10 +1385,13 @@ onMounted(() => {
                 <div class="flex gap-2">
                   <SearchDropdown
                     :model-value="form.spouse_id || undefined"
-                    @update:model-value="(value) => (form.spouse_id = Number(value))"
-                    :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    @update:model-value="(value) => { console.log('Spouse update received:', value); form.spouse_id = Number(value); }"
+                    :options="form.spouse_source === 'Member' ? parishMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.spouse_source === 'Member' ? 'Search for spouse (member)...' : 'Search for spouse (external)...'"
+                    :placeholder="
+                      form.spouse_source === 'Member' ? 'Search spouse across parish (name or family no)...' : 'Search for spouse (external)...'
+                    "
+                    @search="(query) => form.spouse_source === 'Member' ? fetchParishMembers(query) : null"
                   />
                   <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
@@ -1287,9 +1437,12 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.father_id || undefined"
                     @update:model-value="(value) => (form.father_id = Number(value))"
-                    :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    :options="form.father_source === 'Member' ? familyMembers.filter(m => m.gender_name === 'Male') : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.father_source === 'Member' ? 'Search for father (member)...' : 'Search for father (external)...'"
+                    :placeholder="
+                      form.father_source === 'Member' ? 'Search father within family...' : 'Search for father (external)...'
+                    "
+                    @search="undefined"
                   />
                   <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
@@ -1335,9 +1488,12 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.mother_id || undefined"
                     @update:model-value="(value) => (form.mother_id = Number(value))"
-                    :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
+                    :options="form.mother_source === 'Member' ? familyMembers.filter(m => m.gender_name === 'Female') : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
+                    :placeholder="
+                      form.mother_source === 'Member' ? 'Search mother within family...' : 'Search for mother (external)...'
+                    "
+                    @search="undefined"
                   />
                   <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear

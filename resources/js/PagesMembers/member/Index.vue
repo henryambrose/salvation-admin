@@ -101,7 +101,7 @@ const familyStats = computed(() => {
 });
 
 const enhancedMembers = computed<Record<string, any>>(() => {
-  let members = props.members?.data.map((item: any) => ({
+  const members = props.members?.data.map((item: any) => ({
     ...item,
     added_on: item.created_at ? new Date(item.created_at).toLocaleDateString() : '',
     last_updated: item.updated_at ? new Date(item.updated_at).toLocaleDateString() : '',

@@ -23,7 +23,8 @@
       "Bash(cmd /c:*)",
       "Bash(del verify_audit_coverage.php)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": [],
     "ask": []

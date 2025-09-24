@@ -279,7 +279,6 @@ class ExternalMemberController extends Controller
         ]);
 
         $externalMember->update($validated);
-
         // Calculate the page where the updated member will be displayed
         $perPage = $request->input('perPage', 15);
         $query = ExternalMember::query()->with(['relationship', 'gender']);
