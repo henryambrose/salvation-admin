@@ -19,6 +19,7 @@ use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagerController;
 use Modules\Graveyard\Http\Controllers\ObituaryPlanController;
+use Illuminate\Support\Facades\Log;
 
 
 Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->as('graveyard.')->group(function () {
@@ -246,6 +247,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         Route::post('/{obituary}/upgrade-to-premium', [ObituaryManagementController::class, 'upgradeToPremium'])->name('upgrade-to-premium');
 
         // External member management
+
         Route::post('/{obituary}/grant-external-access', [ObituaryManagementController::class, 'grantExternalAccess'])->name('grant-external-access');
         Route::delete('/{obituary}/revoke-external-access', [ObituaryManagementController::class, 'revokeExternalAccess'])->name('revoke-external-access');
         Route::patch('/{obituary}/toggle-external-access', [ObituaryManagementController::class, 'toggleExternalAccess'])->name('toggle-external-access');
@@ -406,8 +408,8 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         'obituary' => $obituary,
         'deceasedName' => $deceasedName,
         'condolences' => $obituary->condolences, // Explicitly pass approved condolences
-        'canSubmitCondolence' => $obituary->allow_condolences && $obituary->hasPremiumFeatures(),
-        'canShareMemory' => $obituary->allow_memory_sharing && $obituary->hasPremiumFeatures(),
+        'canSubmitCondolence' => $obituary->allow_condolences, // && $obituary->hasPremiumFeatures(),
+        'canShareMemory' => $obituary->allow_memory_sharing, // && $obituary->hasPremiumFeatures(),
         'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain'),
         'plan' => $obituary->obituaryPlan,
         'hasExpired' => $obituary->hasExpired(),
@@ -453,9 +455,10 @@ Route::prefix('obituary/{uuid}/manage')->name('obituary.external.')->group(funct
     Route::get('/login', [ObituaryManagerController::class, 'showLogin'])->name('login');
     Route::post('/login', [ObituaryManagerController::class, 'login'])->name('login.submit');
 });
+
 // Protected routes (obituary manager auth required)
-Route::prefix('obituary/{uuid}/manage')->middleware(['web', 'auth:external'])->group(function () {
-    // Route::get('/dashboard', [ObituaryManagerController::class, 'dashboard'])->name('dashboard');
+Route::prefix('obituary/{uuid}/manage')->name('obituary.external.')->middleware(['web', 'auth:external'])->group(function () {
+    Route::get('/dashboard', [ObituaryManagerController::class, 'dashboard'])->name('dashboard');
     Route::get('/edit', [ObituaryManagerController::class, 'editObituary'])->name('edit');
     Route::put('/update', [ObituaryManagerController::class, 'updateObituary'])->name('update');
     Route::get('/condolences', [ObituaryManagerController::class, 'condolences'])->name('condolences');

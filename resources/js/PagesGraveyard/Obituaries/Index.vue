@@ -6,7 +6,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowUp, Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2, Undo2 } from 'lucide-vue-next';
+import { Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2, Undo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface ObituaryPage {
@@ -288,23 +288,14 @@ const restoreObituary = (obituaryUuid: string) => {
                   <tr
                     v-for="obituary in obituaries?.data || []"
                     :key="obituary.id"
-                    :class="[
-                      obituary.deleted_at
-                        ? 'bg-red-50 hover:bg-red-100'
-                        : 'hover:bg-gray-50'
-                    ]"
+                    :class="[obituary.deleted_at ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50']"
                   >
                     <!-- Deceased Person -->
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div :class="[
-                          'text-sm font-medium',
-                          obituary.deleted_at ? 'text-red-600 line-through' : 'text-gray-900'
-                        ]">
+                        <div :class="['text-sm font-medium', obituary.deleted_at ? 'text-red-600 line-through' : 'text-gray-900']">
                           {{ getDeceasedName(obituary) }}
-                          <span v-if="obituary.deleted_at" class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
-                            DELETED
-                          </span>
+                          <span v-if="obituary.deleted_at" class="ml-2 rounded-full bg-red-100 px-2 py-1 text-xs text-red-800"> DELETED </span>
                         </div>
                         <div class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</div>
                       </div>
@@ -326,7 +317,11 @@ const restoreObituary = (obituaryUuid: string) => {
                           {{ obituary.is_published ? 'Published' : 'Draft' }}
                         </Badge>
                         <Badge :class="paymentStatusColors[obituary.payment_status]" class="text-xs">
-                          {{ obituary.payment_status === 'completed' ? 'Paid' : obituary.payment_status.charAt(0).toUpperCase() + obituary.payment_status.slice(1) }}
+                          {{
+                            obituary.payment_status === 'completed'
+                              ? 'Paid'
+                              : obituary.payment_status.charAt(0).toUpperCase() + obituary.payment_status.slice(1)
+                          }}
                         </Badge>
                         <div v-if="obituary.is_published && obituary.published_at" class="text-xs text-gray-500">
                           Published {{ new Date(obituary.published_at).toLocaleDateString() }}
@@ -386,7 +381,7 @@ const restoreObituary = (obituaryUuid: string) => {
                         </div>
 
                         <!-- Upgrade to Premium (Only for Active Obituaries) -->
-                        <div v-if="!obituary.deleted_at && obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
+                        <!-- <div v-if="!obituary.deleted_at && obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
                           <Button
                             size="sm"
                             variant="outline"
@@ -396,7 +391,7 @@ const restoreObituary = (obituaryUuid: string) => {
                             <ArrowUp class="mr-1 h-3 w-3" />
                             Upgrade to Premium
                           </Button>
-                        </div>
+                        </div> -->
 
                         <!-- Publish/Unpublish Actions (Only for Active Obituaries) -->
                         <div v-if="!obituary.deleted_at && (canPublishObituary || canUnpublishObituary)" class="flex space-x-2">

@@ -9,7 +9,7 @@ return [
             'style' => [
                 'backgroundColor' => '#ffffff',
             ],
-            'tier' => 'basic'
+
         ],
         'gradient' => [
             'name' => 'Gradient',
@@ -18,7 +18,7 @@ return [
             'style' => [
                 'background' => 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
             ],
-            'tier' => 'premium'
+
         ],
         'pattern' => [
             'name' => 'Pattern',
@@ -28,7 +28,7 @@ return [
                 'backgroundColor' => '#f8f9fa',
                 'backgroundImage' => 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.5) 10px, rgba(255,255,255,.5) 20px)',
             ],
-            'tier' => 'premium'
+
         ],
         'memorial' => [
             'name' => 'Memorial Sunset',
@@ -41,7 +41,7 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#f8f9fa',
             ],
-            'tier' => 'basic'
+
         ],
         'floral' => [
             'name' => 'Floral Garden',
@@ -54,7 +54,7 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#f8f9fa',
             ],
-            'tier' => 'basic'
+
         ],
         'watercolor_blue' => [
             'name' => 'Watercolor Blue',
@@ -67,7 +67,7 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#f0f8ff',
             ],
-            'tier' => 'basic'
+
         ],
         'rose_corner' => [
             'name' => 'Rose Corners',
@@ -80,7 +80,6 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#fefefe',
             ],
-            'tier' => 'premium'
         ],
         'botanical_frame' => [
             'name' => 'Botanical Frame',
@@ -93,7 +92,6 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#f9f9f9',
             ],
-            'tier' => 'premium'
         ],
         'elegant_border_4' => [
             'name' => 'Elegant Border',
@@ -106,7 +104,6 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#fafafa',
             ],
-            'tier' => 'premium'
         ],
         'decorative_frame_5' => [
             'name' => 'Decorative Frame',
@@ -119,7 +116,6 @@ return [
                 'backgroundRepeat' => 'no-repeat',
                 'backgroundColor' => '#fbfbfb',
             ],
-            'tier' => 'premium'
         ],
     ],
 ];

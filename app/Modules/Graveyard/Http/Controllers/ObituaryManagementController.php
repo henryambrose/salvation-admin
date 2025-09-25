@@ -135,7 +135,7 @@ class ObituaryManagementController extends Controller
             'booking' => $booking,
             'bookingType' => $bookingType,
             'obituaryPlans' => $obituaryPlans,
-            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function($theme) {
+            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function ($theme) {
                 return $theme->toFrontendArray();
             }),
         ]);
@@ -147,7 +147,7 @@ class ObituaryManagementController extends Controller
             'booking_type' => 'required|in:permanent,temporary',
             'booking_id' => 'required|integer',
             'obituary_plan_id' => 'required|integer|exists:obituary_plans,id',
-            'service_type' => 'required|in:basic,premium', // Keep for compatibility
+            // 'service_type' => 'required|in:basic,premium', // Keep for compatibility
             'biography' => 'nullable|string',
             'favorite_memory' => 'nullable|string',
             'achievements' => 'nullable|string',
@@ -164,11 +164,11 @@ class ObituaryManagementController extends Controller
         ]);
 
         // Validate background style against service type
-        if (isset($validated['background_style']) && $validated['background_style']) {
-            if (!BackgroundService::isValidBackground($validated['background_style'], $validated['service_type'])) {
-                return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
-            }
-        }
+        // if (isset($validated['background_style']) && $validated['background_style']) {
+        //     if (!BackgroundService::isValidBackground($validated['background_style'], $validated['service_type'])) {
+        //         return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
+        //     }
+        // }
 
         $booking = null;
         if ($validated['booking_type'] === 'permanent') {
@@ -263,7 +263,7 @@ class ObituaryManagementController extends Controller
 
         return Inertia::render('PagesGraveyard/Obituaries/Edit', [
             'obituary' => $obituary,
-            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function($theme) {
+            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function ($theme) {
                 return $theme->toFrontendArray();
             }),
         ]);
@@ -291,11 +291,11 @@ class ObituaryManagementController extends Controller
             ]);
 
             // Validate background style against service type
-            if (isset($validated['background_style']) && $validated['background_style']) {
-                if (!BackgroundService::isValidBackground($validated['background_style'], $obituary->service_type)) {
-                    return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
-                }
-            }
+            // if (isset($validated['background_style']) && $validated['background_style']) {
+            //     if (!BackgroundService::isValidBackground($validated['background_style'], $obituary->service_type)) {
+            //         return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
+            //     }
+            // }
 
             // Prepare data for update
             $data = [];
@@ -343,24 +343,37 @@ class ObituaryManagementController extends Controller
             // Update the obituary
             $obituary->update($data);
 
-            // Check if it's an AJAX request (from the Vue component)
+            // Check if it's an AJAX request
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Obituary updated successfully!',
-                    'redirect_url' => route('graveyard.obituaries.show', $obituary->uuid)
+                    'message' => 'Obituary updated successfully!'
                 ]);
             }
 
             return redirect()->route('graveyard.obituaries.show', $obituary->uuid)
                 ->with('success', 'Obituary updated successfully!');
         } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors' => $e->errors()
+                ], 422);
+            }
             return back()->withErrors($e->errors())->withInput();
         } catch (\Exception $e) {
             Log::error('Obituary update failed: ' . $e->getMessage(), [
                 'obituary_id' => $obituary->id,
                 'request_data' => $request->all()
             ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update obituary. Please try again.'
+                ], 500);
+            }
 
             return back()->with('error', 'Failed to update obituary. Please try again.');
         }
@@ -1050,51 +1063,51 @@ class ObituaryManagementController extends Controller
     /**
      * Upgrade obituary from basic to premium plan
      */
-    public function upgradeToPremium(ObituaryPage $obituary)
-    {
-        // Validate current status
-        if ($obituary->service_type !== 'basic') {
-            return back()->with('error', 'Only basic plans can be upgraded.');
-        }
+    // public function upgradeToPremium(ObituaryPage $obituary)
+    // {
+    //     // Validate current status
+    //     if ($obituary->service_type !== 'basic') {
+    //         return back()->with('error', 'Only basic plans can be upgraded.');
+    //     }
 
-        if ($obituary->getPaymentStatus() !== 'completed') {
-            return back()->with('error', 'Original payment must be completed before upgrading.');
-        }
+    //     if ($obituary->getPaymentStatus() !== 'completed') {
+    //         return back()->with('error', 'Original payment must be completed before upgrading.');
+    //     }
 
-        // Simple approach: charge full premium amount
-        $premiumAmount = 1500; // ₹1,500 for premium
+    //     // Simple approach: charge full premium amount
+    //     $premiumAmount = 1500; // ₹1,500 for premium
 
-        try {
-            DB::beginTransaction();
+    //     try {
+    //         DB::beginTransaction();
 
-            // Update service type immediately and enable premium features (simple approach)
-            $obituary->update([
-                'service_type' => 'premium',
-                'allow_condolences' => true,
-                'allow_memory_sharing' => true,
-                'updated_by' => Auth::id()
-            ]);
+    //         // Update service type immediately and enable premium features (simple approach)
+    //         $obituary->update([
+    //             'service_type' => 'premium',
+    //             'allow_condolences' => true,
+    //             'allow_memory_sharing' => true,
+    //             'updated_by' => Auth::id()
+    //         ]);
 
-            // Create new payment record for the upgrade
-            $payment = \Modules\Graveyard\Models\ObituaryPayment::create([
-                'obituary_page_id' => $obituary->id,
-                'amount' => $premiumAmount,
-                'payment_status' => 'pending',
-                'payment_reference' => 'UPG' . date('Ymd') . str_pad($obituary->id, 4, '0', STR_PAD_LEFT),
-                'created_by' => Auth::id()
-            ]);
+    //         // Create new payment record for the upgrade
+    //         $payment = \Modules\Graveyard\Models\ObituaryPayment::create([
+    //             'obituary_page_id' => $obituary->id,
+    //             'amount' => $premiumAmount,
+    //             'payment_status' => 'pending',
+    //             'payment_reference' => 'UPG' . date('Ymd') . str_pad($obituary->id, 4, '0', STR_PAD_LEFT),
+    //             'created_by' => Auth::id()
+    //         ]);
 
-            DB::commit();
+    //         DB::commit();
 
-            // Redirect to payment
-            return redirect()->route('graveyard.obituaries.show', $obituary->uuid)
-                ->with('success', 'Obituary upgraded to Premium! Premium features are now available. Please complete the payment.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Failed to upgrade obituary: ' . $e->getMessage());
-            return back()->with('error', 'Failed to upgrade obituary. Please try again.');
-        }
-    }
+    //         // Redirect to payment
+    //         return redirect()->route('graveyard.obituaries.show', $obituary->uuid)
+    //             ->with('success', 'Obituary upgraded to Premium! Premium features are now available. Please complete the payment.');
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error('Failed to upgrade obituary: ' . $e->getMessage());
+    //         return back()->with('error', 'Failed to upgrade obituary. Please try again.');
+    //     }
+    // }
 
     /**
      * Grant external member access to an obituary
@@ -1118,26 +1131,9 @@ class ObituaryManagementController extends Controller
                 'access_granted_at' => now(),
             ]);
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'External access granted successfully',
-                    'external_member' => $obituaryManager,
-                    'access_url' => route('obituary.external.login', $obituary->uuid)
-                ]);
-            }
-
             return back()->with('success', 'External access granted successfully');
         } catch (\Exception $e) {
             Log::error('Failed to grant external access: ' . $e->getMessage());
-
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'error' => 'Failed to grant external access. Please try again.'
-                ], 500);
-            }
 
             return back()->with('error', 'Failed to grant external access. Please try again.');
         }
@@ -1151,24 +1147,11 @@ class ObituaryManagementController extends Controller
         try {
             $obituary->obituaryManager()->delete();
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'External access revoked successfully'
-                ]);
-            }
 
             return back()->with('success', 'External access revoked successfully');
         } catch (\Exception $e) {
             Log::error('Failed to revoke external access: ' . $e->getMessage());
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'error' => 'Failed to revoke external access. Please try again.'
-                ], 500);
-            }
 
             return back()->with('error', 'Failed to revoke external access. Please try again.');
         }
@@ -1183,10 +1166,6 @@ class ObituaryManagementController extends Controller
             $obituaryManager = $obituary->obituaryManager;
 
             if (!$obituaryManager) {
-                // Check if it's an AJAX request
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['error' => 'No external member found'], 404);
-                }
                 return back()->with('error', 'No external member found');
             }
 
@@ -1197,25 +1176,11 @@ class ObituaryManagementController extends Controller
 
             $status = $obituaryManager->is_active ? 'enabled' : 'disabled';
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => "External access {$status} successfully",
-                    'is_active' => $obituaryManager->is_active
-                ]);
-            }
 
             return back()->with('success', "External access {$status} successfully");
         } catch (\Exception $e) {
             Log::error('Failed to toggle external access: ' . $e->getMessage());
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'error' => 'Failed to toggle external access. Please try again.'
-                ], 500);
-            }
 
             return back()->with('error', 'Failed to toggle external access. Please try again.');
         }
@@ -1234,10 +1199,6 @@ class ObituaryManagementController extends Controller
             $obituaryManager = $obituary->obituaryManager;
 
             if (!$obituaryManager) {
-                // Check if it's an AJAX request
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['error' => 'No external member found'], 404);
-                }
                 return back()->with('error', 'No external member found');
             }
 
@@ -1247,24 +1208,11 @@ class ObituaryManagementController extends Controller
                 'blocked_until' => null,
             ]);
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Password reset successfully'
-                ]);
-            }
 
             return back()->with('success', 'Password reset successfully');
         } catch (\Exception $e) {
             Log::error('Failed to reset external password: ' . $e->getMessage());
 
-            // Check if it's an AJAX request
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'error' => 'Failed to reset password. Please try again.'
-                ], 500);
-            }
 
             return back()->with('error', 'Failed to reset password. Please try again.');
         }

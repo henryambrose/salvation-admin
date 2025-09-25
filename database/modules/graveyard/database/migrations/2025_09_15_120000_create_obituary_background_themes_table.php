@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('name'); // 'Plain', 'Gradient', 'Memorial Sunset', etc.
             $table->text('description')->nullable();
             $table->string('type')->default('color'); // 'color', 'gradient', 'pattern', 'image'
-            $table->string('tier')->default('basic'); // 'basic', 'premium'
+            // $table->string('tier')->default('basic'); // 'basic', 'premium'
             $table->string('image_path')->nullable(); // Path to background image
             $table->json('style_properties')->nullable(); // CSS style properties as JSON
             $table->string('background_color')->nullable(); // Fallback background color

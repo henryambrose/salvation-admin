@@ -134,10 +134,10 @@ const getPageTitle = (issueType?: string) => {
           </div>
 
           <div v-else class="space-y-3 text-left">
-            <div class="flex items-start gap-3">
+            <!-- <div class="flex items-start gap-3">
               <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-red-400"></div>
               <p class="text-gray-600">There is an issue with the payment for this obituary page</p>
-            </div>
+            </div> -->
             <div class="flex items-start gap-3">
               <div class="mt-2 h-2 w-2 flex-shrink-0 rounded-full bg-red-400"></div>
               <p class="text-gray-600">Please contact the administrator for assistance</p>

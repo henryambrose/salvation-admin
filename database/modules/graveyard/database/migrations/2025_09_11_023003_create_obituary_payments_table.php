@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('obituary_page_id');
             $table->unsignedBigInteger('obituary_plan_id')->nullable();
             $table->decimal('amount', 10, 2);
-            $table->enum('service_type', ['basic', 'premium']);
+            // $table->enum('service_type', ['basic', 'premium']);
             $table->enum('payment_status', ['pending', 'completed', 'failed'])->default('pending');
             $table->string('payment_reference', 100)->nullable();
             $table->unsignedBigInteger('payment_method_id')->nullable();

@@ -58,14 +58,14 @@ class ObituaryController extends Controller
         }
 
         // Debug logging with detailed type information
-        $canSubmitCondolence = $obituary->allow_condolences && $obituary->service_type === 'premium';
+        $canSubmitCondolence = $obituary->allow_condolences; // && $obituary->service_type === 'premium';
 
         return Inertia::render('Public/Obituary/Show', [
             'obituary' => $obituary,
             'deceasedName' => $deceasedName,
             'condolences' => $obituary->condolences, // Explicitly pass approved condolences
             'canSubmitCondolence' => $canSubmitCondolence,
-            'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
+            'canShareMemory' => $obituary->allow_memory_sharing, // && $obituary->service_type === 'premium',
             'backgroundStyle' => $backgroundStyle, // Pass the processed background style
         ]);
     }
@@ -85,7 +85,7 @@ class ObituaryController extends Controller
         }
 
         // Check if condolences are enabled for this obituary
-        if (!$obituary->allow_condolences || $obituary->service_type !== 'premium') {
+        if (!$obituary->allow_condolences) { // || $obituary->service_type !== 'premium'
             return response()->json(['error' => 'Condolences are not enabled for this obituary page'], 403);
         }
 
@@ -262,7 +262,7 @@ class ObituaryController extends Controller
         }
 
         // For preview, show condolences if they would be available publicly
-        $wouldShowCondolences = $obituary->allow_condolences && $obituary->service_type === 'premium';
+        $wouldShowCondolences = $obituary->allow_condolences; // && $obituary->service_type === 'premium';
 
         return Inertia::render('Public/Obituary/Show', [
             'obituary' => $obituary,
@@ -270,7 +270,7 @@ class ObituaryController extends Controller
             'condolences' => $obituary->condolences, // Show condolences in preview
             'isPreview' => true,
             'canSubmitCondolence' => $wouldShowCondolences, // Show what it would look like publicly
-            'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
+            'canShareMemory' => $obituary->allow_memory_sharing, // && $obituary->service_type === 'premium',
             'backgroundStyle' => $backgroundStyle, // Pass the processed background style
         ]);
     }

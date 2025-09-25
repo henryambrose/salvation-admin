@@ -98,7 +98,7 @@ const form = useForm({
   booking_type: props.bookingType || '',
   booking_id: props.booking?.id || null,
   obituary_plan_id: props.obituaryPlans?.[0]?.id || null,
-  service_type: 'basic' as 'basic' | 'premium', // Keep for backward compatibility
+  // service_type: 'basic' as 'basic' | 'premium', // Keep for backward compatibility
   biography: '',
   favorite_memory: '',
   achievements: '',
@@ -117,7 +117,7 @@ const form = useForm({
 // Computed properties
 const selectedPlan = computed(() => props.obituaryPlans?.find((plan) => plan.id === form.obituary_plan_id) || props.obituaryPlans?.[0]);
 
-const isPremiumPlan = computed(() => selectedPlan.value && selectedPlan.value.cost > 1000);
+// const isPremiumPlan = computed(() => selectedPlan.value && selectedPlan.value.cost > 1000);
 
 // All plans have the same features, so we simplify
 const availableBackgrounds = computed(() => {
