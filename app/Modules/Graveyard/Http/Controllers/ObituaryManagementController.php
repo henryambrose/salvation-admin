@@ -33,7 +33,7 @@ class ObituaryManagementController extends Controller
         // Apply authorization middleware
         $this->middleware('auth');
 
-        // Temporarily disabled for debugging
+        // Temporarily disabled to debug authentication flow
         // $this->authorizeResource(ObituaryPage::class, 'obituary', [
         //     'except' => ['rephraseText']
         // ]);
@@ -102,6 +102,15 @@ class ObituaryManagementController extends Controller
 
     public function create(Request $request)
     {
+        // Debug logging
+        Log::info('ObituaryManagementController::create - START', [
+            'user_id' => Auth::id(),
+            'user_email' => Auth::user()?->email,
+            'is_authenticated' => Auth::check(),
+            'url' => $request->fullUrl(),
+            'method' => $request->method(),
+        ]);
+
         $bookingType = $request->query('type'); // 'permanent' or 'temporary'
         $bookingId = $request->query('booking_id');
 
@@ -114,6 +123,13 @@ class ObituaryManagementController extends Controller
 
         // Get available obituary plans
         $obituaryPlans = \Modules\Graveyard\Models\ObituaryPlan::active()->ordered()->get();
+
+        Log::info('ObituaryManagementController::create - RENDERING', [
+            'booking_type' => $bookingType,
+            'booking_id' => $bookingId,
+            'has_booking' => !is_null($booking),
+            'obituary_plans_count' => $obituaryPlans->count(),
+        ]);
 
         return Inertia::render('PagesGraveyard/Obituaries/Create', [
             'booking' => $booking,
