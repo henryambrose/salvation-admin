@@ -23,41 +23,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
-// Test route - no middleware
-Route::get('/graveyard-simple-test', function () {
-    Log::info('=== SIMPLE TEST ROUTE HIT ===');
-    return response('Simple test works!');
-});
-
-// Graveyard Dashboard - Temporary bypass for testing
-Route::get('/graveyard', function () {
-    Log::info('=== GRAVEYARD ROUTE HIT (NO AUTH) ===');
-
-    try {
-        $result = inertia('PagesGraveyard/Dashboard/Index', [
-            'stats' => [
-                'total_cemeteries' => 0,
-                'total_graves' => 0,
-                'occupied_graves' => 0,
-                'available_graves' => 0,
-                'recent_burials' => [],
-                'maintenance_alerts' => [],
-                'revenue_summary' => [
-                    'monthly' => 0,
-                    'yearly' => 0,
-                ]
-            ]
-        ]);
-        Log::info('Graveyard Inertia response created successfully');
-        return $result;
-    } catch (\Exception $e) {
-        Log::error('Error in graveyard route: ' . $e->getMessage());
-        Log::error('Stack trace: ' . $e->getTraceAsString());
-        throw $e;
-    }
-})->name('graveyard.dashboard');
-
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
+
+    // Graveyard Dashboard
+    Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
 
     // Graves Management
     Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
@@ -203,6 +172,8 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Obituary Plans Management
     Route::resource('graveyard/obituary-plans', ObituaryPlanController::class)
         ->names('graveyard.obituary-plans');
+    Route::post('graveyard/obituary-plans/{id}/restore', [ObituaryPlanController::class, 'restore'])
+        ->name('graveyard.obituary-plans.restore');
 
     // Obituary Background Themes Management
     Route::prefix('graveyard/obituary-background-themes')->name('graveyard.obituary-background-themes.')->group(function () {

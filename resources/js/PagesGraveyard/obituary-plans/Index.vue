@@ -42,6 +42,12 @@
             <option value="0">Inactive</option>
           </select>
         </div>
+        <div class="flex items-center gap-4">
+          <label class="flex cursor-pointer items-center gap-2 select-none">
+            <Checkbox v-model="isArchived" class="switch-checkbox" />
+            <span class="text-sm font-medium">Show Archived</span>
+          </label>
+        </div>
       </div>
     </DatatableHeader>
 
@@ -105,7 +111,7 @@
               <th class="border-b p-3 font-semibold text-gray-700">Status</th>
               <th class="border-b p-3 font-semibold text-gray-700">Order</th>
               <th class="border-b p-3 font-semibold text-gray-700">Usage</th>
-              <th class="border-b p-3 font-semibold text-gray-700">Delete</th>
+              <th v-if="!serverArchived" class="border-b p-3 font-semibold text-gray-700">Delete</th>
             </tr>
           </thead>
           <tbody>
@@ -117,18 +123,25 @@
             >
               <td class="p-2">
                 <div class="flex items-center gap-2">
-                  <Button
-                    @click="router.visit('/graveyard/obituary-plans/' + plan.id)"
-                    class="rounded-full bg-blue-100 p-2 text-blue-700 transition hover:bg-blue-200"
-                  >
-                    <Eye class="h-[1rem] w-[1rem]" />
-                  </Button>
-                  <Button
-                    @click="router.visit('/graveyard/obituary-plans/' + plan.id + '/edit')"
-                    class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
-                  >
-                    <Pencil class="h-[1rem] w-[1rem]" />
-                  </Button>
+                  <template v-if="!serverArchived">
+                    <!-- <Button
+                      @click="router.visit('/graveyard/obituary-plans/' + plan.id)"
+                      class="rounded-full bg-blue-100 p-2 text-blue-700 transition hover:bg-blue-200"
+                    >
+                      <Eye class="h-[1rem] w-[1rem]" />
+                    </Button> -->
+                    <Button
+                      @click="router.visit('/graveyard/obituary-plans/' + plan.id + '/edit')"
+                      class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
+                    >
+                      <Pencil class="h-[1rem] w-[1rem]" />
+                    </Button>
+                  </template>
+                  <template v-else>
+                    <Button @click="restorePlan(plan.id)" class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200">
+                      <RotateCcw class="h-[1rem] w-[1rem]" />
+                    </Button>
+                  </template>
                 </div>
               </td>
               <td class="p-2">
@@ -169,7 +182,7 @@
                   <div class="text-gray-500">{{ plan.obituary_payments_count || 0 }} payments</div>
                 </div>
               </td>
-              <td class="p-2">
+              <td v-if="!serverArchived" class="p-2">
                 <Button
                   @click="deletePlan(plan)"
                   variant="destructive"
@@ -194,7 +207,8 @@
             <h3 class="mb-4 text-xl font-semibold">Delete Obituary Plan</h3>
             <p>
               Are you sure you want to delete the plan
-              <span class="font-bold">{{ planToDelete?.name }}</span>?
+              <span class="font-bold">{{ planToDelete?.name }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -224,10 +238,11 @@
 <script setup lang="ts">
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { Eye, Pencil, Plus, Trash2 } from 'lucide-vue-next';
-import { ref, computed, watch } from 'vue';
+import { Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 interface Props {
   plans: any;
@@ -249,6 +264,8 @@ const filters = ref({ ...(props.filters || {}) });
 const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
 const planToDelete = ref<any>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 // Clear search
 const clearSearch = () => {
@@ -259,7 +276,11 @@ const clearSearch = () => {
 const applyFilters = () => {
   router.get(
     '/graveyard/obituary-plans',
-    { ...filters.value },
+    {
+      ...filters.value,
+      page: 1, // Reset to first page when filtering
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
     {
       preserveState: true,
       preserveScroll: true,
@@ -285,6 +306,21 @@ const confirmDelete = () => {
   }
 };
 
+const restorePlan = (id: number) => {
+  router.post(
+    '/graveyard/obituary-plans/' + id + '/restore',
+    {},
+    {
+      preserveScroll: true,
+      only: ['plans', 'filters'],
+      onSuccess: () => {
+        isArchived.value = false;
+        highlightRow(id);
+      },
+    },
+  );
+};
+
 const highlightRow = (id: number) => {
   highlightedRowId.value = id;
   setTimeout(() => {
@@ -298,6 +334,7 @@ const changePage = (page: number) => {
     {
       ...filters.value,
       page,
+      isArchived: isArchived.value ? 'true' : 'false',
     },
     {
       preserveState: true,
@@ -319,9 +356,15 @@ watch(
   () => props.filters,
   (newFilters) => {
     filters.value = { ...newFilters };
+    isArchived.value = String(newFilters?.isArchived) === 'true';
   },
   { deep: true },
 );
+
+// Watch for isArchived changes
+watch(isArchived, () => {
+  applyFilters();
+});
 </script>
 
 <style scoped>
@@ -344,5 +387,44 @@ watch(
   100% {
     background-color: inherit;
   }
+}
+.switch-checkbox {
+  width: 2.5rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  background: #ef4444;
+  box-shadow:
+    0 2px 8px 0 rgba(239, 68, 68, 0.25),
+    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
+  position: relative;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
+}
+.switch-checkbox[data-state='checked'] {
+  background: #2563eb;
+}
+.switch-checkbox input[type='checkbox'] {
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.switch-checkbox [data-slot='checkbox-indicator'] {
+  position: absolute;
+  left: 0.125rem;
+  top: 0.125rem;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  transition: left 0.2s;
+}
+.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
+  left: 1.375rem;
 }
 </style>

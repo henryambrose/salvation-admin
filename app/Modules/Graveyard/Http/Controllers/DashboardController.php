@@ -5,6 +5,8 @@ namespace Modules\Graveyard\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {

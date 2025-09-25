@@ -32,13 +32,17 @@ class ObituaryPlanController extends Controller
             ->when($request->has('is_active'), function ($query) use ($request) {
                 $query->where('is_active', $request->boolean('is_active'));
             })
+            ->when($request->isArchived === 'true', function ($query) {
+                $query->onlyTrashed();
+            })
+            ->withCount(['obituaryPages', 'obituaryPayments'])
             ->ordered()
             ->paginate(15)
             ->withQueryString();
 
         return Inertia::render('PagesGraveyard/obituary-plans/Index', [
             'plans' => $plans,
-            'filters' => $request->only(['search', 'is_active']),
+            'filters' => $request->only(['search', 'is_active', 'isArchived']),
             'can' => [
                 'create' => true, // Temporarily allow create while debugging authorization
             ],
@@ -134,5 +138,17 @@ class ObituaryPlanController extends Controller
 
         return redirect()->route('graveyard.obituary-plans.index')
             ->with('success', 'Obituary plan deleted successfully.');
+    }
+
+    /**
+     * Restore the specified soft-deleted resource.
+     */
+    public function restore($id): RedirectResponse
+    {
+        $obituaryPlan = ObituaryPlan::withTrashed()->findOrFail($id);
+        $obituaryPlan->restore();
+
+        return redirect()->route('graveyard.obituary-plans.index')
+            ->with('success', 'Obituary plan restored successfully.');
     }
 }

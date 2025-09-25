@@ -25,7 +25,11 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npm run lint:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/app/Modules/Graveyard/Providers/**)",
+      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/routes/**)",
+      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/bootstrap/**)",
+      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/**)"
     ],
     "deny": [],
     "ask": []
