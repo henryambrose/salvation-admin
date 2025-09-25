@@ -372,7 +372,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           as-child
                           class="text-purple-600 hover:bg-purple-50 hover:text-purple-800"
                         >
-                          <Link :href="`/graveyard/obituaries/create?type=temporary&booking_id=${booking.id}`">
+                          <Link :href="route('graveyard.obituaries.create', { type: 'temporary', booking_id: booking.id })">
                             <FileText class="h-4 w-4 mr-1" />
                             Create Obituary
                           </Link>
@@ -460,7 +460,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           as-child
                           class="text-purple-600 hover:bg-purple-50 hover:text-purple-800"
                         >
-                          <Link :href="`/graveyard/obituaries/create?type=temporary&booking_id=${booking.id}`">
+                          <Link :href="route('graveyard.obituaries.create', { type: 'temporary', booking_id: booking.id })">
                             <FileText class="h-4 w-4" />
                           </Link>
                         </Button>

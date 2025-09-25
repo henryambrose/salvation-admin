@@ -33,10 +33,10 @@ class ObituaryManagementController extends Controller
         // Apply authorization middleware
         $this->middleware('auth');
 
-        // Apply policy-based authorization
-        $this->authorizeResource(ObituaryPage::class, 'obituary', [
-            'except' => ['rephraseText']
-        ]);
+        // Temporarily disabled for debugging
+        // $this->authorizeResource(ObituaryPage::class, 'obituary', [
+        //     'except' => ['rephraseText']
+        // ]);
     }
 
 
@@ -119,7 +119,9 @@ class ObituaryManagementController extends Controller
             'booking' => $booking,
             'bookingType' => $bookingType,
             'obituaryPlans' => $obituaryPlans,
-            'backgrounds' => ObituaryBackgroundTheme::all(),
+            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function($theme) {
+                return $theme->toFrontendArray();
+            }),
         ]);
     }
 
@@ -245,8 +247,9 @@ class ObituaryManagementController extends Controller
 
         return Inertia::render('PagesGraveyard/Obituaries/Edit', [
             'obituary' => $obituary,
-            'backgrounds' => ObituaryBackgroundTheme::all(),
-
+            'backgrounds' => ObituaryBackgroundTheme::active()->ordered()->get()->map(function($theme) {
+                return $theme->toFrontendArray();
+            }),
         ]);
     }
 

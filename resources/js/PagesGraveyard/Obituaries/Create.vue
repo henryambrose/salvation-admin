@@ -48,11 +48,13 @@ interface TemporaryGraveBooking {
 }
 
 interface BackgroundOption {
-  value: string;
-  label: string;
+  key: string;
+  name: string;
   description: string;
-  image?: string;
+  type: string;
   tier: string;
+  image?: string;
+  style?: any;
 }
 
 interface ObituaryPlan {
@@ -409,7 +411,7 @@ const goBack = () => {
                 <p class="text-sm text-gray-600">Select the duration and cost that best fits your needs. All plans include the same features.</p>
               </CardHeader>
               <CardContent>
-                <div class="space-y-3">
+                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div
                     v-for="plan in obituaryPlans"
                     :key="plan.id"
@@ -419,22 +421,21 @@ const goBack = () => {
                       form.obituary_plan_id === plan.id ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300',
                     ]"
                   >
-                    <div class="flex items-center justify-between">
-                      <div class="flex items-center space-x-3">
+                    <div class="flex items-start justify-between">
+                      <div class="flex items-start space-x-3">
                         <input
                           type="radio"
                           :value="plan.id"
                           v-model="form.obituary_plan_id"
                           :id="`plan-${plan.id}`"
-                          class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                          class="mt-1 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        <div>
+                        <div class="flex-1">
                           <Label :for="`plan-${plan.id}`" class="cursor-pointer font-semibold text-gray-900">{{ plan.name }}</Label>
-                          <p class="text-sm text-gray-600">{{ plan.description }}</p>
-                          <p class="text-xs text-gray-500">Duration: {{ plan.formatted_duration }}</p>
+                          <p class="mt-1 text-sm leading-relaxed text-gray-600">{{ plan.description }}</p>
                         </div>
                       </div>
-                      <div class="text-right">
+                      <div class="ml-4 flex-shrink-0 text-right">
                         <span class="text-lg font-bold text-blue-600">{{ plan.formatted_cost }}</span>
                       </div>
                     </div>
@@ -442,7 +443,7 @@ const goBack = () => {
                 </div>
 
                 <!-- Features included in all plans -->
-                <div class="mt-4 rounded-lg bg-gray-50 p-4">
+                <!-- <div class="mt-4 rounded-lg bg-gray-50 p-4">
                   <h4 class="mb-2 font-medium text-gray-900">Features included in all plans:</h4>
                   <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
                     <div class="flex items-center">
@@ -478,7 +479,7 @@ const goBack = () => {
                       Text rephrasing AI
                     </div>
                   </div>
-                </div>
+                </div> -->
               </CardContent>
             </Card>
 
@@ -794,13 +795,13 @@ const goBack = () => {
                   <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div
                       v-for="background in availableBackgrounds"
-                      :key="background.value"
+                      :key="background.key"
                       class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
-                      :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                      @click="form.background_style = background.value"
+                      :class="form.background_style === background.key ? 'border-primary bg-primary/5' : 'border-gray-200'"
+                      @click="form.background_style = background.key"
                     >
                       <div class="flex items-center space-x-3">
-                        <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
+                        <input type="radio" :value="background.key" v-model="form.background_style" class="hidden" />
                         <div
                           v-if="background.image"
                           class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
@@ -808,14 +809,14 @@ const goBack = () => {
                         ></div>
                         <div v-else class="h-12 w-12 flex-shrink-0 rounded border bg-gray-100"></div>
                         <div class="min-w-0 flex-1">
-                          <h3 class="text-sm font-medium">{{ background.label }}</h3>
+                          <h3 class="text-sm font-medium">{{ background.name }}</h3>
                           <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
-                          <span
+                          <!-- <span
                             class="mt-1 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
                             :class="background.tier === 'premium' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'"
                           >
                             {{ background.tier === 'premium' ? 'Premium' : 'Basic' }}
-                          </span>
+                          </span> -->
                         </div>
                       </div>
                     </div>
@@ -876,7 +877,7 @@ const goBack = () => {
             </Card>
 
             <!-- Payment Summary -->
-            <Card v-if="selectedPlan">
+            <!-- <Card v-if="selectedPlan">
               <CardHeader>
                 <CardTitle class="flex items-center justify-between">
                   <span>Payment Summary</span>
@@ -925,7 +926,7 @@ const goBack = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+            </Card> -->
 
             <!-- Submit Section -->
             <div class="flex items-center justify-between">
