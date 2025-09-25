@@ -24,7 +24,8 @@
       "Bash(del verify_audit_coverage.php)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "Bash(move:*)"
     ],
     "deny": [],
     "ask": []

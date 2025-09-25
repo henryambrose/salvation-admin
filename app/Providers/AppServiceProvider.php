@@ -3,7 +3,9 @@
 namespace App\Providers;
 
 use App\Policies\ObituaryPolicy;
+use App\Policies\ObituaryPlanPolicy;
 use Modules\Graveyard\Models\ObituaryPage;
+use Modules\Graveyard\Models\ObituaryPlan;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,5 +26,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // Register policies
         Gate::policy(ObituaryPage::class, ObituaryPolicy::class);
+        Gate::policy(ObituaryPlan::class, ObituaryPlanPolicy::class);
     }
 }

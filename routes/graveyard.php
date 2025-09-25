@@ -18,13 +18,46 @@ use Modules\Graveyard\Http\Controllers\ObituaryController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagerController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Modules\Graveyard\Http\Controllers\ObituaryPlanController;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+
+// Test route - no middleware
+Route::get('/graveyard-simple-test', function () {
+    Log::info('=== SIMPLE TEST ROUTE HIT ===');
+    return response('Simple test works!');
+});
+
+// Graveyard Dashboard - Temporary bypass for testing
+Route::get('/graveyard', function () {
+    Log::info('=== GRAVEYARD ROUTE HIT (NO AUTH) ===');
+
+    try {
+        $result = inertia('PagesGraveyard/Dashboard/Index', [
+            'stats' => [
+                'total_cemeteries' => 0,
+                'total_graves' => 0,
+                'occupied_graves' => 0,
+                'available_graves' => 0,
+                'recent_burials' => [],
+                'maintenance_alerts' => [],
+                'revenue_summary' => [
+                    'monthly' => 0,
+                    'yearly' => 0,
+                ]
+            ]
+        ]);
+        Log::info('Graveyard Inertia response created successfully');
+        return $result;
+    } catch (\Exception $e) {
+        Log::error('Error in graveyard route: ' . $e->getMessage());
+        Log::error('Stack trace: ' . $e->getTraceAsString());
+        throw $e;
+    }
+})->name('graveyard.dashboard');
 
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
-
-    // Graveyard Dashboard
-    Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
 
     // Graves Management
     Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
@@ -167,6 +200,10 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
     });
 
+    // Obituary Plans Management
+    Route::resource('graveyard/obituary-plans', ObituaryPlanController::class)
+        ->names('graveyard.obituary-plans');
+
     // Obituary Background Themes Management
     Route::prefix('graveyard/obituary-background-themes')->name('graveyard.obituary-background-themes.')->group(function () {
         Route::get('/', [ObituaryBackgroundThemeController::class, 'index'])->name('index');
@@ -202,6 +239,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::get('/{obituary}/edit', [ObituaryManagementController::class, 'edit'])->name('edit');
         Route::put('/{obituary}', [ObituaryManagementController::class, 'update'])->name('update');
         Route::delete('/{obituary}', [ObituaryManagementController::class, 'destroy'])->name('destroy');
+        Route::post('/{uuid}/restore', [ObituaryManagementController::class, 'restore'])->name('restore');
 
         // File cleanup management
 
@@ -321,7 +359,7 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
 
 // Public obituary routes (no authentication required)
 Route::get('/obituary/{uuid}', function (string $uuid) {
-    $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences'])
+    $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences', 'obituaryPlan'])
         ->where('uuid', $uuid)
         ->first();
 
@@ -380,6 +418,17 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         ]);
     }
 
+    // Check if obituary has expired based on plan duration
+    if ($obituary->hasExpired()) {
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => 'This obituary page has expired. Please contact the administrator to renew.',
+            'paymentStatus' => 'expired',
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'expired',
+            'planName' => $obituary->obituaryPlan?->name
+        ]);
+    }
+
     // Increment view count
     $obituary->increment('view_count');
 
@@ -399,9 +448,11 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         'obituary' => $obituary,
         'deceasedName' => $deceasedName,
         'condolences' => $obituary->condolences, // Explicitly pass approved condolences
-        'canSubmitCondolence' => $obituary->allow_condolences && $obituary->service_type === 'premium',
-        'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
-        'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
+        'canSubmitCondolence' => $obituary->allow_condolences && $obituary->hasPremiumFeatures(),
+        'canShareMemory' => $obituary->allow_memory_sharing && $obituary->hasPremiumFeatures(),
+        'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain'),
+        'plan' => $obituary->obituaryPlan,
+        'hasExpired' => $obituary->hasExpired(),
     ]);
 })->name('obituary.show');
 

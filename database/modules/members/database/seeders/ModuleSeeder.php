@@ -290,6 +290,12 @@ class ModuleSeeder extends Seeder
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
             [
+                'name' => 'Obituary Plans',
+                'slug' => 'obituary-plans',
+                'icon' => 'Receipt',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
                 'name' => 'Obituary Payments',
                 'slug' => 'obituary-payment',
                 'icon' => 'Receipt',

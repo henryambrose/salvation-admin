@@ -22,6 +22,7 @@ class ObituaryPage extends Model
         'qr_code_path',
         'permanent_grave_booking_id',
         'temporary_grave_booking_id',
+        'obituary_plan_id',
         'biography',
         'favorite_memory',
         'achievements',
@@ -108,6 +109,11 @@ class ObituaryPage extends Model
     public function obituaryManager(): HasOne
     {
         return $this->hasOne(ObituaryManager::class);
+    }
+
+    public function obituaryPlan(): BelongsTo
+    {
+        return $this->belongsTo(ObituaryPlan::class);
     }
 
     public function getBookingAttribute()
@@ -284,5 +290,37 @@ class ObituaryPage extends Model
     {
         $booking = $this->getBookingAttribute();
         return $booking?->payment_status;
+    }
+
+    /**
+     * Check if premium features are available based on plan or service type
+     */
+    public function hasPremiumFeatures(): bool
+    {
+        // Check if it has a plan with premium features (we could define this logic)
+        // For now, we'll use the service_type as fallback for backward compatibility
+        if ($this->obituaryPlan) {
+            // You could define premium features based on plan cost or specific plan names
+            // For now, let's consider plans over ₹1000 as premium
+            return $this->obituaryPlan->cost > 1000;
+        }
+
+        // Fallback to original service_type logic
+        return $this->service_type === 'premium';
+    }
+
+    /**
+     * Check if obituary has expired based on plan duration
+     */
+    public function hasExpired(): bool
+    {
+        if ($this->obituaryPlan && !$this->obituaryPlan->isLifetime()) {
+            // Check if obituary has expired based on plan duration
+            $expiryDate = $this->created_at->addDays($this->obituaryPlan->duration_in_days);
+            return $expiryDate->isPast();
+        }
+
+        // Fallback to expires_at column
+        return $this->expires_at && $this->expires_at->isPast();
     }
 }

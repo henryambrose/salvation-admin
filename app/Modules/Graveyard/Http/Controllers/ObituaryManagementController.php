@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 
 use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryCondolence;
-use Modules\Graveyard\Models\ObituaryPayment;
+use Modules\Graveyard\Models\ObituaryBackgroundTheme;
 use Modules\Graveyard\Services\ObituaryService;
 use Modules\Graveyard\Services\BackgroundService;
 use Illuminate\Http\Request;
@@ -112,11 +112,14 @@ class ObituaryManagementController extends Controller
             $booking = TemporaryGraveBooking::findOrFail($bookingId);
         }
 
+        // Get available obituary plans
+        $obituaryPlans = \Modules\Graveyard\Models\ObituaryPlan::active()->ordered()->get();
+
         return Inertia::render('PagesGraveyard/Obituaries/Create', [
             'booking' => $booking,
             'bookingType' => $bookingType,
-            'basicBackgrounds' => BackgroundService::getBackgroundOptions('basic'),
-            'premiumBackgrounds' => BackgroundService::getBackgroundOptions('premium'),
+            'obituaryPlans' => $obituaryPlans,
+            'backgrounds' => ObituaryBackgroundTheme::all(),
         ]);
     }
 
@@ -125,7 +128,8 @@ class ObituaryManagementController extends Controller
         $validated = $request->validate([
             'booking_type' => 'required|in:permanent,temporary',
             'booking_id' => 'required|integer',
-            'service_type' => 'required|in:basic,premium',
+            'obituary_plan_id' => 'required|integer|exists:obituary_plans,id',
+            'service_type' => 'required|in:basic,premium', // Keep for compatibility
             'biography' => 'nullable|string',
             'favorite_memory' => 'nullable|string',
             'achievements' => 'nullable|string',
@@ -173,26 +177,33 @@ class ObituaryManagementController extends Controller
             $data['audio_message'] = $request->file('audio_message')->store('obituaries/audio', 'public');
         }
 
+        // Get the selected obituary plan
+        $obituaryPlan = \Modules\Graveyard\Models\ObituaryPlan::findOrFail($validated['obituary_plan_id']);
+
+        // Add obituary_plan_id to data
+        $data['obituary_plan_id'] = $obituaryPlan->id;
+
         $obituary = $this->obituaryService->createObituaryFromBooking($booking, $data);
 
-        // Create payment record for the obituary service
-        $serviceAmount = $validated['service_type'] === 'premium' ? 1500 : 500;
-
+        // Create payment record for the obituary service using plan pricing
         $payment = \Modules\Graveyard\Models\ObituaryPayment::create([
             'obituary_page_id' => $obituary->id,
-            'service_type' => $validated['service_type'],
-            'amount' => $serviceAmount,
+            'obituary_plan_id' => $obituaryPlan->id,
+            'service_type' => $validated['service_type'], // Keep for compatibility
+            'amount' => $obituaryPlan->cost,
             'payment_status' => 'pending',
             'payment_reference' => 'OBT' . date('Ymd') . str_pad($obituary->id, 4, '0', STR_PAD_LEFT),
             'created_by' => Auth::id(),
+            'expires_at' => $obituaryPlan->isLifetime() ? null : now()->addDays($obituaryPlan->duration_in_days),
         ]);
 
         // Redirect to obituary show page with payment option
         return redirect()->route('graveyard.obituaries.show', $obituary)
             ->with('success', 'Obituary page created successfully! Please complete the payment to activate the page.')
             ->with('payment_required', true)
-            ->with('payment_amount', $serviceAmount)
-            ->with('service_type', $validated['service_type']);
+            ->with('payment_amount', $obituaryPlan->cost)
+            ->with('service_type', $validated['service_type'])
+            ->with('plan_name', $obituaryPlan->name);
     }
 
     public function show(ObituaryPage $obituary)
@@ -234,8 +245,8 @@ class ObituaryManagementController extends Controller
 
         return Inertia::render('PagesGraveyard/Obituaries/Edit', [
             'obituary' => $obituary,
-            'basicBackgrounds' => BackgroundService::getBackgroundOptions('basic'),
-            'premiumBackgrounds' => BackgroundService::getBackgroundOptions('premium'),
+            'backgrounds' => ObituaryBackgroundTheme::all(),
+
         ]);
     }
 
@@ -342,6 +353,18 @@ class ObituaryManagementController extends Controller
 
         return redirect()->route('graveyard.obituaries.index')
             ->with('success', 'Obituary page deleted successfully!');
+    }
+
+    public function restore($uuid)
+    {
+        $obituary = ObituaryPage::withTrashed()->where('uuid', $uuid)->firstOrFail();
+
+        // Check policy authorization for restoring obituaries
+        $this->authorize('restore', $obituary);
+
+        $obituary->restore();
+
+        return back()->with('success', 'Obituary page restored successfully!');
     }
 
     public function condolences(Request $request)

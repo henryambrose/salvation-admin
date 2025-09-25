@@ -12,10 +12,24 @@ import { computed, ref } from 'vue';
 
 type PaymentStatus = 'pending' | 'completed' | 'failed';
 
+interface ObituaryPlan {
+  id: number;
+  name: string;
+  description: string;
+  cost: number;
+  formatted_cost: string;
+  duration_in_days: number;
+  formatted_duration: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 interface ObituaryPage {
   id: number;
   uuid: string;
   service_type: 'basic' | 'premium';
+  obituary_plan_id?: number;
+  obituary_plan?: ObituaryPlan;
   expires_at?: string;
   is_public: boolean;
   view_count: number;
@@ -52,6 +66,8 @@ interface ObituaryPage {
     payment_status: PaymentStatus;
     amount: number;
     payment_reference: string;
+    obituary_plan_id?: number;
+    obituary_plan?: ObituaryPlan;
   }[];
   obituary_manager?: {
     id: number;
@@ -248,6 +264,8 @@ const serviceTypeColors = {
   premium: 'bg-purple-100 text-purple-800',
 };
 
+// Since all plans have same features, no upgrade functionality needed
+
 const expirationInfo = computed(() => {
   if (!props.obituary.expires_at) return null;
 
@@ -432,6 +450,7 @@ const paymentStatusColors = {
             </div>
           </CardContent>
         </Card>
+
 
         <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <!-- Main Content -->

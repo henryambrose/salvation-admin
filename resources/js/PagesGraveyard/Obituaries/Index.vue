@@ -6,7 +6,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowUp, Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2 } from 'lucide-vue-next';
+import { ArrowUp, Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2, Undo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface ObituaryPage {
@@ -19,8 +19,10 @@ interface ObituaryPage {
   view_count: number;
   qr_scan_count: number;
   created_at: string;
+  deleted_at?: string;
   can_be_accessed_publicly: boolean;
   payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
+  can_be_published: boolean;
   permanent_grave_booking?: {
     id: number;
     booking_reference: string;
@@ -109,6 +111,13 @@ const serviceTypeColors = {
   premium: 'bg-purple-100 text-purple-800',
 };
 
+const paymentStatusColors = {
+  pending: 'bg-orange-100 text-orange-800',
+  completed: 'bg-green-100 text-green-800',
+  failed: 'bg-red-100 text-red-800',
+  refunded: 'bg-gray-100 text-gray-800',
+};
+
 const viewObituaryPage = (uuid: string) => {
   window.open(`/obituary/${uuid}`, '_blank');
 };
@@ -176,6 +185,29 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
       onError: (errors) => {
         console.error('Error upgrading obituary:', errors);
         error('Failed to initiate upgrade. Please try again.');
+      },
+    },
+  );
+};
+
+const restoreObituary = (obituaryUuid: string) => {
+  if (!confirm('Are you sure you want to restore this obituary page?')) {
+    return;
+  }
+
+  router.post(
+    `/graveyard/obituaries/${obituaryUuid}/restore`,
+    {},
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        success('Obituary restored successfully!');
+        // Refresh the current page to show updated status
+        router.reload({ only: ['obituaries'] });
+      },
+      onError: (errors) => {
+        console.error('Error restoring obituary:', errors);
+        error('Failed to restore obituary. Please try again.');
       },
     },
   );
@@ -253,11 +285,27 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200 bg-white">
-                  <tr v-for="obituary in obituaries?.data || []" :key="obituary.id" class="hover:bg-gray-50">
+                  <tr
+                    v-for="obituary in obituaries?.data || []"
+                    :key="obituary.id"
+                    :class="[
+                      obituary.deleted_at
+                        ? 'bg-red-50 hover:bg-red-100'
+                        : 'hover:bg-gray-50'
+                    ]"
+                  >
                     <!-- Deceased Person -->
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div class="text-sm font-medium text-gray-900">{{ getDeceasedName(obituary) }}</div>
+                        <div :class="[
+                          'text-sm font-medium',
+                          obituary.deleted_at ? 'text-red-600 line-through' : 'text-gray-900'
+                        ]">
+                          {{ getDeceasedName(obituary) }}
+                          <span v-if="obituary.deleted_at" class="ml-2 text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+                            DELETED
+                          </span>
+                        </div>
                         <div class="text-sm text-gray-600">{{ getBookingReference(obituary) }}</div>
                       </div>
                     </td>
@@ -277,6 +325,9 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
                           <EyeOff v-else class="mr-1 h-3 w-3" />
                           {{ obituary.is_published ? 'Published' : 'Draft' }}
                         </Badge>
+                        <Badge :class="paymentStatusColors[obituary.payment_status]" class="text-xs">
+                          {{ obituary.payment_status === 'completed' ? 'Paid' : obituary.payment_status.charAt(0).toUpperCase() + obituary.payment_status.slice(1) }}
+                        </Badge>
                         <div v-if="obituary.is_published && obituary.published_at" class="text-xs text-gray-500">
                           Published {{ new Date(obituary.published_at).toLocaleDateString() }}
                         </div>
@@ -294,8 +345,22 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
                     <!-- Actions -->
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div class="space-y-2">
-                        <!-- Main Actions -->
-                        <div class="flex space-x-2">
+                        <!-- Restore Button for Deleted Obituaries -->
+                        <div v-if="obituary.deleted_at">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            @click="restoreObituary(obituary.uuid)"
+                            class="w-full border-green-200 text-green-600 hover:bg-green-50"
+                            title="Restore obituary"
+                          >
+                            <Undo2 class="mr-1 h-3 w-3" />
+                            Restore
+                          </Button>
+                        </div>
+
+                        <!-- Main Actions for Active Obituaries -->
+                        <div v-else class="flex space-x-2">
                           <Button
                             size="sm"
                             variant="outline"
@@ -320,8 +385,8 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
                           </Button>
                         </div>
 
-                        <!-- Upgrade to Premium -->
-                        <div v-if="obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
+                        <!-- Upgrade to Premium (Only for Active Obituaries) -->
+                        <div v-if="!obituary.deleted_at && obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
                           <Button
                             size="sm"
                             variant="outline"
@@ -333,8 +398,8 @@ const upgradeObituaryToPremium = (obituary: ObituaryPage) => {
                           </Button>
                         </div>
 
-                        <!-- Publish/Unpublish Actions -->
-                        <div v-if="canPublishObituary || canUnpublishObituary" class="flex space-x-2">
+                        <!-- Publish/Unpublish Actions (Only for Active Obituaries) -->
+                        <div v-if="!obituary.deleted_at && (canPublishObituary || canUnpublishObituary)" class="flex space-x-2">
                           <Button
                             v-if="!obituary.is_published && canPublishObituary"
                             size="sm"

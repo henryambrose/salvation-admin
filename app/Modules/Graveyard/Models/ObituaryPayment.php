@@ -13,6 +13,7 @@ class ObituaryPayment extends Model
 {
     protected $fillable = [
         'obituary_page_id',
+        'obituary_plan_id',
         'amount',
         'service_type',
         'payment_status',
@@ -51,6 +52,11 @@ class ObituaryPayment extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function obituaryPlan(): BelongsTo
+    {
+        return $this->belongsTo(ObituaryPlan::class);
     }
 
     public function markAsPaid(): void

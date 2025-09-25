@@ -115,6 +115,14 @@ class GraveyardPermissionsSeeder extends Seeder
             // 'process-obituary-payment',
             // 'refund-obituary-payment',
 
+            // Obituary Plans
+            'create-obituary-plans',
+            'read-obituary-plans',
+            'update-obituary-plans',
+            'delete-obituary-plans',
+            'list-obituary-plans',
+            'restore-obituary-plans',
+
             // Niche Transfers
             'create-niche-transfer',
             'read-niche-transfer',

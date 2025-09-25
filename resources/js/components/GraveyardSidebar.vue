@@ -69,6 +69,7 @@ const graveyardNavigationGroups = computed(() => [
     label: 'Obituary Management',
     items: [
       { title: 'All Obituaries', href: '/graveyard/obituaries', icon: FileText, show: true },
+      { title: 'Obituary Plans', href: '/graveyard/obituary-plans', icon: Tags, show: can('access-graveyard') },
       { title: 'Condolences', href: '/graveyard/obituaries/condolences/manage', icon: BookOpen, show: true },
       { title: 'File Cleanup', href: '/graveyard/obituaries/cleanup', icon: Trash2, show: true },
       { title: 'Obituary Managers', href: '/graveyard/obituary-managers', icon: Users, show: can('read-obituary-manager') || true },

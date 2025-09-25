@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('obituary_payments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('obituary_page_id');
+            $table->unsignedBigInteger('obituary_plan_id')->nullable();
             $table->decimal('amount', 10, 2);
             $table->enum('service_type', ['basic', 'premium']);
             $table->enum('payment_status', ['pending', 'completed', 'failed'])->default('pending');
@@ -28,6 +29,7 @@ return new class extends Migration
 
             // Foreign keys
             $table->foreign('payment_method_id')->references('id')->on('payment_methods')->onDelete('set null');
+            $table->foreign('obituary_plan_id')->references('id')->on('obituary_plans')->onDelete('set null');
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
             $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
 
@@ -35,6 +37,7 @@ return new class extends Migration
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();
             // Indexes
+            $table->index('obituary_plan_id');
             $table->index('payment_method_id');
             $table->index('created_by');
             $table->index('updated_by');

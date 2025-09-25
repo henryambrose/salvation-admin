@@ -5,12 +5,12 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import axios from 'axios';
 import { ArrowLeft, FileImage, Music, Palette, RefreshCw, Sparkles, Upload, X } from 'lucide-vue-next';
-import { computed, ref, watch } from 'vue';
-import { useToast } from '@/composables/useToast';
+import { computed, ref } from 'vue';
 
 interface ValidMember {
   id: number;
@@ -55,11 +55,23 @@ interface BackgroundOption {
   tier: string;
 }
 
+interface ObituaryPlan {
+  id: number;
+  name: string;
+  description: string;
+  cost: number;
+  formatted_cost: string;
+  duration_in_days: number;
+  formatted_duration: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 interface Props {
   booking?: PermanentGraveBooking | TemporaryGraveBooking;
   bookingType?: 'permanent' | 'temporary';
-  basicBackgrounds: BackgroundOption[];
-  premiumBackgrounds: BackgroundOption[];
+  obituaryPlans: ObituaryPlan[];
+  backgrounds: BackgroundOption[];
 }
 
 const props = defineProps<Props>();
@@ -79,29 +91,12 @@ const deceasedName = computed(() => {
   }
 });
 
-// Pricing structure
-const obituaryPricing = {
-  basic: { amount: 500, label: '₹500', features: ['Basic obituary page', 'QR code generation', 'Profile photo', 'Biography & content'] },
-  premium: {
-    amount: 1500,
-    label: '₹1,500',
-    features: [
-      'All basic features',
-      'Gallery photos',
-      'Condolence collection',
-      'Memory sharing',
-      'Audio messages',
-      'Custom themes',
-      'Priority support',
-    ],
-  },
-};
-
-// Form setup
+// Form setup - updated to use obituary plans
 const form = useForm({
   booking_type: props.bookingType || '',
   booking_id: props.booking?.id || null,
-  service_type: 'basic' as 'basic' | 'premium',
+  obituary_plan_id: props.obituaryPlans?.[0]?.id || null,
+  service_type: 'basic' as 'basic' | 'premium', // Keep for backward compatibility
   biography: '',
   favorite_memory: '',
   achievements: '',
@@ -118,17 +113,14 @@ const form = useForm({
 });
 
 // Computed properties
-const selectedServicePrice = computed(() => obituaryPricing[form.service_type]);
+const selectedPlan = computed(() => props.obituaryPlans?.find((plan) => plan.id === form.obituary_plan_id) || props.obituaryPlans?.[0]);
 
-// Available backgrounds based on service type
+const isPremiumPlan = computed(() => selectedPlan.value && selectedPlan.value.cost > 1000);
+
+// All plans have the same features, so we simplify
 const availableBackgrounds = computed(() => {
-  if (form.service_type === 'premium') {
-    // For premium service, show both basic and premium backgrounds
-    return [...props.basicBackgrounds, ...props.premiumBackgrounds];
-  } else {
-    // For basic service, show only basic backgrounds
-    return props.basicBackgrounds;
-  }
+  // All plans get access to all backgrounds
+  return [...props.backgrounds];
 });
 
 const profileImageRef = ref<HTMLInputElement>();
@@ -155,26 +147,9 @@ const rephraseDialogData = ref<{
   rephrasedText: string;
 } | null>(null);
 
-// Watch for service type changes to enable/disable premium features
-watch(
-  () => form.service_type,
-  (newType) => {
-    if (newType === 'basic') {
-      // Disable premium features for basic service
-      form.allow_condolences = false;
-      form.allow_memory_sharing = false;
-      form.gallery_images = [];
-      galleryPreviews.value = []; // Clear gallery previews too
-      form.audio_message = null;
-      form.theme_color = '#6366f1';
-      form.background_style = 'plain';
-    } else {
-      // Enable premium features
-      form.allow_condolences = true;
-      form.allow_memory_sharing = true;
-    }
-  },
-);
+// Since all plans have same features, enable all features by default
+form.allow_condolences = true;
+form.allow_memory_sharing = true;
 
 // Enhanced file handlers with preview and validation
 const handleProfileImageSelect = (event: Event) => {
@@ -427,74 +402,80 @@ const goBack = () => {
         <!-- Main Form -->
         <form @submit.prevent="submit" v-if="booking">
           <div class="space-y-6">
-            <!-- Service Type Selection -->
+            <!-- Plan Selection -->
             <Card>
               <CardHeader>
-                <CardTitle>Service Type</CardTitle>
+                <CardTitle>Choose Obituary Plan</CardTitle>
+                <p class="text-sm text-gray-600">Select the duration and cost that best fits your needs. All plans include the same features.</p>
               </CardHeader>
               <CardContent>
-                <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div class="space-y-3">
                   <div
-                    @click="form.service_type = 'basic'"
+                    v-for="plan in obituaryPlans"
+                    :key="plan.id"
+                    @click="form.obituary_plan_id = plan.id"
                     :class="[
-                      'cursor-pointer rounded-lg border p-6 transition-all hover:shadow-md',
-                      form.service_type === 'basic' ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300',
+                      'cursor-pointer rounded-lg border p-4 transition-all hover:shadow-md',
+                      form.obituary_plan_id === plan.id ? 'border-blue-500 bg-blue-50 shadow-md' : 'border-gray-200 hover:border-gray-300',
                     ]"
                   >
-                    <div class="flex items-start space-x-3">
-                      <input
-                        type="radio"
-                        value="basic"
-                        v-model="form.service_type"
-                        id="basic"
-                        class="mt-1 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                          <Label for="basic" class="cursor-pointer text-lg font-semibold">Basic Service</Label>
-                          <span class="text-lg font-bold text-blue-600">{{ obituaryPricing.basic.label }}</span>
+                    <div class="flex items-center justify-between">
+                      <div class="flex items-center space-x-3">
+                        <input
+                          type="radio"
+                          :value="plan.id"
+                          v-model="form.obituary_plan_id"
+                          :id="`plan-${plan.id}`"
+                          class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        <div>
+                          <Label :for="`plan-${plan.id}`" class="cursor-pointer font-semibold text-gray-900">{{ plan.name }}</Label>
+                          <p class="text-sm text-gray-600">{{ plan.description }}</p>
+                          <p class="text-xs text-gray-500">Duration: {{ plan.formatted_duration }}</p>
                         </div>
-                        <p class="mt-1 text-sm text-gray-600">Standard obituary page with essential features</p>
-                        <ul class="mt-3 space-y-1">
-                          <li v-for="feature in obituaryPricing.basic.features" :key="feature" class="flex items-center text-sm text-gray-700">
-                            <span class="mr-2 text-green-500">✓</span>
-                            {{ feature }}
-                          </li>
-                        </ul>
+                      </div>
+                      <div class="text-right">
+                        <span class="text-lg font-bold text-blue-600">{{ plan.formatted_cost }}</span>
                       </div>
                     </div>
                   </div>
-                  <div
-                    @click="form.service_type = 'premium'"
-                    :class="[
-                      'relative cursor-pointer rounded-lg border p-6 transition-all hover:shadow-md',
-                      form.service_type === 'premium' ? 'border-purple-500 bg-purple-50 shadow-md' : 'border-gray-200 hover:border-gray-300',
-                    ]"
-                  >
-                    <div class="absolute top-0 right-0 rounded-tr-lg rounded-bl-lg bg-purple-600 px-3 py-1 text-xs font-medium text-white">
-                      RECOMMENDED
+                </div>
+
+                <!-- Features included in all plans -->
+                <div class="mt-4 rounded-lg bg-gray-50 p-4">
+                  <h4 class="mb-2 font-medium text-gray-900">Features included in all plans:</h4>
+                  <div class="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Memorial page & biography
                     </div>
-                    <div class="flex items-start space-x-3">
-                      <input
-                        type="radio"
-                        value="premium"
-                        v-model="form.service_type"
-                        id="premium"
-                        class="mt-1 h-4 w-4 border-gray-300 text-purple-600 focus:ring-purple-500"
-                      />
-                      <div class="flex-1">
-                        <div class="flex items-center justify-between">
-                          <Label for="premium" class="cursor-pointer text-lg font-semibold">Premium Service</Label>
-                          <span class="text-lg font-bold text-purple-600">{{ obituaryPricing.premium.label }}</span>
-                        </div>
-                        <p class="mt-1 text-sm text-gray-600">Enhanced memorial page with premium features</p>
-                        <ul class="mt-3 space-y-1">
-                          <li v-for="feature in obituaryPricing.premium.features" :key="feature" class="flex items-center text-sm text-gray-700">
-                            <span class="mr-2 text-green-500">✓</span>
-                            {{ feature }}
-                          </li>
-                        </ul>
-                      </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Photo gallery
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      QR code generation
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Condolence messages
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Memory sharing
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Audio messages
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Custom themes
+                    </div>
+                    <div class="flex items-center">
+                      <span class="mr-2 text-green-500">✓</span>
+                      Text rephrasing AI
                     </div>
                   </div>
                 </div>
@@ -667,12 +648,9 @@ const goBack = () => {
                   </div>
                 </div>
 
-                <!-- Gallery Images (Premium Only) -->
-                <div v-if="form.service_type === 'premium'" class="border-t pt-6">
-                  <Label class="flex items-center text-base font-semibold">
-                    Gallery Photos
-                    <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span>
-                  </Label>
+                <!-- Gallery Images -->
+                <div class="border-t pt-6">
+                  <Label class="text-base font-semibold">Gallery Photos</Label>
                   <p class="mb-4 text-sm text-gray-600">Additional photos for the memorial gallery</p>
 
                   <!-- Gallery Previews -->
@@ -769,12 +747,9 @@ const goBack = () => {
                   </div>
                 </div>
 
-                <!-- Audio Message (Premium Only) -->
-                <div v-if="form.service_type === 'premium'">
-                  <Label class="flex items-center text-base font-semibold">
-                    Audio Message
-                    <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span>
-                  </Label>
+                <!-- Audio Message -->
+                <div>
+                  <Label class="text-base font-semibold">Audio Message</Label>
                   <div class="mt-2">
                     <Button type="button" variant="outline" @click="audioMessageRef?.click()" class="w-full justify-start">
                       <Music class="mr-2 h-4 w-4" />
@@ -800,14 +775,12 @@ const goBack = () => {
               <CardHeader>
                 <CardTitle class="flex items-center">
                   <Palette class="mr-2 h-5 w-5" />
-                  <span v-if="form.service_type === 'basic'">Background Style</span>
-                  <span v-else>Customization & Backgrounds</span>
-                  <span v-if="form.service_type === 'premium'" class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Features</span>
+                  Customization & Backgrounds
                 </CardTitle>
               </CardHeader>
               <CardContent class="space-y-4">
-                <!-- Theme Color (Premium Only) -->
-                <div v-if="form.service_type === 'premium'">
+                <!-- Theme Color -->
+                <div>
                   <Label for="theme_color">Theme Color</Label>
                   <div class="mt-1 flex items-center space-x-2">
                     <input id="theme_color" v-model="form.theme_color" type="color" class="h-10 w-20 cursor-pointer rounded border border-gray-300" />
@@ -817,11 +790,8 @@ const goBack = () => {
 
                 <!-- Background Selection -->
                 <div>
-                  <Label for="background_style">
-                    <span v-if="form.service_type === 'basic'">Choose Background</span>
-                    <span v-else>Background Style</span>
-                  </Label>
-                  <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2" :class="form.service_type === 'premium' ? 'lg:grid-cols-3' : ''">
+                  <Label for="background_style">Background Style</Label>
+                  <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     <div
                       v-for="background in availableBackgrounds"
                       :key="background.value"
@@ -842,9 +812,7 @@ const goBack = () => {
                           <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
                           <span
                             class="mt-1 inline-flex items-center rounded-full px-2 py-1 text-xs font-medium"
-                            :class="background.tier === 'premium'
-                              ? 'bg-purple-100 text-purple-800'
-                              : 'bg-blue-100 text-blue-800'"
+                            :class="background.tier === 'premium' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'"
                           >
                             {{ background.tier === 'premium' ? 'Premium' : 'Basic' }}
                           </span>
@@ -852,10 +820,7 @@ const goBack = () => {
                       </div>
                     </div>
                   </div>
-                  <p class="mt-3 text-xs text-gray-500">
-                    <span v-if="form.service_type === 'basic'">Choose from our selection of respectful backgrounds</span>
-                    <span v-else>Premium service includes access to both basic and premium background options</span>
-                  </p>
+                  <p class="mt-3 text-xs text-gray-500">Choose from our selection of respectful backgrounds for your memorial page</p>
                 </div>
               </CardContent>
             </Card>
@@ -866,97 +831,76 @@ const goBack = () => {
                 <CardTitle>Page Settings</CardTitle>
               </CardHeader>
               <CardContent class="space-y-4">
-                <!-- Premium Features -->
-                <div v-if="form.service_type === 'premium'" class="space-y-4">
+                <!-- All Features Available -->
+                <div class="space-y-4">
                   <div class="flex items-center justify-between">
                     <div>
-                      <Label>Allow Condolences <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
+                      <Label>Allow Condolences</Label>
                       <p class="text-sm text-gray-600">Allow visitors to leave condolence messages</p>
                     </div>
                     <label class="relative inline-flex cursor-pointer items-center">
                       <input type="checkbox" v-model="form.allow_condolences" class="peer sr-only" />
                       <div
-                        class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-purple-600 peer-focus:ring-4 peer-focus:ring-purple-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                        class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
                       ></div>
                     </label>
                   </div>
 
                   <div class="flex items-center justify-between">
                     <div>
-                      <Label>Allow Memory Sharing <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
+                      <Label>Allow Memory Sharing</Label>
                       <p class="text-sm text-gray-600">Allow visitors to share memories</p>
                     </div>
                     <label class="relative inline-flex cursor-pointer items-center">
                       <input type="checkbox" v-model="form.allow_memory_sharing" class="peer sr-only" />
                       <div
-                        class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-purple-600 peer-focus:ring-4 peer-focus:ring-purple-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                        class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
                       ></div>
                     </label>
                   </div>
-                </div>
 
-                <!-- Basic Features Available to All -->
-                <div class="flex items-center justify-between">
-                  <div>
-                    <Label>Public Page</Label>
-                    <p class="text-sm text-gray-600">Make the obituary page publicly accessible</p>
-                  </div>
-                  <label class="relative inline-flex cursor-pointer items-center">
-                    <input type="checkbox" v-model="form.is_public" class="peer sr-only" />
-                    <div
-                      class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
-                    ></div>
-                  </label>
-                </div>
-
-                <!-- Information for Basic Users -->
-                <div v-if="form.service_type === 'basic'" class="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-                  <div class="flex items-start space-x-2">
-                    <div class="mt-0.5 text-blue-600">
-                      <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fill-rule="evenodd"
-                          d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
-                          clip-rule="evenodd"
-                        ></path>
-                      </svg>
+                  <div class="flex items-center justify-between">
+                    <div>
+                      <Label>Public Page</Label>
+                      <p class="text-sm text-gray-600">Make the obituary page publicly accessible</p>
                     </div>
-                    <div class="text-sm">
-                      <p class="font-medium text-blue-800">Premium Features Available</p>
-                      <p class="text-blue-700">
-                        Premium service includes condolence collection, memory sharing, gallery photos, and audio messages.
-                      </p>
-                    </div>
+                    <label class="relative inline-flex cursor-pointer items-center">
+                      <input type="checkbox" v-model="form.is_public" class="peer sr-only" />
+                      <div
+                        class="peer h-6 w-11 rounded-full bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-4 peer-focus:ring-blue-300 peer-focus:outline-none after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"
+                      ></div>
+                    </label>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             <!-- Payment Summary -->
-            <Card>
+            <Card v-if="selectedPlan">
               <CardHeader>
                 <CardTitle class="flex items-center justify-between">
                   <span>Payment Summary</span>
-                  <span class="text-2xl font-bold" :class="form.service_type === 'premium' ? 'text-purple-600' : 'text-blue-600'">
-                    {{ selectedServicePrice.label }}
+                  <span class="text-2xl font-bold text-blue-600">
+                    {{ selectedPlan.formatted_cost }}
                   </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div class="rounded-lg bg-gray-50 p-4">
                   <div class="mb-2 flex items-center justify-between">
-                    <span class="font-medium">{{ form.service_type === 'premium' ? 'Premium' : 'Basic' }} Obituary Service</span>
-                    <span class="font-semibold">{{ selectedServicePrice.label }}</span>
+                    <span class="font-medium">{{ selectedPlan.name }}</span>
+                    <span class="font-semibold">{{ selectedPlan.formatted_cost }}</span>
                   </div>
                   <div class="mb-3 text-sm text-gray-600">
-                    <p>• Immediate obituary page creation</p>
+                    <p>• {{ selectedPlan.description }}</p>
+                    <p>• Duration: {{ selectedPlan.formatted_duration }}</p>
+                    <p>• All features included (gallery, condolences, etc.)</p>
                     <p>• QR code generation for grave placement</p>
-                    <p v-if="form.service_type === 'premium'">• Premium features and customization</p>
                   </div>
                   <div class="flex items-center justify-between border-t pt-3">
                     <span class="text-lg font-semibold">Total Amount:</span>
-                    <span class="text-xl font-bold" :class="form.service_type === 'premium' ? 'text-purple-600' : 'text-blue-600'">
-                      {{ selectedServicePrice.label }}
+                    <span class="text-xl font-bold text-blue-600">
+                      {{ selectedPlan.formatted_cost }}
                     </span>
                   </div>
                 </div>
@@ -987,15 +931,15 @@ const goBack = () => {
             <div class="flex items-center justify-between">
               <Button type="button" variant="outline" @click="goBack"> Cancel </Button>
               <div class="flex items-center space-x-4">
-                <div class="text-right">
+                <div v-if="selectedPlan" class="text-right">
                   <p class="text-sm text-gray-600">You will pay</p>
-                  <p class="text-lg font-bold" :class="form.service_type === 'premium' ? 'text-purple-600' : 'text-blue-600'">
-                    {{ selectedServicePrice.label }}
+                  <p class="text-lg font-bold text-blue-600">
+                    {{ selectedPlan.formatted_cost }}
                   </p>
                 </div>
                 <Button
                   type="submit"
-                  :disabled="form.processing"
+                  :disabled="form.processing || !selectedPlan"
                   class="bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-3 text-lg text-white hover:from-purple-700 hover:to-blue-700"
                 >
                   {{ form.processing ? 'Creating...' : 'Create & Pay' }}

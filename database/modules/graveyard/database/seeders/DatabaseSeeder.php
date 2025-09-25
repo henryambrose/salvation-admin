@@ -32,7 +32,9 @@ class DatabaseSeeder extends Seeder
         if (class_exists(ObituaryBackgroundThemeSeeder::class)) {
             $seeders[] = ObituaryBackgroundThemeSeeder::class;
         }
-
+        if (class_exists(ObituaryPlanSeeder::class)) {
+            $seeders[] = ObituaryPlanSeeder::class;
+        }
         // Add more seeders here as needed
         // if (class_exists(CemeterySectionsSeeder::class)) { $seeders[] = CemeterySectionsSeeder::class; }
         // if (class_exists(SampleGravesSeeder::class)) { $seeders[] = SampleGravesSeeder::class; }

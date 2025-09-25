@@ -49,8 +49,7 @@ interface BackgroundOption {
 
 interface Props {
   obituary: ObituaryPage;
-  basicBackgrounds: BackgroundOption[];
-  premiumBackgrounds: BackgroundOption[];
+  backgrounds: BackgroundOption[];
 }
 
 defineOptions({
@@ -104,11 +103,11 @@ const galleryPreviews = ref<string[]>([]);
 const availableBackgrounds = computed(() => {
   if (props.obituary.service_type === 'premium') {
     // Combine both arrays and remove duplicates based on 'value' property
-    const combined = [...props.basicBackgrounds, ...props.premiumBackgrounds];
+    const combined = [...props.backgrounds];
     const unique = combined.filter((bg, index, self) => index === self.findIndex((item) => item.value === bg.value));
     return unique;
   } else {
-    return props.basicBackgrounds;
+    return props.backgrounds;
   }
 });
 
