@@ -8,6 +8,8 @@ use Modules\Graveyard\Models\PermanentGraveBooking;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\NicheTransfer;
 use Modules\Graveyard\Models\ServiceType;
+use Modules\Graveyard\Models\PermanentGrave;
+use Modules\Graveyard\Models\Niche;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -569,7 +571,8 @@ class PaymentController extends Controller
     public function storeMaintenancePayment(Request $request)
     {
         $request->validate([
-            'grave_id' => 'required|exists:permanent_graves,id',
+            'payable_type' => 'required|string|in:permanent_grave,niche',
+            'payable_id' => 'required|integer',
             'payer_name' => 'required|string|max:255',
             'payer_phone' => 'required|string|max:20',
             'payer_email' => 'nullable|email|max:255',
@@ -585,11 +588,19 @@ class PaymentController extends Controller
         try {
             DB::beginTransaction();
 
-            $grave = \Modules\Graveyard\Models\PermanentGrave::findOrFail($request->grave_id);
-            $annualFee = config('graveyard.annual_maintenance_fee', 5000);
+            // Get the payable model (PermanentGrave or Niche)
+            if ($request->payable_type === 'permanent_grave') {
+                $payable = PermanentGrave::findOrFail($request->payable_id);
+                $payableClass = 'Modules\\Graveyard\\Models\\PermanentGrave';
+                $payableLabel = 'Permanent Grave';
+            } else {
+                $payable = Niche::findOrFail($request->payable_id);
+                $payableClass = 'Modules\\Graveyard\\Models\\Niche';
+                $payableLabel = 'Niche';
+            }
 
             // Prepare payment notes with payer information
-            $paymentNotes = 'Annual Maintenance Fee Payment';
+            $paymentNotes = "Annual Maintenance Fee Payment ({$payableLabel})";
             $paymentNotes .= "\nPaid by: {$request->payer_name}";
             $paymentNotes .= "\nPhone: {$request->payer_phone}";
             if ($request->payer_email) {
@@ -599,8 +610,8 @@ class PaymentController extends Controller
                 $paymentNotes .= "\nNotes: {$request->payment_notes}";
             }
 
-            // Calculate total pending amount and balance after payment
-            $totalPendingAmount = $grave->calculatePendingAmount();
+            // Calculate total pending amount and balance after payment using historical rates
+            $totalPendingAmount = $payable->calculatePendingAmount();
             $paidAmount = $request->payment_amount;
 
             // Round up the balance amount for partial payments
@@ -611,8 +622,8 @@ class PaymentController extends Controller
 
             // Create payment record
             $payment = Payment::create([
-                'payable_type' => 'Modules\\Graveyard\\Models\\PermanentGrave',
-                'payable_id' => $grave->id,
+                'payable_type' => $payableClass,
+                'payable_id' => $payable->id,
                 'total_amount' => $totalPendingAmount,
                 'paid_amount' => $paidAmount,
                 'balance_amount' => max(0, $balanceAmount),
@@ -625,12 +636,12 @@ class PaymentController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            // Generate receipt
+            // Generate receipt with historical rate information
             $payment->generateReceipt();
 
-            // Record maintenance payment in grave
+            // Record maintenance payment in grave/niche (uses historical rates internally)
             $monthsFor = $request->months_paying_for ?? [];
-            $grave->recordMaintenancePayment($request->payment_amount, $monthsFor);
+            $payable->recordMaintenancePayment($request->payment_amount, $monthsFor);
 
             DB::commit();
 

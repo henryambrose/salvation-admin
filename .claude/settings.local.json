@@ -29,7 +29,8 @@
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/app/Modules/Graveyard/Providers/**)",
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/routes/**)",
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/bootstrap/**)",
-      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/**)"
+      "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/**)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

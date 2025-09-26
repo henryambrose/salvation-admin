@@ -12,6 +12,8 @@ interface NavigationGroup {
 
 defineProps<{
   groups: NavigationGroup[];
+  currentPage?: string;
+  lastPage?: string;
 }>();
 
 const page = usePage<SharedData>();

@@ -140,6 +140,14 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-valid-member',
             'restore-valid-member',
 
+            // Annual Maintenance Fees
+            'create-annual-maintenance-fees',
+            'read-annual-maintenance-fees',
+            'update-annual-maintenance-fees',
+            'delete-annual-maintenance-fees',
+            'list-annual-maintenance-fees',
+            'restore-annual-maintenance-fees',
+
             // Niche Valid Members
             // 'create-niche-valid-member',
             // 'read-niche-valid-member',
@@ -220,6 +228,8 @@ class GraveyardPermissionsSeeder extends Seeder
             'read-obituary-page',
             'create-obituary-condolence',
             'read-obituary-condolence',
+            'read-annual-maintenance-fees',
+            'list-annual-maintenance-fees',
             'view-graveyard-reports',
         ];
         $graveyardStaffRole->givePermissionTo($graveyardStaffPermissions);

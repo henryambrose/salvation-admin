@@ -19,6 +19,7 @@ use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagerController;
 use Modules\Graveyard\Http\Controllers\ObituaryPlanController;
+use Modules\Graveyard\Http\Controllers\AnnualMaintenanceFeeController;
 use Illuminate\Support\Facades\Log;
 
 
@@ -163,6 +164,17 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         Route::put('/{graveCategory}', [GraveCategoryController::class, 'update'])->name('update');
         Route::delete('/{graveCategory}', [GraveCategoryController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
+    });
+
+    // Annual Maintenance Fees Management
+    Route::prefix('/annual-maintenance-fees')->name('annual-maintenance-fees.')->group(function () {
+        Route::get('/', [AnnualMaintenanceFeeController::class, 'index'])->name('index');
+        Route::get('/create', [AnnualMaintenanceFeeController::class, 'create'])->name('create');
+        Route::post('/', [AnnualMaintenanceFeeController::class, 'store'])->name('store');
+        Route::get('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'show'])->name('show');
+        Route::get('/{annualMaintenanceFee}/edit', [AnnualMaintenanceFeeController::class, 'edit'])->name('edit');
+        Route::put('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'update'])->name('update');
+        Route::delete('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'destroy'])->name('destroy');
     });
 
     // Obituary Plans Management

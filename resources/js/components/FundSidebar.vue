@@ -12,7 +12,7 @@
       </SidebarMenu>
     </SidebarHeader>
     <SidebarContent>
-      <NavMainGrouped :groups="filteredFundNavigationGroups" />
+      <NavMainGrouped :groups="filteredFundNavigationGroups" :current-page="page.url" :last-page="page.url" />
     </SidebarContent>
     <SidebarFooter>
       <NavUser />

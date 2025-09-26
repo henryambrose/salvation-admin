@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Modules\Members\Models\User;
 use Modules\Members\Models\Member;
+use Modules\Graveyard\Models\AnnualMaintenanceFee;
 use Carbon\Carbon;
 
 class PermanentGrave extends Model
@@ -165,6 +166,61 @@ class PermanentGrave extends Model
      */
     public function calculatePendingAmount(): float
     {
+        return $this->calculatePendingAmountWithHistoricalRates();
+    }
+
+    /**
+     * Calculate pending maintenance amount using historical rates
+     */
+    public function calculatePendingAmountWithHistoricalRates(): float
+    {
+        $currentYear = now()->year;
+        $lastPaymentYear = $this->last_payment_year;
+
+        // If no payment has been made, determine starting year
+        if (!$lastPaymentYear) {
+            // Start from the year when this grave was created or current year - 1
+            $createdYear = $this->created_at ? $this->created_at->year : $currentYear;
+            $lastPaymentYear = min($createdYear, $currentYear) - 1;
+        }
+
+        // If fully paid up to current year, no pending amount
+        if ($lastPaymentYear >= $currentYear) {
+            return 0;
+        }
+
+        $totalPending = 0;
+
+        // Calculate year by year with historical rates
+        for ($year = $lastPaymentYear + 1; $year <= $currentYear; $year++) {
+            $yearlyFee = $this->getAnnualMaintenanceFeeForYear($year);
+            $totalPending += $yearlyFee;
+        }
+
+        // Subtract any partial payments for current year
+        $currentYearPartial = $this->getPartialPaymentsForYear($currentYear);
+        $totalPending -= $currentYearPartial;
+
+        return max(0, $totalPending);
+    }
+
+    /**
+     * Get the annual maintenance fee for a specific year
+     */
+    private function getAnnualMaintenanceFeeForYear(int $year): float
+    {
+        // Try to get historical rate from annual_maintenance_fees table
+        $historicalRate = AnnualMaintenanceFee::getFeeForYearAndType($year, 'permanent_grave');
+
+        // Fallback to config if no historical rate found
+        return $historicalRate ?? config('graveyard.annual_maintenance_fee', 5000);
+    }
+
+    /**
+     * Legacy method for backward compatibility - uses fixed rate calculation
+     */
+    public function calculatePendingAmountLegacy(): float
+    {
         $annualFee = config('graveyard.annual_maintenance_fee', 5000);
         $currentYear = now()->year;
 
@@ -204,7 +260,7 @@ class PermanentGrave extends Model
             return 0;
         }
 
-        $annualFee = config('graveyard.annual_maintenance_fee', 5000);
+        $annualFee = $this->getAnnualMaintenanceFeeForYear($year);
         $monthlyFee = $annualFee / 12;
 
         // Calculate total amount paid for this year
@@ -219,7 +275,7 @@ class PermanentGrave extends Model
     public function recordMaintenancePayment(float $amount, array $monthsFor = null): void
     {
         $currentYear = now()->year;
-        $annualFee = config('graveyard.annual_maintenance_fee', 5000);
+        $annualFee = $this->getAnnualMaintenanceFeeForYear($currentYear);
         $monthlyFee = $annualFee / 12;
 
         // If no specific months provided, calculate based on amount
