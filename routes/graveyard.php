@@ -18,16 +18,15 @@ use Modules\Graveyard\Http\Controllers\ObituaryController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagementController;
 use Modules\Graveyard\Http\Controllers\ObituaryBackgroundThemeController;
 use Modules\Graveyard\Http\Controllers\ObituaryManagerController;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
+use Modules\Graveyard\Http\Controllers\ObituaryPlanController;
+use Modules\Graveyard\Http\Controllers\AnnualMaintenanceFeeController;
+use Illuminate\Support\Facades\Log;
 
-Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
 
-    // Graveyard Dashboard
-    Route::get('/graveyard', [DashboardController::class, 'index'])->name('graveyard.dashboard');
+Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->as('graveyard.')->group(function () {
 
-    // Graves Management
-    Route::prefix('graveyard/graves')->name('graveyard.graves.')->group(function () {
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+    Route::prefix('/graves')->name('graves.')->group(function () {
         Route::get('/', [GraveController::class, 'index'])->name('index');
         Route::post('/', [GraveController::class, 'store'])->name('store');
         Route::get('/{grave}', [GraveController::class, 'show'])->name('show');
@@ -38,7 +37,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Niches Management
-    Route::prefix('graveyard/niches')->name('graveyard.niches.')->group(function () {
+    Route::prefix('/niches')->name('niches.')->group(function () {
         Route::get('/', [NicheController::class, 'index'])->name('index');
         Route::get('/create', [NicheController::class, 'create'])->name('create');
         Route::post('/', [NicheController::class, 'store'])->name('store');
@@ -51,7 +50,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Permanent Graves Management
-    Route::prefix('graveyard/permanent-graves')->name('graveyard.permanent-graves.')->group(function () {
+    Route::prefix('/permanent-graves')->name('permanent-graves.')->group(function () {
         Route::get('/', [PermanentGraveController::class, 'index'])->name('index');
         Route::get('/create', [PermanentGraveController::class, 'create'])->name('create');
         Route::post('/', [PermanentGraveController::class, 'store'])->name('store');
@@ -65,7 +64,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Temporary Graves Management
-    Route::prefix('graveyard/temporary-graves')->name('graveyard.temporary-graves.')->group(function () {
+    Route::prefix('/temporary-graves')->name('temporary-graves.')->group(function () {
         Route::get('/', [TemporaryGraveController::class, 'index'])->name('index');
         Route::get('/create', [TemporaryGraveController::class, 'create'])->name('create');
         Route::post('/', [TemporaryGraveController::class, 'store'])->name('store');
@@ -78,7 +77,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Valid Member Management
-    Route::prefix('graveyard/valid-members')->name('graveyard.valid-members.')->group(function () {
+    Route::prefix('/valid-members')->name('valid-members.')->group(function () {
         Route::get('/', [ValidMemberController::class, 'index'])->name('index');
         Route::get('/create', [ValidMemberController::class, 'create'])->name('create');
         Route::post('/', [ValidMemberController::class, 'store'])->name('store');
@@ -92,7 +91,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Service Types Management
-    Route::prefix('graveyard/service-types')->name('graveyard.service-types.')->group(function () {
+    Route::prefix('/service-types')->name('service-types.')->group(function () {
         Route::get('/', [ServiceTypeController::class, 'index'])->name('index');
         Route::get('/create', [ServiceTypeController::class, 'create'])->name('create');
         Route::post('/', [ServiceTypeController::class, 'store'])->name('store');
@@ -106,7 +105,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Permanent Grave Booking Management
-    Route::prefix('graveyard/permanent-grave-bookings')->name('graveyard.permanent-grave-bookings.')->group(function () {
+    Route::prefix('/permanent-grave-bookings')->name('permanent-grave-bookings.')->group(function () {
         Route::get('/', [PermanentGraveBookingController::class, 'index'])->name('index');
         Route::get('/create', [PermanentGraveBookingController::class, 'create'])->name('create');
         Route::post('/search-permanent-grave', [PermanentGraveBookingController::class, 'searchPermanentGrave'])->name('search-permanent-grave');
@@ -117,7 +116,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Temporary Grave Booking Management
-    Route::prefix('graveyard/temporary-grave-bookings')->name('graveyard.temporary-grave-bookings.')->group(function () {
+    Route::prefix('/temporary-grave-bookings')->name('temporary-grave-bookings.')->group(function () {
         Route::get('/', [TemporaryGraveBookingController::class, 'index'])->name('index');
         Route::get('/create', [TemporaryGraveBookingController::class, 'create'])->name('create');
         Route::get('/search-members', [TemporaryGraveBookingController::class, 'searchMembers'])->name('search-members');
@@ -130,7 +129,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Niche Transfer Management
-    Route::prefix('graveyard/niche-transfers')->name('graveyard.niche-transfers.')->group(function () {
+    Route::prefix('/niche-transfers')->name('niche-transfers.')->group(function () {
         Route::get('/', [NicheTransferController::class, 'index'])->name('index');
         Route::get('/create', [NicheTransferController::class, 'create'])->name('create');
         Route::post('/', [NicheTransferController::class, 'store'])->name('store');
@@ -143,7 +142,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Payment Management
-    Route::prefix('graveyard/payments')->name('graveyard.payments.')->group(function () {
+    Route::prefix('/payments')->name('payments.')->group(function () {
         Route::get('/', [PaymentController::class, 'index'])->name('index');
         Route::get('/create/maintenance/{graveId}', [PaymentController::class, 'createMaintenancePayment'])->name('create.maintenance');
         Route::post('/maintenance', [PaymentController::class, 'storeMaintenancePayment'])->name('store.maintenance');
@@ -156,7 +155,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Grave Categories Management
-    Route::prefix('graveyard/grave-categories')->name('graveyard.grave-categories.')->group(function () {
+    Route::prefix('/grave-categories')->name('grave-categories.')->group(function () {
         Route::get('/', [GraveCategoryController::class, 'index'])->name('index');
         Route::get('/create', [GraveCategoryController::class, 'create'])->name('create');
         Route::post('/', [GraveCategoryController::class, 'store'])->name('store');
@@ -167,8 +166,25 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{id}/restore', [GraveCategoryController::class, 'restore'])->name('restore');
     });
 
+    // Annual Maintenance Fees Management
+    Route::prefix('/annual-maintenance-fees')->name('annual-maintenance-fees.')->group(function () {
+        Route::get('/', [AnnualMaintenanceFeeController::class, 'index'])->name('index');
+        Route::get('/create', [AnnualMaintenanceFeeController::class, 'create'])->name('create');
+        Route::post('/', [AnnualMaintenanceFeeController::class, 'store'])->name('store');
+        Route::get('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'show'])->name('show');
+        Route::get('/{annualMaintenanceFee}/edit', [AnnualMaintenanceFeeController::class, 'edit'])->name('edit');
+        Route::put('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'update'])->name('update');
+        Route::delete('/{annualMaintenanceFee}', [AnnualMaintenanceFeeController::class, 'destroy'])->name('destroy');
+    });
+
+    // Obituary Plans Management
+    Route::resource('/obituary-plans', ObituaryPlanController::class)
+        ->names('obituary-plans');
+    Route::post('/obituary-plans/{id}/restore', [ObituaryPlanController::class, 'restore'])
+        ->name('obituary-plans.restore');
+
     // Obituary Background Themes Management
-    Route::prefix('graveyard/obituary-background-themes')->name('graveyard.obituary-background-themes.')->group(function () {
+    Route::prefix('/obituary-background-themes')->name('obituary-background-themes.')->group(function () {
         Route::get('/', [ObituaryBackgroundThemeController::class, 'index'])->name('index');
         Route::get('/create', [ObituaryBackgroundThemeController::class, 'create'])->name('create');
         Route::post('/', [ObituaryBackgroundThemeController::class, 'store'])->name('store');
@@ -181,7 +197,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Obituary Managers Management
-    Route::prefix('graveyard/obituary-managers')->name('graveyard.obituary-managers.')->group(function () {
+    Route::prefix('/obituary-managers')->name('obituary-managers.')->group(function () {
         Route::get('/', [ObituaryManagerController::class, 'index'])->name('index');
         Route::get('/create', [ObituaryManagerController::class, 'create'])->name('create');
         Route::post('/', [ObituaryManagerController::class, 'store'])->name('store');
@@ -193,15 +209,17 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     });
 
     // Obituary Management (Admin Routes)
-    Route::prefix('graveyard/obituaries')->name('graveyard.obituaries.')->group(function () {
-        Route::get('/cleanup', [ObituaryManagementController::class, 'cleanupPage'])->name('cleanup');
-        Route::get('/', [ObituaryManagementController::class, 'index'])->name('index');
+    Route::prefix('/obituaries')->name('obituaries.')->group(function () {
         Route::get('/create', [ObituaryManagementController::class, 'create'])->name('create');
+        Route::get('/cleanup', [ObituaryManagementController::class, 'cleanupPage'])->name('cleanup');
+
+        Route::get('/', [ObituaryManagementController::class, 'index'])->name('index');
         Route::post('/', [ObituaryManagementController::class, 'store'])->name('store');
         Route::get('/{obituary}', [ObituaryManagementController::class, 'show'])->name('show');
         Route::get('/{obituary}/edit', [ObituaryManagementController::class, 'edit'])->name('edit');
         Route::put('/{obituary}', [ObituaryManagementController::class, 'update'])->name('update');
         Route::delete('/{obituary}', [ObituaryManagementController::class, 'destroy'])->name('destroy');
+        Route::post('/{uuid}/restore', [ObituaryManagementController::class, 'restore'])->name('restore');
 
         // File cleanup management
 
@@ -241,6 +259,7 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
         Route::post('/{obituary}/upgrade-to-premium', [ObituaryManagementController::class, 'upgradeToPremium'])->name('upgrade-to-premium');
 
         // External member management
+
         Route::post('/{obituary}/grant-external-access', [ObituaryManagementController::class, 'grantExternalAccess'])->name('grant-external-access');
         Route::delete('/{obituary}/revoke-external-access', [ObituaryManagementController::class, 'revokeExternalAccess'])->name('revoke-external-access');
         Route::patch('/{obituary}/toggle-external-access', [ObituaryManagementController::class, 'toggleExternalAccess'])->name('toggle-external-access');
@@ -253,35 +272,13 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
             'message' => request()->get('message', ''),
             'user' => \Illuminate\Support\Facades\Auth::user()
         ]);
-    })->name('graveyard.permission-denied');
-});
-
-// Admin QR Download Route (with minimal middleware to avoid response conflicts)
-Route::middleware(['auth', 'verified'])->group(function () {
-    // QR code download (admin) - without nocache middleware to avoid response conflicts
-    Route::get('/graveyard/obituaries/{obituary}/qr-download', [ObituaryManagementController::class, 'downloadQrCode'])->name('graveyard.obituaries.qr.download');
-});
-
-
-// Public Obituary Routes (no auth required) - outside the auth middleware
-Route::prefix('obituary')->name('obituary.')->group(function () {
-    // Public obituary page view
-    Route::get('/{uuid}', [ObituaryController::class, 'show'])->name('show');
-
-    // Submit condolence (no auth required)
-    Route::post('/{uuid}/condolence', [ObituaryController::class, 'storeCondolence'])->name('condolence.store');
-
-    // Download QR code (no auth required but rate limited)
-    Route::get('/{uuid}/qr-download', [ObituaryController::class, 'downloadQrCode'])
-        ->name('qr.download')
-        ->middleware('throttle:10,1'); // 10 downloads per minute
-
-    // Preview (admin only - will be protected in controller)
-    Route::get('/{uuid}/preview', [ObituaryController::class, 'preview'])->name('preview');
+    })->name('permission-denied');
 });
 
 // API Routes for integrations
-Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'])->group(function () {
+Route::prefix('api/obituary')->name('api.obituary.')->middleware(['api', 'auth:sanctum'])->group(function () {
+    Route::get('/obituary-background-themes', [ObituaryBackgroundThemeController::class, 'api'])
+        ->name('api.obituary-background-themes');
     // Quick create from booking confirmation
     Route::post('/create-from-booking', function (\Illuminate\Http\Request $request) {
         $validated = $request->validate([
@@ -309,9 +306,7 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
         ]);
     })->name('create-from-booking');
 
-    // API for obituary background themes
-    Route::get('api/obituary-background-themes', [ObituaryBackgroundThemeController::class, 'api'])
-        ->name('api.obituary-background-themes');
+
     // Get obituary stats
     Route::get('/{obituary}/stats', function (\Modules\Graveyard\Models\ObituaryPage $obituary) {
         $obituaryService = app(\Modules\Graveyard\Services\ObituaryService::class);
@@ -320,8 +315,23 @@ Route::prefix('api/obituary')->name('api.obituary.')->middleware(['auth:sanctum'
 });
 
 // Public obituary routes (no authentication required)
+Route::prefix('obituary')->name('obituary.')->group(function () {
+    // Public obituary page view
+    Route::get('/{uuid}', [ObituaryController::class, 'show'])->name('show');
+
+    // Submit condolence (no auth required)
+    Route::post('/{uuid}/condolence', [ObituaryController::class, 'storeCondolence'])->name('condolence.store');
+
+    // Download QR code (no auth required but rate limited)
+    Route::get('/{uuid}/qr-download', [ObituaryController::class, 'downloadQrCode'])
+        ->name('qr.download')
+        ->middleware('throttle:10,1'); // 10 downloads per minute
+
+    // Preview (admin only - will be protected in controller)
+    Route::get('/{uuid}/preview', [ObituaryController::class, 'preview'])->name('preview');
+});
 Route::get('/obituary/{uuid}', function (string $uuid) {
-    $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences'])
+    $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences', 'obituaryPlan'])
         ->where('uuid', $uuid)
         ->first();
 
@@ -380,6 +390,17 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         ]);
     }
 
+    // Check if obituary has expired based on plan duration
+    if ($obituary->hasExpired()) {
+        return Inertia::render('Public/Obituary/PaymentPending', [
+            'message' => 'This obituary page has expired. Please contact the administrator to renew.',
+            'paymentStatus' => 'expired',
+            'obituaryName' => $obituary->deceased_name,
+            'issueType' => 'expired',
+            'planName' => $obituary->obituaryPlan?->name
+        ]);
+    }
+
     // Increment view count
     $obituary->increment('view_count');
 
@@ -399,9 +420,11 @@ Route::get('/obituary/{uuid}', function (string $uuid) {
         'obituary' => $obituary,
         'deceasedName' => $deceasedName,
         'condolences' => $obituary->condolences, // Explicitly pass approved condolences
-        'canSubmitCondolence' => $obituary->allow_condolences && $obituary->service_type === 'premium',
-        'canShareMemory' => $obituary->allow_memory_sharing && $obituary->service_type === 'premium',
-        'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain')
+        'canSubmitCondolence' => $obituary->allow_condolences, // && $obituary->hasPremiumFeatures(),
+        'canShareMemory' => $obituary->allow_memory_sharing, // && $obituary->hasPremiumFeatures(),
+        'backgroundStyle' => \Modules\Graveyard\Services\BackgroundService::getBackgroundStyle($obituary->background_style ?: 'plain'),
+        'plan' => $obituary->obituaryPlan,
+        'hasExpired' => $obituary->hasExpired(),
     ]);
 })->name('obituary.show');
 
@@ -443,15 +466,15 @@ Route::prefix('obituary/{uuid}/manage')->name('obituary.external.')->group(funct
     // Login routes (no auth required)
     Route::get('/login', [ObituaryManagerController::class, 'showLogin'])->name('login');
     Route::post('/login', [ObituaryManagerController::class, 'login'])->name('login.submit');
+});
 
-    // Protected routes (obituary manager auth required)
-    Route::middleware(['auth:external'])->group(function () {
-        Route::get('/dashboard', [ObituaryManagerController::class, 'dashboard'])->name('dashboard');
-        Route::get('/edit', [ObituaryManagerController::class, 'editObituary'])->name('edit');
-        Route::put('/update', [ObituaryManagerController::class, 'updateObituary'])->name('update');
-        Route::get('/condolences', [ObituaryManagerController::class, 'condolences'])->name('condolences');
-        Route::patch('/condolences/{condolence}/approve', [ObituaryManagerController::class, 'approveCondolence'])->name('condolences.approve');
-        Route::patch('/condolences/{condolence}/reject', [ObituaryManagerController::class, 'rejectCondolence'])->name('condolences.reject');
-        Route::post('/logout', [ObituaryManagerController::class, 'logout'])->name('logout');
-    });
+// Protected routes (obituary manager auth required)
+Route::prefix('obituary/{uuid}/manage')->name('obituary.external.')->middleware(['web', 'auth:external'])->group(function () {
+    Route::get('/dashboard', [ObituaryManagerController::class, 'dashboard'])->name('dashboard');
+    Route::get('/edit', [ObituaryManagerController::class, 'editObituary'])->name('edit');
+    Route::put('/update', [ObituaryManagerController::class, 'updateObituary'])->name('update');
+    Route::get('/condolences', [ObituaryManagerController::class, 'condolences'])->name('condolences');
+    Route::patch('/condolences/{condolence}/approve', [ObituaryManagerController::class, 'approveCondolence'])->name('condolences.approve');
+    Route::patch('/condolences/{condolence}/reject', [ObituaryManagerController::class, 'rejectCondolence'])->name('condolences.reject');
+    Route::post('/logout', [ObituaryManagerController::class, 'logout'])->name('logout');
 });

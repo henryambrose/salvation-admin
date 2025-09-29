@@ -6,7 +6,7 @@ import { computed, ref } from 'vue';
 interface ObituaryPage {
   id: number;
   uuid: string;
-  service_type: 'basic' | 'premium';
+  // service_type: 'basic' | 'premium';
   is_public: boolean;
   is_active: boolean;
   view_count: number;
@@ -446,7 +446,7 @@ const shareObituaryPage = () => {
           <div class="mt-6 flex items-center justify-center space-x-4 text-sm text-gray-500">
             <span>Memorial Page</span>
             <span>•</span>
-            <span>{{ obituary.service_type }} Service</span>
+            <!-- <span>{{ obituary.service_type }} Service</span> -->
             <span>•</span>
             <span>{{ obituary.view_count || 0 }} visits</span>
           </div>

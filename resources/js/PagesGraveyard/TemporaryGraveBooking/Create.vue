@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
-import { computed, ref, watch, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
 interface TemporaryGrave {
   id: number;
@@ -149,13 +149,16 @@ const selectFirstAvailableGrave = () => {
 };
 
 // Watch for category changes
-watch(() => form.grave_category_id, () => {
-  selectFirstAvailableGrave();
-});
+watch(
+  () => form.grave_category_id,
+  () => {
+    selectFirstAvailableGrave();
+  },
+);
 
 // Initialize with Normal Graves category if available
 const initializeDefaultCategory = () => {
-  const normalGraveCategory = props.graveCategories.find(cat => cat.name.toLowerCase().includes('normal'));
+  const normalGraveCategory = props.graveCategories.find((cat) => cat.name.toLowerCase().includes('normal'));
   if (normalGraveCategory) {
     form.grave_category_id = normalGraveCategory.id;
   } else if (props.graveCategories.length > 0) {
@@ -183,7 +186,7 @@ const showValidMemberSelection = computed(() => selectedPermanentGrave.value && 
 // Filter parishes to only show specific ones
 const filteredParishes = computed(() => {
   const allowedParishIds = [16, 25, 26, 27];
-  return props.parishes.filter(parish => allowedParishIds.includes(parish.id));
+  return props.parishes.filter((parish) => allowedParishIds.includes(parish.id));
 });
 
 // Search members function
@@ -196,7 +199,7 @@ const searchMembers = async () => {
   isSearchingMembers.value = true;
   try {
     const response = await fetch(
-      route('graveyard.temporary-grave-bookings.search-members') + '?query=' + encodeURIComponent(memberSearchQuery.value)
+      route('graveyard.temporary-grave-bookings.search-members') + '?query=' + encodeURIComponent(memberSearchQuery.value),
     );
     const data = await response.json();
     memberSearchResults.value = data;
@@ -230,7 +233,7 @@ const searchPermanentGraves = () => {
   }
 
   const query = permanentGraveSearchQuery.value.toLowerCase();
-  permanentGraveSearchResults.value = props.permanentGraves.filter(grave => {
+  permanentGraveSearchResults.value = props.permanentGraves.filter((grave) => {
     const graveIdentifier = `${grave.section}-${grave.row_no}-${grave.grave_no}`.toLowerCase();
     const ownerName = grave.owner_name.toLowerCase();
     return graveIdentifier.includes(query) || ownerName.includes(query);
@@ -253,7 +256,7 @@ const clearSelectedPermanentGrave = () => {
   permanentGraveSearchQuery.value = '';
   permanentGraveSearchResults.value = [];
   isPermanentGraveSearchOpen.value = false;
-  
+
   // Also clear valid member selection
   clearSelectedValidMember();
 };
@@ -271,10 +274,10 @@ const handlePermanentGraveInput = () => {
 // Select valid member function
 const selectValidMember = (validMember: ValidMember) => {
   selectedValidMember.value = validMember;
-  
+
   // Auto-populate form fields from valid member
   form.deceased_person_type = validMember.member_id ? 'member' : 'external';
-  
+
   if (validMember.member_id && validMember.member) {
     // If it's a parish member
     selectedMember.value = validMember.member;
@@ -321,12 +324,12 @@ const getValidMemberDisplayName = (validMember: ValidMember) => {
   if (validMember.full_name) {
     return validMember.full_name;
   }
-  
+
   // Fallback to member name if it's a parish member
   if (validMember.member_id && validMember.member) {
     return `${validMember.member.first_name || ''} ${validMember.member.last_name || ''}`.trim();
   }
-  
+
   // Fallback to first_name and last_name from valid_member record
   return `${validMember.first_name || ''} ${validMember.last_name || ''}`.trim() || 'Unnamed Member';
 };
@@ -439,17 +442,18 @@ onUnmounted(() => {
                           <span class="font-semibold">{{ selectedGrave.grave_no }}</span>
                           - Section {{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}
                         </p>
-                        <p class="text-sm text-green-600">
-                          First available grave from selected category
-                        </p>
+                        <p class="text-sm text-green-600">First available grave from selected category</p>
                       </div>
                     </div>
                   </div>
 
                   <!-- No graves available message -->
-                  <div v-if="form.grave_category_id && availableGravesForCategory.length === 0" class="rounded-lg border border-orange-200 bg-orange-50 p-4">
+                  <div
+                    v-if="form.grave_category_id && availableGravesForCategory.length === 0"
+                    class="rounded-lg border border-orange-200 bg-orange-50 p-4"
+                  >
                     <div class="flex items-center">
-                      <MapPin class="h-5 w-5 text-orange-600 mr-2" />
+                      <MapPin class="mr-2 h-5 w-5 text-orange-600" />
                       <div>
                         <h4 class="font-medium text-orange-900">No Available Graves</h4>
                         <p class="text-orange-700">No graves are available in the selected category.</p>
@@ -478,7 +482,8 @@ onUnmounted(() => {
                   <span>Bone Transfer Destination</span>
                 </CardTitle>
                 <CardDescription>
-                  Select an occupied permanent grave where bones should be transferred after 24 months. Only unavailable graves are shown since available graves can be used directly for burial.
+                  Select an occupied permanent grave where bones should be transferred after 24 months. Only unavailable graves are shown since
+                  available graves can be used directly for burial.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -505,15 +510,9 @@ onUnmounted(() => {
                         @click="selectPermanentGrave(grave)"
                         class="cursor-pointer border-b border-gray-100 px-4 py-3 last:border-b-0 hover:bg-gray-50"
                       >
-                        <div class="font-medium text-gray-900">
-                          {{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}
-                        </div>
-                        <div class="text-sm text-gray-500">
-                          Owner: {{ grave.owner_name }}
-                        </div>
-                        <div class="text-sm text-gray-500">
-                          Status: {{ grave.status }} (Occupied)
-                        </div>
+                        <div class="font-medium text-gray-900">{{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}</div>
+                        <div class="text-sm text-gray-500">Owner: {{ grave.owner_name }}</div>
+                        <div class="text-sm text-gray-500">Status: {{ grave.status }} (Occupied)</div>
                       </div>
                     </div>
 
@@ -535,12 +534,8 @@ onUnmounted(() => {
                           <div class="font-medium text-blue-800">
                             {{ selectedPermanentGrave.section }}-{{ selectedPermanentGrave.row_no }}-{{ selectedPermanentGrave.grave_no }}
                           </div>
-                          <div class="text-sm text-blue-700">
-                            Owner: {{ selectedPermanentGrave.owner_name }}
-                          </div>
-                          <div class="text-sm text-blue-700">
-                            Status: {{ selectedPermanentGrave.status }} (Occupied)
-                          </div>
+                          <div class="text-sm text-blue-700">Owner: {{ selectedPermanentGrave.owner_name }}</div>
+                          <div class="text-sm text-blue-700">Status: {{ selectedPermanentGrave.status }} (Occupied)</div>
                         </div>
                       </div>
                       <button @click="clearSelectedPermanentGrave" type="button" class="text-blue-600 hover:text-blue-800">
@@ -550,18 +545,16 @@ onUnmounted(() => {
                   </div>
 
                   <p class="mt-1 text-xs text-gray-500">
-                    If you select an occupied permanent grave, bones will be transferred there when the temporary burial period ends (typically 24 months). 
-                    Leave empty for default niche transfer. Only occupied graves are shown since available graves can be used directly.
+                    If you select an occupied permanent grave, bones will be transferred there when the temporary burial period ends (typically 24
+                    months). Leave empty for default niche transfer. Only occupied graves are shown since available graves can be used directly.
                   </p>
 
                   <!-- Valid Member Selection -->
                   <div v-if="showValidMemberSelection" class="mt-4">
                     <Label class="text-base font-medium">Select Deceased from Valid Members</Label>
-                    <p class="text-xs text-gray-500 mt-1 mb-3">
-                      Choose the deceased person from the valid members of this permanent grave
-                    </p>
-                    
-                    <div class="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto border border-gray-200 rounded-md p-3">
+                    <p class="mt-1 mb-3 text-xs text-gray-500">Choose the deceased person from the valid members of this permanent grave</p>
+
+                    <div class="grid max-h-48 grid-cols-1 gap-3 overflow-y-auto rounded-md border border-gray-200 p-3">
                       <div
                         v-for="validMember in selectedPermanentGrave?.valid_members || []"
                         :key="validMember.id"
@@ -570,48 +563,42 @@ onUnmounted(() => {
                           'cursor-pointer rounded-lg border-2 p-3 transition-all',
                           selectedValidMember?.id === validMember.id
                             ? 'border-blue-500 bg-blue-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',
                         ]"
                       >
                         <div class="flex items-start justify-between">
                           <div>
                             <div class="font-medium text-gray-900">{{ getValidMemberDisplayName(validMember) }}</div>
-                            <div class="text-sm text-gray-600 mt-1">
-                              <span v-if="validMember.is_parish_member" class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 mr-2">
+                            <div class="mt-1 text-sm text-gray-600">
+                              <span
+                                v-if="validMember.is_parish_member"
+                                class="mr-2 inline-flex items-center rounded-full bg-green-100 px-2 py-1 text-xs text-green-800"
+                              >
                                 Parish Member
                               </span>
-                              <span v-else class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 mr-2">
+                              <span v-else class="mr-2 inline-flex items-center rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-800">
                                 External
                               </span>
                               <span v-if="validMember.relationship?.name">
                                 {{ validMember.relationship.name }}
                               </span>
                             </div>
-                            <div v-if="validMember.member?.family_no" class="text-xs text-gray-500 mt-1">
-                              Family No: {{ validMember.member.family_no }} | 
-                              Member No: {{ validMember.member.member_no || 'N/A' }}
+                            <div v-if="validMember.member?.family_no" class="mt-1 text-xs text-gray-500">
+                              Family No: {{ validMember.member.family_no }} | Member No: {{ validMember.member.member_no || 'N/A' }}
                             </div>
-                            <div v-if="validMember.contact_no" class="text-xs text-gray-500 mt-1">
-                              Contact: {{ validMember.contact_no }}
-                            </div>
-                            <div v-if="validMember.date_of_birth" class="text-xs text-gray-500 mt-1">
+                            <div v-if="validMember.contact_no" class="mt-1 text-xs text-gray-500">Contact: {{ validMember.contact_no }}</div>
+                            <div v-if="validMember.date_of_birth" class="mt-1 text-xs text-gray-500">
                               DOB: {{ new Date(validMember.date_of_birth).toLocaleDateString() }}
                             </div>
                           </div>
-                          <div v-if="selectedValidMember?.id === validMember.id" class="text-blue-600">
-                            ✓
-                          </div>
+                          <div v-if="selectedValidMember?.id === validMember.id" class="text-blue-600">✓</div>
                         </div>
                       </div>
                     </div>
 
                     <!-- Clear selection button -->
                     <div v-if="selectedValidMember" class="mt-3">
-                      <button 
-                        @click="clearSelectedValidMember" 
-                        type="button" 
-                        class="text-sm text-blue-600 hover:text-blue-800"
-                      >
+                      <button @click="clearSelectedValidMember" type="button" class="text-sm text-blue-600 hover:text-blue-800">
                         Clear selection and enter manually
                       </button>
                     </div>
@@ -684,13 +671,11 @@ onUnmounted(() => {
                         >
                           <div class="font-medium text-gray-900">{{ member.name }}</div>
                           <div class="text-sm text-gray-500">
-                            Community No: {{ member.community?.name?.split('-')[0]?.trim() || 'N/A' }} | 
-                            Family: {{ member.family_no || 'N/A' }} | 
+                            Community No: {{ member.community?.name?.split('-')[0]?.trim() || 'N/A' }} | Family: {{ member.family_no || 'N/A' }} |
                             Member No: {{ member.member_no || 'N/A' }}
                           </div>
                           <div class="text-sm text-gray-500">
-                            Address: {{ member.current_add1 || 'N/A' }} | 
-                            Contact: {{ member.contact_no_1 || 'N/A' }}
+                            Address: {{ member.current_add1 || 'N/A' }} | Contact: {{ member.contact_no_1 || 'N/A' }}
                           </div>
                         </div>
                       </div>
@@ -703,7 +688,7 @@ onUnmounted(() => {
 
                     <!-- Search Helper Text -->
                     <p class="mt-1 text-xs text-gray-500">Start typing to search (minimum 2 characters)</p>
-                    
+
                     <div v-if="form.errors.deceased_member_id" class="mt-1 text-sm text-red-600">
                       {{ form.errors.deceased_member_id }}
                     </div>
@@ -717,18 +702,12 @@ onUnmounted(() => {
                         <div class="mt-2 space-y-1">
                           <div class="font-medium text-blue-800">{{ selectedMember.name }}</div>
                           <div class="text-sm text-blue-700">
-                            Community No: {{ selectedMember.community?.name?.split('-')[0]?.trim() || 'N/A' }} | 
-                            Family: {{ selectedMember.family_no || 'N/A' }}
+                            Community No: {{ selectedMember.community?.name?.split('-')[0]?.trim() || 'N/A' }} | Family:
+                            {{ selectedMember.family_no || 'N/A' }}
                           </div>
-                          <div class="text-sm text-blue-700">
-                            Member No: {{ selectedMember.member_no || 'N/A' }}
-                          </div>
-                          <div class="text-sm text-blue-700">
-                            Address: {{ selectedMember.current_add1 || 'N/A' }}
-                          </div>
-                          <div class="text-sm text-blue-700">
-                            Contact: {{ selectedMember.contact_no_1 || 'N/A' }}
-                          </div>
+                          <div class="text-sm text-blue-700">Member No: {{ selectedMember.member_no || 'N/A' }}</div>
+                          <div class="text-sm text-blue-700">Address: {{ selectedMember.current_add1 || 'N/A' }}</div>
+                          <div class="text-sm text-blue-700">Contact: {{ selectedMember.contact_no_1 || 'N/A' }}</div>
                         </div>
                       </div>
                       <button @click="clearSelectedMember" type="button" class="text-blue-600 hover:text-blue-800">
@@ -740,120 +719,120 @@ onUnmounted(() => {
 
                 <!-- Manual Entry for External -->
                 <div v-if="form.deceased_person_type === 'external'" class="space-y-4">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label for="dead_first_name">First Name *</Label>
-                    <Input
-                      id="dead_first_name"
-                      :model-value="form.dead_first_name || ''"
-                      @input="form.dead_first_name = $event.target.value || null"
-                      :class="form.errors.dead_first_name && 'border-red-500'"
-                      class="mt-1"
-                    />
-                    <div v-if="form.errors.dead_first_name" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.dead_first_name }}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label for="dead_last_name">Last Name *</Label>
-                    <Input
-                      id="dead_last_name"
-                      :model-value="form.dead_last_name || ''"
-                      @input="form.dead_last_name = $event.target.value || null"
-                      :class="form.errors.dead_last_name && 'border-red-500'"
-                      class="mt-1"
-                    />
-                    <div v-if="form.errors.dead_last_name" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.dead_last_name }}
-                    </div>
-                  </div>
-
-                  <div>
-                    <Label for="date_of_birth">Date of Birth</Label>
-                    <Input id="date_of_birth" v-model="form.date_of_birth" type="date" class="mt-1" />
-                  </div>
-
-                  <div>
-                    <Label for="gender_id">Gender *</Label>
-                    <select
-                      v-model="form.gender_id"
-                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                      :class="form.errors.gender_id && 'border-red-500'"
-                    >
-                      <option value="">Select Gender</option>
-                      <option v-for="gender in genders" :key="gender.id" :value="gender.id.toString()">
-                        {{ gender.name }}
-                      </option>
-                    </select>
-                    <div v-if="form.errors.gender_id" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.gender_id }}
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Age Details -->
-                <div>
-                  <Label class="text-base font-medium">Age at Death</Label>
-                  <div class="mt-2 grid grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <Label for="age">Years</Label>
+                      <Label for="dead_first_name">First Name *</Label>
                       <Input
-                        id="age"
-                        :model-value="form.age ?? ''"
-                        @input="form.age = $event.target.value ? Number($event.target.value) : null"
-                        type="number"
-                        min="0"
-                        max="150"
+                        id="dead_first_name"
+                        :model-value="form.dead_first_name || ''"
+                        @input="form.dead_first_name = $event.target.value || null"
+                        :class="form.errors.dead_first_name && 'border-red-500'"
                         class="mt-1"
                       />
+                      <div v-if="form.errors.dead_first_name" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.dead_first_name }}
+                      </div>
                     </div>
+
                     <div>
-                      <Label for="months">Months</Label>
+                      <Label for="dead_last_name">Last Name *</Label>
                       <Input
-                        id="months"
-                        :model-value="form.months ?? ''"
-                        @input="form.months = $event.target.value ? Number($event.target.value) : null"
-                        type="number"
-                        min="0"
-                        max="11"
+                        id="dead_last_name"
+                        :model-value="form.dead_last_name || ''"
+                        @input="form.dead_last_name = $event.target.value || null"
+                        :class="form.errors.dead_last_name && 'border-red-500'"
                         class="mt-1"
                       />
+                      <div v-if="form.errors.dead_last_name" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.dead_last_name }}
+                      </div>
                     </div>
+
                     <div>
-                      <Label for="days">Days</Label>
-                      <Input
-                        id="days"
-                        :model-value="form.days ?? ''"
-                        @input="form.days = $event.target.value ? Number($event.target.value) : null"
-                        type="number"
-                        min="0"
-                        max="30"
-                        class="mt-1"
-                      />
+                      <Label for="date_of_birth">Date of Birth</Label>
+                      <Input id="date_of_birth" v-model="form.date_of_birth" type="date" class="mt-1" />
+                    </div>
+
+                    <div>
+                      <Label for="gender_id">Gender *</Label>
+                      <select
+                        v-model="form.gender_id"
+                        class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                        :class="form.errors.gender_id && 'border-red-500'"
+                      >
+                        <option value="">Select Gender</option>
+                        <option v-for="gender in genders" :key="gender.id" :value="gender.id.toString()">
+                          {{ gender.name }}
+                        </option>
+                      </select>
+                      <div v-if="form.errors.gender_id" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.gender_id }}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <!-- Age Details -->
                   <div>
-                    <Label for="nationality">Nationality</Label>
-                    <Input id="nationality" v-model="form.nationality" class="mt-1" />
+                    <Label class="text-base font-medium">Age at Death</Label>
+                    <div class="mt-2 grid grid-cols-3 gap-4">
+                      <div>
+                        <Label for="age">Years</Label>
+                        <Input
+                          id="age"
+                          :model-value="form.age ?? ''"
+                          @input="form.age = $event.target.value ? Number($event.target.value) : null"
+                          type="number"
+                          min="0"
+                          max="150"
+                          class="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label for="months">Months</Label>
+                        <Input
+                          id="months"
+                          :model-value="form.months ?? ''"
+                          @input="form.months = $event.target.value ? Number($event.target.value) : null"
+                          type="number"
+                          min="0"
+                          max="11"
+                          class="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label for="days">Days</Label>
+                        <Input
+                          id="days"
+                          :model-value="form.days ?? ''"
+                          @input="form.days = $event.target.value ? Number($event.target.value) : null"
+                          type="number"
+                          min="0"
+                          max="30"
+                          class="mt-1"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <Label for="parish_id">Parish</Label>
-                    <select
-                      v-model="form.parish_id"
-                      class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Select Parish</option>
-                      <option v-for="parish in filteredParishes" :key="parish.id" :value="parish.id.toString()">
-                        {{ parish.name }}
-                      </option>
-                    </select>
+                  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                      <Label for="nationality">Nationality</Label>
+                      <Input id="nationality" v-model="form.nationality" class="mt-1" />
+                    </div>
+
+                    <div>
+                      <Label for="parish_id">Parish</Label>
+                      <select
+                        v-model="form.parish_id"
+                        class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Select Parish</option>
+                        <option v-for="parish in filteredParishes" :key="parish.id" :value="parish.id.toString()">
+                          {{ parish.name }}
+                        </option>
+                      </select>
+                    </div>
                   </div>
-                </div>
                 </div>
               </CardContent>
             </Card>
@@ -977,7 +956,7 @@ onUnmounted(() => {
                   <Textarea
                     id="special_requirements"
                     v-model="form.special_requirements"
-                    rows="3"
+                    :rows="3"
                     placeholder="Any special requirements or notes..."
                     class="mt-1"
                   />

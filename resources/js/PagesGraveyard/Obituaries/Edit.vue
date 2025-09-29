@@ -13,7 +13,7 @@ import { computed, ref } from 'vue';
 interface ObituaryPage {
   id: number;
   uuid: string;
-  service_type: 'basic' | 'premium';
+  // service_type: 'basic' | 'premium';
   biography?: string;
   favorite_memory?: string;
   achievements?: string;
@@ -40,7 +40,7 @@ interface ObituaryPage {
 }
 
 interface BackgroundOption {
-  value: string;
+  key: string;
   label: string;
   description: string;
   image?: string;
@@ -49,8 +49,7 @@ interface BackgroundOption {
 
 interface Props {
   obituary: ObituaryPage;
-  basicBackgrounds: BackgroundOption[];
-  premiumBackgrounds: BackgroundOption[];
+  backgrounds: BackgroundOption[];
 }
 
 defineOptions({
@@ -58,7 +57,6 @@ defineOptions({
 });
 
 const props = defineProps<Props>();
-
 const { success, error } = useToast();
 
 // Get deceased person's name
@@ -102,20 +100,20 @@ const galleryPreviews = ref<string[]>([]);
 
 // Available backgrounds computed property
 const availableBackgrounds = computed(() => {
-  if (props.obituary.service_type === 'premium') {
-    // Combine both arrays and remove duplicates based on 'value' property
-    const combined = [...props.basicBackgrounds, ...props.premiumBackgrounds];
-    const unique = combined.filter((bg, index, self) => index === self.findIndex((item) => item.value === bg.value));
-    return unique;
-  } else {
-    return props.basicBackgrounds;
-  }
+  // if (props.obituary.service_type === 'premium') {
+  //   // Combine both arrays and remove duplicates based on 'value' property
+  //   const combined = [...props.backgrounds];
+  //   const unique = combined.filter((bg, index, self) => index === self.findIndex((item) => item.value === bg.value));
+  //   return unique;
+  // } else {
+  return props.backgrounds;
+  // }
 });
 
 // Background preview
 const getBackgroundPreview = computed(() => {
   // Find the selected background configuration
-  const selectedBackground = availableBackgrounds.value.find((bg) => bg.value === form.background_style);
+  const selectedBackground = availableBackgrounds.value.find((bg) => bg.key === form.background_style);
 
   if (selectedBackground?.image) {
     // Use image-based background
@@ -352,17 +350,31 @@ const submit = () => {
     },
     body: formData,
   })
-    .then((response) => {
+    .then(async (response) => {
       if (response.redirected) {
         window.location.href = response.url;
       } else if (response.ok) {
-        success('Obituary updated successfully!');
-        router.visit(route('graveyard.obituaries.show', props.obituary.uuid));
+        const data = await response.json();
+        if (data.success) {
+          success(data.message || 'Obituary updated successfully!');
+          router.visit(route('graveyard.obituaries.show', props.obituary.uuid));
+        } else {
+          throw new Error(data.message || 'Update failed');
+        }
+      } else if (response.status === 422) {
+        // Validation errors
+        const data = await response.json();
+        if (data.errors) {
+          // Handle validation errors - you could display them individually
+          const errorMessages = Object.values(data.errors).flat().join(', ');
+          error(`Validation failed: ${errorMessages}`);
+        } else {
+          error(data.message || 'Validation failed');
+        }
       } else {
-        return response.text().then((text) => {
-          console.error('Server response:', text);
-          throw new Error('Server error');
-        });
+        const text = await response.text();
+        console.error('Server response:', text);
+        throw new Error('Server error');
       }
     })
     .catch((err) => {
@@ -396,7 +408,7 @@ const goBack = () => {
       </div>
 
       <!-- Service Type Info -->
-      <Card class="mb-6">
+      <!-- <Card class="mb-6">
         <CardContent class="pt-6">
           <div class="flex items-center justify-between">
             <div>
@@ -413,7 +425,7 @@ const goBack = () => {
             </span>
           </div>
         </CardContent>
-      </Card>
+      </Card> -->
 
       <!-- Error Display -->
       <div v-if="form.hasErrors" class="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
@@ -565,10 +577,10 @@ const goBack = () => {
               </div>
 
               <!-- Gallery Images (Premium Only) -->
-              <div v-if="obituary.service_type === 'premium'" class="border-t pt-6">
+              <div class="border-t pt-6">
                 <Label class="flex items-center text-base font-semibold">
                   Gallery Photos
-                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span>
+                  <!-- <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span> -->
                 </Label>
                 <p class="mb-4 text-sm text-gray-600">Additional photos for the memorial gallery</p>
 
@@ -681,7 +693,7 @@ const goBack = () => {
               </div>
 
               <!-- Audio Message (Premium Only) -->
-              <div v-if="obituary.service_type === 'premium'">
+              <div>
                 <!-- Current Audio -->
                 <div v-if="obituary.audio_message">
                   <div class="flex items-center justify-between">
@@ -722,12 +734,12 @@ const goBack = () => {
             <CardHeader>
               <CardTitle class="flex items-center">
                 <Palette class="mr-2 h-5 w-5" />
-                {{ obituary.service_type === 'premium' ? 'Customization' : 'Background Style' }}
+                Background Style
               </CardTitle>
             </CardHeader>
             <CardContent class="space-y-4">
               <!-- Theme Color (Premium Only) -->
-              <div v-if="obituary.service_type === 'premium'">
+              <div>
                 <Label for="theme_color">Theme Color</Label>
                 <div class="mt-1 flex items-center space-x-2">
                   <input id="theme_color" v-model="form.theme_color" type="color" class="h-10 w-20 cursor-pointer rounded border border-gray-300" />
@@ -737,19 +749,17 @@ const goBack = () => {
 
               <!-- Background Style -->
               <div>
-                <Label for="background_style">{{ obituary.service_type === 'premium' ? 'Background Style' : 'Choose Background' }}</Label>
-
+                <Label for="background_style">Background Style</Label>
                 <!-- Responsive Grid for Background Options -->
                 <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   <div
                     v-for="background in availableBackgrounds"
-                    :key="background.value"
+                    :key="background.key"
                     class="hover:border-primary/50 relative cursor-pointer rounded-lg border p-3 transition-colors"
-                    :class="form.background_style === background.value ? 'border-primary bg-primary/5' : 'border-gray-200'"
-                    @click="form.background_style = background.value"
+                    :class="form.background_style === background.key ? 'border-blue-500 bg-blue-50' : 'border-gray-200'"
+                    @click="form.background_style = background.key"
                   >
                     <div class="flex items-center space-x-3">
-                      <input type="radio" :value="background.value" v-model="form.background_style" class="hidden" />
                       <div
                         v-if="background.image"
                         class="h-12 w-12 flex-shrink-0 overflow-hidden rounded border"
@@ -759,12 +769,19 @@ const goBack = () => {
                       <div class="min-w-0 flex-1">
                         <h3 class="text-sm font-medium">{{ background.label }}</h3>
                         <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
-                        <span
+                        <!-- <span
                           v-if="background.tier === 'premium'"
                           class="mt-1 inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800"
                           >Premium</span
-                        >
+                        > -->
                       </div>
+                    </div>
+                    <!-- Visual indicator for selected state -->
+                    <div
+                      v-if="form.background_style === background.key"
+                      class="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-blue-500"
+                    >
+                      <div class="h-2 w-2 rounded-full bg-white"></div>
                     </div>
                   </div>
                 </div>
@@ -787,10 +804,10 @@ const goBack = () => {
             </CardHeader>
             <CardContent class="space-y-4">
               <!-- Premium Features -->
-              <div v-if="obituary.service_type === 'premium'" class="space-y-4">
+              <div class="space-y-4">
                 <div class="flex items-center justify-between">
                   <div>
-                    <Label>Allow Condolences <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
+                    <Label>Allow Condolences</Label>
                     <p class="text-sm text-gray-600">Allow visitors to leave condolence messages</p>
                   </div>
                   <label class="relative inline-flex cursor-pointer items-center">
@@ -803,7 +820,7 @@ const goBack = () => {
 
                 <div class="flex items-center justify-between">
                   <div>
-                    <Label>Allow Memory Sharing <span class="text-xs font-medium text-purple-600">(Premium Feature)</span></Label>
+                    <Label>Allow Memory Sharing </Label>
                     <p class="text-sm text-gray-600">Allow visitors to share memories</p>
                   </div>
                   <label class="relative inline-flex cursor-pointer items-center">

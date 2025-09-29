@@ -16,6 +16,7 @@ import {
   Cross,
   FileText,
   Home,
+  IndianRupee,
   Palette,
   Settings,
   Tags,
@@ -69,6 +70,7 @@ const graveyardNavigationGroups = computed(() => [
     label: 'Obituary Management',
     items: [
       { title: 'All Obituaries', href: '/graveyard/obituaries', icon: FileText, show: true },
+      { title: 'Obituary Plans', href: '/graveyard/obituary-plans', icon: Tags, show: can('access-graveyard') },
       { title: 'Condolences', href: '/graveyard/obituaries/condolences/manage', icon: BookOpen, show: true },
       { title: 'File Cleanup', href: '/graveyard/obituaries/cleanup', icon: Trash2, show: true },
       { title: 'Obituary Managers', href: '/graveyard/obituary-managers', icon: Users, show: can('read-obituary-manager') || true },
@@ -87,6 +89,7 @@ const graveyardNavigationGroups = computed(() => [
       { title: 'Temporary Graves', href: '/graveyard/temporary-graves', icon: Clock, show: can('read-temporary-grave') || true },
       { title: 'Niches', href: '/graveyard/niches', icon: Box, show: can('read-niche') || true },
       { title: 'Valid Members', href: '/graveyard/valid-members', icon: UserCheck, show: can('read-valid-member') || true },
+      { title: 'Annual Maintenance Fees', href: '/graveyard/annual-maintenance-fees', icon: IndianRupee, show: can('list-annual-maintenance-fees') || true },
       { title: 'Grave Categories', href: '/graveyard/grave-categories', icon: Tags, show: can('read-grave-category') || true },
       { title: 'Service Types', href: '/graveyard/service-types', icon: Settings, show: can('read-service-type') || true },
     ],
@@ -131,7 +134,7 @@ watch(
     </SidebarHeader>
 
     <SidebarContent>
-      <NavMainGrouped :groups="filteredGraveyardNavigationGroups" />
+      <NavMainGrouped :groups="filteredGraveyardNavigationGroups" :current-page="page.url" :last-page="page.url" />
     </SidebarContent>
 
     <SidebarFooter>

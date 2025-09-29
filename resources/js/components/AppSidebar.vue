@@ -314,7 +314,7 @@ const logoLink = computed(() => {
 
     <SidebarContent>
       <!-- <NavMain :items="mainNavItems" /> -->
-      <NavMainGrouped :groups="filteredNavigationGroups" />
+      <NavMainGrouped :groups="filteredNavigationGroups" :current-page="page.url" :last-page="page.url" />
     </SidebarContent>
 
     <SidebarFooter>

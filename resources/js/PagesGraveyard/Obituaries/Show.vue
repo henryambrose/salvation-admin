@@ -12,10 +12,24 @@ import { computed, ref } from 'vue';
 
 type PaymentStatus = 'pending' | 'completed' | 'failed';
 
+interface ObituaryPlan {
+  id: number;
+  name: string;
+  description: string;
+  cost: number;
+  formatted_cost: string;
+  duration_in_days: number;
+  formatted_duration: string;
+  is_active: boolean;
+  sort_order: number;
+}
+
 interface ObituaryPage {
   id: number;
   uuid: string;
-  service_type: 'basic' | 'premium';
+  // service_type: 'basic' | 'premium';
+  obituary_plan_id?: number;
+  obituary_plan?: ObituaryPlan;
   expires_at?: string;
   is_public: boolean;
   view_count: number;
@@ -52,6 +66,8 @@ interface ObituaryPage {
     payment_status: PaymentStatus;
     amount: number;
     payment_reference: string;
+    obituary_plan_id?: number;
+    obituary_plan?: ObituaryPlan;
   }[];
   obituary_manager?: {
     id: number;
@@ -243,10 +259,12 @@ const viewFullImage = (imagePath: string) => {
   window.open(imageUrl, '_blank');
 };
 
-const serviceTypeColors = {
-  basic: 'bg-blue-100 text-blue-800',
-  premium: 'bg-purple-100 text-purple-800',
-};
+// const serviceTypeColors = {
+//   basic: 'bg-blue-100 text-blue-800',
+//   premium: 'bg-purple-100 text-purple-800',
+// };
+
+// Since all plans have same features, no upgrade functionality needed
 
 const expirationInfo = computed(() => {
   if (!props.obituary.expires_at) return null;
@@ -402,7 +420,7 @@ const paymentStatusColors = {
               </div>
             </div>
             <div class="flex items-center space-x-2">
-              <Badge :class="serviceTypeColors[obituary.service_type]"> {{ obituary.service_type }} Service </Badge>
+              <!-- <Badge :class="serviceTypeColors[obituary.service_type]"> {{ obituary.service_type }} Service </Badge> -->
               <Badge v-if="isPaymentCompleted" class="bg-green-100 text-green-800"> Activated </Badge>
               <Badge v-if="expirationInfo" :class="expirationInfo.color">
                 {{ expirationInfo.message }}
@@ -449,7 +467,7 @@ const paymentStatusColors = {
                     <p class="text-sm text-gray-600">Created: {{ new Date(obituary.created_at).toLocaleDateString() }}</p>
                   </div>
                   <div class="text-right">
-                    <Badge :class="serviceTypeColors[obituary.service_type]" class="mb-2"> {{ obituary.service_type }} Service </Badge>
+                    <!-- <Badge :class="serviceTypeColors[obituary.service_type]" class="mb-2"> {{ obituary.service_type }} Service </Badge> -->
                     <p class="text-sm text-gray-600">Status: {{ obituary.is_public ? 'Public' : 'Private' }}</p>
                   </div>
                 </div>
@@ -521,10 +539,7 @@ const paymentStatusColors = {
             <!-- Gallery Images (Premium Feature) -->
             <Card v-if="obituary.gallery_images && obituary.gallery_images.length > 0">
               <CardHeader>
-                <CardTitle class="flex items-center">
-                  Gallery Photos
-                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium</span>
-                </CardTitle>
+                <CardTitle class="flex items-center"> Gallery Photos </CardTitle>
               </CardHeader>
               <CardContent>
                 <div class="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
@@ -548,10 +563,7 @@ const paymentStatusColors = {
             <!-- Audio Message (Premium Feature) -->
             <Card v-if="obituary.audio_message">
               <CardHeader>
-                <CardTitle class="flex items-center">
-                  Audio Message
-                  <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium</span>
-                </CardTitle>
+                <CardTitle class="flex items-center"> Audio Message </CardTitle>
               </CardHeader>
               <CardContent>
                 <div class="rounded-lg bg-gray-50 p-4">
@@ -768,7 +780,7 @@ const paymentStatusColors = {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Complete Payment</DialogTitle>
-              <DialogDescription> Process the payment for {{ obituary.service_type }} obituary service </DialogDescription>
+              <DialogDescription> Process the payment for obituary service </DialogDescription>
             </DialogHeader>
 
             <form @submit.prevent="submitPayment" class="space-y-4">

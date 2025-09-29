@@ -132,3 +132,11 @@ Route::get('/test-404', function () {
 Route::get('/test-500', function () {
     abort(500);
 });
+Route::get('/_whoami', function () {
+    return [
+        'web_guard'   => auth('web')->check(),
+        'external_guard' => auth('external')->check(),
+        'user_id'     => optional(Auth::user())->id,
+        'email'       => optional(Auth::user())->email,
+    ];
+})->middleware('web');

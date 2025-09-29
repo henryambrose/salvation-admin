@@ -2,48 +2,32 @@
 
 namespace Modules\Graveyard\Providers;
 
-use Illuminate\Foundation\Support\Providers\RouteServiceProvider as ServiceProvider;
+use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 
 class ModuleServiceProvider extends ServiceProvider
 {
     /**
-     * The module namespace to assume when generating URLs to actions.
-     *
-     * @var string
+     * Register any application services.
      */
-    protected $namespace = 'Modules\Graveyard\Http\Controllers';
+    public function register(): void
+    {
+        // Register any bindings or singletons here
+    }
 
     /**
-     * Called before routes are registered.
-     *
-     * Register any model bindings or pattern based filters.
+     * Bootstrap any application services.
      */
     public function boot(): void
     {
-        parent::boot();
+        // Load routes
+        $this->loadRoutesFrom(base_path('routes/graveyard.php'));
 
+        // Load migrations
         $this->loadMigrationsFrom(database_path('modules/graveyard/database/migrations'));
+
         $this->loadPolicies();
         $this->loadCommands();
-    }
-
-    /**
-     * Define the routes for the application.
-     */
-    public function map(): void
-    {
-        $this->mapWebRoutes();
-    }
-
-    /**
-     * Define the "web" routes for the application.
-     *
-     * These routes all receive session state, CSRF protection, etc.
-     */
-    protected function mapWebRoutes(): void
-    {
-        $this->loadRoutesFrom(base_path('routes/graveyard.php'));
     }
 
     protected function loadPolicies(): void

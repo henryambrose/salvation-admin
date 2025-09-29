@@ -68,18 +68,18 @@ class ObituaryBackgroundService
     /**
      * Validate if a theme is available for a user tier
      */
-    public function isThemeAvailableForTier(string $themeKey, string $userTier = 'basic'): bool
-    {
-        $theme = $this->getThemeByKey($themeKey);
+    // public function isThemeAvailableForTier(string $themeKey, string $userTier = 'basic'): bool
+    // {
+    //     $theme = $this->getThemeByKey($themeKey);
 
-        if (!$theme) {
-            return false;
-        }
+    //     if (!$theme) {
+    //         return false;
+    //     }
 
-        $allowedTiers = $userTier === 'premium' ? ['basic', 'premium'] : ['basic'];
+    //     $allowedTiers = $userTier === 'premium' ? ['basic', 'premium'] : ['basic'];
 
-        return in_array($theme->tier, $allowedTiers);
-    }
+    //     return in_array($theme->tier, $allowedTiers);
+    // }
 
     /**
      * Get the default theme
@@ -94,15 +94,15 @@ class ObituaryBackgroundService
     /**
      * Get themes grouped by tier
      */
-    public function getThemesGroupedByTier(): array
-    {
-        $themes = ObituaryBackgroundTheme::active()->ordered()->get();
+    // public function getThemesGroupedByTier(): array
+    // {
+    //     $themes = ObituaryBackgroundTheme::active()->ordered()->get();
 
-        return [
-            'basic' => $themes->where('tier', 'basic')->map(fn($theme) => $theme->toFrontendArray())->values()->toArray(),
-            'premium' => $themes->where('tier', 'premium')->map(fn($theme) => $theme->toFrontendArray())->values()->toArray(),
-        ];
-    }
+    //     return [
+    //         'basic' => $themes->where('tier', 'basic')->map(fn($theme) => $theme->toFrontendArray())->values()->toArray(),
+    //         'premium' => $themes->where('tier', 'premium')->map(fn($theme) => $theme->toFrontendArray())->values()->toArray(),
+    //     ];
+    // }
 
     /**
      * Create a new theme (for admin management)

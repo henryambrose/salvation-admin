@@ -379,16 +379,16 @@ class ObituaryManagerController extends Controller
         ];
 
         // Add premium-only validation rules
-        if ($obituary->service_type === 'premium') {
-            $rules = array_merge($rules, [
-                'theme_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
-                'background_style' => 'nullable|string|max:50',
-                'allow_condolences' => 'nullable|in:0,1,true,false',
-                'allow_memory_sharing' => 'nullable|in:0,1,true,false',
-                'gallery_images.*' => 'image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB each
-                'audio_message' => 'nullable|file|mimes:mp3,wav,m4a,aac|max:25600', // 25MB
-            ]);
-        }
+        // if ($obituary->service_type === 'premium') {
+        //     $rules = array_merge($rules, [
+        //         'theme_color' => 'nullable|string|regex:/^#[a-fA-F0-9]{6}$/',
+        //         'background_style' => 'nullable|string|max:50',
+        //         'allow_condolences' => 'nullable|in:0,1,true,false',
+        //         'allow_memory_sharing' => 'nullable|in:0,1,true,false',
+        //         'gallery_images.*' => 'image|mimes:jpeg,jpg,png,gif|max:5120', // 5MB each
+        //         'audio_message' => 'nullable|file|mimes:mp3,wav,m4a,aac|max:25600', // 25MB
+        //     ]);
+        // }
 
         $validator = Validator::make($request->all(), $rules);
 
@@ -413,48 +413,48 @@ class ObituaryManagerController extends Controller
         }
 
         // Handle gallery images (premium only)
-        if ($obituary->service_type === 'premium') {
-            $existingGallery = $obituary->gallery_images ?? [];
+        // if ($obituary->service_type === 'premium') {
+        //     $existingGallery = $obituary->gallery_images ?? [];
 
-            // Handle image removal
-            if ($request->has('remove_gallery_images')) {
-                $imagesToRemove = json_decode($request->get('remove_gallery_images'), true);
+        //     // Handle image removal
+        //     if ($request->has('remove_gallery_images')) {
+        //         $imagesToRemove = json_decode($request->get('remove_gallery_images'), true);
 
-                // Remove files from storage
-                foreach ($imagesToRemove as $imagePath) {
-                    Storage::disk('public')->delete($imagePath);
-                }
+        //         // Remove files from storage
+        //         foreach ($imagesToRemove as $imagePath) {
+        //             Storage::disk('public')->delete($imagePath);
+        //         }
 
-                // Remove from existing gallery array
-                $existingGallery = array_filter($existingGallery, function ($image) use ($imagesToRemove) {
-                    return !in_array($image, $imagesToRemove);
-                });
+        //         // Remove from existing gallery array
+        //         $existingGallery = array_filter($existingGallery, function ($image) use ($imagesToRemove) {
+        //             return !in_array($image, $imagesToRemove);
+        //         });
 
-                // Re-index array to avoid gaps
-                $existingGallery = array_values($existingGallery);
-            }
+        //         // Re-index array to avoid gaps
+        //         $existingGallery = array_values($existingGallery);
+        //     }
 
-            // Handle new image uploads
-            if ($request->hasFile('gallery_images')) {
-                $galleryPaths = [];
+        //     // Handle new image uploads
+        //     if ($request->hasFile('gallery_images')) {
+        //         $galleryPaths = [];
 
-                foreach ($request->file('gallery_images') as $file) {
-                    $galleryPath = $file->store('obituaries/gallery', 'public');
-                    $galleryPaths[] = $galleryPath;
-                }
+        //         foreach ($request->file('gallery_images') as $file) {
+        //             $galleryPath = $file->store('obituaries/gallery', 'public');
+        //             $galleryPaths[] = $galleryPath;
+        //         }
 
-                // Merge with existing gallery images
-                $existingGallery = array_merge($existingGallery, $galleryPaths);
-            }
+        //         // Merge with existing gallery images
+        //         $existingGallery = array_merge($existingGallery, $galleryPaths);
+        //     }
 
-            // Always update gallery_images field if there were any changes
-            if ($request->has('remove_gallery_images') || $request->hasFile('gallery_images')) {
-                $updateData['gallery_images'] = $existingGallery;
-            }
-        }
+        //     // Always update gallery_images field if there were any changes
+        //     if ($request->has('remove_gallery_images') || $request->hasFile('gallery_images')) {
+        //         $updateData['gallery_images'] = $existingGallery;
+        //     }
+        // }
 
         // Handle audio message upload (premium only)
-        if ($obituary->service_type === 'premium' && $request->hasFile('audio_message')) {
+        if ($request->hasFile('audio_message')) {
             // Delete old audio message if exists
             if ($obituary->audio_message) {
                 Storage::disk('public')->delete($obituary->audio_message);
@@ -469,14 +469,14 @@ class ObituaryManagerController extends Controller
             $updateData['is_public'] = in_array($updateData['is_public'], ['1', 'true', true], true);
         }
 
-        if ($obituary->service_type === 'premium') {
-            if (isset($updateData['allow_condolences'])) {
-                $updateData['allow_condolences'] = in_array($updateData['allow_condolences'], ['1', 'true', true], true);
-            }
-            if (isset($updateData['allow_memory_sharing'])) {
-                $updateData['allow_memory_sharing'] = in_array($updateData['allow_memory_sharing'], ['1', 'true', true], true);
-            }
-        }
+        // if ($obituary->service_type === 'premium') {
+        //     if (isset($updateData['allow_condolences'])) {
+        //         $updateData['allow_condolences'] = in_array($updateData['allow_condolences'], ['1', 'true', true], true);
+        //     }
+        //     if (isset($updateData['allow_memory_sharing'])) {
+        //         $updateData['allow_memory_sharing'] = in_array($updateData['allow_memory_sharing'], ['1', 'true', true], true);
+        //     }
+        // }
 
         $obituary->update($updateData);
 

@@ -12,6 +12,7 @@ use Illuminate\Support\Str;
 use Modules\Graveyard\Models\PermanentGraveBooking;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ObituaryPage extends Model
 {
@@ -22,6 +23,7 @@ class ObituaryPage extends Model
         'qr_code_path',
         'permanent_grave_booking_id',
         'temporary_grave_booking_id',
+        'obituary_plan_id',
         'biography',
         'favorite_memory',
         'achievements',
@@ -108,6 +110,11 @@ class ObituaryPage extends Model
     public function obituaryManager(): HasOne
     {
         return $this->hasOne(ObituaryManager::class);
+    }
+
+    public function obituaryPlan(): BelongsTo
+    {
+        return $this->belongsTo(ObituaryPlan::class);
     }
 
     public function getBookingAttribute()
@@ -247,18 +254,28 @@ class ObituaryPage extends Model
     }
 
     /**
-     * Check if the associated booking has completed payment
+     * Check if the obituary page has completed payment
      */
     public function hasCompletedPayment(): bool
     {
-        $booking = $this->getBookingAttribute();
+        // First, check if there are specific obituary payments
+        $obituaryPayments = $this->payments;
 
-        if (!$booking) {
-            return false;
+        if ($obituaryPayments->isNotEmpty()) {
+            // If there are obituary-specific payments, all must be completed
+            return $obituaryPayments->every(function ($payment) {
+                return in_array($payment->payment_status, ['paid', 'completed']);
+            });
         }
 
-        // Check payment status - 'paid' for bookings, 'completed' for some payment records
-        return in_array($booking->payment_status, ['paid', 'completed']);
+        // Fallback: If no obituary-specific payments exist, check the associated booking payment
+        // This handles cases where obituary pages are included with the burial service
+        $booking = $this->getBookingAttribute();
+        if ($booking) {
+            return in_array($booking->payment_status, ['paid', 'completed']);
+        }
+
+        return false;
     }
 
     /**
@@ -278,11 +295,59 @@ class ObituaryPage extends Model
     }
 
     /**
-     * Get payment status from associated booking
+     * Get payment status from obituary payments with booking fallback
      */
     public function getPaymentStatus(): ?string
     {
+        $obituaryPayments = $this->payments;
+
+        if ($obituaryPayments->isNotEmpty()) {
+            // If there are obituary-specific payments, analyze them
+            if ($obituaryPayments->every(fn($payment) => in_array($payment->payment_status, ['paid', 'completed']))) {
+                return 'completed';
+            }
+
+            if ($obituaryPayments->some(fn($payment) => in_array($payment->payment_status, ['paid', 'completed']))) {
+                return 'partial';
+            }
+
+            return 'pending';
+        }
+
+        // Fallback: Return the booking payment status if no obituary payments exist
         $booking = $this->getBookingAttribute();
         return $booking?->payment_status;
+    }
+
+    /**
+     * Check if premium features are available based on plan or service type
+     */
+    // public function hasPremiumFeatures(): bool
+    // {
+    //     // Check if it has a plan with premium features (we could define this logic)
+    //     // For now, we'll use the service_type as fallback for backward compatibility
+    //     if ($this->obituaryPlan) {
+    //         // You could define premium features based on plan cost or specific plan names
+    //         // For now, let's consider plans over ₹1000 as premium
+    //         return $this->obituaryPlan->cost > 1000;
+    //     }
+
+    //     // Fallback to original service_type logic
+    //     return $this->service_type === 'premium';
+    // }
+
+    /**
+     * Check if obituary has expired based on plan duration
+     */
+    public function hasExpired(): bool
+    {
+        if ($this->obituaryPlan && !$this->obituaryPlan->isLifetime()) {
+            // Check if obituary has expired based on plan duration
+            $expiryDate = $this->created_at->addDays($this->obituaryPlan->duration_in_days);
+            return $expiryDate->isPast();
+        }
+
+        // Fallback to expires_at column
+        return $this->expires_at && $this->expires_at->isPast();
     }
 }

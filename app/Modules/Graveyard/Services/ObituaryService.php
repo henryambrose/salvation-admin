@@ -78,20 +78,20 @@ class ObituaryService
         return Storage::url($fileName);
     }
 
-    public function upgradeToPremiun(ObituaryPage $obituary, float $amount): ObituaryPayment
-    {
-        $premiumDays = config('obituary.duration.premium');
+    // public function upgradeToPremiun(ObituaryPage $obituary, float $amount): ObituaryPayment
+    // {
+    //     $premiumDays = config('obituary.duration.premium');
 
-        $payment = ObituaryPayment::create([
-            'obituary_page_id' => $obituary->id,
-            'amount' => $amount,
-            'service_type' => 'premium',
-            'payment_status' => 'pending',
-            'expires_at' => Carbon::now()->addDays($premiumDays),
-        ]);
+    //     $payment = ObituaryPayment::create([
+    //         'obituary_page_id' => $obituary->id,
+    //         'amount' => $amount,
+    //         'service_type' => 'premium',
+    //         'payment_status' => 'pending',
+    //         'expires_at' => Carbon::now()->addDays($premiumDays),
+    //     ]);
 
-        return $payment;
-    }
+    //     return $payment;
+    // }
 
     public function processPayment(ObituaryPayment $payment, string $reference): bool
     {

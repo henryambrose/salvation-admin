@@ -49,9 +49,9 @@ class BackgroundThemeHelper
     /**
      * Check if theme is available for user tier
      */
-    public static function isThemeAvailable(string $key, string $userTier = 'basic'): bool
-    {
-        $service = app(ObituaryBackgroundService::class);
-        return $service->isThemeAvailableForTier($key, $userTier);
-    }
+    // public static function isThemeAvailable(string $key, string $userTier = 'basic'): bool
+    // {
+    //     $service = app(ObituaryBackgroundService::class);
+    //     return $service->isThemeAvailableForTier($key, $userTier);
+    // }
 }

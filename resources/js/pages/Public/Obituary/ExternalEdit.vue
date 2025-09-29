@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { ArrowLeftIcon, Image, Music, Palette, SaveIcon, Settings, X } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 interface Props {
   obituary: {
     uuid: string;
-    service_type: 'basic' | 'premium';
+    // service_type: 'basic' | 'premium';
     biography?: string;
     favorite_memory?: string;
     achievements?: string;
@@ -54,8 +54,8 @@ const audioFile = ref<File | null>(null);
 const imagesToRemove = ref<string[]>([]);
 
 // Computed
-const isPremium = computed(() => props.obituary.service_type === 'premium');
-const availableBackgrounds = computed(() => props.backgroundOptions?.filter((bg) => bg.tier === 'basic' || isPremium.value) || []);
+// const isPremium = computed(() => props.obituary.service_type === 'premium');
+const availableBackgrounds = props.backgroundOptions || [];
 
 const isSubmitting = ref(false);
 const successMessage = ref('');
@@ -458,11 +458,11 @@ const saveChanges = async () => {
           </div>
 
           <!-- Gallery Images Section (Premium Only) -->
-          <div v-if="isPremium" class="border-t pt-8">
+          <div class="border-t pt-8">
             <div class="mb-4 flex items-center space-x-2">
               <Image class="h-5 w-5 text-gray-600" />
               <h3 class="text-lg font-medium text-gray-900">Photo Gallery</h3>
-              <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span>
+              <!-- <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span> -->
             </div>
 
             <div class="space-y-4">
@@ -525,11 +525,11 @@ const saveChanges = async () => {
           </div>
 
           <!-- Audio Message Section (Premium Only) -->
-          <div v-if="isPremium" class="border-t pt-8">
+          <div class="border-t pt-8">
             <div class="mb-4 flex items-center space-x-2">
               <Music class="h-5 w-5 text-gray-600" />
               <h3 class="text-lg font-medium text-gray-900">Audio Message</h3>
-              <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span>
+              <!-- <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span> -->
             </div>
 
             <div class="space-y-4">
@@ -575,11 +575,11 @@ const saveChanges = async () => {
           </div>
 
           <!-- Theme & Background Section (Premium Only) -->
-          <div v-if="isPremium" class="border-t pt-8">
+          <div class="border-t pt-8">
             <div class="mb-4 flex items-center space-x-2">
               <Palette class="h-5 w-5 text-gray-600" />
               <h3 class="text-lg font-medium text-gray-900">Theme & Appearance</h3>
-              <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span>
+              <!-- <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800"> Premium </span> -->
             </div>
 
             <div class="space-y-6">
@@ -629,11 +629,11 @@ const saveChanges = async () => {
                       <div v-else class="mb-2 h-16 w-full rounded bg-gradient-to-br from-gray-100 to-gray-200"></div>
                       <h4 class="text-sm font-medium text-gray-900">{{ background.label }}</h4>
                       <p class="mt-1 text-xs text-gray-500">{{ background.description }}</p>
-                      <div v-if="background.tier === 'premium'" class="absolute top-2 right-2">
+                      <!-- <div v-if="background.tier === 'premium'" class="absolute top-2 right-2">
                         <span class="inline-flex items-center rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-800">
                           Premium
                         </span>
-                      </div>
+                      </div> -->
                     </div>
                   </div>
                 </div>
@@ -666,7 +666,7 @@ const saveChanges = async () => {
               </div>
 
               <!-- Condolences Setting (Premium Only) -->
-              <div v-if="isPremium">
+              <div>
                 <label class="flex items-start space-x-3">
                   <input
                     type="checkbox"
@@ -682,7 +682,7 @@ const saveChanges = async () => {
               </div>
 
               <!-- Memory Sharing Setting (Premium Only) -->
-              <div v-if="isPremium">
+              <div>
                 <label class="flex items-start space-x-3">
                   <input
                     type="checkbox"

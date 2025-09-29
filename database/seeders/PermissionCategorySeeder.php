@@ -311,6 +311,7 @@ class PermissionCategorySeeder extends Seeder
                     ['rule_type' => 'contains', 'rule_value' => 'obituary-page', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'obituary-condolence', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'obituary-payment', 'priority' => 15],
+                    ['rule_type' => 'contains', 'rule_value' => 'obituary-plans', 'priority' => 15],
                 ]
             ],
             [

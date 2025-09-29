@@ -1,6 +1,8 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 use Modules\Fund\Http\Controllers\AnnualContributionController;
 use Modules\Fund\Http\Controllers\CommunityContributionController;
 use Modules\Fund\Http\Controllers\CommunityContributionTypeController;
@@ -24,6 +26,17 @@ use Modules\Fund\Http\Controllers\PaymentMethodController;
 Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     // Dashboard
     Route::get('/', function () {
+        Log::info('=== FUND ROUTE HIT ===');
+        Log::info('User ID: ' . Auth::id());
+        Log::info('Is authenticated: ' . (Auth::check() ? 'YES' : 'NO'));
+
+        if (Auth::check()) {
+            Log::info('User Email: ' . Auth::user()->email);
+            Log::info('Is Superadmin: ' . (Auth::user()->is_superadmin ? 'YES' : 'NO'));
+        } else {
+            Log::info('User is not authenticated in Fund route');
+        }
+
         return inertia('FundDashboard');
     })->name('dashboard');
 
@@ -126,11 +139,11 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
                     'notes' => $contribution->notes
                 ];
             });
-        
+
         $totalContributions = $contributions->count();
         $totalPaid = $contributions->where('status', 'paid')->sum('amount');
         $totalPending = $contributions->whereIn('status', ['pending', 'partial'])->sum('amount');
-        
+
         return response()->json([
             'contributions' => $contributions,
             'total_contributions' => $totalContributions,
@@ -142,20 +155,20 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     Route::get('pending-amounts/{familyNo}/{year}', function ($familyNo, $year) {
         // Get all fund categories
         $categories = \Modules\Fund\Models\FundCategory::all();
-        
+
         $pendingAmounts = $categories->map(function ($category) use ($familyNo, $year) {
             // Get contributions for this category and year
             $contributions = \Modules\Fund\Models\FamilyContribution::where('family_no', $familyNo)
                 ->where('year', $year)
                 ->where('fund_category_id', $category->id)
                 ->get();
-            
+
             $paidAmount = $contributions->where('status', 'paid')->sum('amount');
             $partialAmount = $contributions->where('status', 'partial')->sum('amount');
             $pendingAmount = $contributions->where('status', 'pending')->sum('amount');
-            
+
             $totalPaid = $paidAmount + $partialAmount;
-            
+
             return [
                 'id' => $category->id,
                 'name' => $category->name,
@@ -167,9 +180,9 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
         })->filter(function ($category) {
             return $category['pending_amount'] > 0 || $category['contributions'] > 0;
         })->values();
-        
+
         $totalPending = $pendingAmounts->sum('pending_amount');
-        
+
         return response()->json([
             'pending_amounts' => $pendingAmounts,
             'total_pending' => $totalPending
@@ -182,18 +195,18 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
         if (!$category) {
             return response()->json(['pending_amounts' => [], 'total_pending' => 0]);
         }
-        
+
         $contributions = \Modules\Fund\Models\FamilyContribution::where('family_no', $familyNo)
             ->where('year', $year)
             ->where('fund_category_id', $categoryId)
             ->get();
-        
+
         $paidAmount = $contributions->where('status', 'paid')->sum('amount');
         $partialAmount = $contributions->where('status', 'partial')->sum('amount');
         $pendingAmount = $contributions->where('status', 'pending')->sum('amount');
-        
+
         $totalPaid = $paidAmount + $partialAmount;
-        
+
         $pendingAmounts = [
             [
                 'id' => $category->id,
@@ -204,7 +217,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
                 'contributions' => $contributions->count()
             ]
         ];
-        
+
         $totalPending = $pendingAmount;
         return response()->json(['pending_amounts' => $pendingAmounts, 'total_pending' => $totalPending]);
     })->name('pending-amounts-by-category');

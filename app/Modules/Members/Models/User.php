@@ -66,4 +66,5 @@ class User extends Authenticatable
 
         return $permissions->unique('name')->pluck('name');
     }
+
 }

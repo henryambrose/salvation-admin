@@ -58,6 +58,11 @@ return new class extends Migration
             $table->string('permit_no')->nullable();
             $table->json('required_documents')->nullable(); // List of required/submitted documents
 
+            // Maintenance fields for the niche
+            $table->decimal('pending_amount', 10, 2)->default(0);
+            $table->integer('last_payment_year')->nullable();
+            $table->json('partial_payment_months')->nullable();
+
             // Audit fields
             $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('updated_by');
