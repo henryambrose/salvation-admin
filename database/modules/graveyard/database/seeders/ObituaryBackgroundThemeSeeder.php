@@ -25,7 +25,6 @@ class ObituaryBackgroundThemeSeeder extends Seeder
                 'name' => $background['name'],
                 'description' => $background['description'],
                 'type' => $this->determineType($background),
-                'tier' => $background['tier'] ?? 'basic',
                 'image_path' => $background['image'] ?? null,
                 'style_properties' => $background['style'] ?? null,
                 'background_color' => $this->extractBackgroundColor($background),
@@ -48,7 +47,6 @@ class ObituaryBackgroundThemeSeeder extends Seeder
                 'name' => $background['name'],
                 'description' => $background['description'],
                 'type' => $background['type'] ?? 'color',
-                'tier' => 'basic', // Default tier for general backgrounds
                 'image_path' => $background['image'] ?? null,
                 'style_properties' => $this->generateStyleFromBackgroundConfig($background),
                 'background_color' => null,
