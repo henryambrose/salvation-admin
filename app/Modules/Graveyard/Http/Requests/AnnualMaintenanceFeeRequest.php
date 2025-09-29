@@ -32,13 +32,13 @@ class AnnualMaintenanceFeeRequest extends FormRequest
                 Rule::unique('annual_maintenance_fees', 'year')->ignore($feeId),
             ],
             'permanent_grave_amount' => [
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
                 'max:999999.99',
             ],
             'niche_amount' => [
-                'required',
+                'nullable',
                 'numeric',
                 'min:0',
                 'max:999999.99',
@@ -46,7 +46,6 @@ class AnnualMaintenanceFeeRequest extends FormRequest
             'effective_from' => [
                 'required',
                 'date',
-                'before_or_equal:effective_until',
             ],
             'effective_until' => [
                 'nullable',
@@ -73,9 +72,8 @@ class AnnualMaintenanceFeeRequest extends FormRequest
             'year.unique' => 'A maintenance fee for this year already exists.',
             'year.min' => 'Year must be 2020 or later.',
             'year.max' => 'Year cannot be more than 10 years in the future.',
-            'permanent_grave_amount.required' => 'Permanent grave amount is required.',
-            'niche_amount.required' => 'Niche amount is required.',
-            'effective_from.before_or_equal' => 'Effective from date must be before or equal to effective until date.',
+            'permanent_grave_amount.numeric' => 'Permanent grave amount must be a valid number.',
+            'niche_amount.numeric' => 'Niche amount must be a valid number.',
             'effective_until.after_or_equal' => 'Effective until date must be after or equal to effective from date.',
         ];
     }
@@ -95,16 +93,35 @@ class AnnualMaintenanceFeeRequest extends FormRequest
                 }
             }
 
-            // Both amounts are now required, so no additional validation needed for amounts
+            // Ensure at least one amount is provided
+            $permanentAmount = $this->input('permanent_grave_amount');
+            $nicheAmount = $this->input('niche_amount');
+
+            if (empty($permanentAmount) && empty($nicheAmount)) {
+                $validator->errors()->add('permanent_grave_amount', 'Either permanent grave amount or niche amount must be provided.');
+                $validator->errors()->add('niche_amount', 'Either permanent grave amount or niche amount must be provided.');
+            }
 
             // Validate effective dates
             $effectiveFrom = $this->input('effective_from');
+            $effectiveUntil = $this->input('effective_until');
             $year = $this->input('year');
 
+            // Validate that effective_from is in the same year as the maintenance fee year
             if ($effectiveFrom && $year) {
                 $effectiveFromYear = date('Y', strtotime($effectiveFrom));
                 if ($effectiveFromYear != $year) {
                     $validator->errors()->add('effective_from', 'Effective from date should be in the same year as the maintenance fee year.');
+                }
+            }
+
+            // Only validate date order if both dates are provided
+            if ($effectiveFrom && $effectiveUntil) {
+                $fromDate = \Carbon\Carbon::parse($effectiveFrom);
+                $untilDate = \Carbon\Carbon::parse($effectiveUntil);
+
+                if ($fromDate->isAfter($untilDate)) {
+                    $validator->errors()->add('effective_until', 'Effective until date must be after or equal to effective from date.');
                 }
             }
         });

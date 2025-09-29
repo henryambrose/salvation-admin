@@ -207,7 +207,6 @@ class ObituaryManagementController extends Controller
         $payment = \Modules\Graveyard\Models\ObituaryPayment::create([
             'obituary_page_id' => $obituary->id,
             'obituary_plan_id' => $obituaryPlan->id,
-            'service_type' => $validated['service_type'], // Keep for compatibility
             'amount' => $obituaryPlan->cost,
             'payment_status' => 'pending',
             'payment_reference' => 'OBT' . date('Ymd') . str_pad($obituary->id, 4, '0', STR_PAD_LEFT),
@@ -220,7 +219,7 @@ class ObituaryManagementController extends Controller
             ->with('success', 'Obituary page created successfully! Please complete the payment to activate the page.')
             ->with('payment_required', true)
             ->with('payment_amount', $obituaryPlan->cost)
-            ->with('service_type', $validated['service_type'])
+            ->with('service_type', $obituaryPlan->name) // Use plan name instead of deprecated service_type
             ->with('plan_name', $obituaryPlan->name);
     }
 

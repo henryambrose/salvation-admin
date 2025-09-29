@@ -19,6 +19,9 @@ use Modules\Members\Models\Relationship;
 use Modules\Members\Models\SCCHead;
 use Modules\Members\Models\User;
 use Modules\Members\Models\Zone;
+use Modules\Members\Models\CertificateRecord;
+use Modules\Members\Models\CertificateType;
+use Modules\Members\Models\CertificateTemplate;
 use Modules\Members\Policies\BloodGroupPolicy;
 use Modules\Members\Policies\CellsAndAssociationPolicy;
 use Modules\Members\Policies\CellsAndAssociationMemberPolicy;
@@ -37,6 +40,9 @@ use Modules\Members\Policies\SCCHeadPolicy;
 use Modules\Members\Policies\UserPolicy;
 use Modules\Members\Policies\ZonePolicy;
 use Modules\Members\Policies\RolePolicy;
+use Modules\Members\Policies\CertificateRecordPolicy;
+use Modules\Members\Policies\CertificateTypePolicy;
+use Modules\Members\Policies\CertificateTemplatePolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 
 class AuthServiceProvider extends ServiceProvider
@@ -64,6 +70,9 @@ class AuthServiceProvider extends ServiceProvider
         User::class => UserPolicy::class,
         Zone::class => ZonePolicy::class,
         \Spatie\Permission\Models\Role::class => RolePolicy::class,
+        CertificateRecord::class => CertificateRecordPolicy::class,
+        CertificateType::class => CertificateTypePolicy::class,
+        CertificateTemplate::class => CertificateTemplatePolicy::class,
     ];
 
     /**

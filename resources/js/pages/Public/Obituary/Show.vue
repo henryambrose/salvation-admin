@@ -188,6 +188,12 @@ const getBackgroundStyle = computed(() => {
   return style;
 });
 
+// Open gallery image in new tab
+const openImageInNewTab = (image: string) => {
+  const url = image.startsWith('http') ? image : `/storage/${image}`;
+  window.open(url, '_blank');
+};
+
 const shareObituaryPage = () => {
   if (navigator.share) {
     navigator.share({
@@ -295,7 +301,8 @@ const shareObituaryPage = () => {
               :key="index"
               :src="image.startsWith('http') ? image : `/storage/${image}`"
               :alt="`Memory ${index + 1}`"
-              class="h-48 w-full rounded-lg object-cover shadow-md transition-shadow duration-200 hover:shadow-xl"
+              class="h-48 w-full rounded-lg object-cover shadow-md transition-shadow duration-200 hover:shadow-xl cursor-pointer"
+              @click="openImageInNewTab(image)"
             />
           </div>
         </section>

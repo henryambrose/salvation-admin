@@ -208,6 +208,59 @@ const getTodayDate = (): string => {
   return today.toISOString().split('T')[0]; // YYYY-MM-DD format
 };
 
+// Helper function to validate chronological order of sacrament dates
+const validateChronologicalDates = (currentField: string, currentDate: string): string | null => {
+  if (!currentDate) return null;
+
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  const current = parseDate(currentDate);
+  if (!current) return null;
+
+  const birthDate = parseDate(form.date_of_birth);
+  const baptismDate = parseDate(form.baptism_date);
+  const confirmationDate = parseDate(form.confirmation_date);
+  const marriageDate = parseDate(form.marriage_date);
+
+  switch (currentField) {
+    case 'baptism_date':
+      if (birthDate && current < birthDate) {
+        return 'Baptism date cannot be earlier than birth date';
+      }
+      break;
+
+    case 'confirmation_date':
+      if (baptismDate && current < baptismDate) {
+        return 'Confirmation date cannot be earlier than baptism date';
+      }
+      break;
+
+    case 'marriage_date':
+      if (confirmationDate && current < confirmationDate) {
+        return 'Marriage date cannot be earlier than confirmation date';
+      }
+      if (!confirmationDate && baptismDate && current < baptismDate) {
+        return 'Marriage date cannot be earlier than baptism date';
+      }
+      break;
+
+    case 'death_date':
+      if (birthDate && current < birthDate) {
+        return 'Death date cannot be earlier than birth date';
+      }
+      if (marriageDate && current < marriageDate) {
+        return 'Death date cannot be earlier than marriage date';
+      }
+      break;
+  }
+
+  return null;
+};
+
 // Validation error modal state
 const showValidationModal = ref(false);
 const validationErrors = ref<Array<{ field: string; message: string }>>([]);
@@ -223,6 +276,10 @@ const collectValidationErrors = () => {
 
   if (!form.relationship_id) {
     errors.push({ field: 'relationship_id', message: 'Relationship is required' });
+  }
+
+  if (!form.community_cluster_id) {
+    errors.push({ field: 'community_cluster_id', message: 'Community cluster is required' });
   }
 
   // Check phone number validation
@@ -269,6 +326,50 @@ const collectValidationErrors = () => {
 
   if (form.death_date && !validateNotFutureDate(form.death_date)) {
     errors.push({ field: 'death_date', message: 'Death date cannot be in the future' });
+  }
+
+  // Chronological date validation for sacraments
+  // Helper function to convert date string to Date object for comparison
+  const parseDate = (dateStr: string): Date | null => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  const birthDate = parseDate(form.date_of_birth);
+  const baptismDate = parseDate(form.baptism_date);
+  const confirmationDate = parseDate(form.confirmation_date);
+  const marriageDate = parseDate(form.marriage_date);
+  const deathDate = parseDate(form.death_date);
+
+  // Baptism date cannot be earlier than birth date
+  if (birthDate && baptismDate && baptismDate < birthDate) {
+    errors.push({ field: 'baptism_date', message: 'Baptism date cannot be earlier than birth date' });
+  }
+
+  // Confirmation date cannot be earlier than baptism date
+  if (baptismDate && confirmationDate && confirmationDate < baptismDate) {
+    errors.push({ field: 'confirmation_date', message: 'Confirmation date cannot be earlier than baptism date' });
+  }
+
+  // Marriage date cannot be earlier than confirmation date (if confirmation exists)
+  if (confirmationDate && marriageDate && marriageDate < confirmationDate) {
+    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be earlier than confirmation date' });
+  }
+
+  // Marriage date cannot be earlier than baptism date (if no confirmation but baptism exists)
+  if (!confirmationDate && baptismDate && marriageDate && marriageDate < baptismDate) {
+    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be earlier than baptism date' });
+  }
+
+  // Death date cannot be earlier than birth date
+  if (birthDate && deathDate && deathDate < birthDate) {
+    errors.push({ field: 'death_date', message: 'Death date cannot be earlier than birth date' });
+  }
+
+  // Death date cannot be earlier than marriage date (if marriage exists)
+  if (marriageDate && deathDate && deathDate < marriageDate) {
+    errors.push({ field: 'death_date', message: 'Death date cannot be earlier than marriage date' });
   }
 
   // Check parish validation - only validate if both parish name and ID are provided but don't match
@@ -497,6 +598,80 @@ const loadCurrentSpouse = async () => {
   }
 };
 
+// Function to load current father data for editing
+const loadCurrentFather = async () => {
+  if (member?.father_id && form.father_source === 'Member') {
+    try {
+      const response = await fetch(`/member/search-members?q=${member.father_id}&limit=1&include_deceased=1`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'same-origin',
+      });
+
+      if (response.ok) {
+        const fatherArray = await response.json();
+        if (fatherArray && fatherArray.length > 0) {
+          const father = fatherArray[0];
+          // Add father to familyMembers if not already present
+          const existingFather = familyMembers.value.find(m => m.id === father.id);
+          if (!existingFather) {
+            familyMembers.value.push({
+              id: father.id,
+              name: `${father.first_name} ${father.last_name}`,
+              family_no: father.family_no || '',
+              full_name: `${father.first_name} ${father.last_name}`,
+              community: father.community || '',
+              gender_name: father.gender_name || 'Male',
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading current father:', error);
+    }
+  }
+};
+
+// Function to load current mother data for editing
+const loadCurrentMother = async () => {
+  if (member?.mother_id && form.mother_source === 'Member') {
+    try {
+      const response = await fetch(`/member/search-members?q=${member.mother_id}&limit=1&include_deceased=1`, {
+        headers: {
+          Accept: 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        },
+        credentials: 'same-origin',
+      });
+
+      if (response.ok) {
+        const motherArray = await response.json();
+        if (motherArray && motherArray.length > 0) {
+          const mother = motherArray[0];
+          // Add mother to familyMembers if not already present
+          const existingMother = familyMembers.value.find(m => m.id === mother.id);
+          if (!existingMother) {
+            familyMembers.value.push({
+              id: mother.id,
+              name: `${mother.first_name} ${mother.last_name}`,
+              family_no: mother.family_no || '',
+              full_name: `${mother.first_name} ${mother.last_name}`,
+              community: mother.community || '',
+              gender_name: mother.gender_name || 'Female',
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading current mother:', error);
+    }
+  }
+};
+
 // Watch for family_no changes to refetch external family members
 watch(
   () => form.family_no,
@@ -597,10 +772,15 @@ watch(
   },
 );
 
-// Debug watcher for community_cluster_id
+// Debug watcher for community_cluster_id and clear errors when value changes
 watch(
   () => form.community_cluster_id,
-  () => {},
+  (newValue) => {
+    // Clear the server-side validation error when user selects a cluster
+    if (newValue && form.errors.community_cluster_id) {
+      form.clearErrors('community_cluster_id');
+    }
+  },
 );
 
 // Auto-populate pincode when permanent town is selected
@@ -888,9 +1068,11 @@ onMounted(() => {
   }
 });
 
-// Load current spouse data when editing a member
+// Load current spouse, father, and mother data when editing a member
 onMounted(() => {
   loadCurrentSpouse();
+  loadCurrentFather();
+  loadCurrentMother();
 });
 
 function cancel() {
@@ -951,7 +1133,7 @@ const fetchMemberDetails = async (memberId: number) => {
 const familyMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string; gender_name?: string }>>([]);
 
 // Function to fetch family members
-const fetchFamilyMembers = async () => {
+const fetchFamilyMembers = async (): Promise<void> => {
   if (form.family_no) {
     try {
       const response = await fetch(`/member/family-details/${form.family_no}`, {
@@ -1078,7 +1260,11 @@ const fetchParishMembers = async (searchQuery: string = '') => {
 watch(
   () => form.family_no,
   () => {
-    fetchFamilyMembers();
+    fetchFamilyMembers().then(() => {
+      // Load current father and mother after family members are refetched
+      loadCurrentFather();
+      loadCurrentMother();
+    });
     fetchExternalFamilyMembers();
   },
 );
@@ -1086,7 +1272,11 @@ watch(
 // Fetch family members on mount
 onMounted(() => {
   // Fetch family members since Member is the default
-  fetchFamilyMembers();
+  fetchFamilyMembers().then(() => {
+    // Load current father and mother after family members are fetched
+    loadCurrentFather();
+    loadCurrentMother();
+  });
 
   // Also fetch external members in case they're needed later
   fetchExternalFamilyMembers();
@@ -1823,7 +2013,7 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)
+                  !showValidationModal && form.baptism_date && (!validateNotFutureDate(form.baptism_date) || validateChronologicalDates('baptism_date', form.baptism_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -1834,6 +2024,9 @@ onMounted(() => {
               />
               <div v-if="!showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
+              </div>
+              <div v-if="!showValidationModal && form.baptism_date && validateChronologicalDates('baptism_date', form.baptism_date)" class="mt-1 text-sm text-red-500">
+                {{ validateChronologicalDates('baptism_date', form.baptism_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.baptism_date" />
             </div>
@@ -1860,7 +2053,7 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.confirmation_date && !validateNotFutureDate(form.confirmation_date)
+                  !showValidationModal && form.confirmation_date && (!validateNotFutureDate(form.confirmation_date) || validateChronologicalDates('confirmation_date', form.confirmation_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -1874,6 +2067,9 @@ onMounted(() => {
                 class="mt-1 text-sm text-red-500"
               >
                 Date cannot be in the future.
+              </div>
+              <div v-if="!showValidationModal && form.confirmation_date && validateChronologicalDates('confirmation_date', form.confirmation_date)" class="mt-1 text-sm text-red-500">
+                {{ validateChronologicalDates('confirmation_date', form.confirmation_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.confirmation_date" />
             </div>
@@ -1905,7 +2101,7 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)
+                  !showValidationModal && form.marriage_date && (!validateNotFutureDate(form.marriage_date) || validateChronologicalDates('marriage_date', form.marriage_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -1916,6 +2112,9 @@ onMounted(() => {
               />
               <div v-if="!showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
+              </div>
+              <div v-if="!showValidationModal && form.marriage_date && validateChronologicalDates('marriage_date', form.marriage_date)" class="mt-1 text-sm text-red-500">
+                {{ validateChronologicalDates('marriage_date', form.marriage_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.marriage_date" />
             </div>
@@ -1942,7 +2141,7 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)
+                  !showValidationModal && form.death_date && (!validateNotFutureDate(form.death_date) || validateChronologicalDates('death_date', form.death_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -1953,6 +2152,9 @@ onMounted(() => {
               />
               <div v-if="!showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
+              </div>
+              <div v-if="!showValidationModal && form.death_date && validateChronologicalDates('death_date', form.death_date)" class="mt-1 text-sm text-red-500">
+                {{ validateChronologicalDates('death_date', form.death_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.death_date" />
             </div>

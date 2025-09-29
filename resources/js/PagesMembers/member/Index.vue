@@ -117,6 +117,7 @@ const enhancedMembers = computed<Record<string, any>>(() => {
 const columns: Column[] = [
   { key: 'first_name', label: 'First Name', sortable: true },
   { key: 'last_name', label: 'Last Name', sortable: true },
+  { key: 'old_family_no', label: 'Old Fly. No.', sortable: true },
   { key: 'old_sal_id', label: 'Old SAL ID', sortable: true },
   { key: 'family_no', label: 'Family No', sortable: true },
   { key: 'member_no', label: 'Member No', sortable: true },

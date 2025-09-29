@@ -332,4 +332,36 @@ class ObituaryController extends Controller
 
         return false;
     }
+
+    /**
+     * Serve gallery images with proper HTML layout and favicon
+     */
+    public function galleryImage(string $filename)
+    {
+        $imagePath = 'obituaries/gallery/' . $filename;
+
+        // Check if file exists
+        if (!Storage::disk('public')->exists($imagePath)) {
+            abort(404, 'Image not found');
+        }
+
+        // Get image details
+        $fullPath = Storage::disk('public')->path($imagePath);
+        $imageUrl = Storage::disk('public')->url($imagePath);
+        $mimeType = Storage::disk('public')->mimeType($imagePath);
+        $fileSize = Storage::disk('public')->size($imagePath);
+
+        // Create HTML page with proper favicon and meta tags
+        $html = view('obituary.gallery-image', [
+            'imageUrl' => $imageUrl,
+            'filename' => $filename,
+            'mimeType' => $mimeType,
+            'fileSize' => $fileSize
+        ])->render();
+
+        return response($html, 200, [
+            'Content-Type' => 'text/html; charset=utf-8',
+            'Cache-Control' => 'public, max-age=31536000', // Cache for 1 year
+        ]);
+    }
 }

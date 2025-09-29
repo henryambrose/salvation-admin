@@ -6,6 +6,9 @@
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-blue-700">Add Annual Maintenance Fee</h1>
         <p class="text-gray-600 mt-1">Set up maintenance fees for a specific year</p>
+        <p class="text-sm text-blue-600 mt-2">
+          <strong>Note:</strong> You can set either permanent grave amount, niche amount, or both. At least one amount is required.
+        </p>
       </div>
 
       <div class="bg-white rounded-lg shadow p-6">
@@ -31,7 +34,7 @@
             <!-- Permanent Grave Amount -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Permanent Grave Amount (₹) <span class="text-red-500">*</span>
+                Permanent Grave Amount (₹) <span class="text-gray-500">(Optional)</span>
               </label>
               <input
                 v-model="form.permanent_grave_amount"
@@ -51,7 +54,7 @@
             <!-- Niche Amount -->
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">
-                Niche Amount (₹) <span class="text-red-500">*</span>
+                Niche Amount (₹) <span class="text-gray-500">(Optional)</span>
               </label>
               <input
                 v-model="form.niche_amount"
@@ -174,9 +177,9 @@ const props = defineProps({
 })
 
 const breadcrumbs = [
-  { name: 'Graveyard', href: '/graveyard' },
-  { name: 'Annual Maintenance Fees', href: '/graveyard/annual-maintenance-fees' },
-  { name: 'Add Fee', href: null },
+  { title: 'Graveyard', href: '/graveyard' },
+  { title: 'Annual Maintenance Fees', href: '/graveyard/annual-maintenance-fees' },
+  { title: 'Add Fee' }, // No href for current page
 ]
 
 const form = useForm({
@@ -190,6 +193,13 @@ const form = useForm({
 })
 
 const submit = () => {
+  // Client-side validation to ensure at least one amount is provided
+  if ((!form.permanent_grave_amount || form.permanent_grave_amount <= 0) &&
+      (!form.niche_amount || form.niche_amount <= 0)) {
+    alert('Please provide either permanent grave amount or niche amount (or both).');
+    return;
+  }
+
   form.post(route('graveyard.annual-maintenance-fees.store'))
 }
 

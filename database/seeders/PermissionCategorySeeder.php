@@ -26,6 +26,9 @@ class PermissionCategorySeeder extends Seeder
                     ['rule_type' => 'contains', 'rule_value' => 'external-member', 'priority' => 10],
                     ['rule_type' => 'starts_with', 'rule_value' => 'community', 'priority' => 5],
                     ['rule_type' => 'contains', 'rule_value' => 'parish', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'certificate', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'view-certificate-history', 'priority' => 15],
+                    ['rule_type' => 'contains', 'rule_value' => 'manage-certificate-templates', 'priority' => 15],
                 ]
             ],
             [

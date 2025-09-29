@@ -252,6 +252,39 @@ class MembersPermissionsSeeder extends Seeder
             // 'delete-dashboard',
             'list-dashboard',
             // 'restore-dashboard',
+
+            // Certificate Management
+            'create-certificate',
+            'read-certificate',
+            'update-certificate',
+            'delete-certificate',
+            'list-certificate',
+            'restore-certificate',
+
+            'generate-certificate',
+            'reprint-certificate',
+            'download-certificate',
+            'view-certificate-history',
+
+            // Certificate Types
+            'create-certificate-type',
+            'read-certificate-type',
+            'update-certificate-type',
+            'delete-certificate-type',
+            'list-certificate-type',
+            'restore-certificate-type',
+
+            // Certificate Templates
+            'create-certificate-template',
+            'read-certificate-template',
+            'update-certificate-template',
+            'delete-certificate-template',
+            'list-certificate-template',
+            'restore-certificate-template',
+
+            'manage-certificate-templates',
+            'set-template-default',
+            'preview-certificate-template',
         ];
 
         // Create permissions

@@ -329,6 +329,9 @@ Route::prefix('obituary')->name('obituary.')->group(function () {
 
     // Preview (admin only - will be protected in controller)
     Route::get('/{uuid}/preview', [ObituaryController::class, 'preview'])->name('preview');
+
+    // Gallery image viewer with proper favicon and HTML layout
+    Route::get('/gallery/{filename}', [ObituaryController::class, 'galleryImage'])->name('gallery.image');
 });
 Route::get('/obituary/{uuid}', function (string $uuid) {
     $obituary = \Modules\Graveyard\Models\ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'condolences', 'obituaryPlan'])

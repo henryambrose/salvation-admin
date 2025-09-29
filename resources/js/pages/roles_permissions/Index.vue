@@ -149,6 +149,11 @@ function getModuleForModel(modelName: string): string {
     'cells-and-association': 'Members',
     'cells-and-association-member': 'Members',
 
+    // Certificate Management
+    certificate: 'Members',
+    'certificate-type': 'Members',
+    'certificate-template': 'Members',
+
     // Fund
     'fund-category': 'Fund',
     'mass-intention': 'Fund',

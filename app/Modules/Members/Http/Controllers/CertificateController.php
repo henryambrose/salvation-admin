@@ -25,11 +25,16 @@ class CertificateController extends Controller
 
     // Auth middleware is already applied at route level - no need to duplicate here
 
-    // Apply permissions middleware - temporarily disabled to debug authentication flow
-    // $this->middleware(['permission:generate-certificates'])->only(['generate', 'store']);
-    // $this->middleware(['permission:view-certificate-history'])->only(['index', 'show']);
-    // $this->middleware(['permission:reprint-certificates'])->only(['reprint']);
-    // $this->middleware(['permission:manage-certificate-templates'])->only(['templateIndex', 'templateStore', 'templateShow', 'templateUpdate', 'templateDestroy', 'setTemplateAsDefault', 'templatePreview']);
+    // Apply permissions middleware
+    $this->middleware(['permission:generate-certificate'])->only(['generate', 'store', 'generateMemberSelection']);
+    $this->middleware(['permission:view-certificate-history|list-certificate'])->only(['index', 'show']);
+    $this->middleware(['permission:reprint-certificate'])->only(['reprint']);
+    $this->middleware(['permission:download-certificate'])->only(['download']);
+    $this->middleware(['permission:manage-certificate-templates'])->only(['templateIndex', 'templateStore', 'templateShow', 'templateUpdate', 'templateDestroy', 'setTemplateAsDefault', 'templatePreview']);
+    $this->middleware(['permission:create-certificate'])->only(['store']);
+    $this->middleware(['permission:read-certificate'])->only(['show']);
+    $this->middleware(['permission:update-certificate'])->only(['generatePdf']);
+    $this->middleware(['permission:preview-certificate-template'])->only(['preview']);
   }
 
   /**
@@ -82,9 +87,9 @@ class CertificateController extends Controller
       'certificates' => $certificates,
       'filters' => $request->only(['search', 'type', 'member_id', 'perPage']),
       'certificateTypes' => $certificateTypes,
-      'canGenerateCertificates' => Gate::allows('create-certificate'),
+      'canGenerateCertificates' => Gate::allows('generate-certificate'),
       'canViewCertificateHistory' => Gate::allows('view-certificate-history'),
-      'canReprintCertificates' => Gate::allows('reprint-certificates'),
+      'canReprintCertificates' => Gate::allows('reprint-certificate'),
     ]);
   }
 
@@ -190,7 +195,7 @@ class CertificateController extends Controller
     return Inertia::render('certificates/Generate', [
       'templates' => $templates,
       'certificateTypes' => $certificateTypes,
-      'canGenerateCertificates' => Gate::allows('create-certificate'),
+      'canGenerateCertificates' => Gate::allows('generate-certificate'),
     ]);
   }
 
@@ -241,7 +246,7 @@ class CertificateController extends Controller
       'existingCertificates' => $existingCertificates,
       'certificateTypes' => $certificateTypes,
       'requiredAdditionalData' => $type ? CertificateRecord::getRequiredAdditionalData($type) : [],
-      'canGenerateCertificates' => Gate::allows('create-certificate'),
+      'canGenerateCertificates' => Gate::allows('generate-certificate'),
     ]);
   }
 
@@ -381,8 +386,8 @@ class CertificateController extends Controller
 
     return Inertia::render('certificates/Show', [
       'certificate' => $certificate,
-      'canGenerateCertificates' => Gate::allows('create-certificate'),
-      'canReprintCertificates' => Gate::allows('reprint-certificates'),
+      'canGenerateCertificates' => Gate::allows('generate-certificate'),
+      'canReprintCertificates' => Gate::allows('reprint-certificate'),
     ]);
   }
 

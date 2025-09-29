@@ -283,6 +283,8 @@ const calculateRoundedAmount = (amount: number): number => {
 // Form setup
 const form = useForm({
   grave_id: props.grave.id,
+  payable_type: 'permanent_grave',
+  payable_id: props.grave.id,
   payer_name: '',
   payer_phone: '',
   payer_email: '',

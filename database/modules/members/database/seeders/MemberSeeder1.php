@@ -2029,8 +2029,22 @@ class MemberSeeder1 extends Seeder
     });
 
     // Initialize counters for member numbering
-    $memberCounter = 1;
-    $familyCounter = 1;
+    // Start from where MemberSeeder left off
+    // Get the count of members in the first seeder to continue the sequence
+    $memberSeederPath = __DIR__ . '/MemberSeeder.php';
+    $memberSeederContent = file_get_contents($memberSeederPath);
+    preg_match_all("/'first_name'=>/", $memberSeederContent, $matches);
+    $firstSeederCount = count($matches[0]);
+
+    $memberCounter = $firstSeederCount + 1;
+
+    // For family counter, we need to find the highest family number used in the first seeder
+    // Extract all old_family_no values from first seeder to calculate max family groups
+    preg_match_all("/'old_family_no'=>'([^']+)'/", $memberSeederContent, $familyMatches);
+    $firstSeederFamilies = array_unique($familyMatches[1]);
+    $firstSeederFamilyCount = count($firstSeederFamilies);
+
+    $familyCounter = $firstSeederFamilyCount + 1;
     $familyGroups = [];
     $familyMemberCounters = [];
 

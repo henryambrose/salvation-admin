@@ -366,7 +366,7 @@
                       </div>
 
                       <!-- Age Details -->
-                      <div>
+                      <!-- <div>
                         <label class="mb-1 block text-sm font-medium text-gray-700">Age at Time of Record</label>
                         <div class="mt-2 grid grid-cols-3 gap-4">
                           <div>
@@ -417,7 +417,7 @@
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </div> -->
 
                       <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div>
@@ -515,12 +515,12 @@
 </template>
 
 <script setup lang="ts">
+import ParishSelection from '@/components/ParishSelection.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import ParishSelection from '@/components/ParishSelection.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, MapPin, Plus, Users, X } from 'lucide-vue-next';

@@ -1712,8 +1712,33 @@ class MemberSeeder2 extends Seeder
     });
 
     // Initialize counters for member numbering
-    $memberCounter = 1;
-    $familyCounter = 1;
+    // Start from where MemberSeeder and MemberSeeder1 left off
+    // Get the count of members in both previous seeders to continue the sequence
+    $memberSeederPath = __DIR__ . '/MemberSeeder.php';
+    $memberSeeder1Path = __DIR__ . '/MemberSeeder1.php';
+
+    $memberSeederContent = file_get_contents($memberSeederPath);
+    $memberSeeder1Content = file_get_contents($memberSeeder1Path);
+
+    preg_match_all("/'first_name'=>/", $memberSeederContent, $matches1);
+    preg_match_all("/'first_name'=>/", $memberSeeder1Content, $matches2);
+
+    $firstSeederCount = count($matches1[0]);
+    $secondSeederCount = count($matches2[0]);
+
+    $memberCounter = $firstSeederCount + $secondSeederCount + 1;
+
+    // For family counter, we need to find the highest family number used in both previous seeders
+    // Extract all old_family_no values from both seeders to calculate max family groups
+    preg_match_all("/'old_family_no'=>'([^']+)'/", $memberSeederContent, $familyMatches1);
+    preg_match_all("/'old_family_no'=>'([^']+)'/", $memberSeeder1Content, $familyMatches2);
+
+    $firstSeederFamilies = array_unique($familyMatches1[1]);
+    $secondSeederFamilies = array_unique($familyMatches2[1]);
+    $totalPreviousFamilies = array_unique(array_merge($firstSeederFamilies, $secondSeederFamilies));
+    $totalPreviousFamilyCount = count($totalPreviousFamilies);
+
+    $familyCounter = $totalPreviousFamilyCount + 1;
     $familyGroups = [];
     $familyMemberCounters = [];
 

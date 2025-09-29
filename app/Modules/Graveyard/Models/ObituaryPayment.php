@@ -15,7 +15,6 @@ class ObituaryPayment extends Model
         'obituary_page_id',
         'obituary_plan_id',
         'amount',
-        'service_type',
         'payment_status',
         'payment_reference',
         'payment_method_id',

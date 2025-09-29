@@ -332,6 +332,26 @@ class ModuleSeeder extends Seeder
                 'actions' => ['transfer'],
             ],
 
+            // Certificate Management
+            [
+                'name' => 'Certificate Records',
+                'slug' => 'certificate',
+                'icon' => 'Award',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'generate', 'reprint', 'download'],
+            ],
+            [
+                'name' => 'Certificate Types',
+                'slug' => 'certificate-type',
+                'icon' => 'Tags',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
+            ],
+            [
+                'name' => 'Certificate Templates',
+                'slug' => 'certificate-template',
+                'icon' => 'FileTemplate',
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'manage', 'set-default', 'preview'],
+            ],
+
             // Special Pages
             [
                 'name' => 'Dashboard',
@@ -366,6 +386,16 @@ class ModuleSeeder extends Seeder
 
                 Permission::firstOrCreate(['name' => $slug]);
             }
+        }
+
+        // Create additional certificate-specific permissions
+        $additionalCertificatePermissions = [
+            'view-certificate-history',
+            'manage-certificate-templates',
+        ];
+
+        foreach ($additionalCertificatePermissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Assign permissions to super admin (all permissions)

@@ -41,7 +41,6 @@ class ObituaryPage extends Model
         'is_published',
         'published_at',
         'published_by',
-        'service_type',
         'expires_at',
         'view_count',
         'qr_scan_count',
