@@ -32,7 +32,7 @@ class CommunityAccessService
 
         // First try to find member record by email
         $member = Member::where('email', $user->email)->first();
-        
+
         if ($member) {
             // Found member record, get communities from PPC/SCC head tables
             $ppcCommunityIds = PPCHead::where('member_id', $member->id)->pluck('community_id')->all();
@@ -40,12 +40,12 @@ class CommunityAccessService
         } else {
             // No member record found, try to find communities directly
             // Look for PPCHead records where the member has this email
-            $ppcCommunityIds = PPCHead::whereHas('member', function($query) use ($user) {
+            $ppcCommunityIds = PPCHead::whereHas('member', function ($query) use ($user) {
                 $query->where('email', $user->email);
             })->pluck('community_id')->all();
-            
+
             // Look for SCCHead records where the member has this email
-            $sccCommunityIds = SCCHead::whereHas('member', function($query) use ($user) {
+            $sccCommunityIds = SCCHead::whereHas('member', function ($query) use ($user) {
                 $query->where('email', $user->email);
             })->pluck('community_id')->all();
         }

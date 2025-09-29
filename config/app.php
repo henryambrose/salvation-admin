@@ -137,6 +137,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Certificate Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration options for certificate generation including logo settings.
+    |
+    */
+
+    'certificate_show_logo' => env('CERTIFICATE_SHOW_LOGO', true),
+    'certificate_logo_path' => env('CERTIFICATE_LOGO_PATH', 'church-logo.png'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Graveyard Configuration
     |--------------------------------------------------------------------------
     |

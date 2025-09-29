@@ -18,6 +18,9 @@ Route::get('/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF token refreshed'], 200);
 })->middleware('web');
 
+// Load certificate routes early to avoid conflicts
+require __DIR__ . '/certificate.php';
+
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard

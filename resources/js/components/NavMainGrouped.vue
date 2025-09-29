@@ -87,6 +87,17 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
     return currentUrl === itemHref || currentUrl.startsWith(itemHref + '/');
   }
 
+  // Handle Certificate routes explicitly (similar to Fund/Graveyard logic)
+  if (itemHref.startsWith('/certificates')) {
+    // Handle base certificates route - should only be active for the main certificates page
+    if (itemHref === '/certificates') {
+      return currentUrl === '/certificates' || currentUrl === '/certificates/';
+    }
+
+    // For certificate sub-routes, use standard nested route detection
+    return currentUrl.startsWith(itemHref);
+  }
+
   // Handle different URL patterns for the same page
   const urlVariations = {
     '/member/index': ['/member/index', '/member'],

@@ -7,6 +7,7 @@ import { useScrollRestoration } from '@/composables/useScrollRestoration';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import {
+  Award,
   Bot,
   Building,
   Building2,
@@ -42,7 +43,6 @@ const resolveIcon = (iconName: string) => {
 };
 
 const page = usePage();
-
 
 // Organized navigation groups
 const navigationGroups = [
@@ -107,6 +107,29 @@ const navigationGroups = [
         href: '/cells-and-association-members',
         icon: UserCheck,
         show: can('read-cells-and-association-member'),
+      },
+    ],
+  },
+  {
+    label: 'Certificates',
+    items: [
+      {
+        title: 'View Certificates',
+        href: '/certificates',
+        icon: FileText,
+        show: can('read-certificate'),
+      },
+      {
+        title: 'Generate Certificate',
+        href: '/certificates/generate',
+        icon: Award,
+        show: can('create-certificate'),
+      },
+      {
+        title: 'Templates',
+        href: '/certificates/templates',
+        icon: FileText,
+        show: can('read-certificate-template'),
       },
     ],
   },

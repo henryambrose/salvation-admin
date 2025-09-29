@@ -481,4 +481,45 @@ class Member extends Model
     {
         return $condition ? $query->alive() : $query;
     }
+
+    /**
+     * Get the member's certificate records
+     */
+    public function certificates()
+    {
+        return $this->hasMany(CertificateRecord::class, 'member_id');
+    }
+
+    /**
+     * Get available certificate types for this member based on their data
+     */
+    public function getAvailableCertificateTypes(): array
+    {
+        $availableTypes = [];
+
+        // Baptism certificate - available if member has baptism date
+        if ($this->baptism_date) {
+            $availableTypes[] = 'baptism';
+        }
+
+        // Confirmation certificate - available if member has confirmation date
+        if ($this->confirmation_date) {
+            $availableTypes[] = 'confirmation';
+        }
+
+        // Marriage certificate - available if member has marriage date
+        if ($this->marriage_date) {
+            $availableTypes[] = 'marriage';
+        }
+
+        // Membership certificate - always available for all members
+        $availableTypes[] = 'membership';
+
+        // Death certificate - available if member has death date
+        if ($this->death_date) {
+            $availableTypes[] = 'death';
+        }
+
+        return $availableTypes;
+    }
 }
