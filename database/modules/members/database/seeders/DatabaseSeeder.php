@@ -33,6 +33,8 @@ class DatabaseSeeder extends Seeder
             CitySeeder::class,
             TownSeeder::class,
             MemberSeeder::class,
+            MemberSeeder1::class,
+            MemberSeeder2::class,
             PPCHeadSeeder::class,
             SCCHeadSeeder::class,
             PermissionGroupSeeder::class,
