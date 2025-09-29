@@ -34,20 +34,26 @@ interface Member {
 interface CertificateTemplate {
   id: number;
   name: string;
-  type: string;
   description?: string;
+  certificate_type_id: number;
+  certificate_type?: {
+    id: number;
+    name: string;
+    code: string;
+  };
 }
 
 const props = defineProps<{
   member?: Member;
   templates: CertificateTemplate[];
-  certificateTypes: Array<{ value: string; label: string }>;
+  certificateTypes: Array<{ value: number; label: string; code: string }>;
   canGenerateCertificates: boolean;
   availableTypes?: string[];
-  selectedType?: string;
+  selectedType?: number;
   existingCertificates?: Array<{
     id: number;
-    certificate_type: string;
+    certificate_type_id: number;
+    certificate_type: string; // accessor for backward compatibility
     certificate_number: string;
     issued_date: string;
     template?: { name: string };
@@ -58,7 +64,8 @@ const props = defineProps<{
 // Reactive existing certificates data
 const existingCertificates = ref<Array<{
   id: number;
-  certificate_type: string;
+  certificate_type_id: number;
+  certificate_type: string; // accessor for backward compatibility
   certificate_number: string;
   issued_date: string;
   template?: { name: string };
@@ -69,7 +76,7 @@ const { getState } = useCertificateState();
 // Form setup
 const form = useForm({
   member_id: props.member?.id || '',
-  certificate_type: props.selectedType || '',
+  certificate_type_id: props.selectedType || '',
   template_id: '',
   issued_date: new Date().toISOString().split('T')[0],
   additional_data: {} as Record<string, any>,
@@ -78,8 +85,11 @@ const form = useForm({
 
 // Check for existing certificates of selected type
 const existingCertificateOfType = computed(() => {
-  if (!form.certificate_type || !existingCertificates.value) return null;
-  return existingCertificates.value.find(cert => cert.certificate_type === form.certificate_type);
+  if (!form.certificate_type_id || !existingCertificates.value) return null;
+  // Find the selected certificate type to get its code
+  const selectedType = props.certificateTypes.find(type => type.value === form.certificate_type_id);
+  if (!selectedType) return null;
+  return existingCertificates.value.find(cert => cert.certificate_type === selectedType.code);
 });
 
 const showDuplicateWarning = computed(() => {
@@ -87,7 +97,7 @@ const showDuplicateWarning = computed(() => {
 });
 
 // Reset force duplicate when certificate type changes
-watch(() => form.certificate_type, () => {
+watch(() => form.certificate_type_id, () => {
   form.force_duplicate = false;
 });
 
@@ -123,8 +133,9 @@ const additionalFields = ref<Record<string, any>>({});
 
 // Watch for certificate type changes to show relevant fields
 watch(
-  () => form.certificate_type,
-  (newType) => {
+  () => form.certificate_type_id,
+  (newTypeId) => {
+    const newType = props.certificateTypes.find(type => type.value === newTypeId)?.code;
     additionalFields.value = {};
     form.additional_data = {};
 
@@ -170,18 +181,35 @@ watch(
   },
 );
 
+// Get current certificate type code
+const currentCertificateTypeCode = computed(() => {
+  if (!form.certificate_type_id) return null;
+  const selectedType = props.certificateTypes.find(type => type.value === form.certificate_type_id);
+  return selectedType?.code || null;
+});
+
 // Available templates for selected certificate type
 const availableTemplates = computed(() => {
-  if (!form.certificate_type) return [];
-  return props.templates.filter((template) => template.type === form.certificate_type);
+  if (!form.certificate_type_id) return [];
+
+  // Keep console logs for debugging
+  console.log('Debug - Selected certificate type ID:', form.certificate_type_id);
+  console.log('Debug - All templates:', props.templates);
+
+  const filtered = props.templates.filter((template) => template.certificate_type_id === form.certificate_type_id);
+  console.log('Debug - Filtered templates:', filtered);
+  return filtered;
 });
 
 // Check if member has required data for certificate type
 const memberValidation = computed(() => {
-  if (!selectedMember.value || !form.certificate_type) return { valid: true, message: '' };
+  if (!selectedMember.value || !form.certificate_type_id) return { valid: true, message: '' };
 
   const member = selectedMember.value;
-  const type = form.certificate_type;
+  // Find the selected certificate type to get its code
+  const selectedType = props.certificateTypes.find(type => type.value === form.certificate_type_id);
+  if (!selectedType) return { valid: false, message: 'Invalid certificate type selected' };
+  const type = selectedType.code;
 
   if (type === 'baptism' && !member.baptism_date) {
     return { valid: false, message: 'Member does not have a baptism date recorded.' };
@@ -212,7 +240,7 @@ async function selectMember(member: Member) {
   showMemberSearch.value = false;
 
   // Reset certificate type when member changes
-  form.certificate_type = '';
+  form.certificate_type_id = '';
   form.template_id = '';
 
   // Fetch existing certificates for the selected member
@@ -232,7 +260,7 @@ function clearMemberSelection() {
   memberSearchQuery.value = '';
   memberSearchResults.value = [];
   showMemberSearch.value = true;
-  form.certificate_type = '';
+  form.certificate_type_id = '';
   form.template_id = '';
   existingCertificates.value = [];
 }
@@ -421,7 +449,7 @@ function generateCertificate() {
               <div>
                 <Label for="certificate_type">Certificate Type *</Label>
                 <select
-                  v-model="form.certificate_type"
+                  v-model="form.certificate_type_id"
                   id="certificate_type"
                   required
                   class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -431,7 +459,7 @@ function generateCertificate() {
                     {{ type.label }}
                   </option>
                 </select>
-                <p v-if="form.errors.certificate_type" class="mt-1 text-sm text-red-600">{{ form.errors.certificate_type }}</p>
+                <p v-if="form.errors.certificate_type_id" class="mt-1 text-sm text-red-600">{{ form.errors.certificate_type_id }}</p>
 
                 <!-- Duplicate Certificate Warning -->
                 <div v-if="showDuplicateWarning" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
@@ -440,7 +468,7 @@ function generateCertificate() {
                     <div>
                       <p class="text-sm font-medium text-amber-800">Certificate Already Exists</p>
                       <p class="text-sm text-amber-700 mt-1">
-                        This member already has a {{ existingCertificateOfType?.certificate_type }} certificate
+                        This member already has a {{ props.certificateTypes.find(type => type.code === existingCertificateOfType?.certificate_type)?.label || existingCertificateOfType?.certificate_type }} certificate
                         ({{ existingCertificateOfType?.certificate_number }})
                         issued on {{ new Date(existingCertificateOfType?.issued_date || '').toLocaleDateString() }}.
                       </p>
@@ -465,7 +493,7 @@ function generateCertificate() {
               </div>
 
               <!-- Template Selection -->
-              <div v-if="form.certificate_type">
+              <div v-if="form.certificate_type_id">
                 <Label for="template_id">Template</Label>
                 <select
                   v-model="form.template_id"
@@ -503,7 +531,7 @@ function generateCertificate() {
         </Card>
 
         <!-- Additional Information -->
-        <Card v-if="form.certificate_type && Object.keys(additionalFields).length > 0">
+        <Card v-if="form.certificate_type_id && Object.keys(additionalFields).length > 0">
           <CardHeader>
             <CardTitle class="flex items-center gap-2">
               <Users class="h-5 w-5" />
@@ -513,7 +541,7 @@ function generateCertificate() {
           <CardContent>
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <!-- Baptism Fields -->
-              <template v-if="form.certificate_type === 'baptism'">
+              <template v-if="currentCertificateTypeCode === 'baptism'">
                 <div>
                   <Label for="godfather_name">Godfather Name</Label>
                   <Input v-model="additionalFields.godfather_name" type="text" id="godfather_name" />
@@ -533,7 +561,7 @@ function generateCertificate() {
               </template>
 
               <!-- Confirmation Fields -->
-              <template v-if="form.certificate_type === 'confirmation'">
+              <template v-if="currentCertificateTypeCode === 'confirmation'">
                 <div>
                   <Label for="confirmation_name">Confirmation Name</Label>
                   <Input v-model="additionalFields.confirmation_name" type="text" id="confirmation_name" />
@@ -553,7 +581,7 @@ function generateCertificate() {
               </template>
 
               <!-- Marriage Fields -->
-              <template v-if="form.certificate_type === 'marriage'">
+              <template v-if="currentCertificateTypeCode === 'marriage'">
                 <div>
                   <Label for="spouse_name">Spouse Name *</Label>
                   <Input v-model="additionalFields.spouse_name" type="text" id="spouse_name" required />
@@ -585,7 +613,7 @@ function generateCertificate() {
               </template>
 
               <!-- Death Fields -->
-              <template v-if="form.certificate_type === 'death'">
+              <template v-if="currentCertificateTypeCode === 'death'">
                 <div>
                   <Label for="burial_date">Burial Date</Label>
                   <Input v-model="additionalFields.burial_date" type="date" id="burial_date" />
@@ -613,7 +641,7 @@ function generateCertificate() {
               </template>
 
               <!-- Membership Fields -->
-              <template v-if="form.certificate_type === 'membership'">
+              <template v-if="currentCertificateTypeCode === 'membership'">
                 <div>
                   <Label for="join_date">Join Date</Label>
                   <Input v-model="additionalFields.join_date" type="date" id="join_date" />
@@ -639,14 +667,14 @@ function generateCertificate() {
             type="button"
             variant="outline"
             @click="previewCertificate"
-            :disabled="!form.certificate_type || !memberValidation.valid || form.processing"
+            :disabled="!form.certificate_type_id || !memberValidation.valid || form.processing"
           >
             Preview
           </Button>
 
           <Button
             type="submit"
-            :disabled="!form.certificate_type || !memberValidation.valid || form.processing || (showDuplicateWarning && !form.force_duplicate)"
+            :disabled="!form.certificate_type_id || !memberValidation.valid || form.processing || (showDuplicateWarning && !form.force_duplicate)"
             class="bg-green-600 text-white hover:bg-green-700"
           >
             <span v-if="form.processing">Generating...</span>

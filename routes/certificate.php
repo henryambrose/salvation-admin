@@ -34,4 +34,5 @@ Route::middleware(['auth'])->prefix('certificates')->name('certificates.')->grou
   Route::get('/{certificate}', [CertificateController::class, 'show'])->whereNumber('certificate')->name('show');
   Route::get('/{certificate}/download', [CertificateController::class, 'download'])->whereNumber('certificate')->name('download');
   Route::post('/{certificate}/reprint', [CertificateController::class, 'reprint'])->whereNumber('certificate')->name('reprint');
+  Route::post('/{certificate}/generate-pdf', [CertificateController::class, 'generatePdf'])->whereNumber('certificate')->name('generate-pdf');
 });

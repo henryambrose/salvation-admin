@@ -38,6 +38,9 @@ class DatabaseSeeder extends Seeder
             PermissionGroupSeeder::class,
             PPCHeadPermissionSeeder::class,
             SCCHeadPermissionSeeder::class,
+            CertificateTypeSeeder::class,
+            CertificateTemplateSeeder::class,
+
         ]);
     }
 }

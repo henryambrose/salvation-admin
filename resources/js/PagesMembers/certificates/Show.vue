@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { ArrowLeft, Calendar, Download, FileText, RotateCcw, User, Users } from 'lucide-vue-next';
+import { ArrowLeft, Download, FileText, RotateCcw, User, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import { useCertificateState } from '@/composables/useCertificateState';
 
@@ -106,6 +106,7 @@ const relevantMemberData = computed(() => {
   }
 });
 
+
 const breadcrumbs = computed(() => {
   const savedFilters = getState();
   return [
@@ -121,8 +122,28 @@ const breadcrumbs = computed(() => {
 });
 
 function downloadCertificate() {
-  if (!props.certificate.file_path) return;
+  if (!props.certificate.file_path) {
+    console.log('Certificate PDF not available');
+    return;
+  }
   window.open(`/certificates/${props.certificate.id}/download`, '_blank');
+}
+
+function generatePDF() {
+  router.post(
+    `/certificates/${props.certificate.id}/generate-pdf`,
+    {},
+    {
+      preserveState: true,
+      onSuccess: () => {
+        // Reload the page to show updated certificate with file path
+        router.reload({ only: ['certificate'] });
+      },
+      onError: (errors) => {
+        console.error('Failed to generate PDF:', errors);
+      },
+    },
+  );
 }
 
 function reprintCertificate() {
@@ -147,16 +168,6 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function goToMemberProfile() {
-  router.get(`/member/${props.certificate.member.id}`);
-}
-
-function generateNewCertificate() {
-  router.get(`/certificates/generate/${props.certificate.member.id}`, {}, {
-    preserveState: true,
-    preserveScroll: true,
-  });
-}
 </script>
 
 <template>
@@ -178,9 +189,22 @@ function generateNewCertificate() {
         </div>
 
         <div class="flex items-center gap-3">
-          <Button v-if="certificate.file_path" @click="downloadCertificate" class="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700">
+          <Button
+            v-if="certificate.file_path"
+            @click="downloadCertificate"
+            class="flex items-center gap-2 bg-blue-600 text-white hover:bg-blue-700"
+          >
             <Download class="h-4 w-4" />
             Download PDF
+          </Button>
+
+          <Button
+            v-else
+            @click="generatePDF"
+            class="flex items-center gap-2 bg-green-600 text-white hover:bg-green-700"
+          >
+            <FileText class="h-4 w-4" />
+            Generate PDF
           </Button>
 
           <Button v-if="canReprintCertificates" @click="reprintCertificate" variant="outline" class="flex items-center gap-2">
@@ -190,9 +214,8 @@ function generateNewCertificate() {
         </div>
       </div>
 
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <!-- Main Certificate Information -->
-        <div class="space-y-6 lg:col-span-2">
+      <!-- Main Certificate Information -->
+      <div class="space-y-6">
           <!-- Certificate Overview -->
           <Card>
             <CardHeader>
@@ -245,15 +268,9 @@ function generateNewCertificate() {
               </CardTitle>
             </CardHeader>
             <CardContent class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div>
-                  <h3 class="text-lg font-semibold text-gray-900">{{ memberFullName }}</h3>
-                  <p class="text-gray-600">Member #{{ certificate.member.member_no }} | Family #{{ certificate.member.family_no }}</p>
-                </div>
-                <Button variant="outline" size="sm" @click="goToMemberProfile" class="flex items-center gap-2">
-                  <User class="h-4 w-4" />
-                  View Profile
-                </Button>
+              <div>
+                <h3 class="text-lg font-semibold text-gray-900">{{ memberFullName }}</h3>
+                <p class="text-gray-600">Member #{{ certificate.member.member_no }} | Family #{{ certificate.member.family_no }}</p>
               </div>
 
               <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -305,104 +322,6 @@ function generateNewCertificate() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="space-y-6">
-          <!-- Quick Actions -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-3">
-              <Button
-                v-if="certificate.file_path"
-                @click="downloadCertificate"
-                variant="outline"
-                class="flex w-full items-center justify-start gap-2"
-              >
-                <Download class="h-4 w-4" />
-                Download PDF
-              </Button>
-
-              <Button
-                v-if="canReprintCertificates"
-                @click="reprintCertificate"
-                variant="outline"
-                class="flex w-full items-center justify-start gap-2"
-              >
-                <RotateCcw class="h-4 w-4" />
-                Reprint Certificate
-              </Button>
-
-              <Button
-                v-if="canGenerateCertificates"
-                @click="generateNewCertificate"
-                variant="outline"
-                class="flex w-full items-center justify-start gap-2"
-              >
-                <FileText class="h-4 w-4" />
-                Generate Another
-              </Button>
-
-              <Button @click="goToMemberProfile" variant="outline" class="flex w-full items-center justify-start gap-2">
-                <User class="h-4 w-4" />
-                View Member Profile
-              </Button>
-            </CardContent>
-          </Card>
-
-          <!-- Certificate Statistics -->
-          <Card>
-            <CardHeader>
-              <CardTitle>Statistics</CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-4">
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Downloads</span>
-                <span class="font-semibold">{{ certificate.download_count }}</span>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Created</span>
-                <span class="text-sm font-medium">{{ formatDate(certificate.created_at) }}</span>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">Last Updated</span>
-                <span class="text-sm font-medium">{{ formatDate(certificate.updated_at) }}</span>
-              </div>
-
-              <div class="flex items-center justify-between">
-                <span class="text-sm text-gray-600">File Status</span>
-                <Badge :class="certificate.file_path ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                  {{ certificate.file_path ? 'Available' : 'Missing' }}
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <!-- Related Information -->
-          <Card v-if="relevantMemberData">
-            <CardHeader>
-              <CardTitle class="flex items-center gap-2">
-                <Calendar class="h-5 w-5" />
-                {{ relevantMemberData.label }} Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent class="space-y-3">
-              <div v-if="relevantMemberData.date">
-                <label class="mb-1 block text-sm font-medium text-gray-700">Date</label>
-                <p class="text-gray-900">{{ formatDate(relevantMemberData.date) }}</p>
-              </div>
-
-              <div v-if="relevantMemberData.regNo">
-                <label class="mb-1 block text-sm font-medium text-gray-700">Registration Number</label>
-                <p class="font-mono text-gray-900">{{ relevantMemberData.regNo }}</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   </AppLayout>

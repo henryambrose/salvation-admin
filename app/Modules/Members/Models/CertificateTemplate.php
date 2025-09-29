@@ -14,7 +14,7 @@ class CertificateTemplate extends Model
 
   protected $fillable = [
     'name',
-    'type',
+    'certificate_type_id',
     'template_content',
     'template_config',
     'language',
@@ -33,7 +33,8 @@ class CertificateTemplate extends Model
   ];
 
   /**
-   * Certificate types enum
+   * Certificate types enum - deprecated, use CertificateType model
+   * @deprecated Use CertificateType model instead
    */
   public const TYPES = [
     'baptism' => 'Baptism Certificate',
@@ -42,6 +43,14 @@ class CertificateTemplate extends Model
     'membership' => 'Membership Certificate',
     'death' => 'Death Certificate',
   ];
+
+  /**
+   * Get the certificate type for this template
+   */
+  public function certificateType(): BelongsTo
+  {
+    return $this->belongsTo(CertificateType::class);
+  }
 
   /**
    * Get the user who created this template
@@ -76,11 +85,26 @@ class CertificateTemplate extends Model
   }
 
   /**
-   * Scope to get templates by type
+   * Scope to get templates by certificate type
+   */
+  public function scopeByCertificateType($query, $certificateType)
+  {
+    if (is_string($certificateType)) {
+      return $query->whereHas('certificateType', function ($q) use ($certificateType) {
+        $q->where('code', $certificateType);
+      });
+    }
+
+    return $query->where('certificate_type_id', $certificateType);
+  }
+
+  /**
+   * Scope to get templates by type (backward compatibility)
+   * @deprecated Use scopeByCertificateType instead
    */
   public function scopeByType($query, string $type)
   {
-    return $query->where('type', $type);
+    return $this->scopeByCertificateType($query, $type);
   }
 
   /**
@@ -92,12 +116,12 @@ class CertificateTemplate extends Model
   }
 
   /**
-   * Get the default template for a specific type
+   * Get the default template for a specific certificate type
    */
-  public static function getDefaultForType(string $type): ?self
+  public static function getDefaultForCertificateType($certificateType): ?self
   {
     return static::active()
-      ->byType($type)
+      ->byCertificateType($certificateType)
       ->default()
       ->first();
   }
@@ -107,7 +131,7 @@ class CertificateTemplate extends Model
    */
   public function getFormattedTypeAttribute(): string
   {
-    return self::TYPES[$this->type] ?? ucfirst($this->type);
+    return $this->certificateType?->name ?? 'Unknown Type';
   }
 
   /**

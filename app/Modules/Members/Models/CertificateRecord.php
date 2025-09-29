@@ -14,7 +14,7 @@ class CertificateRecord extends Model
 
   protected $fillable = [
     'member_id',
-    'certificate_type',
+    'certificate_type_id',
     'template_id',
     'issued_date',
     'issued_by',
@@ -34,6 +34,12 @@ class CertificateRecord extends Model
     'issued_date' => 'date',
     'last_downloaded_at' => 'datetime',
     'is_reprint' => 'boolean',
+  ];
+
+  protected $appends = [
+    'certificate_type',
+    'certificate_type_name',
+    'formatted_type',
   ];
 
   /**
@@ -72,6 +78,14 @@ class CertificateRecord extends Model
   }
 
   /**
+   * Get the certificate type this certificate belongs to
+   */
+  public function certificateType(): BelongsTo
+  {
+    return $this->belongsTo(\Modules\Members\Models\CertificateType::class);
+  }
+
+  /**
    * Get the original certificate if this is a reprint
    */
   public function originalCertificate(): BelongsTo
@@ -80,11 +94,18 @@ class CertificateRecord extends Model
   }
 
   /**
-   * Scope to get certificates by type
+   * Scope to get certificates by type (by code)
    */
   public function scopeByType($query, string $type)
   {
-    return $query->where('certificate_type', $type);
+    // Get the certificate type ID first to avoid relationship queries
+    $certificateType = \Modules\Members\Models\CertificateType::where('code', $type)->first();
+    if ($certificateType) {
+      return $query->where('certificate_type_id', $certificateType->id);
+    }
+
+    // Return empty result if certificate type not found
+    return $query->whereRaw('1 = 0');
   }
 
   /**
@@ -112,7 +133,7 @@ class CertificateRecord extends Model
   }
 
   /**
-   * Generate unique certificate number
+   * Generate unique certificate number with better concurrency handling
    */
   public static function generateCertificateNumber(string $type, int $memberId): string
   {
@@ -120,14 +141,48 @@ class CertificateRecord extends Model
     $typeCode = strtoupper(substr($type, 0, 3)); // BAP, CON, MAR, etc.
     $memberCode = str_pad($memberId, 6, '0', STR_PAD_LEFT);
 
-    // Count certificates of this type for this year
-    $count = static::where('certificate_type', $type)
-      ->whereYear('issued_date', $year)
-      ->count() + 1;
+    // Get the certificate type ID first
+    $certificateType = \Modules\Members\Models\CertificateType::where('code', $type)->first();
+    if (!$certificateType) {
+      throw new \Exception("Certificate type '{$type}' not found");
+    }
 
-    $sequence = str_pad($count, 4, '0', STR_PAD_LEFT);
+    return \DB::transaction(function () use ($typeCode, $year, $memberCode, $certificateType) {
+      // Get the highest sequence number for this type and year with lock
+      $lastCertificate = static::where('certificate_number', 'LIKE', "{$typeCode}/{$year}/%")
+        ->orderBy('certificate_number', 'desc')
+        ->lockForUpdate()
+        ->first();
 
-    return "{$typeCode}/{$year}/{$memberCode}/{$sequence}";
+      $sequence = 1;
+      if ($lastCertificate) {
+        // Extract sequence number from the last certificate
+        $parts = explode('/', $lastCertificate->certificate_number);
+        if (count($parts) === 4) {
+          $lastSequence = (int) end($parts);
+          $sequence = $lastSequence + 1;
+        }
+      }
+
+      // Generate certificate number with retry logic for edge cases
+      $maxAttempts = 50;
+      for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
+        $sequenceStr = str_pad($sequence + $attempt, 4, '0', STR_PAD_LEFT);
+        $certificateNumber = "{$typeCode}/{$year}/{$memberCode}/{$sequenceStr}";
+
+        // Double-check if this number is already taken with lock
+        $exists = static::where('certificate_number', $certificateNumber)
+          ->lockForUpdate()
+          ->exists();
+        if (!$exists) {
+          return $certificateNumber;
+        }
+      }
+
+      // Fallback to timestamp with microseconds if we can't find a unique sequence
+      $timestamp = now()->format('His') . substr(microtime(), 2, 6);
+      return "{$typeCode}/{$year}/{$memberCode}/{$timestamp}";
+    });
   }
 
   /**
@@ -135,7 +190,27 @@ class CertificateRecord extends Model
    */
   public function getFormattedTypeAttribute(): string
   {
-    return self::TYPES[$this->certificate_type] ?? ucfirst($this->certificate_type);
+    $certificateType = \Modules\Members\Models\CertificateType::find($this->certificate_type_id);
+    return $certificateType ? $certificateType->name : 'Unknown Certificate Type';
+  }
+
+  /**
+   * Get certificate type name for display
+   */
+  public function getCertificateTypeNameAttribute(): string
+  {
+    $certificateType = \Modules\Members\Models\CertificateType::find($this->certificate_type_id);
+    return $certificateType ? $certificateType->name : 'Unknown Certificate Type';
+  }
+
+  /**
+   * Get certificate type code (for backward compatibility)
+   */
+  public function getCertificateTypeAttribute(): ?string
+  {
+    // Temporarily load directly to avoid relationship issues
+    $certificateType = \Modules\Members\Models\CertificateType::find($this->certificate_type_id);
+    return $certificateType?->code;
   }
 
   /**

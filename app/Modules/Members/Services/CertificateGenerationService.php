@@ -21,8 +21,14 @@ class CertificateGenerationService
     // Load relationships
     $certificate->load(['member', 'template', 'issuer']);
 
+    // Load certificate type separately to avoid relationship issues
+    $certificateType = \Modules\Members\Models\CertificateType::find($certificate->certificate_type_id);
+    if (!$certificateType) {
+      throw new \Exception("Certificate type not found for ID: {$certificate->certificate_type_id}");
+    }
+
     // Generate the PDF content
-    $pdfContent = $this->generatePdfContent($certificate);
+    $pdfContent = $this->generatePdfContent($certificate, $certificateType);
 
     // Create directory structure
     $year = $certificate->issued_date->year;
@@ -35,7 +41,7 @@ class CertificateGenerationService
     // Generate filename
     $filename = sprintf(
       '%s_%s_%s.pdf',
-      $certificate->certificate_type,
+      $certificateType->code,
       $certificate->member_id,
       $certificate->issued_date->format('Y-m-d_H-i-s')
     );
@@ -53,16 +59,22 @@ class CertificateGenerationService
    */
   public function generatePreview(CertificateRecord $certificate): string
   {
-    return $this->generatePdfContent($certificate);
+    // Load certificate type separately to avoid relationship issues
+    $certificateType = \Modules\Members\Models\CertificateType::find($certificate->certificate_type_id);
+    if (!$certificateType) {
+      throw new \Exception("Certificate type not found for ID: {$certificate->certificate_type_id}");
+    }
+
+    return $this->generatePdfContent($certificate, $certificateType);
   }
 
   /**
    * Generate PDF content from certificate data
    */
-  protected function generatePdfContent(CertificateRecord $certificate): string
+  protected function generatePdfContent(CertificateRecord $certificate, $certificateType): string
   {
     // Prepare data for the template
-    $data = $this->prepareCertificateData($certificate);
+    $data = $this->prepareCertificateData($certificate, $certificateType);
 
     // Use custom template if available, otherwise use default
     if ($certificate->template && $certificate->template->template_content) {
@@ -76,13 +88,13 @@ class CertificateGenerationService
       $html = $this->renderCustomTemplate($certificate->template->template_content, $data);
     } else {
       Log::info('Certificate Generation - Using DEFAULT template', [
-        'certificate_type' => $certificate->certificate_type,
+        'certificate_type' => $certificateType->code,
         'template_id' => $certificate->template->id ?? 'none',
         'template_config_in_data' => isset($data['template_config']),
         'logo_in_config' => isset($data['template_config']['logo_url']) ? 'YES' : 'NO',
         'logo_url_prefix' => isset($data['template_config']['logo_url']) ? substr($data['template_config']['logo_url'], 0, 50) : 'none',
       ]);
-      $html = $this->renderDefaultTemplate($certificate->certificate_type, $data);
+      $html = $this->renderDefaultTemplate($certificateType->code, $data);
     }
 
     // Log HTML content sample for debugging
@@ -110,7 +122,7 @@ class CertificateGenerationService
   /**
    * Prepare certificate data for template rendering
    */
-  protected function prepareCertificateData(CertificateRecord $certificate): array
+  protected function prepareCertificateData(CertificateRecord $certificate, $certificateType): array
   {
     $member = $certificate->member;
     $additionalData = $certificate->additional_data ?? [];
@@ -134,7 +146,7 @@ class CertificateGenerationService
     ];
 
     // Add certificate type specific data
-    switch ($certificate->certificate_type) {
+    switch ($certificateType->code) {
       case 'baptism':
         $data = array_merge($data, [
           'baptism_date' => $member->baptism_date?->format('d/m/Y'),
@@ -214,7 +226,7 @@ class CertificateGenerationService
     ]);
 
     // Add certificate type for template use
-    $data['certificate_type'] = $certificate->certificate_type;
+    $data['certificate_type'] = $certificateType->code;
 
     return $data;
   }
@@ -268,9 +280,7 @@ class CertificateGenerationService
     }
 
     // Fall back to generic template
-    return view('certificates.templates.default', array_merge($data, [
-      'certificate_type' => $certificateType
-    ]))->render();
+    return view('certificates.templates.default', $data)->render();
   }
 
   /**
@@ -302,13 +312,20 @@ class CertificateGenerationService
     $errors = [];
     $member = $certificate->member;
 
+    // Load certificate type separately to avoid relationship issues
+    $certificateType = \Modules\Members\Models\CertificateType::find($certificate->certificate_type_id);
+    if (!$certificateType) {
+      $errors[] = "Certificate type not found for ID: {$certificate->certificate_type_id}";
+      return $errors;
+    }
+
     // Common validations
     if (!$member->first_name || !$member->last_name) {
       $errors[] = 'Member name is required';
     }
 
     // Certificate type specific validations
-    switch ($certificate->certificate_type) {
+    switch ($certificateType->code) {
       case 'baptism':
         if (!$member->baptism_date) {
           $errors[] = 'Baptism date is required';

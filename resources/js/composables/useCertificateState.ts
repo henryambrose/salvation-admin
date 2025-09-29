@@ -15,7 +15,7 @@ export function useCertificateState() {
   const saveState = (filters: any) => {
     if (filters.search !== undefined) certificateState.search = filters.search
     if (filters.type !== undefined) certificateState.certificateType = filters.type
-    if (filters.certificate_type !== undefined) certificateState.certificateType = filters.certificate_type
+    if (filters.certificate_type_id !== undefined) certificateState.certificateType = filters.certificate_type_id
     if (filters.sort !== undefined) certificateState.sort = filters.sort
     if (filters.direction !== undefined) certificateState.direction = filters.direction
     if (filters.per_page !== undefined) certificateState.perPage = filters.per_page

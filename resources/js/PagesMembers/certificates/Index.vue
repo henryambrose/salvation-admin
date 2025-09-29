@@ -11,7 +11,10 @@ import { useCertificateState } from '@/composables/useCertificateState';
 interface Certificate {
   id: number;
   certificate_number: string;
-  certificate_type: string;
+  certificate_type_id: number;
+  certificate_type: string; // accessor for display (code)
+  certificate_type_name?: string; // accessor for display name
+  formatted_type?: string; // accessor for formatted type name
   member: {
     id: number;
     first_name: string;
@@ -374,8 +377,8 @@ function reprintCertificate(certificate: Certificate) {
                   <div class="text-sm font-medium text-gray-900">{{ certificate.certificate_number }}</div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <Badge :class="certificate.type_badge_class" class="capitalize">
-                    {{ certificate.certificate_type }}
+                  <Badge :class="certificate.type_badge_class">
+                    {{ certificate.certificate_type_name }}
                   </Badge>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
