@@ -22,6 +22,9 @@ interface Payment {
     booking_reference: string;
   };
   payable_type: string;
+  payment_method?: {
+    name: string;
+  };
   paymentMethod?: {
     name: string;
   };
@@ -53,7 +56,6 @@ const searchForm = ref({
   status: props.filters.status || '',
   booking_type: props.filters.booking_type || '',
 });
-
 // Computed
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -115,9 +117,11 @@ const clearFilters = () => {
 };
 
 const getBookingTypeLabel = (payableType: string) => {
-  if (payableType.includes('PermanentGraveBooking')) return 'Permanent';
-  if (payableType.includes('TemporaryGraveBooking')) return 'Temporary';
-  if (payableType.includes('NicheBooking')) return 'Niche';
+  if (payableType.endsWith('PermanentGraveBooking')) return 'Permanent';
+  if (payableType.endsWith('TemporaryGraveBooking')) return 'Temporary';
+  if (payableType.endsWith('NicheBooking')) return 'Niche';
+  if (payableType.endsWith('PermanentGrave')) return 'Permanent Maint.';
+  if (payableType.endsWith('Niche')) return 'Niche Maint.';
   return 'Unknown';
 };
 </script>
@@ -281,11 +285,13 @@ const getBookingTypeLabel = (payableType: string) => {
                     <td class="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div class="text-sm font-medium text-gray-900">{{ payment.payment_reference }}</div>
-                        <div class="text-sm text-gray-500">{{ payment.paymentMethod?.name || 'N/A' }}</div>
+                        <div class="text-sm text-gray-500">{{ payment.paymentMethod?.name || payment.payment_method?.name || 'Free' }}</div>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">{{ payment.payable?.booking_reference || 'N/A' }}</div>
+                      <div class="text-sm font-medium text-gray-900">
+                        {{ payment.payable?.booking_reference || payment.payment_reference || 'N/A' }}
+                      </div>
                       <div class="text-sm text-gray-500">{{ getBookingTypeLabel(payment.payable_type) }}</div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">

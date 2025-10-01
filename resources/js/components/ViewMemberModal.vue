@@ -143,8 +143,9 @@ const enhancedIncomeRanges = computed(() => {
 const canEditMember = computed(() => {
   // Check if user has permission to edit members
   // This should match the permission check from the member index page
-  return page.props.auth?.permissions?.includes('update-member') ||
-         page.props.auth?.user?.roles?.includes('super admin');
+  const auth = page.props.auth as any;
+  return auth?.permissions?.includes('update-member') ||
+         auth?.user?.roles?.includes('super admin');
 });
 
 function calculateAge(dateStr: string) {

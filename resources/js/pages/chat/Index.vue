@@ -39,13 +39,16 @@ const sendMessage = async () => {
   isLoading.value = true;
 
   try {
+    // Get fresh CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     const response = await fetch('/chat/send', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-CSRF-TOKEN': csrfToken,
       },
       credentials: 'same-origin',
       body: JSON.stringify({
@@ -59,6 +62,18 @@ const sendMessage = async () => {
     });
 
     const data = await response.json();
+
+    // Handle CSRF token mismatch
+    if (response.status === 419) {
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: 'Your session has expired. Please refresh the page and try again.',
+        timestamp: new Date(),
+      };
+      messages.value.push(errorMessage);
+      return;
+    }
 
     if (response.ok && data.success) {
       const assistantMessage: Message = {
@@ -78,7 +93,7 @@ const sendMessage = async () => {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: data.error || 'Sorry, I encountered an error. Please try again.',
+        content: data.error || data.message || 'Sorry, I encountered an error. Please try again.',
         timestamp: new Date(),
       };
       messages.value.push(errorMessage);

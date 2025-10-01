@@ -189,6 +189,51 @@ const filteredParishes = computed(() => {
   return props.parishes.filter((parish) => allowedParishIds.includes(parish.id));
 });
 
+// Calculate age at death (years, months, days) when both DOB and DOD are entered
+const calculateAgeAtDeath = () => {
+  if (!form.date_of_birth || !form.died_on) {
+    return;
+  }
+
+  const birthDate = new Date(form.date_of_birth);
+  const deathDate = new Date(form.died_on);
+
+  // Validate dates
+  if (birthDate >= deathDate) {
+    // Reset age fields if dates are invalid
+    form.age = null;
+    form.months = null;
+    form.days = null;
+    return;
+  }
+
+  let years = deathDate.getFullYear() - birthDate.getFullYear();
+  let months = deathDate.getMonth() - birthDate.getMonth();
+  let days = deathDate.getDate() - birthDate.getDate();
+
+  // Adjust for negative days
+  if (days < 0) {
+    months--;
+    const prevMonth = new Date(deathDate.getFullYear(), deathDate.getMonth(), 0);
+    days += prevMonth.getDate();
+  }
+
+  // Adjust for negative months
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  form.age = years;
+  form.months = months;
+  form.days = days;
+};
+
+// Watch for changes in date of birth and date of death
+watch([() => form.date_of_birth, () => form.died_on], () => {
+  calculateAgeAtDeath();
+});
+
 // Search members function
 const searchMembers = async () => {
   if (memberSearchQuery.value.length < 2) {
@@ -771,49 +816,6 @@ onUnmounted(() => {
                     </div>
                   </div>
 
-                  <!-- Age Details -->
-                  <div>
-                    <Label class="text-base font-medium">Age at Death</Label>
-                    <div class="mt-2 grid grid-cols-3 gap-4">
-                      <div>
-                        <Label for="age">Years</Label>
-                        <Input
-                          id="age"
-                          :model-value="form.age ?? ''"
-                          @input="form.age = $event.target.value ? Number($event.target.value) : null"
-                          type="number"
-                          min="0"
-                          max="150"
-                          class="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label for="months">Months</Label>
-                        <Input
-                          id="months"
-                          :model-value="form.months ?? ''"
-                          @input="form.months = $event.target.value ? Number($event.target.value) : null"
-                          type="number"
-                          min="0"
-                          max="11"
-                          class="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label for="days">Days</Label>
-                        <Input
-                          id="days"
-                          :model-value="form.days ?? ''"
-                          @input="form.days = $event.target.value ? Number($event.target.value) : null"
-                          type="number"
-                          min="0"
-                          max="30"
-                          class="mt-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
                   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label for="nationality">Nationality</Label>
@@ -845,34 +847,83 @@ onUnmounted(() => {
                   <span>Death & Burial Details</span>
                 </CardTitle>
               </CardHeader>
-              <CardContent class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <CardContent class="space-y-4">
+                <!-- Date of Death and Burial -->
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label for="died_on">Date of Death *</Label>
+                    <Input id="died_on" v-model="form.died_on" type="date" :class="form.errors.died_on && 'border-red-500'" class="mt-1" />
+                    <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.died_on }}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label for="buried_on">Date of Burial *</Label>
+                    <Input id="buried_on" v-model="form.buried_on" type="date" :class="form.errors.buried_on && 'border-red-500'" class="mt-1" />
+                    <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.buried_on }}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Age at Death -->
                 <div>
-                  <Label for="died_on">Date of Death *</Label>
-                  <Input id="died_on" v-model="form.died_on" type="date" :class="form.errors.died_on && 'border-red-500'" class="mt-1" />
-                  <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.died_on }}
+                  <Label class="text-base font-medium">Age at Death</Label>
+                  <div class="mt-2 grid grid-cols-3 gap-4">
+                    <div>
+                      <Label for="age">Years</Label>
+                      <Input
+                        id="age"
+                        :model-value="form.age ?? ''"
+                        @input="form.age = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="150"
+                        class="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label for="months">Months</Label>
+                      <Input
+                        id="months"
+                        :model-value="form.months ?? ''"
+                        @input="form.months = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="11"
+                        class="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label for="days">Days</Label>
+                      <Input
+                        id="days"
+                        :model-value="form.days ?? ''"
+                        @input="form.days = $event.target.value ? Number($event.target.value) : null"
+                        type="number"
+                        min="0"
+                        max="30"
+                        class="mt-1"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <Label for="buried_on">Date of Burial *</Label>
-                  <Input id="buried_on" v-model="form.buried_on" type="date" :class="form.errors.buried_on && 'border-red-500'" class="mt-1" />
-                  <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.buried_on }}
+                <!-- Cause of Death and Minister -->
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <Label for="cause_of_death">Cause of Death *</Label>
+                    <Input id="cause_of_death" v-model="form.cause_of_death" :class="form.errors.cause_of_death && 'border-red-500'" class="mt-1" />
+                    <div v-if="form.errors.cause_of_death" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.cause_of_death }}
+                    </div>
                   </div>
-                </div>
 
-                <div class="sm:col-span-2">
-                  <Label for="cause_of_death">Cause of Death *</Label>
-                  <Input id="cause_of_death" v-model="form.cause_of_death" :class="form.errors.cause_of_death && 'border-red-500'" class="mt-1" />
-                  <div v-if="form.errors.cause_of_death" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.cause_of_death }}
+                  <div>
+                    <Label for="minister">Minister</Label>
+                    <Input id="minister" v-model="form.minister" class="mt-1" />
                   </div>
-                </div>
-
-                <div class="sm:col-span-2">
-                  <Label for="minister">Minister</Label>
-                  <Input id="minister" v-model="form.minister" class="mt-1" />
                 </div>
               </CardContent>
             </Card>
