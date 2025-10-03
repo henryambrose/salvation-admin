@@ -56,19 +56,6 @@ class ObituaryBackgroundTheme extends Model
     }
 
     /**
-     * Get themes available for a specific tier level
-     */
-    // public static function getAvailableForTier(string $userTier = 'basic'): \Illuminate\Database\Eloquent\Collection
-    // {
-    //     $allowedTiers = $userTier === 'premium' ? ['basic', 'premium'] : ['basic'];
-
-    //     return self::active()
-    //         ->whereIn('tier', $allowedTiers)
-    //         ->ordered()
-    //         ->get();
-    // }
-
-    /**
      * Get theme by key
      */
     public static function getByKey(string $key): ?self

@@ -5,6 +5,7 @@ namespace Modules\Graveyard\Http\Controllers;
 use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\AnnualMaintenanceFee;
 use Modules\Graveyard\Http\Requests\AnnualMaintenanceFeeRequest;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -134,7 +135,7 @@ class AnnualMaintenanceFeeController extends Controller
     /**
      * Show the form for editing the specified resource
      */
-    public function edit(AnnualMaintenanceFee $annualMaintenanceFee): Response
+    public function edit(AnnualMaintenanceFee $annualMaintenanceFee): Response|RedirectResponse
     {
         if (!$annualMaintenanceFee->canBeEdited()) {
             return redirect()

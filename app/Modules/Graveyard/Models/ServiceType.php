@@ -35,10 +35,7 @@ class ServiceType extends Model
     /**
      * Get the booking services for this service type
      */
-    public function bookingServices()
-    {
-        return $this->hasMany(BookingService::class);
-    }
+
 
     /**
      * Get the user who created this record

@@ -8,7 +8,6 @@ use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryCondolence;
 use Modules\Graveyard\Models\ObituaryBackgroundTheme;
 use Modules\Graveyard\Services\ObituaryService;
-use Modules\Graveyard\Services\BackgroundService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\PermanentGraveBooking;
@@ -19,7 +18,6 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 
@@ -33,11 +31,6 @@ class ObituaryManagementController extends Controller
 
         // Apply authorization middleware
         $this->middleware('auth');
-
-        // Temporarily disabled to debug authentication flow
-        // $this->authorizeResource(ObituaryPage::class, 'obituary', [
-        //     'except' => ['rephraseText']
-        // ]);
     }
 
 
@@ -154,7 +147,6 @@ class ObituaryManagementController extends Controller
             'booking_type' => 'required|in:permanent,temporary',
             'booking_id' => 'required|integer',
             'obituary_plan_id' => 'required|integer|exists:obituary_plans,id',
-            // 'service_type' => 'required|in:basic,premium', // Keep for compatibility
             'biography' => 'nullable|string',
             'favorite_memory' => 'nullable|string',
             'achievements' => 'nullable|string',
@@ -170,12 +162,6 @@ class ObituaryManagementController extends Controller
             'is_public' => 'boolean',
         ]);
 
-        // Validate background style against service type
-        // if (isset($validated['background_style']) && $validated['background_style']) {
-        //     if (!BackgroundService::isValidBackground($validated['background_style'], $validated['service_type'])) {
-        //         return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
-        //     }
-        // }
 
         $booking = null;
         if ($validated['booking_type'] === 'permanent') {
@@ -295,13 +281,6 @@ class ObituaryManagementController extends Controller
                 'allow_memory_sharing' => 'nullable|boolean',
                 'is_public' => 'nullable|boolean',
             ]);
-
-            // Validate background style against service type
-            // if (isset($validated['background_style']) && $validated['background_style']) {
-            //     if (!BackgroundService::isValidBackground($validated['background_style'], $obituary->service_type)) {
-            //         return back()->withErrors(['background_style' => 'Selected background is not available for your service type.']);
-            //     }
-            // }
 
             // Prepare data for update
             $data = [];
@@ -559,9 +538,10 @@ class ObituaryManagementController extends Controller
         }
 
         $downloadName = 'obituary-' . $obituary->uuid . '.png';
+        $fullPath = Storage::disk('public')->path($path);
 
         // Let Laravel stream the file; don't set Content-Length manually.
-        return Storage::disk('public')->download($path, $downloadName, [
+        return response()->download($fullPath, $downloadName, [
             'Content-Type'  => 'image/png',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);

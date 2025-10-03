@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Policies;
+namespace Modules\Graveyard\Policies;
 
 use Modules\Members\Models\User;
 use Modules\Graveyard\Models\ObituaryPage;
@@ -19,8 +19,8 @@ class ObituaryPolicy
         }
 
         // Check if user has permission to view obituaries
-        return $user->can('view-obituaries') || 
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+        return $user->can('view-obituaries') ||
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 
     /**
@@ -34,8 +34,10 @@ class ObituaryPolicy
         }
 
         // Admin users can view all obituaries
-        if ($user->hasRole(['admin', 'superadmin', 'super admin']) || 
-            $user->can('view-all-obituaries')) {
+        if (
+            $user->hasRole(['admin', 'superadmin', 'super admin']) ||
+            $user->can('view-all-obituaries')
+        ) {
             return true;
         }
 
@@ -52,8 +54,10 @@ class ObituaryPolicy
             }
 
             // Check if user is the applicant member
-            if ($obituary->permanent_grave_booking->applicant_type === 'member' &&
-                $obituary->permanent_grave_booking->applicant_member_id === $user->member_id) {
+            if (
+                $obituary->permanent_grave_booking->applicant_type === 'member' &&
+                $obituary->permanent_grave_booking->applicant_member_id === $user->member_id
+            ) {
                 return true;
             }
         }
@@ -65,8 +69,10 @@ class ObituaryPolicy
             }
 
             // Check if user is the applicant member
-            if ($obituary->temporary_grave_booking->applicant_type === 'member' &&
-                $obituary->temporary_grave_booking->applicant_member_id === $user->member_id) {
+            if (
+                $obituary->temporary_grave_booking->applicant_type === 'member' &&
+                $obituary->temporary_grave_booking->applicant_member_id === $user->member_id
+            ) {
                 return true;
             }
         }
@@ -85,8 +91,8 @@ class ObituaryPolicy
         }
 
         // Check if user has permission to create obituaries
-        return $user->can('create-obituaries') || 
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+        return $user->can('create-obituaries') ||
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 
     /**
@@ -100,8 +106,10 @@ class ObituaryPolicy
         }
 
         // Admin users can update all obituaries
-        if ($user->hasRole(['admin', 'superadmin', 'super admin']) || 
-            $user->can('update-all-obituaries')) {
+        if (
+            $user->hasRole(['admin', 'superadmin', 'super admin']) ||
+            $user->can('update-all-obituaries')
+        ) {
             return true;
         }
 
@@ -119,8 +127,10 @@ class ObituaryPolicy
                 }
 
                 // Check if user is the applicant member
-                if ($obituary->permanent_grave_booking->applicant_type === 'member' &&
-                    $obituary->permanent_grave_booking->applicant_member_id === $user->member_id) {
+                if (
+                    $obituary->permanent_grave_booking->applicant_type === 'member' &&
+                    $obituary->permanent_grave_booking->applicant_member_id === $user->member_id
+                ) {
                     return true;
                 }
             }
@@ -132,8 +142,10 @@ class ObituaryPolicy
                 }
 
                 // Check if user is the applicant member
-                if ($obituary->temporary_grave_booking->applicant_type === 'member' &&
-                    $obituary->temporary_grave_booking->applicant_member_id === $user->member_id) {
+                if (
+                    $obituary->temporary_grave_booking->applicant_type === 'member' &&
+                    $obituary->temporary_grave_booking->applicant_member_id === $user->member_id
+                ) {
                     return true;
                 }
             }
@@ -153,8 +165,10 @@ class ObituaryPolicy
         }
 
         // Admin users can delete all obituaries
-        if ($user->hasRole(['admin', 'superadmin', 'super admin']) || 
-            $user->can('delete-all-obituaries')) {
+        if (
+            $user->hasRole(['admin', 'superadmin', 'super admin']) ||
+            $user->can('delete-all-obituaries')
+        ) {
             return true;
         }
 
@@ -177,8 +191,8 @@ class ObituaryPolicy
         }
 
         // Check if user has permission to manage condolences
-        return $user->can('manage-condolences') || 
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+        return $user->can('manage-condolences') ||
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 
     /**
@@ -192,8 +206,8 @@ class ObituaryPolicy
         }
 
         // Check if user has permission to approve condolences
-        return $user->can('approve-condolences') || 
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+        return $user->can('approve-condolences') ||
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 
     /**
@@ -207,8 +221,8 @@ class ObituaryPolicy
         }
 
         // Check if user has permission to process payments
-        return $user->can('process-obituary-payments') || 
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+        return $user->can('process-obituary-payments') ||
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 
     /**
@@ -304,6 +318,6 @@ class ObituaryPolicy
 
         // Check if user has permission to reject condolences
         return $user->can('reject-obituary-condolence') ||
-               $user->hasRole(['admin', 'superadmin', 'super admin']);
+            $user->hasRole(['admin', 'superadmin', 'super admin']);
     }
 }

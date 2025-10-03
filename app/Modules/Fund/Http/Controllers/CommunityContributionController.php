@@ -107,7 +107,7 @@ class CommunityContributionController extends Controller
             $validatedData = $request->validated();
             $validatedData['created_by'] = Auth::id();
 
-            $contribution = CommunityContribution::create($validatedData);
+            CommunityContribution::create($validatedData);
 
             DB::commit();
 

@@ -62,8 +62,6 @@ class ObituaryBackgroundThemeController extends Controller
             'stats' => [
                 'total' => ObituaryBackgroundTheme::count(),
                 'active' => ObituaryBackgroundTheme::where('is_active', true)->count(),
-                // 'basic' => ObituaryBackgroundTheme::where('tier', 'basic')->count(),
-                // 'premium' => ObituaryBackgroundTheme::where('tier', 'premium')->count(),
             ]
         ]);
     }
@@ -86,7 +84,6 @@ class ObituaryBackgroundThemeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:color,gradient,pattern,image',
-            // 'tier' => 'required|in:basic,premium',
             'image_path' => 'nullable|string|max:500',
             'image_file' => 'nullable|file|image|max:5120', // 5MB max
             'style_properties' => 'nullable|array',
@@ -120,7 +117,7 @@ class ObituaryBackgroundThemeController extends Controller
         // Remove image_file from validated data as it's not a database column
         unset($validated['image_file']);
 
-        $theme = $this->backgroundService->createTheme($validated);
+        $this->backgroundService->createTheme($validated);
 
         return redirect()->route('graveyard.obituary-background-themes.index')
             ->with('success', 'Background theme created successfully.');
@@ -156,7 +153,6 @@ class ObituaryBackgroundThemeController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:color,gradient,pattern,image',
-            // 'tier' => 'required|in:basic,premium',
             'image_path' => 'nullable|string|max:500',
             'image_file' => 'nullable|file|image|max:5120', // 5MB max
             'style_properties' => 'nullable|array',
@@ -244,7 +240,6 @@ class ObituaryBackgroundThemeController extends Controller
 
         return response()->json([
             'themes' => $themes,
-            'grouped' => $this->backgroundService->getThemesGroupedByTier(),
         ]);
     }
 }

@@ -70,11 +70,6 @@ class MassIntentionController extends Controller
             $query->where('mass_date', '<=', $request->end_date);
         }
 
-        // Apply mass schedule filter (legacy)
-        // if ($request->filled('mass_schedule_id')) {
-        //     $query->where('mass_schedule_id', $request->mass_schedule_id);
-        // }
-
         // Apply intention type filter
         if ($request->filled('mass_intention_type_id')) {
             $query->where('mass_intention_type_id', $request->mass_intention_type_id);
@@ -360,12 +355,9 @@ class MassIntentionController extends Controller
     public function searchMembers(Request $request)
     {
         $query = $request->get('query', '');
-        // $familyNo = $request->get('family_no', '');
 
         $members = Member::with('community')->alive()->where(function ($q) use ($query) {
-            // if ($familyNo) {
-            //     $q->where('family_no', $familyNo);
-            // }
+
             if ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                     ->orWhere('middle_name', 'like', "%{$query}%")

@@ -241,16 +241,10 @@ class NicheTransferController extends Controller
             'relationship',
             'creator',
             'updater',
-            // 'approver',
-            // 'rejecter',
             'payments'
         ]);
 
-        // Calculate costs when viewing the transfer (if not already calculated)
-        // if ($nicheTransfer->total_cost == 0) {
-        //     $nicheTransfer->calculateTotalCost();
-        //     $nicheTransfer->save();
-        // }
+
 
         return Inertia::render('PagesGraveyard/NicheTransfer/Show', [
             'transfer' => $nicheTransfer

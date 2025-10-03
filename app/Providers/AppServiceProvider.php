@@ -2,8 +2,8 @@
 
 namespace App\Providers;
 
-use App\Policies\ObituaryPolicy;
-use App\Policies\ObituaryPlanPolicy;
+use  Modules\Graveyard\Policies\ObituaryPolicy;
+use Modules\Graveyard\Policies\ObituaryPlanPolicy;
 use Modules\Graveyard\Models\ObituaryPage;
 use Modules\Graveyard\Models\ObituaryPlan;
 use Illuminate\Support\Facades\Gate;
@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
             return $user->is_superadmin ? true : null;
         });
         // Register policies
-        // Gate::policy(ObituaryPage::class, ObituaryPolicy::class);
-        // Gate::policy(ObituaryPlan::class, ObituaryPlanPolicy::class);
+        Gate::policy(ObituaryPage::class, ObituaryPolicy::class);
+        Gate::policy(ObituaryPlan::class, ObituaryPlanPolicy::class);
     }
 }

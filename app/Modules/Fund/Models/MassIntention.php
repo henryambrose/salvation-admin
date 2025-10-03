@@ -79,13 +79,6 @@ class MassIntention extends Model
         return $this->belongsTo(PaymentMethod::class);
     }
 
-    /**
-     * Get the mass schedule for this mass intention
-     */
-    // public function massSchedule()
-    // {
-    //     return $this->belongsTo(MassSchedule::class, 'mass_schedule_id');
-    // }
 
     public function createdBy()
     {

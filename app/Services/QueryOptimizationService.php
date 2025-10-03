@@ -23,18 +23,18 @@ class QueryOptimizationService
             'paymentMethod:id,name',
             'createdBy:id,name',
         ])
-        ->when(isset($filters['status']), function (Builder $query) use ($filters) {
-            return $query->where('status', $filters['status']);
-        })
-        ->when(isset($filters['date_from']), function (Builder $query) use ($filters) {
-            return $query->where('mass_date', '>=', $filters['date_from']);
-        })
-        ->when(isset($filters['date_to']), function (Builder $query) use ($filters) {
-            return $query->where('mass_date', '<=', $filters['date_to']);
-        })
-        ->orderBy('mass_date', 'desc')
-        ->orderBy('created_at', 'desc')
-        ->get();
+            ->when(isset($filters['status']), function (Builder $query) use ($filters) {
+                return $query->where('status', $filters['status']);
+            })
+            ->when(isset($filters['date_from']), function (Builder $query) use ($filters) {
+                return $query->where('mass_date', '>=', $filters['date_from']);
+            })
+            ->when(isset($filters['date_to']), function (Builder $query) use ($filters) {
+                return $query->where('mass_date', '<=', $filters['date_to']);
+            })
+            ->orderBy('mass_date', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
     }
 
     /**
@@ -52,18 +52,18 @@ class QueryOptimizationService
                 $query->select('id', 'payable_id', 'payable_type', 'amount', 'payment_status', 'payment_date');
             }
         ])
-        ->when(isset($filters['status']), function (Builder $query) use ($filters) {
-            return $query->where('status', $filters['status']);
-        })
-        ->when(isset($filters['transfer_due']), function (Builder $query) use ($filters) {
-            if ($filters['transfer_due'] === 'overdue') {
-                return $query->where('transfer_due_date', '<', now());
-            } elseif ($filters['transfer_due'] === 'due_soon') {
-                return $query->whereBetween('transfer_due_date', [now(), now()->addDays(30)]);
-            }
-        })
-        ->orderBy('booking_date', 'desc')
-        ->get();
+            ->when(isset($filters['status']), function (Builder $query) use ($filters) {
+                return $query->where('status', $filters['status']);
+            })
+            ->when(isset($filters['transfer_due']), function (Builder $query) use ($filters) {
+                if ($filters['transfer_due'] === 'overdue') {
+                    return $query->where('transfer_due_date', '<', now());
+                } elseif ($filters['transfer_due'] === 'due_soon') {
+                    return $query->whereBetween('transfer_due_date', [now(), now()->addDays(30)]);
+                }
+            })
+            ->orderBy('booking_date', 'desc')
+            ->get();
     }
 
     /**
@@ -79,17 +79,17 @@ class QueryOptimizationService
                 $query->select('id', 'payable_id', 'payable_type', 'amount', 'payment_status', 'payment_date');
             }
         ])
-        ->when(isset($filters['status']), function (Builder $query) use ($filters) {
-            return $query->where('status', $filters['status']);
-        })
-        ->when(isset($filters['date_from']), function (Builder $query) use ($filters) {
-            return $query->where('booking_date', '>=', $filters['date_from']);
-        })
-        ->when(isset($filters['date_to']), function (Builder $query) use ($filters) {
-            return $query->where('booking_date', '<=', $filters['date_to']);
-        })
-        ->orderBy('booking_date', 'desc')
-        ->get();
+            ->when(isset($filters['status']), function (Builder $query) use ($filters) {
+                return $query->where('status', $filters['status']);
+            })
+            ->when(isset($filters['date_from']), function (Builder $query) use ($filters) {
+                return $query->where('booking_date', '>=', $filters['date_from']);
+            })
+            ->when(isset($filters['date_to']), function (Builder $query) use ($filters) {
+                return $query->where('booking_date', '<=', $filters['date_to']);
+            })
+            ->orderBy('booking_date', 'desc')
+            ->get();
     }
 
     /**
@@ -103,17 +103,17 @@ class QueryOptimizationService
             'fundCategory:id,name',
             'createdBy:id,name',
         ])
-        ->when(isset($filters['family_no']), function (Builder $query) use ($filters) {
-            return $query->where('family_no', 'LIKE', '%' . $filters['family_no'] . '%');
-        })
-        ->when(isset($filters['status']), function (Builder $query) use ($filters) {
-            return $query->where('status', $filters['status']);
-        })
-        ->when(isset($filters['year']), function (Builder $query) use ($filters) {
-            return $query->whereYear('start_date', $filters['year']);
-        })
-        ->orderBy('start_date', 'desc')
-        ->get();
+            ->when(isset($filters['family_no']), function (Builder $query) use ($filters) {
+                return $query->where('family_no', 'LIKE', '%' . $filters['family_no'] . '%');
+            })
+            ->when(isset($filters['status']), function (Builder $query) use ($filters) {
+                return $query->where('status', $filters['status']);
+            })
+            ->when(isset($filters['year']), function (Builder $query) use ($filters) {
+                return $query->whereYear('start_date', $filters['year']);
+            })
+            ->orderBy('start_date', 'desc')
+            ->get();
     }
 
     /**
@@ -150,21 +150,27 @@ class QueryOptimizationService
     public function searchMembersOptimized(string $query, int $limit = 20): Collection
     {
         $searchTerm = '%' . $query . '%';
-        
+
         return \Modules\Members\Models\Member::select([
-            'id', 'first_name', 'last_name', 'member_no', 'family_no', 'phone', 'email'
+            'id',
+            'first_name',
+            'last_name',
+            'member_no',
+            'family_no',
+            'phone',
+            'email'
         ])
-        ->where(function ($q) use ($searchTerm) {
-            $q->where('first_name', 'LIKE', $searchTerm)
-              ->orWhere('last_name', 'LIKE', $searchTerm)  
-              ->orWhere('member_no', 'LIKE', $searchTerm)
-              ->orWhere('family_no', 'LIKE', $searchTerm)
-              ->orWhere('phone', 'LIKE', $searchTerm);
-        })
-        ->orderBy('first_name')
-        ->orderBy('last_name')
-        ->limit($limit)
-        ->get();
+            ->where(function ($q) use ($searchTerm) {
+                $q->where('first_name', 'LIKE', $searchTerm)
+                    ->orWhere('last_name', 'LIKE', $searchTerm)
+                    ->orWhere('member_no', 'LIKE', $searchTerm)
+                    ->orWhere('family_no', 'LIKE', $searchTerm)
+                    ->orWhere('phone', 'LIKE', $searchTerm);
+            })
+            ->orderBy('first_name')
+            ->orderBy('last_name')
+            ->limit($limit)
+            ->get();
     }
 
     /**
@@ -173,33 +179,33 @@ class QueryOptimizationService
     public function getRecentActivityOptimized(int $days = 7, int $limit = 50): array
     {
         $since = now()->subDays($days);
-        
+
         $recentMassIntentions = MassIntention::with([
             'member:id,first_name,last_name',
             'createdBy:id,name'
         ])
-        ->where('created_at', '>=', $since)
-        ->latest()
-        ->limit($limit)
-        ->get();
+            ->where('created_at', '>=', $since)
+            ->latest()
+            ->limit($limit)
+            ->get();
 
         $recentBookings = TemporaryGraveBooking::with([
             'temporaryGrave:id,grave_no,section',
             'createdBy:id,name'
         ])
-        ->where('created_at', '>=', $since)
-        ->latest()
-        ->limit($limit)
-        ->get();
+            ->where('created_at', '>=', $since)
+            ->latest()
+            ->limit($limit)
+            ->get();
 
         $recentContributions = FamilyContribution::with([
             'member:id,first_name,last_name',
             'createdBy:id,name'
         ])
-        ->where('created_at', '>=', $since)
-        ->latest()
-        ->limit($limit)
-        ->get();
+            ->where('created_at', '>=', $since)
+            ->latest()
+            ->limit($limit)
+            ->get();
 
         return [
             'mass_intentions' => $recentMassIntentions,

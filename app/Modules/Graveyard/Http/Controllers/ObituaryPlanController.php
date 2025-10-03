@@ -15,8 +15,6 @@ class ObituaryPlanController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        // Temporarily disabled for debugging
-        // $this->authorizeResource(ObituaryPlan::class, 'obituary_plan');
     }
 
     /**
@@ -27,7 +25,7 @@ class ObituaryPlanController extends Controller
         $plans = ObituaryPlan::query()
             ->when($request->search, function ($query, $search) {
                 $query->where('name', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             })
             ->when($request->has('is_active'), function ($query) use ($request) {
                 $query->where('is_active', $request->boolean('is_active'));

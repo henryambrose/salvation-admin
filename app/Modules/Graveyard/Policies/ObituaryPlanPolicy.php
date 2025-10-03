@@ -1,9 +1,8 @@
 <?php
 
-namespace App\Policies;
+namespace Modules\Graveyard\Policies;
 
 use Modules\Graveyard\Models\ObituaryPlan;
-use Illuminate\Auth\Access\Response;
 use Modules\Members\Models\User;
 
 class ObituaryPlanPolicy
@@ -23,7 +22,7 @@ class ObituaryPlanPolicy
     public function view(User $user, ObituaryPlan $obituaryPlan): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.view'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.view'));
     }
 
     /**
@@ -32,7 +31,7 @@ class ObituaryPlanPolicy
     public function create(User $user): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.create'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.create'));
     }
 
     /**
@@ -41,7 +40,7 @@ class ObituaryPlanPolicy
     public function update(User $user, ObituaryPlan $obituaryPlan): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.update'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.update'));
     }
 
     /**
@@ -50,7 +49,7 @@ class ObituaryPlanPolicy
     public function delete(User $user, ObituaryPlan $obituaryPlan): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.delete'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.delete'));
     }
 
     /**
@@ -59,7 +58,7 @@ class ObituaryPlanPolicy
     public function restore(User $user, ObituaryPlan $obituaryPlan): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.restore'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.restore'));
     }
 
     /**
@@ -68,6 +67,6 @@ class ObituaryPlanPolicy
     public function forceDelete(User $user, ObituaryPlan $obituaryPlan): bool
     {
         return $user->can('access-graveyard') &&
-               ($user->hasRole('Super Admin') || $user->can('obituary-plans.forceDelete'));
+            ($user->hasRole('Super Admin') || $user->can('obituary-plans.forceDelete'));
     }
 }
