@@ -175,7 +175,15 @@ class ExternalMemberController extends Controller
         $validated['family_no'] = Auth::user()->family_no ?? $validated['family_no'];
 
         $externalMember = ExternalMember::create($validated);
-
+        if ($externalMember->spouse_source == 'Member' && $externalMember->spouse_id) {
+            $spouse = Member::find($externalMember->spouse_id);
+            if ($spouse) {
+                $spouse->spouse_id = $externalMember->id;
+                $spouse->spouse_source = 'External';
+                $spouse->marital_status = 'Married'; // Married
+                $spouse->save();
+            }
+        }
         return redirect()->route('external-members.index')
             ->with('success', 'External member created successfully.');
     }
@@ -278,7 +286,22 @@ class ExternalMemberController extends Controller
             'relationship_id' => 'required|exists:relationships,id',
         ]);
 
-        $externalMember->update($validated);
+        $externalMember->fill($validated);
+        $isChanged = false;
+        $isChanged = $externalMember->isDirty('spouse_id');
+        $externalMember->save();
+
+        Log::info('External member ID ' . $externalMember->spouse_source . '-' . $isChanged);
+        if ($isChanged && $externalMember->spouse_source === 'Member') {
+            Log::info('Updating spouse relationship for external member ID ' . $externalMember->id);
+            $spouse = Member::find($externalMember->spouse_id);
+            if ($spouse) {
+                $spouse->spouse_id = $externalMember->id;
+                $spouse->spouse_source = 'External';
+                $spouse->marital_status = 'Married'; // Married
+                $spouse->save();
+            }
+        }
         // Calculate the page where the updated member will be displayed
         $perPage = $request->input('perPage', 15);
         $query = ExternalMember::query()->with(['relationship', 'gender']);

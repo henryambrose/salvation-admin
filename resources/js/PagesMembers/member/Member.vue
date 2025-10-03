@@ -463,7 +463,7 @@ const form = useForm({
   church_code: member?.church_code ? member.church_code : page.props.church_code,
   family_sequence: member?.family_sequence ? member.family_sequence : '',
   member_sequence: member?.member_sequence ? member.member_sequence : '',
-  marital_status: member?.marital_status ? member.marital_status : 'single',
+  marital_status: member?.marital_status ? member.marital_status : 'Single',
   // current_family_no is managed by business logic (marriage, etc.) - not editable
   mother_id: member?.mother_id || null,
   father_id: member?.father_id || null,
@@ -524,7 +524,7 @@ const loadCurrentSpouse = async () => {
   console.log('loadCurrentSpouse called', {
     member_spouse_id: member?.spouse_id,
     form_spouse_source: form.spouse_source,
-    form_spouse_id: form.spouse_id
+    form_spouse_id: form.spouse_id,
   });
 
   if (member?.spouse_id && form.spouse_source === 'Member') {
@@ -548,13 +548,15 @@ const loadCurrentSpouse = async () => {
 
         if (spouseArray && spouseArray.length > 0) {
           const spouse = spouseArray[0]; // Get first (and should be only) result
-          parishMembers.value = [{
-            id: spouse.id,
-            name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
-            family_no: spouse.family_no || '',
-            full_name: `${spouse.first_name} ${spouse.last_name}`,
-            community: spouse.community || '',
-          }];
+          parishMembers.value = [
+            {
+              id: spouse.id,
+              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
+              family_no: spouse.family_no || '',
+              full_name: `${spouse.first_name} ${spouse.last_name}`,
+              community: spouse.community || '',
+            },
+          ];
           console.log('Updated parishMembers with current spouse:', parishMembers.value);
         } else {
           console.log('No spouse data found in response');
@@ -577,13 +579,15 @@ const loadCurrentSpouse = async () => {
           const data = await fallbackResponse.json();
           if (data.length > 0) {
             const spouse = data[0];
-            parishMembers.value = [{
-              id: spouse.id,
-              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
-              family_no: spouse.family_no,
-              full_name: `${spouse.first_name} ${spouse.last_name}`,
-              community: spouse.community || '',
-            }];
+            parishMembers.value = [
+              {
+                id: spouse.id,
+                name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
+                family_no: spouse.family_no,
+                full_name: `${spouse.first_name} ${spouse.last_name}`,
+                community: spouse.community || '',
+              },
+            ];
           }
         }
       }
@@ -593,7 +597,7 @@ const loadCurrentSpouse = async () => {
   } else {
     console.log('Conditions not met for loading spouse:', {
       has_member_spouse_id: !!member?.spouse_id,
-      spouse_source_is_member: form.spouse_source === 'Member'
+      spouse_source_is_member: form.spouse_source === 'Member',
     });
   }
 };
@@ -616,7 +620,7 @@ const loadCurrentFather = async () => {
         if (fatherArray && fatherArray.length > 0) {
           const father = fatherArray[0];
           // Add father to familyMembers if not already present
-          const existingFather = familyMembers.value.find(m => m.id === father.id);
+          const existingFather = familyMembers.value.find((m) => m.id === father.id);
           if (!existingFather) {
             familyMembers.value.push({
               id: father.id,
@@ -653,7 +657,7 @@ const loadCurrentMother = async () => {
         if (motherArray && motherArray.length > 0) {
           const mother = motherArray[0];
           // Add mother to familyMembers if not already present
-          const existingMother = familyMembers.value.find(m => m.id === mother.id);
+          const existingMother = familyMembers.value.find((m) => m.id === mother.id);
           if (!existingMother) {
             familyMembers.value.push({
               id: mother.id,
@@ -889,7 +893,7 @@ watch(
       form.church_code = props.member.church_code || page.props.church_code;
       form.family_sequence = props.member.family_sequence || '';
       form.member_sequence = props.member.member_sequence || '';
-      form.marital_status = props.member.marital_status || 'single';
+      form.marital_status = props.member.marital_status || 'Single';
       form.father_id = props.member.father_id || null;
       form.mother_id = props.member.mother_id || null;
       form.spouse_id = props.member.spouse_id || null;
@@ -1216,7 +1220,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
     // Get current member's gender name for filtering
     let excludeGender = '';
     if (form.gender_id && props.genders) {
-      const currentGender = props.genders.find(g => g.id == form.gender_id);
+      const currentGender = props.genders.find((g) => g.id == form.gender_id);
       if (currentGender) {
         excludeGender = currentGender.name;
       }
@@ -1337,13 +1341,14 @@ onMounted(() => {
               <InputError class="mt-2" :message="form.errors.last_name" />
             </div>
             <div class="grid gap-2">
-              <Label for="gender">Gender</Label>
+              <Label for="gender">Gender <span class="text-red-500">*</span></Label>
               <SelectInput
                 id="gender"
                 v-model="form.gender_id"
                 :options="props.genders"
                 class="mt-1 block w-full rounded-full"
                 placeholder="Select Gender"
+                required
               />
               <InputError class="mt-2" :message="form.errors.gender_id" />
             </div>
@@ -1484,10 +1489,10 @@ onMounted(() => {
                 id="marital_status"
                 v-model="form.marital_status"
                 :options="[
-                  { id: 'single', name: 'Single' },
-                  { id: 'married', name: 'Married' },
-                  { id: 'divorced', name: 'Divorced' },
-                  { id: 'widowed', name: 'Widowed' },
+                  { id: 'Single', name: 'Single' },
+                  { id: 'Married', name: 'Married' },
+                  { id: 'Divorced', name: 'Divorced' },
+                  { id: 'Widowed', name: 'Widowed' },
                 ]"
                 class="mt-1 block w-full rounded-full"
                 placeholder="Select Marital Status"
@@ -1575,13 +1580,18 @@ onMounted(() => {
                 <div class="flex gap-2">
                   <SearchDropdown
                     :model-value="form.spouse_id || undefined"
-                    @update:model-value="(value) => { console.log('Spouse update received:', value); form.spouse_id = Number(value); }"
+                    @update:model-value="
+                      (value) => {
+                        console.log('Spouse update received:', value);
+                        form.spouse_id = Number(value);
+                      }
+                    "
                     :options="form.spouse_source === 'Member' ? parishMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                     :placeholder="
                       form.spouse_source === 'Member' ? 'Search spouse across parish (name or family no)...' : 'Search for spouse (external)...'
                     "
-                    @search="(query) => form.spouse_source === 'Member' ? fetchParishMembers(query) : null"
+                    @search="(query) => (form.spouse_source === 'Member' ? fetchParishMembers(query) : null)"
                   />
                   <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
@@ -1627,11 +1637,9 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.father_id || undefined"
                     @update:model-value="(value) => (form.father_id = Number(value))"
-                    :options="form.father_source === 'Member' ? familyMembers.filter(m => m.gender_name === 'Male') : externalFamilyMembers"
+                    :options="form.father_source === 'Member' ? familyMembers.filter((m) => m.gender_name === 'Male') : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="
-                      form.father_source === 'Member' ? 'Search father within family...' : 'Search for father (external)...'
-                    "
+                    :placeholder="form.father_source === 'Member' ? 'Search father within family...' : 'Search for father (external)...'"
                     @search="undefined"
                   />
                   <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
@@ -1678,11 +1686,9 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.mother_id || undefined"
                     @update:model-value="(value) => (form.mother_id = Number(value))"
-                    :options="form.mother_source === 'Member' ? familyMembers.filter(m => m.gender_name === 'Female') : externalFamilyMembers"
+                    :options="form.mother_source === 'Member' ? familyMembers.filter((m) => m.gender_name === 'Female') : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
-                    :placeholder="
-                      form.mother_source === 'Member' ? 'Search mother within family...' : 'Search for mother (external)...'
-                    "
+                    :placeholder="form.mother_source === 'Member' ? 'Search mother within family...' : 'Search for mother (external)...'"
                     @search="undefined"
                   />
                   <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
@@ -2013,7 +2019,9 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.baptism_date && (!validateNotFutureDate(form.baptism_date) || validateChronologicalDates('baptism_date', form.baptism_date))
+                  !showValidationModal &&
+                  form.baptism_date &&
+                  (!validateNotFutureDate(form.baptism_date) || validateChronologicalDates('baptism_date', form.baptism_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -2025,7 +2033,10 @@ onMounted(() => {
               <div v-if="!showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
               </div>
-              <div v-if="!showValidationModal && form.baptism_date && validateChronologicalDates('baptism_date', form.baptism_date)" class="mt-1 text-sm text-red-500">
+              <div
+                v-if="!showValidationModal && form.baptism_date && validateChronologicalDates('baptism_date', form.baptism_date)"
+                class="mt-1 text-sm text-red-500"
+              >
                 {{ validateChronologicalDates('baptism_date', form.baptism_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.baptism_date" />
@@ -2053,7 +2064,9 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.confirmation_date && (!validateNotFutureDate(form.confirmation_date) || validateChronologicalDates('confirmation_date', form.confirmation_date))
+                  !showValidationModal &&
+                  form.confirmation_date &&
+                  (!validateNotFutureDate(form.confirmation_date) || validateChronologicalDates('confirmation_date', form.confirmation_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -2068,7 +2081,10 @@ onMounted(() => {
               >
                 Date cannot be in the future.
               </div>
-              <div v-if="!showValidationModal && form.confirmation_date && validateChronologicalDates('confirmation_date', form.confirmation_date)" class="mt-1 text-sm text-red-500">
+              <div
+                v-if="!showValidationModal && form.confirmation_date && validateChronologicalDates('confirmation_date', form.confirmation_date)"
+                class="mt-1 text-sm text-red-500"
+              >
                 {{ validateChronologicalDates('confirmation_date', form.confirmation_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.confirmation_date" />
@@ -2101,7 +2117,9 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.marriage_date && (!validateNotFutureDate(form.marriage_date) || validateChronologicalDates('marriage_date', form.marriage_date))
+                  !showValidationModal &&
+                  form.marriage_date &&
+                  (!validateNotFutureDate(form.marriage_date) || validateChronologicalDates('marriage_date', form.marriage_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -2113,7 +2131,10 @@ onMounted(() => {
               <div v-if="!showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
               </div>
-              <div v-if="!showValidationModal && form.marriage_date && validateChronologicalDates('marriage_date', form.marriage_date)" class="mt-1 text-sm text-red-500">
+              <div
+                v-if="!showValidationModal && form.marriage_date && validateChronologicalDates('marriage_date', form.marriage_date)"
+                class="mt-1 text-sm text-red-500"
+              >
                 {{ validateChronologicalDates('marriage_date', form.marriage_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.marriage_date" />
@@ -2141,7 +2162,9 @@ onMounted(() => {
                 type="date"
                 :class="[
                   'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
-                  !showValidationModal && form.death_date && (!validateNotFutureDate(form.death_date) || validateChronologicalDates('death_date', form.death_date))
+                  !showValidationModal &&
+                  form.death_date &&
+                  (!validateNotFutureDate(form.death_date) || validateChronologicalDates('death_date', form.death_date))
                     ? 'border-red-300 focus:ring-red-200'
                     : 'border-gray-300',
                 ]"
@@ -2153,7 +2176,10 @@ onMounted(() => {
               <div v-if="!showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
               </div>
-              <div v-if="!showValidationModal && form.death_date && validateChronologicalDates('death_date', form.death_date)" class="mt-1 text-sm text-red-500">
+              <div
+                v-if="!showValidationModal && form.death_date && validateChronologicalDates('death_date', form.death_date)"
+                class="mt-1 text-sm text-red-500"
+              >
                 {{ validateChronologicalDates('death_date', form.death_date) }}
               </div>
               <InputError class="mt-2" :message="form.errors.death_date" />

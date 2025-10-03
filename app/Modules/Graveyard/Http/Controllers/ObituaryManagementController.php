@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 
 class ObituaryManagementController extends Controller
@@ -538,42 +539,25 @@ class ObituaryManagementController extends Controller
         return back()->with('success', 'Payment completed successfully! The obituary page is now active.');
     }
 
-    public function downloadQrCode(ObituaryPage $obituary)
+    public function downloadQrCode(ObituaryPage $obituary): BinaryFileResponse
     {
-        // Check policy authorization for downloading QR codes
         $this->authorize('view', $obituary);
 
-        // If no QR code path or file doesn't exist, generate it automatically
-        if (!$obituary->qr_code_path || !Storage::disk('public')->exists($obituary->qr_code_path)) {
-            $this->obituaryService->generateQrCode($obituary);
-            $obituary->refresh(); // Reload to get updated qr_code_path
+        // normalize to disk-relative path like "qr-codes/obituary-<uuid>.png"
+        $path = ltrim(str_replace(['public/', '\\'], ['', '/'], (string) $obituary->qr_code_path), '/');
+        abort_unless($path && Storage::disk('public')->exists($path), 404, 'QR code file not found');
+
+        // (optional) disable debugbar for this response, just in case
+        if (app()->bound('debugbar')) {
+            app('debugbar')->disable();
         }
 
-        // Final check - if still no QR code, return error
-        if (!$obituary->qr_code_path || !Storage::disk('public')->exists($obituary->qr_code_path)) {
-            return back()->with('error', 'Failed to generate QR code. Please try again.');
-        }
+        $downloadName = 'obituary-' . $obituary->uuid . '.png';
 
-        // Increment QR scan count
-        $obituary->increment('qr_scan_count');
-
-        // Get file path and return file directly to avoid output buffer issues
-        $filePath = Storage::disk('public')->path($obituary->qr_code_path);
-        $fileName = 'obituary-qr-' . $obituary->uuid . '.png';
-
-        // Ensure file exists at the path
-        if (!file_exists($filePath)) {
-            return back()->with('error', 'QR code file not found on disk. Please regenerate the QR code.');
-        }
-
-        // Clean any output buffers to prevent corruption
-        if (ob_get_level()) {
-            ob_end_clean();
-        }
-
-        // Return file directly using Laravel's download helper
-        return response()->download($filePath, $fileName, [
-            'Content-Type' => 'image/png',
+        // Let Laravel stream the file; don't set Content-Length manually.
+        return Storage::disk('public')->download($path, $downloadName, [
+            'Content-Type'  => 'image/png',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);
     }
 
@@ -628,6 +612,44 @@ class ObituaryManagementController extends Controller
         $obituary->update(['gallery_images' => $galleryImages]);
 
         return back()->with('success', 'Gallery image removed successfully!');
+    }
+
+    public function removeGalleryImagesBulk(Request $request, ObituaryPage $obituary)
+    {
+        // Check policy authorization for updating obituaries
+        $this->authorize('update', $obituary);
+
+        $validated = $request->validate([
+            'image_paths' => 'required|array',
+            'image_paths.*' => 'required|string'
+        ]);
+
+        $imagePaths = $validated['image_paths'];
+        $galleryImages = $obituary->gallery_images ?? [];
+        $deletedCount = 0;
+
+        foreach ($imagePaths as $imagePath) {
+            // Check if image exists in gallery
+            $imageIndex = array_search($imagePath, $galleryImages);
+            if ($imageIndex !== false) {
+                // Delete the file from storage
+                if (Storage::disk('public')->exists($imagePath)) {
+                    Storage::disk('public')->delete($imagePath);
+                }
+
+                // Remove from gallery array
+                unset($galleryImages[$imageIndex]);
+                $deletedCount++;
+            }
+        }
+
+        // Re-index array
+        $galleryImages = array_values($galleryImages);
+
+        // Update the database
+        $obituary->update(['gallery_images' => $galleryImages]);
+
+        return back()->with('success', "{$deletedCount} gallery image(s) removed successfully!");
     }
 
     public function removeAudioMessage(ObituaryPage $obituary)

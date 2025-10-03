@@ -22,6 +22,7 @@ return new class extends Migration
             // Optional direct community link for performance (denormalized)
             $table->foreignId('community_id')->nullable()->constrained('communities');
             $table->foreignId('relationship_id')->constrained('relationships')->onDelete('cascade');
+            $table->string('marital_status')->nullable()->default('Single');
             $table->unsignedBigInteger('father_id')->nullable();
             $table->unsignedBigInteger('mother_id')->nullable();
             $table->unsignedBigInteger('spouse_id')->nullable();

@@ -235,6 +235,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
 
         // Custom QR code generation
         Route::post('/{obituary}/generate-qr', [ObituaryManagementController::class, 'generateCustomQr'])->name('qr.generate');
+        Route::get('/{obituary:uuid}/qr-download', [ObituaryManagementController::class, 'downloadQrCode'])->name('qr.download-admin');
 
         // Payment processing
         Route::post('/{obituary}/payment', [ObituaryManagementController::class, 'processPayment'])->name('payment.process');
@@ -242,6 +243,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         // Image management
         Route::delete('/{obituary}/profile-image', [ObituaryManagementController::class, 'removeProfileImage'])->name('images.remove-profile');
         Route::delete('/{obituary}/gallery-image', [ObituaryManagementController::class, 'removeGalleryImage'])->name('images.remove-gallery');
+        Route::delete('/{obituary}/gallery-images-bulk', [ObituaryManagementController::class, 'removeGalleryImagesBulk'])->name('images.remove-gallery-bulk');
         Route::delete('/{obituary}/audio-message', [ObituaryManagementController::class, 'removeAudioMessage'])->name('audio.remove');
         Route::post('/{obituary}/cleanup-files', [ObituaryManagementController::class, 'cleanupOrphanedFiles'])->name('files.cleanup');
 

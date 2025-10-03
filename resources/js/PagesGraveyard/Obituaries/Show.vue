@@ -206,14 +206,7 @@ const copyPublicLink = async () => {
 };
 
 const downloadQRCode = () => {
-  // Create a temporary link element to trigger download
-  const link = document.createElement('a');
-  link.href = `/graveyard/obituaries/${props.obituary.uuid}/qr-download`;
-  link.download = `obituary-qr-${props.obituary.uuid}.png`;
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  window.location.href = `/graveyard/obituaries/${props.obituary.uuid}/qr-download?ts=${Date.now()}`;
 };
 
 const generateStandardQr = () => {

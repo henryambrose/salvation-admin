@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, FileImage, Music, Palette, Upload, X } from 'lucide-vue-next';
+import { ArrowLeft, CheckSquare, FileImage, Music, Palette, Square, Trash2, Upload, X } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 interface ObituaryPage {
@@ -97,6 +97,10 @@ const audioMessageRef = ref<HTMLInputElement>();
 // Image preview states
 const profileImagePreview = ref<string | null>(null);
 const galleryPreviews = ref<string[]>([]);
+
+// Multiple selection for gallery images
+const selectedGalleryImages = ref<number[]>([]);
+const isSelectMode = ref(false);
 
 // Available backgrounds computed property
 const availableBackgrounds = computed(() => {
@@ -254,6 +258,50 @@ const removeExistingGalleryImage = (index: number) => {
   const imagePath = props.obituary.gallery_images?.[index];
   if (imagePath) {
     removeGalleryImage(imagePath);
+  }
+};
+
+const toggleSelectMode = () => {
+  isSelectMode.value = !isSelectMode.value;
+  if (!isSelectMode.value) {
+    selectedGalleryImages.value = [];
+  }
+};
+
+const toggleImageSelection = (index: number) => {
+  const selectedIndex = selectedGalleryImages.value.indexOf(index);
+  if (selectedIndex > -1) {
+    selectedGalleryImages.value.splice(selectedIndex, 1);
+  } else {
+    selectedGalleryImages.value.push(index);
+  }
+};
+
+const selectAllImages = () => {
+  if (selectedGalleryImages.value.length === (props.obituary.gallery_images?.length || 0)) {
+    selectedGalleryImages.value = [];
+  } else {
+    selectedGalleryImages.value = (props.obituary.gallery_images || []).map((_, index) => index);
+  }
+};
+
+const deleteSelectedImages = () => {
+  if (selectedGalleryImages.value.length === 0) return;
+
+  if (confirm(`Are you sure you want to delete ${selectedGalleryImages.value.length} selected image(s)?`)) {
+    const imagePaths = selectedGalleryImages.value
+      .map(index => props.obituary.gallery_images?.[index])
+      .filter(Boolean);
+
+    router.delete(`/graveyard/obituaries/${props.obituary.uuid}/gallery-images-bulk`, {
+      data: { image_paths: imagePaths },
+      preserveState: false,
+      onSuccess: () => {
+        selectedGalleryImages.value = [];
+        isSelectMode.value = false;
+        success(`${imagePaths.length} image(s) deleted successfully!`);
+      },
+    });
   }
 };
 
@@ -578,11 +626,49 @@ const goBack = () => {
 
               <!-- Gallery Images (Premium Only) -->
               <div class="border-t pt-6">
-                <Label class="flex items-center text-base font-semibold">
-                  Gallery Photos
-                  <!-- <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span> -->
-                </Label>
-                <p class="mb-4 text-sm text-gray-600">Additional photos for the memorial gallery</p>
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <Label class="flex items-center text-base font-semibold">
+                      Gallery Photos
+                      <!-- <span class="ml-2 rounded-full bg-purple-100 px-2 py-1 text-xs font-medium text-purple-700">Premium Feature</span> -->
+                    </Label>
+                    <p class="text-sm text-gray-600">Additional photos for the memorial gallery</p>
+                  </div>
+
+                  <!-- Selection Controls -->
+                  <div v-if="obituary.gallery_images?.length" class="flex items-center gap-2">
+                    <Button
+                      v-if="isSelectMode"
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      @click="selectAllImages"
+                    >
+                      <CheckSquare class="mr-1 h-4 w-4" />
+                      {{ selectedGalleryImages.length === (obituary.gallery_images?.length || 0) ? 'Deselect All' : 'Select All' }}
+                    </Button>
+
+                    <Button
+                      v-if="isSelectMode && selectedGalleryImages.length > 0"
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      @click="deleteSelectedImages"
+                    >
+                      <Trash2 class="mr-1 h-4 w-4" />
+                      Delete ({{ selectedGalleryImages.length }})
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      @click="toggleSelectMode"
+                    >
+                      {{ isSelectMode ? 'Cancel' : 'Select Multiple' }}
+                    </Button>
+                  </div>
+                </div>
 
                 <!-- Current Gallery Grid -->
                 <div v-if="obituary.gallery_images?.length || galleryPreviews.length" class="mb-4">
@@ -593,6 +679,7 @@ const goBack = () => {
                       :key="`existing-${index}`"
                       style="position: relative; width: 150px; height: 150px"
                       class="group"
+                      :class="{ 'ring-4 ring-blue-500 ring-offset-2': isSelectMode && selectedGalleryImages.includes(index) }"
                     >
                       <img
                         :src="image.startsWith('http') ? image : `/storage/${image}`"
@@ -605,9 +692,25 @@ const goBack = () => {
                           border: 2px solid #e5e7eb;
                           box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
                         "
+                        @click="isSelectMode ? toggleImageSelection(index) : null"
+                        :class="{ 'cursor-pointer': isSelectMode }"
                       />
+
+                      <!-- Selection Checkbox -->
+                      <div
+                        v-if="isSelectMode"
+                        class="absolute top-2 left-2 z-10"
+                        @click.stop="toggleImageSelection(index)"
+                      >
+                        <div class="bg-white rounded-full p-1 shadow-lg cursor-pointer">
+                          <CheckSquare v-if="selectedGalleryImages.includes(index)" class="h-5 w-5 text-blue-600" />
+                          <Square v-else class="h-5 w-5 text-gray-400" />
+                        </div>
+                      </div>
+
                       <!-- Delete button positioned at top-right corner -->
                       <button
+                        v-if="!isSelectMode"
                         type="button"
                         @click="removeExistingGalleryImage(index)"
                         class="absolute top-1 right-1 rounded-full bg-red-600 p-1 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-700"

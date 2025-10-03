@@ -37,7 +37,7 @@ class StoreMemberRequest extends FormRequest
             'church_code' => 'nullable|string|max:3',
             'family_sequence' => 'nullable|integer',
             'member_sequence' => 'nullable|integer',
-            'marital_status' => 'nullable|in:single,married,divorced,widowed',
+            'marital_status' => 'nullable|in:Single,Married,Divorced,Widowed',
             'birth_family_no' => 'nullable|string|max:255',
             'relation_member_id' => 'nullable|exists:members,id',
             'mother_id' => 'nullable|exists:members,id',

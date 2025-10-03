@@ -132,6 +132,7 @@ const audioMessageRef = ref<HTMLInputElement>();
 // Image preview states
 const profileImagePreview = ref<string | null>(null);
 const galleryPreviews = ref<string[]>([]);
+const isUploadingGallery = ref(false);
 
 // Rephrasing states
 const rephraseLoading = ref<Record<string, boolean>>({
@@ -193,6 +194,7 @@ const handleGalleryImagesSelect = (event: Event) => {
   const target = event.target as HTMLInputElement;
 
   if (target.files) {
+    isUploadingGallery.value = true;
     const files = Array.from(target.files);
     const validFiles = files.filter((file) => validateImageFile(file));
 
@@ -201,9 +203,14 @@ const handleGalleryImagesSelect = (event: Event) => {
     galleryPreviews.value = [];
 
     // Generate previews for new files
+    let processedCount = 0;
     validFiles.forEach((file) => {
       generateImagePreview(file, (preview) => {
         galleryPreviews.value.push(preview);
+        processedCount++;
+        if (processedCount === validFiles.length) {
+          isUploadingGallery.value = false;
+        }
       });
     });
 
@@ -216,6 +223,7 @@ const handleGalleryImagesDrop = (event: DragEvent) => {
   event.preventDefault();
   const files = event.dataTransfer?.files;
   if (files) {
+    isUploadingGallery.value = true;
     const filesArray = Array.from(files);
     const validFiles = filesArray.filter((file) => validateImageFile(file));
 
@@ -224,9 +232,14 @@ const handleGalleryImagesDrop = (event: DragEvent) => {
     galleryPreviews.value = [];
 
     // Generate previews for new files
+    let processedCount = 0;
     validFiles.forEach((file) => {
       generateImagePreview(file, (preview) => {
         galleryPreviews.value.push(preview);
+        processedCount++;
+        if (processedCount === validFiles.length) {
+          isUploadingGallery.value = false;
+        }
       });
     });
   }
@@ -653,6 +666,14 @@ const goBack = () => {
                 <div class="border-t pt-6">
                   <Label class="text-base font-semibold">Gallery Photos</Label>
                   <p class="mb-4 text-sm text-gray-600">Additional photos for the memorial gallery</p>
+
+                  <!-- Uploading Indicator -->
+                  <div v-if="isUploadingGallery" class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                    <div class="flex items-center space-x-3">
+                      <RefreshCw class="h-5 w-5 animate-spin text-blue-600" />
+                      <span class="text-sm font-medium text-blue-700">Uploading photos...</span>
+                    </div>
+                  </div>
 
                   <!-- Gallery Previews -->
                   <div v-if="galleryPreviews.length" style="margin-bottom: 16px">

@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+
 
 class ObituaryController extends Controller
 {
@@ -200,30 +202,48 @@ class ObituaryController extends Controller
     /**
      * Download QR code for the obituary
      */
-    public function downloadQrCode(string $uuid)
+    public function downloadQrCode(string $uuid): BinaryFileResponse
     {
-        $obituary = ObituaryPage::where('uuid', $uuid)
-            ->where('is_public', true)
-            ->where('is_active', true)
-            ->first();
+        $obituary = ObituaryPage::where('uuid', $uuid)->firstOrFail();
 
-        if (!$obituary || !$obituary->qr_code_path) {
-            abort(404, 'QR code not found');
+        // 1) Start with whatever is in DB
+        $path = $obituary->qr_code_path ?? '';
+
+        // 2) Normalize common mistakes:
+        //    - remove leading "public/"
+        //    - fix backslashes
+        //    - fix singular "qr-code" -> plural "qr-codes"
+        $path = ltrim(str_replace(['public/', '\\'], ['', '/'], $path), '/');
+        if (str_starts_with($path, 'qr-code/')) {
+            $path = preg_replace('/^qr-code\//', 'qr-codes/', $path);
         }
 
-        // Increment QR scan count
-        $obituary->increment('qr_scan_count');
-
-        // Return the QR code file for download
-        if (Storage::disk('public')->exists($obituary->qr_code_path)) {
-            $filePath = Storage::disk('public')->path($obituary->qr_code_path);
-            $fileName = 'obituary-qr-' . $obituary->uuid . '.png';
-
-            return response()->download($filePath, $fileName);
+        // 3) Now verify
+        if (!$path || !Storage::disk('public')->exists($path)) {
+            // helpful logs while you test
+            logger()->warning('QR download: file not found', [
+                'uuid' => $uuid,
+                'qr_code_path_in_db' => $obituary->qr_code_path,
+                'normalized_path' => $path,
+                'root' => Storage::disk('public')->path(''),
+            ]);
+            abort(404, 'QR code file not found');
         }
+        Log::info('QR download: file found', [
+            'uuid' => $uuid,
+            'qr_code_path_in_db' => $obituary->qr_code_path,
+            'normalized_path' => $path,
+            'root' => Storage::disk('public')->path(''),
+        ]);
+        $absolute = Storage::disk('public')->path($path);
+        $filename = 'obituary-qr-' . $obituary->uuid . '.png';
 
-        abort(404, 'QR code file not found');
+        return response()->download($absolute, $filename, [
+            'Content-Type' => 'image/png',
+        ]);
     }
+
+
 
     /**
      * Preview obituary page (admin only)
@@ -347,8 +367,8 @@ class ObituaryController extends Controller
 
         // Get image details
         $fullPath = Storage::disk('public')->path($imagePath);
-        $imageUrl = Storage::disk('public')->url($imagePath);
-        $mimeType = Storage::disk('public')->mimeType($imagePath);
+        $imageUrl = asset('storage/' . $imagePath);
+        $mimeType = mime_content_type($fullPath);
         $fileSize = Storage::disk('public')->size($imagePath);
 
         // Create HTML page with proper favicon and meta tags

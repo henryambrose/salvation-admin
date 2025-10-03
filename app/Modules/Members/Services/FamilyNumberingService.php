@@ -221,15 +221,14 @@ class FamilyNumberingService
                     'father_id' => null,                     // Clear parent links
                     'mother_id' => null,                     // Clear parent links
                     'spouse_id' => $groom->id,               // Link to groom
-                    'marital_status' => 'married'
+                    'marital_status' => 'Married'
                 ]);
 
                 // Update groom
                 $groom->update([
                     'spouse_id' => $bride->id,
-                    'marital_status' => 'married'
+                    'marital_status' => 'Married'
                 ]);
-
             } else {
                 // Rare case: Groom joins bride's family
                 $this->createExternalMemberRecord($groom, $groom->family_no, $externalMemberClass);
@@ -241,13 +240,13 @@ class FamilyNumberingService
                     'father_id' => null,                     // Clear parent links
                     'mother_id' => null,                     // Clear parent links
                     'spouse_id' => $bride->id,               // Link to bride
-                    'marital_status' => 'married'
+                    'marital_status' => 'Married'
                 ]);
 
                 // Update bride
                 $bride->update([
                     'spouse_id' => $groom->id,
-                    'marital_status' => 'married'
+                    'marital_status' => 'Married'
                 ]);
             }
         });
@@ -297,7 +296,7 @@ class FamilyNumberingService
         $query = Member::where('family_no', $familyGroup);
 
         if (! $includeMarriedMembers) {
-            $query->where('marital_status', '!=', 'married');
+            $query->where('marital_status', '!=', 'Married');
         }
 
         return $query->with(['relationship', 'community'])

@@ -51,18 +51,18 @@ export interface Member {
   church_code?: string | null;
   family_sequence?: number | null;
   member_sequence?: number | null;
-  marital_status?: 'single' | 'married' | 'divorced' | 'widowed';
+  marital_status?: 'Single' | 'Married' | 'Divorced' | 'Widowed';
   birth_family_no?: string | null;
   // relation_member_id?: number | null;
   mother_id?: number | null;
   father_id?: number | null;
-  spouse_id?: number | null;  
+  spouse_id?: number | null;
   status: 'Resident' | 'Non-Resident' | 'Dead' | 'Redevelopment Unsettled';
   relationship?: string | null;
   last_name?: string | null;
   first_name?: string;
   middle_name?: string | null;
-  date_of_birth?: string | null; 
+  date_of_birth?: string | null;
   permanent_add1?: string | null;
   permanent_add2?: string | null;
   permanent_add3?: string | null;
@@ -93,19 +93,19 @@ export interface Member {
   company_name?: string | null;
   designation_id?: number | null;
   income_range_id?: number | null;
-  baptism_date?: string | null; 
+  baptism_date?: string | null;
   baptism_reg_no?: string | null;
   baptism_parish?: string | null;
   baptism_parish_id?: number | null;
-  confirmation_date?: string | null; 
+  confirmation_date?: string | null;
   confirmation_reg_no?: string | null;
   confirmation_parish?: string | null;
   confirmation_parish_id?: number | null;
-  marriage_date?: string | null; 
+  marriage_date?: string | null;
   marriage_reg_no?: string | null;
   marriage_parish?: string | null;
   marriage_parish_id?: number | null;
-  death_date?: string | null; 
+  death_date?: string | null;
   deaths_reg_no?: string | null;
   death_parish?: string | null;
   death_parish_id?: number | null;
@@ -113,9 +113,9 @@ export interface Member {
   scc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
   ppc_heads?: Array<{ id: number; community?: { id: number; name: string } }> | null;
   cluster_heads?: Array<{ id: number; community?: { id: number; name: string }; cluster?: { id: number; name: string } }> | null;
-  created_at: string; 
-  updated_at: string; 
-  deleted_at?: string | null; 
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
   spouse_source?: string;
   father_source?: string;
   mother_source?: string;
@@ -137,20 +137,20 @@ export interface ExternalMember {
   address?: string;
   relationship_id?: number;
   father_data?: {
-    id: number
-    name: string
-    type: 'internal' | 'external'
-  } | null
+    id: number;
+    name: string;
+    type: 'internal' | 'external';
+  } | null;
   mother_data?: {
-    id: number
-    name: string
-    type: 'internal' | 'external'
-  } | null
+    id: number;
+    name: string;
+    type: 'internal' | 'external';
+  } | null;
   spouse_data?: {
-    id: number
-    name: string
-    type: 'internal' | 'external'
-  } | null
+    id: number;
+    name: string;
+    type: 'internal' | 'external';
+  } | null;
 }
 
 export interface CommunityCluster {
@@ -170,8 +170,6 @@ export interface Community {
 
 export type Communities = Community[];
 
-
-
 export interface IncomeRange {
   id: number; // changed from string to number
   name: string;
@@ -184,7 +182,10 @@ export interface SCCHead {
   member_id: number;
   community_id: number;
 }
-export interface Zone { id: number|string; name: string; }
+export interface Zone {
+  id: number | string;
+  name: string;
+}
 export interface PPCHead {
   id: number;
   member_id: number;
@@ -195,10 +196,10 @@ export interface CommunityFund {
   member_id: number;
   member: Member;
   amount: number;
-  fund_date: string; 
+  fund_date: string;
   description?: string | null;
-  created_at: string; 
-  updated_at: string; 
+  created_at: string;
+  updated_at: string;
 }
 
 export type CommunityFunds = CommunityFund[];
@@ -206,9 +207,9 @@ export type CommunityFunds = CommunityFund[];
 export interface Country {
   id: number;
   name: string;
-  created_at: string; 
-  updated_at: string; 
-  deleted_at?: string | null; 
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
 }
 
 export type Countries = Country[];
@@ -218,20 +219,19 @@ export interface State {
   name: string;
   abbr?: string | null;
   country_id?: number | null;
-  created_at: string; 
-  updated_at: string; 
-  deleted_at?: string | null; 
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
 }
 
 export type States = State[];
-
 
 export interface City {
   id: number;
   state_id?: number | null;
   name: string;
-  created_at?: string | null; 
-  updated_at?: string | null; 
+  created_at?: string | null;
+  updated_at?: string | null;
   deleted_at?: string | null;
 }
 export type Cities = City[];
@@ -241,9 +241,9 @@ export interface Town {
   name: string;
   pincode?: string | null;
   city_id?: number | null;
-  created_at?: string | null; 
-  updated_at?: string | null; 
-  deleted_at?: string | null; 
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type Towns = Town[];
@@ -262,7 +262,6 @@ export interface BloodGroup {
 
 export type BloodGroups = BloodGroup[];
 
-
 // countres
 export interface Country {
   id: number;
@@ -279,13 +278,11 @@ export interface State {
 
 export type States = State[];
 
-
-
 export interface Designation {
   id: number;
   name: string;
-  created_at: string; 
-  updated_at: string; 
+  created_at: string;
+  updated_at: string;
 }
 
 export type Designations = Designation[];
@@ -322,9 +319,9 @@ export interface AgeGroup {
   description?: string | null;
   min_age: number;
   max_age: number;
-  created_at?: string | null; 
-  updated_at?: string | null; 
-  deleted_at?: string | null; 
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 }
 
 export type AgeGroups = AgeGroup[];
@@ -335,21 +332,20 @@ export interface Parish {
   name: string;
   code?: string | null;
   address?: string | null;
-  created_at: string; 
-  updated_at: string; 
-  deleted_at?: string | null;  
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string | null;
 }
 
 export type Parishes = Parish[];
-
 
 export interface Relationship {
   id: number;
   name: string;
   description?: string | null;
-  created_at?: string | null; 
-  updated_at?: string | null; 
-  deleted_at?: string | null;  
+  created_at?: string | null;
+  updated_at?: string | null;
+  deleted_at?: string | null;
 }
 export type Relationships = Relationship[];
 

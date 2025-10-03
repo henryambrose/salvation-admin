@@ -212,6 +212,52 @@ const restoreObituary = (obituaryUuid: string) => {
     },
   );
 };
+
+const downloadQRCode = async (uuid: string) => {
+  try {
+    // Get CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    // Fetch the QR code file with proper headers
+    const response = await fetch(`/graveyard/obituaries/${uuid}/qr-download`, {
+      method: 'GET',
+      headers: {
+        'X-CSRF-TOKEN': csrfToken,
+        'X-Requested-With': 'XMLHttpRequest',
+        'Accept': 'image/png,image/*,*/*',
+      },
+      credentials: 'same-origin', // Include cookies for authentication
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(errorData.error || 'Failed to download QR code');
+    }
+
+    // Get the blob from response
+    const blob = await response.blob();
+
+    // Create blob URL and trigger download
+    const blobUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = `obituary-${uuid}.png`;
+    link.style.display = 'none';
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    }, 100);
+
+    success('QR code downloaded successfully!');
+  } catch (err: any) {
+    console.error('QR code download error:', err);
+    error(err.message || 'Failed to download QR code. Please try again.');
+  }
+};
 </script>
 
 <template>
@@ -373,10 +419,8 @@ const restoreObituary = (obituaryUuid: string) => {
                           <Button size="sm" variant="outline" @click="copyShareLink(obituary.uuid, obituary)" title="Copy share link">
                             <Share2 class="h-3 w-3" />
                           </Button>
-                          <Button size="sm" variant="outline" as-child title="Manage obituary">
-                            <Link :href="`/graveyard/obituaries/${obituary.uuid}`">
-                              <QrCode class="h-3 w-3" />
-                            </Link>
+                          <Button size="sm" variant="outline" @click="downloadQRCode(obituary.uuid)" title="Download QR code">
+                            <QrCode class="h-3 w-3" />
                           </Button>
                         </div>
 

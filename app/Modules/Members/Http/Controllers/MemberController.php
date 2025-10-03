@@ -381,7 +381,7 @@ class MemberController extends Controller
             // Set default values for family numbering
             $data['church_code'] = $data['church_code'] ?? config('app.church_code', 'SAL');
             $data['registration_year'] = $data['registration_year'] ?? date('Y');
-            $data['marital_status'] = $data['marital_status'] ?? 'single';
+            $data['marital_status'] = $data['marital_status'] ?? 'Single';
 
             // Check if this is a new family or existing family
             if ($request->has('existing_family_no') && $request->existing_family_no && ! empty($request->existing_family_no)) {
@@ -566,7 +566,7 @@ class MemberController extends Controller
         $oldValues = $member->toArray();
 
         $validated = $request->validated();
-
+        Log::info('Validated data for update:', $validated);
         // Check if spouse_id changed and handle family transition
         $shouldCallTransition = isset($validated['spouse_id']) &&
             $validated['spouse_id'] !== null &&
@@ -574,14 +574,25 @@ class MemberController extends Controller
             (string)$validated['spouse_id'] != (string)$member->spouse_id;
 
         $member->update($validated);
-
-        if ($shouldCallTransition) {
-            $this->handleMarriageTransition($member, $validated);
+        if ($validated['spouse_source'] == 'External' && $validated['spouse_id'] !== null) {
+            $externalSpouse = ExternalMember::find($validated['spouse_id']);
+            if ($externalSpouse && (!$externalSpouse->spouse_id)) {
+                $externalSpouse->spouse_id = $member->id;
+                $externalSpouse->spouse_source = 'Member';
+                $externalSpouse->marital_status = 'Married';
+                $externalSpouse->save();
+                $member->marital_status = 'Married';
+                $member->save();
+            }
         } else {
-            Log::info('Not calling handleMarriageTransition - condition not met');
+
+            if ($shouldCallTransition) {
+
+                $this->handleMarriageTransition($member, $validated);
+            } else {
+                Log::info('Not calling handleMarriageTransition - condition not met');
+            }
         }
-
-
 
         // Create audit log for the update
         AuditLog::create([
@@ -1509,18 +1520,18 @@ class MemberController extends Controller
             // Male new member keeps his family, female spouse joins his family
             $this->updateSpouseToJoinNewMemberFamily($spouse, $data);
             // Male new member keeps his original family assignment
-            $data['marital_status'] = 'married';
+            $data['marital_status'] = 'Married';
         } elseif ($newMemberGender === 'Other' && $spouseGender === 'Female') {
             // Other gender new member keeps family, female spouse joins
             $this->updateSpouseToJoinNewMemberFamily($spouse, $data);
-            $data['marital_status'] = 'married';
+            $data['marital_status'] = 'Married';
         } else {
             // Same gender or other combinations - default to new member joining spouse's family
             $this->processNewMemberFamilyTransition($data, $spouse, 'default');
         }
 
         // Update spouse's marital status to married
-        $spouse->marital_status = 'married';
+        $spouse->marital_status = 'Married';
         $spouse->save();
     }
 
@@ -1538,7 +1549,7 @@ class MemberController extends Controller
         $data['mother_id'] = null;
 
         // Set marital status to married
-        $data['marital_status'] = 'married';
+        $data['marital_status'] = 'Married';
 
         // Set appropriate relationship based on gender
         $this->setNewMemberSpouseRelationship($data);
@@ -1721,7 +1732,7 @@ class MemberController extends Controller
         $spouse->family_no = $data['family_no'];
         $spouse->father_id = null;
         $spouse->mother_id = null;
-        $spouse->marital_status = 'married';
+        $spouse->marital_status = 'Married';
 
         // Set bidirectional spouse relationship (spouse will be updated after member is created)
         // Note: The new member's spouse_id will be set in the $data array
@@ -1778,7 +1789,8 @@ class MemberController extends Controller
     {
 
         // Get the spouse with their gender
-        $spouse = Member::with('gender')->find($validated['spouse_id']);
+        $spouse = Member::with('gender')->find($validated['member_sequence']);
+
         if (!$spouse) {
             return;
         }
@@ -1795,16 +1807,16 @@ class MemberController extends Controller
             ]);
 
             // Just set marital status for both members - no family changes or external members needed
-            $validated['marital_status'] = 'married';
+            $validated['marital_status'] = 'Married';
 
             // Also update the current member's marital status immediately in the database
-            $member->marital_status = 'married';
+            $member->marital_status = 'Married';
             $member->save();
 
             // Update spouse's marital status and bidirectional relationship
             $spouse->spouse_id = $member->id;
             $spouse->spouse_source = 'Member';
-            $spouse->marital_status = 'married';
+            $spouse->marital_status = 'Married';
             $spouse->save();
 
             return;
@@ -1828,7 +1840,7 @@ class MemberController extends Controller
         } elseif ($memberGender === 'Other' && $spouseGender === 'Female') {
             // Other gender member stays, female spouse joins
             $this->processSpouseJoinsFamily($spouse, $member, 'female_joins_male');
-            $validated['marital_status'] = 'married';
+            $validated['marital_status'] = 'Married';
         } else {
             // Same gender or other combinations - default to member joining spouse's family
             $this->processFamilyTransition($member, $spouse, $validated, 'default');
@@ -1855,7 +1867,7 @@ class MemberController extends Controller
             $personJoining['family_no'] = $personStaying->family_no;
             $personJoining['father_id'] = null; // Clear birth family relationships
             $personJoining['mother_id'] = null;
-            $personJoining['marital_status'] = 'married';
+            $personJoining['marital_status'] = 'Married';
             $personJoining->save();
 
             // Set appropriate relationship
@@ -1865,7 +1877,7 @@ class MemberController extends Controller
         // Set bidirectional spouse relationship for the person staying
         $personStaying->spouse_id = $personJoining->id;
         $personStaying->spouse_source = 'Member';
-        $personStaying->marital_status = 'married';
+        $personStaying->marital_status = 'Married';
         $personStaying->save();
     }
 
@@ -1889,7 +1901,7 @@ class MemberController extends Controller
         $spouse->family_no = $memberStaying->family_no;
         $spouse->father_id = null; // Clear birth family relationships
         $spouse->mother_id = null;
-        $spouse->marital_status = 'married';
+        $spouse->marital_status = 'Married';
 
         // Set bidirectional spouse relationship
         $spouse->spouse_id = $memberStaying->id;
@@ -1918,7 +1930,7 @@ class MemberController extends Controller
         // Update the member staying (male member) - set marital status and bidirectional relationship
         $memberStaying->spouse_id = $spouse->id;
         $memberStaying->spouse_source = 'Member';
-        $memberStaying->marital_status = 'married';
+        $memberStaying->marital_status = 'Married';
         $memberStaying->save();
 
         Log::info('Spouse joined family and updated member staying', [
