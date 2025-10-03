@@ -217,6 +217,11 @@ const totalAmount = computed(() => {
     return Number(props.booking.balance_amount) || 0;
   }
 
+  // If services are selected AND there's an outstanding balance, add both
+  if (form.selected_services.length > 0 && props.booking.balance_amount > 0) {
+    return servicesTotal + Number(props.booking.balance_amount);
+  }
+
   return servicesTotal;
 });
 
@@ -699,6 +704,7 @@ const submit = () => {
                         <span class="text-orange-600">Concession Discount:</span>
                         <span class="font-medium text-orange-600">- {{ formatCurrency(Number(form.concession_amount) || 0) }}</span>
                       </div>
+
                       <!-- Balance Payment Info -->
                       <div
                         v-if="form.selected_services.length === 0 && booking.balance_amount > 0"
@@ -708,11 +714,35 @@ const submit = () => {
                         <div class="text-xs text-blue-700">Outstanding balance from previous payment</div>
                       </div>
 
-                      <div class="flex justify-between">
-                        <span class="text-gray-500">
-                          {{ form.selected_services.length > 0 ? 'Service Total:' : 'Outstanding Balance:' }}
+                      <!-- Show breakdown when both services and balance exist -->
+                      <template v-if="form.selected_services.length > 0 && booking.balance_amount > 0">
+                        <div class="col-span-2 rounded-md border border-amber-200 bg-amber-50 p-2">
+                          <div class="mb-2 text-sm font-medium text-amber-800">⚠️ Outstanding Balance Included</div>
+                          <div class="text-xs text-amber-700">The outstanding balance will be added to this payment</div>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-gray-500">New Services:</span>
+                          <span class="font-medium">{{
+                            formatCurrency(
+                              Math.max(
+                                0,
+                                form.selected_services.reduce((sum, service) => sum + (Number(service.total_cost) || 0), 0) -
+                                  (Number(form.concession_amount) || 0),
+                              ),
+                            )
+                          }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                          <span class="text-red-600">Outstanding Balance:</span>
+                          <span class="font-medium text-red-600">{{ formatCurrency(booking.balance_amount) }}</span>
+                        </div>
+                      </template>
+
+                      <div class="flex justify-between font-semibold" :class="form.selected_services.length > 0 && booking.balance_amount > 0 ? 'col-span-2 border-t pt-2' : ''">
+                        <span class="text-gray-700">
+                          {{ form.selected_services.length > 0 && booking.balance_amount > 0 ? 'Total Amount Due:' : form.selected_services.length > 0 ? 'Service Total:' : 'Outstanding Balance:' }}
                         </span>
-                        <span class="font-medium">{{ formatCurrency(totalAmount) }}</span>
+                        <span class="font-bold">{{ formatCurrency(totalAmount) }}</span>
                       </div>
                       <div class="flex justify-between">
                         <span class="text-gray-500">Amount Paying:</span>

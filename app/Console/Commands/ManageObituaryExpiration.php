@@ -107,18 +107,7 @@ class ManageObituaryExpiration extends Command
                     'is_public' => false,
                 ]);
                 $action = 'Deactivated (beyond grace period)';
-            }
-            // Within grace period for premium - downgrade to basic
-            // elseif ($obituary->service_type === 'premium') {
-            //     $basicDays = config('obituary.duration.basic', 90);
-            //     $obituary->update([
-            //         'service_type' => 'basic',
-            //         'expires_at' => Carbon::now()->addDays($basicDays),
-            //     ]);
-            //     $action = "Downgraded to basic service (expires in {$basicDays} days)";
-            // }
-            // Basic service expired - deactivate
-            else {
+            } else {
                 $obituary->update([
                     'is_active' => false,
                 ]);

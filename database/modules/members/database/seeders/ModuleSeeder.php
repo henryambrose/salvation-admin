@@ -337,7 +337,7 @@ class ModuleSeeder extends Seeder
                 'name' => 'Certificate Records',
                 'slug' => 'certificate',
                 'icon' => 'Award',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'generate', 'reprint', 'download'],
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
             [
                 'name' => 'Certificate Types',
@@ -349,7 +349,7 @@ class ModuleSeeder extends Seeder
                 'name' => 'Certificate Templates',
                 'slug' => 'certificate-template',
                 'icon' => 'FileTemplate',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'manage', 'set-default', 'preview'],
+                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
 
             // Special Pages

@@ -6,7 +6,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Eye, EyeOff, FileText, Globe, Plus, QrCode, Search, Share2, Undo2 } from 'lucide-vue-next';
+import { Eye, EyeOff, FileText, Globe, Pencil, Plus, QrCode, Search, Share2, Undo2 } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 interface ObituaryPage {
@@ -23,6 +23,11 @@ interface ObituaryPage {
   can_be_accessed_publicly: boolean;
   payment_status: 'pending' | 'completed' | 'failed' | 'refunded';
   can_be_published: boolean;
+  obituary_plan?: {
+    id: number;
+    name: string;
+    cost: number;
+  };
   permanent_grave_booking?: {
     id: number;
     booking_reference: string;
@@ -39,6 +44,12 @@ interface ObituaryPage {
   };
 }
 
+interface ObituaryPlan {
+  id: number;
+  name: string;
+  cost: number;
+}
+
 interface Props {
   obituaries?: {
     data: ObituaryPage[];
@@ -47,8 +58,9 @@ interface Props {
   };
   filters?: {
     search?: string;
-    service_type?: string;
+    obituary_plan_id?: number;
   };
+  obituaryPlans?: ObituaryPlan[];
 }
 
 const props = defineProps<Props>();
@@ -61,17 +73,18 @@ const { can } = permissionHelpers();
 // Permission checks
 const canPublishObituary = can('publish-obituary-page');
 const canUnpublishObituary = can('unpublish-obituary-page');
+const canUpdateObituary = can('update-obituary-page');
 
 const search = ref(props.filters?.search || '');
-const serviceType = ref(props.filters?.service_type || 'all');
+const selectedPlanId = ref(props.filters?.obituary_plan_id || null);
 
 const performSearch = () => {
   const params: any = {
     search: search.value,
   };
 
-  if (serviceType.value && serviceType.value !== 'all') {
-    params.service_type = serviceType.value;
+  if (selectedPlanId.value) {
+    params.obituary_plan_id = selectedPlanId.value;
   }
 
   router.get('/graveyard/obituaries', params, {
@@ -83,7 +96,7 @@ const performSearch = () => {
 // Debounced search function
 let searchTimeout: number;
 
-watch([search, serviceType], () => {
+watch([search, selectedPlanId], () => {
   clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
     performSearch();
@@ -91,6 +104,7 @@ watch([search, serviceType], () => {
 });
 
 const getDeceasedName = (obituary: ObituaryPage): string => {
+  console.log(obituary);
   if (obituary.permanent_grave_booking) {
     const member = obituary.permanent_grave_booking.valid_member;
     return `${member.first_name} ${member.last_name}`;
@@ -224,7 +238,7 @@ const downloadQRCode = async (uuid: string) => {
       headers: {
         'X-CSRF-TOKEN': csrfToken,
         'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'image/png,image/*,*/*',
+        Accept: 'image/png,image/*,*/*',
       },
       credentials: 'same-origin', // Include cookies for authentication
     });
@@ -292,12 +306,13 @@ const downloadQRCode = async (uuid: string) => {
                   <Input v-model="search" placeholder="Search by name or booking reference..." class="pl-10" />
                 </div>
                 <select
-                  v-model="serviceType"
+                  v-model="selectedPlanId"
                   class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring flex h-9 w-[180px] items-center justify-between rounded-md border px-3 py-2 text-sm whitespace-nowrap shadow-sm focus:ring-1 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <option value="all">All Types</option>
-                  <option value="basic">Basic</option>
-                  <option value="premium">Premium</option>
+                  <option :value="null">All Plans</option>
+                  <option v-for="plan in obituaryPlans" :key="plan.id" :value="plan.id">
+                    {{ plan.name }} (₹{{ plan.cost.toLocaleString('en-IN') }})
+                  </option>
                 </select>
               </div>
             </div>
@@ -324,7 +339,7 @@ const downloadQRCode = async (uuid: string) => {
                 <thead class="bg-gray-50">
                   <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Deceased Person</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Service Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Plan</th>
                     <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Status</th>
                     <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Statistics</th>
                     <th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Actions</th>
@@ -347,9 +362,12 @@ const downloadQRCode = async (uuid: string) => {
                       </div>
                     </td>
 
-                    <!-- Service Type -->
+                    <!-- Plan / Service Type -->
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <Badge :class="serviceTypeColors[obituary.service_type]">
+                      <Badge v-if="obituary.obituary_plan" :class="serviceTypeColors[obituary.service_type]">
+                        {{ obituary.obituary_plan.name }}
+                      </Badge>
+                      <Badge v-else :class="serviceTypeColors[obituary.service_type]">
                         {{ obituary.service_type }}
                       </Badge>
                     </td>
@@ -403,6 +421,18 @@ const downloadQRCode = async (uuid: string) => {
                         <!-- Main Actions for Active Obituaries -->
                         <div v-else class="flex space-x-2">
                           <Button
+                            v-if="canUpdateObituary"
+                            size="sm"
+                            variant="outline"
+                            as-child
+                            title="Manage obituary (edit, payment, QR, etc.)"
+                            class="border-blue-200 text-blue-700 hover:bg-blue-50"
+                          >
+                            <Link :href="`/graveyard/obituaries/${obituary.uuid}`">
+                              <Pencil class="h-3 w-3" />
+                            </Link>
+                          </Button>
+                          <Button
                             size="sm"
                             variant="outline"
                             @click="viewObituaryPage(obituary.uuid)"
@@ -423,20 +453,6 @@ const downloadQRCode = async (uuid: string) => {
                             <QrCode class="h-3 w-3" />
                           </Button>
                         </div>
-
-                        <!-- Upgrade to Premium (Only for Active Obituaries) -->
-                        <!-- <div v-if="!obituary.deleted_at && obituary.service_type === 'basic' && obituary.payment_status === 'completed'">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            @click="upgradeObituaryToPremium(obituary)"
-                            class="w-full border-purple-200 text-purple-600 hover:bg-purple-50"
-                          >
-                            <ArrowUp class="mr-1 h-3 w-3" />
-                            Upgrade to Premium
-                          </Button>
-                        </div> -->
-
                         <!-- Publish/Unpublish Actions (Only for Active Obituaries) -->
                         <div v-if="!obituary.deleted_at && (canPublishObituary || canUnpublishObituary)" class="flex space-x-2">
                           <Button

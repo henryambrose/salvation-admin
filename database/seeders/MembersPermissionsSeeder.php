@@ -261,10 +261,10 @@ class MembersPermissionsSeeder extends Seeder
             'list-certificate',
             'restore-certificate',
 
-            'generate-certificate',
-            'reprint-certificate',
-            'download-certificate',
-            'view-certificate-history',
+            // 'generate-certificate',
+            // 'reprint-certificate',
+            // 'download-certificate',
+            // 'view-certificate-history',
 
             // Certificate Types
             'create-certificate-type',
@@ -282,9 +282,9 @@ class MembersPermissionsSeeder extends Seeder
             'list-certificate-template',
             'restore-certificate-template',
 
-            'manage-certificate-templates',
-            'set-template-default',
-            'preview-certificate-template',
+            // 'manage-certificate-templates',
+            // 'set-template-default',
+            // 'preview-certificate-template',
         ];
 
         // Create permissions

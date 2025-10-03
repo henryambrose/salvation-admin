@@ -28,10 +28,12 @@ interface ObituaryPage {
     id: number;
     booking_reference: string;
     valid_member: {
-      first_name: string;
-      last_name: string;
-      date_of_birth?: string;
-      date_of_death?: string;
+      member: {
+        first_name: string;
+        last_name: string;
+        date_of_birth?: string;
+        death_date?: string;
+      };
     };
   };
   temporary_grave_booking?: {
@@ -76,23 +78,33 @@ const condolenceError = ref('');
 
 // Use deceased name from props
 
+// Helper function to format date as dd/mm/yyyy
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 // Get dates
 const dateOfBirth = computed(() => {
-  if (props.obituary.permanent_grave_booking?.valid_member?.date_of_birth) {
-    return new Date(props.obituary.permanent_grave_booking.valid_member.date_of_birth).toLocaleDateString();
+  console.log('Computing dateOfBirth with obituary:', props.obituary);
+  if (props.obituary.permanent_grave_booking?.valid_member?.member?.date_of_birth) {
+    return formatDate(props.obituary.permanent_grave_booking.valid_member?.member?.date_of_birth);
   }
   if (props.obituary.temporary_grave_booking?.date_of_birth) {
-    return new Date(props.obituary.temporary_grave_booking.date_of_birth).toLocaleDateString();
+    return formatDate(props.obituary.temporary_grave_booking.date_of_birth);
   }
   return null;
 });
 
 const dateOfDeath = computed(() => {
-  if (props.obituary.permanent_grave_booking?.valid_member?.date_of_death) {
-    return new Date(props.obituary.permanent_grave_booking.valid_member.date_of_death).toLocaleDateString();
+  if (props.obituary.permanent_grave_booking?.valid_member?.member?.death_date) {
+    return formatDate(props.obituary.permanent_grave_booking.valid_member.member.death_date);
   }
   if (props.obituary.temporary_grave_booking?.date_of_death) {
-    return new Date(props.obituary.temporary_grave_booking.date_of_death).toLocaleDateString();
+    return formatDate(props.obituary.temporary_grave_booking.date_of_death);
   }
   return null;
 });
@@ -164,6 +176,7 @@ const submitCondolence = async () => {
 const getBackgroundStyle = computed(() => {
   // Use the background style from the backend service if available, otherwise fallback to legacy logic
   if (props.backgroundStyle) {
+    console.log('Using background style from props:', props.backgroundStyle);
     return props.backgroundStyle;
   }
 
@@ -178,7 +191,7 @@ const getBackgroundStyle = computed(() => {
     style.backgroundImage =
       "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")";
   } else if (props.obituary.background_style === 'floral' || props.obituary.background_style === 'memorial') {
-    style.backgroundImage = `url('/storage/backgrounds/memorial-sunset.png')`;
+    style.backgroundImage = `url('/storage/backgrounds/Memorial-18-01.webp')`;
     style.backgroundSize = 'cover';
     style.backgroundPosition = 'center';
     style.backgroundRepeat = 'no-repeat';
@@ -211,7 +224,45 @@ const shareObituaryPage = () => {
 <template>
   <Head :title="`In memory of ${props.deceasedName}`" />
 
-  <div class="min-h-screen" :style="getBackgroundStyle">
+  <!-- Background Color Layer -->
+  <div
+    class="fixed inset-0"
+    style="z-index: 0;"
+    :style="{ backgroundColor: obituary.theme_color || '#ffffff' }"
+  ></div>
+
+  <!-- Main Content Layer with Corner Frame -->
+  <div class="relative min-h-screen mx-auto" style="z-index: 1; max-width: 64rem;">
+    <!-- Four Corner Background Images - Positioned relative to content -->
+    <div class="pointer-events-none absolute" style="top: 0; left: 0; right: 0; bottom: 0;">
+      <!-- Top-Left Corner -->
+      <div
+        class="absolute"
+        style="top: 0; left: 0; width: 150px; height: 150px; background-size: contain; background-repeat: no-repeat; background-position: top left;"
+        :style="{ backgroundImage: `url('/storage/backgrounds/Memorial-18-01.png')` }"
+      ></div>
+      <!-- Top-Right Corner (Horizontally Flipped) -->
+      <div
+        class="absolute"
+        style="top: 0; right: 0; width: 150px; height: 150px; background-size: contain; background-repeat: no-repeat; background-position: top right; transform: scaleX(-1); transform-origin: right top;"
+        :style="{ backgroundImage: `url('/storage/backgrounds/Memorial-18-01.png')` }"
+      ></div>
+      <!-- Bottom-Left Corner (Vertically Flipped) -->
+      <div
+        class="absolute"
+        style="bottom: 0; left: 0; width: 150px; height: 150px; background-size: contain; background-repeat: no-repeat; background-position: bottom left; transform: scaleY(-1); transform-origin: left bottom;"
+        :style="{ backgroundImage: `url('/storage/backgrounds/Memorial-18-01.png')` }"
+      ></div>
+      <!-- Bottom-Right Corner (Both Horizontally and Vertically Flipped) -->
+      <div
+        class="absolute"
+        style="bottom: 0; right: 0; width: 150px; height: 150px; background-size: contain; background-repeat: no-repeat; background-position: bottom right; transform: scale(-1, -1); transform-origin: right bottom;"
+        :style="{ backgroundImage: `url('/storage/backgrounds/Memorial-18-01.png')` }"
+      ></div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="relative">
     <!-- Header Section -->
     <div class="relative px-4 py-16">
       <div class="mx-auto max-w-4xl text-center">
@@ -301,7 +352,7 @@ const shareObituaryPage = () => {
               :key="index"
               :src="image.startsWith('http') ? image : `/storage/${image}`"
               :alt="`Memory ${index + 1}`"
-              class="h-48 w-full rounded-lg object-cover shadow-md transition-shadow duration-200 hover:shadow-xl cursor-pointer"
+              class="h-48 w-full cursor-pointer rounded-lg object-cover shadow-md transition-shadow duration-200 hover:shadow-xl"
               @click="openImageInNewTab(image)"
             />
           </div>
@@ -460,7 +511,8 @@ const shareObituaryPage = () => {
         </div>
       </div>
     </div>
-  </div>
+    </div><!-- End Content Area -->
+  </div><!-- End Main Content Layer with Corner Frame -->
 </template>
 
 <style scoped>

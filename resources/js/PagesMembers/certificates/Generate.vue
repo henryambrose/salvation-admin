@@ -616,7 +616,7 @@ function generateCertificate() {
               <template v-if="currentCertificateTypeCode === 'death'">
                 <div>
                   <Label for="burial_date">Burial Date</Label>
-                  <Input v-model="additionalFields.burial_date" type="date" id="burial_date" />
+                  <Input v-model="additionalFields.burial_date" type="date" id="burial_date" :max="new Date().toISOString().split('T')[0]" />
                 </div>
                 <div>
                   <Label for="burial_place">Burial Place</Label>

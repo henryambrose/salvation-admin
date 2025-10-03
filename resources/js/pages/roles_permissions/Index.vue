@@ -320,6 +320,7 @@ const getCategoryHeaders = computed(() => {
   return [
     'Core Management',
     'Organizational Structure',
+    'Certificate Management',
     'Leadership',
     'Member Attributes',
     'Geographic Data',
@@ -344,6 +345,7 @@ const getCategoriesByApp = computed(() => {
         [
           'Core Management',
           'Organizational Structure',
+          'Certificate Management',
           'Leadership',
           'Member Attributes',
           'Geographic Data',

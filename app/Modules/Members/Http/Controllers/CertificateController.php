@@ -544,7 +544,8 @@ class CertificateController extends Controller
     // Increment download count
     $certificate->incrementDownloadCount();
 
-    $fileName = "certificate_{$certificate->certificateType->code}_{$certificate->member->first_name}_{$certificate->member->last_name}_{$certificate->issued_date->format('Y-m-d')}.pdf";
+    $certificateTypeCode = is_object($certificate->certificateType) ? $certificate->certificateType->code : $certificate->certificateType;
+    $fileName = "certificate_{$certificateTypeCode}_{$certificate->member->first_name}_{$certificate->member->last_name}_{$certificate->issued_date->format('Y-m-d')}.pdf";
 
     return response()->download(Storage::disk('local')->path($certificate->file_path), $fileName);
   }

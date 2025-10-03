@@ -481,11 +481,9 @@ const breadcrumbs = [
                   <div class="text-sm text-gray-900">{{ contribution.payment_method?.name || '-' }}</div>
                 </td>
                 <td class="p-2 text-sm text-gray-500">
-                  {{ formatDate(contribution.start_date) }}
+                  {{ formatDate(contribution.created_at) }}
                 </td>
-                <td class="p-2 text-sm text-gray-500">
-                  {{ formatDate(contribution.end_date) }}
-                </td>
+
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyAnnualContribution">
                     <Button

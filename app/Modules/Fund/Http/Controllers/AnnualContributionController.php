@@ -9,8 +9,6 @@ use Modules\Fund\Models\FamilyContribution;
 use Modules\Fund\Models\FundCategory;
 use Modules\Fund\Models\PaymentMethod;
 use Modules\Members\Models\Member;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB; // For DB transactions   
 use Illuminate\Support\Facades\Auth; // For Auth
 
 class AnnualContributionController extends Controller

@@ -28,7 +28,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useScrollRestoration } from '@/composables/useScrollRestoration';
 import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
-import { BarChart3, Clock, FileText, FolderOpen, Home, IndianRupee, Settings } from 'lucide-vue-next';
+import { Clock, FileText, FolderOpen, Home, IndianRupee, Settings } from 'lucide-vue-next';
 import { computed, watch } from 'vue';
 import AppLogo from './AppLogo.vue';
 
@@ -75,25 +75,25 @@ const fundNavigationGroups = computed(() => [
       },
     ],
   },
-  {
-    label: 'Reports & Analytics',
-    items: [
-      {
-        title: 'Financial Reports',
-        // href: '/fund/reports/financial',
-        href: '#',
-        icon: BarChart3,
-        show: can('read-financial-reports') || true,
-      },
-      {
-        title: 'Contribution History',
-        // href: '/fund/reports/contributions',
-        href: '#',
-        icon: FileText,
-        show: can('read-contribution-reports') || true,
-      },
-    ],
-  },
+  // {
+  //   label: 'Reports & Analytics',
+  //   items: [
+  //     {
+  //       title: 'Financial Reports',
+  //       // href: '/fund/reports/financial',
+  //       href: '#',
+  //       icon: BarChart3,
+  //       show: can('read-financial-reports') || true,
+  //     },
+  //     {
+  //       title: 'Contribution History',
+  //       // href: '/fund/reports/contributions',
+  //       href: '#',
+  //       icon: FileText,
+  //       show: can('read-contribution-reports') || true,
+  //     },
+  //   ],
+  // },
   {
     label: 'Administration',
     items: [

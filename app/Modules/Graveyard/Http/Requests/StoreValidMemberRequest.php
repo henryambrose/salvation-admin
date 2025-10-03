@@ -54,24 +54,30 @@ class StoreValidMemberRequest extends FormRequest
             // External member: names required; parish members should NOT provide names
             'members.*.first_name' => [
                 'required_if:members.*.member_type,external',
-                'nullable', 'string', 'max:255',
-                'prohibited_if:members.*.member_type,member', // Prevent sending names for parish members
+                'nullable',
+                'string',
+                'max:255',
+
             ],
             'members.*.last_name' => [
                 'required_if:members.*.member_type,external',
-                'nullable', 'string', 'max:255',
-                'prohibited_if:members.*.member_type,member', // Prevent sending names for parish members
+                'nullable',
+                'string',
+                'max:255',
+
             ],
 
             // Optional fields for either type
             'members.*.contact_no' => ['nullable', 'string', 'max:20'],
             'members.*.aadhar_no'  => ['nullable', 'string', 'max:20'],
+            'members.*.relationship_id'  => ['nullable', 'integer'],
+            'members.*.notes'  => ['nullable', 'string', 'max:500'],
         ];
     }
 
     public function messages(): array
     {
-       
+
         return [
             'grave_type.required' => 'Please select a grave type.',
             'grave_type.in' => 'Invalid grave type selected.',
@@ -93,8 +99,7 @@ class StoreValidMemberRequest extends FormRequest
             'input'  => $this->all(),
         ]);
 
-        throw new HttpResponseException(
-            response()->json(['errors' => $validator->errors()], 422)
-        );
+        // Let Laravel/Inertia handle the validation response properly
+        parent::failedValidation($validator);
     }
 }

@@ -2,11 +2,11 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useCertificateState } from '@/composables/useCertificateState';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Eye, FileText, Plus, Search } from 'lucide-vue-next';
-import { computed, ref, watch, onMounted, onBeforeUnmount } from 'vue';
-import { useCertificateState } from '@/composables/useCertificateState';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 
 interface Certificate {
   id: number;
@@ -174,18 +174,25 @@ function clearSearch() {
 }
 
 function generateNewCertificate() {
-  router.get('/certificates/generate', {}, {
-    preserveState: true,
-    preserveScroll: true,
-  });
+  router.get(
+    '/certificates/generate',
+    {},
+    {
+      preserveState: true,
+      preserveScroll: true,
+    },
+  );
 }
 
-
 function viewCertificate(certificate: Certificate) {
-  router.get(`/certificates/${certificate.id}`, {}, {
-    preserveState: true,
-    preserveScroll: true,
-  });
+  router.get(
+    `/certificates/${certificate.id}`,
+    {},
+    {
+      preserveState: true,
+      preserveScroll: true,
+    },
+  );
 }
 
 function downloadCertificate(certificate: Certificate) {
@@ -436,7 +443,7 @@ function reprintCertificate(certificate: Certificate) {
           <FileText class="mx-auto h-12 w-12 text-gray-400" />
           <h3 class="mt-2 text-sm font-medium text-gray-900">No certificates found</h3>
           <p class="mt-1 text-sm text-gray-500">Get started by generating a new certificate.</p>
-          <div class="mt-6">
+          <!-- <div class="mt-6">
             <Button
               v-if="canGenerateCertificates"
               @click="generateNewCertificate"
@@ -445,7 +452,7 @@ function reprintCertificate(certificate: Certificate) {
               <Plus class="h-4 w-4" />
               Generate Certificate
             </Button>
-          </div>
+          </div> -->
         </div>
       </CardContent>
     </Card>
@@ -470,6 +477,5 @@ function reprintCertificate(certificate: Certificate) {
         </Button>
       </div>
     </div>
-
   </AppLayout>
 </template>

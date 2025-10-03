@@ -46,6 +46,7 @@ interface Member {
   last_name?: string;
   member_no: string;
   family_no: string;
+  date_of_birth?: string;
   community: {
     name: string;
   };
@@ -260,6 +261,10 @@ const searchMembers = async () => {
 const selectMember = (member: Member) => {
   selectedMember.value = member;
   form.deceased_member_id = member.id;
+  // Populate date of birth if available for age calculation
+  if (member.date_of_birth) {
+    form.date_of_birth = member.date_of_birth;
+  }
   memberSearchQuery.value = '';
   memberSearchResults.value = [];
 };
@@ -852,7 +857,14 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label for="died_on">Date of Death *</Label>
-                    <Input id="died_on" v-model="form.died_on" type="date" :class="form.errors.died_on && 'border-red-500'" class="mt-1" />
+                    <Input
+                      id="died_on"
+                      v-model="form.died_on"
+                      type="date"
+                      :max="new Date().toISOString().split('T')[0]"
+                      :class="form.errors.died_on && 'border-red-500'"
+                      class="mt-1"
+                    />
                     <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.died_on }}
                     </div>
@@ -860,10 +872,19 @@ onUnmounted(() => {
 
                   <div>
                     <Label for="buried_on">Date of Burial *</Label>
-                    <Input id="buried_on" v-model="form.buried_on" type="date" :class="form.errors.buried_on && 'border-red-500'" class="mt-1" />
+                    <Input
+                      id="buried_on"
+                      v-model="form.buried_on"
+                      type="date"
+                      :min="form.died_on"
+                      :max="new Date().toISOString().split('T')[0]"
+                      :class="form.errors.buried_on && 'border-red-500'"
+                      class="mt-1"
+                    />
                     <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.buried_on }}
                     </div>
+                    <p v-if="form.died_on" class="mt-1 text-xs text-gray-500">Must be on or after the date of death</p>
                   </div>
                 </div>
 

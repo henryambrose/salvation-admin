@@ -201,8 +201,8 @@ class ValidMemberController extends Controller
                 $memberToCreate['member_id'] = $memberData['member_id'];
                 // For parish members, don't store first_name/last_name directly
                 // The relationship will handle name display via the member table
-                $memberToCreate['first_name'] = null;
-                $memberToCreate['last_name'] = null;
+                $memberToCreate['first_name'] = $memberData['first_name'] ?? null;
+                $memberToCreate['last_name'] = $memberData['last_name'] ?? null;
                 $memberToCreate['contact_no'] = $memberData['contact_no'] ?? null;
                 $memberToCreate['member_type'] = $memberData['member_type'];
             } else {
@@ -222,8 +222,10 @@ class ValidMemberController extends Controller
             }
 
             // Add relationship_id for both member types
+            Log::info('Member Data:', $memberData);
             $memberToCreate['relationship_id'] = $memberData['relationship_id'] ?? null;
             $memberToCreate['notes'] = $memberData['notes'] ?? null;
+            Log::info('Creating Valid Member:', $memberToCreate);
             $createdMembers[] = ValidMember::create($memberToCreate);
         }
 
@@ -409,6 +411,8 @@ class ValidMemberController extends Controller
                     'id' => $member->id,
                     'name' => $member->first_name . ' ' . $member->last_name,
                     'full_name' => $member->first_name . ' ' . $member->last_name,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
                     'member_no' => $member->member_no,
                     'family_no' => $member->family_no,
                     'community' => $member->community ? [

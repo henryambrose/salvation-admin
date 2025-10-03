@@ -354,7 +354,7 @@ function createContribution() {
             </select>
           </div>
 
-          <div>
+          <!-- <div>
             <label class="mb-1 block text-xs font-medium text-gray-600">Per Page</label>
             <select v-model="perPage" class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200">
               <option :value="10">10</option>
@@ -362,7 +362,7 @@ function createContribution() {
               <option :value="50">50</option>
               <option :value="100">100</option>
             </select>
-          </div>
+          </div> -->
 
           <div class="flex items-end">
             <button @click="clearFilters" class="w-full rounded-full bg-gray-500 px-3 py-1 text-sm text-white transition hover:bg-gray-600">

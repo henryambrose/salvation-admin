@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Foundation\Auth\Access\Authorizable;
+use Illuminate\Support\Facades\DB;
 
 class CertificateRecord extends Model
 {
@@ -148,7 +149,7 @@ class CertificateRecord extends Model
       throw new \Exception("Certificate type '{$type}' not found");
     }
 
-    return \DB::transaction(function () use ($typeCode, $year, $memberCode, $certificateType) {
+    return DB::transaction(function () use ($typeCode, $year, $memberCode, $certificateType) {
       // Get the highest sequence number for this type and year with lock
       $lastCertificate = static::where('certificate_number', 'LIKE', "{$typeCode}/{$year}/%")
         ->orderBy('certificate_number', 'desc')

@@ -26,9 +26,7 @@ class PermissionCategorySeeder extends Seeder
                     ['rule_type' => 'contains', 'rule_value' => 'external-member', 'priority' => 10],
                     ['rule_type' => 'starts_with', 'rule_value' => 'community', 'priority' => 5],
                     ['rule_type' => 'contains', 'rule_value' => 'parish', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'certificate', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'view-certificate-history', 'priority' => 15],
-                    ['rule_type' => 'contains', 'rule_value' => 'manage-certificate-templates', 'priority' => 15],
+
                 ]
             ],
             [
@@ -44,6 +42,19 @@ class PermissionCategorySeeder extends Seeder
                     ['rule_type' => 'contains', 'rule_value' => 'community-cluster', 'priority' => 15],
                     ['rule_type' => 'contains', 'rule_value' => 'cells-and-association', 'priority' => 15],
 
+                ]
+            ],
+            [
+                'name' => 'Certificate Management',
+                'slug' => 'certificate-management',
+                'description' => 'Certificate generation and management permissions',
+                'app' => 'Members',
+                'color' => '#EC4899',
+                'sort_order' => 26,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'certificate', 'priority' => 10],
+                    // ['rule_type' => 'contains', 'rule_value' => 'view-certificate-history', 'priority' => 15],
+                    // ['rule_type' => 'contains', 'rule_value' => 'manage-certificate-templates', 'priority' => 15],
                 ]
             ],
             [

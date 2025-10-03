@@ -47,7 +47,7 @@ class PermanentGraveBookingController extends Controller
                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                 })
                 ->orWhereHas('permanentGrave', function ($q) use ($search) {
-                    $q->where("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"]);
+                    $q->whereRaw("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"]);
                 });
         }
 
@@ -92,6 +92,8 @@ class PermanentGraveBookingController extends Controller
             ->orWhere('contact_no', 'like', '%' . $request->search_term . '%');
 
         $graves = $query->get()->map(function (PermanentGrave $grave) {
+            $pendingMaintenanceFee = $grave->calculatePendingAmount();
+
             return [
                 'id' => $grave->id,
                 'grave_no' => $grave->grave_no,
@@ -101,6 +103,8 @@ class PermanentGraveBookingController extends Controller
                 'last_burial_date' => $grave->last_burial_date,
                 'is_eligible' => $this->checkGraveEligibility($grave),
                 'eligibility_message' => $this->getEligibilityMessage($grave),
+                'pending_maintenance_fee' => $pendingMaintenanceFee,
+                'has_pending_maintenance' => $pendingMaintenanceFee > 0,
                 'valid_members' => $grave->validMembers->map(function (ValidMember $member) {
                     return [
                         'id' => $member->id,
@@ -163,23 +167,12 @@ class PermanentGraveBookingController extends Controller
                 return back()->withErrors(['permanent_grave_id' => 'This grave is not eligible for burial yet.']);
             }
 
-            // Check for pending maintenance fees
+            // Log pending maintenance fees for information (not blocking burial)
             $pendingMaintenanceFee = $grave->calculatePendingAmount();
             if ($pendingMaintenanceFee > 0) {
-                Log::warning('Grave has pending maintenance fees', [
+                Log::info('Grave has pending maintenance fees (tracked separately)', [
                     'grave_id' => $grave->id,
                     'pending_amount' => $pendingMaintenanceFee
-                ]);
-
-                $gravePosition = "{$grave->section}-{$grave->row_no}-{$grave->grave_no}";
-                $pendingAmount = '₹' . number_format($pendingMaintenanceFee, 2);
-
-                return back()->withErrors([
-                    'permanent_grave_id' => "Cannot create booking for grave {$gravePosition}. There are pending maintenance fees of {$pendingAmount}. Please clear the maintenance fees before proceeding with the burial booking."
-                ])->with('maintenance_fee_warning', [
-                    'grave_id' => $grave->id,
-                    'pending_amount' => $pendingMaintenanceFee,
-                    'grave_position' => $gravePosition
                 ]);
             }
 
@@ -223,7 +216,7 @@ class PermanentGraveBookingController extends Controller
                 'updated_by' => Auth::id() ?: 1, // Default to user ID 1 if not authenticated
             ]);
 
-            // Calculate total cost from selected services
+            // Calculate total cost from selected services only
             if ($request->selected_services) {
                 $totalCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');
                 $booking->update([

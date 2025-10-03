@@ -16,7 +16,9 @@ interface ValidMember {
   full_name: string;
   first_name: string;
   last_name: string;
-  relationship: string;
+  relationship: {
+    name: string;
+  };
   member_type: string;
   is_deceased: boolean;
   death_date?: string;
@@ -33,6 +35,8 @@ interface PermanentGrave {
   last_burial_date?: string;
   is_eligible: boolean;
   eligibility_message: string;
+  pending_maintenance_fee: number;
+  has_pending_maintenance: boolean;
   valid_members: ValidMember[];
   has_valid_members: boolean;
   available_members: ValidMember[];
@@ -185,6 +189,12 @@ const formatDate = (date: string) => {
   return date ? new Date(date).toLocaleDateString('en-IN') : '';
 };
 
+const openMaintenancePayment = () => {
+  if (selectedGrave.value?.id) {
+    window.open(`/graveyard/payments/create/maintenance/${selectedGrave.value.id}`, '_blank');
+  }
+};
+
 const submit = () => {
   // Check if all required fields are filled
   if (!form.permanent_grave_id) {
@@ -259,22 +269,63 @@ const submit = () => {
                   </CardHeader>
                   <CardContent class="space-y-4">
                     <!-- Selected Grave Display -->
-                    <div v-if="selectedGrave" class="rounded-lg border border-green-200 bg-green-50 p-4">
-                      <div class="flex items-start justify-between">
+                    <div v-if="selectedGrave" class="space-y-3">
+                      <div class="rounded-lg border border-green-200 bg-green-50 p-4">
+                        <div class="flex items-start justify-between">
+                          <div class="flex items-start space-x-3">
+                            <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
+                            <div>
+                              <h4 class="font-medium text-green-900">Grave {{ selectedGrave.grave_no }}</h4>
+                              <p class="text-sm text-green-700">{{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}</p>
+                              <p class="text-sm text-green-600">Owner: {{ selectedGrave.owner_name }}</p>
+                              <div class="mt-2">
+                                <Badge :class="selectedGrave.is_eligible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                                  {{ selectedGrave.eligibility_message }}
+                                </Badge>
+                              </div>
+                            </div>
+                          </div>
+                          <Button variant="outline" size="sm" @click="clearGraveSelection"> Change </Button>
+                        </div>
+                      </div>
+
+                      <!-- Pending Maintenance Fee Warning -->
+                      <div v-if="selectedGrave.has_pending_maintenance" class="rounded-lg border border-amber-300 bg-amber-50 p-4">
                         <div class="flex items-start space-x-3">
-                          <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
-                          <div>
-                            <h4 class="font-medium text-green-900">Grave {{ selectedGrave.grave_no }}</h4>
-                            <p class="text-sm text-green-700">{{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}</p>
-                            <p class="text-sm text-green-600">Owner: {{ selectedGrave.owner_name }}</p>
-                            <div class="mt-2">
-                              <Badge :class="selectedGrave.is_eligible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
-                                {{ selectedGrave.eligibility_message }}
-                              </Badge>
+                          <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path
+                              fill-rule="evenodd"
+                              d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                              clip-rule="evenodd"
+                            />
+                          </svg>
+                          <div class="flex-1">
+                            <h4 class="font-medium text-amber-900">Pending Maintenance Fees</h4>
+                            <p class="mt-1 text-sm text-amber-800">
+                              This grave has pending maintenance fees of
+                              <span class="font-semibold"
+                                >₹{{
+                                  selectedGrave.pending_maintenance_fee.toLocaleString('en-IN', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })
+                                }}</span
+                              >
+                              that need to be paid separately.
+                            </p>
+                            <div class="mt-3">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                class="border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
+                                @click="openMaintenancePayment"
+                              >
+                                Pay Pending Maintenance Fees
+                              </Button>
                             </div>
                           </div>
                         </div>
-                        <Button variant="outline" size="sm" @click="clearGraveSelection"> Change </Button>
                       </div>
                     </div>
 
@@ -321,12 +372,15 @@ const submit = () => {
                                   Member: {{ grave.member.full_name }} ({{ grave.member.family_no }})
                                 </p>
                                 <p v-if="grave.contact_no" class="text-sm text-gray-500">Contact: {{ grave.contact_no }}</p>
-                                <div class="mt-2 flex items-center gap-2">
+                                <div class="mt-2 flex flex-wrap items-center gap-2">
                                   <Badge :class="grave.is_eligible ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
                                     {{ grave.is_eligible ? 'Eligible' : 'Not Eligible' }}
                                   </Badge>
                                   <Badge v-if="grave.has_valid_members" class="bg-blue-100 text-blue-800">
                                     {{ grave.valid_members.filter((member) => !member.is_deceased).length }} Valid Members
+                                  </Badge>
+                                  <Badge v-if="grave.has_pending_maintenance" class="bg-amber-100 text-amber-800">
+                                    Pending: ₹{{ grave.pending_maintenance_fee.toLocaleString('en-IN', { minimumFractionDigits: 2 }) }}
                                   </Badge>
                                 </div>
                               </div>
@@ -359,7 +413,14 @@ const submit = () => {
                   <CardContent class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label for="died_on">Date of Death *</Label>
-                      <Input id="died_on" v-model="form.died_on" type="date" :class="form.errors.died_on && 'border-red-500'" class="mt-1" />
+                      <Input
+                        id="died_on"
+                        v-model="form.died_on"
+                        type="date"
+                        :max="new Date().toISOString().split('T')[0]"
+                        :class="form.errors.died_on && 'border-red-500'"
+                        class="mt-1"
+                      />
                       <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
                         {{ form.errors.died_on }}
                       </div>
@@ -367,10 +428,19 @@ const submit = () => {
 
                     <div>
                       <Label for="buried_on">Date of Burial *</Label>
-                      <Input id="buried_on" v-model="form.buried_on" type="date" :class="form.errors.buried_on && 'border-red-500'" class="mt-1" />
+                      <Input
+                        id="buried_on"
+                        v-model="form.buried_on"
+                        type="date"
+                        :min="form.died_on"
+                        :max="new Date().toISOString().split('T')[0]"
+                        :class="form.errors.buried_on && 'border-red-500'"
+                        class="mt-1"
+                      />
                       <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
                         {{ form.errors.buried_on }}
                       </div>
+                      <p v-if="form.died_on" class="mt-1 text-xs text-gray-500">Must be on or after the date of death</p>
                     </div>
 
                     <div class="sm:col-span-2">
@@ -513,10 +583,10 @@ const submit = () => {
                                 <div class="flex items-center gap-2">
                                   <h4 class="font-medium text-gray-900">{{ member.full_name }}</h4>
                                   <Badge v-if="member.is_deceased" variant="destructive" class="text-xs"> Deceased </Badge>
-                                  <Badge v-else variant="outline" class="border-green-200 bg-green-50 text-xs text-green-700"> Living </Badge>
+                                  <!-- <Badge v-else variant="outline" class="border-green-200 bg-green-50 text-xs text-green-700"> Living </Badge> -->
                                 </div>
                                 <div class="mt-1 space-y-1">
-                                  <p class="text-sm text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship }}</p>
+                                  <p class="text-sm text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship.name }}</p>
                                   <p v-if="member.member_type" class="text-sm text-gray-600">
                                     <span class="font-medium">Type:</span> {{ member.member_type }}
                                   </p>

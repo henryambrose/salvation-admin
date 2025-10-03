@@ -43,7 +43,7 @@ class ObituaryManagementController extends Controller
 
     public function index(Request $request)
     {
-        $obituaries = ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking'])
+        $obituaries = ObituaryPage::with(['permanentGraveBooking.validMember', 'temporaryGraveBooking', 'obituaryPlan'])
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('permanentGraveBooking.validMember', function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
@@ -53,8 +53,8 @@ class ObituaryManagementController extends Controller
                         ->orWhere('dead_last_name', 'like', "%{$search}%");
                 });
             })
-            ->when($request->service_type, function ($query, $type) {
-                $query->where('service_type', $type);
+            ->when($request->obituary_plan_id, function ($query, $planId) {
+                $query->where('obituary_plan_id', $planId);
             })
             ->when($request->payment_status, function ($query, $status) {
                 if ($status === 'paid') {
@@ -95,9 +95,15 @@ class ObituaryManagementController extends Controller
             return $obituary;
         });
 
+        // Get all active obituary plans for filter dropdown
+        $obituaryPlans = \Modules\Graveyard\Models\ObituaryPlan::where('is_active', true)
+            ->orderBy('cost', 'asc')
+            ->get(['id', 'name', 'cost']);
+
         return Inertia::render('PagesGraveyard/Obituaries/Index', [
             'obituaries' => $obituaries,
-            'filters' => $request->only(['search', 'service_type', 'payment_status', 'published_status']),
+            'filters' => $request->only(['search', 'obituary_plan_id', 'payment_status', 'published_status']),
+            'obituaryPlans' => $obituaryPlans,
         ]);
     }
 

@@ -161,7 +161,14 @@
                       <Button
                         v-if="canUpdateAnyGrave"
                         @click="router.visit('/graveyard/temporary-graves/' + grave.id + '/edit')"
-                        class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
+                        :disabled="grave.status === 'occupied'"
+                        :class="[
+                          'rounded-full p-2 transition',
+                          grave.status === 'occupied'
+                            ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-50'
+                            : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
+                        ]"
+                        :title="grave.status === 'occupied' ? 'Cannot edit occupied grave' : 'Edit grave'"
                       >
                         <Pencil class="h-[1rem] w-[1rem]" />
                       </Button>
@@ -193,7 +200,14 @@
                     <Button
                       @click="deleteGrave(grave)"
                       variant="destructive"
-                      class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
+                      :disabled="grave.status === 'occupied'"
+                      :class="[
+                        'rounded-full p-2 transition',
+                        grave.status === 'occupied'
+                          ? 'cursor-not-allowed bg-gray-100 text-gray-400 opacity-50'
+                          : 'bg-red-100 text-red-700 hover:bg-red-200',
+                      ]"
+                      :title="grave.status === 'occupied' ? 'Cannot delete occupied grave' : 'Delete grave'"
                     >
                       <Trash2 class="h-[1rem] w-[1rem]" />
                     </Button>

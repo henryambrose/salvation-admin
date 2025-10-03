@@ -123,6 +123,7 @@ class TemporaryGraveBookingController extends Controller
                     'full_name' => $member->first_name . ' ' . $member->last_name,
                     'member_no' => $member->member_no,
                     'family_no' => $member->family_no,
+                    'date_of_birth' => $member->date_of_birth?->format('Y-m-d'),
                     'community' => $member->community ? [
                         'name' => $member->community->name
                     ] : null,

@@ -466,7 +466,7 @@
                             :class="getFieldError(`members.${index}.relationship_id`) && 'border-red-500'"
                           >
                             <option value="">Select Relationship</option>
-                            <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id.toString()">
+                            <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id">
                               {{ relationship.name }}
                             </option>
                           </select>
@@ -553,6 +553,8 @@ interface Props {
     member?: {
       id: number;
       full_name: string;
+      first_name: string;
+      last_name: string;
       family_no: string;
     };
   }>;
@@ -572,6 +574,8 @@ interface ParishMemberSearchResult {
   id: number;
   name: string;
   full_name: string;
+  first_name: string;
+  last_name: string;
   member_no: string;
   family_no: string;
   community: {
@@ -829,7 +833,10 @@ const searchParishMembers = (index: number, query: string) => {
 const selectParishMember = (index: number, selectedMember: ParishMemberSearchResult) => {
   const member = formData.members[index];
   member.selected_member = selectedMember;
+  console.log('Selected Member:', selectedMember);
   member.member_id = selectedMember.id.toString();
+  member.first_name = selectedMember.first_name;
+  member.last_name = selectedMember.last_name;
   member.member_search = '';
   member.search_results = [];
   member.contact_no = selectedMember.contact_no_1 || '';
@@ -885,16 +892,19 @@ watch(
 
 // Submit form
 const submitForm = () => {
+  // Filter out empty members (members with no member_type selected)
+  const validMembers = formData.members.filter((member) => member.member_type !== '');
+
   // Prepare the data for submission
   const submitData = {
     grave_type: formData.grave_type,
     permanent_grave_id: formData.grave_type === 'permanent_grave' ? formData.permanent_grave_id : null,
     niche_id: formData.grave_type === 'niche' ? formData.niche_id : null,
-    members: formData.members.map((member) => ({
+    members: validMembers.map((member) => ({
       member_type: member.member_type,
       member_id: member.member_type === 'member' ? member.member_id : null,
-      first_name: member.member_type === 'external' ? member.first_name : '',
-      last_name: member.member_type === 'external' ? member.last_name : '',
+      first_name: member.first_name || null,
+      last_name: member.last_name || null,
       date_of_birth: member.member_type === 'external' ? member.date_of_birth || null : null,
       age: member.member_type === 'external' ? member.age : null,
       months: member.member_type === 'external' ? member.months : null,
