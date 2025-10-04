@@ -550,7 +550,7 @@ const loadCurrentSpouse = async () => {
           const spouse = spouseArray[0]; // Get first (and should be only) result
           parishMembers.value = [
             {
-              id: spouse.id,
+              id: Number(spouse.id),
               name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
               family_no: spouse.family_no || '',
               full_name: `${spouse.first_name} ${spouse.last_name}`,
@@ -581,7 +581,7 @@ const loadCurrentSpouse = async () => {
             const spouse = data[0];
             parishMembers.value = [
               {
-                id: spouse.id,
+                id: Number(spouse.id),
                 name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
                 family_no: spouse.family_no,
                 full_name: `${spouse.first_name} ${spouse.last_name}`,
@@ -599,80 +599,6 @@ const loadCurrentSpouse = async () => {
       has_member_spouse_id: !!member?.spouse_id,
       spouse_source_is_member: form.spouse_source === 'Member',
     });
-  }
-};
-
-// Function to load current father data for editing
-const loadCurrentFather = async () => {
-  if (member?.father_id && form.father_source === 'Member') {
-    try {
-      const response = await fetch(`/member/search-members?q=${member.father_id}&limit=1&include_deceased=1`, {
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (response.ok) {
-        const fatherArray = await response.json();
-        if (fatherArray && fatherArray.length > 0) {
-          const father = fatherArray[0];
-          // Add father to familyMembers if not already present
-          const existingFather = familyMembers.value.find((m) => m.id === father.id);
-          if (!existingFather) {
-            familyMembers.value.push({
-              id: father.id,
-              name: `${father.first_name} ${father.last_name}`,
-              family_no: father.family_no || '',
-              full_name: `${father.first_name} ${father.last_name}`,
-              community: father.community || '',
-              gender_name: father.gender_name || 'Male',
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading current father:', error);
-    }
-  }
-};
-
-// Function to load current mother data for editing
-const loadCurrentMother = async () => {
-  if (member?.mother_id && form.mother_source === 'Member') {
-    try {
-      const response = await fetch(`/member/search-members?q=${member.mother_id}&limit=1&include_deceased=1`, {
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        credentials: 'same-origin',
-      });
-
-      if (response.ok) {
-        const motherArray = await response.json();
-        if (motherArray && motherArray.length > 0) {
-          const mother = motherArray[0];
-          // Add mother to familyMembers if not already present
-          const existingMother = familyMembers.value.find((m) => m.id === mother.id);
-          if (!existingMother) {
-            familyMembers.value.push({
-              id: mother.id,
-              name: `${mother.first_name} ${mother.last_name}`,
-              family_no: mother.family_no || '',
-              full_name: `${mother.first_name} ${mother.last_name}`,
-              community: mother.community || '',
-              gender_name: mother.gender_name || 'Female',
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error loading current mother:', error);
-    }
   }
 };
 
@@ -734,6 +660,11 @@ const submit = () => {
     showValidationModal.value = true;
     return;
   }
+
+  // Debug: Log spouse_id before submission
+  console.log('Submitting form with spouse_id:', form.spouse_id);
+  console.log('Member ID:', member?.id);
+  console.log('Full form data:', form.data());
 
   // Proceed with form submission
   const routeName = member?.id ? 'member.update' : 'member.store';
@@ -1072,11 +1003,14 @@ onMounted(() => {
   }
 });
 
-// Load current spouse, father, and mother data when editing a member
+// Load current spouse data and fetch family members when editing a member
 onMounted(() => {
   loadCurrentSpouse();
-  loadCurrentFather();
-  loadCurrentMother();
+  // Fetch family members if family_no exists
+  if (form.family_no) {
+    fetchFamilyMembers();
+    fetchExternalFamilyMembers();
+  }
 });
 
 function cancel() {
@@ -1155,10 +1089,9 @@ const fetchFamilyMembers = async (): Promise<void> => {
 
         familyMembers.value = data.members
           .filter((member: any) => member.id !== currentMemberId && member.source === 'Member')
-
           .map((member: any) => ({
             id: member.id,
-            name: member.first_name + ' ' + member.last_name,
+            name: `${member.first_name} ${member.last_name}`,
             gender_name: member.gender_name,
           }));
       }
@@ -1217,19 +1150,10 @@ const fetchParishMembers = async (searchQuery: string = '') => {
   try {
     const currentMemberId = member?.id;
 
-    // Get current member's gender name for filtering
-    let excludeGender = '';
-    if (form.gender_id && props.genders) {
-      const currentGender = props.genders.find((g) => g.id == form.gender_id);
-      if (currentGender) {
-        excludeGender = currentGender.name;
-      }
-    }
-
-    // Build the URL with gender filter
-    let url = `/member/search-members?q=${encodeURIComponent(searchQuery)}&exclude_id=${currentMemberId}&limit=15`;
-    if (excludeGender) {
-      url += `&exclude_gender=${encodeURIComponent(excludeGender)}`;
+    // Build the URL with exclude current member
+    let url = `/member/search-members?q=${encodeURIComponent(searchQuery)}&limit=15`;
+    if (currentMemberId) {
+      url += `&exclude_id=${currentMemberId}`;
     }
 
     const response = await fetch(url, {
@@ -1244,7 +1168,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
     if (response.ok) {
       const data = await response.json();
       parishMembers.value = data.map((member: any) => ({
-        id: member.id,
+        id: Number(member.id),
         name: `${member.first_name} ${member.last_name} (${member.family_no})`,
         family_no: member.family_no,
         full_name: `${member.first_name} ${member.last_name}`,
@@ -1261,30 +1185,30 @@ const fetchParishMembers = async (searchQuery: string = '') => {
 };
 
 // Watch for family_no changes to refetch family members
-watch(
-  () => form.family_no,
-  () => {
-    fetchFamilyMembers().then(() => {
-      // Load current father and mother after family members are refetched
-      loadCurrentFather();
-      loadCurrentMother();
-    });
-    fetchExternalFamilyMembers();
-  },
-);
+// watch(
+//   () => form.family_no,
+//   () => {
+//     fetchFamilyMembers().then(() => {
+//       // Load current father and mother after family members are refetched
+//       loadCurrentFather();
+//       loadCurrentMother();
+//     });
+//     fetchExternalFamilyMembers();
+//   },
+// );
 
 // Fetch family members on mount
-onMounted(() => {
-  // Fetch family members since Member is the default
-  fetchFamilyMembers().then(() => {
-    // Load current father and mother after family members are fetched
-    loadCurrentFather();
-    loadCurrentMother();
-  });
+// onMounted(() => {
+//   // Fetch family members since Member is the default
+//   fetchFamilyMembers().then(() => {
+//     // Load current father and mother after family members are fetched
+//     loadCurrentFather();
+//     loadCurrentMother();
+//   });
 
-  // Also fetch external members in case they're needed later
-  fetchExternalFamilyMembers();
-});
+//   // Also fetch external members in case they're needed later
+//   fetchExternalFamilyMembers();
+// });
 </script>
 
 <template>
@@ -1637,7 +1561,7 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.father_id || undefined"
                     @update:model-value="(value) => (form.father_id = Number(value))"
-                    :options="form.father_source === 'Member' ? familyMembers.filter((m) => m.gender_name === 'Male') : externalFamilyMembers"
+                    :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.father_source === 'Member' ? 'Search father within family...' : 'Search for father (external)...'"
                     @search="undefined"
@@ -1686,7 +1610,7 @@ onMounted(() => {
                   <SearchDropdown
                     :model-value="form.mother_id || undefined"
                     @update:model-value="(value) => (form.mother_id = Number(value))"
-                    :options="form.mother_source === 'Member' ? familyMembers.filter((m) => m.gender_name === 'Female') : externalFamilyMembers"
+                    :options="form.mother_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.mother_source === 'Member' ? 'Search mother within family...' : 'Search for mother (external)...'"
                     @search="undefined"

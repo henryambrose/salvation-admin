@@ -567,13 +567,18 @@ class MemberController extends Controller
 
         $validated = $request->validated();
         Log::info('Validated data for update:', $validated);
+        Log::info('Current member spouse_id before update:', ['current_spouse_id' => $member->spouse_id, 'new_spouse_id' => $validated['spouse_id'] ?? null]);
+
         // Check if spouse_id changed and handle family transition
         $shouldCallTransition = isset($validated['spouse_id']) &&
             $validated['spouse_id'] !== null &&
             $validated['spouse_id'] != '' &&
             (string)$validated['spouse_id'] != (string)$member->spouse_id;
 
+        Log::info('Should call transition?', ['shouldCallTransition' => $shouldCallTransition]);
+
         $member->update($validated);
+        Log::info('Member updated. Spouse ID after update:', ['spouse_id' => $member->fresh()->spouse_id]);
         if ($validated['spouse_source'] == 'External' && $validated['spouse_id'] !== null) {
             $externalSpouse = ExternalMember::find($validated['spouse_id']);
             if ($externalSpouse && (!$externalSpouse->spouse_id)) {
@@ -1789,7 +1794,7 @@ class MemberController extends Controller
     {
 
         // Get the spouse with their gender
-        $spouse = Member::with('gender')->find($validated['member_sequence']);
+        $spouse = Member::with('gender')->find($validated['spouse_id']);
 
         if (!$spouse) {
             return;
