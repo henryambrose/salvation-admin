@@ -202,44 +202,69 @@ class ObituaryController extends Controller
     /**
      * Download QR code for the obituary
      */
-    public function downloadQrCode(string $uuid): BinaryFileResponse
+    public function downloadQrCode(string $uuid)
     {
         $obituary = ObituaryPage::where('uuid', $uuid)->firstOrFail();
-
+        Log::info('QR download requested', ['uuid' => $uuid]);
         // 1) Start with whatever is in DB
         $path = $obituary->qr_code_path ?? '';
 
         // 2) Normalize common mistakes:
-        //    - remove leading "public/"
+        //    - remove leading "public/" or "private/"
         //    - fix backslashes
         //    - fix singular "qr-code" -> plural "qr-codes"
-        $path = ltrim(str_replace(['public/', '\\'], ['', '/'], $path), '/');
+        $path = ltrim(str_replace(['public/', 'private/', '\\'], ['', '', '/'], $path), '/');
         if (str_starts_with($path, 'qr-code/')) {
             $path = preg_replace('/^qr-code\//', 'qr-codes/', $path);
         }
 
-        // 3) Now verify
-        if (!$path || !Storage::disk('public')->exists($path)) {
-            // helpful logs while you test
+        // 3) Check both public and private disks
+        $disk = null;
+        if (Storage::disk('public')->exists($path)) {
+            $disk = 'public';
+        } elseif (Storage::disk('private')->exists($path)) {
+            $disk = 'private';
+        }
+
+        if (!$disk || !$path) {
             logger()->warning('QR download: file not found', [
                 'uuid' => $uuid,
                 'qr_code_path_in_db' => $obituary->qr_code_path,
                 'normalized_path' => $path,
-                'root' => Storage::disk('public')->path(''),
             ]);
             abort(404, 'QR code file not found');
         }
+
         Log::info('QR download: file found', [
             'uuid' => $uuid,
             'qr_code_path_in_db' => $obituary->qr_code_path,
             'normalized_path' => $path,
-            'root' => Storage::disk('public')->path(''),
+            'disk' => $disk,
         ]);
-        $absolute = Storage::disk('public')->path($path);
+        $absolute = Storage::disk($disk)->path($path);
         $filename = 'obituary-qr-' . $obituary->uuid . '.png';
 
-        return response()->download($absolute, $filename, [
+        // Verify file is readable
+        if (!file_exists($absolute) || !is_readable($absolute)) {
+            abort(404, 'QR code file not accessible');
+        }
+
+        // Clean any output buffers to prevent corruption
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Read the file content directly
+        $fileContent = file_get_contents($absolute);
+
+        // Return raw binary response with proper headers
+        return response($fileContent, 200, [
             'Content-Type' => 'image/png',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Length' => strlen($fileContent),
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 

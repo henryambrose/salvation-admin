@@ -64,13 +64,18 @@ class ObituaryService
     {
         $url = route('obituary.show', $obituary->uuid);
 
-        $qrCodeContent = QrCode::format('png')
+        // Generate QR code as PNG binary
+        $qrCode = QrCode::format('png')
             ->size(300)
             ->margin(2)
-            ->errorCorrection('M')
-            ->generate($url);
+            ->errorCorrection('M');
+
+        // Get the actual PNG binary content
+        $qrCodeContent = $qrCode->generate($url);
 
         $fileName = "qr-codes/obituary-{$obituary->uuid}.png";
+
+        // Save the binary content directly
         Storage::disk('public')->put($fileName, $qrCodeContent);
 
         $obituary->update(['qr_code_path' => $fileName]);

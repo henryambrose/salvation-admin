@@ -1831,23 +1831,34 @@ class MemberController extends Controller
         $memberGender = $member->gender->name ?? null;
         $spouseGender = $spouse->gender->name ?? null;
 
+        Log::info('Marriage transition gender check', [
+            'member_id' => $member->id,
+            'member_gender' => $memberGender,
+            'spouse_id' => $spouse->id,
+            'spouse_gender' => $spouseGender
+        ]);
+
         // Determine who joins whose family based on gender
         $femaleJoinsMaleFamily = true; // Traditional approach
 
         if ($memberGender === 'Female' && ($spouseGender === 'Male' || $spouseGender === 'Other')) {
             // Female member joins male/other spouse's family
+            Log::info('Path: Female member joins male/other spouse family');
             $this->processFamilyTransition($member, $spouse, $validated, 'female_joins_male');
         } elseif ($memberGender === 'Male' && $spouseGender === 'Female') {
             // Male member stays in his family, female spouse joins his family
+            Log::info('Path: Male member stays, female spouse joins his family');
             $this->processSpouseJoinsFamily($spouse, $member, 'female_joins_male');
             // Male member only gets marital status change - no family change
             $validated['marital_status'] = 'married';
         } elseif ($memberGender === 'Other' && $spouseGender === 'Female') {
             // Other gender member stays, female spouse joins
+            Log::info('Path: Other gender stays, female spouse joins');
             $this->processSpouseJoinsFamily($spouse, $member, 'female_joins_male');
             $validated['marital_status'] = 'Married';
         } else {
             // Same gender or other combinations - default to member joining spouse's family
+            Log::info('Path: Default - member joining spouse family', ['path' => 'default']);
             $this->processFamilyTransition($member, $spouse, $validated, 'default');
         }
 
@@ -1856,23 +1867,41 @@ class MemberController extends Controller
 
     private function processFamilyTransition(Member $personJoining, Member $personStaying, array &$validated, string $transitionType)
     {
+        Log::info('processFamilyTransition called', [
+            'personJoining_id' => $personJoining->id,
+            'personJoining_family' => $personJoining->family_no,
+            'personStaying_id' => $personStaying->id,
+            'personStaying_family' => $personStaying->family_no,
+            'transitionType' => $transitionType
+        ]);
+
         // Store birth family if not already stored (only for the person joining)
         $birthFamilyNo = $personJoining->family_no;
         if (!$personJoining->birth_family_no) {
             $personJoining->birth_family_no = $birthFamilyNo;
             $personJoining->save(); // Save immediately to persist birth family
         }
+
         // Create external member record in the birth family for genealogy tracking
-        if ($transitionType === 'female_joins_male') {
+        // Create for both 'female_joins_male' and 'default' to ensure family tree is complete
+        Log::info('Checking if should create external member', [
+            'transitionType' => $transitionType,
+            'willCreate' => in_array($transitionType, ['female_joins_male', 'default'])
+        ]);
+
+        if (in_array($transitionType, ['female_joins_male', 'default'])) {
+            Log::info('Creating external member records');
             $this->createExternalMemberRecord($personJoining, $birthFamilyNo, $personStaying);
+        } else {
+            Log::info('NOT creating external member - transition type mismatch', ['transitionType' => $transitionType]);
         }
 
         // If this is the current member being updated, modify their validated data
         if ($transitionType === 'female_joins_male' || $transitionType === 'default') {
-            $personJoining['family_no'] = $personStaying->family_no;
-            $personJoining['father_id'] = null; // Clear birth family relationships
-            $personJoining['mother_id'] = null;
-            $personJoining['marital_status'] = 'Married';
+            $personJoining->family_no = $personStaying->family_no;
+            $personJoining->father_id = null; // Clear birth family relationships
+            $personJoining->mother_id = null;
+            $personJoining->marital_status = 'Married';
             $personJoining->save();
 
             // Set appropriate relationship

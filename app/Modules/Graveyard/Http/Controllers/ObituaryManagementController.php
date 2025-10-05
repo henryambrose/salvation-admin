@@ -524,13 +524,22 @@ class ObituaryManagementController extends Controller
         return back()->with('success', 'Payment completed successfully! The obituary page is now active.');
     }
 
-    public function downloadQrCode(ObituaryPage $obituary): BinaryFileResponse
+    public function downloadQrCode(ObituaryPage $obituary)
     {
         $this->authorize('view', $obituary);
 
         // normalize to disk-relative path like "qr-codes/obituary-<uuid>.png"
-        $path = ltrim(str_replace(['public/', '\\'], ['', '/'], (string) $obituary->qr_code_path), '/');
-        abort_unless($path && Storage::disk('public')->exists($path), 404, 'QR code file not found');
+        $path = ltrim(str_replace(['public/', 'private/', '\\'], ['', '', '/'], (string) $obituary->qr_code_path), '/');
+
+        // Check both public and private disks
+        $disk = null;
+        if (Storage::disk('public')->exists($path)) {
+            $disk = 'public';
+        } elseif (Storage::disk('private')->exists($path)) {
+            $disk = 'private';
+        }
+
+        abort_unless($disk && $path, 404, 'QR code file not found');
 
         // (optional) disable debugbar for this response, just in case
         if (app()->bound('debugbar')) {
@@ -538,12 +547,29 @@ class ObituaryManagementController extends Controller
         }
 
         $downloadName = 'obituary-' . $obituary->uuid . '.png';
-        $fullPath = Storage::disk('public')->path($path);
+        $fullPath = Storage::disk($disk)->path($path);
 
-        // Let Laravel stream the file; don't set Content-Length manually.
-        return response()->download($fullPath, $downloadName, [
-            'Content-Type'  => 'image/png',
-            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        // Verify file is readable
+        if (!file_exists($fullPath) || !is_readable($fullPath)) {
+            abort(404, 'QR code file not accessible');
+        }
+
+        // Clean any output buffers to prevent corruption
+        if (ob_get_level()) {
+            ob_end_clean();
+        }
+
+        // Read the file content directly
+        $fileContent = file_get_contents($fullPath);
+
+        // Return raw binary response with proper headers
+        return response($fileContent, 200, [
+            'Content-Type' => 'image/png',
+            'Content-Disposition' => 'attachment; filename="' . $downloadName . '"',
+            'Content-Length' => strlen($fileContent),
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
         ]);
     }
 

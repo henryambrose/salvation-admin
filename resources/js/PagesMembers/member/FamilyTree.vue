@@ -158,7 +158,8 @@
                 <div class="name font-semibold">{{ displayNameWithNo(person) }}</div>
                 <div class="rounded-r-md border-l-4 border-blue-500 bg-blue-50 px-3 py-2">
                   <div class="text-sm font-semibold text-blue-800">
-                    Current Person<span v-if="personRelationLabel"> — {{ personRelationLabel }}</span>
+                    Current Person
+                    <!-- <span v-if="personRelationLabel"> — {{ personRelationLabel }}</span> -->
                   </div>
                 </div>
               </div>
@@ -308,11 +309,11 @@
 </template>
 
 <script setup>
+import { useToast } from '@/composables/useToast';
 import { router } from '@inertiajs/vue3';
 import { saveAs } from 'file-saver';
 import { toPng } from 'html-to-image';
 import { computed } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 const { success, error } = useToast();
 

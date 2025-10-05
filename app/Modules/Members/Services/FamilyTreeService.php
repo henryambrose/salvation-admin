@@ -51,7 +51,9 @@ class FamilyTreeService
             !$p1->mother_uid
         ) { // No mother (not born into family)
             // Check if p2 is his spouse
+
             if ($p1->spouse_uid === $p2->uid) {
+                Log::info('Calculating relationship between ' . $p1->spouse_uid . ' and ' . $p2->uid);
                 return $p2->gender_id == 1 ? 'Husband' : 'Wife';
             }
 
