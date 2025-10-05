@@ -6,7 +6,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
+import { Download, Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -184,6 +184,11 @@ function clearFilters() {
   startDate.value = '';
   endDate.value = '';
   perPage.value = 10;
+}
+
+function downloadReceipt(intentionId: number) {
+  const url = route('fund.mass-intentions.receipt', intentionId);
+  window.open(url, '_blank');
 }
 
 function exportToCSV() {
@@ -418,6 +423,13 @@ const breadcrumbs = [
                 <td class="p-2">
                   <template v-if="!serverArchived">
                     <div class="flex items-center gap-2">
+                      <Button
+                        @click="downloadReceipt(intention.id)"
+                        class="rounded-full bg-green-100 p-2 text-green-700 transition hover:bg-green-200"
+                        title="Download Receipt"
+                      >
+                        <Download class="h-[1rem] w-[1rem]" />
+                      </Button>
                       <Button
                         v-if="canUpdateAnyMassIntention"
                         @click="router.visit(route('fund.mass-intentions.edit', intention.id))"

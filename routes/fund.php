@@ -78,12 +78,14 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
 
     // Annual Contributions
     Route::get('annual-contributions/export', [AnnualContributionController::class, 'export'])->name('annual-contributions.export');
+    Route::get('annual-contributions/{id}/receipt', [AnnualContributionController::class, 'downloadReceipt'])->name('annual-contributions.receipt');
     Route::resource('annual-contributions', AnnualContributionController::class);
     Route::post('annual-contributions/bulk-update', [AnnualContributionController::class, 'bulkUpdate'])->name('annual-contributions.bulk-update');
     Route::post('annual-contributions/{id}/restore', [AnnualContributionController::class, 'restore'])->name('annual-contributions.restore');
 
     // Community Contributions
     Route::get('community-contributions/stats', [CommunityContributionController::class, 'getStats'])->name('community-contributions.stats');
+    Route::get('community-contributions/{id}/receipt', [CommunityContributionController::class, 'downloadReceipt'])->name('community-contributions.receipt');
     Route::resource('community-contributions', CommunityContributionController::class);
     Route::post('community-contributions/{id}/restore', [CommunityContributionController::class, 'restore'])->name('community-contributions.restore');
     Route::put('community-contributions/{communityContribution}/status', [CommunityContributionController::class, 'updateStatus'])->name('community-contributions.update-status');
@@ -99,16 +101,17 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
 
     // Mass Intentions
     Route::get('mass-intentions/export', [MassIntentionController::class, 'export'])->name('mass-intentions.export');
+    Route::get('mass-intentions/search/members', [MassIntentionController::class, 'searchMembers'])->name('mass-intentions.search-members');
     Route::get('mass-intentions', [MassIntentionController::class, 'index'])->name('mass-intentions.index');
     Route::get('mass-intentions/create', [MassIntentionController::class, 'create'])->name('mass-intentions.create');
     Route::post('mass-intentions', [MassIntentionController::class, 'store'])->name('mass-intentions.store');
+    Route::get('mass-intentions/{massIntention}/receipt', [MassIntentionController::class, 'downloadReceipt'])->name('mass-intentions.receipt');
     Route::get('mass-intentions/{massIntention}', [MassIntentionController::class, 'show'])->name('mass-intentions.show');
     Route::get('mass-intentions/{massIntention}/edit', [MassIntentionController::class, 'edit'])->name('mass-intentions.edit');
     Route::put('mass-intentions/{massIntention}', [MassIntentionController::class, 'update'])->name('mass-intentions.update');
     Route::delete('mass-intentions/{massIntention}', [MassIntentionController::class, 'destroy'])->name('mass-intentions.destroy');
     Route::post('mass-intentions/{id}/restore', [MassIntentionController::class, 'restore'])->name('mass-intentions.restore');
     Route::put('mass-intentions/{massIntention}/status', [MassIntentionController::class, 'updateStatus'])->name('mass-intentions.update-status');
-    Route::get('mass-intentions/search/members', [MassIntentionController::class, 'searchMembers'])->name('mass-intentions.search-members');
 
     // Permission Denied
     Route::get('permission-denied', function () {

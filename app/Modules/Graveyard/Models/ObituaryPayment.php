@@ -6,7 +6,7 @@ use App\Traits\Auditable;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Modules\Fund\Models\PaymentMethod;
 
 class ObituaryPayment extends Model
@@ -17,6 +17,8 @@ class ObituaryPayment extends Model
         'amount',
         'payment_status',
         'payment_reference',
+        'receipt_number',
+        'receipt_generated_at',
         'payment_method_id',
         'paid_amount',
         'payment_date',
@@ -31,6 +33,7 @@ class ObituaryPayment extends Model
         'paid_amount' => 'decimal:2',
         'payment_date' => 'datetime',
         'expires_at' => 'datetime',
+        'receipt_generated_at' => 'datetime',
     ];
 
     public function obituaryPage(): BelongsTo
@@ -86,5 +89,34 @@ class ObituaryPayment extends Model
     public function isExpired(): bool
     {
         return $this->expires_at && $this->expires_at->isPast();
+    }
+
+    /**
+     * Generate receipt number for this payment
+     */
+    public function generateReceipt(): void
+    {
+        if (!$this->receipt_number) {
+            $this->update([
+                'receipt_number' => static::generateReceiptNumber(),
+                'receipt_generated_at' => now()
+            ]);
+        }
+    }
+
+    /**
+     * Generate a unique receipt number
+     */
+    public static function generateReceiptNumber(): string
+    {
+        $prefix = 'OBTR'; // Obituary Receipt
+        $date = now()->format('Ymd');
+        $lastReceipt = static::whereDate('receipt_generated_at', today())
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $sequence = $lastReceipt ? (int)substr($lastReceipt->receipt_number, -4) + 1 : 1;
+
+        return $prefix . $date . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
 }

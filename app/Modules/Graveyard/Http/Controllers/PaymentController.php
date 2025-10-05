@@ -306,7 +306,9 @@ class PaymentController extends Controller
             // Redirect back to the appropriate booking page
             $redirectRoute = $this->getBookingShowRoute($request->booking_type);
             return redirect()->route($redirectRoute, $booking->id)
-                ->with('success', 'Payment recorded successfully.');
+                ->with('success', 'Payment recorded successfully.')
+                ->with('receipt_id', $payment->id)
+                ->with('receipt_url', route('graveyard.payments.receipt', $payment->id));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create payment: ' . $e->getMessage());
@@ -424,7 +426,9 @@ class PaymentController extends Controller
             DB::commit();
 
             return redirect()->route('graveyard.payments.show', $balancePayment->id)
-                ->with('success', 'Balance payment recorded successfully.');
+                ->with('success', 'Balance payment recorded successfully.')
+                ->with('receipt_id', $balancePayment->id)
+                ->with('receipt_url', route('graveyard.payments.receipt', $balancePayment->id));
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create balance payment: ' . $e->getMessage());
@@ -646,7 +650,9 @@ class PaymentController extends Controller
             DB::commit();
 
             return redirect()->route('graveyard.payments.show', $payment->id)
-                ->with('success', 'Maintenance fee payment recorded successfully.');
+                ->with('success', 'Maintenance fee payment recorded successfully.')
+                ->with('receipt_id', $payment->id)
+                ->with('receipt_url', route('graveyard.payments.receipt', $payment->id));
 
         } catch (\Exception $e) {
             DB::rollBack();

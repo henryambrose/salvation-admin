@@ -239,6 +239,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
 
         // Payment processing
         Route::post('/{obituary}/payment', [ObituaryManagementController::class, 'processPayment'])->name('payment.process');
+        Route::get('/payments/{payment}/receipt', [ObituaryManagementController::class, 'downloadReceipt'])->name('payment.receipt');
 
         // Image management
         Route::delete('/{obituary}/profile-image', [ObituaryManagementController::class, 'removeProfileImage'])->name('images.remove-profile');

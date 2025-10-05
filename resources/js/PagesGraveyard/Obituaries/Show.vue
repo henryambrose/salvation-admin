@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, Copy, CreditCard, Edit, Eye, Key, Lock, QrCode, RefreshCw, Settings, Unlock, UserPlus, UserX } from 'lucide-vue-next';
+import { ArrowLeft, Copy, CreditCard, Download, Edit, Eye, Key, Lock, QrCode, RefreshCw, Settings, Unlock, UserPlus, UserX } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 type PaymentStatus = 'pending' | 'completed' | 'failed';
@@ -732,13 +732,27 @@ const paymentStatusColors = {
               <CardContent>
                 <div class="space-y-3">
                   <div v-for="payment in obituary.payments" :key="payment.id" class="flex items-center justify-between rounded bg-gray-50 p-3">
-                    <div>
+                    <div class="flex-1">
                       <p class="font-medium">₹{{ payment.amount }}</p>
                       <p class="text-xs text-gray-600">{{ payment.payment_reference }}</p>
+                      <p v-if="payment.obituary_plan" class="text-xs text-gray-500 mt-1">{{ payment.obituary_plan.name }}</p>
                     </div>
-                    <Badge :class="paymentStatusColors[payment.payment_status]">
-                      {{ payment.payment_status }}
-                    </Badge>
+                    <div class="flex items-center gap-2">
+                      <Badge :class="paymentStatusColors[payment.payment_status]">
+                        {{ payment.payment_status }}
+                      </Badge>
+                      <Button
+                        v-if="payment.payment_status === 'completed'"
+                        size="sm"
+                        variant="outline"
+                        as-child
+                        title="Download Receipt"
+                      >
+                        <a :href="`/graveyard/obituaries/payments/${payment.id}/receipt`" target="_blank" rel="noopener noreferrer">
+                          <Download class="h-3 w-3" />
+                        </a>
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>

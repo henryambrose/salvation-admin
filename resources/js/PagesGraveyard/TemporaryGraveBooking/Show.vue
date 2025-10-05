@@ -522,7 +522,7 @@ const goToCreateObituary = () => {
                           variant="outline"
                           class="group h-auto min-h-[3rem] w-full justify-start border-blue-200/60 bg-blue-50/30 text-left transition-all duration-200 hover:border-blue-300 hover:bg-blue-100/60 hover:shadow-sm"
                         >
-                          <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex w-full items-center space-x-3 p-3">
+                          <a :href="route('graveyard.payments.receipt', payment.id)" target="_blank" rel="noopener noreferrer" class="flex w-full items-center space-x-3 p-3">
                             <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>
@@ -532,7 +532,7 @@ const goToCreateObituary = () => {
                                 {{ formatCurrency(payment.paid_amount) }}
                               </div>
                             </div>
-                          </Link>
+                          </a>
                         </Button>
                       </div>
                     </div>

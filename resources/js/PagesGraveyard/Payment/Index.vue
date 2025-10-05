@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { CreditCard, Eye, Filter, Search } from 'lucide-vue-next';
+import { CreditCard, Download, Eye, Filter, Search } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 
 interface Payment {
@@ -315,6 +315,12 @@ const getBookingTypeLabel = (payableType: string) => {
                     </td>
                     <td class="px-6 py-4 text-sm font-medium whitespace-nowrap">
                       <div class="flex space-x-2">
+                        <Button size="sm" variant="outline" as-child>
+                          <a :href="route('graveyard.payments.receipt', payment.id)" target="_blank" rel="noopener noreferrer">
+                            <Download class="mr-1 h-4 w-4" />
+                            Receipt
+                          </a>
+                        </Button>
                         <Button size="sm" variant="outline" as-child>
                           <Link :href="route('graveyard.payments.show', payment.id)">
                             <Eye class="mr-1 h-4 w-4" />

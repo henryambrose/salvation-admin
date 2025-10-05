@@ -450,7 +450,7 @@ const goToCreateObituary = () => {
                           variant="outline"
                           class="group h-12 justify-start text-left transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50"
                         >
-                          <Link :href="route('graveyard.payments.receipt', payment.id)" class="flex items-center space-x-3 p-3">
+                          <a :href="route('graveyard.payments.receipt', payment.id)" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-3">
                             <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>
@@ -458,7 +458,7 @@ const goToCreateObituary = () => {
                               <div class="text-sm font-medium text-gray-900">Receipt #{{ payment.payment_reference }}</div>
                               <div class="text-xs font-medium text-gray-600">${{ Number(payment.paid_amount).toFixed(2) }}</div>
                             </div>
-                          </Link>
+                          </a>
                         </Button>
                       </div>
                     </div>

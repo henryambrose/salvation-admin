@@ -172,7 +172,7 @@ class AnnualContributionController extends Controller
             'notes' => 'nullable|string',
         ]);
 
-        FamilyContribution::create([
+        $contribution = FamilyContribution::create([
             'family_no' => $validated['family_no'],
             'amount' => $validated['amount'],
             'payment_method_id' => $validated['payment_method_id'],
@@ -189,7 +189,9 @@ class AnnualContributionController extends Controller
         ]);
 
         return redirect()->route('fund.annual-contributions.index')
-            ->with('success', 'Contribution created successfully.');
+            ->with('success', 'Contribution created successfully.')
+            ->with('receipt_id', $contribution->id)
+            ->with('receipt_url', route('fund.annual-contributions.receipt', $contribution->id));
     }
 
     public function show($id)
@@ -288,6 +290,72 @@ class AnnualContributionController extends Controller
             ]);
 
         return back()->with('success', 'Contributions updated successfully.');
+    }
+
+    public function downloadReceipt($id)
+    {
+        $contribution = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
+            ->findOrFail($id);
+
+        $memberName = $contribution->member
+            ? trim($contribution->member->first_name . ' ' . $contribution->member->last_name)
+            : ($contribution->paid_by_name ?? 'N/A');
+
+        $receiptData = [
+            'receipt_no' => 'AC-' . str_pad($contribution->id, 6, '0', STR_PAD_LEFT),
+            'date' => now()->format('d/m/Y'),
+            'family_no' => $contribution->family_no,
+            'received_from' => $memberName,
+            'amount' => number_format($contribution->amount, 2),
+            'amount_words' => $this->numberToWords($contribution->amount),
+            'payment_method' => $contribution->paymentMethod->name ?? 'N/A',
+            'category' => $contribution->fundCategory->name ?? 'Annual Contribution',
+            'period' => date('d/m/Y', strtotime($contribution->start_date)) . ' to ' . date('d/m/Y', strtotime($contribution->end_date)),
+            'status' => ucfirst($contribution->status),
+            'notes' => $contribution->notes ?? '',
+            'created_at' => $contribution->created_at->format('d/m/Y H:i A'),
+        ];
+
+        return view('fund.receipts.annual-contribution', $receiptData);
+    }
+
+    private function numberToWords($number)
+    {
+        $amount = number_format($number, 2, '.', '');
+        list($rupees, $paise) = explode('.', $amount);
+
+        $words = '';
+        if ($rupees > 0) {
+            $words = $this->convertNumberToWords((int)$rupees) . ' Rupees';
+        }
+        if ($paise > 0) {
+            $words .= ($words ? ' and ' : '') . $this->convertNumberToWords((int)$paise) . ' Paise';
+        }
+
+        return $words ?: 'Zero Rupees';
+    }
+
+    private function convertNumberToWords($number)
+    {
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        $teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+
+        if ($number < 10) {
+            return $ones[$number];
+        } elseif ($number < 20) {
+            return $teens[$number - 10];
+        } elseif ($number < 100) {
+            return $tens[intval($number / 10)] . ' ' . $ones[$number % 10];
+        } elseif ($number < 1000) {
+            return $ones[intval($number / 100)] . ' Hundred ' . $this->convertNumberToWords($number % 100);
+        } elseif ($number < 100000) {
+            return $this->convertNumberToWords(intval($number / 1000)) . ' Thousand ' . $this->convertNumberToWords($number % 1000);
+        } elseif ($number < 10000000) {
+            return $this->convertNumberToWords(intval($number / 100000)) . ' Lakh ' . $this->convertNumberToWords($number % 100000);
+        } else {
+            return $this->convertNumberToWords(intval($number / 10000000)) . ' Crore ' . $this->convertNumberToWords($number % 10000000);
+        }
     }
 
     public function export(Request $request)

@@ -10,35 +10,38 @@ interface Payment {
   total_amount: number;
   paid_amount: number;
   payment_date: string;
-  payment_mode: string;
+  payment_mode?: string;
   transaction_reference?: string;
-  service_charges: Array<{
+  service_charges?: Array<{
     service_id: number;
     service_name: string;
     quantity: number;
     unit_cost: number;
     total_cost: number;
   }>;
-  paymentMethod: {
+  paymentMethod?: {
     name: string;
   };
-  payable: {
-    booking_reference: string;
-    permanent_grave: {
+  payment_method?: {
+    name: string;
+  };
+  payable?: {
+    booking_reference?: string;
+    permanent_grave?: {
       grave_no: string;
       section: string;
       row_no: string;
     };
-    valid_member: {
+    valid_member?: {
       first_name: string;
       last_name: string;
       relationship: string;
     };
-    applicant_name: string;
-    died_on: string;
-    buried_on: string;
+    applicant_name?: string;
+    died_on?: string;
+    buried_on?: string;
   };
-  creator: {
+  creator?: {
     name: string;
   };
   created_at: string;
@@ -68,8 +71,11 @@ const formatDateTime = (date: string) => {
 };
 
 const getDeceasedName = () => {
-  const validMember = props.payment.payable.valid_member;
-  return `${validMember.first_name} ${validMember.last_name}`;
+  const validMember = props.payment.payable?.valid_member;
+  if (validMember) {
+    return `${validMember.first_name} ${validMember.last_name}`;
+  }
+  return props.payment.payable?.applicant_name || 'N/A';
 };
 
 const printReceipt = () => {
@@ -135,7 +141,7 @@ onMounted(() => {
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
                 <span class="font-medium">Booking Reference:</span>
-                <span>{{ payment.payable.booking_reference }}</span>
+                <span>{{ payment.payable?.booking_reference || 'N/A' }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="font-medium">Deceased Person:</span>
@@ -143,11 +149,11 @@ onMounted(() => {
               </div>
               <div class="flex justify-between">
                 <span class="font-medium">Grave Number:</span>
-                <span>{{ payment.payable.permanent_grave.grave_no }}</span>
+                <span>{{ payment.payable?.permanent_grave?.grave_no || 'N/A' }}</span>
               </div>
               <div class="flex justify-between">
                 <span class="font-medium">Applicant:</span>
-                <span>{{ payment.payable.applicant_name }}</span>
+                <span>{{ payment.payable?.applicant_name || 'N/A' }}</span>
               </div>
             </div>
           </div>
@@ -155,7 +161,7 @@ onMounted(() => {
       </div>
 
       <!-- Service Details -->
-      <div class="mb-6">
+      <div v-if="payment.service_charges && payment.service_charges.length > 0" class="mb-6">
         <h3 class="text-lg font-semibold mb-4">Service Details</h3>
         <div class="border border-gray-200 rounded-lg overflow-hidden">
           <table class="w-full">
@@ -209,11 +215,11 @@ onMounted(() => {
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="font-medium">Method:</span>
-              <span>{{ payment.paymentMethod.name }}</span>
+              <span>{{ payment.paymentMethod?.name || payment.payment_method?.name || 'N/A' }}</span>
             </div>
             <div class="flex justify-between">
               <span class="font-medium">Mode:</span>
-              <span class="capitalize">{{ payment.payment_mode }}</span>
+              <span class="capitalize">{{ payment.payment_mode || 'N/A' }}</span>
             </div>
             <div v-if="payment.transaction_reference" class="flex justify-between">
               <span class="font-medium">Reference:</span>
@@ -227,7 +233,7 @@ onMounted(() => {
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="font-medium">Recorded By:</span>
-              <span>{{ payment.creator.name }}</span>
+              <span>{{ payment.creator?.name || 'N/A' }}</span>
             </div>
           </div>
         </div>
@@ -241,22 +247,22 @@ onMounted(() => {
       </div>
     </div>
   </div>
-
-  <style>
-  @media print {
-    .no-print {
-      display: none !important;
-    }
-    
-    body {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    
-    @page {
-      margin: 1in;
-      size: A4;
-    }
-  }
-  </style>
 </template>
+
+<style scoped>
+@media print {
+  .no-print {
+    display: none !important;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  @page {
+    margin: 1in;
+    size: A4;
+  }
+}
+</style>

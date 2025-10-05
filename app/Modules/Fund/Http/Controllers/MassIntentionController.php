@@ -229,7 +229,9 @@ class MassIntentionController extends Controller
         ]);
 
         return redirect()->route('fund.mass-intentions.index')
-            ->with('success', 'Mass intention booked successfully!');
+            ->with('success', 'Mass intention booked successfully!')
+            ->with('receipt_id', $massIntention->id)
+            ->with('receipt_url', route('fund.mass-intentions.receipt', $massIntention->id));
     }
 
     /**
@@ -384,6 +386,81 @@ class MassIntentionController extends Controller
         });
 
         return response()->json($members);
+    }
+
+    /**
+     * Download receipt for a mass intention
+     */
+    public function downloadReceipt($id)
+    {
+        $intention = MassIntention::with(['member', 'massIntentionType', 'massType', 'paymentMethod'])
+            ->findOrFail($id);
+
+        $memberName = $intention->member
+            ? trim(implode(' ', array_filter([
+                $intention->member->first_name,
+                $intention->member->middle_name,
+                $intention->member->last_name
+            ])))
+            : ($intention->external_name ?? 'N/A');
+
+        $receiptData = [
+            'receipt_no' => 'MI-' . str_pad($intention->id, 6, '0', STR_PAD_LEFT),
+            'date' => now()->format('d/m/Y'),
+            'mass_date' => date('d/m/Y', strtotime($intention->mass_date)),
+            'received_from' => $memberName,
+            'amount' => number_format($intention->amount, 2),
+            'amount_words' => $this->numberToWords($intention->amount),
+            'payment_method' => $intention->paymentMethod->name ?? 'N/A',
+            'mass_type' => $intention->massType->name ?? 'N/A',
+            'intention_type' => $intention->massIntentionType->name ?? 'N/A',
+            'intention_for' => $intention->intention_for ?? '',
+            'special_instructions' => $intention->special_instructions ?? '',
+            'status' => ucfirst($intention->status),
+            'phone' => $intention->phone ?? '',
+            'created_at' => $intention->created_at->format('d/m/Y H:i A'),
+        ];
+
+        return view('fund.receipts.mass-intention', $receiptData);
+    }
+
+    private function numberToWords($number)
+    {
+        $amount = number_format($number, 2, '.', '');
+        list($rupees, $paise) = explode('.', $amount);
+
+        $words = '';
+        if ($rupees > 0) {
+            $words = $this->convertNumberToWords((int)$rupees) . ' Rupees';
+        }
+        if ($paise > 0) {
+            $words .= ($words ? ' and ' : '') . $this->convertNumberToWords((int)$paise) . ' Paise';
+        }
+
+        return $words ?: 'Zero Rupees';
+    }
+
+    private function convertNumberToWords($number)
+    {
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        $teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+
+        if ($number < 10) {
+            return $ones[$number];
+        } elseif ($number < 20) {
+            return $teens[$number - 10];
+        } elseif ($number < 100) {
+            return $tens[intval($number / 10)] . ' ' . $ones[$number % 10];
+        } elseif ($number < 1000) {
+            return $ones[intval($number / 100)] . ' Hundred ' . $this->convertNumberToWords($number % 100);
+        } elseif ($number < 100000) {
+            return $this->convertNumberToWords(intval($number / 1000)) . ' Thousand ' . $this->convertNumberToWords($number % 1000);
+        } elseif ($number < 10000000) {
+            return $this->convertNumberToWords(intval($number / 100000)) . ' Lakh ' . $this->convertNumberToWords($number % 100000);
+        } else {
+            return $this->convertNumberToWords(intval($number / 10000000)) . ' Crore ' . $this->convertNumberToWords($number % 10000000);
+        }
     }
 
     /**

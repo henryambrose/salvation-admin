@@ -518,10 +518,16 @@ class ObituaryManagementController extends Controller
             'updated_by' => Auth::id(),
         ]);
 
+        // Generate receipt
+        $payment->generateReceipt();
+
         // Activate the obituary page
         $obituary->update(['is_active' => true]);
 
-        return back()->with('success', 'Payment completed successfully! The obituary page is now active.');
+        return back()
+            ->with('success', 'Payment completed successfully! The obituary page is now active.')
+            ->with('receipt_id', $payment->id)
+            ->with('receipt_url', route('graveyard.obituaries.payment.receipt', $payment->id));
     }
 
     public function downloadQrCode(ObituaryPage $obituary)
@@ -1249,5 +1255,27 @@ class ObituaryManagementController extends Controller
 
             return back()->with('error', 'Failed to reset password. Please try again.');
         }
+    }
+
+    /**
+     * Download obituary payment receipt
+     */
+    public function downloadReceipt($paymentId)
+    {
+        $payment = \Modules\Graveyard\Models\ObituaryPayment::with([
+            'obituaryPage',
+            'obituaryPlan',
+            'paymentMethod',
+            'creator'
+        ])->findOrFail($paymentId);
+
+        // Generate receipt if it doesn't exist
+        if (!$payment->receipt_number) {
+            $payment->generateReceipt();
+        }
+
+        return view('graveyard.receipts.obituary-payment', [
+            'payment' => $payment,
+        ]);
     }
 }
