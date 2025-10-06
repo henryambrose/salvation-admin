@@ -60,19 +60,19 @@ const isActivePage = (itemHref: string, currentUrl: string): boolean => {
     return currentUrl === '/graveyard' || currentUrl === '/graveyard/dashboard';
   }
 
-  if (itemHref.startsWith('/graveyard/')) {
-    // Handle specific graveyard route conflicts
-    if (itemHref === '/graveyard/obituaries') {
-      // For "All Obituaries", only match exact route or its direct children, not nested subroutes
-      return currentUrl === itemHref ||
-             currentUrl.startsWith(itemHref + '/') &&
-             !currentUrl.includes('/condolences/') &&
-             !currentUrl.includes('/cleanup');
-    }
+  // if (itemHref.startsWith('/graveyard/')) {
+  //   // Handle specific graveyard route conflicts
+  //   if (itemHref === '/graveyard/obituaries') {
+  //     // For "All Obituaries", only match exact route or its direct children, not nested subroutes
+  //     return currentUrl === itemHref ||
+  //            currentUrl.startsWith(itemHref + '/') &&
+  //            !currentUrl.includes('/condolences/') &&
+  //            !currentUrl.includes('/cleanup');
+  //   }
 
-    // For other graveyard routes, use standard nested route detection
-    return currentUrl.startsWith(itemHref);
-  }
+  //   // For other graveyard routes, use standard nested route detection
+  //   return currentUrl.startsWith(itemHref);
+  // }
 
   // Handle clashing URLs first - use exact match for URLs that might clash with others
   if (itemHref === '/cells-and-association' || itemHref === '/cells-and-association-members') {

@@ -6,11 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, Clock, Eye, FileText, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
+import { Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { useToast } from '@/composables/useToast';
 
 interface TemporaryGraveBooking {
   id: number;
@@ -42,7 +42,7 @@ interface TemporaryGraveBooking {
   payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   expected_transfer_date: string;
   transfer_requested: boolean;
-  has_obituary: boolean;
+  // has_obituary: boolean;
   created_at: string;
   creator: {
     name: string;
@@ -70,7 +70,6 @@ const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
 const transferDue = ref(props.filters.transfer_due || 'all');
 
-
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
@@ -97,7 +96,6 @@ const debouncedSearch = () => {
 };
 
 const applyFilters = () => {
-
   router.get(
     route('graveyard.temporary-grave-bookings.index'),
     {
@@ -178,7 +176,6 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
     });
   }
 };
-
 </script>
 
 <template>
@@ -288,7 +285,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                       <TableHead class="font-medium text-gray-900">Transfer Status</TableHead>
                       <TableHead class="font-medium text-gray-900">Payment Details</TableHead>
                       <TableHead class="font-medium text-gray-900">Status</TableHead>
-                      <TableHead class="font-medium text-gray-900">Obituary</TableHead>
+                      <!-- <TableHead class="font-medium text-gray-900">Obituary</TableHead> -->
                       <TableHead class="text-right font-medium text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -364,7 +361,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           {{ booking.status }}
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <!-- <TableCell>
                         <Button
                           v-if="booking.status === 'confirmed' && !booking.has_obituary"
                           variant="outline"
@@ -381,7 +378,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           Obituary Created
                         </Badge>
                         <span v-else class="text-gray-400 text-sm">Not Available</span>
-                      </TableCell>
+                      </TableCell> -->
                       <TableCell class="text-right">
                         <div class="flex items-center justify-end space-x-2">
                           <Button variant="outline" size="sm" as-child>
@@ -453,7 +450,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                         </Badge>
                       </div>
                       <div class="flex items-center space-x-2">
-                        <Button
+                        <!-- <Button
                           v-if="booking.status === 'confirmed' && !booking.has_obituary"
                           variant="outline"
                           size="sm"
@@ -463,7 +460,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           <Link :href="route('graveyard.obituaries.create', { type: 'temporary', booking_id: booking.id })">
                             <FileText class="h-4 w-4" />
                           </Link>
-                        </Button>
+                        </Button> -->
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />

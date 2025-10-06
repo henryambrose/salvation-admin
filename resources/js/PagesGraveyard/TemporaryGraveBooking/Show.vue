@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight, CheckCircle, FileText, IndianRupee, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { ArrowLeft, ArrowRight, FileText, IndianRupee, MapPin, Phone, User } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 interface NicheTransfer {
   id: number;
@@ -80,11 +80,11 @@ interface TemporaryGraveBooking {
   }[];
 }
 
-interface FlashMessage {
-  success?: string;
-  error?: string;
-  offer_obituary?: boolean;
-}
+// interface FlashMessage {
+//   success?: string;
+//   error?: string;
+//   offer_obituary?: boolean;
+// }
 
 interface Props {
   booking: TemporaryGraveBooking;
@@ -95,7 +95,7 @@ const props = defineProps<Props>();
 
 // Flash message support
 const page = usePage();
-const flashMessage = computed(() => page.props.flash as FlashMessage | undefined);
+// const flashMessage = computed(() => page.props.flash as FlashMessage | undefined);
 
 const showCancelDialog = ref(false);
 const cancelReason = ref('');
@@ -191,14 +191,14 @@ const cancelBooking = () => {
   );
 };
 
-const goToCreateObituary = () => {
-  router.visit(
-    route('graveyard.obituaries.create', {
-      type: 'temporary',
-      booking_id: props.booking.id,
-    }),
-  );
-};
+// const goToCreateObituary = () => {
+//   router.visit(
+//     route('graveyard.obituaries.create', {
+//       type: 'temporary',
+//       booking_id: props.booking.id,
+//     }),
+//   );
+// };
 </script>
 
 <template>
@@ -231,10 +231,10 @@ const goToCreateObituary = () => {
                   {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
                 </Badge>
                 <div class="flex space-x-2">
-                  <Button v-if="canCreateObituary" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700">
+                  <!-- <Button v-if="canCreateObituary" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700">
                     <FileText class="mr-2 h-4 w-4" />
                     Create Obituary
-                  </Button>
+                  </Button> -->
                   <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
                     <IndianRupee class="mr-2 h-4 w-4" />
                     Make Payment
@@ -281,22 +281,22 @@ const goToCreateObituary = () => {
           </div>
 
           <!-- Flash Messages -->
-          <div v-if="flashMessage?.success" class="border-b border-green-200 bg-green-50 px-4 py-3">
+          <!-- <div v-if="flashMessage?.success" class="border-b border-green-200 bg-green-50 px-4 py-3">
             <div class="flex items-center">
               <CheckCircle class="mr-2 h-5 w-5 text-green-600" />
               <p class="text-sm text-green-800">{{ flashMessage.success }}</p>
             </div>
-          </div>
+          </div> -->
 
-          <div v-if="flashMessage?.error" class="border-b border-red-200 bg-red-50 px-4 py-3">
+          <!-- <div v-if="flashMessage?.error" class="border-b border-red-200 bg-red-50 px-4 py-3">
             <div class="flex items-center">
               <XCircle class="mr-2 h-5 w-5 text-red-600" />
               <p class="text-sm text-red-800">{{ flashMessage.error }}</p>
             </div>
-          </div>
+          </div> -->
 
           <!-- Obituary Creation Offer -->
-          <div v-if="flashMessage?.offer_obituary" class="border-b border-purple-200 bg-purple-50 px-4 py-3">
+          <!-- <div v-if="flashMessage?.offer_obituary" class="border-b border-purple-200 bg-purple-50 px-4 py-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center">
                 <FileText class="mr-2 h-5 w-5 text-purple-600" />
@@ -310,7 +310,7 @@ const goToCreateObituary = () => {
                 <Button size="sm" variant="outline" class="border-purple-300 text-purple-700"> Maybe Later </Button>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <div class="px-4 py-5 sm:p-6">
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -522,7 +522,12 @@ const goToCreateObituary = () => {
                           variant="outline"
                           class="group h-auto min-h-[3rem] w-full justify-start border-blue-200/60 bg-blue-50/30 text-left transition-all duration-200 hover:border-blue-300 hover:bg-blue-100/60 hover:shadow-sm"
                         >
-                          <a :href="route('graveyard.payments.receipt', payment.id)" target="_blank" rel="noopener noreferrer" class="flex w-full items-center space-x-3 p-3">
+                          <a
+                            :href="route('graveyard.payments.receipt', payment.id)"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="flex w-full items-center space-x-3 p-3"
+                          >
                             <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>
