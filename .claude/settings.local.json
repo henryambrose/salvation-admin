@@ -30,7 +30,10 @@
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/routes/**)",
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/bootstrap/**)",
       "Read(//e/Downloads/salvation-admin-main/salvation-admin-main/**)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(copy \"app\\Console\\Commands\\GenerateObituaryQrCode.php\" \"obituary-extraction\\app\\Console\\Commands\"\" && copy \"appConsoleCommandsManageObituaryExpiration.php\" \"obituary-extractionappConsoleCommands\"\")",
+      "Bash(copy \"app\\Console\\Commands\\MigrateObituaryExpirations.php\" \"obituary-extraction\\app\\Console\\Commands\"\" && copy \"appListenersAutoPublishObituaryOnPayment.php\" \"obituary-extractionappListeners\"\")",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []

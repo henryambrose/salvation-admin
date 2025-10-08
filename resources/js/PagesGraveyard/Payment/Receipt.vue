@@ -94,28 +94,25 @@ onMounted(() => {
   <div class="min-h-screen bg-white">
     <!-- Print Button (hidden when printing) -->
     <div class="no-print fixed top-4 right-4 z-10">
-      <button
-        @click="printReceipt"
-        class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg hover:bg-blue-700 transition-colors"
-      >
+      <button @click="printReceipt" class="rounded-lg bg-blue-600 px-4 py-2 text-white shadow-lg transition-colors hover:bg-blue-700">
         Print Receipt
       </button>
     </div>
 
     <!-- Receipt Content -->
-    <div class="max-w-4xl mx-auto p-8">
+    <div class="mx-auto max-w-4xl p-8">
       <!-- Header -->
-      <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">ST. LAWRENCE CHURCH</h1>
-        <p class="text-lg text-gray-600 mb-1">Graveyard Services</p>
+      <div class="mb-8 text-center">
+        <h1 class="mb-2 text-3xl font-bold text-gray-800">OUR LADY OF SALVATION CHURCH</h1>
+        <p class="mb-1 text-lg text-gray-600">Graveyard Services</p>
         <p class="text-sm text-gray-500">Payment Receipt</p>
       </div>
 
       <!-- Receipt Details -->
-      <div class="bg-gray-50 p-6 rounded-lg mb-6">
+      <div class="mb-6 rounded-lg bg-gray-50 p-6">
         <div class="grid grid-cols-2 gap-6">
           <div>
-            <h3 class="text-lg font-semibold mb-3">Receipt Information</h3>
+            <h3 class="mb-3 text-lg font-semibold">Receipt Information</h3>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
                 <span class="font-medium">Receipt Number:</span>
@@ -137,7 +134,7 @@ onMounted(() => {
           </div>
 
           <div>
-            <h3 class="text-lg font-semibold mb-3">Booking Details</h3>
+            <h3 class="mb-3 text-lg font-semibold">Booking Details</h3>
             <div class="space-y-2 text-sm">
               <div class="flex justify-between">
                 <span class="font-medium">Booking Reference:</span>
@@ -162,8 +159,8 @@ onMounted(() => {
 
       <!-- Service Details -->
       <div v-if="payment.service_charges && payment.service_charges.length > 0" class="mb-6">
-        <h3 class="text-lg font-semibold mb-4">Service Details</h3>
-        <div class="border border-gray-200 rounded-lg overflow-hidden">
+        <h3 class="mb-4 text-lg font-semibold">Service Details</h3>
+        <div class="overflow-hidden rounded-lg border border-gray-200">
           <table class="w-full">
             <thead class="bg-gray-50">
               <tr>
@@ -186,8 +183,8 @@ onMounted(() => {
       </div>
 
       <!-- Payment Summary -->
-      <div class="bg-gray-50 p-6 rounded-lg mb-6">
-        <h3 class="text-lg font-semibold mb-4">Payment Summary</h3>
+      <div class="mb-6 rounded-lg bg-gray-50 p-6">
+        <h3 class="mb-4 text-lg font-semibold">Payment Summary</h3>
         <div class="space-y-3">
           <div class="flex justify-between text-lg">
             <span class="font-medium">Total Amount:</span>
@@ -209,9 +206,9 @@ onMounted(() => {
       </div>
 
       <!-- Payment Method -->
-      <div class="grid grid-cols-2 gap-6 mb-8">
+      <div class="mb-8 grid grid-cols-2 gap-6">
         <div>
-          <h3 class="text-lg font-semibold mb-3">Payment Method</h3>
+          <h3 class="mb-3 text-lg font-semibold">Payment Method</h3>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="font-medium">Method:</span>
@@ -229,7 +226,7 @@ onMounted(() => {
         </div>
 
         <div>
-          <h3 class="text-lg font-semibold mb-3">Authorized By</h3>
+          <h3 class="mb-3 text-lg font-semibold">Authorized By</h3>
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
               <span class="font-medium">Recorded By:</span>
@@ -240,7 +237,7 @@ onMounted(() => {
       </div>
 
       <!-- Footer -->
-      <div class="text-center text-sm text-gray-500 border-t border-gray-200 pt-6">
+      <div class="border-t border-gray-200 pt-6 text-center text-sm text-gray-500">
         <p>This is a computer-generated receipt and does not require a signature.</p>
         <p class="mt-2">For any queries, please contact the church office.</p>
         <p class="mt-4 font-medium">Thank you for your contribution to St. Lawrence Church</p>

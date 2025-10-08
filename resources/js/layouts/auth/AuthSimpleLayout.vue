@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLogoIcon from '@/components/AppLogoIcon.vue';
+import DisclaimerNotice from '@/components/DisclaimerNotice.vue';
 import { Link } from '@inertiajs/vue3';
 
 defineProps<{
@@ -24,6 +25,7 @@ defineProps<{
             <p class="text-muted-foreground text-center text-sm">{{ description }}</p>
           </div>
         </div>
+        <DisclaimerNotice />
         <slot />
       </div>
     </div>

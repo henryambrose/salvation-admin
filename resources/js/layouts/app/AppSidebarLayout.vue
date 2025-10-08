@@ -3,6 +3,7 @@ import AppContent from '@/components/AppContent.vue';
 import AppShell from '@/components/AppShell.vue';
 import AppSidebar from '@/components/AppSidebar.vue';
 import AppSidebarHeader from '@/components/AppSidebarHeader.vue';
+import DisclaimerNotice from '@/components/DisclaimerNotice.vue';
 import type { BreadcrumbItemType } from '@/types';
 import { useScrollRestoration } from '@/composables/useScrollRestoration';
 
@@ -23,6 +24,7 @@ useScrollRestoration();
     <AppSidebar />
     <AppContent variant="sidebar" class="main-bg">
       <AppSidebarHeader :breadcrumbs="breadcrumbs" />
+      <DisclaimerNotice />
       <slot />
     </AppContent>
   </AppShell>
