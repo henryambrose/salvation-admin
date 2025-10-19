@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
             MemberSeeder::class,
             MemberSeeder1::class,
             MemberSeeder2::class,
-            PPCHeadSeeder::class,
+            // PPCHeadSeeder::class,
             SCCHeadSeeder::class,
             PermissionGroupSeeder::class,
             PPCHeadPermissionSeeder::class,
