@@ -33,7 +33,12 @@
       "Bash(findstr:*)",
       "Bash(copy \"app\\Console\\Commands\\GenerateObituaryQrCode.php\" \"obituary-extraction\\app\\Console\\Commands\"\" && copy \"appConsoleCommandsManageObituaryExpiration.php\" \"obituary-extractionappConsoleCommands\"\")",
       "Bash(copy \"app\\Console\\Commands\\MigrateObituaryExpirations.php\" \"obituary-extraction\\app\\Console\\Commands\"\" && copy \"appListenersAutoPublishObituaryOnPayment.php\" \"obituary-extractionappListeners\"\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryController.php\")",
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryManagementController.php\")",
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryBackgroundThemeController.php\")",
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryManagerController.php\")",
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryPlanController.php\")"
     ],
     "deny": [],
     "ask": []
