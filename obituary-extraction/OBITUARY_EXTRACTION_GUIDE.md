@@ -1,6 +1,7 @@
 # Obituary Module Extraction Guide
 
 ## Overview
+
 This document provides a comprehensive list of all files and dependencies needed to extract the Obituary module from the Salvation Admin application and create a standalone application.
 
 ---
@@ -10,6 +11,7 @@ This document provides a comprehensive list of all files and dependencies needed
 ### Backend Files
 
 #### **Controllers** (`app/Modules/Graveyard/Http/Controllers/`)
+
 - `ObituaryController.php` - Public obituary viewing, condolences submission
 - `ObituaryManagementController.php` - Admin management (CRUD, payment, publishing)
 - `ObituaryPlanController.php` - Obituary plans management
@@ -17,6 +19,7 @@ This document provides a comprehensive list of all files and dependencies needed
 - `ObituaryManagerController.php` - External manager authentication & management
 
 #### **Models** (`app/Modules/Graveyard/Models/`)
+
 - `ObituaryPage.php` - Main obituary model
 - `ObituaryPlan.php` - Subscription/pricing plans model
 - `ObituaryPayment.php` - Payment tracking model
@@ -25,15 +28,18 @@ This document provides a comprehensive list of all files and dependencies needed
 - `ObituaryBackgroundTheme.php` - Background themes model
 
 #### **Services** (`app/Modules/Graveyard/Services/`)
+
 - `ObituaryService.php` - Core business logic
 - `ObituaryBackgroundService.php` - Background styling service
 
 #### **Policies** (`app/Modules/Graveyard/Policies/`)
+
 - `ObituaryPolicy.php` - Authorization for obituaries
 - `ObituaryPagePolicy.php` - Authorization for obituary pages
 - `ObituaryPlanPolicy.php` - Authorization for plans
 
 #### **Helpers** (`app/Modules/Graveyard/Helpers/`)
+
 - `BackgroundHelper.php` - Background utility functions (may be used)
 - `BackgroundThemeHelper.php` - Theme utility functions (may be used)
 
@@ -42,6 +48,7 @@ This document provides a comprehensive list of all files and dependencies needed
 ### Database Files
 
 #### **Migrations** (`database/modules/graveyard/database/migrations/`)
+
 - `2025_09_11_022950_create_obituary_plans_table.php`
 - `2025_09_11_022953_create_obituary_pages_table.php`
 - `2025_09_11_022958_create_obituary_condolences_table.php`
@@ -50,13 +57,8 @@ This document provides a comprehensive list of all files and dependencies needed
 - `2025_09_18_081331_create_obituary_managers_table.php`
 - `2025_10_05_154004_add_receipt_fields_to_obituary_payments_table.php`
 
-#### **Seeders** (`database/modules/graveyard/database/seeders/`)
-- `ObituaryPlanSeeder.php`
-- `ObituaryBackgroundThemeSeeder.php`
-
----
-
 ### Console Commands (`app/Console/Commands/`)
+
 - `GenerateObituaryQrCode.php` - QR code generation
 - `ManageObituaryExpiration.php` - Expiration management
 - `MigrateObituaryExpirations.php` - Migration for expiration logic
@@ -64,6 +66,7 @@ This document provides a comprehensive list of all files and dependencies needed
 ---
 
 ### Event Listeners (`app/Listeners/`)
+
 - `AutoPublishObituaryOnPayment.php` - Auto-publish on payment completion
 
 ---
@@ -71,6 +74,7 @@ This document provides a comprehensive list of all files and dependencies needed
 ### Frontend Files
 
 #### **Admin Pages** (`resources/js/PagesGraveyard/`)
+
 - `Obituaries/Index.vue` - List view
 - `Obituaries/Create.vue` - Create form
 - `Obituaries/Edit.vue` - Edit form
@@ -92,6 +96,7 @@ This document provides a comprehensive list of all files and dependencies needed
 - `ObituaryManagers/Show.vue` - Manager details
 
 #### **Public Pages** (`resources/js/pages/Public/Obituary/`)
+
 - `Show.vue` - Public obituary page
 - `NotFound.vue` - 404 page
 - `PaymentPending.vue` - Payment/status messages
@@ -103,6 +108,7 @@ This document provides a comprehensive list of all files and dependencies needed
 ---
 
 ### Configuration Files
+
 - `config/obituary.php` - Duration, expiration, grace period settings
 - `config/obituary_backgrounds.php` - Background theme definitions
 - `config/auth.php` - Add external manager guard configuration
@@ -110,7 +116,9 @@ This document provides a comprehensive list of all files and dependencies needed
 ---
 
 ### Routes
+
 Extract from `routes/graveyard.php`:
+
 - Lines 180-270: Obituary management routes (admin)
 - Lines 282-318: API routes
 - Lines 321-338: Public routes (obituary viewing, condolences)
@@ -121,11 +129,13 @@ Extract from `routes/graveyard.php`:
 ---
 
 ### Views (Blade Templates)
+
 - `resources/views/graveyard/receipts/obituary-payment.blade.php` - Payment receipt template
 
 ---
 
 ### Storage/Assets
+
 - `storage/app/public/qr-codes/` - QR code images (auto-generated)
 - `public/storage/backgrounds/` - Background images referenced in config
 
@@ -134,18 +144,21 @@ Extract from `routes/graveyard.php`:
 ## 🔗 Dependencies
 
 ### Laravel Packages
+
 - **Spatie Laravel Permission** - Role/permission system (for admin access control)
 - **Inertia.js** - Frontend-backend bridge
 - **SimpleSoftwareIO/simple-qrcode** - QR code generation
 - **Laravel Sanctum** - API authentication (for external managers)
 
 ### Vue/Frontend Dependencies
+
 - **Vue 3** - Frontend framework
 - **Inertia.js Vue adapter** - For Vue-Laravel integration
 - **Reka UI** - Component library (used in forms/UI)
 - **Vite** - Build tool
 
 ### External Services (Optional)
+
 - **OpenAI API** - Text rephrasing feature (see `OPENAI_API_KEY` in `.env`)
 - Alternative: Hugging Face API or rule-based rephrasing
 
@@ -154,6 +167,7 @@ Extract from `routes/graveyard.php`:
 ## 🔄 Relationships with Other Modules
 
 ### **Direct Dependencies**
+
 1. **Members Module** (for family/member association)
    - `ObituaryPage` may reference member records
    - Used for searching members during obituary creation
@@ -164,6 +178,7 @@ Extract from `routes/graveyard.php`:
    - `ValidMember` model - Associates obituaries with deceased members
 
 ### **Optional Dependencies** (Can be decoupled)
+
 - Payment integration with graveyard payment system
 - Service types from graveyard module
 
@@ -172,6 +187,7 @@ Extract from `routes/graveyard.php`:
 ## 📝 Key Configuration Changes Needed
 
 ### Environment Variables (`.env`)
+
 ```env
 # Obituary Settings
 OBITUARY_BASIC_DURATION_DAYS=90
@@ -185,7 +201,9 @@ OPENAI_API_KEY=your-api-key-here
 ```
 
 ### Authentication Guard (`config/auth.php`)
+
 Add external manager guard:
+
 ```php
 'guards' => [
     // ... existing guards
@@ -205,7 +223,9 @@ Add external manager guard:
 ```
 
 ### Service Provider Registration
+
 Register in `config/app.php`:
+
 ```php
 'providers' => [
     // ...
@@ -218,11 +238,13 @@ Register in `config/app.php`:
 ## 🚀 Migration Steps for Standalone App
 
 ### 1. **Create New Laravel App**
+
 ```bash
 composer create-project laravel/laravel obituary-app
 ```
 
 ### 2. **Copy Files**
+
 - Copy all backend files maintaining directory structure
 - Copy all frontend files
 - Copy migrations and seeders
@@ -230,10 +252,12 @@ composer create-project laravel/laravel obituary-app
 - Copy views/templates
 
 ### 3. **Update Namespaces**
+
 - Change `Modules\Graveyard\` namespace to your new app namespace
 - Update all references in controllers, models, services
 
 ### 4. **Install Dependencies**
+
 ```bash
 composer require spatie/laravel-permission
 composer require simplesoftwareio/simple-qrcode
@@ -241,19 +265,14 @@ composer require laravel/sanctum
 npm install @inertiajs/vue3
 ```
 
-### 5. **Run Migrations**
-```bash
-php artisan migrate
-php artisan db:seed --class=ObituaryPlanSeeder
-php artisan db:seed --class=ObituaryBackgroundThemeSeeder
-```
-
 ### 6. **Configure Routes**
+
 - Move routes from `routes/graveyard.php` to `routes/web.php`
 - Remove `/graveyard` prefix if desired
 - Update route names
 
 ### 7. **Setup Storage**
+
 ```bash
 php artisan storage:link
 mkdir -p storage/app/public/qr-codes
@@ -262,6 +281,7 @@ mkdir -p storage/app/public/backgrounds
 ```
 
 ### 8. **Configure Permissions**
+
 ```bash
 php artisan permission:create-role "Super Admin"
 php artisan permission:create-permission "access-obituary"
@@ -273,24 +293,30 @@ php artisan permission:create-permission "manage-obituary"
 ## ⚠️ Breaking Changes to Address
 
 ### 1. **Decouple from Graveyard Bookings**
+
 Current obituaries are linked to:
+
 - `permanent_grave_booking_id`
 - `temporary_grave_booking_id`
 
 **Options:**
+
 - **A)** Keep booking system (recommended if you need grave management)
 - **B)** Replace with standalone deceased person records
 - **C)** Make booking relationships optional
 
 ### 2. **Member Search Integration**
+
 Obituary creation uses member search from Members module.
 
 **Solution:** Create standalone person/deceased management or import member data.
 
 ### 3. **Payment System**
+
 Current system integrates with graveyard payment processing.
 
 **Options:**
+
 - Extract payment system as well
 - Integrate with external payment gateway (Stripe, PayPal)
 - Build standalone payment module
@@ -300,6 +326,7 @@ Current system integrates with graveyard payment processing.
 ## 🧪 Testing Checklist
 
 After extraction, test:
+
 - [ ] Obituary CRUD operations
 - [ ] Public obituary page viewing
 - [ ] QR code generation and download
@@ -392,6 +419,7 @@ obituary-module/
 ## 📞 Support & Next Steps
 
 After extracting the files:
+
 1. Review all dependencies and relationships
 2. Plan database schema changes if decoupling from bookings
 3. Set up development environment
