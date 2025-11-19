@@ -22,41 +22,41 @@
 
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Section *</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Block *</label>
                     <input
-                      v-model="form.section"
+                      v-model="form.block"
                       type="text"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholder="Enter section name"
+                      placeholder="Enter block name"
                       required
                     />
-                    <p v-if="errors.section" class="mt-1 text-sm text-red-600">{{ errors.section }}</p>
+                    <p v-if="errors.block" class="mt-1 text-sm text-red-600">{{ errors.block }}</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Row No *</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Row *</label>
                     <input
-                      v-model="form.row_no"
+                      v-model="form.row"
                       type="number"
                       min="1"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="Enter row number"
                       required
                     />
-                    <p v-if="errors.row_no" class="mt-1 text-sm text-red-600">{{ errors.row_no }}</p>
+                    <p v-if="errors.row" class="mt-1 text-sm text-red-600">{{ errors.row }}</p>
                   </div>
 
                   <div>
-                    <label class="mb-2 block text-sm font-medium text-gray-700">Grave No *</label>
+                    <label class="mb-2 block text-sm font-medium text-gray-700">Column *</label>
                     <input
-                      v-model="form.grave_no"
+                      v-model="form.column"
                       type="number"
                       min="1"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                      placeholder="Enter grave number"
+                      placeholder="Enter column number"
                       required
                     />
-                    <p v-if="errors.grave_no" class="mt-1 text-sm text-red-600">{{ errors.grave_no }}</p>
+                    <p v-if="errors.column" class="mt-1 text-sm text-red-600">{{ errors.column }}</p>
                   </div>
                 </div>
 
@@ -64,12 +64,12 @@
                   <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">Old Number</label>
                     <input
-                      v-model="form.oldno"
+                      v-model="form.old_no"
                       type="text"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="Enter old grave number"
                     />
-                    <p v-if="errors.oldno" class="mt-1 text-sm text-red-600">{{ errors.oldno }}</p>
+                    <p v-if="errors.old_no" class="mt-1 text-sm text-red-600">{{ errors.old_no }}</p>
                   </div>
 
                   <div>
@@ -293,7 +293,7 @@ defineOptions({
 
 interface Props {
   permanentGrave: any;
-  sections: string[];
+  blocks: string[];
   statuses: string[];
   errors?: any;
 }
@@ -309,10 +309,10 @@ const selectedMember = ref<any>(null);
 
 const form = useForm({
   member_type: 'member',
-  section: '',
-  row_no: '',
-  grave_no: '',
-  oldno: '',
+  block: '',
+  row: '',
+  column: '',
+  old_no: '',
   status: '',
   last_burial_date: '',
   owner_name: '',
@@ -345,10 +345,10 @@ const initializeForm = () => {
 
     // Determine member type based on existing data
     form.member_type = grave.member_id ? 'member' : 'external';
-    form.section = grave.section || '';
-    form.row_no = grave.row_no || '';
-    form.grave_no = grave.grave_no || '';
-    form.oldno = grave.oldno || '';
+    form.block = grave.block || '';
+    form.row = grave.row || '';
+    form.column = grave.column || '';
+    form.old_no = grave.old_no || '';
     form.status = grave.status || '';
     form.last_burial_date = formattedDate;
     form.owner_name = grave.owner_name || '';

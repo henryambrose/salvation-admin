@@ -18,11 +18,10 @@ class PermanentGrave extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'grave_id',
-        'section',
-        'row_no',
-        'grave_no',
-        'oldno',
+        'block',
+        'row',
+        'column',
+        'old_no',
         'status',
         'last_burial_date',
         'owner_name',
@@ -42,8 +41,8 @@ class PermanentGrave extends Model
         'last_burial_date' => 'date',
         'plot_size' => 'decimal:2',
         'is_active' => 'boolean',
-        'row_no' => 'integer',
-        'grave_no' => 'integer',
+        'row' => 'integer',
+        'column' => 'integer',
         'pending_amount' => 'decimal:2',
         'partial_payment_months' => 'array',
     ];
@@ -108,11 +107,11 @@ class PermanentGrave extends Model
     }
 
     /**
-     * Scope to get graves by section
+     * Scope to get graves by block
      */
-    public function scopeBySection($query, $section)
+    public function scopeByBlock($query, $block)
     {
-        return $query->where('section', $section);
+        return $query->where('block', $block);
     }
 
     /**
@@ -122,10 +121,10 @@ class PermanentGrave extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('owner_name', 'like', "%{$search}%")
-                ->orWhere('grave_no', 'like', "%{$search}%")
-                ->orWhere('section', 'like', "%{$search}%")
-                ->orWhere('oldno', 'like', "%{$search}%")
-                ->orWhere(DB::raw("CONCAT(section, '-', row_no, '-', grave_no)"), 'like', "%{$search}%")
+                ->orWhere('column', 'like', "%{$search}%")
+                ->orWhere('block', 'like', "%{$search}%")
+                ->orWhere('old_no', 'like', "%{$search}%")
+                ->orWhere(DB::raw("CONCAT(block, '-', `row`, '-', `column`)"), 'like', "%{$search}%")
                 ->orWhereHas('member', function ($memberQuery) use ($search) {
                     $memberQuery->where('first_name', 'like', "%{$search}%")
                         ->orWhere('last_name', 'like', "%{$search}%")
@@ -139,7 +138,7 @@ class PermanentGrave extends Model
      */
     public function getFullIdentifierAttribute()
     {
-        return "{$this->section}-{$this->row_no}-{$this->grave_no}";
+        return "{$this->block}-{$this->row}-{$this->column}";
     }
 
     /**

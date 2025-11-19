@@ -33,8 +33,8 @@ class PermanentGraveController extends Controller
         }
 
         // Apply filters
-        if ($request->filled('section')) {
-            $query->bySection($request->section);
+        if ($request->filled('block')) {
+            $query->byBlock($request->block);
         }
 
         if ($request->filled('status')) {
@@ -70,8 +70,8 @@ class PermanentGraveController extends Controller
             $query->search($request->search);
         }
 
-        if ($request->filled('section')) {
-            $query->bySection($request->section);
+        if ($request->filled('block')) {
+            $query->byBlock($request->block);
         }
 
         if ($request->filled('status')) {
@@ -87,11 +87,11 @@ class PermanentGraveController extends Controller
         }
 
         // Apply sorting
-        $sortBy = $request->get('sort', 'section');
+        $sortBy = $request->get('sort', 'block');
         $sortDirection = $request->get('direction', 'asc');
         $query->orderBy($sortBy, $sortDirection)
-            ->orderBy('row_no', 'asc')
-            ->orderBy('grave_no', 'asc');
+            ->orderBy('row', 'asc')
+            ->orderBy('column', 'asc');
 
         // Handle CSV export
         if ($request->get('export') === 'csv') {
@@ -108,14 +108,14 @@ class PermanentGraveController extends Controller
         }
 
         // Get filter options
-        $sections = PermanentGrave::distinct()->pluck('section')->filter()->sort()->values();
+        $blocks = PermanentGrave::distinct()->pluck('block')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/PermanentGraves/Index', [
             'data' => $permanentGraves,
-            'filters' => $request->only(['search', 'section', 'status', 'is_active', 'maintenance_status', 'sort', 'direction', 'perPage', 'isArchived']),
+            'filters' => $request->only(['search', 'block', 'status', 'is_active', 'maintenance_status', 'sort', 'direction', 'perPage', 'isArchived']),
             'filterOptions' => [
-                'sections' => $sections,
+                'blocks' => $blocks,
                 'statuses' => $statuses,
             ],
             'fetchUrl' => route('graveyard.permanent-graves.index'),
@@ -127,11 +127,11 @@ class PermanentGraveController extends Controller
      */
     public function create()
     {
-        $sections = PermanentGrave::distinct()->pluck('section')->filter()->sort()->values();
+        $blocks = PermanentGrave::distinct()->pluck('block')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/PermanentGraves/Create', [
-            'sections' => $sections,
+            'blocks' => $blocks,
             'statuses' => $statuses,
         ]);
     }
@@ -142,11 +142,10 @@ class PermanentGraveController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'grave_id' => 'nullable|integer',
-            'section' => 'required|string|max:100',
-            'row_no' => 'required|integer|min:1',
-            'grave_no' => 'required|integer|min:1',
-            'oldno' => 'nullable|string|max:50',
+            'block' => 'required|string|max:100',
+            'row' => 'required|integer|min:1',
+            'column' => 'required|integer|min:1',
+            'old_no' => 'nullable|string|max:50',
             'status' => 'required|in:available,unavailable',
             'last_burial_date' => 'nullable|date',
             'owner_name' => 'nullable|string|max:255',
@@ -173,23 +172,22 @@ class PermanentGraveController extends Controller
             $request->merge(['member_id' => null]);
         }
 
-        // Check for duplicate grave in same section
-        $existingGrave = PermanentGrave::where('section', $request->section)
-            ->where('row_no', $request->row_no)
-            ->where('grave_no', $request->grave_no)
+        // Check for duplicate grave in same block
+        $existingGrave = PermanentGrave::where('block', $request->block)
+            ->where('row', $request->row)
+            ->where('column', $request->column)
             ->first();
 
         if ($existingGrave) {
-            return back()->withErrors(['grave_no' => 'A grave with this number already exists in the specified section and row.']);
+            return back()->withErrors(['column' => 'A grave with this position already exists in the specified block and row.']);
         }
 
         try {
             $permanentGrave = PermanentGrave::create([
-                'grave_id' => $request->grave_id,
-                'section' => $request->section,
-                'row_no' => $request->row_no,
-                'grave_no' => $request->grave_no,
-                'oldno' => $request->oldno,
+                'block' => $request->block,
+                'row' => $request->row,
+                'column' => $request->column,
+                'old_no' => $request->old_no,
                 'status' => $request->status,
                 'last_burial_date' => $request->last_burial_date,
                 'owner_name' => $request->owner_name,
@@ -233,12 +231,12 @@ class PermanentGraveController extends Controller
     {
         $permanentGrave->load(['member', 'member.community']);
 
-        $sections = PermanentGrave::distinct()->pluck('section')->filter()->sort()->values();
+        $blocks = PermanentGrave::distinct()->pluck('block')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
         return Inertia::render('PagesGraveyard/PermanentGraves/Edit', [
             'permanentGrave' => $permanentGrave,
-            'sections' => $sections,
+            'blocks' => $blocks,
             'statuses' => $statuses,
         ]);
     }
@@ -249,11 +247,10 @@ class PermanentGraveController extends Controller
     public function update(Request $request, PermanentGrave $permanentGrave)
     {
         $request->validate([
-            'grave_id' => 'nullable|integer',
-            'section' => 'required|string|max:100',
-            'row_no' => 'required|integer|min:1',
-            'grave_no' => 'required|integer|min:1',
-            'oldno' => 'nullable|string|max:50',
+            'block' => 'required|string|max:100',
+            'row' => 'required|integer|min:1',
+            'column' => 'required|integer|min:1',
+            'old_no' => 'nullable|string|max:50',
             'status' => 'required|in:available,unavailable',
             'last_burial_date' => 'nullable|date',
             'owner_name' => 'nullable|string|max:255',
@@ -280,24 +277,23 @@ class PermanentGraveController extends Controller
             $request->merge(['member_id' => null]);
         }
 
-        // Check for duplicate grave in same section (excluding current grave)
-        $existingGrave = PermanentGrave::where('section', $request->section)
-            ->where('row_no', $request->row_no)
-            ->where('grave_no', $request->grave_no)
+        // Check for duplicate grave in same block (excluding current grave)
+        $existingGrave = PermanentGrave::where('block', $request->block)
+            ->where('row', $request->row)
+            ->where('column', $request->column)
             ->where('id', '!=', $permanentGrave->id)
             ->first();
 
         if ($existingGrave) {
-            return back()->withErrors(['grave_no' => 'A grave with this number already exists in the specified section and row.']);
+            return back()->withErrors(['column' => 'A grave with this position already exists in the specified block and row.']);
         }
 
         try {
             $permanentGrave->update([
-                'grave_id' => $request->grave_id,
-                'section' => $request->section,
-                'row_no' => $request->row_no,
-                'grave_no' => $request->grave_no,
-                'oldno' => $request->oldno,
+                'block' => $request->block,
+                'row' => $request->row,
+                'column' => $request->column,
+                'old_no' => $request->old_no,
                 'status' => $request->status,
                 'last_burial_date' => $request->last_burial_date,
                 'owner_name' => $request->owner_name,
@@ -444,8 +440,8 @@ class PermanentGraveController extends Controller
                     ($grave->member ? $grave->member->first_name . ' ' . $grave->member->last_name : '-');
 
                 fputcsv($file, [
-                    $grave->section . '-' . $grave->row_no . '-' . $grave->grave_no,
-                    $grave->oldno ?: '-',
+                    $grave->block . '-' . $grave->row . '-' . $grave->column,
+                    $grave->old_no ?: '-',
                     ucfirst($grave->status),
                     $ownerName,
                     $grave->plot_size ? $grave->plot_size . ' sq ft' : '-',

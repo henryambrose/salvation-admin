@@ -124,19 +124,19 @@
             <thead>
               <tr class="bg-blue-50">
                 <th class="border-b p-3 font-semibold text-gray-700">Actions</th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('section')">
+                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('block')">
                   <div class="flex items-center">
                     Grave Position
-                    <ChevronUp v-if="filters.sort === 'section' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'section' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
+                    <ChevronUp v-if="filters.sort === 'block' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
+                    <ChevronDown v-else-if="filters.sort === 'block' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('oldno')">
+                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('old_no')">
                   <div class="flex items-center">
                     Old No
-                    <ChevronUp v-if="filters.sort === 'oldno' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'oldno' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
+                    <ChevronUp v-if="filters.sort === 'old_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
+                    <ChevronDown v-else-if="filters.sort === 'old_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
@@ -200,8 +200,8 @@
                     </template>
                   </div>
                 </td>
-                <td class="p-6">{{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}</td>
-                <td class="p-6">{{ grave.oldno }}</td>
+                <td class="p-6">{{ grave.block }}-{{ grave.row }}-{{ grave.column }}</td>
+                <td class="p-6">{{ grave.old_no }}</td>
                 <td class="p-2">
                   <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="getStatusClass(grave.status)">
                     {{ grave.status.charAt(0).toUpperCase() + grave.status.slice(1) }}
@@ -252,7 +252,7 @@
             <h3 class="mb-4 text-xl font-semibold">Delete Permanent Grave</h3>
             <p>
               Are you sure you want to delete this permanent grave
-              <span class="font-bold">{{ graveToDelete?.section }}-{{ graveToDelete?.grave_no }}</span
+              <span class="font-bold">{{ graveToDelete?.block }}-{{ graveToDelete?.column }}</span
               >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
@@ -319,7 +319,7 @@ const breadcrumbs = [
 const filters = ref({
   perPage: 10,
   search: '',
-  sort: 'section',
+  sort: 'block',
   direction: 'asc',
   maintenance_status: '',
   ...(props.filters || {})
