@@ -13,11 +13,10 @@ return new class extends Migration
     {
         Schema::create('permanent_graves', function (Blueprint $table) {
             $table->id();
-            $table->integer('grave_id')->nullable();
-            $table->string('section')->index();
-            $table->integer('row_no')->index();
-            $table->integer('grave_no')->index();
-            $table->string('oldno')->nullable();
+            $table->string('block')->index();
+            $table->integer('row')->index();
+            $table->integer('column')->index();
+            $table->string('old_no')->nullable();
             $table->enum('status', ['available', 'unavailable'])->default('available')->index();
             $table->date('last_burial_date')->nullable();
             $table->string('owner_name')->nullable()->index(); // For search functionality
@@ -35,11 +34,11 @@ return new class extends Migration
             $table->softDeletes();
 
             // Composite indexes for efficient queries
-            $table->index(['section', 'row_no', 'grave_no']);
-            $table->index(['status', 'section']);
+            $table->index(['block', 'row', 'column']);
+            $table->index(['status', 'block']);
 
             // Unique constraint to prevent duplicate graves
-            $table->unique(['section', 'row_no', 'grave_no']);
+            $table->unique(['block', 'row', 'column']);
 
             // Foreign key constraints
             $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
