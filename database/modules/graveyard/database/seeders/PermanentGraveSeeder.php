@@ -953,15 +953,7 @@ class PermanentGraveSeeder extends Seeder
                 'column' => $permanentGrave['column'],
                 'status' => $permanentGrave['status'] ?? 'available',
                 'old_no' => $permanentGrave['old_no'],
-                // 'last_burial_date' => $lastBurialDate,
                 'owner_name' => $permanentGrave['owners_name'], // Map 'owner' to 'owner_name'
-                'contact_no' => $permanentGrave['contact_no'],
-                'member_id' => $permanentGrave['member_id'],
-                'remarks' => $permanentGrave['remarks'],
-                'plot_size' => $permanentGrave['plot_size'],
-                'is_active' => $permanentGrave['is_active'] ?? true,
-                'created_by' => $permanentGrave['created_by'],
-                'updated_by' => $permanentGrave['updated_by'],
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
