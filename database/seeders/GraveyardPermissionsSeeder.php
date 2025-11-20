@@ -15,6 +15,9 @@ class GraveyardPermissionsSeeder extends Seeder
     {
         // Define all Graveyard module permissions
         $graveyardPermissions = [
+            // Module Access
+            'access-graveyard',
+
             // Dashboard
             'read-graveyard-dashboard',
 
