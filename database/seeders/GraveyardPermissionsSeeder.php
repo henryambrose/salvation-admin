@@ -79,23 +79,23 @@ class GraveyardPermissionsSeeder extends Seeder
             'restore-service-type',
 
             // Obituary Pages
-            'create-obituary-page',
-            'read-obituary-page',
-            'update-obituary-page',
-            'delete-obituary-page',
-            'list-obituary-page',
-            'restore-obituary-page',
-            'publish-obituary-page',
-            'unpublish-obituary-page',
+            // 'create-obituary-page',
+            // 'read-obituary-page',
+            // 'update-obituary-page',
+            // 'delete-obituary-page',
+            // 'list-obituary-page',
+            // 'restore-obituary-page',
+            // 'publish-obituary-page',
+            // 'unpublish-obituary-page',
 
             // Obituary Condolences
-            'create-obituary-condolence',
-            'read-obituary-condolence',
-            'update-obituary-condolence',
-            'delete-obituary-condolence',
-            'list-obituary-condolence',
-            'approve-obituary-condolence',
-            'reject-obituary-condolence',
+            // 'create-obituary-condolence',
+            // 'read-obituary-condolence',
+            // 'update-obituary-condolence',
+            // 'delete-obituary-condolence',
+            // 'list-obituary-condolence',
+            // 'approve-obituary-condolence',
+            // 'reject-obituary-condolence',
 
             // Payments
             'create-graveyard-payment',
@@ -107,21 +107,21 @@ class GraveyardPermissionsSeeder extends Seeder
             // 'refund-graveyard-payment',
 
             // Obituary Payments
-            'create-obituary-payment',
-            'read-obituary-payment',
-            'update-obituary-payment',
-            'delete-obituary-payment',
-            'list-obituary-payment',
+            // 'create-obituary-payment',
+            // 'read-obituary-payment',
+            // 'update-obituary-payment',
+            // 'delete-obituary-payment',
+            // 'list-obituary-payment',
             // 'process-obituary-payment',
             // 'refund-obituary-payment',
 
             // Obituary Plans
-            'create-obituary-plans',
-            'read-obituary-plans',
-            'update-obituary-plans',
-            'delete-obituary-plans',
-            'list-obituary-plans',
-            'restore-obituary-plans',
+            // 'create-obituary-plans',
+            // 'read-obituary-plans',
+            // 'update-obituary-plans',
+            // 'delete-obituary-plans',
+            // 'list-obituary-plans',
+            // 'restore-obituary-plans',
 
             // Niche Transfers
             'create-niche-transfer',

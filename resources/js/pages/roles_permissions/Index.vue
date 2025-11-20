@@ -391,7 +391,7 @@ function hasPermission(roleId: number, permissionSlug: string): boolean {
   const role = props.roles.find((r) => r.id === roleId);
   if (!role) return false;
 
-  // Check if the role has this permission based on the local permissions state
+  // First, check in modules/actions (old system)
   for (const module of props.modules) {
     for (const action of module.actions) {
       if (action.slug === permissionSlug) {
@@ -405,16 +405,31 @@ function hasPermission(roleId: number, permissionSlug: string): boolean {
     }
   }
 
+  // If not found in modules, check Spatie permissions
+  if (props.permissionsByCategory) {
+    for (const categoryPermissions of Object.values(props.permissionsByCategory)) {
+      for (const permission of categoryPermissions as any[]) {
+        if (permission.name === permissionSlug || permission.slug === permissionSlug) {
+          const rolePermissions = localPermissions.value[roleId];
+          if (rolePermissions && rolePermissions['spatie'] && rolePermissions['spatie'][permission.id]) {
+            return rolePermissions['spatie'][permission.id] === 1;
+          }
+          return false;
+        }
+      }
+    }
+  }
+
   return false;
 }
 
 // Toggle permission for a role
 function togglePermission(roleId: number, permissionSlug: string) {
-  // Find the module and action for this permission
+  // First, try to find in modules/actions (old system)
   for (const module of props.modules) {
     for (const action of module.actions) {
       if (action.slug === permissionSlug) {
-        // Toggle the permission state in local permissions
+        // Ensure the role exists in local permissions
         if (!localPermissions.value[roleId]) {
           localPermissions.value[roleId] = {};
         }
@@ -423,9 +438,44 @@ function togglePermission(roleId: number, permissionSlug: string) {
         }
 
         const currentValue = localPermissions.value[roleId][module.id][action.id] || 0;
-        localPermissions.value[roleId][module.id][action.id] = currentValue === 1 ? 0 : 1;
+        const newValue = currentValue === 1 ? 0 : 1;
+
+        // Update the permission value
+        localPermissions.value[roleId][module.id][action.id] = newValue;
+
+        // Force reactivity by creating a new object reference
+        localPermissions.value = { ...localPermissions.value };
 
         return;
+      }
+    }
+  }
+
+  // If not found in modules, check if it's a Spatie permission from permissionsByCategory
+  if (props.permissionsByCategory) {
+    for (const categoryPermissions of Object.values(props.permissionsByCategory)) {
+      for (const permission of categoryPermissions as any[]) {
+        if (permission.name === permissionSlug || permission.slug === permissionSlug) {
+          // Store Spatie permissions separately
+          if (!localPermissions.value[roleId]) {
+            localPermissions.value[roleId] = {};
+          }
+
+          // Use a special key for Spatie-only permissions (key 'spatie')
+          if (!localPermissions.value[roleId]['spatie']) {
+            localPermissions.value[roleId]['spatie'] = {};
+          }
+
+          const currentValue = localPermissions.value[roleId]['spatie'][permission.id] || 0;
+          const newValue = currentValue === 1 ? 0 : 1;
+
+          localPermissions.value[roleId]['spatie'][permission.id] = newValue;
+
+          // Force reactivity
+          localPermissions.value = { ...localPermissions.value };
+
+          return;
+        }
       }
     }
   }
@@ -490,6 +540,23 @@ async function applyPermissionGroup(groupId: string) {
   }
 }
 
+// Helper function to get fresh CSRF token
+async function getCsrfToken(): Promise<string> {
+  try {
+    // Refresh the CSRF token
+    await fetch('/csrf-cookie', {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
+
+    // Get the token from the meta tag
+    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    return token;
+  } catch {
+    return document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+  }
+}
+
 // Save permissions
 async function savePermissions() {
   if (!selectedRoleId.value) {
@@ -498,7 +565,14 @@ async function savePermissions() {
   }
 
   // Check if there are any changes to save
-  const hasChanges = JSON.stringify(localPermissions.value[selectedRoleId.value]) !== JSON.stringify(originalPermissions.value[selectedRoleId.value]);
+  const localPerms = localPermissions.value[selectedRoleId.value];
+  const originalPerms = originalPermissions.value[selectedRoleId.value];
+
+  // Convert Proxy objects to plain objects for proper comparison
+  const localPermsPlain = JSON.parse(JSON.stringify(localPerms || {}));
+  const originalPermsPlain = JSON.parse(JSON.stringify(originalPerms || {}));
+
+  const hasChanges = JSON.stringify(localPermsPlain) !== JSON.stringify(originalPermsPlain);
 
   if (!hasChanges) {
     error('No changes to save');
@@ -518,14 +592,18 @@ async function savePermissions() {
       `;
     }
 
+    // Get fresh CSRF token before making the request
+    const csrfToken = await getCsrfToken();
+
     // Send the updated permissions to the backend using fetch (not Inertia)
     const response = await fetch('/roles-permissions/update-permissions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-CSRF-TOKEN': csrfToken,
         Accept: 'application/json',
       },
+      credentials: 'same-origin',
       body: JSON.stringify({
         role_id: selectedRoleId.value,
         permissions: localPermissions.value[selectedRoleId.value],
@@ -552,14 +630,20 @@ async function savePermissions() {
       success('Permissions saved successfully!');
       // Reload the page to get the latest data
       router.reload();
+    } else if (response.status === 419) {
+      // CSRF token mismatch - session expired
+      error('Your session has expired. Please refresh the page and try again.');
+
+      // Optionally reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } else {
-      const errorData = await response.json();
-      console.error('Error saving permissions:', errorData);
-      error('Failed to save permissions. Please try again.');
+      const errorData = await response.json().catch(() => ({ message: 'Unknown error occurred' }));
+      error(errorData.message || 'Failed to save permissions. Please try again.');
     }
-  } catch (err) {
-    console.error('Error saving permissions:', err);
-    error('Failed to save permissions. Please try again.');
+  } catch {
+    error('Failed to save permissions. Network error occurred.');
   } finally {
     // Reset button state
     const saveButton = document.querySelector('[data-save-permissions]') as HTMLButtonElement;
@@ -630,7 +714,7 @@ function createRole() {
   );
 }
 const standardActions = ['create', 'read', 'update', 'delete', 'list', 'restore'];
-const specialActions = ['publish', 'unpublish', 'approve', 'reject']; // the only non-CRUD you want to surface
+const specialActions = ['publish', 'unpublish', 'approve', 'reject', 'generate', 'download', 'manage', 'preview', 'reprint', 'view']; // special non-CRUD actions
 const knownActions = [...standardActions, ...specialActions];
 const norm = (s: string) => s.toLowerCase().trim().replace(/_/g, '-');
 function splitActionModel(rawSlug: string): { action: string | null; model: string } {

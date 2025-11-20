@@ -81,9 +81,11 @@ class RolePermissionController extends Controller
         // Build permissions matrix for roles (keeping existing logic for now)
         $permissions = [];
         $rolesPermissions = Role::with('permissions')->get()->pluck('permissions', 'id');
-        
+
         foreach ($rolesPermissions as $roleId => $rolePermissions) {
             $permissions[$roleId] = [];
+
+            // Handle module-based permissions (old system)
             foreach ($modules as $module) {
                 $moduleActionsPermission = [];
                 // Check if role has permissions for this module
@@ -97,6 +99,23 @@ class RolePermissionController extends Controller
                     }
                 }
                 $permissions[$roleId][$module->id] = $moduleActionsPermission;
+            }
+
+            // Handle Spatie-only permissions (new system)
+            // Check which permissions this role has that are NOT in modules
+            $permissions[$roleId]['spatie'] = [];
+            $modulePermissionSlugs = [];
+            foreach ($modules as $module) {
+                foreach ($module->actions as $action) {
+                    $modulePermissionSlugs[] = $action->slug;
+                }
+            }
+
+            foreach ($rolePermissions as $rolePermission) {
+                // If this permission is not in modules, it's a Spatie-only permission
+                if (!in_array($rolePermission->name, $modulePermissionSlugs)) {
+                    $permissions[$roleId]['spatie'][$rolePermission->id] = 1;
+                }
             }
         }
 
@@ -378,27 +397,33 @@ class RolePermissionController extends Controller
 
         // Get all available permissions from the modules
         $modules = Module::with('actions')->get();
-        $allPermissions = [];
 
-        // Build the list of all available permissions
-        foreach ($modules as $module) {
-            foreach ($module->actions as $action) {
-                $allPermissions[] = $action->slug;
-            }
-        }
+        // Get all Spatie permissions
+        $allSpatiePermissions = Permission::all()->keyBy('id');
 
         // Get the permissions that should be assigned to this role
         $permissionsToAssign = [];
+
         foreach ($permissions as $moduleId => $modulePermissions) {
-            foreach ($modulePermissions as $actionId => $hasPermission) {
-                if ($hasPermission == 1) {
-                    // Find the action slug for this action ID
-                    foreach ($modules as $module) {
-                        if ($module->id == $moduleId) {
-                            foreach ($module->actions as $action) {
-                                if ($action->id == $actionId) {
-                                    $permissionsToAssign[] = $action->slug;
-                                    break 2;
+            // Check if this is the special 'spatie' key for Spatie-only permissions
+            if ($moduleId === 'spatie') {
+                foreach ($modulePermissions as $permissionId => $hasPermission) {
+                    if ($hasPermission == 1 && isset($allSpatiePermissions[$permissionId])) {
+                        $permissionsToAssign[] = $allSpatiePermissions[$permissionId]->name;
+                    }
+                }
+            } else {
+                // Handle module-based permissions (old system)
+                foreach ($modulePermissions as $actionId => $hasPermission) {
+                    if ($hasPermission == 1) {
+                        // Find the action slug for this action ID
+                        foreach ($modules as $module) {
+                            if ($module->id == $moduleId) {
+                                foreach ($module->actions as $action) {
+                                    if ($action->id == $actionId) {
+                                        $permissionsToAssign[] = $action->slug;
+                                        break 2;
+                                    }
                                 }
                             }
                         }
