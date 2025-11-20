@@ -228,9 +228,9 @@ class GraveyardPermissionsSeeder extends Seeder
             'create-permanent-grave-booking',
             'read-permanent-grave-booking',
             'update-permanent-grave-booking',
-            'read-obituary-page',
-            'create-obituary-condolence',
-            'read-obituary-condolence',
+            // 'read-obituary-page',
+            // 'create-obituary-condolence',
+            // 'read-obituary-condolence',
             'read-annual-maintenance-fees',
             'list-annual-maintenance-fees',
             'view-graveyard-reports',
@@ -238,26 +238,26 @@ class GraveyardPermissionsSeeder extends Seeder
         $graveyardStaffRole->givePermissionTo($graveyardStaffPermissions);
 
         // Create an Obituary Manager role for managing obituaries
-        $obituaryManagerRole = Role::firstOrCreate(['name' => 'obituary-manager']);
-        $obituaryManagerPermissions = [
-            'read-graveyard-dashboard',
-            'create-obituary-page',
-            'read-obituary-page',
-            'update-obituary-page',
-            'delete-obituary-page',
-            'list-obituary-page',
-            'publish-obituary-page',
-            'unpublish-obituary-page',
-            'create-obituary-condolence',
-            'read-obituary-condolence',
-            'update-obituary-condolence',
-            'delete-obituary-condolence',
-            'approve-obituary-condolence',
-            'reject-obituary-condolence',
-            'create-obituary-payment',
-            'read-obituary-payment',
-            // 'process-obituary-payment',
-        ];
-        $obituaryManagerRole->givePermissionTo($obituaryManagerPermissions);
+        // $obituaryManagerRole = Role::firstOrCreate(['name' => 'obituary-manager']);
+        // $obituaryManagerPermissions = [
+        //     'read-graveyard-dashboard',
+        //     'create-obituary-page',
+        //     'read-obituary-page',
+        //     'update-obituary-page',
+        //     'delete-obituary-page',
+        //     'list-obituary-page',
+        //     'publish-obituary-page',
+        //     'unpublish-obituary-page',
+        //     'create-obituary-condolence',
+        //     'read-obituary-condolence',
+        //     'update-obituary-condolence',
+        //     'delete-obituary-condolence',
+        //     'approve-obituary-condolence',
+        //     'reject-obituary-condolence',
+        //     'create-obituary-payment',
+        //     'read-obituary-payment',
+        //     // 'process-obituary-payment',
+        // ];
+        // $obituaryManagerRole->givePermissionTo($obituaryManagerPermissions);
     }
 }
