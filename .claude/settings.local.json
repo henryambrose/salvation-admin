@@ -38,7 +38,9 @@
       "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryManagementController.php\")",
       "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryBackgroundThemeController.php\")",
       "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryManagerController.php\")",
-      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryPlanController.php\")"
+      "Bash(del \"D:\\Projects\\salvation-admin\\app\\Modules\\Graveyard\\Http\\Controllers\\ObituaryPlanController.php\")",
+      "Bash(nul)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
