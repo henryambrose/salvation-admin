@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { computed } from 'vue';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Clock, AlertTriangle } from 'lucide-vue-next';
 
 const props = defineProps<{
@@ -30,17 +29,17 @@ const timeDisplay = computed(() => {
 </script>
 
 <template>
-  <AlertDialog :open="open">
-    <AlertDialogContent class="max-w-md">
-      <AlertDialogHeader>
+  <Dialog :open="open" @update:open="(val) => !val && emit('close')">
+    <DialogContent class="max-w-md">
+      <DialogHeader>
         <div class="flex items-center gap-3 mb-2">
           <div class="p-2 rounded-full bg-amber-100 dark:bg-amber-900">
             <AlertTriangle class="h-6 w-6 text-amber-600 dark:text-amber-400" />
           </div>
-          <AlertDialogTitle class="text-xl">Session Expiring Soon</AlertDialogTitle>
+          <DialogTitle class="text-xl">Session Expiring Soon</DialogTitle>
         </div>
 
-        <AlertDialogDescription class="text-base space-y-3 pt-2">
+        <DialogDescription class="text-base space-y-3 pt-2">
           <p class="flex items-center gap-2">
             <Clock class="h-4 w-4 text-amber-600" />
             <span>Your session will expire <strong>{{ timeDisplay }}</strong></span>
@@ -49,20 +48,23 @@ const timeDisplay = computed(() => {
           <p class="text-sm">
             If your session expires, you'll lose any unsaved changes. Click "Continue Working" to keep your session active.
           </p>
-        </AlertDialogDescription>
-      </AlertDialogHeader>
+        </DialogDescription>
+      </DialogHeader>
 
-      <AlertDialogFooter>
-        <AlertDialogCancel @click="emit('close')">
+      <DialogFooter class="gap-2 sm:gap-0">
+        <Button
+          variant="outline"
+          @click="emit('close')"
+        >
           Let it expire
-        </AlertDialogCancel>
-        <AlertDialogAction
+        </Button>
+        <Button
           @click="emit('continue')"
           class="bg-blue-600 hover:bg-blue-700"
         >
           Continue Working
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>
