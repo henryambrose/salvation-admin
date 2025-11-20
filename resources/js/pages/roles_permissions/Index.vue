@@ -6,9 +6,12 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { Roles, Modules, Permissions } from '@/types';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
+import { useSessionKeepAlive } from '@/composables/useSessionKeepAlive';
+import { useFormPersistence } from '@/composables/useFormPersistence';
+import SessionWarningDialog from '@/components/SessionWarningDialog.vue';
 
 const { can } = permissionHelpers();
-const { success, error } = useToast();
+const { success, error, info } = useToast();
 
 interface Props {
   roles: Roles;
@@ -75,6 +78,49 @@ const newRoleForm = ref({
   description: '',
   is_default: false,
 });
+
+// Session management
+const showSessionWarning = ref(false);
+const sessionMinutesRemaining = ref(5);
+
+// Session keep-alive to prevent timeout while user is working
+const { refresh: refreshSession } = useSessionKeepAlive({
+  enabled: true,
+  intervalMinutes: 2, // Ping every 2 minutes
+  warningMinutes: 5,  // Warn 5 minutes before expiry
+  onWarning: () => {
+    showSessionWarning.value = true;
+    sessionMinutesRemaining.value = 5;
+  },
+  onExpired: () => {
+    error('Your session has expired. The page will reload.');
+    setTimeout(() => window.location.reload(), 2000);
+  },
+});
+
+// Form persistence to localStorage (auto-saves permission changes)
+const { clear: clearSavedForm, hasRestoredData } = useFormPersistence(
+  localPermissions,
+  'role-permissions-form',
+  {
+    enabled: true,
+    debounceMs: 2000, // Save 2 seconds after last change
+    onRestore: (data) => {
+      info('Restored your unsaved permission changes');
+    },
+  }
+);
+
+// Handle session warning actions
+function handleContinueWorking() {
+  showSessionWarning.value = false;
+  refreshSession();
+  success('Session refreshed! You can continue working.');
+}
+
+function handleCloseWarning() {
+  showSessionWarning.value = false;
+}
 
 // Helper function to get category name safely
 function getCategoryName(category: any): string {
@@ -628,6 +674,10 @@ async function savePermissions() {
       }, 3000);
 
       success('Permissions saved successfully!');
+
+      // Clear saved form data from localStorage since we successfully saved
+      clearSavedForm();
+
       // Reload the page to get the latest data
       router.reload();
     } else if (response.status === 419) {
@@ -764,6 +814,15 @@ function formatSpecialPermissionName(permissionSlug: string): string {
 <template>
   <AppLayout>
     <Head title="Role Permissions" />
+
+    <!-- Session Warning Dialog -->
+    <SessionWarningDialog
+      :open="showSessionWarning"
+      :minutes-remaining="sessionMinutesRemaining"
+      @continue="handleContinueWorking"
+      @close="handleCloseWarning"
+    />
+
     <div v-if="canViewRoles" class="mx-auto max-w-7xl px-4 py-6">
       <!-- Header Section -->
       <div class="mb-6 flex items-center justify-between">

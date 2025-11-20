@@ -17,6 +17,13 @@ Route::get('/csrf-cookie', function () {
     return response()->json(['message' => 'CSRF token refreshed'], 200);
 })->middleware('web');
 
+// Session keep-alive ping route
+Route::post('/ping', function () {
+    // This route just needs to be hit to keep the session alive
+    // It doesn't need to do anything special
+    return response()->json(['status' => 'ok', 'timestamp' => now()], 200);
+})->middleware(['web', 'auth']);
+
 // Load certificate routes early to avoid conflicts
 require __DIR__ . '/certificate.php';
 
