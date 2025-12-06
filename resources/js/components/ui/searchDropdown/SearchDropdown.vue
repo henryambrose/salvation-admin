@@ -237,8 +237,6 @@ async function openDropdown() {
   highlightedIndex.value = -1
   error.value = null
 
-  console.log('🔍 SearchDropdown opened - Options count:', props.options.length, 'Options:', props.options)
-
   // Focus search input if searchable
   if (props.searchable) {
     await nextTick()
@@ -370,8 +368,9 @@ async function scrollToHighlighted() {
       :aria-label="placeholder"
       :tabindex="tabindex"
       :class="cn(
-        'flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-xs transition-colors',
-        'focus-visible:outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+        'flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm shadow-xs transition-colors outline-none',
+        'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
+        open && 'border-ring ring-ring/50 ring-[3px]',
         disabled
           ? 'cursor-not-allowed opacity-50'
           : 'cursor-pointer bg-background hover:bg-accent/50',
