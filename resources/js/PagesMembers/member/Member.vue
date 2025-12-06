@@ -1094,6 +1094,7 @@ const fetchFamilyMembers = async (): Promise<void> => {
             name: `${member.first_name} ${member.last_name}`,
             gender_name: member.gender_name,
           }));
+        console.log('✅ Family members loaded:', familyMembers.value.length, familyMembers.value);
       }
     } catch (error) {
       console.error('Error fetching family members:', error);
