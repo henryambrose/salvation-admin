@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
 import { SelectInput } from '@/components/ui/select';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { City, State, Town } from '@/types';
 import {
@@ -513,6 +514,15 @@ const form = useForm({
   mother_source: props.member?.mother_source || 'Member',
 });
 
+// Loading state for family details fetch
+const isFetchingFamilyDetails = ref(false);
+
+// Previous family_no for revert on error
+const previousFamilyNo = ref(form.family_no);
+
+// Toast notifications
+const { success, error, warning } = useToast();
+
 // Add external family members data
 const externalFamilyMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string }>>([]);
 
@@ -680,6 +690,17 @@ const submit = () => {
 
 const communityClusters = ref<CommunityCluster[]>([]);
 
+// Initial family option for SearchDropdown to display current value
+const initialFamilyOptions = computed(() => {
+  if (form.family_no) {
+    return [{
+      id: form.family_no,
+      name: form.family_no,
+    }];
+  }
+  return [];
+});
+
 const fetchCommunityCluster = async () => {
   if (!form.community_id) {
     // If no community is selected but we have a cluster_id, show all clusters
@@ -696,6 +717,83 @@ const fetchCommunityCluster = async () => {
 
   communityClusters.value = filteredClusters;
 };
+
+/**
+ * Fetch family details and auto-update community/cluster when family_no changes
+ */
+const fetchAndApplyFamilyDetails = async (newFamilyNo: string) => {
+  // Skip if empty or same as previous
+  if (!newFamilyNo || newFamilyNo === previousFamilyNo.value) {
+    return;
+  }
+
+  isFetchingFamilyDetails.value = true;
+  const oldCommunityId = form.community_id;
+  const oldClusterId = form.community_cluster_id;
+  const oldFamilyNo = previousFamilyNo.value;
+
+  try {
+    const response = await fetch(`/member/family-details/${encodeURIComponent(newFamilyNo)}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error('Family not found');
+      }
+      throw new Error(`Failed to fetch family details: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Extract community data from response
+    const communityId = data.community_id;
+    const communityClusterId = data.community_cluster_id;
+
+    if (!communityId || !communityClusterId) {
+      warning('Selected family has no community/cluster assigned. Please select manually.', 5000);
+      previousFamilyNo.value = newFamilyNo;
+      return;
+    }
+
+    // Update form fields
+    form.community_id = communityId;
+    form.community_cluster_id = communityClusterId;
+
+    // Update community cluster dropdown options
+    await fetchCommunityCluster();
+
+    // Update previous value
+    previousFamilyNo.value = newFamilyNo;
+
+    success('Family changed. Community and cluster updated automatically.', 3000);
+  } catch (err) {
+    console.error('Error fetching family details:', err);
+
+    // Revert changes on error
+    form.family_no = oldFamilyNo;
+    form.community_id = oldCommunityId;
+    form.community_cluster_id = oldClusterId;
+
+    error(err instanceof Error ? err.message : 'Failed to fetch family details. Please try again.', 5000);
+  } finally {
+    isFetchingFamilyDetails.value = false;
+  }
+};
+
+// Watch for family_no changes to auto-update community/cluster
+watch(() => form.family_no, (newFamilyNo) => {
+  if (newFamilyNo) {
+    fetchAndApplyFamilyDetails(newFamilyNo);
+  } else {
+    // Family cleared - update previous value
+    previousFamilyNo.value = '';
+  }
+});
 
 // Debug watcher for communityClusters ref
 watch(communityClusters, (newValue) => {});
@@ -1001,6 +1099,9 @@ onMounted(() => {
   if (form.community_id) {
     fetchCommunityCluster();
   }
+
+  // Initialize previous family number
+  previousFamilyNo.value = form.family_no;
 });
 
 // Load current spouse data and fetch family members when editing a member
@@ -1407,6 +1508,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.aadhar" />
             </div>
 
+            <!-- Marital Status & Family Numbers Row -->
             <div class="grid gap-2">
               <Label for="marital_status">Marital Status</Label>
               <SelectInput
@@ -1423,13 +1525,37 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               />
               <InputError class="mt-2" :message="form.errors.marital_status" />
             </div>
+
+            <!-- Birth Family Number (Read-only) -->
             <div class="grid gap-2">
               <Label for="birth_family_no">Birth Family No</Label>
               <div class="mt-1 block w-full rounded-full border border-gray-300 bg-gray-50 px-4 py-2 text-gray-600">
                 <span v-if="member?.birth_family_no">{{ member.birth_family_no }}</span>
-                <span v-else class="mt-1 text-xs text-gray-500"> Shows original family before marriage </span>
+                <span v-else class="text-xs text-gray-500">Shows original family before marriage</span>
               </div>
-              <p class="text-xs text-gray-500">This preserves genealogical records of birth family</p>
+              <p class="text-xs text-gray-500">Preserves genealogical records of birth family</p>
+            </div>
+
+            <!-- Current Family Number (Editable) -->
+            <div class="grid gap-2">
+              <Label for="family_no">Current Family Number</Label>
+              <SearchDropdown
+                id="family_no"
+                v-model="form.family_no"
+                :options="initialFamilyOptions"
+                fetchUrl="/member/search-families-simple"
+                searchParam="search"
+                class="mt-1 block w-full rounded-full"
+                placeholder="Search and select family number..."
+                :disabled="isFetchingFamilyDetails"
+              />
+              <p v-if="isFetchingFamilyDetails" class="text-xs text-blue-600">
+                Updating community and cluster...
+              </p>
+              <p v-else class="text-xs text-gray-500">
+                Select a different family. Community and cluster will update automatically.
+              </p>
+              <InputError class="mt-2" :message="form.errors.family_no" />
             </div>
           </div>
 
@@ -1628,7 +1754,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
         <!-- Community Details -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Community Details</h3>
-          <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="grid gap-2">
               <Label for="community_id">Community <span class="text-red-500">*</span></Label>
               <SearchDropdown

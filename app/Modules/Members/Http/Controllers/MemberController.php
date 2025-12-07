@@ -1115,6 +1115,42 @@ class MemberController extends Controller
         }
     }
 
+    public function searchFamiliesSimple(Request $request)
+    {
+        try {
+            $query = $request->input('search', $request->input('q', ''));
+
+            if (strlen($query) < 2) {
+                return response()->json([]);
+            }
+
+            $numberingService = new FamilyNumberingService;
+            $results = $numberingService->searchFamilies($query);
+
+            // Transform results to { id, name } format for SearchDropdown
+            $transformed = collect($results)->map(function ($family) {
+                $memberCount = $family['member_count'] ?? 0;
+                $members = is_array($family['members']) ? implode(', ', array_slice($family['members'], 0, 3)) : '';
+                $displayName = "{$family['family_no']} ({$memberCount} members)" . ($members ? " - {$members}" : '');
+
+                return [
+                    'id' => $family['family_no'],
+                    'name' => $displayName,
+                ];
+            })->values()->all();
+
+            return response()->json($transformed);
+        } catch (\Exception $e) {
+            Log::error('Error in searchFamiliesSimple: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'error' => 'An error occurred while searching families',
+                'message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function getChurchStatistics($churchCode = null)
     {
         $churchCode = $churchCode ?? config('app.church_code', 'SAL');

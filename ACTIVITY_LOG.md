@@ -200,6 +200,20 @@ All issues with the SearchDropdown component have been resolved:
 - [x] Create `unified_people` view
 - [x] Test dropdown after backend fix
 - [x] Remove debug console.log statements
+- [x] Implement editable family_no dropdown
+- [x] Add SearchDropdown left-alignment fix
+- [x] Fix Community Details 2-column layout
+- [x] Business impact analysis for family_no changes
+
+### Pending Business Logic Review:
+- [ ] **CRITICAL**: Decide mitigation strategy for family_no changes:
+  - Option 1: Restrict to super admins with warning (EASIEST - 1 hour)
+  - Option 2: Add cascade update job for fund contributions (4-6 hours)
+  - Option 3: Prevent changes if contributions exist (1 hour)
+- [ ] Document that marriage workflow should be used for actual family changes
+- [ ] Add warning dialog before family_no change
+- [ ] Test impact on Fund module reports after family_no change
+- [ ] Test family tree display after family_no change
 
 ### Follow-up Considerations:
 - [ ] Review other uses of SearchDropdown in the codebase for consistency

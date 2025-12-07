@@ -23,6 +23,8 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('member/export', [MemberController::class, 'export'])->name('member.export');
     Route::get('member/search-families', [MemberController::class, 'searchFamilies'])
         ->name('member.search-families');
+    Route::get('member/search-families-simple', [MemberController::class, 'searchFamiliesSimple'])
+        ->name('member.search-families-simple');
     Route::get('member/next-available-numbers', [MemberController::class, 'getNextAvailableNumbers'])
         ->name('member.next-available-numbers');
     Route::get('member/family-details/{familyNo}', [MemberController::class, 'getFamilyDetails'])
