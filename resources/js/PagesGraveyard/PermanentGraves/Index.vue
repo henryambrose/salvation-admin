@@ -175,6 +175,14 @@
                         <span class="text-xs font-medium">Pay ₹{{ Number(grave.pending_amount).toLocaleString('en-IN') }}</span>
                       </Button>
                       <Button
+                        v-if="grave.maintenance_payments && grave.maintenance_payments.length > 0 && grave.maintenance_payments[0].receipt_number"
+                        @click="downloadReceipt(grave.maintenance_payments[0].id)"
+                        class="rounded-full bg-blue-100 p-2 text-blue-700 transition hover:bg-blue-200"
+                        title="Download Receipt"
+                      >
+                        <Download class="h-[1rem] w-[1rem]" />
+                      </Button>
+                      <Button
                         v-if="canUpdateAnyGrave"
                         @click="router.visit('/graveyard/permanent-graves/' + grave.id + '/edit')"
                         :disabled="grave.status === 'unavailable'"
@@ -288,7 +296,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Download, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -409,6 +417,11 @@ const restoreGrave = (id: number) => {
 const payMaintenanceFee = (grave: any) => {
   // Navigate to maintenance fee payment page
   router.visit(`/graveyard/payments/create/maintenance/${grave.id}`);
+};
+
+const downloadReceipt = (paymentId: number) => {
+  // Open receipt in new window/tab
+  window.open(`/graveyard/payments/${paymentId}/receipt`, '_blank');
 };
 
 const exportToCSV = () => {

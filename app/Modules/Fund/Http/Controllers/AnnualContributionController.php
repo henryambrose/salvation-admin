@@ -42,12 +42,19 @@ class AnnualContributionController extends Controller
             $query->where('family_no', 'like', '%' . $request->family_no . '%');
         }
 
-        // Optional: filter by date range
-        if ($request->filled('start_date')) {
-            $query->whereDate('start_date', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('end_date', '<=', $request->end_date);
+        // Filter by date range - find contributions whose period overlaps with the selected range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            // Both dates provided - find contributions that overlap with the filter period
+            $query->where(function($q) use ($request) {
+                $q->where('start_date', '<=', $request->end_date)
+                  ->where('end_date', '>=', $request->start_date);
+            });
+        } elseif ($request->filled('start_date')) {
+            // Only start date - find contributions that end on or after this date
+            $query->whereDate('end_date', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            // Only end date - find contributions that start on or before this date
+            $query->whereDate('start_date', '<=', $request->end_date);
         }
 
         if ($request->filled('category_id')) {
@@ -391,12 +398,19 @@ class AnnualContributionController extends Controller
             $query->where('family_no', 'like', '%' . $request->family_no . '%');
         }
 
-        // Optional: filter by date range
-        if ($request->filled('start_date')) {
-            $query->whereDate('start_date', '>=', $request->start_date);
-        }
-        if ($request->filled('end_date')) {
-            $query->whereDate('end_date', '<=', $request->end_date);
+        // Filter by date range - find contributions whose period overlaps with the selected range
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            // Both dates provided - find contributions that overlap with the filter period
+            $query->where(function($q) use ($request) {
+                $q->where('start_date', '<=', $request->end_date)
+                  ->where('end_date', '>=', $request->start_date);
+            });
+        } elseif ($request->filled('start_date')) {
+            // Only start date - find contributions that end on or after this date
+            $query->whereDate('end_date', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            // Only end date - find contributions that start on or before this date
+            $query->whereDate('start_date', '<=', $request->end_date);
         }
 
         if ($request->filled('category_id')) {

@@ -229,12 +229,34 @@
         .print-button:hover {
             background: #7B1FA2;
         }
+
+        .receipt-copy {
+            page-break-after: always;
+        }
+
+        .copy-label {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media print {
+            .receipt-copy:last-child {
+                page-break-after: avoid;
+            }
+        }
     </style>
 </head>
 <body>
     <button class="print-button no-print" onclick="window.print()">Print Receipt</button>
 
-    <div class="receipt-container">
+    <!-- First Copy - Office Copy -->
+    <div class="receipt-copy">
+        <div class="copy-label">Office Copy</div>
+        <div class="receipt-container">
         <div class="header">
             <h1>PAYMENT RECEIPT</h1>
             <h2>Mass Intention</h2>
@@ -330,6 +352,109 @@
             <p>This is a computer-generated receipt.</p>
             <p>Thank you for your mass intention offering.</p>
         </div>
+    </div>
+    </div>
+
+    <!-- Second Copy - Customer Copy -->
+    <div class="receipt-copy">
+        <div class="copy-label">Customer Copy</div>
+        <div class="receipt-container">
+        <div class="header">
+            <h1>PAYMENT RECEIPT</h1>
+            <h2>Mass Intention</h2>
+        </div>
+
+        <div class="receipt-info">
+            <div>
+                <strong>Receipt No:</strong>
+                <span>{{ $receipt_no }}</span>
+            </div>
+            <div>
+                <strong>Date:</strong>
+                <span>{{ $date }}</span>
+            </div>
+            <div>
+                <strong>Mass Date:</strong>
+                <span>{{ $mass_date }}</span>
+            </div>
+        </div>
+
+        <div class="amount-section">
+            <div class="amount">₹ {{ $amount }}</div>
+            <div class="amount-words">{{ $amount_words }} Only</div>
+        </div>
+
+        <div class="receipt-body">
+            <div class="row">
+                <div class="label">Received From:</div>
+                <div class="value">{{ $received_from }}</div>
+            </div>
+
+            @if($phone)
+            <div class="row">
+                <div class="label">Phone:</div>
+                <div class="value">{{ $phone }}</div>
+            </div>
+            @endif
+
+            <div class="row">
+                <div class="label">Mass Type:</div>
+                <div class="value">{{ $mass_type }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Intention Type:</div>
+                <div class="value">{{ $intention_type }}</div>
+            </div>
+
+            @if($intention_for)
+            <div class="intention-box">
+                <strong>Mass Intention For:</strong>
+                <p>{{ $intention_for }}</p>
+            </div>
+            @endif
+
+            @if($special_instructions)
+            <div class="intention-box">
+                <strong>Special Instructions:</strong>
+                <p>{{ $special_instructions }}</p>
+            </div>
+            @endif
+
+            <div class="row">
+                <div class="label">Payment Method:</div>
+                <div class="value">{{ $payment_method }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Status:</div>
+                <div class="value">
+                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="label">Transaction Date:</div>
+                <div class="value">{{ $created_at }}</div>
+            </div>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">Received By</div>
+            </div>
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">Authorized Signature</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is a computer-generated receipt.</p>
+            <p>Thank you for your mass intention offering.</p>
+        </div>
+    </div>
     </div>
 
     <script>

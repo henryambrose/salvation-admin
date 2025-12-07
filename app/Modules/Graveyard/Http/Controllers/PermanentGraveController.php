@@ -17,7 +17,9 @@ class PermanentGraveController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PermanentGrave::query()->with('member');
+        $query = PermanentGrave::query()->with(['member', 'maintenancePayments' => function($query) {
+            $query->latest()->limit(1);
+        }]);
 
         // Archive logic
         if ($request->input('isArchived') === 'true') {
@@ -57,7 +59,9 @@ class PermanentGraveController extends Controller
         }
 
         // Re-apply the query with updated pending amounts
-        $query = PermanentGrave::query()->with('member');
+        $query = PermanentGrave::query()->with(['member', 'maintenancePayments' => function($query) {
+            $query->latest()->limit(1);
+        }]);
 
         // Reapply all filters
         if ($request->input('isArchived') === 'true') {

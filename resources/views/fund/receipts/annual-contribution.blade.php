@@ -203,12 +203,34 @@
         .print-button:hover {
             background: #45a049;
         }
+
+        .receipt-copy {
+            page-break-after: always;
+        }
+
+        .copy-label {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        @media print {
+            .receipt-copy:last-child {
+                page-break-after: avoid;
+            }
+        }
     </style>
 </head>
 <body>
     <button class="print-button no-print" onclick="window.print()">Print Receipt</button>
 
-    <div class="receipt-container">
+    <!-- First Copy - Office Copy -->
+    <div class="receipt-copy">
+        <div class="copy-label">Office Copy</div>
+        <div class="receipt-container">
         <div class="header">
             <h1>PAYMENT RECEIPT</h1>
             <h2>Annual Contribution</h2>
@@ -290,6 +312,95 @@
             <p>This is a computer-generated receipt.</p>
             <p>Thank you for your contribution.</p>
         </div>
+    </div>
+    </div>
+
+    <!-- Second Copy - Customer Copy -->
+    <div class="receipt-copy">
+        <div class="copy-label">Customer Copy</div>
+        <div class="receipt-container">
+        <div class="header">
+            <h1>PAYMENT RECEIPT</h1>
+            <h2>Annual Contribution</h2>
+        </div>
+
+        <div class="receipt-info">
+            <div>
+                <strong>Receipt No:</strong>
+                <span>{{ $receipt_no }}</span>
+            </div>
+            <div>
+                <strong>Date:</strong>
+                <span>{{ $date }}</span>
+            </div>
+            <div>
+                <strong>Family No:</strong>
+                <span>{{ $family_no }}</span>
+            </div>
+        </div>
+
+        <div class="amount-section">
+            <div class="amount">₹ {{ $amount }}</div>
+            <div class="amount-words">{{ $amount_words }} Only</div>
+        </div>
+
+        <div class="receipt-body">
+            <div class="row">
+                <div class="label">Received From:</div>
+                <div class="value">{{ $received_from }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Category:</div>
+                <div class="value">{{ $category }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Period:</div>
+                <div class="value">{{ $period }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Payment Method:</div>
+                <div class="value">{{ $payment_method }}</div>
+            </div>
+
+            <div class="row">
+                <div class="label">Status:</div>
+                <div class="value">
+                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
+                </div>
+            </div>
+
+            @if($notes)
+            <div class="row">
+                <div class="label">Notes:</div>
+                <div class="value">{{ $notes }}</div>
+            </div>
+            @endif
+
+            <div class="row">
+                <div class="label">Transaction Date:</div>
+                <div class="value">{{ $created_at }}</div>
+            </div>
+        </div>
+
+        <div class="signature-section">
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">Received By</div>
+            </div>
+            <div class="signature">
+                <div class="signature-line"></div>
+                <div class="signature-label">Authorized Signature</div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is a computer-generated receipt.</p>
+            <p>Thank you for your contribution.</p>
+        </div>
+    </div>
     </div>
 
     <script>
