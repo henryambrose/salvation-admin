@@ -450,9 +450,47 @@ class PaymentController extends Controller
 
         $payment->load($this->getPaymentRelationships($payment));
 
-        return Inertia::render('PagesGraveyard/Payment/Receipt', [
-            'payment' => $payment
-        ]);
+        // Get deceased name
+        $deceasedName = null;
+        if ($payment->payable) {
+            $validMember = $payment->payable->validMember ?? null;
+            if ($validMember) {
+                $deceasedName = trim(($validMember->first_name ?? '') . ' ' . ($validMember->last_name ?? ''));
+            } else {
+                $deceasedName = $payment->payable->applicant_name ?? null;
+            }
+        }
+
+        // Get grave number
+        $graveNumber = null;
+        if ($payment->payable && $payment->payable->permanentGrave) {
+            $graveNumber = $payment->payable->permanentGrave->grave_no;
+        }
+
+        // Prepare receipt data
+        $receiptData = [
+            'receipt_number' => $payment->receipt_number,
+            'payment_reference' => $payment->payment_reference,
+            'payment_date' => $payment->payment_date ? date('d/m/Y', strtotime($payment->payment_date)) : date('d/m/Y'),
+            'booking_reference' => $payment->payable->booking_reference ?? null,
+            'deceased_name' => $deceasedName,
+            'grave_number' => $graveNumber,
+            'applicant_name' => $payment->payable->applicant_name ?? null,
+            'service_charges' => $payment->service_charges ?? [],
+            'total_amount' => $payment->total_amount,
+            'paid_amount' => $payment->paid_amount,
+            'amount_words' => $this->numberToWords($payment->paid_amount),
+            'balance_amount' => $payment->balance_amount,
+            'payment_method' => $payment->paymentMethod->name ?? $payment->payment_method->name ?? 'N/A',
+            'payment_mode' => $payment->payment_mode,
+            'transaction_reference' => $payment->transaction_reference,
+            'payment_status' => $payment->payment_status,
+            'payment_notes' => $payment->payment_notes,
+            'recorded_by' => $payment->creator->name ?? 'N/A',
+            'created_at' => $payment->created_at->format('d/m/Y H:i A'),
+        ];
+
+        return view('graveyard.receipts.payment', $receiptData);
     }
 
     /**
@@ -661,6 +699,51 @@ class PaymentController extends Controller
 
             return back()->withErrors(['error' => 'Failed to record maintenance payment. Please try again.'])
                 ->withInput();
+        }
+    }
+
+    /**
+     * Convert number to words for receipt
+     */
+    private function numberToWords($number)
+    {
+        $amount = number_format($number, 2, '.', '');
+        list($rupees, $paise) = explode('.', $amount);
+
+        $words = '';
+        if ($rupees > 0) {
+            $words = $this->convertNumberToWords((int)$rupees) . ' Rupees';
+        }
+        if ($paise > 0) {
+            $words .= ($words ? ' and ' : '') . $this->convertNumberToWords((int)$paise) . ' Paise';
+        }
+
+        return $words ?: 'Zero Rupees';
+    }
+
+    /**
+     * Helper function to convert number to words
+     */
+    private function convertNumberToWords($number)
+    {
+        $ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        $tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        $teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+
+        if ($number < 10) {
+            return $ones[$number];
+        } elseif ($number < 20) {
+            return $teens[$number - 10];
+        } elseif ($number < 100) {
+            return $tens[intval($number / 10)] . ' ' . $ones[$number % 10];
+        } elseif ($number < 1000) {
+            return $ones[intval($number / 100)] . ' Hundred ' . $this->convertNumberToWords($number % 100);
+        } elseif ($number < 100000) {
+            return $this->convertNumberToWords(intval($number / 1000)) . ' Thousand ' . $this->convertNumberToWords($number % 1000);
+        } elseif ($number < 10000000) {
+            return $this->convertNumberToWords(intval($number / 100000)) . ' Lakh ' . $this->convertNumberToWords($number % 100000);
+        } else {
+            return $this->convertNumberToWords(intval($number / 10000000)) . ' Crore ' . $this->convertNumberToWords($number % 10000000);
         }
     }
 }

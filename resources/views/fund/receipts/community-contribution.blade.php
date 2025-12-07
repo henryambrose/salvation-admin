@@ -205,21 +205,125 @@
         }
 
         .receipt-copy {
-            page-break-after: always;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
         }
 
         .copy-label {
             text-align: center;
-            font-size: 12px;
+            font-size: 10px;
             color: #999;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
         }
 
         @media print {
+            @page {
+                margin: 0.3in;
+                size: A4 portrait;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+                transform: scale(0.85);
+                transform-origin: top center;
+            }
+
+            .receipt-container {
+                padding: 15px;
+                margin-bottom: 0;
+                max-width: 700px;
+            }
+
+            .receipt-copy {
+                margin-bottom: 10px;
+            }
+
             .receipt-copy:last-child {
-                page-break-after: avoid;
+                margin-bottom: 0;
+            }
+
+            .copy-label {
+                font-size: 9px;
+                margin-bottom: 5px;
+            }
+
+            .header h1 {
+                font-size: 18px;
+                margin-bottom: 2px;
+            }
+
+            .header h2 {
+                font-size: 14px;
+            }
+
+            .header {
+                padding-bottom: 8px;
+                margin-bottom: 10px;
+            }
+
+            .receipt-info {
+                margin-bottom: 10px;
+                padding-bottom: 8px;
+            }
+
+            .receipt-info strong {
+                font-size: 10px;
+            }
+
+            .receipt-info span {
+                font-size: 13px;
+            }
+
+            .amount-section {
+                margin: 10px 0;
+                padding: 10px;
+            }
+
+            .amount-section .amount {
+                font-size: 22px;
+            }
+
+            .amount-section .amount-words {
+                font-size: 12px;
+            }
+
+            .receipt-body {
+                margin-bottom: 10px;
+            }
+
+            .row {
+                padding: 5px 0;
+            }
+
+            .row .label {
+                font-size: 13px;
+            }
+
+            .row .value {
+                font-size: 13px;
+            }
+
+            .signature-section {
+                margin-top: 20px;
+            }
+
+            .signature-line {
+                margin: 30px 0 5px 0;
+                width: 150px;
+            }
+
+            .signature-label {
+                font-size: 12px;
+            }
+
+            .footer {
+                margin-top: 15px;
+                padding-top: 8px;
+                font-size: 11px;
             }
         }
     </style>
@@ -232,8 +336,8 @@
         <div class="copy-label">Office Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>PAYMENT RECEIPT</h1>
-            <h2>Community Contribution</h2>
+            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
+            <h2>Community Contribution - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">
@@ -329,8 +433,8 @@
         <div class="copy-label">Customer Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>PAYMENT RECEIPT</h1>
-            <h2>Community Contribution</h2>
+            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
+            <h2>Community Contribution - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">

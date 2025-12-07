@@ -231,21 +231,143 @@
         }
 
         .receipt-copy {
-            page-break-after: always;
+            margin-bottom: 30px;
+            page-break-inside: avoid;
         }
 
         .copy-label {
             text-align: center;
-            font-size: 12px;
+            font-size: 10px;
             color: #999;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             text-transform: uppercase;
             letter-spacing: 1px;
+            font-weight: 600;
         }
 
         @media print {
+            @page {
+                margin: 0.2in;
+                size: A4 portrait;
+            }
+
+            body {
+                padding: 0;
+                margin: 0;
+                transform: scale(0.72);
+                transform-origin: top center;
+            }
+
+            .receipt-container {
+                padding: 10px;
+                margin-bottom: 0;
+                max-width: 700px;
+            }
+
+            .receipt-copy {
+                margin-bottom: 5px;
+            }
+
             .receipt-copy:last-child {
-                page-break-after: avoid;
+                margin-bottom: 0;
+            }
+
+            .copy-label {
+                font-size: 8px;
+                margin-bottom: 3px;
+            }
+
+            .header h1 {
+                font-size: 16px;
+                margin-bottom: 1px;
+            }
+
+            .header h2 {
+                font-size: 12px;
+            }
+
+            .header {
+                padding-bottom: 5px;
+                margin-bottom: 6px;
+            }
+
+            .receipt-info {
+                margin-bottom: 6px;
+                padding-bottom: 5px;
+            }
+
+            .receipt-info strong {
+                font-size: 9px;
+                margin-bottom: 2px;
+            }
+
+            .receipt-info span {
+                font-size: 11px;
+            }
+
+            .amount-section {
+                margin: 6px 0;
+                padding: 6px;
+            }
+
+            .amount-section .amount {
+                font-size: 18px;
+                margin-bottom: 5px;
+            }
+
+            .amount-section .amount-words {
+                font-size: 10px;
+            }
+
+            .receipt-body {
+                margin-bottom: 6px;
+            }
+
+            .row {
+                padding: 3px 0;
+            }
+
+            .row .label {
+                font-size: 11px;
+            }
+
+            .row .value {
+                font-size: 11px;
+            }
+
+            .intention-box {
+                padding: 4px;
+                margin: 4px 0;
+            }
+
+            .intention-box strong {
+                font-size: 9px;
+                margin-bottom: 3px;
+            }
+
+            .intention-box p {
+                font-size: 11px;
+                line-height: 1.3;
+            }
+
+            .signature-section {
+                margin-top: 12px;
+                padding: 0 20px;
+            }
+
+            .signature-line {
+                margin: 20px 0 3px 0;
+                width: 120px;
+            }
+
+            .signature-label {
+                font-size: 10px;
+            }
+
+            .footer {
+                margin-top: 8px;
+                padding-top: 5px;
+                font-size: 9px;
             }
         }
     </style>
@@ -258,8 +380,8 @@
         <div class="copy-label">Office Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>PAYMENT RECEIPT</h1>
-            <h2>Mass Intention</h2>
+            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
+            <h2>Mass Intention - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">
@@ -360,8 +482,8 @@
         <div class="copy-label">Customer Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>PAYMENT RECEIPT</h1>
-            <h2>Mass Intention</h2>
+            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
+            <h2>Mass Intention - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">

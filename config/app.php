@@ -17,6 +17,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Church Name
+    |--------------------------------------------------------------------------
+    |
+    | This value is the full name of the church/parish. This will be used in
+    | receipts, certificates, and other official documents.
+    |
+    */
+
+    'church_name' => env('CHURCH_NAME', 'Our Lady of Salvation Church'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

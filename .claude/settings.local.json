@@ -42,7 +42,8 @@
       "Bash(nul)",
       "Bash(git rm:*)",
       "Bash(del \"resources\\js\\composables\\useDebounce.ts\" \"resources\\js\\composables\\useComboboxSearch.ts\" \"resources\\js\\composables\\useComboboxKeyboard.ts\")",
-      "Bash(tasklist:*)"
+      "Bash(tasklist:*)",
+      "Bash(del \"D:\\Projects\\salvation-admin\\resources\\js\\PagesGraveyard\\Payment\\Receipt.vue\")"
     ],
     "deny": [],
     "ask": []

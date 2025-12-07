@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt - {{ $receipt_no }}</title>
+    <title>Receipt - {{ $receipt_number }}</title>
     <style>
         * {
             margin: 0;
@@ -99,13 +99,13 @@
             background: #f9f9f9;
             padding: 20px;
             margin: 30px 0;
-            border-left: 4px solid #4CAF50;
+            border-left: 4px solid #FF9800;
         }
 
         .amount-section .amount {
             font-size: 32px;
             font-weight: bold;
-            color: #4CAF50;
+            color: #FF9800;
             margin-bottom: 10px;
         }
 
@@ -113,6 +113,30 @@
             font-size: 14px;
             color: #666;
             font-style: italic;
+        }
+
+        .service-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .service-table th {
+            background: #f9f9f9;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            color: #666;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .service-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .service-table tr:last-child td {
+            border-bottom: none;
         }
 
         .footer {
@@ -155,17 +179,17 @@
             text-transform: uppercase;
         }
 
-        .status.paid {
+        .status.completed {
             background: #d4edda;
             color: #155724;
         }
 
-        .status.pending {
+        .status.partial {
             background: #fff3cd;
             color: #856404;
         }
 
-        .status.partial {
+        .status.pending {
             background: #d1ecf1;
             color: #0c5460;
         }
@@ -190,7 +214,7 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #4CAF50;
+            background: #FF9800;
             color: white;
             border: none;
             padding: 12px 24px;
@@ -201,7 +225,7 @@
         }
 
         .print-button:hover {
-            background: #45a049;
+            background: #F57C00;
         }
 
         .receipt-copy {
@@ -221,25 +245,25 @@
 
         @media print {
             @page {
-                margin: 0.3in;
+                margin: 0.2in;
                 size: A4 portrait;
             }
 
             body {
                 padding: 0;
                 margin: 0;
-                transform: scale(0.85);
+                transform: scale(0.75);
                 transform-origin: top center;
             }
 
             .receipt-container {
-                padding: 15px;
+                padding: 10px;
                 margin-bottom: 0;
                 max-width: 700px;
             }
 
             .receipt-copy {
-                margin-bottom: 10px;
+                margin-bottom: 5px;
             }
 
             .receipt-copy:last-child {
@@ -247,83 +271,101 @@
             }
 
             .copy-label {
-                font-size: 9px;
-                margin-bottom: 5px;
+                font-size: 8px;
+                margin-bottom: 3px;
             }
 
             .header h1 {
-                font-size: 18px;
-                margin-bottom: 2px;
+                font-size: 16px;
+                margin-bottom: 1px;
             }
 
             .header h2 {
-                font-size: 14px;
+                font-size: 12px;
             }
 
             .header {
-                padding-bottom: 8px;
-                margin-bottom: 10px;
+                padding-bottom: 5px;
+                margin-bottom: 6px;
             }
 
             .receipt-info {
-                margin-bottom: 10px;
-                padding-bottom: 8px;
+                margin-bottom: 6px;
+                padding-bottom: 5px;
             }
 
             .receipt-info strong {
-                font-size: 10px;
+                font-size: 9px;
+                margin-bottom: 2px;
             }
 
             .receipt-info span {
-                font-size: 13px;
+                font-size: 11px;
             }
 
             .amount-section {
-                margin: 10px 0;
-                padding: 10px;
+                margin: 6px 0;
+                padding: 6px;
             }
 
             .amount-section .amount {
-                font-size: 22px;
+                font-size: 18px;
+                margin-bottom: 5px;
             }
 
             .amount-section .amount-words {
-                font-size: 12px;
+                font-size: 10px;
             }
 
             .receipt-body {
-                margin-bottom: 10px;
+                margin-bottom: 6px;
             }
 
             .row {
-                padding: 5px 0;
+                padding: 3px 0;
             }
 
             .row .label {
-                font-size: 13px;
+                font-size: 11px;
             }
 
             .row .value {
-                font-size: 13px;
+                font-size: 11px;
+            }
+
+            .service-table {
+                margin: 6px 0;
+                font-size: 10px;
+            }
+
+            .service-table th {
+                padding: 4px;
+                font-size: 10px;
+            }
+
+            .service-table td {
+                padding: 4px;
+                font-size: 10px;
             }
 
             .signature-section {
-                margin-top: 20px;
+                margin-top: 12px;
+                padding: 0 20px;
             }
 
             .signature-line {
-                margin: 30px 0 5px 0;
-                width: 150px;
+                margin: 20px 0 3px 0;
+                width: 120px;
             }
 
             .signature-label {
-                font-size: 12px;
+                font-size: 10px;
             }
 
             .footer {
-                margin-top: 15px;
-                padding-top: 8px;
-                font-size: 11px;
+                margin-top: 8px;
+                padding-top: 5px;
+                font-size: 9px;
             }
         }
     </style>
@@ -337,61 +379,138 @@
         <div class="receipt-container">
         <div class="header">
             <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Annual Contribution - Payment Receipt</h2>
+            <h2>Graveyard Services - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">
             <div>
                 <strong>Receipt No:</strong>
-                <span>{{ $receipt_no }}</span>
+                <span>{{ $receipt_number }}</span>
             </div>
             <div>
-                <strong>Date:</strong>
-                <span>{{ $date }}</span>
+                <strong>Payment Ref:</strong>
+                <span>{{ $payment_reference }}</span>
             </div>
             <div>
-                <strong>Family No:</strong>
-                <span>{{ $family_no }}</span>
+                <strong>Payment Date:</strong>
+                <span>{{ $payment_date }}</span>
             </div>
         </div>
 
         <div class="amount-section">
-            <div class="amount">₹ {{ $amount }}</div>
+            <div class="amount">₹ {{ $paid_amount }}</div>
             <div class="amount-words">{{ $amount_words }} Only</div>
         </div>
 
         <div class="receipt-body">
+            @if($booking_reference)
             <div class="row">
-                <div class="label">Received From:</div>
-                <div class="value">{{ $received_from }}</div>
+                <div class="label">Booking Reference:</div>
+                <div class="value">{{ $booking_reference }}</div>
+            </div>
+            @endif
+
+            @if($deceased_name)
+            <div class="row">
+                <div class="label">Deceased Person:</div>
+                <div class="value">{{ $deceased_name }}</div>
+            </div>
+            @endif
+
+            @if($grave_number)
+            <div class="row">
+                <div class="label">Grave Number:</div>
+                <div class="value">{{ $grave_number }}</div>
+            </div>
+            @endif
+
+            @if($applicant_name)
+            <div class="row">
+                <div class="label">Applicant:</div>
+                <div class="value">{{ $applicant_name }}</div>
+            </div>
+            @endif
+
+            @if(!empty($service_charges))
+            <div class="row">
+                <div class="label" style="flex: 1;">Service Details:</div>
+            </div>
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Unit Cost</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($service_charges as $service)
+                    <tr>
+                        <td>{{ $service['service_name'] }}</td>
+                        <td style="text-align: center;">{{ $service['quantity'] }}</td>
+                        <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
+                        <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @endif
+
+            <div class="row">
+                <div class="label">Total Amount:</div>
+                <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
             </div>
 
             <div class="row">
-                <div class="label">Category:</div>
-                <div class="value">{{ $category }}</div>
+                <div class="label">Amount Paid:</div>
+                <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
             </div>
 
+            @if($balance_amount > 0)
             <div class="row">
-                <div class="label">Period:</div>
-                <div class="value">{{ $period }}</div>
+                <div class="label">Balance Amount:</div>
+                <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
             </div>
+            @endif
 
             <div class="row">
                 <div class="label">Payment Method:</div>
                 <div class="value">{{ $payment_method }}</div>
             </div>
 
+            @if($payment_mode)
+            <div class="row">
+                <div class="label">Payment Mode:</div>
+                <div class="value">{{ ucfirst($payment_mode) }}</div>
+            </div>
+            @endif
+
+            @if($transaction_reference)
+            <div class="row">
+                <div class="label">Transaction Reference:</div>
+                <div class="value">{{ $transaction_reference }}</div>
+            </div>
+            @endif
+
             <div class="row">
                 <div class="label">Status:</div>
                 <div class="value">
-                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
+                    <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
                 </div>
             </div>
 
-            @if($notes)
+            @if($payment_notes)
             <div class="row">
                 <div class="label">Notes:</div>
-                <div class="value">{{ $notes }}</div>
+                <div class="value">{{ $payment_notes }}</div>
+            </div>
+            @endif
+
+            @if($recorded_by)
+            <div class="row">
+                <div class="label">Recorded By:</div>
+                <div class="value">{{ $recorded_by }}</div>
             </div>
             @endif
 
@@ -414,7 +533,7 @@
 
         <div class="footer">
             <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your contribution.</p>
+            <p>Thank you for your payment.</p>
         </div>
     </div>
     </div>
@@ -425,61 +544,138 @@
         <div class="receipt-container">
         <div class="header">
             <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Annual Contribution - Payment Receipt</h2>
+            <h2>Graveyard Services - Payment Receipt</h2>
         </div>
 
         <div class="receipt-info">
             <div>
                 <strong>Receipt No:</strong>
-                <span>{{ $receipt_no }}</span>
+                <span>{{ $receipt_number }}</span>
             </div>
             <div>
-                <strong>Date:</strong>
-                <span>{{ $date }}</span>
+                <strong>Payment Ref:</strong>
+                <span>{{ $payment_reference }}</span>
             </div>
             <div>
-                <strong>Family No:</strong>
-                <span>{{ $family_no }}</span>
+                <strong>Payment Date:</strong>
+                <span>{{ $payment_date }}</span>
             </div>
         </div>
 
         <div class="amount-section">
-            <div class="amount">₹ {{ $amount }}</div>
+            <div class="amount">₹ {{ $paid_amount }}</div>
             <div class="amount-words">{{ $amount_words }} Only</div>
         </div>
 
         <div class="receipt-body">
+            @if($booking_reference)
             <div class="row">
-                <div class="label">Received From:</div>
-                <div class="value">{{ $received_from }}</div>
+                <div class="label">Booking Reference:</div>
+                <div class="value">{{ $booking_reference }}</div>
+            </div>
+            @endif
+
+            @if($deceased_name)
+            <div class="row">
+                <div class="label">Deceased Person:</div>
+                <div class="value">{{ $deceased_name }}</div>
+            </div>
+            @endif
+
+            @if($grave_number)
+            <div class="row">
+                <div class="label">Grave Number:</div>
+                <div class="value">{{ $grave_number }}</div>
+            </div>
+            @endif
+
+            @if($applicant_name)
+            <div class="row">
+                <div class="label">Applicant:</div>
+                <div class="value">{{ $applicant_name }}</div>
+            </div>
+            @endif
+
+            @if(!empty($service_charges))
+            <div class="row">
+                <div class="label" style="flex: 1;">Service Details:</div>
+            </div>
+            <table class="service-table">
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th style="text-align: center;">Qty</th>
+                        <th style="text-align: right;">Unit Cost</th>
+                        <th style="text-align: right;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($service_charges as $service)
+                    <tr>
+                        <td>{{ $service['service_name'] }}</td>
+                        <td style="text-align: center;">{{ $service['quantity'] }}</td>
+                        <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
+                        <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @endif
+
+            <div class="row">
+                <div class="label">Total Amount:</div>
+                <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
             </div>
 
             <div class="row">
-                <div class="label">Category:</div>
-                <div class="value">{{ $category }}</div>
+                <div class="label">Amount Paid:</div>
+                <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
             </div>
 
+            @if($balance_amount > 0)
             <div class="row">
-                <div class="label">Period:</div>
-                <div class="value">{{ $period }}</div>
+                <div class="label">Balance Amount:</div>
+                <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
             </div>
+            @endif
 
             <div class="row">
                 <div class="label">Payment Method:</div>
                 <div class="value">{{ $payment_method }}</div>
             </div>
 
+            @if($payment_mode)
+            <div class="row">
+                <div class="label">Payment Mode:</div>
+                <div class="value">{{ ucfirst($payment_mode) }}</div>
+            </div>
+            @endif
+
+            @if($transaction_reference)
+            <div class="row">
+                <div class="label">Transaction Reference:</div>
+                <div class="value">{{ $transaction_reference }}</div>
+            </div>
+            @endif
+
             <div class="row">
                 <div class="label">Status:</div>
                 <div class="value">
-                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
+                    <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
                 </div>
             </div>
 
-            @if($notes)
+            @if($payment_notes)
             <div class="row">
                 <div class="label">Notes:</div>
-                <div class="value">{{ $notes }}</div>
+                <div class="value">{{ $payment_notes }}</div>
+            </div>
+            @endif
+
+            @if($recorded_by)
+            <div class="row">
+                <div class="label">Recorded By:</div>
+                <div class="value">{{ $recorded_by }}</div>
             </div>
             @endif
 
@@ -502,7 +698,7 @@
 
         <div class="footer">
             <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your contribution.</p>
+            <p>Thank you for your payment.</p>
         </div>
     </div>
     </div>
