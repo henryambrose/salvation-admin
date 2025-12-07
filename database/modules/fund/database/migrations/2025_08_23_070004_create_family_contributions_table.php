@@ -17,6 +17,7 @@ return new class extends Migration
             // Date range instead of single year
             $table->decimal('amount', 10, 2);
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null');
+             $table->string('transaction_reference')->nullable();
             $table->foreignId('fund_category_id')->nullable()->constrained('fund_categories')->onDelete('set null');
             // Start and end date for contribution period
             $table->date('start_date');

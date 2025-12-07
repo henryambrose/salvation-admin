@@ -24,6 +24,7 @@ return new class extends Migration
             $table->foreignId('mass_type_id')->nullable()->constrained('mass_types')->onDelete('set null');
             $table->text('special_instructions')->nullable();
             $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->onDelete('set null');
+            $table->string('transaction_reference')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();
