@@ -111,3 +111,64 @@ export function calculateAge(dateOfBirth: string | null | undefined | Date): num
 
   return age;
 }
+
+/**
+ * Viewport and Scroll Utilities
+ * These utilities help with element visibility and scroll management.
+ */
+
+/**
+ * Check if an element is fully visible within the viewport.
+ * Accounts for optional offset (e.g., sticky headers/footers).
+ *
+ * @param element - The HTML element to check
+ * @param offset - Optional offset in pixels to account for fixed/sticky elements
+ * @returns true if element is fully visible, false otherwise
+ */
+export function isElementInViewport(element: HTMLElement, offset: number = 0): boolean {
+  const rect = element.getBoundingClientRect();
+
+  return (
+    rect.top >= offset &&
+    rect.left >= 0 &&
+    rect.bottom <= (window.innerHeight || document.documentElement.clientHeight) - offset &&
+    rect.right <= (window.innerWidth || document.documentElement.clientWidth)
+  );
+}
+
+/**
+ * Calculate the total offset height from sticky/fixed positioned elements.
+ * Useful for determining scroll padding or element visibility calculations.
+ *
+ * @param includeTop - Whether to include top sticky elements (default: true)
+ * @param includeBottom - Whether to include bottom sticky elements (default: true)
+ * @returns Total offset height in pixels
+ */
+export function getScrollOffset(includeTop: boolean = true, includeBottom: boolean = true): number {
+  let offset = 0;
+
+  // Query all elements with position: fixed or sticky
+  const stickyElements = document.querySelectorAll('[class*="sticky"], [class*="fixed"]');
+
+  stickyElements.forEach((element) => {
+    const el = element as HTMLElement;
+    const styles = window.getComputedStyle(el);
+    const position = styles.position;
+
+    if (position === 'fixed' || position === 'sticky') {
+      const rect = el.getBoundingClientRect();
+
+      // Check if element is at the top
+      if (includeTop && rect.top === 0) {
+        offset += rect.height;
+      }
+
+      // Check if element is at the bottom
+      if (includeBottom && rect.bottom === window.innerHeight) {
+        offset += rect.height;
+      }
+    }
+  });
+
+  return offset;
+}

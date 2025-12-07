@@ -284,3 +284,27 @@ button {
 body {
   @apply bg-gray-50 text-gray-950;
 }
+
+/* Scroll padding for sticky headers/footers */
+html {
+  scroll-padding-top: 80px;
+  scroll-padding-bottom: 80px;
+}
+
+/* Field highlight animation for validation errors and focus */
+@keyframes field-highlight {
+  0% {
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    background-color: transparent;
+  }
+}
+
+@layer utilities {
+  .highlight-field {
+    animation: field-highlight 2s ease-out;
+  }
+}

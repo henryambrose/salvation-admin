@@ -598,6 +598,26 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
             <form @submit.prevent="submitEdit">
+
+                            <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Member</label>
+                <Multiselect
+                  v-model="editForm.member_id"
+                  :options="searchResults"
+                  label="name"
+                  track-by="id"
+                  placeholder="Type at least 3 characters to search members..."
+                  :searchable="true"
+                  :loading="isSearching"
+                  @search-change="handleMemberSearch"
+                  :allow-empty="false"
+                  :multiple="false"
+                  :close-on-select="true"
+                />
+                <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
+                <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
+              </div>
+              
               <div class="mb-4">
                 <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
                 <Multiselect
@@ -617,24 +637,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <div v-if="!editForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
               </div>
 
-              <div class="mb-4">
-                <label class="mb-2 block font-medium text-gray-700">Member</label>
-                <Multiselect
-                  v-model="editForm.member_id"
-                  :options="searchResults"
-                  label="name"
-                  track-by="id"
-                  placeholder="Type at least 3 characters to search members..."
-                  :searchable="true"
-                  :loading="isSearching"
-                  @search-change="handleMemberSearch"
-                  :allow-empty="false"
-                  :multiple="false"
-                  :close-on-select="true"
-                />
-                <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
-                <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
-              </div>
+
 
               <div class="flex justify-end space-x-2">
                 <Button
@@ -666,25 +669,8 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
             <form @submit.prevent="submitCreate">
-              <div class="mb-4">
-                <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
-                <Multiselect
-                  v-model="createForm.cells_and_association_id"
-                  :options="props.cellsAndAssociations || []"
-                  label="name"
-                  track-by="id"
-                  placeholder="Select Cell Association(s)"
-                  :searchable="true"
-                  :allow-empty="false"
-                  :multiple="true"
-                  :close-on-select="false"
-                />
-                <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">
-                  {{ createForm.errors.cells_and_association_id }}
-                </div>
-                <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
-              </div>
 
+              
               <div class="mb-4">
                 <label class="mb-2 block font-medium text-gray-700">Member</label>
                 <Multiselect
@@ -706,6 +692,26 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
                 <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
               </div>
+
+              <div class="mb-4">
+                <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
+                <Multiselect
+                  v-model="createForm.cells_and_association_id"
+                  :options="props.cellsAndAssociations || []"
+                  label="name"
+                  track-by="id"
+                  placeholder="Select Cell Association(s)"
+                  :searchable="true"
+                  :allow-empty="false"
+                  :multiple="true"
+                  :close-on-select="false"
+                />
+                <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">
+                  {{ createForm.errors.cells_and_association_id }}
+                </div>
+                <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
+              </div>
+
 
               <div class="flex justify-end space-x-2">
                 <Button
