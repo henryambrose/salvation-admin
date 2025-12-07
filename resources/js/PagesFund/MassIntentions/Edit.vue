@@ -141,6 +141,20 @@
                     </option>
                   </select>
                 </div>
+
+                <!-- Transaction Reference -->
+                <div class="mb-4">
+                  <label class="mb-2 block text-sm font-medium text-gray-700">Transaction Reference</label>
+                  <input
+                    v-model="form.transaction_reference"
+                    type="text"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    placeholder="Check No, UPI ID, etc."
+                  />
+                  <p class="mt-1 text-sm text-gray-500">
+                    Enter check number, UPI transaction ID, or other payment reference
+                  </p>
+                </div>
               </div>
 
               <!-- Submit Button -->
@@ -198,6 +212,7 @@ const form = ref({
   intention_for: '',
   amount: '',
   payment_method_id: '',
+  transaction_reference: '',
   special_instructions: '',
   status: '',
 });
@@ -247,6 +262,7 @@ function initializeForm() {
       intention_for: intention.intention_for || '',
       amount: intention.amount || '',
       payment_method_id: intention.payment_method_id || '',
+      transaction_reference: intention.transaction_reference || '',
       special_instructions: intention.special_instructions || '',
       status: intention.status || 'pending',
     };

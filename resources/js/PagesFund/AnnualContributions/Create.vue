@@ -242,6 +242,29 @@
                         {{ form.errors.payment_method_id }}
                       </p>
                     </div>
+
+                    <!-- Transaction Reference -->
+                    <div>
+                      <label for="transaction_reference" class="block text-sm font-medium text-gray-700 mb-2">
+                        Transaction Reference
+                      </label>
+                      <input
+                        id="transaction_reference"
+                        v-model="form.transaction_reference"
+                        type="text"
+                        :class="[
+                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
+                          form.errors.transaction_reference ? 'border-red-300' : 'border-gray-300'
+                        ]"
+                        placeholder="Check No, UPI ID, etc."
+                      />
+                      <p v-if="form.errors.transaction_reference" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.transaction_reference }}
+                      </p>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Enter check number, UPI transaction ID, or other payment reference
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -476,6 +499,7 @@ const form = useForm({
   family_no: '',
   amount: '',
   payment_method_id: '',
+  transaction_reference: '',
   fund_category_id: '',
   start_date: '',
   end_date: '',

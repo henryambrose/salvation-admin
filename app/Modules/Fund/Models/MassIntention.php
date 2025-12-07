@@ -26,6 +26,7 @@ class MassIntention extends Model
         'mass_intention_type_id',
         'special_instructions',
         'payment_method_id',
+        'transaction_reference',
         'amount',
         'intention_for',
         'status',

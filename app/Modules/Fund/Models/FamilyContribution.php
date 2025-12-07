@@ -16,6 +16,7 @@ class FamilyContribution extends Model
         'family_no',
         'amount',
         'payment_method_id',
+        'transaction_reference',
         'fund_category_id',
         'start_date',
         'end_date',

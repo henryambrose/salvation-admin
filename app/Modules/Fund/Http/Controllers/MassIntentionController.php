@@ -188,6 +188,7 @@ class MassIntentionController extends Controller
             'status' => 'required|in:pending,confirmed,completed,cancelled',
             'special_instructions' => 'nullable|string|max:1000',
             'payment_method_id' => 'required|exists:payment_methods,id',
+            'transaction_reference' => 'nullable|string|max:255',
         ]);
 
         // Validate member information based on type
@@ -224,6 +225,7 @@ class MassIntentionController extends Controller
             'status' => $request->status,
             'special_instructions' => $request->special_instructions,
             'payment_method_id' => $request->payment_method_id,
+            'transaction_reference' => $request->transaction_reference,
             'created_by' => Auth::id(),
             'updated_by' => Auth::id(),
         ]);
@@ -304,6 +306,7 @@ class MassIntentionController extends Controller
             'intention_for' => $request->intention_for,
             'amount' => $request->amount,
             'payment_method_id' => $request->payment_method_id,
+            'transaction_reference' => $request->transaction_reference,
             'special_instructions' => $request->special_instructions,
             'status' => $request->status,
             'updated_by' => Auth::id(),
