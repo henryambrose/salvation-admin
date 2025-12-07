@@ -84,15 +84,9 @@
                       <label for="start_date" class="block text-xs font-medium text-gray-700 mb-3">
                         Start Date <span class="text-red-500">*</span>
                       </label>
-                      <input 
-                        id="start_date"
+                      <DateInput
                         v-model="form.start_date"
-                        type="date"
-                        :class="[
-                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.start_date ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
+                        class="w-full"
                       />
                       <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.start_date }}
@@ -104,15 +98,9 @@
                       <label for="end_date" class="block text-xs font-medium text-gray-700 mb-3">
                         End Date <span class="text-red-500">*</span>
                       </label>
-                      <input 
-                        id="end_date"
+                      <DateInput
                         v-model="form.end_date"
-                        type="date"
-                        :class="[
-                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.end_date ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
+                        class="w-full"
                       />
                       <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.end_date }}
@@ -368,6 +356,8 @@
 import { onMounted } from 'vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 import { ref } from 'vue';
 
 defineOptions({

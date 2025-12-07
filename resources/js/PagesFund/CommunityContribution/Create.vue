@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Save } from 'lucide-vue-next';
@@ -119,11 +120,9 @@ const handleAmountInput = (event: Event) => {
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Collection Date <span class="text-red-500">*</span>
               </label>
-              <input
+              <DateInput
                 v-model="form.collection_date"
-                type="date"
-                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                :class="{ 'border-red-300': form.errors.collection_date }"
+                class="w-full"
               />
               <div v-if="form.errors.collection_date" class="mt-1 text-sm text-red-600">
                 {{ form.errors.collection_date }}

@@ -53,11 +53,9 @@
                 <!-- Mass Date -->
                 <div>
                   <label class="mb-2 block text-sm font-medium text-gray-700">Mass Date</label>
-                  <input
+                  <DateInput
                     v-model="form.mass_date"
-                    type="date"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    required
+                    class="w-full"
                   />
                 </div>
               </div>
@@ -173,6 +171,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,
@@ -273,11 +273,5 @@ function updateIntention() {
       updating.value = false;
     },
   });
-}
-
-// Utility function
-function formatDate(dateString: string) {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-IN');
 }
 </script>

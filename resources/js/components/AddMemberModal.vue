@@ -140,11 +140,7 @@
                 
                 <div>
                   <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                  <input 
-                    v-model="form.date_of_birth" 
-                    type="date" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#3b82f6] focus:border-blue-500"
-                  />
+                  <DateInput v-model="form.date_of_birth" id="date_of_birth" class="w-full" />
                 </div>
                 
 
@@ -274,6 +270,8 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 
 

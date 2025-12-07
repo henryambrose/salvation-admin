@@ -232,11 +232,7 @@
 
                 <div class="mt-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Last Burial Date</label>
-                  <input
-                    v-model="form.last_burial_date"
-                    type="date"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  />
+                  <DateInput v-model="form.last_burial_date" class="w-full" />
                   <p v-if="errors.last_burial_date" class="mt-1 text-sm text-red-600">{{ errors.last_burial_date }}</p>
                 </div>
 
@@ -289,6 +285,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { X } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,

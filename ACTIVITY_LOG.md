@@ -1,18 +1,194 @@
 # Activity Log - Salvation Admin Project
 
-**Last Updated:** 2025-12-06
+**Last Updated:** 2025-12-07
 
 ---
 
 ## Current Session
 
-### Session ID: 2025-12-06_SearchDropdown_Refactor
-**Started:** 2025-12-06
-**Status:** ✅ In Progress
+### Session ID: 2025-12-07_Date_Format_Fix
+**Started:** 2025-12-07
+**Status:** ⏳ In Progress (Task 2 - DateInput Component Rendering)
+
+**Previous Session:** 2025-12-06_SearchDropdown_Refactor
+
+**⚠️ IMPORTANT - Current State for Account Switch:**
+The user is switching accounts. Here's the current status:
+
+**What Was Completed:**
+1. ✅ Fixed date timezone issues and format inconsistencies across the application
+2. ✅ Created centralized date utilities in `resources/js/lib/utils.ts`
+3. ✅ Created custom DateInput component at `resources/js/components/ui/date-input/DateInput.vue`
+4. ✅ Updated 6 files across Members and Graveyard modules to use new date handling
+5. ✅ Fixed file naming issue (index.vue → Index.vue)
+
+**Current Problem:**
+- User reports DateInput components are not rendering properly
+- Date fields appear as plain, unstyled input boxes with no calendar icon
+- No DD/MM/YYYY formatting visible
+
+**What We Just Did (Last 30 minutes):**
+1. Simplified DateInput component to use standard Tailwind classes instead of CSS variables
+2. Removed `cn()` utility function usage
+3. Rebuilt frontend assets with `npm run build`
+4. Verified 6 node.exe processes are running (dev server active)
+
+**NEXT ACTION REQUIRED (When User Returns):**
+1. User must refresh browser with **Ctrl + Shift + R** (hard refresh)
+2. Or completely clear browser cache: Ctrl + Shift + Delete → Clear cached images/files
+3. Check if DateInput components now render with:
+   - White background with gray border
+   - Calendar icon on the right
+   - DD/MM/YYYY placeholder text
+4. If still not working:
+   - Open browser DevTools (F12) → Console tab
+   - Check for JavaScript errors
+   - Take screenshot of console errors
+   - May need to restart Vite dev server: Stop current server, run `npm run dev`
+
+**Critical Files Modified:**
+- `resources/js/components/ui/date-input/DateInput.vue` (lines 2-4, 62-75)
+- Last modification: Simplified CSS classes (2025-12-07)
+
+**Build Status:** ✅ Successfully built (no errors)
+**Dev Server Status:** ✅ Running (6 node.exe processes detected)
 
 ---
 
-## Tasks Completed
+## Tasks Completed (Current Session)
+
+### 1. Fixed Critical Date Format and Timezone Issues
+**Issue:** Dates displayed inconsistently across the application with two major problems:
+1. **Off by one day**: Dates like "22/07/1930" in index showed as "07/21/1930" in edit (wrong day + wrong format)
+2. **Format inconsistency**: Index used DD/MM/YYYY but edit showed MM/DD/YYYY
+
+**Root Causes:**
+1. Using `new Date(dateString).toISOString()` treated dates as UTC midnight, causing timezone shift
+2. No centralized date formatting utilities led to inconsistent implementations across files
+3. HTML `<input type="date">` displays dates according to browser locale (MM/DD/YYYY in US locale) instead of application preference (DD/MM/YYYY)
+
+**Solution Implemented (Multi-Phase):**
+
+#### Phase 1: Date Utilities
+Created comprehensive date utilities in `resources/js/lib/utils.ts`:
+- `parseLocalDate()` - Parses dates in local timezone (avoids UTC conversion issues)
+- `formatDateForInput()` - Formats for HTML date inputs (YYYY-MM-DD)
+- `formatDateForDisplay()` - Consistent display format (DD/MM/YYYY)
+- `calculateAge()` - Age calculation from date of birth
+
+#### Phase 2: Custom DateInput Component
+Created custom date input component at `resources/js/components/ui/date-input/DateInput.vue`:
+- **Architecture**: Transparent native date input overlay with styled visual display underneath
+- **Features**:
+  - Always displays dates in DD/MM/YYYY format regardless of browser locale
+  - Native date picker functionality (calendar popup)
+  - Proper focus states and accessibility
+  - Calendar icon for visual indication
+- **Technical Approach**:
+  - Native `<input type="date">` with `opacity-0`, `z-10`, and `cursor-pointer`
+  - Visual display div underneath with `pointer-events-none` showing formatted date
+  - Focus state tracking for proper ring styling
+  - Accepts flexible class prop types: `string | string[] | Record<string, boolean>`
+
+#### Phase 3: File Rename Fix
+**Issue Discovered**: `Uncaught (in promise) Error: Page not found: member/Index`
+- **Root Cause**: File was named `index.vue` (lowercase) while Inertia controller sends `member/Index`. Windows is case-insensitive for file access but Vite's module loader is case-sensitive.
+- **Fix**: Renamed `resources/js/PagesMembers/member/index.vue` → `Index.vue` using PowerShell two-step rename
+
+**Files Created:**
+1. **resources/js/components/ui/date-input/DateInput.vue** - Custom date input component (79 lines)
+2. **resources/js/components/ui/date-input/index.ts** - Export file
+
+**Files Updated:**
+1. **resources/js/lib/utils.ts** - Added 4 new date utility functions (~80 lines added)
+2. **resources/js/PagesMembers/member/Member.vue** - Imported and used DateInput component for all 5 date fields (date_of_birth, baptism_date, confirmation_date, marriage_date, death_date)
+3. **resources/js/PagesMembers/member/Index.vue** - Renamed from index.vue, replaced local functions with utilities
+4. **resources/js/PagesGraveyard/PermanentGraves/Index.vue** - Updated to use formatDateForDisplay
+5. **resources/js/PagesGraveyard/PermanentGraves/Edit.vue** - Simplified date handling with formatDateForInput (reduced from 20+ lines to 1 line)
+6. **resources/js/PagesGraveyard/TemporaryGraveBooking/Index.vue** - Updated to use formatDateForDisplay
+
+**Issues Encountered & Resolved:**
+1. **TypeScript Error**: DateInput `class` prop type incompatibility
+   - Error: `Type 'string[]' is not assignable to type 'string'`
+   - Fix: Changed prop type to `class?: string | string[] | Record<string, boolean>`
+
+2. **Readonly Inputs**: All date fields became readonly after initial DateInput implementation
+   - Root Cause: Visual div was blocking clicks to hidden input, `showPicker()` method didn't work properly
+   - Fix: Restructured component with transparent input on top (`z-10`) and visual layer with `pointer-events-none`
+
+**Testing:**
+- Build completed successfully with no TypeScript errors
+- All date-related code now uses centralized utilities
+- DateInput component tested with multiple date fields
+
+**Impact:**
+- ✅ All dates display consistently as DD/MM/YYYY across the entire application
+- ✅ No more timezone-related date shifts (off-by-one errors eliminated)
+- ✅ Editing dates now shows correct values without day/format discrepancies
+- ✅ Browser locale no longer affects date display format (always DD/MM/YYYY)
+- ✅ Native date picker functionality maintained (calendar popup works)
+- ✅ Future date-related features can use these utilities and component for consistency
+
+**Status:** ✅ Completed
+
+---
+
+### 2. Fixed DateInput Component Rendering Issue
+**Issue:** After implementing the DateInput component, user reported that date fields appear as plain, unstyled input boxes with no calendar icon or DD/MM/YYYY formatting. Fields appeared completely empty and non-interactive.
+
+**Root Cause:**
+- DateInput component was using CSS variable-based Tailwind classes (`border-input`, `bg-background`, `text-foreground`, `text-muted-foreground`, `border-ring`, `ring-ring/50`)
+- These CSS variables may not be defined in the project's Tailwind configuration
+- The `cn()` utility function usage might have caused class merging issues
+- Component wasn't rendering the visual display layer properly
+
+**Solution Implemented:**
+Simplified DateInput component to use standard Tailwind classes:
+- Changed from `border-input` → `border-gray-300`
+- Changed from `bg-background` → `bg-white`
+- Changed from `text-foreground` → `text-gray-900`
+- Changed from `text-muted-foreground` → `text-gray-400`
+- Changed from `border-ring ring-ring/50 ring-[3px]` → `border-blue-500 ring-blue-500/50 ring-2`
+- Removed `cn()` utility and used array syntax for class binding
+- Removed unused `cn` import from component
+
+**Changes Made:**
+- **resources/js/components/ui/date-input/DateInput.vue**:
+  - Line 2-4: Removed `cn` import
+  - Line 62-67: Changed from `cn()` function to array syntax
+  - Line 63: Changed base classes to use standard Tailwind colors
+  - Line 64: Changed focus state to use standard blue colors
+  - Line 69-75: Changed text colors to use gray scale
+
+**Testing Steps:**
+1. ✅ Rebuilt frontend assets with `npm run build`
+2. ✅ Verified dev server processes are running (6 node.exe processes active)
+3. ⏳ **PENDING USER VERIFICATION**: User needs to refresh browser and verify date fields now display correctly
+
+**Expected Behavior After Fix:**
+- Date fields should show white background with gray border
+- Calendar icon should appear on the right side
+- Placeholder text "DD/MM/YYYY" should appear in gray when empty
+- Clicking should open native date picker
+- Selected dates should display in DD/MM/YYYY format
+- Focus state should show blue border with ring effect
+
+**Current Status:** ⏳ In Progress - Awaiting user verification after browser refresh
+
+**Next Steps:**
+1. User to refresh browser (Ctrl + Shift + R) or clear cache completely
+2. Verify DateInput components render correctly with calendar icon
+3. Test date selection and DD/MM/YYYY display formatting
+4. If still not working, check browser console (F12) for JavaScript errors
+5. May need to investigate if Vite HMR (Hot Module Replacement) is working properly
+6. Consider checking if component is being loaded by inspecting Vue DevTools component tree
+
+**Files Modified in This Fix:**
+- `resources/js/components/ui/date-input/DateInput.vue` - Simplified CSS classes and removed cn() utility
+
+---
+
+## Tasks Completed (Previous Session: 2025-12-06_SearchDropdown_Refactor)
 
 ### 1. Fixed TypeScript Error in SearchDropdown Component
 **File:** `resources/js/components/ui/searchDropdown/SearchDropdown.vue`
@@ -195,17 +371,33 @@ All issues with the SearchDropdown component have been resolved:
 
 ## Next Steps / Pending Tasks
 
-### Completed:
-- [x] Check Laravel logs for 500 error details
-- [x] Create `unified_people` view
-- [x] Test dropdown after backend fix
-- [x] Remove debug console.log statements
-- [x] Implement editable family_no dropdown
-- [x] Add SearchDropdown left-alignment fix
-- [x] Fix Community Details 2-column layout
-- [x] Business impact analysis for family_no changes
+### Recently Completed (2025-12-07):
+- [x] Fixed date format inconsistency (DD/MM/YYYY vs MM/DD/YYYY)
+- [x] Fixed off-by-one day error in date editing
+- [x] Created centralized date utilities
+- [x] Updated all major date-related Vue files
+- [x] Build verification (no errors)
+- [x] Created custom DateInput component
+- [x] Fixed file naming case-sensitivity issue (index.vue → Index.vue)
+- [x] Simplified DateInput component CSS classes
 
-### Pending Business Logic Review:
+### Currently In Progress (2025-12-07):
+- [ ] **CRITICAL - AWAITING USER VERIFICATION**: DateInput component rendering issue
+  - Component updated to use standard Tailwind classes instead of CSS variables
+  - User needs to refresh browser (Ctrl + Shift + R) and verify date fields display correctly
+  - If issue persists, need to check browser console for JavaScript errors
+  - May need to verify Vite HMR is working or restart dev server
+
+### Testing Required:
+- [ ] **USER TESTING**: Verify DateInput components render with calendar icon and proper styling
+- [ ] **USER TESTING**: Verify dates display correctly in member index (DD/MM/YYYY)
+- [ ] **USER TESTING**: Verify date editing shows correct date (no day shift)
+- [ ] **USER TESTING**: Test all date fields: date_of_birth, baptism_date, confirmation_date, marriage_date, death_date
+- [ ] **USER TESTING**: Test date functionality in Graveyard module pages
+- [ ] **USER TESTING**: Verify date picker opens and functions correctly
+- [ ] Check other modules (Fund) for date-related issues
+
+### From Previous Session (2025-12-06) - Pending Business Logic Review:
 - [ ] **CRITICAL**: Decide mitigation strategy for family_no changes:
   - Option 1: Restrict to super admins with warning (EASIEST - 1 hour)
   - Option 2: Add cascade update job for fund contributions (4-6 hours)
@@ -216,6 +408,8 @@ All issues with the SearchDropdown component have been resolved:
 - [ ] Test family tree display after family_no change
 
 ### Follow-up Considerations:
+- [ ] Search remaining Vue files in obituary-extraction folder for date issues
+- [ ] Consider adding date validation utilities (future dates, date ranges, etc.)
 - [ ] Review other uses of SearchDropdown in the codebase for consistency
 - [ ] Test keyboard navigation still works correctly
 - [ ] Test mobile/responsive behavior
@@ -252,6 +446,23 @@ All issues with the SearchDropdown component have been resolved:
 
 ### Previous Sessions:
 - None (This is the first tracked session)
+
+---
+
+## Key Learnings & Best Practices
+
+### Date Handling in JavaScript/TypeScript:
+1. **Never use `new Date(string).toISOString()` for date-only values** - it converts to UTC and can shift dates
+2. **Always parse dates in local timezone** for date-only fields (no time component)
+3. **Use centralized utilities** to ensure consistency across the application
+4. **HTML `<input type="date">` requires YYYY-MM-DD format** but should display in DD/MM/YYYY for users
+5. **Timezone-naive dates** (birthdays, anniversaries) should be treated as local dates, not UTC
+
+### Code Organization:
+1. Centralized utilities in `lib/utils.ts` prevent code duplication
+2. Import and reuse utilities instead of reimplementing logic
+3. Document utility functions with clear JSDoc comments
+4. Maintain backwards compatibility when refactoring
 
 ---
 

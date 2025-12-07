@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
@@ -127,9 +128,8 @@ const formatCurrency = (amount: number) => {
     .replace('₹', '₹ ');
 };
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-IN');
-};
+// Use formatDateForDisplay from utils for consistent date formatting (DD/MM/YYYY)
+const formatDate = formatDateForDisplay;
 
 const getDeceasedName = (booking: TemporaryGraveBooking) => {
   return `${booking.dead_first_name} ${booking.dead_last_name}`;

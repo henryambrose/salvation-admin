@@ -2,8 +2,10 @@
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
@@ -206,11 +208,6 @@ function exportToCSV() {
 }
 
 // Utility functions
-function formatDate(dateString: string) {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-IN');
-}
-
 function getStatusBadgeClass(status: string) {
   const classes = {
     pending: 'px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full',
@@ -309,12 +306,12 @@ const breadcrumbs = [
 
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">Start Date</label>
-            <input v-model="startDate" type="date" class="w-full rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" />
+            <DateInput v-model="startDate" class="w-full" />
           </div>
 
           <div>
             <label class="mb-1 block text-sm font-medium text-gray-700">End Date</label>
-            <input v-model="endDate" type="date" class="w-full rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200" />
+            <DateInput v-model="endDate" class="w-full" />
           </div>
 
           <div class="flex items-end">
@@ -467,7 +464,7 @@ const breadcrumbs = [
                   </div>
                 </td>
                 <td class="p-2">
-                  <div class="text-sm text-gray-900">{{ formatDate(intention.mass_date) }}</div>
+                  <div class="text-sm text-gray-900">{{ formatDateForDisplay(intention.mass_date) }}</div>
                   <div v-if="intention.mass_type" class="text-sm text-gray-500">{{ intention.mass_type.name }}</div>
                 </td>
                 <td class="p-2">
@@ -482,7 +479,7 @@ const breadcrumbs = [
                   </span>
                 </td>
                 <td class="p-2 text-sm text-gray-500">
-                  {{ formatDate(intention.created_at) }}
+                  {{ formatDateForDisplay(intention.created_at) }}
                 </td>
                 <td v-if="!serverArchived" class="p-2">
                   <template v-if="canDeleteAnyMassIntention">

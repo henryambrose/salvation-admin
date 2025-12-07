@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
@@ -512,7 +514,7 @@ function generateCertificate() {
             <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <Label for="issued_date">Issued Date *</Label>
-                <Input v-model="form.issued_date" type="date" id="issued_date" required />
+                <DateInput v-model="form.issued_date" id="issued_date" class="w-full" />
                 <p v-if="form.errors.issued_date" class="mt-1 text-sm text-red-600">{{ form.errors.issued_date }}</p>
               </div>
             </div>
@@ -616,7 +618,7 @@ function generateCertificate() {
               <template v-if="currentCertificateTypeCode === 'death'">
                 <div>
                   <Label for="burial_date">Burial Date</Label>
-                  <Input v-model="additionalFields.burial_date" type="date" id="burial_date" :max="new Date().toISOString().split('T')[0]" />
+                  <DateInput v-model="additionalFields.burial_date" id="burial_date" class="w-full" />
                 </div>
                 <div>
                   <Label for="burial_place">Burial Place</Label>
@@ -644,7 +646,7 @@ function generateCertificate() {
               <template v-if="currentCertificateTypeCode === 'membership'">
                 <div>
                   <Label for="join_date">Join Date</Label>
-                  <Input v-model="additionalFields.join_date" type="date" id="join_date" />
+                  <DateInput v-model="additionalFields.join_date" id="join_date" class="w-full" />
                 </div>
                 <div>
                   <Label for="community_name">Community Name</Label>

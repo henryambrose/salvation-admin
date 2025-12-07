@@ -10,6 +10,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator, CreditCard, IndianRupee } from 'lucide-vue-next';
 import { computed } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 interface PaymentMethod {
   id: number;
@@ -98,9 +100,6 @@ const formatCurrency = (amount: number) => {
     .replace('₹', '₹ ');
 };
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-IN');
-};
 
 const getDeceasedName = () => {
   const payable = props.originalPayment.payable;
@@ -233,11 +232,11 @@ const submit = () => {
                     <div class="grid grid-cols-2 gap-4">
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Date of Death</Label>
-                        <p class="text-base">{{ formatDate(originalPayment.payable.died_on) }}</p>
+                        <p class="text-base">{{ formatDateForDisplay(originalPayment.payable.died_on) }}</p>
                       </div>
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Date of Burial</Label>
-                        <p class="text-base">{{ formatDate(originalPayment.payable.buried_on) }}</p>
+                        <p class="text-base">{{ formatDateForDisplay(originalPayment.payable.buried_on) }}</p>
                       </div>
                     </div>
 
@@ -308,7 +307,7 @@ const submit = () => {
 
                     <div>
                       <Label for="payment_date">Payment Date *</Label>
-                      <Input id="payment_date" v-model="form.payment_date" type="date" />
+                      <DateInput id="payment_date" v-model="form.payment_date" class="w-full" />
                       <div v-if="form.errors.payment_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.payment_date }}
                       </div>

@@ -7,6 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay, calculateAge as calcAge } from '@/lib/utils';
 import { Column, FamilyStats } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
@@ -254,23 +255,9 @@ function downloadExcel() {
   // Use window.location.href for direct download
   window.location.href = `${window.location.origin}/member/export?${params.toString()}`;
 }
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
-}
-
-function calculateAge(dateStr: string) {
-  if (!dateStr) return '';
-  const birthDate = new Date(dateStr);
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const m = today.getMonth() - birthDate.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-    age--;
-  }
-  return age;
-}
+// Date formatting functions are now imported from @/lib/utils
+// formatDateForDisplay - formats dates as DD/MM/YYYY
+// calcAge (calculateAge) - calculates age from date of birth
 
 function fetch(page = 1) {
   if (!props.fetchUrl) return;
@@ -770,7 +757,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                   <!-- Main table data -->
                   <td v-for="col in columns" :key="col.key" class="overflow-hidden p-2 whitespace-nowrap">
                     <template v-if="['created_at', 'updated_at', 'date_of_birth', 'death_date'].includes(col.key)">
-                      {{ formatDate(member[col.key]) }}
+                      {{ formatDateForDisplay(member[col.key]) }}
                     </template>
                     <template v-else-if="col.key === 'community_cluster_id'">
                       <span class="block truncate" :title="member.community_cluster_id || '—'">{{ member.community_cluster_id || '—' }}</span>
@@ -779,7 +766,7 @@ function copyToClipboard(text: string, type: string, memberId: number) {
                       <span class="block truncate" :title="member.community_id || '—'">{{ member.community_id || '—' }}</span>
                     </template>
                     <template v-else-if="col.key === 'age'">
-                      {{ calculateAge(member.date_of_birth) }}
+                      {{ calcAge(member.date_of_birth) }}
                     </template>
                     <template v-else-if="col.key === 'relationship_id'">
                       <span class="block truncate" :title="member.relationship_id || '—'">{{ member.relationship_id || '—' }}</span>

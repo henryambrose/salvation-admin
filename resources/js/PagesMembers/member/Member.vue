@@ -5,12 +5,14 @@ import InputError from '@/components/InputError.vue';
 import ParishSelection from '@/components/ParishSelection.vue';
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
 import { Button } from '@/components/ui/button';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
 import { SelectInput } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForInput, formatDateForDisplay, calculateAge } from '@/lib/utils';
 import type { City, State, Town } from '@/types';
 import {
   BloodGroups,
@@ -59,19 +61,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const page = usePage<SharedData>();
 const member = page.props.member as Member;
-
-// Format date for HTML date input (YYYY-MM-DD)
-const formatDateForInput = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return '';
-  }
-};
 
 // Validate Indian phone number (mobile or landline)
 const validateIndianPhone = (phoneNumber: string): boolean => {
@@ -531,11 +520,6 @@ const parishMembers = ref<Array<{ id: number; name: string; family_no?: string; 
 
 // Function to load current spouse data for editing
 const loadCurrentSpouse = async () => {
-  console.log('loadCurrentSpouse called', {
-    member_spouse_id: member?.spouse_id,
-    form_spouse_source: form.spouse_source,
-    form_spouse_id: form.spouse_id,
-  });
 
   if (member?.spouse_id && form.spouse_source === 'Member') {
     try {
@@ -550,7 +534,6 @@ const loadCurrentSpouse = async () => {
         credentials: 'same-origin',
       });
 
-      console.log('Response status:', response.status);
 
       if (response.ok) {
         const spouseArray = await response.json();
@@ -604,12 +587,13 @@ const loadCurrentSpouse = async () => {
     } catch (error) {
       console.error('Error loading current spouse:', error);
     }
-  } else {
-    console.log('Conditions not met for loading spouse:', {
-      has_member_spouse_id: !!member?.spouse_id,
-      spouse_source_is_member: form.spouse_source === 'Member',
-    });
-  }
+  } 
+  // else {
+  //   console.log('Conditions not met for loading spouse:', {
+  //     has_member_spouse_id: !!member?.spouse_id,
+  //     spouse_source_is_member: form.spouse_source === 'Member',
+  //   });
+  // }
 };
 
 // Watch for family_no changes to refetch external family members
@@ -1379,19 +1363,15 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             </div>
             <div class="grid gap-2">
               <Label for="date_of_birth">Date of Birth</Label>
-              <Input
+              <DateInput
                 id="date_of_birth"
-                type="date"
                 :class="[
-                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
                   !showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth)
-                    ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-300',
+                    ? '!border-red-300'
+                    : '',
                 ]"
                 v-model="form.date_of_birth"
-                :max="getTodayDate()"
-                autocomplete="date_of_birth"
-                placeholder="Date of birth"
+                placeholder="DD/MM/YYYY"
               />
               <div v-if="!showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
@@ -2064,21 +2044,17 @@ const fetchParishMembers = async (searchQuery: string = '') => {
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
               <Label for="baptism_date">Baptism Date</Label>
-              <Input
+              <DateInput
                 id="baptism_date"
-                type="date"
                 :class="[
-                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
                   !showValidationModal &&
                   form.baptism_date &&
                   (!validateNotFutureDate(form.baptism_date) || validateChronologicalDates('baptism_date', form.baptism_date))
-                    ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-300',
+                    ? '!border-red-300'
+                    : '',
                 ]"
                 v-model="form.baptism_date"
-                :max="getTodayDate()"
-                autocomplete="baptism_date"
-                placeholder="Baptism date"
+                placeholder="DD/MM/YYYY"
               />
               <div v-if="!showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
@@ -2109,21 +2085,17 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             </div>
             <div class="grid gap-2">
               <Label for="confirmation_date">Confirmation Date</Label>
-              <Input
+              <DateInput
                 id="confirmation_date"
-                type="date"
                 :class="[
-                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
                   !showValidationModal &&
                   form.confirmation_date &&
                   (!validateNotFutureDate(form.confirmation_date) || validateChronologicalDates('confirmation_date', form.confirmation_date))
-                    ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-300',
+                    ? '!border-red-300'
+                    : '',
                 ]"
                 v-model="form.confirmation_date"
-                :max="getTodayDate()"
-                autocomplete="confirmation_date"
-                placeholder="Confirmation date"
+                placeholder="DD/MM/YYYY"
               />
               <div
                 v-if="!showValidationModal && form.confirmation_date && !validateNotFutureDate(form.confirmation_date)"
@@ -2162,21 +2134,17 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             </div>
             <div class="grid gap-2">
               <Label for="marriage_date">Marriage Date</Label>
-              <Input
+              <DateInput
                 id="marriage_date"
-                type="date"
                 :class="[
-                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
                   !showValidationModal &&
                   form.marriage_date &&
                   (!validateNotFutureDate(form.marriage_date) || validateChronologicalDates('marriage_date', form.marriage_date))
-                    ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-300',
+                    ? '!border-red-300'
+                    : '',
                 ]"
                 v-model="form.marriage_date"
-                :max="getTodayDate()"
-                autocomplete="marriage_date"
-                placeholder="Marriage date"
+                placeholder="DD/MM/YYYY"
               />
               <div v-if="!showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.
@@ -2207,21 +2175,17 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             </div>
             <div class="grid gap-2">
               <Label for="death_date">Death Date</Label>
-              <Input
+              <DateInput
                 id="death_date"
-                type="date"
                 :class="[
-                  'mt-1 block w-full rounded-full px-4 py-2 shadow focus:ring-2 focus:ring-blue-200',
                   !showValidationModal &&
                   form.death_date &&
                   (!validateNotFutureDate(form.death_date) || validateChronologicalDates('death_date', form.death_date))
-                    ? 'border-red-300 focus:ring-red-200'
-                    : 'border-gray-300',
+                    ? '!border-red-300'
+                    : '',
                 ]"
                 v-model="form.death_date"
-                :max="getTodayDate()"
-                autocomplete="death_date"
-                placeholder="Death date"
+                placeholder="DD/MM/YYYY"
               />
               <div v-if="!showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)" class="mt-1 text-sm text-red-500">
                 Date cannot be in the future.

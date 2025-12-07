@@ -2,8 +2,10 @@
 import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { DateInput } from '@/components/ui/date-input';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
@@ -216,11 +218,6 @@ function exportToCSV() {
 }
 
 // Utility functions
-function formatDate(dateString: string) {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-IN');
-}
-
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -300,19 +297,11 @@ const breadcrumbs = [
 
           <div>
             <label class="mb-1 block text-xs font-medium text-gray-600">Start Date</label>
-            <input
-              v-model="startDate"
-              type="date"
-              class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-            />
+            <DateInput v-model="startDate" class="w-full" />
           </div>
           <div>
             <label class="mb-1 block text-xs font-medium text-gray-600">End Date</label>
-            <input
-              v-model="endDate"
-              type="date"
-              class="w-full rounded-full border border-gray-300 px-3 py-1 text-sm focus:ring-2 focus:ring-blue-200"
-            />
+            <DateInput v-model="endDate" class="w-full" />
           </div>
 
           <div>
@@ -481,7 +470,7 @@ const breadcrumbs = [
                   </div>
                 </td>
                 <td class="p-2">
-                  <div class="text-sm text-gray-900">{{ formatDate(contribution.start_date) }} - {{ formatDate(contribution.end_date) }}</div>
+                  <div class="text-sm text-gray-900">{{ formatDateForDisplay(contribution.start_date) }} - {{ formatDateForDisplay(contribution.end_date) }}</div>
                 </td>
                 <td class="p-2">
                   <div class="text-sm text-gray-900">{{ contribution.fund_category?.name || '-' }}</div>
@@ -493,7 +482,7 @@ const breadcrumbs = [
                   <div class="text-sm text-gray-900">{{ contribution.payment_method?.name || '-' }}</div>
                 </td>
                 <td class="p-2 text-sm text-gray-500">
-                  {{ formatDate(contribution.created_at) }}
+                  {{ formatDateForDisplay(contribution.created_at) }}
                 </td>
 
                 <td v-if="!serverArchived" class="p-2">

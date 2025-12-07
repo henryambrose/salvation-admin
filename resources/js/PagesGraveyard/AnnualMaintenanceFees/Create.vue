@@ -76,12 +76,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Effective From <span class="text-red-500">*</span>
               </label>
-              <input
-                v-model="form.effective_from"
-                type="date"
-                class="w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
-                :class="{ 'border-red-300': form.errors.effective_from }"
-              />
+              <DateInput v-model="form.effective_from" class="w-full" />
               <p v-if="form.errors.effective_from" class="mt-1 text-sm text-red-600">{{ form.errors.effective_from }}</p>
             </div>
 
@@ -90,12 +85,7 @@
               <label class="block text-sm font-medium text-gray-700 mb-2">
                 Effective Until
               </label>
-              <input
-                v-model="form.effective_until"
-                type="date"
-                class="w-full rounded-md border-gray-300 focus:ring-2 focus:ring-blue-500"
-                :class="{ 'border-red-300': form.errors.effective_until }"
-              />
+              <DateInput v-model="form.effective_until" class="w-full" />
               <p v-if="form.errors.effective_until" class="mt-1 text-sm text-red-600">{{ form.errors.effective_until }}</p>
               <p class="mt-1 text-sm text-gray-500">Leave blank for no end date</p>
             </div>
@@ -170,6 +160,8 @@ import { watch } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 const props = defineProps({
   suggestedYear: Number,

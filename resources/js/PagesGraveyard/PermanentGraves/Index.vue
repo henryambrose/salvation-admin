@@ -286,6 +286,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
@@ -441,9 +442,8 @@ const getStatusClass = (status: string) => {
   return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN');
-};
+// Use formatDateForDisplay from utils for consistent date formatting (DD/MM/YYYY)
+const formatDate = formatDateForDisplay;
 
 const changePage = (page: number) => {
   router.get(

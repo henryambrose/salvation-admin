@@ -9,6 +9,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, Calendar, CheckCircle, MapPin, User, Users } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 interface ValidMember {
   id: number;
@@ -131,10 +133,6 @@ const navigateToAddValidMember = () => {
 
 // No cost calculations during request creation
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-IN');
-};
-
 // Watch for booking selection
 watch(
   () => form.from_booking_id,
@@ -231,7 +229,7 @@ const submit = () => {
                       >
                         <option value="" disabled>Select a booking</option>
                         <option v-for="booking in eligibleBookings" :key="booking.id" :value="booking.id">
-                          {{ booking.full_name }} ({{ booking.grave_no }}) - Buried: {{ formatDate(booking.buried_on)
+                          {{ booking.full_name }} ({{ booking.grave_no }}) - Buried: {{ formatDateForDisplay(booking.buried_on)
                           }}{{ booking.is_overdue ? ' - Overdue' : '' }}
                         </option>
                       </select>
@@ -250,8 +248,8 @@ const submit = () => {
                               {{ selectedBooking.temporary_grave.row_no }})
                             </p>
                             <p class="text-sm text-blue-600">
-                              Buried: {{ formatDate(selectedBooking.buried_on) }} • Transfer due:
-                              {{ formatDate(selectedBooking.expected_transfer_date) }}
+                              Buried: {{ formatDateForDisplay(selectedBooking.buried_on) }} • Transfer due:
+                              {{ formatDateForDisplay(selectedBooking.expected_transfer_date) }}
                             </p>
                             <Badge v-if="selectedBooking.is_overdue" class="mt-1 bg-red-100 text-xs text-red-800"> Transfer Overdue </Badge>
                           </div>
@@ -295,7 +293,7 @@ const submit = () => {
                             <div class="text-sm text-gray-600">Location: {{ niche.location || 'No location specified' }}</div>
                             <div v-if="niche.owner_name" class="text-sm text-gray-500">Owner: {{ niche.owner_name }}</div>
                             <div v-if="niche.last_occupation_date" class="text-xs text-gray-400">
-                              Last occupied: {{ formatDate(niche.last_occupation_date) }}
+                              Last occupied: {{ formatDateForDisplay(niche.last_occupation_date) }}
                             </div>
                           </div>
                         </div>
@@ -325,7 +323,7 @@ const submit = () => {
                             </p>
                             <p v-if="selectedNiche.owner_name" class="text-sm text-green-600">Owner: {{ selectedNiche.owner_name }}</p>
                             <p v-if="selectedNiche.last_occupation_date" class="text-xs text-green-500">
-                              Last occupied: {{ formatDate(selectedNiche.last_occupation_date) }}
+                              Last occupied: {{ formatDateForDisplay(selectedNiche.last_occupation_date) }}
                             </p>
                           </div>
                         </div>
@@ -345,12 +343,10 @@ const submit = () => {
                   <CardContent class="space-y-4">
                     <div>
                       <Label for="proposed_transfer_date">Proposed Transfer Date *</Label>
-                      <Input
+                      <DateInput
                         id="proposed_transfer_date"
                         v-model="form.proposed_transfer_date"
-                        type="date"
-                        :class="form.errors.proposed_transfer_date && 'border-red-500'"
-                        class="mt-1"
+                        class="mt-1 w-full"
                       />
                       <div v-if="form.errors.proposed_transfer_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.proposed_transfer_date }}
@@ -509,8 +505,8 @@ const submit = () => {
                                 <span class="font-medium">Type:</span> {{ member.member_type }}
                               </p>
                               <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="space-y-1 text-xs text-gray-500">
-                                <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDate(member.death_date) }}</p>
-                                <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDate(member.burial_date) }}</p>
+                                <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}</p>
+                                <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}</p>
                               </div>
                             </div>
                           </div>
@@ -573,10 +569,10 @@ const submit = () => {
                     </div>
                     <div v-if="selectedValidMember.is_deceased && (selectedValidMember.death_date || selectedValidMember.burial_date)" class="space-y-1 text-gray-500">
                       <div v-if="selectedValidMember.death_date">
-                        <span class="font-medium">Death Date:</span> {{ formatDate(selectedValidMember.death_date) }}
+                        <span class="font-medium">Death Date:</span> {{ formatDateForDisplay(selectedValidMember.death_date) }}
                       </div>
                       <div v-if="selectedValidMember.burial_date">
-                        <span class="font-medium">Burial Date:</span> {{ formatDate(selectedValidMember.burial_date) }}
+                        <span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(selectedValidMember.burial_date) }}
                       </div>
                     </div>
                   </div>

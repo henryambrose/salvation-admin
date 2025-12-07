@@ -114,16 +114,12 @@
                   <!-- Date Selection -->
                   <div class="mb-4">
                     <label class="mb-2 block text-sm font-medium text-gray-700">Mass Date</label>
-                    <input
+                    <DateInput
                       v-model="form.mass_date"
-                      type="date"
-                      :min="minDate"
-                      :max="maxDate"
-                      required
-                      class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none"
+                      class="w-full"
                       @change="onDateChange"
                     />
-                    <p class="mt-1 text-xs text-gray-500">Available dates: {{ formatDate(minDate) }} to {{ formatDate(maxDate) }}</p>
+                    <p class="mt-1 text-xs text-gray-500">Available dates: {{ formatDateForDisplay(minDate) }} to {{ formatDateForDisplay(maxDate) }}</p>
                   </div>
 
                   <!-- Mass Type Selection -->
@@ -257,7 +253,7 @@
                 <div v-else>
                   <div class="mb-4">
                     <div class="text-sm text-gray-600">
-                      <strong>{{ formatDate(form.mass_date) }}</strong
+                      <strong>{{ formatDateForDisplay(form.mass_date) }}</strong
                       ><br />
                       <span v-if="selectedMassType">{{ selectedMassType.name }} - {{ formatTime(selectedMassType.default_time) }}</span>
                     </div>
@@ -303,6 +299,8 @@ import { useForm } from '@inertiajs/vue3';
 import { Calendar, CheckCircle, X } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 import { useToast } from '@/composables/useToast';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,
@@ -467,16 +465,6 @@ function submitForm() {
       error('Please check the form for errors and try again.');
       isSubmitting.value = false;
     },
-  });
-}
-
-function formatDate(dateString: string) {
-  if (!dateString) return '';
-  return new Date(dateString).toLocaleDateString('en-IN', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
   });
 }
 

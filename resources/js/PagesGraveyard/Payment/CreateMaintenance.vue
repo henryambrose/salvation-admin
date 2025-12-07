@@ -150,13 +150,7 @@
               <label for="payment_date" class="block text-sm font-medium text-gray-700 mb-2">
                 Payment Date <span class="text-red-500">*</span>
               </label>
-              <input
-                id="payment_date"
-                v-model="form.payment_date"
-                type="date"
-                class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                required
-              />
+              <DateInput id="payment_date" v-model="form.payment_date" class="w-full" />
             </div>
 
             <!-- Transaction Reference -->
@@ -225,7 +219,7 @@
             </thead>
             <tbody>
               <tr v-for="payment in paymentHistory" :key="payment.id" class="hover:bg-gray-50">
-                <td class="border-b p-3">{{ formatDate(payment.payment_date) }}</td>
+                <td class="border-b p-3">{{ formatDateForDisplay(payment.payment_date) }}</td>
                 <td class="border-b p-3 font-semibold text-green-600">
                   ₹{{ Number(payment.paid_amount).toLocaleString('en-IN') }}
                 </td>
@@ -246,6 +240,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { computed, watch, ref } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 interface Props {
   grave: any;
@@ -338,8 +334,4 @@ const submitPayment = () => {
   });
 };
 
-// Format date helper
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN');
-};
 </script>

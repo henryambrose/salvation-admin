@@ -8,6 +8,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 interface TemporaryGrave {
   id: number;
@@ -800,7 +802,7 @@ onUnmounted(() => {
 
                     <div>
                       <Label for="date_of_birth">Date of Birth</Label>
-                      <Input id="date_of_birth" v-model="form.date_of_birth" type="date" class="mt-1" />
+                      <DateInput id="date_of_birth" v-model="form.date_of_birth" class="mt-1 w-full" />
                     </div>
 
                     <div>
@@ -857,13 +859,10 @@ onUnmounted(() => {
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label for="died_on">Date of Death *</Label>
-                    <Input
+                    <DateInput
                       id="died_on"
                       v-model="form.died_on"
-                      type="date"
-                      :max="new Date().toISOString().split('T')[0]"
-                      :class="form.errors.died_on && 'border-red-500'"
-                      class="mt-1"
+                      class="mt-1 w-full"
                     />
                     <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.died_on }}
@@ -872,14 +871,10 @@ onUnmounted(() => {
 
                   <div>
                     <Label for="buried_on">Date of Burial *</Label>
-                    <Input
+                    <DateInput
                       id="buried_on"
                       v-model="form.buried_on"
-                      type="date"
-                      :min="form.died_on"
-                      :max="new Date().toISOString().split('T')[0]"
-                      :class="form.errors.buried_on && 'border-red-500'"
-                      class="mt-1"
+                      class="mt-1 w-full"
                     />
                     <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.buried_on }}

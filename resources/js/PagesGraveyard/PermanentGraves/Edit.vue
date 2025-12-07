@@ -228,11 +228,10 @@
                 </div>
 
                 <div class="mt-4">
-                  <label class="mb-2 block text-sm font-medium text-gray-700">Last Burial Date</label>
-                  <input
+                  <label class="mb-2 block text-xs font-medium text-gray-700">Last Burial Date</label>
+                  <DateInput
                     v-model="form.last_burial_date"
-                    type="date"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    class="w-full"
                   />
                   <p v-if="errors.last_burial_date" class="mt-1 text-sm text-red-600">{{ errors.last_burial_date }}</p>
                 </div>
@@ -283,9 +282,11 @@
 
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForInput } from '@/lib/utils';
 import { Link, useForm } from '@inertiajs/vue3';
 import { X } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
 
 defineOptions({
   layout: AppLayout,
@@ -327,22 +328,6 @@ const initializeForm = () => {
   if (props.permanentGrave) {
     const grave = props.permanentGrave;
 
-    // Format the date for the HTML date input (YYYY-MM-DD format)
-    let formattedDate = '';
-    if (grave.last_burial_date) {
-      try {
-        const date = new Date(grave.last_burial_date);
-        if (!isNaN(date.getTime())) {
-          const year = date.getFullYear();
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const day = String(date.getDate()).padStart(2, '0');
-          formattedDate = `${year}-${month}-${day}`;
-        }
-      } catch (error) {
-        console.error('Date parsing error:', error);
-      }
-    }
-
     // Determine member type based on existing data
     form.member_type = grave.member_id ? 'member' : 'external';
     form.block = grave.block || '';
@@ -350,7 +335,7 @@ const initializeForm = () => {
     form.column = grave.column || '';
     form.old_no = grave.old_no || '';
     form.status = grave.status || '';
-    form.last_burial_date = formattedDate;
+    form.last_burial_date = formatDateForInput(grave.last_burial_date);
     form.owner_name = grave.owner_name || '';
     form.member_id = grave.member_id || null;
     form.contact_no = grave.contact_no || '';

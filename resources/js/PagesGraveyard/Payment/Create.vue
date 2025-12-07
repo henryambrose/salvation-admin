@@ -11,6 +11,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
+import { DateInput } from '@/components/ui/date-input';
+import { formatDateForDisplay } from '@/lib/utils';
 
 interface ServiceType {
   id: number;
@@ -343,9 +345,6 @@ const formatCurrency = (amount: number) => {
     .replace('₹', '₹ ');
 };
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString('en-IN');
-};
 
 const getDeceasedName = () => {
   if (props.bookingType === 'temporary' || props.bookingType === 'niche-transfer') {
@@ -427,11 +426,11 @@ const submit = () => {
                     <div class="grid grid-cols-2 gap-4">
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Date of Death</Label>
-                        <p class="text-base">{{ formatDate(booking.died_on) }}</p>
+                        <p class="text-base">{{ formatDateForDisplay(booking.died_on) }}</p>
                       </div>
                       <div>
                         <Label class="text-sm font-medium text-gray-500">Date of Burial</Label>
-                        <p class="text-base">{{ formatDate(booking.buried_on) }}</p>
+                        <p class="text-base">{{ formatDateForDisplay(booking.buried_on) }}</p>
                       </div>
                     </div>
 
@@ -657,7 +656,7 @@ const submit = () => {
 
                     <div>
                       <Label for="payment_date">Payment Date *</Label>
-                      <Input id="payment_date" v-model="form.payment_date" type="date" />
+                      <DateInput id="payment_date" v-model="form.payment_date" class="w-full" />
                       <div v-if="form.errors.payment_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.payment_date }}
                       </div>

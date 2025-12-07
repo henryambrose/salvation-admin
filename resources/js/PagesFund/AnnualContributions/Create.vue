@@ -150,15 +150,9 @@
                       <label for="start_date" class="block text-xs font-medium text-gray-700 mb-3">
                         Start Date <span class="text-red-500">*</span>
                       </label>
-                      <input 
-                        id="start_date"
+                      <DateInput
                         v-model="form.start_date"
-                        type="date"
-                        :class="[
-                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.start_date ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
+                        class="w-full"
                       />
                       <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.start_date }}
@@ -170,15 +164,9 @@
                       <label for="end_date" class="block text-xs font-medium text-gray-700 mb-3">
                         End Date <span class="text-red-500">*</span>
                       </label>
-                      <input 
-                        id="end_date"
+                      <DateInput
                         v-model="form.end_date"
-                        type="date"
-                        :class="[
-                          'w-full px-2 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.end_date ? 'border-red-300' : 'border-gray-300'
-                        ]"
-                        required
+                        class="w-full"
                       />
                       <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.end_date }}
@@ -434,7 +422,7 @@
                 </thead>
                 <tbody class="bg-[#ffffff] divide-y divide-gray-200">
                   <tr v-for="contribution in sortedContributionHistory" :key="contribution.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(contribution.start_date) }} - {{ formatDate(contribution.end_date) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDateForDisplay(contribution.start_date) }} - {{ formatDateForDisplay(contribution.end_date) }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.category_name }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">₹{{ contribution.amount }}</td>
                     <td class="px-4 py-3">
@@ -443,7 +431,7 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.paid_by || '-' }}</td>
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDate(contribution.date_of_payment) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDateForDisplay(contribution.date_of_payment) }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.payment_method || '-' }}</td>
                   </tr>
                 </tbody>
@@ -463,7 +451,9 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import { Link, router, useForm } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { DateInput } from '@/components/ui/date-input';
 import { SelectInput } from '@/components/ui/select';
+import { formatDateForDisplay } from '@/lib/utils';
 import { useToast } from '@/composables/useToast';
 
 defineOptions({
@@ -783,11 +773,6 @@ const getStatusBadgeClass = (status: string) => {
     'refunded': 'px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full'
   };
   return classes[status as keyof typeof classes] || classes.pending;
-};
-
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-IN');
 };
 
 // Removed split amount logic (no years)
