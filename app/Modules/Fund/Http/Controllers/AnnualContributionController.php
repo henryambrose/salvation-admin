@@ -41,17 +41,17 @@ class AnnualContributionController extends Controller
             $query->where('family_no', 'like', '%' . $request->family_no . '%');
         }
 
-        // Filter by date range - find contributions that fall completely within the selected range
+        // Filter by date range - find contributions created within the selected range
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            // Both dates provided - find contributions within the filter period
-            $query->where('start_date', '>=', $request->start_date)
-                  ->where('end_date', '<=', $request->end_date);
+            // Both dates provided - find contributions created within the filter period
+            $query->whereDate('created_at', '>=', $request->start_date)
+                  ->whereDate('created_at', '<=', $request->end_date);
         } elseif ($request->filled('start_date')) {
-            // Only start date - find contributions that start on or after this date
-            $query->where('start_date', '>=', $request->start_date);
+            // Only start date - find contributions created on or after this date
+            $query->whereDate('created_at', '>=', $request->start_date);
         } elseif ($request->filled('end_date')) {
-            // Only end date - find contributions that end on or before this date
-            $query->where('end_date', '<=', $request->end_date);
+            // Only end date - find contributions created on or before this date
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         if ($request->filled('category_id')) {
@@ -395,17 +395,17 @@ class AnnualContributionController extends Controller
             $query->where('family_no', 'like', '%' . $request->family_no . '%');
         }
 
-        // Filter by date range - find contributions that fall completely within the selected range
+        // Filter by date range - find contributions created within the selected range
         if ($request->filled('start_date') && $request->filled('end_date')) {
-            // Both dates provided - find contributions within the filter period
-            $query->where('start_date', '>=', $request->start_date)
-                  ->where('end_date', '<=', $request->end_date);
+            // Both dates provided - find contributions created within the filter period
+            $query->whereDate('created_at', '>=', $request->start_date)
+                  ->whereDate('created_at', '<=', $request->end_date);
         } elseif ($request->filled('start_date')) {
-            // Only start date - find contributions that start on or after this date
-            $query->where('start_date', '>=', $request->start_date);
+            // Only start date - find contributions created on or after this date
+            $query->whereDate('created_at', '>=', $request->start_date);
         } elseif ($request->filled('end_date')) {
-            // Only end date - find contributions that end on or before this date
-            $query->where('end_date', '<=', $request->end_date);
+            // Only end date - find contributions created on or before this date
+            $query->whereDate('created_at', '<=', $request->end_date);
         }
 
         if ($request->filled('category_id')) {
@@ -452,8 +452,8 @@ class AnnualContributionController extends Controller
                 'Paid By Name',
                 'Contact Number',
                 'Notes',
-                'Created At',
-                'Updated At'
+                'Received Date',
+               
             ]);
 
             // CSV Data
@@ -462,8 +462,8 @@ class AnnualContributionController extends Controller
                     $contribution->id,
                     $contribution->family_no,
                     $contribution->amount,
-                    $contribution->start_date,
-                    $contribution->end_date,
+                    $contribution->start_date ? date('d/m/Y', strtotime($contribution->start_date)) : 'N/A',
+                    $contribution->end_date ? date('d/m/Y', strtotime($contribution->end_date)) : 'N/A',
                     $contribution->status,
                     $contribution->fundCategory->name ?? 'N/A',
                     $contribution->paymentMethod->name ?? 'N/A',
@@ -471,8 +471,8 @@ class AnnualContributionController extends Controller
                     $contribution->paid_by_name ?? 'N/A',
                     $contribution->contact_no ?? 'N/A',
                     $contribution->notes ?? 'N/A',
-                    $contribution->created_at,
-                    $contribution->updated_at
+                    $contribution->created_at ? $contribution->created_at->format('d/m/Y H:i') : 'N/A',
+
                 ]);
             }
 
