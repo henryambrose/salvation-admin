@@ -26,7 +26,7 @@ class CommunityContribution extends Model
     ];
 
     protected $casts = [
-        'collection_date' => 'date',
+        'collection_date' => \App\Casts\DateString::class,
         'amount' => 'decimal:2',
     ];
 

@@ -54,9 +54,9 @@ class ValidMember extends Model
      * @var array
      */
     protected $casts = [
-        'date_of_birth' => 'date',
-        'death_date' => 'date',
-        'burial_date' => 'date',
+        'date_of_birth' => \App\Casts\DateString::class,
+        'death_date' => \App\Casts\DateString::class,
+        'burial_date' => \App\Casts\DateString::class,
         'is_active' => 'boolean',
     ];
 

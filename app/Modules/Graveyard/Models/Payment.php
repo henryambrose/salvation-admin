@@ -43,7 +43,7 @@ class Payment extends Model
         'concession_amount' => 'decimal:2',
         'selected_services' => 'array',
         'service_charges' => 'array',
-        'payment_date' => 'date',
+        'payment_date' => \App\Casts\DateString::class,
         'receipt_generated_at' => 'datetime',
     ];
 

@@ -38,7 +38,7 @@ class PermanentGrave extends Model
     ];
 
     protected $casts = [
-        'last_burial_date' => 'date',
+        'last_burial_date' => \App\Casts\DateString::class,
         'plot_size' => 'decimal:2',
         'is_active' => 'boolean',
         'row' => 'integer',

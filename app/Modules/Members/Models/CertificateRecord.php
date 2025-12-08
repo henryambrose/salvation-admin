@@ -33,7 +33,7 @@ class CertificateRecord extends Model
 
   protected $casts = [
     'additional_data' => 'array',
-    'issued_date' => 'date',
+    'issued_date' => \App\Casts\DateString::class,
     'last_downloaded_at' => 'datetime',
     'is_reprint' => 'boolean',
   ];

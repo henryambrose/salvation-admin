@@ -30,8 +30,8 @@ class FamilyContribution extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
+        'start_date' => \App\Casts\DateString::class,
+        'end_date' => \App\Casts\DateString::class,
         'amount' => 'decimal:2',
     ];
 

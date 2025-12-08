@@ -35,7 +35,7 @@ class MassIntention extends Model
     ];
 
     protected $casts = [
-        'mass_date' => 'date',
+        'mass_date' => \App\Casts\DateString::class,
         'amount' => 'decimal:2',
         'status' => 'string',
     ];

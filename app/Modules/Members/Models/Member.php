@@ -87,11 +87,11 @@ class Member extends Model
     ];
 
     protected $casts = [
-        'marriage_date' => 'date',
-        'date_of_birth' => 'date',
-        'baptism_date' => 'date',
-        'confirmation_date' => 'date',
-        'death_date' => 'date',
+        'marriage_date' => \App\Casts\DateString::class,
+        'date_of_birth' => \App\Casts\DateString::class,
+        'baptism_date' => \App\Casts\DateString::class,
+        'confirmation_date' => \App\Casts\DateString::class,
+        'death_date' => \App\Casts\DateString::class,
     ];
 
     /**

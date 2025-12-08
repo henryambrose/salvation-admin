@@ -52,12 +52,12 @@ class NicheTransfer extends Model
     ];
 
     protected $casts = [
-        'transfer_request_date' => 'date',
-        'proposed_transfer_date' => 'date',
-        'actual_transfer_date' => 'date',
-        'date_of_birth' => 'date',
-        'died_on' => 'date',
-        'buried_on' => 'date',
+        'transfer_request_date' => \App\Casts\DateString::class,
+        'proposed_transfer_date' => \App\Casts\DateString::class,
+        'actual_transfer_date' => \App\Casts\DateString::class,
+        'date_of_birth' => \App\Casts\DateString::class,
+        'died_on' => \App\Casts\DateString::class,
+        'buried_on' => \App\Casts\DateString::class,
         'required_documents' => 'array',
     ];
 

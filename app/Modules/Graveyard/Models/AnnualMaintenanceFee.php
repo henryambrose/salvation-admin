@@ -30,8 +30,8 @@ class AnnualMaintenanceFee extends Model
     ];
 
     protected $casts = [
-        'effective_from' => 'date',
-        'effective_until' => 'date',
+        'effective_from' => \App\Casts\DateString::class,
+        'effective_until' => \App\Casts\DateString::class,
         'is_active' => 'boolean',
         'permanent_grave_amount' => 'decimal:2',
         'niche_amount' => 'decimal:2',

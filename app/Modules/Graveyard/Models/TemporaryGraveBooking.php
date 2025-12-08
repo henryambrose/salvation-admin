@@ -64,11 +64,11 @@ class TemporaryGraveBooking extends Model
     ];
 
     protected $casts = [
-        'booking_date' => 'date',
-        'died_on' => 'date',
-        'buried_on' => 'date',
-        'date_of_birth' => 'date',
-        'expected_transfer_date' => 'date',
+        'booking_date' => \App\Casts\DateString::class,
+        'died_on' => \App\Casts\DateString::class,
+        'buried_on' => \App\Casts\DateString::class,
+        'date_of_birth' => \App\Casts\DateString::class,
+        'expected_transfer_date' => \App\Casts\DateString::class,
         'selected_services' => 'array',
         'total_cost' => 'decimal:2',
         'paid_amount' => 'decimal:2',

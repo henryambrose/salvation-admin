@@ -37,7 +37,7 @@ class Niche extends Model
     ];
 
     protected $casts = [
-        'last_occupation_date' => 'date',
+        'last_occupation_date' => \App\Casts\DateString::class,
         'size_width' => 'decimal:2',
         'size_height' => 'decimal:2',
         'size_depth' => 'decimal:2',

@@ -24,7 +24,7 @@ class MassSchedule extends Model
     ];
 
     protected $casts = [
-        'mass_date' => 'date',
+        'mass_date' => \App\Casts\DateString::class,
         'mass_time' => 'datetime:H:i:s',
         'max_intentions' => 'integer',
         'current_intentions' => 'integer',
