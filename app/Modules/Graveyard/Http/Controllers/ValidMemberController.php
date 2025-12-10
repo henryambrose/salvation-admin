@@ -91,7 +91,7 @@ class ValidMemberController extends Controller
                 $q->where('owner_name', 'like', "%{$searchTerm}%")
                     ->orWhere('contact_no', 'like', "%{$searchTerm}%")
                     ->orWhere('grave_no', 'like', "%{$searchTerm}%")
-                    ->orWhere('oldno', 'like', "%{$searchTerm}%")
+                    ->orWhere('old_no', 'like', "%{$searchTerm}%")
                     ->orWhereHas('member', function ($memberQuery) use ($searchTerm) {
                         $memberQuery->where('first_name', 'like', "%{$searchTerm}%")
                             ->orWhere('last_name', 'like', "%{$searchTerm}%")

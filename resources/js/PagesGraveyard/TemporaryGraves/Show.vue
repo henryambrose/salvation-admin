@@ -43,7 +43,7 @@
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-500">Old Number</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ temporaryGrave.oldno || 'N/A' }}</p>
+                    <p class="mt-1 text-sm text-gray-900">{{ temporaryGrave.old_no || 'N/A' }}</p>
                   </div>
                 </div>
               </div>

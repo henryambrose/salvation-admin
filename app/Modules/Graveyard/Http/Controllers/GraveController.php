@@ -39,7 +39,7 @@ class GraveController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('section', 'like', "%{$search}%")
                         ->orWhere('grave_no', 'like', "%{$search}%")
-                        ->orWhere('oldno', 'like', "%{$search}%");
+                        ->orWhere('old_no', 'like', "%{$search}%");
                 });
             }
         }

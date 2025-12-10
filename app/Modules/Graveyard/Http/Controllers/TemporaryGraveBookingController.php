@@ -83,7 +83,7 @@ class TemporaryGraveBookingController extends Controller
                         ->whereNull('death_date') // Only living members
                         ->with(['member', 'gender', 'parish', 'relationship']);
                 }])
-                ->orderBy('section')->orderBy('row_no')->orderBy('grave_no')->get(),
+                ->orderBy('column')->orderBy('row')->get(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
             'relationships' => Relationship::all()

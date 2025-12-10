@@ -125,11 +125,11 @@
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
-                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('oldno')">
+                <th class="cursor-pointer border-b p-3 font-semibold text-gray-700" @click="toggleSort('old_no')">
                   <div class="flex items-center">
                     Old No
-                    <ChevronUp v-if="filters.sort === 'oldno' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
-                    <ChevronDown v-else-if="filters.sort === 'oldno' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
+                    <ChevronUp v-if="filters.sort === 'old_no' && filters.direction === 'asc'" class="ml-1 h-4 w-4" />
+                    <ChevronDown v-else-if="filters.sort === 'old_no' && filters.direction === 'desc'" class="ml-1 h-4 w-4" />
                     <ChevronsUpDown v-else class="ml-1 h-4 w-4 text-gray-300" />
                   </div>
                 </th>
@@ -185,7 +185,7 @@
                   </div>
                 </td>
                 <td class="p-6">{{ grave.section }}-{{ grave.row_no }}-{{ grave.grave_no }}</td>
-                <td class="p-6">{{ grave.oldno }}</td>
+                <td class="p-6">{{ grave.old_no }}</td>
                 <td class="p-2">
                   <span class="inline-flex rounded-full px-2 py-1 text-xs font-semibold" :class="getStatusClass(grave.status)">
                     {{ grave.status.charAt(0).toUpperCase() + grave.status.slice(1) }}

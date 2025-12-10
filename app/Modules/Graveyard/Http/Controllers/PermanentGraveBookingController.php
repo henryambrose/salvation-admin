@@ -88,7 +88,7 @@ class PermanentGraveBookingController extends Controller
         $query = PermanentGrave::with(['validMembers']);
 
         $query->where('owner_name', 'like', '%' . $request->search_term . '%')
-            ->orWhere('oldno', 'like', '%' . $request->search_term . '%')
+            ->orWhere('old_no', 'like', '%' . $request->search_term . '%')
             ->orWhere('contact_no', 'like', '%' . $request->search_term . '%');
 
         $graves = $query->get()->map(function (PermanentGrave $grave) {

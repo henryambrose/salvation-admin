@@ -21,7 +21,7 @@ class TemporaryGrave extends Model
         'section',
         'row_no',
         'grave_no',
-        'oldno',
+        'old_no',
         'status',
         'last_burial_date',
         'buried_name',
@@ -117,7 +117,7 @@ class TemporaryGrave extends Model
         return $query->where(function ($q) use ($search) {
             $q->where('section', 'like', "%{$search}%")
                 ->orWhere('grave_no', 'like', "%{$search}%")
-                ->orWhere('oldno', 'like', "%{$search}%")
+                ->orWhere('old_no', 'like', "%{$search}%")
                 ->orWhere('owner_name', 'like', "%{$search}%")
                 ->orWhereRaw("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"])
                 ->orWhereHas('member', function ($memberQuery) use ($search) {

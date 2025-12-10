@@ -64,12 +64,12 @@
                   <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">Old Number</label>
                     <input
-                      v-model="form.oldno"
+                      v-model="form.old_no"
                       type="text"
                       class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                       placeholder="Enter old grave number"
                     />
-                    <p v-if="errors.oldno" class="mt-1 text-sm text-red-600">{{ errors.oldno }}</p>
+                    <p v-if="errors.old_no" class="mt-1 text-sm text-red-600">{{ errors.old_no }}</p>
                   </div>
 
                   <div>
@@ -313,7 +313,7 @@ const form = useForm({
   section: '',
   row_no: '',
   grave_no: '',
-  oldno: '',
+  old_no: '',
   status: '',
   grave_category_id: null as number | null,
   last_burial_date: '',
@@ -350,7 +350,7 @@ const initializeForm = () => {
     form.section = grave.section || '';
     form.row_no = grave.row_no || '';
     form.grave_no = grave.grave_no || '';
-    form.oldno = grave.oldno || '';
+    form.old_no = grave.old_no || '';
     form.status = grave.status || '';
     form.grave_category_id = grave.grave_category_id || null;
     form.last_burial_date = formattedDate;

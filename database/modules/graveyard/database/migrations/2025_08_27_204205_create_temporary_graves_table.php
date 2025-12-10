@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('section')->index();
             $table->integer('row_no')->index();
             $table->integer('grave_no')->index();
-            $table->string('oldno')->nullable();
+            $table->string('old_no')->nullable();
             $table->enum('status', ['available', 'unavailable'])->default('available')->index();
             $table->date('last_burial_date')->nullable();
             $table->string('buried_name')->nullable()->index(); // For search functionality
