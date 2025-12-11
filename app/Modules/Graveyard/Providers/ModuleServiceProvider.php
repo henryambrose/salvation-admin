@@ -36,7 +36,6 @@ class ModuleServiceProvider extends ServiceProvider
             \Modules\Graveyard\Models\ValidMember::class => \Modules\Graveyard\Policies\ValidMemberPolicy::class,
             \Modules\Graveyard\Models\PermanentGrave::class => \Modules\Graveyard\Policies\PermanentGravePolicy::class,
             \Modules\Graveyard\Models\ServiceType::class => \Modules\Graveyard\Policies\ServiceTypePolicy::class,
-            \Modules\Graveyard\Models\ObituaryPage::class => \Modules\Graveyard\Policies\ObituaryPagePolicy::class,
         ];
 
         foreach ($policies as $key => $value) {

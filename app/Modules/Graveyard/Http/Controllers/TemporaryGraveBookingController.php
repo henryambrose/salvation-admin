@@ -33,7 +33,6 @@ class TemporaryGraveBookingController extends Controller
             'parish',
             'applicantMember',
             'creator',
-            'obituaryPage'
         ]);
 
         // Apply filters
@@ -56,12 +55,6 @@ class TemporaryGraveBookingController extends Controller
 
         // Pagination
         $bookings = $query->orderBy('created_at', 'desc')->paginate(10);
-
-        // Add has_obituary attribute to each booking
-        $bookings->getCollection()->transform(function ($booking) {
-            $booking->has_obituary = $booking->obituaryPage !== null;
-            return $booking;
-        });
 
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Index', [
             'bookings' => $bookings,
@@ -101,7 +94,7 @@ class TemporaryGraveBookingController extends Controller
             return response()->json([]);
         }
 
-        $members = Member::with('community')
+        $members = Member::with(['community', 'gender'])
             ->alive() // Only select alive members for booking new graves
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'LIKE', '%' . $query . '%')
@@ -129,7 +122,10 @@ class TemporaryGraveBookingController extends Controller
                     ] : null,
                     'current_add1' => $member->current_add1,
                     'contact_no_1' => $member->contact_no_1,
-                    'gender' => $member->gender,
+                    'gender' => $member->gender ? [
+                        'id' => $member->gender->id,
+                        'name' => $member->gender->name
+                    ] : null,
                 ];
             });
 
@@ -299,16 +295,8 @@ class TemporaryGraveBookingController extends Controller
             'updater',
             'nicheTransfers',
             'payments',
-            'obituaryPage'
         ]);
 
-        // Check if obituary page can be created
-        $canCreateObituary = $temporaryGraveBooking->status === 'confirmed' && !$temporaryGraveBooking->hasObituaryPage();
-
-        return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Show', [
-            'booking' => $temporaryGraveBooking,
-            'canCreateObituary' => $canCreateObituary
-        ]);
     }
 
     /**
@@ -322,17 +310,11 @@ class TemporaryGraveBookingController extends Controller
 
         $temporaryGraveBooking->update(['status' => 'confirmed']);
 
-        // Check if we should offer obituary page creation
-        $offerObituary = !$temporaryGraveBooking->hasObituaryPage();
-
         $message = 'Booking confirmed successfully.';
-        if ($offerObituary) {
-            $message .= ' Would you like to create an obituary page for this booking?';
-        }
+
 
         return back()->with([
             'success' => $message,
-            'offer_obituary' => $offerObituary,
             'booking_id' => $temporaryGraveBooking->id,
             'booking_type' => 'temporary'
         ]);

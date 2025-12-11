@@ -352,21 +352,6 @@ class TemporaryGraveBooking extends Model
         return true;
     }
 
-    /**
-     * Get the obituary page for this booking
-     */
-    public function obituaryPage(): HasOne
-    {
-        return $this->hasOne(\Modules\Graveyard\Models\ObituaryPage::class);
-    }
-
-    /**
-     * Check if this booking has an obituary page
-     */
-    public function hasObituaryPage(): bool
-    {
-        return $this->obituaryPage()->exists();
-    }
 
     /**
      * Get status color for UI

@@ -80,15 +80,10 @@ interface TemporaryGraveBooking {
   }[];
 }
 
-// interface FlashMessage {
-//   success?: string;
-//   error?: string;
-//   offer_obituary?: boolean;
-// }
+
 
 interface Props {
   booking: TemporaryGraveBooking;
-  canCreateObituary?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -191,14 +186,7 @@ const cancelBooking = () => {
   );
 };
 
-// const goToCreateObituary = () => {
-//   router.visit(
-//     route('graveyard.obituaries.create', {
-//       type: 'temporary',
-//       booking_id: props.booking.id,
-//     }),
-//   );
-// };
+
 </script>
 
 <template>
@@ -231,10 +219,7 @@ const cancelBooking = () => {
                   {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
                 </Badge>
                 <div class="flex space-x-2">
-                  <!-- <Button v-if="canCreateObituary" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700">
-                    <FileText class="mr-2 h-4 w-4" />
-                    Create Obituary
-                  </Button> -->
+
                   <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
                     <IndianRupee class="mr-2 h-4 w-4" />
                     Make Payment
@@ -288,30 +273,7 @@ const cancelBooking = () => {
             </div>
           </div> -->
 
-          <!-- <div v-if="flashMessage?.error" class="border-b border-red-200 bg-red-50 px-4 py-3">
-            <div class="flex items-center">
-              <XCircle class="mr-2 h-5 w-5 text-red-600" />
-              <p class="text-sm text-red-800">{{ flashMessage.error }}</p>
-            </div>
-          </div> -->
-
-          <!-- Obituary Creation Offer -->
-          <!-- <div v-if="flashMessage?.offer_obituary" class="border-b border-purple-200 bg-purple-50 px-4 py-3">
-            <div class="flex items-center justify-between">
-              <div class="flex items-center">
-                <FileText class="mr-2 h-5 w-5 text-purple-600" />
-                <div>
-                  <p class="text-sm font-medium text-purple-800">Create Memorial Page</p>
-                  <p class="text-sm text-purple-700">Would you like to create an obituary page for this confirmed booking?</p>
-                </div>
-              </div>
-              <div class="flex space-x-2">
-                <Button size="sm" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700"> Create Now </Button>
-                <Button size="sm" variant="outline" class="border-purple-300 text-purple-700"> Maybe Later </Button>
-              </div>
-            </div>
-          </div> -->
-
+          
           <div class="px-4 py-5 sm:p-6">
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <!-- Left Column -->

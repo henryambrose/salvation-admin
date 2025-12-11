@@ -10,6 +10,7 @@ import { ArrowLeft, Calendar, MapPin, Phone, User, X } from 'lucide-vue-next';
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DateInput } from '@/components/ui/date-input';
 import { formatDateForDisplay } from '@/lib/utils';
+import axios from 'axios';
 
 interface TemporaryGrave {
   id: number;
@@ -246,11 +247,13 @@ const searchMembers = async () => {
 
   isSearchingMembers.value = true;
   try {
-    const response = await fetch(
-      route('graveyard.temporary-grave-bookings.search-members') + '?query=' + encodeURIComponent(memberSearchQuery.value),
+    const response = await axios.get(
+      route('graveyard.temporary-grave-bookings.search-members'),
+      {
+        params: { query: memberSearchQuery.value }
+      }
     );
-    const data = await response.json();
-    memberSearchResults.value = data;
+    memberSearchResults.value = response.data;
   } catch (error) {
     console.error('Error searching members:', error);
     memberSearchResults.value = [];

@@ -25,7 +25,6 @@ class PermanentGraveBookingController extends Controller
             'permanentGrave',
             'validMember.member',
             'creator',
-            'obituaryPage'
         ]);
 
         // Apply filters
@@ -54,12 +53,7 @@ class PermanentGraveBookingController extends Controller
         // Pagination
         $bookings = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        // Add has_obituary attribute to each booking
-        $bookings->getCollection()->transform(function ($booking) {
-            $booking->has_obituary = $booking->obituaryPage !== null;
-            return $booking;
-        });
-
+ 
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Index', [
             'bookings' => $bookings,
             'filters' => $request->only(['status', 'search'])
@@ -250,16 +244,8 @@ class PermanentGraveBookingController extends Controller
             'creator',
             'updater',
             'payments',
-            'obituaryPage'
-        ]);
+         ]);
 
-        // Check if obituary page can be created
-        $canCreateObituary = $permanentGraveBooking->status === 'confirmed' && !$permanentGraveBooking->hasObituaryPage();
-
-        return Inertia::render('PagesGraveyard/PermanentGraveBooking/Show', [
-            'booking' => $permanentGraveBooking,
-            'canCreateObituary' => $canCreateObituary
-        ]);
     }
 
     /**

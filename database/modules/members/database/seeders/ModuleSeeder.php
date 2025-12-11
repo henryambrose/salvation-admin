@@ -271,36 +271,14 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Settings',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            [
-                'name' => 'Obituary Pages',
-                'slug' => 'obituary-page',
-                'icon' => 'FileText',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore', 'publish', 'unpublish'],
-            ],
-            [
-                'name' => 'Obituary Condolences',
-                'slug' => 'obituary-condolence',
-                'icon' => 'MessageSquare',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'approve', 'reject'],
-            ],
+
             [
                 'name' => 'Graveyard Payments',
                 'slug' => 'graveyard-payment',
                 'icon' => 'CreditCard',
                 'actions' => ['create', 'read', 'update', 'delete', 'list'],
             ],
-            [
-                'name' => 'Obituary Plans',
-                'slug' => 'obituary-plans',
-                'icon' => 'Receipt',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
-            ],
-            [
-                'name' => 'Obituary Payments',
-                'slug' => 'obituary-payment',
-                'icon' => 'Receipt',
-                'actions' => ['create', 'read', 'update', 'delete', 'list'],
-            ],
+
             [
                 'name' => 'Niche Transfers',
                 'slug' => 'niche-transfer',

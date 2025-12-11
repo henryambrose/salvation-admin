@@ -263,23 +263,6 @@ class PermanentGraveBooking extends Model
         return $this->buried_on < now()->toDateString() && !in_array($this->status, ['completed', 'cancelled']);
     }
 
-
-    /**
-     * Get the obituary page for this booking
-     */
-    public function obituaryPage(): HasOne
-    {
-        return $this->hasOne(\Modules\Graveyard\Models\ObituaryPage::class);
-    }
-
-    /**
-     * Check if this booking has an obituary page
-     */
-    public function hasObituaryPage(): bool
-    {
-        return $this->obituaryPage()->exists();
-    }
-
     /**
      * Cancel the booking
      */

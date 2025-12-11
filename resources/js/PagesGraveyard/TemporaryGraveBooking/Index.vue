@@ -43,7 +43,6 @@ interface TemporaryGraveBooking {
   payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   expected_transfer_date: string;
   transfer_requested: boolean;
-  // has_obituary: boolean;
   created_at: string;
   creator: {
     name: string;
@@ -285,7 +284,6 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                       <TableHead class="font-medium text-gray-900">Transfer Status</TableHead>
                       <TableHead class="font-medium text-gray-900">Payment Details</TableHead>
                       <TableHead class="font-medium text-gray-900">Status</TableHead>
-                      <!-- <TableHead class="font-medium text-gray-900">Obituary</TableHead> -->
                       <TableHead class="text-right font-medium text-gray-900">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -361,24 +359,6 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           {{ booking.status }}
                         </Badge>
                       </TableCell>
-                      <!-- <TableCell>
-                        <Button
-                          v-if="booking.status === 'confirmed' && !booking.has_obituary"
-                          variant="outline"
-                          size="sm"
-                          as-child
-                          class="text-purple-600 hover:bg-purple-50 hover:text-purple-800"
-                        >
-                          <Link :href="route('graveyard.obituaries.create', { type: 'temporary', booking_id: booking.id })">
-                            <FileText class="h-4 w-4 mr-1" />
-                            Create Obituary
-                          </Link>
-                        </Button>
-                        <Badge v-else-if="booking.has_obituary" class="bg-green-100 text-green-800">
-                          Obituary Created
-                        </Badge>
-                        <span v-else class="text-gray-400 text-sm">Not Available</span>
-                      </TableCell> -->
                       <TableCell class="text-right">
                         <div class="flex items-center justify-end space-x-2">
                           <Button variant="outline" size="sm" as-child>
@@ -450,17 +430,6 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                         </Badge>
                       </div>
                       <div class="flex items-center space-x-2">
-                        <!-- <Button
-                          v-if="booking.status === 'confirmed' && !booking.has_obituary"
-                          variant="outline"
-                          size="sm"
-                          as-child
-                          class="text-purple-600 hover:bg-purple-50 hover:text-purple-800"
-                        >
-                          <Link :href="route('graveyard.obituaries.create', { type: 'temporary', booking_id: booking.id })">
-                            <FileText class="h-4 w-4" />
-                          </Link>
-                        </Button> -->
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />

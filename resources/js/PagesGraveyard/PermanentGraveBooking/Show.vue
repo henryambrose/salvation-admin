@@ -74,7 +74,6 @@ interface FlashMessage {
 
 interface Props {
   booking: PermanentGraveBooking;
-  canCreateObituary?: boolean;
 }
 
 const props = defineProps<Props>();
@@ -162,14 +161,6 @@ const canCancel = () => {
   return ['pending', 'confirmed'].includes(props.booking.status);
 };
 
-const goToCreateObituary = () => {
-  router.visit(
-    route('graveyard.obituaries.create', {
-      type: 'permanent',
-      booking_id: props.booking.id,
-    }),
-  );
-};
 </script>
 
 <template>
@@ -202,10 +193,6 @@ const goToCreateObituary = () => {
                   {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
                 </Badge>
                 <div class="flex space-x-2">
-                  <Button v-if="canCreateObituary" @click="goToCreateObituary" class="bg-purple-600 hover:bg-purple-700">
-                    <FileText class="mr-2 h-4 w-4" />
-                    Create Obituary
-                  </Button>
                   <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
                     <IndianRupee class="mr-2 h-4 w-4" />
                     Make Payment

@@ -211,8 +211,6 @@ function getModuleForModel(modelName: string): string {
     'community-contribution-type': 'Fund',
 
     // Graveyard
-    'obituary-page': 'Graveyard',
-    'obituary-condolence': 'Graveyard',
     grave: 'Graveyard',
     plot: 'Graveyard',
     deceased: 'Graveyard',
@@ -405,7 +403,7 @@ const getCategoriesByApp = computed(() => {
       props.categories?.filter((cat) =>
         ['Fund Categories', 'Annual Contributions', 'Mass Intentions', 'Mass Types', 'Mass Intention Types', 'Payment Methods'].includes(cat.name),
       ) || [],
-    Graveyard: props.categories?.filter((cat) => ['Graveyard Management', 'Obituary Management'].includes(cat.name)) || [],
+    Graveyard: props.categories?.filter((cat) => ['Graveyard Management'].includes(cat.name)) || [],
     Core: props.categories?.filter((cat) => ['System Management', 'Data Management', 'AI Assistance', 'Dashboard'].includes(cat.name)) || [],
   };
 });
