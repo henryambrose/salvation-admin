@@ -112,11 +112,11 @@ function fetch(page = 1) {
       end_date: endDate.value,
       category_id: categoryId.value,
       payment_method_id: paymentMethodId.value,
-      per_page: perPage.value,
+      per_page: perPage.value.toString(),
       sort: sort.value,
       direction: direction.value,
       isArchived: isArchived.value ? 'true' : 'false',
-      page,
+      page: page.toString(),
     },
     { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
   );

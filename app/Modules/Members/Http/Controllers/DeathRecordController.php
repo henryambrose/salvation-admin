@@ -1,0 +1,256 @@
+<?php
+
+namespace Modules\Members\Http\Controllers;
+
+use App\Http\Controllers\Controller;
+use Modules\Members\Models\DeathRecord;
+use Modules\Members\Models\Member;
+use Modules\Members\Models\Parish;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
+
+class DeathRecordController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = DeathRecord::with(['member', 'burialParish']);
+
+        // Archive filter
+        if ($request->input('isArchived') === 'true') {
+            $query->onlyTrashed();
+        } else {
+            $query->withoutTrashed();
+        }
+
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('burial_reg_no', 'like', "%{$search}%")
+                    ->orWhere('deceased_name', 'like', "%{$search}%")
+                    ->orWhere('deceased_surname', 'like', "%{$search}%")
+                    ->orWhereHas('member', function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        // Sorting
+        $sort = $request->get('sort', 'death_date');
+        $direction = $request->get('direction', 'desc');
+        $query->orderBy($sort, $direction);
+
+        // Pagination
+        $perPage = $request->get('per_page', 15);
+        $deathRecords = $query->paginate($perPage)->appends($request->query());
+
+        return Inertia::render('DeathRecords/Index', [
+            'deathRecords' => $deathRecords,
+            'filters' => $request->only(['search', 'sort', 'direction', 'per_page', 'isArchived']),
+        ]);
+    }
+
+    public function create()
+    {
+        $parishes = Parish::orderBy('name')->get();
+
+        return Inertia::render('DeathRecords/Create', [
+            'parishes' => $parishes,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        Log::info($request);
+        $validated = $request->validate([
+            'member_id' => 'nullable|exists:members,id',
+            'death_date' => 'nullable|date',
+            'burial_date' => 'nullable|date',
+            'burial_reg_no' => 'nullable|string|max:255',
+            // 'burial_parish_id' => 'nullable|exists:parishes,id',
+            'deceased_name' => 'nullable|string|max:255',
+            'deceased_surname' => 'nullable|string|max:255',
+            'relationship' => 'nullable|string|max:100',
+            'residence' => 'nullable|string',
+            'age' => 'nullable|integer|min:0|max:150',
+            'nationality' => 'nullable|string|max:100',
+            'cause_of_death' => 'nullable|string|max:255',
+            'place_of_burial' => 'nullable|string|max:255',
+            'minister_name' => 'nullable|string|max:255',
+            'death_remarks' => 'nullable|string',
+        ]);
+Log::info($validated);
+        DeathRecord::create($validated);
+
+        return redirect()->route('death-records.index')
+            ->with('success', 'Death record created successfully.');
+    }
+
+    public function show(DeathRecord $deathRecord)
+    {
+        $deathRecord->load(['member', 'burialParish']);
+
+        return Inertia::render('DeathRecords/Show', [
+            'deathRecord' => $deathRecord,
+        ]);
+    }
+
+    public function edit(DeathRecord $deathRecord)
+    {
+        $deathRecord->load(['member', 'burialParish']);
+        $parishes = Parish::orderBy('name')->get();
+
+        return Inertia::render('DeathRecords/Edit', [
+            'deathRecord' => $deathRecord,
+            'parishes' => $parishes,
+        ]);
+    }
+
+    public function update(Request $request, DeathRecord $deathRecord)
+    {
+        $validated = $request->validate([
+            'member_id' => 'nullable|exists:members,id',
+            'death_date' => 'nullable|date',
+            'burial_date' => 'nullable|date',
+            'burial_reg_no' => 'nullable|string|max:255',
+            'burial_parish_id' => 'nullable|exists:parishes,id',
+            'deceased_name' => 'nullable|string|max:255',
+            'deceased_surname' => 'nullable|string|max:255',
+            'relationship' => 'nullable|string|max:100',
+            'residence' => 'nullable|string',
+            'age' => 'nullable|integer|min:0|max:150',
+            'nationality' => 'nullable|string|max:100',
+            'cause_of_death' => 'nullable|string|max:255',
+            'place_of_burial' => 'nullable|string|max:255',
+            'minister_name' => 'nullable|string|max:255',
+            'death_remarks' => 'nullable|string',
+        ]);
+
+        $deathRecord->update($validated);
+
+        return redirect()->route('death-records.index')
+            ->with('success', 'Death record updated successfully.');
+    }
+
+    public function destroy(DeathRecord $deathRecord)
+    {
+        $deathRecord->delete();
+
+        return redirect()->route('death-records.index')
+            ->with('success', 'Death record deleted successfully.');
+    }
+
+    /**
+     * Restore a soft-deleted death record
+     */
+    public function restore($id)
+    {
+        $deathRecord = DeathRecord::onlyTrashed()->findOrFail($id);
+        $deathRecord->restore();
+
+        return redirect()->route('death-records.index')
+            ->with('success', 'Death record restored successfully.');
+    }
+
+    /**
+     * Generate and download burial certificate PDF
+     */
+    public function downloadPdf(DeathRecord $deathRecord)
+    {
+        // Helper to format dates (handles both string and Carbon instances)
+        $formatDate = function ($date, $format = 'd/m/Y') {
+            if (!$date) return null;
+            if ($date instanceof \Carbon\Carbon) {
+                return $date->format($format);
+            }
+            return \Carbon\Carbon::parse($date)->format($format);
+        };
+
+        // Load relationships
+        $deathRecord->load(['member', 'burialParish']);
+
+        // Prepare data for the template
+        $data = [
+            // Death/Burial data
+            'death_date' => $formatDate($deathRecord->death_date),
+            'burial_date' => $formatDate($deathRecord->burial_date),
+            'burial_reg_no' => $deathRecord->burial_reg_no,
+            'burial_year' => $deathRecord->burial_date ? \Carbon\Carbon::parse($deathRecord->burial_date)->year : null,
+
+            // Deceased data
+            'deceased_name' => $deathRecord->deceased_name,
+            'deceased_surname' => $deathRecord->deceased_surname,
+            'relationship' => $deathRecord->relationship,
+            'residence' => $deathRecord->residence,
+            'age' => $deathRecord->age,
+            'nationality' => $deathRecord->nationality,
+            'cause_of_death' => $deathRecord->cause_of_death,
+            'place_of_burial' => $deathRecord->place_of_burial,
+
+            // Minister
+            'minister_name' => $deathRecord->minister_name,
+
+            // Remarks
+            'death_remarks' => $deathRecord->death_remarks,
+
+            // Parish info
+            'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
+            'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
+            'issued_date' => now()->format('d/m/Y'),
+
+            // Template config
+            'template_config' => [
+                'show_logo' => config('app.certificate_show_logo', true),
+                'logo_url' => $this->makeLogoDataUrl(config('app.certificate_logo_path', 'images/logo.png')),
+            ],
+        ];
+
+        // Generate PDF
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.templates.parochial_register_burial', $data);
+        $pdf->setPaper('A4', 'portrait');
+
+        // Generate filename
+        $filename = sprintf(
+            'Burial_Certificate_%s_%s_%s.pdf',
+            str_replace(' ', '_', $deathRecord->deceased_name),
+            str_replace(' ', '_', $deathRecord->deceased_surname),
+            now()->format('Y-m-d')
+        );
+
+        // Return PDF for download/viewing in new tab
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Convert logo path to data URL for PDF generation
+     */
+    protected function makeLogoDataUrl(?string $path): ?string
+    {
+        if (!$path) {
+            return null;
+        }
+
+        $fullPath = public_path($path);
+
+        if (is_file($fullPath) && is_readable($fullPath)) {
+            $mime = mime_content_type($fullPath) ?: 'image/png';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+        }
+
+        return null;
+    }
+
+    /**
+     * Get death record by member ID
+     */
+    public function getByMember($memberId)
+    {
+        $deathRecord = DeathRecord::where('member_id', $memberId)
+            ->with(['member', 'burialParish'])
+            ->first();
+
+        return response()->json($deathRecord);
+    }
+}

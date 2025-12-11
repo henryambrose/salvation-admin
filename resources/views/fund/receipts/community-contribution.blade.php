@@ -228,102 +228,122 @@
             body {
                 padding: 0;
                 margin: 0;
-                transform: scale(0.85);
-                transform-origin: top center;
             }
 
             .receipt-container {
-                padding: 15px;
+                padding: 8px;
                 margin-bottom: 0;
-                max-width: 700px;
+                max-width: 100%;
+                box-shadow: none;
             }
 
             .receipt-copy {
-                margin-bottom: 10px;
+                margin-bottom: 8px;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+            }
+
+            .receipt-copy:first-child {
+                page-break-after: avoid;
             }
 
             .receipt-copy:last-child {
                 margin-bottom: 0;
+                page-break-before: avoid;
             }
 
             .copy-label {
-                font-size: 9px;
-                margin-bottom: 5px;
+                font-size: 8px;
+                margin-bottom: 3px;
             }
 
             .header h1 {
-                font-size: 18px;
-                margin-bottom: 2px;
+                font-size: 14px;
+                margin-bottom: 1px;
             }
 
             .header h2 {
-                font-size: 14px;
-            }
-
-            .header {
-                padding-bottom: 8px;
-                margin-bottom: 10px;
-            }
-
-            .receipt-info {
-                margin-bottom: 10px;
-                padding-bottom: 8px;
-            }
-
-            .receipt-info strong {
                 font-size: 10px;
             }
 
+            .header {
+                padding-bottom: 4px;
+                margin-bottom: 4px;
+                border-bottom: 1px solid #333;
+            }
+
+            .receipt-info {
+                margin-bottom: 4px;
+                padding-bottom: 4px;
+            }
+
+            .receipt-info strong {
+                font-size: 8px;
+                margin-bottom: 1px;
+            }
+
             .receipt-info span {
-                font-size: 13px;
+                font-size: 10px;
             }
 
             .amount-section {
-                margin: 10px 0;
-                padding: 10px;
+                margin: 4px 0;
+                padding: 5px;
             }
 
             .amount-section .amount {
-                font-size: 22px;
+                font-size: 16px;
+                margin-bottom: 3px;
             }
 
             .amount-section .amount-words {
-                font-size: 12px;
+                font-size: 9px;
             }
 
             .receipt-body {
-                margin-bottom: 10px;
+                margin-bottom: 4px;
             }
 
             .row {
-                padding: 5px 0;
+                padding: 2px 0;
             }
 
             .row .label {
-                font-size: 13px;
+                font-size: 9px;
+                flex: 0 0 140px;
             }
 
             .row .value {
-                font-size: 13px;
+                font-size: 9px;
             }
 
             .signature-section {
-                margin-top: 20px;
+                margin-top: 8px;
+                padding: 0 15px;
             }
 
             .signature-line {
-                margin: 30px 0 5px 0;
-                width: 150px;
+                margin: 15px 0 2px 0;
+                width: 100px;
             }
 
             .signature-label {
-                font-size: 12px;
+                font-size: 8px;
             }
 
             .footer {
-                margin-top: 15px;
-                padding-top: 8px;
-                font-size: 11px;
+                margin-top: 6px;
+                padding-top: 4px;
+                font-size: 8px;
+            }
+
+            .footer p {
+                margin: 2px 0;
+            }
+
+            .status {
+                padding: 2px 8px;
+                font-size: 8px;
             }
         }
     </style>

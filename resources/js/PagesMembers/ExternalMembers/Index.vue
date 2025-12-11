@@ -68,12 +68,12 @@ function fetch(page = 1) {
       familySearch: familySearch.value,
       sort: sortField.value,
       direction: sortDirection.value,
-      perPage: perPage.value,
+      perPage: perPage.value.toString(),
       relationship: relationship.value,
       filterColumnKey: filterColumnKey.value,
       filterColumnValue: filterColumnValue.value,
       isArchived: isArchived.value ? 'true' : 'false',
-      page,
+      page: page.toString(),
     };
 
     router.get(props.fetchUrl, params, {

@@ -38,6 +38,7 @@ const props = withDefaults(defineProps<{
 const emits = defineEmits<{
   (e: 'update:modelValue', payload: string | number): void
   (e: 'search', payload: string): void
+  (e: 'select', payload: Option): void
 }>()
 
 // V-Model
@@ -208,7 +209,8 @@ watch(search, (newQuery) => {
   emits('search', newQuery)
   highlightedIndex.value = -1
 
-  if (props.fetchUrl) {
+  // Only fetch if query has minimum length (to match backend validation)
+  if (props.fetchUrl && newQuery && newQuery.length >= 2) {
     performSearch(newQuery)
   }
 })
@@ -243,10 +245,8 @@ async function openDropdown() {
     searchInputRef.value?.focus()
   }
 
-  // Fetch initial data if fetchUrl provided and no query
-  if (props.fetchUrl && !search.value) {
-    await fetchFromServer('')
-  }
+  // Don't fetch initial data on open - only fetch when user types
+  // This preserves previously fetched options and keeps selected values visible
 }
 
 /**
@@ -268,6 +268,7 @@ function closeDropdown() {
  */
 function selectOption(option: Option) {
   modelValue.value = option.id
+  emits('select', option)
   closeDropdown()
 }
 

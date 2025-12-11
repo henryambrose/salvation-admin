@@ -191,7 +191,7 @@
                     </div>
                     <div class="text-xs text-gray-500">
                       <div v-if="validMember.permanent_grave">
-                        Section {{ validMember.permanent_grave.section }}, Row {{ validMember.permanent_grave.row_no }}
+                        Section {{ validMember.permanent_grave.row }}, Row {{ validMember.permanent_grave.column }}
                         <br />
                         Owner Name {{ validMember.permanent_grave.owner_name }}
                       </div>
@@ -374,7 +374,7 @@ const highlightRow = (id: number) => {
 
 const getGraveIdentifier = (validMember: any) => {
   if (validMember.permanent_grave) {
-    return `G${validMember.permanent_grave.grave_no}`;
+    return `${validMember.permanent_grave.block}-${validMember.permanent_grave.row}-${validMember.permanent_grave.column}`;
   } else if (validMember.niche) {
     return `N${validMember.niche.niche_no}`;
   }

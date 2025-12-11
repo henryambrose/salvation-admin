@@ -8,6 +8,7 @@ import { Link, usePage } from '@inertiajs/vue3';
 import * as Icons from 'lucide-vue-next';
 import {
   Award,
+  Baby,
   Bot,
   Building,
   Building2,
@@ -24,9 +25,11 @@ import {
   MapPin,
   Network,
   Shield,
+  Skull,
   UserCheck,
   UserCircle,
   Users,
+  UsersRound,
 } from 'lucide-vue-next';
 import { computed } from 'vue';
 import AppLogo from './AppLogo.vue';
@@ -130,6 +133,24 @@ const navigationGroups = [
         href: '/certificates/templates',
         icon: FileText,
         show: can('read-certificate-template'),
+      },
+      {
+        title: 'Baptism Records',
+        href: '/baptism-records',
+        icon: Baby,
+        show: can('read-certificate'),
+      },
+      {
+        title: 'Marriage Records',
+        href: '/marriage-records',
+        icon: UsersRound,
+        show: can('read-certificate'),
+      },
+      {
+        title: 'Death Records',
+        href: '/death-records',
+        icon: Skull,
+        show: can('read-certificate'),
       },
     ],
   },

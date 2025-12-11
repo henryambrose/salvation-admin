@@ -455,9 +455,9 @@ const form = useForm({
   member_sequence: member?.member_sequence ? member.member_sequence : '',
   marital_status: member?.marital_status ? member.marital_status : 'Single',
   // current_family_no is managed by business logic (marriage, etc.) - not editable
-  mother_id: member?.mother_id || null,
-  father_id: member?.father_id || null,
-  spouse_id: member?.spouse_id || null,
+  mother_id: member?.mother_id ? Number(member.mother_id) : null,
+  father_id: member?.father_id ? Number(member.father_id) : null,
+  spouse_id: member?.spouse_id ? Number(member.spouse_id) : null,
   community_id: member?.community_id ? member.community_id : '',
   community_cluster_id: member?.community_cluster_id ? member.community_cluster_id : '',
   permanent_add1: member?.permanent_add1 ? member.permanent_add1 : '',
@@ -520,46 +520,13 @@ const parishMembers = ref<Array<{ id: number; name: string; family_no?: string; 
 
 // Function to load current spouse data for editing
 const loadCurrentSpouse = async () => {
-
-  if (member?.spouse_id && form.spouse_source === 'Member') {
+  if (member?.spouse_id) {
     try {
-      console.log('Making API call to load spouse by ID:', member.spouse_id);
-      // Use search API with include_deceased parameter to find spouse even if dead
-      const response = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
-        headers: {
-          Accept: 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-        },
-        credentials: 'same-origin',
-      });
+      console.log('Loading spouse data for ID:', member.spouse_id, 'Source:', form.spouse_source);
 
-
-      if (response.ok) {
-        const spouseArray = await response.json();
-        console.log('Spouse API response:', spouseArray);
-
-        if (spouseArray && spouseArray.length > 0) {
-          const spouse = spouseArray[0]; // Get first (and should be only) result
-          parishMembers.value = [
-            {
-              id: Number(spouse.id),
-              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
-              family_no: spouse.family_no || '',
-              full_name: `${spouse.first_name} ${spouse.last_name}`,
-              community: spouse.community || '',
-            },
-          ];
-          console.log('Updated parishMembers with current spouse:', parishMembers.value);
-        } else {
-          console.log('No spouse data found in response');
-        }
-      } else {
-        console.error('Failed to load spouse:', response.status, response.statusText);
-
-        // Fallback to search API in case direct lookup doesn't work
-        console.log('Trying fallback search API');
-        const fallbackResponse = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
+      if (form.spouse_source === 'Member') {
+        // Use search API with include_deceased parameter to find spouse even if dead
+        const response = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
           headers: {
             Accept: 'application/json',
             'X-Requested-With': 'XMLHttpRequest',
@@ -568,32 +535,245 @@ const loadCurrentSpouse = async () => {
           credentials: 'same-origin',
         });
 
-        if (fallbackResponse.ok) {
-          const data = await fallbackResponse.json();
-          if (data.length > 0) {
-            const spouse = data[0];
-            parishMembers.value = [
-              {
+        if (response.ok) {
+          const spouseArray = await response.json();
+          console.log('Spouse API response:', spouseArray);
+
+          if (spouseArray && spouseArray.length > 0) {
+            const spouse = spouseArray[0]; // Get first (and should be only) result
+            const spouseData = {
+              id: Number(spouse.id),
+              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
+              family_no: spouse.family_no || '',
+              full_name: `${spouse.first_name} ${spouse.last_name}`,
+              community: spouse.community || '',
+            };
+
+            // Add spouse to parishMembers if not already present
+            if (!parishMembers.value.find(m => m.id === spouseData.id)) {
+              parishMembers.value = [spouseData, ...parishMembers.value];
+            }
+            console.log('Updated parishMembers with current spouse:', parishMembers.value);
+          } else {
+            console.log('No spouse data found in response');
+          }
+        } else {
+          console.error('Failed to load spouse:', response.status, response.statusText);
+
+          // Fallback to search API in case direct lookup doesn't work
+          console.log('Trying fallback search API');
+          const fallbackResponse = await fetch(`/member/search-members?q=${member.spouse_id}&limit=1&include_deceased=1`, {
+            headers: {
+              Accept: 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+            credentials: 'same-origin',
+          });
+
+          if (fallbackResponse.ok) {
+            const data = await fallbackResponse.json();
+            if (data.length > 0) {
+              const spouse = data[0];
+              const spouseData = {
                 id: Number(spouse.id),
                 name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
                 family_no: spouse.family_no,
                 full_name: `${spouse.first_name} ${spouse.last_name}`,
                 community: spouse.community || '',
-              },
-            ];
+              };
+
+              // Add spouse to parishMembers if not already present
+              if (!parishMembers.value.find(m => m.id === spouseData.id)) {
+                parishMembers.value = [spouseData, ...parishMembers.value];
+              }
+            }
+          }
+        }
+      } else if (form.spouse_source === 'External') {
+        // Fetch external spouse data
+        const response = await fetch(`/external-member/search?q=${member.spouse_id}&limit=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const spouseArray = await response.json();
+          console.log('External spouse API response:', spouseArray);
+
+          if (spouseArray && spouseArray.length > 0) {
+            const spouse = spouseArray[0];
+            const spouseData = {
+              id: Number(spouse.id),
+              name: `${spouse.first_name} ${spouse.last_name}`,
+            };
+
+            // Add spouse to externalFamilyMembers if not already present
+            if (!externalFamilyMembers.value.find(m => m.id === spouseData.id)) {
+              externalFamilyMembers.value = [spouseData, ...externalFamilyMembers.value];
+            }
+            console.log('Updated externalFamilyMembers with current spouse:', externalFamilyMembers.value);
           }
         }
       }
     } catch (error) {
       console.error('Error loading current spouse:', error);
     }
-  } 
-  // else {
-  //   console.log('Conditions not met for loading spouse:', {
-  //     has_member_spouse_id: !!member?.spouse_id,
-  //     spouse_source_is_member: form.spouse_source === 'Member',
-  //   });
-  // }
+  }
+};
+
+// Function to load current father data for editing
+const loadCurrentFather = async () => {
+  if (member?.father_id) {
+    try {
+      console.log('Loading father data for ID:', member.father_id, 'Source:', form.father_source);
+
+      if (form.father_source === 'Member') {
+        // Fetch member father data
+        const response = await fetch(`/member/search-members?q=${member.father_id}&limit=1&include_deceased=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const fatherArray = await response.json();
+          console.log('Father API response:', fatherArray);
+
+          if (fatherArray && fatherArray.length > 0) {
+            const father = fatherArray[0];
+            const fatherData = {
+              id: Number(father.id),
+              name: `${father.first_name} ${father.last_name}`,
+              family_no: father.family_no || '',
+              full_name: `${father.first_name} ${father.last_name}`,
+              community: father.community || '',
+              gender_name: father.gender_name,
+            };
+
+            // Add father to familyMembers if not already present
+            if (!familyMembers.value.find(m => m.id === fatherData.id)) {
+              familyMembers.value = [fatherData, ...familyMembers.value];
+            }
+            console.log('Updated familyMembers with current father:', familyMembers.value);
+          }
+        }
+      } else if (form.father_source === 'External') {
+        // Fetch external father data
+        const response = await fetch(`/external-member/search?q=${member.father_id}&limit=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const fatherArray = await response.json();
+          console.log('External father API response:', fatherArray);
+
+          if (fatherArray && fatherArray.length > 0) {
+            const father = fatherArray[0];
+            const fatherData = {
+              id: Number(father.id),
+              name: `${father.first_name} ${father.last_name}`,
+            };
+
+            // Add father to externalFamilyMembers if not already present
+            if (!externalFamilyMembers.value.find(m => m.id === fatherData.id)) {
+              externalFamilyMembers.value = [fatherData, ...externalFamilyMembers.value];
+            }
+            console.log('Updated externalFamilyMembers with current father:', externalFamilyMembers.value);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading current father:', error);
+    }
+  }
+};
+
+// Function to load current mother data for editing
+const loadCurrentMother = async () => {
+  if (member?.mother_id) {
+    try {
+      console.log('Loading mother data for ID:', member.mother_id, 'Source:', form.mother_source);
+
+      if (form.mother_source === 'Member') {
+        // Fetch member mother data
+        const response = await fetch(`/member/search-members?q=${member.mother_id}&limit=1&include_deceased=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const motherArray = await response.json();
+          console.log('Mother API response:', motherArray);
+
+          if (motherArray && motherArray.length > 0) {
+            const mother = motherArray[0];
+            const motherData = {
+              id: Number(mother.id),
+              name: `${mother.first_name} ${mother.last_name}`,
+              family_no: mother.family_no || '',
+              full_name: `${mother.first_name} ${mother.last_name}`,
+              community: mother.community || '',
+              gender_name: mother.gender_name,
+            };
+
+            // Add mother to familyMembers if not already present
+            if (!familyMembers.value.find(m => m.id === motherData.id)) {
+              familyMembers.value = [motherData, ...familyMembers.value];
+            }
+            console.log('Updated familyMembers with current mother:', familyMembers.value);
+          }
+        }
+      } else if (form.mother_source === 'External') {
+        // Fetch external mother data
+        const response = await fetch(`/external-member/search?q=${member.mother_id}&limit=1`, {
+          headers: {
+            Accept: 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          credentials: 'same-origin',
+        });
+
+        if (response.ok) {
+          const motherArray = await response.json();
+          console.log('External mother API response:', motherArray);
+
+          if (motherArray && motherArray.length > 0) {
+            const mother = motherArray[0];
+            const motherData = {
+              id: Number(mother.id),
+              name: `${mother.first_name} ${mother.last_name}`,
+            };
+
+            // Add mother to externalFamilyMembers if not already present
+            if (!externalFamilyMembers.value.find(m => m.id === motherData.id)) {
+              externalFamilyMembers.value = [motherData, ...externalFamilyMembers.value];
+            }
+            console.log('Updated externalFamilyMembers with current mother:', externalFamilyMembers.value);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading current mother:', error);
+    }
+  }
 };
 
 // Watch for family_no changes to refetch external family members
@@ -612,9 +792,9 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      // Clear parish members when switching to Member source
-      // User will need to type to search
-      parishMembers.value = [];
+      // When switching to Member source, preserve currently selected spouse if any
+      const currentlySelected = parishMembers.value.find((m: any) => m.id === form.spouse_id);
+      parishMembers.value = currentlySelected ? [currentlySelected] : [];
     }
   },
 );
@@ -625,8 +805,9 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      // Clear parish members when switching to Member source
-      parishMembers.value = [];
+      // When switching to Member source, preserve currently selected father if any
+      const currentlySelected = familyMembers.value.find((m: any) => m.id === form.father_id);
+      familyMembers.value = currentlySelected ? [currentlySelected] : [];
     }
   },
 );
@@ -637,8 +818,9 @@ watch(
     if (newValue === 'External') {
       fetchExternalFamilyMembers();
     } else {
-      // Clear parish members when switching to Member source
-      parishMembers.value = [];
+      // When switching to Member source, preserve currently selected mother if any
+      const currentlySelected = familyMembers.value.find((m: any) => m.id === form.mother_id);
+      familyMembers.value = currentlySelected ? [currentlySelected] : [];
     }
   },
 );
@@ -1089,13 +1271,22 @@ onMounted(() => {
 });
 
 // Load current spouse data and fetch family members when editing a member
-onMounted(() => {
-  loadCurrentSpouse();
-  // Fetch family members if family_no exists
+onMounted(async () => {
+  // Fetch family members first if family_no exists
   if (form.family_no) {
-    fetchFamilyMembers();
-    fetchExternalFamilyMembers();
+    await Promise.all([
+      fetchFamilyMembers(),
+      fetchExternalFamilyMembers()
+    ]);
   }
+
+  // Then load current selections (spouse, father, mother) after family members are fetched
+  // This ensures the loaded selections are added to already-populated arrays
+  await Promise.all([
+    loadCurrentSpouse(),
+    loadCurrentFather(),
+    loadCurrentMother()
+  ]);
 });
 
 function cancel() {
@@ -1228,7 +1419,7 @@ const fetchExternalFamilyMembers = async () => {
 // Function to fetch parish-wide members for spouse search
 const fetchParishMembers = async (searchQuery: string = '') => {
   if (!searchQuery || searchQuery.length < 2) {
-    parishMembers.value = [];
+    // Don't clear the array - preserve any pre-loaded values (like current spouse)
     return;
   }
 
@@ -1252,13 +1443,24 @@ const fetchParishMembers = async (searchQuery: string = '') => {
 
     if (response.ok) {
       const data = await response.json();
-      parishMembers.value = data.map((member: any) => ({
+      const parishmember = data.map((member: any) => ({
         id: Number(member.id),
         name: `${member.first_name} ${member.last_name} (${member.family_no})`,
         family_no: member.family_no,
         full_name: `${member.first_name} ${member.last_name}`,
         community: member.community || '',
+        gender:member.gender,
       }));
+
+      const filteredMembers = parishmember.filter((member: any) => member.gender !== '');
+
+      // Preserve currently selected spouse in the array if it exists
+      const currentlySelected = parishMembers.value.find((m: any) => m.id === form.spouse_id);
+      if (currentlySelected && !filteredMembers.find((m: any) => m.id === currentlySelected.id)) {
+        filteredMembers.unshift(currentlySelected); // Add to beginning
+      }
+
+      parishMembers.value = filteredMembers;
       console.log('parishMembers updated:', parishMembers.value);
     } else {
       parishMembers.value = [];
@@ -1269,31 +1471,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
   }
 };
 
-// Watch for family_no changes to refetch family members
-// watch(
-//   () => form.family_no,
-//   () => {
-//     fetchFamilyMembers().then(() => {
-//       // Load current father and mother after family members are refetched
-//       loadCurrentFather();
-//       loadCurrentMother();
-//     });
-//     fetchExternalFamilyMembers();
-//   },
-// );
 
-// Fetch family members on mount
-// onMounted(() => {
-//   // Fetch family members since Member is the default
-//   fetchFamilyMembers().then(() => {
-//     // Load current father and mother after family members are fetched
-//     loadCurrentFather();
-//     loadCurrentMother();
-//   });
-
-//   // Also fetch external members in case they're needed later
-//   fetchExternalFamilyMembers();
-// });
 </script>
 
 <template>

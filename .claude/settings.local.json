@@ -43,7 +43,8 @@
       "Bash(git rm:*)",
       "Bash(del \"resources\\js\\composables\\useDebounce.ts\" \"resources\\js\\composables\\useComboboxSearch.ts\" \"resources\\js\\composables\\useComboboxKeyboard.ts\")",
       "Bash(tasklist:*)",
-      "Bash(del \"D:\\Projects\\salvation-admin\\resources\\js\\PagesGraveyard\\Payment\\Receipt.vue\")"
+      "Bash(del \"D:\\Projects\\salvation-admin\\resources\\js\\PagesGraveyard\\Payment\\Receipt.vue\")",
+      "Bash(del \"D:\\Projects\\salvation-admin\\database\\modules\\members\\database\\migrations\\2025_12_10_230602_add_parochial_register_fields_to_members.php\")"
     ],
     "deny": [],
     "ask": []

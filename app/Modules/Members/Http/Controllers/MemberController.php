@@ -289,49 +289,12 @@ class MemberController extends Controller
 
         return Inertia::render('member/Member', [
             'communities' => Community::all(),
-            // 'incomeRanges' => IncomeRange::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // }),
-            // 'parishes' => Parish::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // }),
-            // 'bloodGroups' => BloodGroup::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // })->toArray(),
             'relationships' => Relationship::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            // 'countries' => Country::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // })->toArray(),
-            // 'states' => State::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name, 'country_id' => $item->country_id];
-            // })->toArray(),
-            // 'cities' => City::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name, 'state_id' => $item->state_id];
-            // })->toArray(),
-            // 'towns' => Town::with('city.state.country')->get()->map(function ($item) {
-            //     return [
-            //         'id' => $item->id,
-            //         'name' => $item->name,
-            //         'pincode' => $item->pincode,
-            //         'city_id' => $item->city_id,
-            //         'state_id' => $item->city->state_id ?? null,
-            //         'country_id' => $item->city->state->country_id ?? null,
-            //     ];
-            // })->toArray(),
-            // 'designations' => Designation::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // })->toArray(),
             'genders' => Gender::all()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->name];
             })->toArray(),
-            // 'statuses' => Status::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // })->toArray(),
-            // 'parishes' => Parish::all()->map(function ($item) {
-            //     return ['id' => $item->id, 'name' => $item->name];
-            // })->toArray(),
             'communityClusters' => CommunityCluster::with('cluster')->get()->map(function ($item) {
                 return ['id' => $item->id, 'name' => $item->cluster->name ?? 'Unknown Cluster', 'community_id' => $item->community_id];
             })->toArray(),
@@ -456,34 +419,12 @@ class MemberController extends Controller
             DB::commit();
 
             $perPage = $request->input('perPage', 10);
-            // // Build the query as in index
-            // $query = Member::query();
-            // if ($search = $request->input('search')) {
-            //     $query->where('first_name', 'like', "%$search%");
-            //     // Add other filters as needed
-            // }
-            // if ($sort = $request->input('sort')) {
-            //     $query->orderBy($sort, $request->input('direction', 'asc'));
-            // } else {
-            //     $query->orderBy('id', 'asc');
-            // }
-            // $allIds = $query->pluck('id')->toArray();
-            // $position = array_search($member->id, $allIds);
-            // $page = $position !== false ? (int) floor($position / $perPage) + 1 : 1;
             $page = $this->resolvePageFor($member, $request, $perPage);
 
             return redirect()->route('member.index', array_merge(
                 $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
                 ['page' => $page, 'perPage' => $perPage, 'highlightId' => $member->id]
             ))->with('success', 'Member created successfully with Family No: ' . $member->family_no);
-            // return redirect()->route('member.index', array_merge(
-            //     $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
-            //     [
-            //         'page' => $page,
-            //         'perPage' => $perPage,
-            //         'highlightId' => $member->id,
-            //     ]
-            // ))->with('success', 'Member created successfully with Family No: '.$member->family_no);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -694,22 +635,6 @@ class MemberController extends Controller
             'type' => $type,
         ]);
     }
-
-    // public function searchFamilyMembers(Request $request)
-    // {
-    //     $query = $request->input('q', '');
-    //     $limit = $request->input('limit', 10);
-
-    //     if (empty($query) || strlen($query) < 2) {
-    //         return response()->json([]);
-    //     }
-
-    //     $familyTreeService = new FamilyTreeService;
-    //     $members = $familyTreeService->searchMembers($query, $limit);
-
-    //     return response()->json($members);
-    // }
-
 
     public function export(Request $request)
     {
@@ -1274,6 +1199,47 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
+    /**
+     * Search members for SearchDropdown component
+     * Returns data in format: [{ id, name }]
+     */
+    public function search(Request $request)
+    {
+        $query = $request->input('search', '');
+
+        if (empty($query)) {
+            return response()->json([]);
+        }
+
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $members = Member::with(['community'])
+            ->alive()
+            ->where(function ($q) use ($query) {
+                $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('last_name', 'like', "%{$query}%")
+                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhere('member_no', 'like', "%{$query}%")
+                    ->orWhere('family_no', 'like', "%{$query}%");
+            })
+            ->limit(10)
+            ->get()
+            ->map(function ($member) {
+                $communityName = $member->community->name ?? '';
+                return [
+                    'id' => $member->id,
+                    'name' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$communityName}",
+                    'baptism_date' => $member->baptism_date,
+                    'baptism_reg_no' => $member->baptism_reg_no,
+                    'baptism_parish_id' => $member->baptism_parish_id,
+                ];
+            });
+
+        return response()->json($members);
+    }
+
     //for viewmembermodal leadership roles tab
     public function getMemberDetails($id)
     {
@@ -1540,6 +1506,7 @@ class MemberController extends Controller
 
         // Get the spouse with their gender
         $spouse = Member::with('gender')->find($data['spouse_id']);
+        Log::info('spouse:', $spouse);
         if (!$spouse) {
             return;
         }

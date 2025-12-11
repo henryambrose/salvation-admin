@@ -146,8 +146,8 @@ function fetch(page = 1) {
       type: certificateType.value,
       sort: sort.value,
       direction: direction.value,
-      per_page: perPage.value,
-      page,
+      per_page: perPage.value.toString(),
+      page: page.toString(),
     },
     {
       preserveState: true,

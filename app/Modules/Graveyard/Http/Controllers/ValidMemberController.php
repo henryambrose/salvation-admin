@@ -62,7 +62,7 @@ class ValidMemberController extends Controller
     public function create(Request $request): Response
     {
         return Inertia::render('PagesGraveyard/ValidMember/Create', [
-            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'grave_no', 'section', 'row_no', 'owner_name', 'contact_no', 'member_id')->with('member:id,full_name,family_no')->get(),
+            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'row', 'column', 'owner_name', 'contact_no', 'member_id')->with('member:id,full_name,family_no')->get(),
             'niches' => \Modules\Graveyard\Models\Niche::select('id', 'niche_no', 'location')->get(),
             'genders' => \Modules\Members\Models\Gender::select('id', 'name')->get(),
             'parishes' => \Modules\Members\Models\Parish::all(),
@@ -90,7 +90,8 @@ class ValidMemberController extends Controller
             $query->where(function ($q) use ($searchTerm) {
                 $q->where('owner_name', 'like', "%{$searchTerm}%")
                     ->orWhere('contact_no', 'like', "%{$searchTerm}%")
-                    ->orWhere('grave_no', 'like', "%{$searchTerm}%")
+                    ->orWhere('row', 'like', "%{$searchTerm}%")
+                    ->orWhere('column', 'like', "%{$searchTerm}%")
                     ->orWhere('old_no', 'like', "%{$searchTerm}%")
                     ->orWhereHas('member', function ($memberQuery) use ($searchTerm) {
                         $memberQuery->where('first_name', 'like', "%{$searchTerm}%")
@@ -103,11 +104,11 @@ class ValidMemberController extends Controller
                 return [
                     'id' => $grave->id,
                     'type' => 'permanent_grave',
-                    'display_name' => "Grave {$grave->grave_no} ({$grave->section}, Row {$grave->row_no})",
+                    'display_name' => "Grave {$grave->column} ({$grave->block}, Row {$grave->row})",
                     'details' => [
-                        'grave_no' => $grave->grave_no,
-                        'section' => $grave->section,
-                        'row_no' => $grave->row_no,
+                        'column' => $grave->column,
+                        'block' => $grave->block,
+                        'row' => $grave->row,
                         'owner_name' => $grave->owner_name,
                         'contact_no' => $grave->contact_no,
                         'member' => $grave->member ? [
@@ -283,7 +284,7 @@ class ValidMemberController extends Controller
 
         return Inertia::render('PagesGraveyard/ValidMember/Edit', [
             'validMember' => $validMember,
-            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'grave_no', 'section', 'row_no')->get(),
+            'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'block', 'column', 'row')->get(),
             'niches' => \Modules\Graveyard\Models\Niche::select('id', 'niche_no', 'location')->get(),
         ]);
     }

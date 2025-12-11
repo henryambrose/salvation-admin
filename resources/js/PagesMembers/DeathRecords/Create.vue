@@ -1,0 +1,167 @@
+<script setup lang="ts">
+import { Head, useForm, router } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+
+const props = defineProps<{
+  parishes: any[];
+}>();
+
+const form = useForm({
+  member_id: undefined as number | undefined,
+  death_date: '',
+  burial_date: '',
+  burial_reg_no: '',
+  burial_parish_id: null as number | null,
+  deceased_name: '',
+  deceased_surname: '',
+  relationship: '',
+  residence: '',
+  age: null as number | null,
+  nationality: '',
+  cause_of_death: '',
+  place_of_burial: '',
+  minister_name: '',
+  death_remarks: '',
+});
+
+// Format date from DD/MM/YYYY to YYYY-MM-DD for database
+const formatDateForDatabase = (dateString: string): string => {
+  if (!dateString) return '';
+  const parts = dateString.split('/');
+  if (parts.length !== 3) return '';
+  const [day, month, year] = parts;
+  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+};
+
+// Handle member selection from SearchDropdown
+function handleMemberSelect(member: any) {
+  // Auto-populate fields from member data
+  form.deceased_name = member.first_name || '';
+  form.deceased_surname = member.last_name || '';
+  form.nationality = member.nationality || '';
+  form.residence = member.current_address || '';
+
+  // Calculate age from date of birth if available
+  if (member.date_of_birth) {
+    const birthDate = new Date(member.date_of_birth);
+    const currentDate = new Date();
+    const age = currentDate.getFullYear() - birthDate.getFullYear();
+    form.age = age;
+  }
+}
+
+function submit() {
+  // Convert dates from DD/MM/YYYY to YYYY-MM-DD for database
+  const dataToSubmit = {
+    ...form.data(),
+    death_date: formatDateForDatabase(form.death_date),
+    burial_date: formatDateForDatabase(form.burial_date),
+  };
+
+  form.transform(() => dataToSubmit).post('/death-records', {
+    preserveScroll: true,
+    onSuccess: () => router.visit('/death-records'),
+  });
+}
+</script>
+
+<template>
+  <AppLayout title="Create Death Record">
+    <Head title="Create Death Record" />
+
+    <div class="p-6">
+      <h1 class="mb-6 text-2xl font-bold">Create Death Record</h1>
+
+      <form @submit.prevent="submit" class="max-w-4xl space-y-6 rounded-lg bg-white p-6 shadow">
+        <div class="grid gap-4 md:grid-cols-2">
+          <div class="md:col-span-2">
+            <Label>Search Member</Label>
+            <SearchDropdown
+              v-model="form.member_id"
+              :options="[]"
+              fetch-url="/member/search"
+              placeholder="Search deceased member by name..."
+              @select="handleMemberSelect"
+            />
+          </div>
+          <div>
+            <Label>Death Date</Label>
+            <Input
+              v-model="form.death_date"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              pattern="\d{2}/\d{2}/\d{4}"
+            />
+          </div>
+          <div>
+            <Label>Burial Date</Label>
+            <Input
+              v-model="form.burial_date"
+              type="text"
+              placeholder="DD/MM/YYYY"
+              pattern="\d{2}/\d{2}/\d{4}"
+            />
+          </div>
+          <div>
+            <Label>Burial Reg No</Label>
+            <Input v-model="form.burial_reg_no" />
+          </div>
+          <div>
+            <Label>Deceased Name</Label>
+            <Input v-model="form.deceased_name" />
+          </div>
+          <div>
+            <Label>Deceased Surname</Label>
+            <Input v-model="form.deceased_surname" />
+          </div>
+          <div>
+            <Label>Relationship (e.g., w/o, h/o)</Label>
+            <Input v-model="form.relationship" placeholder="w/o (wife of), h/o (husband of)" />
+          </div>
+          <div>
+            <Label>Age</Label>
+            <Input v-model.number="form.age" type="number" min="0" max="150" />
+          </div>
+          <div>
+            <Label>Nationality</Label>
+            <Input v-model="form.nationality" />
+          </div>
+          <div>
+            <Label>Cause of Death</Label>
+            <Input v-model="form.cause_of_death" />
+          </div>
+          <div class="md:col-span-2">
+            <Label>Residence</Label>
+            <Textarea v-model="form.residence" />
+          </div>
+          <div>
+            <Label>Place of Burial</Label>
+            <Input v-model="form.place_of_burial" />
+          </div>
+          <div>
+            <Label>Minister Name</Label>
+            <Input v-model="form.minister_name" />
+          </div>
+          <div class="md:col-span-2">
+            <Label>Remarks</Label>
+            <Textarea v-model="form.death_remarks" />
+          </div>
+        </div>
+
+        <div class="flex gap-4">
+          <Button type="submit" :disabled="form.processing">
+            {{ form.processing ? 'Saving...' : 'Save Death Record' }}
+          </Button>
+          <Button type="button" variant="outline" @click="router.visit('/death-records')">
+            Cancel
+          </Button>
+        </div>
+      </form>
+    </div>
+  </AppLayout>
+</template>

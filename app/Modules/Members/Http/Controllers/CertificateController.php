@@ -628,7 +628,7 @@ class CertificateController extends Controller
         'member_id' => $member->id,
         'certificate_type_id' => $validated['certificate_type_id'],
         'template_id' => $template->id,
-        'issued_date' => now()->toDateString(),
+        'issued_date' => now(),  // Keep as Carbon instance, not string
         'issued_by' => Auth::id(),
         'certificate_number' => 'PREVIEW-' . time(),
         'additional_data' => $validated['additional_data'] ?? [],

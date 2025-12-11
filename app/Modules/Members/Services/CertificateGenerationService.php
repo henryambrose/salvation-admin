@@ -148,14 +148,71 @@ class CertificateGenerationService
     // Add certificate type specific data
     switch ($certificateType->code) {
       case 'baptism':
+        // Get baptism record if exists
+        $baptismRecord = $member->baptismRecord;
+
+        // Get father/mother names from relationships
+        $father = $member->father;
+        $mother = $member->mother;
+        $spouse = $member->spouse;
+
+        // Get confirmation certificate if exists
+        $confirmationCert = CertificateRecord::where('member_id', $member->id)
+          ->where('certificate_type_id', 2) // confirmation type
+          ->orderBy('issued_date', 'desc')
+          ->first();
+
+        // Get marriage certificate if exists
+        $marriageCert = CertificateRecord::where('member_id', $member->id)
+          ->where('certificate_type_id', 3) // marriage type
+          ->orderBy('issued_date', 'desc')
+          ->first();
+
         $data = array_merge($data, [
-          'baptism_date' => $member->baptism_date?->format('d/m/Y'),
-          'baptism_reg_no' => $member->baptism_reg_no,
-          'baptism_parish' => $member->baptism_parish ?? $data['parish_name'],
-          'godfather_name' => $additionalData['godfather_name'] ?? '',
-          'godmother_name' => $additionalData['godmother_name'] ?? '',
-          'priest_name' => $additionalData['priest_name'] ?? '',
+          // Legacy fields from member table (fallback)
+          'baptism_date' => $baptismRecord?->baptism_date?->format('d F Y') ?? $member->baptism_date?->format('d F Y'),
+          'baptism_reg_no' => $baptismRecord?->baptism_reg_no ?? $member->baptism_reg_no,
+          'baptism_parish' => $baptismRecord?->baptismParish?->name ?? $member->baptism_parish ?? $data['parish_name'],
+          'baptism_year' => $baptismRecord?->baptism_year ?? $member->baptism_date?->year,
+
+          // Parochial register fields from baptism_records table
+          'place_of_birth' => $baptismRecord?->place_of_birth ?? '',
+          'place_of_baptism' => $baptismRecord?->place_of_baptism ?? ($baptismRecord?->baptismParish?->name ?? $member->baptism_parish ?? ''),
+          'nationality' => $baptismRecord?->nationality ?? '',
+
+          // Father and Mother names
+          'father_name' => $baptismRecord?->father_name ?? ($father ? trim("{$father->first_name} {$father->middle_name} {$father->last_name}") : ''),
+          'mother_name' => $baptismRecord?->mother_name ?? ($mother ? trim("{$mother->first_name} {$mother->middle_name} {$mother->last_name}") : ''),
+          'father_residence' => $baptismRecord?->father_residence ?? '',
+          'father_profession' => $baptismRecord?->father_profession ?? '',
+
+          // Godparents
+          'godfather_name' => $baptismRecord?->godfather_name ?? $additionalData['godfather_name'] ?? '',
+          'godfather_residence' => $baptismRecord?->godfather_residence ?? '',
+          'godmother_name' => $baptismRecord?->godmother_name ?? $additionalData['godmother_name'] ?? '',
+          'godmother_residence' => $baptismRecord?->godmother_residence ?? '',
+
+          // Minister/Priest
+          'minister_name' => $baptismRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
+
+          // Remarks
+          'baptism_remarks' => $baptismRecord?->baptism_remarks ?? '',
+
+          // Legacy fields
+          'priest_name' => $baptismRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
           'witnesses' => $additionalData['witnesses'] ?? '',
+
+          // Cross-reference data
+          'confirmation_info' => $confirmationCert ? [
+            'date' => $member->confirmation_date?->format('d F Y'),
+            'place' => $member->confirmation_parish ?? $data['parish_name'],
+          ] : null,
+
+          'marriage_info' => $marriageCert ? [
+            'date' => $member->marriage_date?->format('d F Y'),
+            'place' => $member->marriage_parish ?? $data['parish_name'],
+            'spouse' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : $additionalData['spouse_name'] ?? '',
+          ] : null,
         ]);
         break;
 
@@ -172,14 +229,61 @@ class CertificateGenerationService
         break;
 
       case 'marriage':
+        // Get marriage record (check both as bridegroom and bride)
+        $marriageRecord = $member->marriageRecordAsBridegroom ?? $member->marriageRecordAsBride;
+
+        // Determine member's role and get spouse info
+        $spouse = $member->spouse;
+        $isBridegroom = $marriageRecord && $marriageRecord->bridegroom_member_id === $member->id;
+
         $data = array_merge($data, [
-          'marriage_date' => $member->marriage_date?->format('d/m/Y'),
-          'marriage_reg_no' => $member->marriage_reg_no,
-          'marriage_parish' => $member->marriage_parish ?? $data['parish_name'],
-          'spouse_name' => $additionalData['spouse_name'] ?? '',
-          'witness1_name' => $additionalData['witness1_name'] ?? '',
-          'witness2_name' => $additionalData['witness2_name'] ?? '',
-          'priest_name' => $additionalData['priest_name'] ?? '',
+          // Legacy fields from member table (fallback)
+          'marriage_date' => $marriageRecord?->marriage_date?->format('d F Y') ?? $member->marriage_date?->format('d F Y'),
+          'marriage_reg_no' => $marriageRecord?->marriage_reg_no ?? $member->marriage_reg_no,
+          'marriage_parish' => $marriageRecord?->marriageParish?->name ?? $member->marriage_parish ?? $data['parish_name'],
+          'marriage_year' => $marriageRecord?->marriage_year ?? $member->marriage_date?->year,
+
+          // Bridegroom Information
+          'bridegroom_name' => $marriageRecord?->bridegroom_name ?? ($isBridegroom ? $member->first_name . ($member->middle_name ? ' ' . $member->middle_name : '') : ($spouse?->first_name ?? '')),
+          'bridegroom_surname' => $marriageRecord?->bridegroom_surname ?? ($isBridegroom ? $member->last_name : ($spouse?->last_name ?? '')),
+          'bridegroom_dob' => $marriageRecord?->bridegroom_dob?->format('d F Y') ?? ($isBridegroom ? $member->date_of_birth?->format('d F Y') : ($spouse?->date_of_birth?->format('d F Y') ?? '')),
+          'bridegroom_nationality' => $marriageRecord?->bridegroom_nationality ?? '',
+          'bridegroom_profession' => $marriageRecord?->bridegroom_profession ?? '',
+          'bridegroom_residence' => $marriageRecord?->bridegroom_residence ?? '',
+          'bridegroom_father_name' => $marriageRecord?->bridegroom_father_name ?? '',
+          'bridegroom_mother_name' => $marriageRecord?->bridegroom_mother_name ?? '',
+          'bridegroom_status' => $marriageRecord?->bridegroom_status ?? '',
+          'bridegroom_if_widower_whose' => $marriageRecord?->bridegroom_if_widower_whose ?? '',
+
+          // Bride Information
+          'bride_name' => $marriageRecord?->bride_name ?? (!$isBridegroom ? $member->first_name . ($member->middle_name ? ' ' . $member->middle_name : '') : ($spouse?->first_name ?? '')),
+          'bride_surname' => $marriageRecord?->bride_surname ?? (!$isBridegroom ? $member->last_name : ($spouse?->last_name ?? '')),
+          'bride_dob' => $marriageRecord?->bride_dob?->format('d F Y') ?? (!$isBridegroom ? $member->date_of_birth?->format('d F Y') : ($spouse?->date_of_birth?->format('d F Y') ?? '')),
+          'bride_nationality' => $marriageRecord?->bride_nationality ?? '',
+          'bride_profession' => $marriageRecord?->bride_profession ?? '',
+          'bride_residence' => $marriageRecord?->bride_residence ?? '',
+          'bride_father_name' => $marriageRecord?->bride_father_name ?? '',
+          'bride_mother_name' => $marriageRecord?->bride_mother_name ?? '',
+          'bride_status' => $marriageRecord?->bride_status ?? '',
+          'bride_if_widow_whose' => $marriageRecord?->bride_if_widow_whose ?? '',
+
+          // Witnesses
+          'first_witness_name' => $marriageRecord?->first_witness_name ?? $additionalData['witness1_name'] ?? '',
+          'first_witness_residence' => $marriageRecord?->first_witness_residence ?? '',
+          'second_witness_name' => $marriageRecord?->second_witness_name ?? $additionalData['witness2_name'] ?? '',
+          'second_witness_residence' => $marriageRecord?->second_witness_residence ?? '',
+
+          // Minister
+          'minister_name' => $marriageRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
+
+          // Remarks
+          'marriage_remarks' => $marriageRecord?->marriage_remarks ?? '',
+
+          // Legacy fields
+          'spouse_name' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : $additionalData['spouse_name'] ?? '',
+          'witness1_name' => $marriageRecord?->first_witness_name ?? $additionalData['witness1_name'] ?? '',
+          'witness2_name' => $marriageRecord?->second_witness_name ?? $additionalData['witness2_name'] ?? '',
+          'priest_name' => $marriageRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
           'marriage_type' => $additionalData['marriage_type'] ?? 'Catholic Marriage',
         ]);
         break;
@@ -193,13 +297,33 @@ class CertificateGenerationService
         break;
 
       case 'death':
+        // Get death record if exists
+        $deathRecord = $member->deathRecord;
+
         $data = array_merge($data, [
-          'death_date' => $member->death_date?->format('d/m/Y'),
-          'deaths_reg_no' => $member->deaths_reg_no,
-          'death_parish' => $member->death_parish ?? $data['parish_name'],
-          'burial_date' => $additionalData['burial_date'] ?? '',
-          'burial_place' => $additionalData['burial_place'] ?? '',
-          'priest_name' => $additionalData['priest_name'] ?? '',
+          // Legacy fields from member table (fallback)
+          'death_date' => $deathRecord?->death_date?->format('d F Y') ?? $member->death_date?->format('d F Y'),
+          'burial_date' => $deathRecord?->burial_date?->format('d F Y') ?? $additionalData['burial_date'] ?? '',
+          'burial_reg_no' => $deathRecord?->burial_reg_no ?? $member->deaths_reg_no,
+          'death_parish' => $deathRecord?->burialParish?->name ?? $member->death_parish ?? $data['parish_name'],
+          'burial_year' => $deathRecord?->burial_year ?? $member->death_date?->year,
+
+          // Parochial register fields from death_records table
+          'deceased_name' => $deathRecord?->deceased_name ?? $member->first_name . ($member->middle_name ? ' ' . $member->middle_name : ''),
+          'deceased_surname' => $deathRecord?->deceased_surname ?? $member->last_name,
+          'relationship' => $deathRecord?->relationship ?? '',
+          'residence' => $deathRecord?->residence ?? '',
+          'age' => $deathRecord?->age ?? '',
+          'nationality' => $deathRecord?->nationality ?? '',
+          'cause_of_death' => $deathRecord?->cause_of_death ?? '',
+          'place_of_burial' => $deathRecord?->place_of_burial ?? $additionalData['burial_place'] ?? '',
+          'minister_name' => $deathRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
+          'death_remarks' => $deathRecord?->death_remarks ?? '',
+
+          // Legacy fields
+          'deaths_reg_no' => $deathRecord?->burial_reg_no ?? $member->deaths_reg_no,
+          'burial_place' => $deathRecord?->place_of_burial ?? $additionalData['burial_place'] ?? '',
+          'priest_name' => $deathRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
           'last_rites_given' => $additionalData['last_rites_given'] ?? 'Yes',
         ]);
         break;

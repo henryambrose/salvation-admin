@@ -26,6 +26,7 @@ Route::post('/ping', function () {
 
 // Load certificate routes early to avoid conflicts
 require __DIR__ . '/certificate.php';
+require __DIR__ . '/sacramental_records.php';
 
 // Protected routes
 Route::middleware(['auth', 'verified', 'nocache'])->group(function () {

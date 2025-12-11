@@ -35,6 +35,8 @@ Route::middleware(['web', 'auth'])->group(function () {
         ->name('member.church-statistics');
     Route::get('member/search-members', [MemberController::class, 'searchMembers'])
         ->name('member.search-members');
+    Route::get('member/search', [MemberController::class, 'search'])
+        ->name('member.search');
     Route::post('member/handle-marriage', [MemberController::class, 'handleMarriage'])
         ->name('member.handle-marriage');
 

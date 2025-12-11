@@ -146,6 +146,26 @@ class Member extends Model
         return $this->belongsTo(BloodGroup::class);
     }
 
+    public function baptismRecord()
+    {
+        return $this->hasOne(BaptismRecord::class);
+    }
+
+    public function marriageRecordAsBridegroom()
+    {
+        return $this->hasOne(MarriageRecord::class, 'bridegroom_member_id');
+    }
+
+    public function marriageRecordAsBride()
+    {
+        return $this->hasOne(MarriageRecord::class, 'bride_member_id');
+    }
+
+    public function deathRecord()
+    {
+        return $this->hasOne(DeathRecord::class);
+    }
+
     protected static function boot()
     {
         parent::boot();

@@ -102,11 +102,11 @@ function fetch(page = 1) {
       mass_intention_type_id: massIntentionTypeId.value,
       start_date: startDate.value,
       end_date: endDate.value,
-      per_page: perPage.value,
+      per_page: perPage.value.toString(),
       sort: sort.value,
       direction: direction.value,
       isArchived: isArchived.value ? 'true' : 'false',
-      page,
+      page: page.toString(),
     },
     { preserveState: true, preserveScroll: true, replace: true, only: partialOnly },
   );

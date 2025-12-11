@@ -47,7 +47,7 @@ class PermanentGraveBookingController extends Controller
                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                 })
                 ->orWhereHas('permanentGrave', function ($q) use ($search) {
-                    $q->whereRaw("CONCAT(section, '-', row_no, '-', grave_no) LIKE ?", ["%{$search}%"]);
+                    $q->whereRaw("CONCAT(block, '-', row, '-', column) LIKE ?", ["%{$search}%"]);
                 });
         }
 
@@ -96,10 +96,10 @@ class PermanentGraveBookingController extends Controller
 
             return [
                 'id' => $grave->id,
-                'grave_no' => $grave->grave_no,
+                'column' => $grave->column,
                 'owner_name' => $grave->owner_name,
-                'section' => $grave->section,
-                'row_no' => $grave->row_no,
+                'block' => $grave->block,
+                'row' => $grave->row,
                 'last_burial_date' => $grave->last_burial_date,
                 'is_eligible' => $this->checkGraveEligibility($grave),
                 'eligibility_message' => $this->getEligibilityMessage($grave),
