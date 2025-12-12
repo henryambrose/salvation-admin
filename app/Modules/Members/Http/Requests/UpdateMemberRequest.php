@@ -27,6 +27,9 @@ class UpdateMemberRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Get the member being updated from route parameter
+        $member = $this->route('member');
+
         return [
             'community_id' => 'required|exists:communities,id',
             'community_cluster_id' => 'required|exists:community_clusters,id',
@@ -78,19 +81,19 @@ class UpdateMemberRequest extends FormRequest
             'income_range_id' => 'nullable|exists:income_ranges,id',
             'baptism_date' => ['nullable', 'date', new NotFutureDate],
             'baptism_reg_no' => 'nullable|string|max:255',
-            'baptism_parish' => ['nullable', 'string', 'max:255', new ParishValidation('baptism')],
+            'baptism_parish' => ['nullable', 'string', 'max:255', new ParishValidation('baptism', $member->baptism_parish ?? null)],
             'baptism_parish_id' => 'nullable|exists:parishes,id',
             'confirmation_date' => ['nullable', 'date', new NotFutureDate],
             'confirmation_reg_no' => 'nullable|string|max:255',
-            'confirmation_parish' => ['nullable', 'string', 'max:255', new ParishValidation('confirmation')],
+            'confirmation_parish' => ['nullable', 'string', 'max:255', new ParishValidation('confirmation', $member->confirmation_parish ?? null)],
             'confirmation_parish_id' => 'nullable|exists:parishes,id',
             'marriage_date' => ['nullable', 'date', new NotFutureDate],
             'marriage_reg_no' => 'nullable|string|max:255',
-            'marriage_parish' => ['nullable', 'string', 'max:255', new ParishValidation('marriage')],
+            'marriage_parish' => ['nullable', 'string', 'max:255', new ParishValidation('marriage', $member->marriage_parish ?? null)],
             'marriage_parish_id' => 'nullable|exists:parishes,id',
             'death_date' => ['nullable', 'date', new NotFutureDate],
             'deaths_reg_no' => 'nullable|string|max:255',
-            'death_parish' => ['nullable', 'string', 'max:255', new ParishValidation('death')],
+            'death_parish' => ['nullable', 'string', 'max:255', new ParishValidation('death', $member->death_parish ?? null)],
             'death_parish_id' => 'nullable|exists:parishes,id',
             'gender_id' => 'nullable|exists:genders,id',
             'status_id' => 'nullable|exists:statuses,id',

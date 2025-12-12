@@ -5,15 +5,28 @@ namespace Modules\Members\Rules;
 use Modules\Members\Models\Parish;
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Contracts\Validation\DataAwareRule;
 use Illuminate\Support\Str;
 
-class ParishValidation implements ValidationRule
+class ParishValidation implements ValidationRule, DataAwareRule
 {
     protected $fieldName;
+    protected $data = [];
+    protected $originalValue;
 
-    public function __construct($fieldName = null)
+    public function __construct($fieldName = null, $originalValue = null)
     {
         $this->fieldName = $fieldName;
+        $this->originalValue = $originalValue;
+    }
+
+    /**
+     * Set the data under validation.
+     */
+    public function setData(array $data): static
+    {
+        $this->data = $data;
+        return $this;
     }
 
     /**
@@ -27,18 +40,28 @@ class ParishValidation implements ValidationRule
             return; // Allow empty values
         }
 
-        $parishName = trim($value);
+        // Get the corresponding parish_id field name
+        // e.g., if attribute is 'baptism_parish', look for 'baptism_parish_id'
+        $parishIdField = $attribute . '_id';
 
-        // Check for exact match (case-insensitive)
-        $exactMatch = Parish::where('name', $parishName)->first();
-
-        if ($exactMatch) {
-            $fail("Parish '{$parishName}' already exists. Please select it from the dropdown instead.");
-
-            return;
+        // If a parish_id is set, it means the user selected from dropdown
+        // In this case, skip validation as we WANT to use the existing parish
+        if (!empty($this->data[$parishIdField])) {
+            return; // Skip validation when parish is selected from dropdown
         }
 
-        // Check for similar names (fuzzy matching)
+        $parishName = trim($value);
+
+        // Skip validation if the value hasn't changed (editing existing member)
+        // This prevents validation errors when editing a member who already has this parish
+        if (!empty($this->originalValue) && Str::lower($parishName) === Str::lower(trim($this->originalValue))) {
+            return; // Skip validation when value is unchanged
+        }
+
+        // Note: Duplicate parish validation removed - users can enter custom parish names
+        // even if they exist in the dropdown. The dropdown is for convenience only.
+
+        // Check for similar names (fuzzy matching) - informational only
         $similarParishes = Parish::where(function ($query) use ($parishName) {
             $query->whereRaw('LOWER(name) LIKE ?', ['%' . Str::lower($parishName) . '%'])
                 ->orWhereRaw('LOWER(name) LIKE ?', ['%' . Str::lower(str_replace(' ', '%', $parishName)) . '%'])
@@ -46,12 +69,8 @@ class ParishValidation implements ValidationRule
                 ->orWhereRaw('LOWER(name) LIKE ?', ['%' . Str::lower(str_replace('Saint ', 'St. ', $parishName)) . '%']);
         })->limit(5)->get();
 
-        if ($similarParishes->count() > 0) {
-            $similarNames = $similarParishes->pluck('name')->implode(', ');
-            $fail("Similar parishes found: {$similarNames}. Please check if you meant one of these or use a different name.");
-
-            return;
-        }
+        // Note: Similar parish warnings removed - users have full freedom to enter custom parish names
+        // The validation now only checks for format and length requirements
 
         // Additional validation for parish name format
         if (strlen($parishName) < 3) {

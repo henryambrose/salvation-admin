@@ -80,6 +80,7 @@ interface Props {
   label: string;
   modelValue: { parishId?: number | null; parishName?: string | null };
   parishes: Array<{ id: number; name: string; code?: string; town?: string }>;
+  originalValue?: string | null; // Original parish name for edit validation
 }
 
 const props = defineProps<Props>();
@@ -152,7 +153,7 @@ const onParishSelected = (parishId: number | string | null) => {
 
   emit('update:modelValue', {
     parishId: parishId as number,
-    parishName: null, // Clear custom name when using dropdown
+    parishName: parishName, // Include the actual parish name when using dropdown
   });
 
   validationMessage.value = null;
@@ -185,6 +186,7 @@ const validateCustomParish = async () => {
   try {
     const response = await axios.post('/api/validate-parish', {
       name: customParishName.value.trim(),
+      original: props.originalValue || '', // Pass original value for edit validation
     });
 
     const { valid, exists, similar } = response.data;

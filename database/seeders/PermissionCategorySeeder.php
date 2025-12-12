@@ -356,6 +356,17 @@ class PermissionCategorySeeder extends Seeder
                     // ['rule_type' => 'starts_with', 'rule_value' => 'refund-', 'priority' => 10],
                 ]
             ],
+            [
+                'name' => 'Annual Maintenance Fees',
+                'slug' => 'annual-maintenance-fees',
+                'description' => 'Annual maintenance fee management permissions',
+                'app' => 'Graveyard',
+                'color' => '#16A34A',
+                'sort_order' => 26,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'annual-maintenance-fee', 'priority' => 15],
+                ]
+            ],
         ];
 
         foreach ($categories as $categoryData) {

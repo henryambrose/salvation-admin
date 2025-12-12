@@ -2257,7 +2257,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.baptism_reg_no" />
             </div>
             <div class="grid gap-2">
-              <ParishSelection id="baptism_parish" label="Baptism Parish" v-model="baptismParishSelection" :parishes="props.parishes" />
+              <ParishSelection id="baptism_parish" label="Baptism Parish" v-model="baptismParishSelection" :parishes="props.parishes" :original-value="props.member?.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish_id" />
             </div>
@@ -2306,6 +2306,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
                 label="Confirmation Parish"
                 v-model="confirmationParishSelection"
                 :parishes="props.parishes"
+                :original-value="props.member?.confirmation_parish"
               />
               <InputError class="mt-2" :message="form.errors.confirmation_parish" />
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
@@ -2347,7 +2348,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.marriage_reg_no" />
             </div>
             <div class="grid gap-2">
-              <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" />
+              <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" :original-value="props.member?.marriage_parish" />
               <InputError class="mt-2" :message="form.errors.marriage_parish" />
               <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
             </div>
@@ -2388,7 +2389,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.deaths_reg_no" />
             </div>
             <div class="grid gap-2">
-              <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" />
+              <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" :original-value="props.member?.death_parish" />
               <InputError class="mt-2" :message="form.errors.death_parish" />
               <InputError class="mt-2" :message="form.errors.death_parish_id" />
             </div>

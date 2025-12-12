@@ -47,7 +47,8 @@
       "Bash(del \"D:\\Projects\\salvation-admin\\database\\modules\\members\\database\\migrations\\2025_12_10_230602_add_parochial_register_fields_to_members.php\")",
       "Bash(git -C \"D:\\Projects\\salvation-admin\" show 761cbee --stat)",
       "Bash(git -C \"D:\\Projects\\salvation-admin\" show 6433c65 --stat)",
-      "Bash(xcopy \"vendor\\dompdf\\dompdf\\lib\\fonts\\*\" \"storage\\fonts\"\" /E /I /Y)"
+      "Bash(xcopy \"vendor\\dompdf\\dompdf\\lib\\fonts\\*\" \"storage\\fonts\"\" /E /I /Y)",
+      "Bash(php artisan db:seed:*)"
     ],
     "deny": [],
     "ask": []
