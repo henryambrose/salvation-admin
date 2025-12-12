@@ -48,10 +48,10 @@
             @change="applyFilters"
             class="rounded-full border border-gray-300 px-3 py-1 focus:ring-2 focus:ring-blue-200"
           >
-            <option value="">All Payment Status</option>
-            <option value="pending">Pending Payment</option>
-            <option value="partial">Partial Payment</option>
-            <option value="paid">Paid Up</option>
+            <option value="">All Maintenance Status</option>
+            <option value="pending">Pending Maintenance</option>
+            <option value="partial">Partial Maintenance</option>
+            <option value="paid">Maintenance Paid</option>
           </select>
         </div>
         <div class="flex items-center gap-4">
@@ -166,6 +166,14 @@
                 <td class="p-2">
                   <div class="flex items-center gap-2">
                     <template v-if="!serverArchived">
+                      <Button
+                        v-if="canReadAnyGrave"
+                        @click="router.visit('/graveyard/permanent-graves/' + grave.id)"
+                        class="rounded-full bg-blue-100 p-2 text-blue-700 transition hover:bg-blue-200"
+                        title="View grave details"
+                      >
+                        <Eye class="h-[1rem] w-[1rem]" />
+                      </Button>
                       <Button
                         v-if="grave.pending_amount > 0"
                         @click="payMaintenanceFee(grave)"
@@ -296,7 +304,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { ChevronDown, ChevronsUpDown, ChevronUp, Download, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Download, Eye, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();

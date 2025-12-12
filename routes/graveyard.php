@@ -42,6 +42,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         Route::put('/{niche}', [NicheController::class, 'update'])->name('update');
         Route::delete('/{niche}', [NicheController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [NicheController::class, 'restore'])->name('restore');
+        Route::get('/{niche}/valid-members-pdf', [NicheController::class, 'downloadValidMembersPdf'])->name('download-valid-members-pdf');
     });
 
     // Permanent Graves Management
@@ -56,6 +57,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         Route::put('/{permanentGrave}', [PermanentGraveController::class, 'update'])->name('update');
         Route::delete('/{permanentGrave}', [PermanentGraveController::class, 'destroy'])->name('destroy');
         Route::post('/{id}/restore', [PermanentGraveController::class, 'restore'])->name('restore');
+        Route::get('/{permanentGrave}/valid-members-pdf', [PermanentGraveController::class, 'downloadValidMembersPdf'])->name('download-valid-members-pdf');
     });
 
     // Temporary Graves Management

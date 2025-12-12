@@ -30,16 +30,16 @@
                 <h3 class="mb-4 text-lg font-medium text-gray-900">Basic Information</h3>
                 <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
                   <div>
-                    <label class="block text-sm font-medium text-gray-500">Section</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.section }}</p>
+                    <label class="block text-sm font-medium text-gray-500">Block</label>
+                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.block }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-500">Row No</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.row_no }}</p>
+                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.row }}</p>
                   </div>
                   <div>
-                    <label class="block text-sm font-medium text-gray-500">Grave No</label>
-                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.grave_no }}</p>
+                    <label class="block text-sm font-medium text-gray-500">Column</label>
+                    <p class="mt-1 text-sm text-gray-900">{{ permanentGrave.column }}</p>
                   </div>
                   <div>
                     <label class="block text-sm font-medium text-gray-500">Old Number</label>
@@ -121,18 +121,26 @@
               <div class="rounded-lg bg-blue-50 p-6">
                 <h3 class="mb-4 text-lg font-medium text-gray-900">Quick Actions</h3>
                 <div class="space-y-3">
+                  <a
+                    :href="route('graveyard.permanent-graves.download-valid-members-pdf', permanentGrave.id)"
+                    target="_blank"
+                    class="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <FileText class="h-4 w-4" />
+                    Print Valid Members Document
+                  </a>
                   <Link
                     :href="route('graveyard.permanent-graves.edit', permanentGrave.id)"
                     class="flex w-full items-center justify-center rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
                   >
                     Edit Grave
                   </Link>
-                  <button
+                  <!-- <button
                     @click="deleteGrave"
                     class="flex w-full items-center justify-center rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:outline-none"
                   >
                     Delete Grave
-                  </button>
+                  </button> -->
                 </div>
               </div>
 
@@ -143,7 +151,7 @@
                   <div>
                     <label class="block text-sm font-medium text-gray-500">Full Identifier</label>
                     <p class="mt-1 text-sm font-medium text-gray-900">
-                      {{ permanentGrave.section }}-R{{ permanentGrave.row_no }}-G{{ permanentGrave.grave_no }}
+                      {{ permanentGrave.block }}-R-{{ permanentGrave.row }}-C-{{ permanentGrave.column }}
                     </p>
                   </div>
                   <div>
@@ -211,7 +219,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { AlertTriangle } from 'lucide-vue-next';
+import { AlertTriangle, Download, FileText } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 defineOptions({
@@ -253,10 +261,13 @@ const formatDate = (dateString: string) => {
 };
 
 const getDeceasedName = (booking: any) => {
-  if (booking.member) {
-    return `${booking.member.first_name} ${booking.member.last_name}`;
+  if (booking.valid_member?.member) {
+    return `${booking.valid_member.member.first_name} ${booking.valid_member.member.last_name}`;
   }
-  return booking.dead_first_name && booking.dead_last_name ? `${booking.dead_first_name} ${booking.dead_last_name}` : 'N/A';
+  if (booking.valid_member) {
+    return `${booking.valid_member.first_name} ${booking.valid_member.last_name}`;
+  }
+  return 'N/A';
 };
 
 const getAgeDisplay = (booking: any) => {

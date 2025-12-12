@@ -46,7 +46,7 @@ class PermanentGraveBookingController extends Controller
                         ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$search}%"]);
                 })
                 ->orWhereHas('permanentGrave', function ($q) use ($search) {
-                    $q->whereRaw("CONCAT(block, '-', row, '-', column) LIKE ?", ["%{$search}%"]);
+                    $q->whereRaw("CONCAT(block, '-', `row`, '-', `column`) LIKE ?", ["%{$search}%"]);
                 });
         }
 
@@ -221,7 +221,7 @@ class PermanentGraveBookingController extends Controller
 
             DB::commit();
 
-            return redirect()->route('graveyard.permanent-grave-bookings.show', $booking->id)
+            return redirect()->route('graveyard.permanent-grave-bookings.index')
                 ->with('success', 'Permanent grave booking created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -241,11 +241,17 @@ class PermanentGraveBookingController extends Controller
         $permanentGraveBooking->load([
             'permanentGrave',
             'validMember.member',
+            'validMember.gender',
+            'validMember.parish',
+            'validMember.relationship',
             'creator',
             'updater',
-            'payments',
+            'payments.paymentMethod',
          ]);
 
+        return Inertia::render('PagesGraveyard/PermanentGraveBooking/Show', [
+            'booking' => $permanentGraveBooking,
+        ]);
     }
 
     /**

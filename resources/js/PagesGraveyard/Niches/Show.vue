@@ -138,6 +138,14 @@
               <div class="rounded-lg bg-blue-50 p-6">
                 <h3 class="mb-4 text-lg font-medium text-gray-900">Quick Actions</h3>
                 <div class="space-y-3">
+                  <a
+                    :href="route('graveyard.niches.download-valid-members-pdf', niche.id)"
+                    target="_blank"
+                    class="flex w-full items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <FileText class="h-4 w-4" />
+                    Print Valid Members Document
+                  </a>
                   <Link
                     :href="route('graveyard.niches.edit', niche.id)"
                     class="flex w-full items-center justify-center rounded-md bg-yellow-600 px-4 py-2 text-sm font-medium text-white hover:bg-yellow-700 focus:ring-2 focus:ring-yellow-500 focus:outline-none"
@@ -252,7 +260,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
-import { AlertTriangle } from 'lucide-vue-next';
+import { AlertTriangle, Download, FileText } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 defineOptions({

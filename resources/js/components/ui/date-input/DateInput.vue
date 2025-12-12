@@ -219,8 +219,8 @@ initializeEditableValue();
         type="text"
         :disabled="disabled"
         :placeholder="placeholder"
+        title="Type date as DD/MM/YYYY or click calendar icon"
         maxlength="10"
-        inputmode="numeric"
         autocomplete="off"
         :class="[
           'flex h-9 w-full rounded-md border border-gray-300 bg-white px-3 py-1 pr-9 text-sm shadow-sm transition-colors',

@@ -33,6 +33,19 @@ interface Payment {
   };
 }
 
+interface PendingBooking {
+  id: number;
+  type: string;
+  type_label: string;
+  reference: string;
+  deceased_name: string;
+  grave_info: string;
+  total_cost: number;
+  status: string;
+  created_at: string;
+  payment_url: string;
+}
+
 interface Props {
   payments: {
     data: Payment[];
@@ -40,6 +53,12 @@ interface Props {
     last_page: number;
     per_page: number;
     total: number;
+  };
+  pendingBookings: PendingBooking[];
+  statusCounts: {
+    partial: number;
+    completed: number;
+    refunded: number;
   };
   filters: {
     status?: string;
@@ -65,21 +84,13 @@ const statusColors = {
 };
 
 const statusCounts = computed(() => {
-  const counts = {
+  return {
     total: props.payments.total,
-    pending: 0,
-    partial: 0,
-    completed: 0,
-    refunded: 0,
+    pending: props.pendingBookings?.length || 0, // Pending bookings awaiting payment
+    partial: props.statusCounts.partial,
+    completed: props.statusCounts.completed,
+    refunded: props.statusCounts.refunded,
   };
-
-  // Note: This only counts current page items, not total
-  // In a real app, you'd get these from backend
-  props.payments.data.forEach((payment) => {
-    counts[payment.payment_status]++;
-  });
-
-  return counts;
 });
 
 // Methods
@@ -257,6 +268,66 @@ const getBookingTypeLabel = (payableType: string) => {
                   Search
                 </Button>
                 <Button @click="clearFilters" variant="outline"> Clear </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Pending Bookings Section -->
+        <Card v-if="pendingBookings && pendingBookings.length > 0" class="mb-6 border-yellow-200 bg-yellow-50">
+          <CardHeader>
+            <CardTitle class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <CreditCard class="h-5 w-5 text-yellow-600" />
+                <span class="text-yellow-900">Pending Payments ({{ pendingBookings.length }})</span>
+              </div>
+              <Badge class="bg-yellow-100 text-yellow-800">Awaiting Payment</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="space-y-3">
+              <div
+                v-for="booking in pendingBookings"
+                :key="booking.type + '-' + booking.id"
+                class="flex items-center justify-between rounded-lg border border-yellow-200 bg-white p-4 shadow-sm hover:shadow-md transition-shadow"
+              >
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3">
+                    <Badge variant="outline" class="text-xs">{{ booking.type_label }}</Badge>
+                    <h3 class="font-semibold text-gray-900">{{ booking.reference }}</h3>
+                  </div>
+                  <div class="mt-2 grid grid-cols-1 gap-2 text-sm sm:grid-cols-3">
+                    <div>
+                      <span class="text-gray-500">Deceased:</span>
+                      <span class="ml-1 font-medium text-gray-900">{{ booking.deceased_name }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">{{ booking.grave_info }}</span>
+                    </div>
+                    <div>
+                      <span class="text-gray-500">Status:</span>
+                      <span class="ml-1 font-medium text-gray-900">{{ booking.status }}</span>
+                    </div>
+                  </div>
+                  <div class="mt-2 text-sm">
+                    <span class="text-gray-500">Created:</span>
+                    <span class="ml-1 text-gray-700">{{ formatDate(booking.created_at) }}</span>
+                  </div>
+                </div>
+                <div class="ml-6 flex flex-col items-end space-y-2">
+                  <div class="text-right">
+                    <div class="text-sm text-gray-500">Total Cost</div>
+                    <div class="text-xl font-bold text-gray-900">
+                      {{ booking.total_cost > 0 ? formatCurrency(booking.total_cost) : 'Not Set' }}
+                    </div>
+                  </div>
+                  <Link :href="booking.payment_url">
+                    <Button size="sm" class="bg-yellow-600 hover:bg-yellow-700">
+                      <CreditCard class="mr-2 h-4 w-4" />
+                      Make Payment
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </div>
           </CardContent>

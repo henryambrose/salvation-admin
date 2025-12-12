@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\Niche;
 use Modules\Members\Models\Member;
+use PDF;
 
 class NicheController extends Controller
 {
@@ -313,6 +314,56 @@ class NicheController extends Controller
 
             return back()->withErrors(['error' => 'Failed to restore niche. Please try again.']);
         }
+    }
+
+    /**
+     * Download PDF document showing all valid members for this niche
+     */
+    public function downloadValidMembersPdf(Niche $niche)
+    {
+        $niche->load([
+            'validMembers.member',
+            'validMembers.relationship',
+            'validMembers.gender',
+            'validMembers.parish',
+            'member',
+        ]);
+
+        $data = [
+            'grave' => $niche,
+            'graveType' => 'Niche',
+            'graveIdentifier' => 'N' . $niche->niche_no . '-' . $niche->sr_no,
+            'location' => $niche->location,
+            'oldNumber' => null,
+            'plotSize' => $niche->size_width && $niche->size_height && $niche->size_depth
+                ? $niche->size_width . ' x ' . $niche->size_height . ' x ' . $niche->size_depth . ' inches'
+                : null,
+            'registrationDate' => $niche->created_at?->format('d/m/Y') ?? 'N/A',
+            'ownerName' => $niche->owner_name ?: ($niche->member ? $niche->member->first_name . ' ' . $niche->member->last_name : 'N/A'),
+            'contactNo' => $niche->contact_no ?: ($niche->member?->contact_no_1 ?? 'N/A'),
+            'validMembers' => $niche->validMembers,
+            'generatedDate' => now()->format('d/m/Y H:i A'),
+            'generatedBy' => Auth::user()->name ?? 'System',
+        ];
+
+        // Generate descriptive filename for the document title
+        $filename = 'Valid_Members_Niche_N' . $niche->niche_no . '-' . $niche->sr_no . '_' . now()->format('Y-m-d');
+        $data['documentTitle'] = $filename;
+
+        // Log PDF data for debugging
+        Log::info('Niche PDF Generation', [
+            'niche_id' => $niche->id,
+            'graveIdentifier' => $data['graveIdentifier'],
+            'location' => $data['location'],
+            'plotSize' => $data['plotSize'],
+            'validMembers_count' => $niche->validMembers->count(),
+            'ownerName' => $data['ownerName'],
+            'contactNo' => $data['contactNo'],
+            'filename' => $filename,
+        ]);
+
+        // Return view for printing (opens print dialog automatically)
+        return view('graveyard.documents.valid-members', $data);
     }
 
     /**

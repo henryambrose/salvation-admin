@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Members\Models\User;
 use Modules\Members\Models\Member;
 use Modules\Graveyard\Models\AnnualMaintenanceFee;
+use Modules\Graveyard\Models\PermanentGraveBooking;
 use Carbon\Carbon;
 
 class PermanentGrave extends Model
@@ -50,6 +51,10 @@ class PermanentGrave extends Model
     /**
      * Get the bookings for this permanent grave
      */
+    public function bookings()
+    {
+        return $this->hasMany(PermanentGraveBooking::class, 'permanent_grave_id');
+    }
 
     /**
      * Get the user who created this record

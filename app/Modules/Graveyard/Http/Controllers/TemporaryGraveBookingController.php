@@ -116,7 +116,7 @@ class TemporaryGraveBookingController extends Controller
                     'full_name' => $member->first_name . ' ' . $member->last_name,
                     'member_no' => $member->member_no,
                     'family_no' => $member->family_no,
-                    'date_of_birth' => $member->date_of_birth?->format('Y-m-d'),
+                    'date_of_birth' => $member->date_of_birth,
                     'community' => $member->community ? [
                         'name' => $member->community->name
                     ] : null,
@@ -196,13 +196,22 @@ class TemporaryGraveBookingController extends Controller
 
             // Check if temporary grave is still available and matches selected category
             $grave = TemporaryGrave::findOrFail($request->temporary_grave_id);
-            if (!$grave->status == 'available') {
-                return back()->with('error', 'This temporary grave is no longer available.');
+            if ($grave->status != 'available') {
+                return back()->with('error', 'This temporary grave is no longer available.')->withInput();
+            }
+
+            // Check if there's already an active booking for this grave
+            $existingBooking = TemporaryGraveBooking::where('temporary_grave_id', $request->temporary_grave_id)
+                ->whereIn('status', ['pending', 'confirmed'])
+                ->first();
+
+            if ($existingBooking) {
+                return back()->with('error', 'This temporary grave already has an active booking.')->withInput();
             }
 
             // Validate that the selected grave belongs to the selected category
             if ($grave->grave_category_id != $request->grave_category_id) {
-                return back()->with('error', 'Selected grave does not belong to the selected category.');
+                return back()->with('error', 'Selected grave does not belong to the selected category.')->withInput();
             }
 
             // Handle member selection vs manual entry
@@ -271,7 +280,7 @@ class TemporaryGraveBookingController extends Controller
 
             DB::commit();
 
-            return redirect()->route('graveyard.temporary-grave-bookings.show', $booking->id)
+            return redirect()->route('graveyard.temporary-grave-bookings.index')
                 ->with('success', 'Temporary grave booking created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -294,9 +303,12 @@ class TemporaryGraveBookingController extends Controller
             'creator',
             'updater',
             'nicheTransfers',
-            'payments',
+            'payments.paymentMethod',
         ]);
 
+        return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Show', [
+            'booking' => $temporaryGraveBooking,
+        ]);
     }
 
     /**

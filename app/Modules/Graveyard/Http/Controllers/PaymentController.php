@@ -60,8 +60,66 @@ class PaymentController extends Controller
         }
 
         $payments = $query->paginate(15)->withQueryString();
+
+        // Get payment status counts (across all pages, not just current page)
+        $statusCounts = [
+            'partial' => Payment::where('payment_status', 'partial')->count(),
+            'completed' => Payment::where('payment_status', 'completed')->count(),
+            'refunded' => Payment::where('payment_status', 'refunded')->count(),
+        ];
+
+        // Get pending bookings (bookings awaiting payment)
+        $pendingBookings = collect();
+
+        // Temporary Grave Bookings with pending payments
+        $pendingTemporary = TemporaryGraveBooking::with(['temporaryGrave', 'gender'])
+            ->where('payment_status', 'pending')
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->latest()
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'type' => 'temporary',
+                    'type_label' => 'Temporary Grave',
+                    'reference' => $booking->booking_reference ?? 'TGB-' . $booking->id,
+                    'deceased_name' => trim($booking->dead_first_name . ' ' . $booking->dead_last_name),
+                    'grave_info' => $booking->temporaryGrave ? 'Grave: ' . $booking->temporaryGrave->grave_no : 'N/A',
+                    'total_cost' => $booking->total_cost ?? 0,
+                    'status' => $booking->status,
+                    'created_at' => $booking->created_at,
+                    'payment_url' => route('graveyard.payments.create', ['bookingType' => 'temporary', 'bookingId' => $booking->id]),
+                ];
+            });
+
+        // Permanent Grave Bookings with pending payments
+        $pendingPermanent = PermanentGraveBooking::with(['permanentGrave', 'validMember'])
+            ->where('payment_status', 'pending')
+            ->whereIn('status', ['pending', 'confirmed'])
+            ->latest()
+            ->get()
+            ->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'type' => 'permanent',
+                    'type_label' => 'Permanent Grave',
+                    'reference' => $booking->booking_reference ?? 'PGB-' . $booking->id,
+                    'deceased_name' => $booking->validMember ? trim($booking->validMember->first_name . ' ' . $booking->validMember->last_name) : $booking->applicant_name,
+                    'grave_info' => $booking->permanentGrave ? 'Grave: ' . $booking->permanentGrave->grave_no : 'N/A',
+                    'total_cost' => $booking->total_cost ?? 0,
+                    'status' => $booking->status,
+                    'created_at' => $booking->created_at,
+                    'payment_url' => route('graveyard.payments.create', ['bookingType' => 'permanent', 'bookingId' => $booking->id]),
+                ];
+            });
+
+        // Merge all pending bookings
+        $pendingBookings = $pendingTemporary->merge($pendingPermanent)->sortByDesc('created_at');
+
         return Inertia::render('PagesGraveyard/Payment/Index', [
             'payments' => $payments,
+            'pendingBookings' => $pendingBookings->values(),
+            'statusCounts' => $statusCounts,
             'filters' => $request->only(['status', 'booking_type', 'search']),
         ]);
     }

@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Members\Models\Member;
+use PDF;
 
 class PermanentGraveController extends Controller
 {
@@ -221,7 +222,12 @@ class PermanentGraveController extends Controller
      */
     public function show(PermanentGrave $permanentGrave)
     {
-        $permanentGrave->load(['bookings.member', 'creator', 'updater']);
+        $permanentGrave->load([
+            'bookings.validMember.member',
+            'creator',
+            'updater',
+            'validMembers',
+        ]);
 
         return Inertia::render('PagesGraveyard/PermanentGraves/Show', [
             'permanentGrave' => $permanentGrave,
@@ -365,6 +371,55 @@ class PermanentGraveController extends Controller
 
             return back()->withErrors(['error' => 'Failed to restore permanent grave. Please try again.']);
         }
+    }
+
+    /**
+     * Download PDF document showing all valid members for this permanent grave
+     */
+    public function downloadValidMembersPdf(PermanentGrave $permanentGrave)
+    {
+        $permanentGrave->load([
+            'validMembers.member',
+            'validMembers.relationship',
+            'validMembers.gender',
+            'validMembers.parish',
+            'member',
+        ]);
+
+        $data = [
+            'grave' => $permanentGrave,
+            'graveType' => 'Permanent Grave',
+            'graveIdentifier' => $permanentGrave->block . '-' . $permanentGrave->row . '-' . $permanentGrave->column,
+            'location' => 'Block: ' . $permanentGrave->block . ', Row: ' . $permanentGrave->row . ', Column: ' . $permanentGrave->column,
+            'oldNumber' => $permanentGrave->old_no,
+            'plotSize' => $permanentGrave->plot_size,
+            'registrationDate' => $permanentGrave->created_at?->format('d/m/Y') ?? 'N/A',
+            'ownerName' => $permanentGrave->owner_name ?: ($permanentGrave->member ? $permanentGrave->member->first_name . ' ' . $permanentGrave->member->last_name : 'N/A'),
+            'contactNo' => $permanentGrave->contact_no ?: ($permanentGrave->member?->contact_no_1 ?? 'N/A'),
+            'validMembers' => $permanentGrave->validMembers,
+            'generatedDate' => now()->format('d/m/Y H:i A'),
+            'generatedBy' => Auth::user()->name ?? 'System',
+        ];
+
+        // Generate descriptive filename for the document title
+        $filename = 'Valid_Members_Permanent_Grave_' . $permanentGrave->block . '-' . $permanentGrave->row . '-' . $permanentGrave->column . '_' . now()->format('Y-m-d');
+        $data['documentTitle'] = $filename;
+
+        // Log PDF data for debugging
+        Log::info('Permanent Grave PDF Generation', [
+            'grave_id' => $permanentGrave->id,
+            'graveIdentifier' => $data['graveIdentifier'],
+            'location' => $data['location'],
+            'oldNumber' => $data['oldNumber'],
+            'plotSize' => $data['plotSize'],
+            'validMembers_count' => $permanentGrave->validMembers->count(),
+            'ownerName' => $data['ownerName'],
+            'contactNo' => $data['contactNo'],
+            'filename' => $filename,
+        ]);
+
+        // Return view for printing (opens print dialog automatically)
+        return view('graveyard.documents.valid-members', $data);
     }
 
     /**

@@ -166,9 +166,18 @@
                   <div class="flex items-center gap-2">
                     <template v-if="!serverArchived">
                       <Button
+                        v-if="canReadAnyNiche"
+                        @click="router.visit('/graveyard/niches/' + niche.id)"
+                        class="rounded-full bg-blue-100 p-2 text-blue-700 transition hover:bg-blue-200"
+                        title="View niche details"
+                      >
+                        <Eye class="h-[1rem] w-[1rem]" />
+                      </Button>
+                      <Button
                         v-if="canUpdateAnyNiche"
                         @click="router.visit('/graveyard/niches/' + niche.id + '/edit')"
                         class="rounded-full bg-yellow-100 p-2 text-yellow-700 transition hover:bg-yellow-200"
+                        title="Edit niche"
                       >
                         <Pencil class="h-[1rem] w-[1rem]" />
                       </Button>
@@ -258,7 +267,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Eye, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();

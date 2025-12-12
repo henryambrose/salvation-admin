@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Calendar, Eye, FileText, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
+import { Calendar, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useToast } from '@/composables/useToast';
 
@@ -376,7 +376,8 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                         </Badge>
                       </div>
                       <div class="flex items-center space-x-2">
-                        <Button
+                        <!-- Obituaries feature - coming soon -->
+                        <!-- <Button
                           v-if="booking.status === 'confirmed'"
                           variant="outline"
                           size="sm"
@@ -386,7 +387,7 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                           <Link :href="route('graveyard.obituaries.create', { type: 'permanent', booking_id: booking.id })">
                             <FileText class="h-4 w-4" />
                           </Link>
-                        </Button>
+                        </Button> -->
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
