@@ -48,7 +48,14 @@
       "Bash(git -C \"D:\\Projects\\salvation-admin\" show 761cbee --stat)",
       "Bash(git -C \"D:\\Projects\\salvation-admin\" show 6433c65 --stat)",
       "Bash(xcopy \"vendor\\dompdf\\dompdf\\lib\\fonts\\*\" \"storage\\fonts\"\" /E /I /Y)",
-      "Bash(php artisan db:seed:*)"
+      "Bash(php artisan db:seed:*)",
+      "Bash(test:*)",
+      "Bash(php artisan test:*)",
+      "Bash(grep:*)",
+      "Bash(xargs:*)",
+      "Bash(ls:*)",
+      "Bash(php -m:*)",
+      "Bash(mysql:*)"
     ],
     "deny": [],
     "ask": []

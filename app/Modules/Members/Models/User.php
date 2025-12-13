@@ -47,7 +47,6 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
             'is_superadmin' => 'boolean',
         ];
     }
@@ -65,6 +64,14 @@ class User extends Authenticatable
         $permissions = $permissions->merge($this->permissions);
 
         return $permissions->unique('name')->pluck('name');
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\UserFactory::new();
     }
 
 }

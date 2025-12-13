@@ -272,10 +272,6 @@ class BaptismRecordController extends Controller
             ],
         ];
 
-        // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.templates.parochial_register_baptism', $data);
-        $pdf->setPaper('A4', 'portrait');
-
         // Generate filename
         $filename = sprintf(
             'Baptism_Certificate_%s_%s.pdf',
@@ -283,8 +279,11 @@ class BaptismRecordController extends Controller
             now()->format('Y-m-d')
         );
 
-        // Return PDF for download/viewing in new tab
-        return $pdf->stream($filename);
+        // Generate PDF with Spatie (Chromium-based - supports modern CSS)
+        return \Spatie\LaravelPdf\Facades\Pdf::view('certificates.templates.parochial_register_baptism', $data)
+            ->format('a4')
+            ->name($filename)
+            ->inline();
     }
 
     /**

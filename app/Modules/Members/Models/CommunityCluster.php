@@ -37,4 +37,12 @@ class CommunityCluster extends Model
     {
         return $this->belongsTo(Member::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\CommunityClusterFactory::new();
+    }
 }

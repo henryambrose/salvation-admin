@@ -22,4 +22,12 @@ class Zone extends Model
     {
         return $this->hasMany(Community::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\ZoneFactory::new();
+    }
 }

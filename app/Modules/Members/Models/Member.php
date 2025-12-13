@@ -293,6 +293,11 @@ class Member extends Model
     }
 
 
+    public function parish()
+    {
+        return $this->belongsTo(Parish::class);
+    }
+
     public function baptismParish()
     {
         return $this->belongsTo(Parish::class, 'baptism_parish_id');
@@ -541,5 +546,13 @@ class Member extends Model
         }
 
         return $availableTypes;
+    }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\MemberFactory::new();
     }
 }

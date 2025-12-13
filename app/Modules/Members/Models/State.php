@@ -38,4 +38,12 @@ class State extends Model
     {
         return $this->hasMany(City::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\StateFactory::new();
+    }
 }

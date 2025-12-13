@@ -3,16 +3,16 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Members\Models\Zone;
+use Modules\Members\Models\Cluster;
 
-class ZoneFactory extends Factory
+class ClusterFactory extends Factory
 {
     /**
      * The name of the factory's corresponding model.
      *
      * @var class-string<\Illuminate\Database\Eloquent\Model>
      */
-    protected $model = Zone::class;
+    protected $model = Cluster::class;
 
     /**
      * Define the model's default state.
@@ -22,8 +22,7 @@ class ZoneFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->unique()->colorName() . ' Zone',
-            'description' => fake()->sentence(),
+            'name' => fake()->unique()->word() . ' Cluster',
         ];
     }
 }

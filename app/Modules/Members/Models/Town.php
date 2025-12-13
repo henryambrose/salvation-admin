@@ -33,4 +33,12 @@ class Town extends Model
     {
         return $this->belongsTo(City::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\TownFactory::new();
+    }
 }

@@ -53,4 +53,12 @@ class Community extends Model
     {
         return $this->belongsTo(Zone::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\CommunityFactory::new();
+    }
 }

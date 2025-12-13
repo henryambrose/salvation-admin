@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Modules\Members\Models\Member;
 use Modules\Members\Models\Community;
+use Modules\Members\Models\CommunityCluster;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Status;
 use Modules\Members\Models\Relationship;
@@ -22,6 +23,8 @@ class MemberFactory extends Factory
 
     public function definition(): array
     {
+        $community = Community::factory()->create();
+
         return [
             'first_name' => fake()->firstName(),
             'last_name' => fake()->lastName(),
@@ -29,9 +32,13 @@ class MemberFactory extends Factory
             'contact_no_1' => fake()->phoneNumber(),
             'date_of_birth' => fake()->date(),
             'aadhar' => fake()->numerify('##########'),
-            'family_no' => 'SAL-' . fake()->numerify('###'), // Fix: Use SAL-XXX format (3 digits)
-            'member_no' => fake()->year() . '-SAL-M' . fake()->numerify('######'), // Format: YYYY-SAL-MNNNNN
+            'family_no' => 'SAL-' . fake()->unique()->numerify('###'),
+            'member_no' => fake()->year() . '-SAL-M' . fake()->unique()->numerify('######'),
             'registration_year' => fake()->year(),
+            'gender_id' => Gender::factory(),
+            'community_id' => $community->id,
+            'community_cluster_id' => CommunityCluster::factory()->create(['community_id' => $community->id])->id,
+            'relationship_id' => Relationship::factory(),
         ];
     }
 

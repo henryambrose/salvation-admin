@@ -32,4 +32,12 @@ class BloodGroup extends Model
     {
         return $this->hasMany(Member::class);
     }
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory()
+    {
+        return \Database\Factories\BloodGroupFactory::new();
+    }
 }

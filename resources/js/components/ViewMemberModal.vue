@@ -243,6 +243,10 @@ function formatFieldValue(fieldKey: string, value: any) {
   
   // Handle parish relationships
   if (fieldKey === 'baptism_parish') {
+    // First check if string value exists (custom or saved parish name)
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
     // Check if value is a JSON object with name property
     if (typeof value === 'object' && value !== null && value.name) {
       return value.name;
@@ -251,10 +255,14 @@ function formatFieldValue(fieldKey: string, value: any) {
     if (props.member?.baptism_parish_id && props.member?.baptismParish) {
       return props.member.baptismParish.name;
     }
-    // Return string value or fallback
-    return (typeof value === 'string' ? value : '') || '—';
+    // Fallback
+    return '—';
   }
   if (fieldKey === 'confirmation_parish') {
+    // First check if string value exists (custom or saved parish name)
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
     // Check if value is a JSON object with name property
     if (typeof value === 'object' && value !== null && value.name) {
       return value.name;
@@ -263,10 +271,14 @@ function formatFieldValue(fieldKey: string, value: any) {
     if (props.member?.confirmation_parish_id && props.member?.confirmationParish) {
       return props.member.confirmationParish.name;
     }
-    // Return string value or fallback
-    return (typeof value === 'string' ? value : '') || '—';
+    // Fallback
+    return '—';
   }
   if (fieldKey === 'marriage_parish') {
+    // First check if string value exists (custom or saved parish name)
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
     // Check if value is a JSON object with name property
     if (typeof value === 'object' && value !== null && value.name) {
       return value.name;
@@ -275,10 +287,14 @@ function formatFieldValue(fieldKey: string, value: any) {
     if (props.member?.marriage_parish_id && props.member?.marriageParish) {
       return props.member.marriageParish.name;
     }
-    // Return string value or fallback
-    return (typeof value === 'string' ? value : '') || '—';
+    // Fallback
+    return '—';
   }
   if (fieldKey === 'death_parish') {
+    // First check if string value exists (custom or saved parish name)
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
     // Check if value is a JSON object with name property
     if (typeof value === 'object' && value !== null && value.name) {
       return value.name;
@@ -287,16 +303,33 @@ function formatFieldValue(fieldKey: string, value: any) {
     if (props.member?.death_parish_id && props.member?.deathParish) {
       return props.member.deathParish.name;
     }
-    // Return string value or fallback
-    return (typeof value === 'string' ? value : '') || '—';
+    // Fallback
+    return '—';
   }
   
   // Handle address fields (town, city, state, country)
   if (fieldKey.includes('_town_id') || fieldKey.includes('_city_id') || fieldKey.includes('_state_id') || fieldKey.includes('_country_id')) {
-    // The value should be the name string from the transformed data
+    // Check if value is a relationship object with name
+    if (typeof value === 'object' && value !== null && value.name) {
+      return value.name;
+    }
+    // Check if value is a string (legacy data)
     if (typeof value === 'string' && value.trim()) {
       return value;
     }
+
+    // Try different relationship key formats (camelCase and snake_case)
+    const fieldBase = fieldKey.replace('_id', '');
+    const camelCaseKey = fieldBase.replace(/_([a-z])/g, (g) => g[1].toUpperCase());
+
+    // Check memberDetails for relationship in different formats
+    if (memberDetails.value?.[fieldBase]?.name) {
+      return memberDetails.value[fieldBase].name;
+    }
+    if (memberDetails.value?.[camelCaseKey]?.name) {
+      return memberDetails.value[camelCaseKey].name;
+    }
+
     // Return fallback
     return '—';
   }
@@ -518,9 +551,11 @@ watch(() => currentTab.value, (newTab) => {
                     </span>
                   </template>
                   <template v-else>
-                    {{ formatFieldValue(field.key, 
-                      field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' || field.key === 'cells_and_associations' 
-                        ? memberDetails?.[field.key] 
+                    {{ formatFieldValue(field.key,
+                      field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' || field.key === 'cells_and_associations'
+                        ? memberDetails?.[field.key]
+                        : field.key.includes('_parish') || field.key.includes('_town_id') || field.key.includes('_city_id') || field.key.includes('_state_id') || field.key.includes('_country_id')
+                        ? (memberDetails?.[field.key] ?? member[field.key])
                         : member[field.key]
                     ) }}
                   </template>
