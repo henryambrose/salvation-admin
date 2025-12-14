@@ -18,6 +18,8 @@ class StateController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-state');
+
         $query = State::query()->with('country');
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -51,6 +53,8 @@ class StateController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create-state');
+
         $countries = Country::all();
 
         return Inertia::render('state/Create', [
@@ -63,6 +67,8 @@ class StateController extends Controller
      */
     public function store(StoreStateRequest $request)
     {
+        $this->authorize('create-state');
+
         State::create($request->validated());
 
         return redirect()->route('state.index')->with('success', 'State created successfully.');
@@ -73,6 +79,8 @@ class StateController extends Controller
      */
     public function edit(State $state): Response
     {
+        $this->authorize('update-state');
+
         $countries = Country::all();
 
         return Inertia::render('state/Edit', [
@@ -86,6 +94,8 @@ class StateController extends Controller
      */
     public function update(UpdateStateRequest $request, State $state)
     {
+        $this->authorize('update-state');
+
         $state->update($request->validated());
 
         return redirect()->route('state.index')->with('success', 'State updated successfully.');
@@ -96,6 +106,8 @@ class StateController extends Controller
      */
     public function destroy(Request $request, State $state)
     {
+        $this->authorize('delete-state');
+
         $state->delete();
 
         // Preserve current state after deletion
@@ -135,6 +147,8 @@ class StateController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-state');
+
         $state = State::onlyTrashed()->findOrFail($id);
         $state->restore();
 
@@ -146,6 +160,8 @@ class StateController extends Controller
      */
     public function show($id): Response
     {
+        $this->authorize('read-state');
+
         $state = State::withTrashed()->findOrFail($id);
 
         return Inertia::render('state/Show', [

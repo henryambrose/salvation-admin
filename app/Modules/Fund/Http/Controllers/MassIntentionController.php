@@ -3,7 +3,7 @@
 namespace Modules\Fund\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Modules\Fund\Models\MassIntention;
@@ -20,6 +20,8 @@ class MassIntentionController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-mass-intention');
+
         $query = MassIntention::with(['member', 'massIntentionType', 'paymentMethod', 'massType']);
 
         // Archive logic
@@ -175,6 +177,8 @@ class MassIntentionController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-mass-intention');
+
         $request->validate([
             'member_type' => 'required|in:member,external',
             'member_id' => 'nullable|exists:members,id',
@@ -241,6 +245,8 @@ class MassIntentionController extends Controller
      */
     public function show(MassIntention $massIntention)
     {
+        $this->authorize('read-mass-intention');
+
         $massIntention->load(['member', 'massSchedule', 'intentionType', 'createdBy', 'updatedBy']);
 
         return Inertia::render('MassIntentions/Show', [

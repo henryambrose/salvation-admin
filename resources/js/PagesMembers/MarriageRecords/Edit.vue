@@ -34,14 +34,14 @@ const formatDateForDatabase = (dateString: string): string => {
 };
 
 const form = useForm({
-  marriage_date: formatDateForDisplay(props.marriageRecord.marriage_date),
+  marriage_date: props.marriageRecord.marriage_date || '', // Keep YYYY-MM-DD format for type="date" inputs
   marriage_reg_no: props.marriageRecord.marriage_reg_no || '',
   marriage_parish_id: props.marriageRecord.marriage_parish_id,
   parish_of_marriage: props.marriageRecord.parish_of_marriage || '',
   bridegroom_member_id: props.marriageRecord.bridegroom_member_id,
   bridegroom_name: props.marriageRecord.bridegroom_name || '',
   bridegroom_surname: props.marriageRecord.bridegroom_surname || '',
-  bridegroom_dob: formatDateForDisplay(props.marriageRecord.bridegroom_dob),
+  bridegroom_dob: props.marriageRecord.bridegroom_dob || '', // Keep YYYY-MM-DD format for type="date" inputs
   bridegroom_nationality: props.marriageRecord.bridegroom_nationality || '',
   bridegroom_profession: props.marriageRecord.bridegroom_profession || '',
   bridegroom_residence: props.marriageRecord.bridegroom_residence || '',
@@ -52,7 +52,7 @@ const form = useForm({
   bride_member_id: props.marriageRecord.bride_member_id,
   bride_name: props.marriageRecord.bride_name || '',
   bride_surname: props.marriageRecord.bride_surname || '',
-  bride_dob: formatDateForDisplay(props.marriageRecord.bride_dob),
+  bride_dob: props.marriageRecord.bride_dob || '', // Keep YYYY-MM-DD format for type="date" inputs
   bride_nationality: props.marriageRecord.bride_nationality || '',
   bride_profession: props.marriageRecord.bride_profession || '',
   bride_residence: props.marriageRecord.bride_residence || '',
@@ -68,11 +68,43 @@ const form = useForm({
   marriage_remarks: props.marriageRecord.marriage_remarks || '',
 });
 
+// Pre-populate bridegroom member options for SearchDropdown
+const bridegroomMemberOptions = computed(() => {
+  if (props.marriageRecord.bridegroom && props.marriageRecord.bridegroom_member_id) {
+    const member = props.marriageRecord.bridegroom;
+    const communityName = member.community?.name || '';
+    return [{
+      id: member.id,
+      name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
+      first_name: member.first_name,
+      last_name: member.last_name,
+      date_of_birth: member.date_of_birth,
+    }];
+  }
+  return [];
+});
+
+// Pre-populate bride member options for SearchDropdown
+const brideMemberOptions = computed(() => {
+  if (props.marriageRecord.bride && props.marriageRecord.bride_member_id) {
+    const member = props.marriageRecord.bride;
+    const communityName = member.community?.name || '';
+    return [{
+      id: member.id,
+      name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
+      first_name: member.first_name,
+      last_name: member.last_name,
+      date_of_birth: member.date_of_birth,
+    }];
+  }
+  return [];
+});
+
 // Handle bridegroom member selection
 function handleBridegroomSelect(member: any) {
   form.bridegroom_name = member.first_name || '';
   form.bridegroom_surname = member.last_name || '';
-  form.bridegroom_dob = formatDateForDisplay(member.date_of_birth);
+  form.bridegroom_dob = member.date_of_birth || ''; // Keep YYYY-MM-DD format for type="date" inputs
   form.bridegroom_nationality = member.nationality || '';
   form.bridegroom_residence = member.address || '';
   form.bridegroom_father_name = member.father_name || '';
@@ -83,7 +115,7 @@ function handleBridegroomSelect(member: any) {
 function handleBrideSelect(member: any) {
   form.bride_name = member.first_name || '';
   form.bride_surname = member.last_name || '';
-  form.bride_dob = formatDateForDisplay(member.date_of_birth);
+  form.bride_dob = member.date_of_birth || ''; // Keep YYYY-MM-DD format for type="date" inputs
   form.bride_nationality = member.nationality || '';
   form.bride_residence = member.address || '';
   form.bride_father_name = member.father_name || '';
@@ -91,15 +123,8 @@ function handleBrideSelect(member: any) {
 }
 
 function submit() {
-  // Convert dates from DD/MM/YYYY to YYYY-MM-DD for database
-  const dataToSubmit = {
-    ...form.data(),
-    marriage_date: formatDateForDatabase(form.marriage_date),
-    bridegroom_dob: formatDateForDatabase(form.bridegroom_dob),
-    bride_dob: formatDateForDatabase(form.bride_dob),
-  };
-
-  form.transform(() => dataToSubmit).put(`/marriage-records/${props.marriageRecord.id}`, {
+  // Date inputs already provide YYYY-MM-DD format, so no conversion needed
+  form.put(`/marriage-records/${props.marriageRecord.id}`, {
     preserveScroll: true,
     onSuccess: () => router.visit('/marriage-records'),
   });
@@ -122,9 +147,7 @@ function submit() {
               <Label>Marriage Date</Label>
               <Input
                 v-model="form.marriage_date"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
               />
             </div>
             <div>
@@ -146,7 +169,7 @@ function submit() {
               <Label>Search Bridegroom Member</Label>
               <SearchDropdown
                 v-model="form.bridegroom_member_id"
-                :options="[]"
+                :options="bridegroomMemberOptions"
                 fetch-url="/member/search"
                 placeholder="Search bridegroom by name..."
                 @select="handleBridegroomSelect"
@@ -164,9 +187,7 @@ function submit() {
               <Label>Date of Birth</Label>
               <Input
                 v-model="form.bridegroom_dob"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
               />
             </div>
             <div>
@@ -208,7 +229,7 @@ function submit() {
               <Label>Search Bride Member</Label>
               <SearchDropdown
                 v-model="form.bride_member_id"
-                :options="[]"
+                :options="brideMemberOptions"
                 fetch-url="/member/search"
                 placeholder="Search bride by name..."
                 @select="handleBrideSelect"
@@ -226,9 +247,7 @@ function submit() {
               <Label>Date of Birth</Label>
               <Input
                 v-model="form.bride_dob"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
               />
             </div>
             <div>

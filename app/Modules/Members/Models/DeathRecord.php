@@ -30,8 +30,8 @@ class DeathRecord extends Model
     ];
 
     protected $casts = [
-        'death_date' => 'date',
-        'burial_date' => 'date',
+        'death_date' => 'date:Y-m-d',
+        'burial_date' => 'date:Y-m-d',
         'age' => 'integer',
     ];
 

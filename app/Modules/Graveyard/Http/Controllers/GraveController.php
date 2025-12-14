@@ -15,6 +15,8 @@ class GraveController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-grave');
+
         $graveType = $request->get('type', 'permanent'); // permanent or temporary
 
         if ($graveType === 'permanent') {
@@ -85,21 +87,29 @@ class GraveController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create-grave');
+
         return back()->with('success', 'Grave created successfully.');
     }
 
     public function show($grave)
     {
+        $this->authorize('read-grave');
+
         return Inertia::render('PagesGraveyard/Graves/Show', []);
     }
 
     public function update(Request $request, $grave)
     {
+        $this->authorize('update-grave');
+
         return back()->with('success', 'Grave updated successfully.');
     }
 
     public function destroy($grave)
     {
+        $this->authorize('delete-grave');
+
         return back()->with('success', 'Grave deleted successfully.');
     }
 

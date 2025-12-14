@@ -21,6 +21,8 @@ class ParishController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-parish');
+
         DB::enableQueryLog();
         $query = Parish::query();
 
@@ -65,6 +67,8 @@ class ParishController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-parish');
+
         return Inertia::render('parish/Create');
     }
 
@@ -73,6 +77,8 @@ class ParishController extends Controller
      */
     public function store(StoreParishRequest $request)
     {
+        $this->authorize('create-parish');
+
         Parish::create($request->validated());
 
         return redirect()->route('parish.index')->with('success', 'Parish created successfully.');
@@ -83,6 +89,8 @@ class ParishController extends Controller
      */
     public function show(Parish $parish)
     {
+        $this->authorize('read-parish');
+
         // Optionally implement if needed
     }
 
@@ -91,6 +99,8 @@ class ParishController extends Controller
      */
     public function edit(Parish $parish)
     {
+        $this->authorize('update-parish');
+
         return Inertia::render('parish/Edit', [
             'parish' => $parish,
         ]);
@@ -101,6 +111,8 @@ class ParishController extends Controller
      */
     public function update(UpdateParishRequest $request, Parish $parish)
     {
+        $this->authorize('update-parish');
+
         $parish->update($request->validated());
 
         return redirect()->route('parish.index')->with('success', 'Parish updated successfully.');
@@ -111,6 +123,8 @@ class ParishController extends Controller
      */
     public function destroy(Request $request, Parish $parish)
     {
+        $this->authorize('delete-parish');
+
         $parish->delete();
 
         // Preserve current state after deletion
@@ -127,6 +141,8 @@ class ParishController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-parish');
+
         $parish = Parish::onlyTrashed()->findOrFail($id);
         $parish->restore();
 

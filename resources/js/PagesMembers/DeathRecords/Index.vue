@@ -248,7 +248,12 @@ function downloadPdf(id: number) {
               </td>
               <td class="px-4 py-3 text-sm">{{ record.burial_reg_no || '-' }}</td>
               <td class="px-4 py-3 text-sm">
-                {{ record.deceased_name }} {{ record.deceased_surname }}
+                <template v-if="record.member_id && record.member">
+                  {{ record.member.first_name }} {{ record.member.last_name }}
+                </template>
+                <template v-else>
+                  {{ record.deceased_name }} {{ record.deceased_surname }}
+                </template>
               </td>
               <td class="px-4 py-3 text-sm">
                 {{ formatDate(record.death_date) }}

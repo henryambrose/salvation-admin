@@ -20,6 +20,8 @@ class CityController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-city');
+
         $query = City::query()->with('state');
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -63,6 +65,8 @@ class CityController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create-city');
+
         $states = State::all();
 
         return Inertia::render('city/Create', [
@@ -75,6 +79,8 @@ class CityController extends Controller
      */
     public function store(StoreCityRequest $request)
     {
+        $this->authorize('create-city');
+
         City::create($request->validated());
 
         return redirect()->route('city.index')->with('success', 'City created successfully.');
@@ -85,6 +91,8 @@ class CityController extends Controller
      */
     public function show(City $city): Response
     {
+        $this->authorize('read-city');
+
         return Inertia::render('city/Show', [
             'city' => $city->load('state'),
         ]);
@@ -95,6 +103,8 @@ class CityController extends Controller
      */
     public function edit(City $city): Response
     {
+        $this->authorize('update-city');
+
         $states = State::all();
 
         return Inertia::render('city/Edit', [
@@ -108,6 +118,8 @@ class CityController extends Controller
      */
     public function update(UpdateCityRequest $request, City $city)
     {
+        $this->authorize('update-city');
+
         $city->update($request->validated());
 
         return redirect()->route('city.index')->with('success', 'City updated successfully.');
@@ -118,6 +130,8 @@ class CityController extends Controller
      */
     public function destroy(Request $request, City $city)
     {
+        $this->authorize('delete-city');
+
         $city->delete();
 
         // Preserve current state after deletion
@@ -137,6 +151,8 @@ class CityController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-city');
+
         $city = City::onlyTrashed()->findOrFail($id);
         $city->restore();
 

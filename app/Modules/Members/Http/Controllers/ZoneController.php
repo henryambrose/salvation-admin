@@ -18,6 +18,7 @@ class ZoneController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-zone');
 
         $query = Zone::query();
         if ($request->input('isArchived') === 'true') {
@@ -45,6 +46,8 @@ class ZoneController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-zone');
+
         $zone = Zone::onlyTrashed()->findOrFail($id);
         $zone->restore();
 
@@ -69,6 +72,8 @@ class ZoneController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create-zone');
+
         $validated = $request->validate([
             'name' => 'required|string|unique:zones,name',
             'description' => 'nullable|string',
@@ -85,7 +90,11 @@ class ZoneController extends Controller
      */
     public function show(Zone $zone)
     {
-        //
+        $this->authorize('read-zone');
+
+        return Inertia::render('zones/Show', [
+            'zone' => $zone,
+        ]);
     }
 
     /**
@@ -93,6 +102,8 @@ class ZoneController extends Controller
      */
     public function edit(Zone $zone)
     {
+        $this->authorize('update-zone');
+
         return Inertia::render('zones/ZoneEdit', [
             'zone' => $zone,
         ]);
@@ -103,6 +114,8 @@ class ZoneController extends Controller
      */
     public function update(Request $request, Zone $zone)
     {
+        $this->authorize('update-zone');
+
         $validated = $request->validate([
             'name' => 'required|string|unique:zones,name,' . $zone->id,
             'description' => 'nullable|string',
@@ -118,6 +131,8 @@ class ZoneController extends Controller
      */
     public function destroy(Request $request, Zone $zone)
     {
+        $this->authorize('delete-zone');
+
         $zone->delete();
 
         // Preserve current state after deletion

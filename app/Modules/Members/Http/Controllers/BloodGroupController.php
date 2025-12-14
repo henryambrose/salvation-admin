@@ -16,6 +16,7 @@ class BloodGroupController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-blood-group');
 
         $query = BloodGroup::query();
         if ($request->input('isArchived') === 'true') {
@@ -47,6 +48,8 @@ class BloodGroupController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-blood-group');
+
         //
     }
 
@@ -56,6 +59,8 @@ class BloodGroupController extends Controller
     // public function store(StoreBloodGroupRequest $request)
     public function store(Request $request)
     {
+        $this->authorize('create-blood-group');
+
         $validated = $request->validate([
             'name' => 'required|string|unique:blood_groups,name',
         ]);
@@ -79,6 +84,8 @@ class BloodGroupController extends Controller
      */
     public function show(BloodGroup $bloodGroup)
     {
+        $this->authorize('read-blood-group');
+
         //
     }
 
@@ -87,6 +94,8 @@ class BloodGroupController extends Controller
      */
     public function edit(BloodGroup $bloodGroup)
     {
+        $this->authorize('update-blood-group');
+
         return Inertia::render('blood_group/BloodGroupEdit', [
             'bloodGroup' => $bloodGroup,
         ]);
@@ -97,6 +106,8 @@ class BloodGroupController extends Controller
      */
     public function update(Request $request, BloodGroup $bloodGroup)
     {
+        $this->authorize('update-blood-group');
+
         $validated = $request->validate([
             'name' => 'required|string|unique:blood_groups,name,'.$bloodGroup->id,
         ]);
@@ -119,6 +130,8 @@ class BloodGroupController extends Controller
      */
     public function destroy(Request $request, BloodGroup $bloodGroup)
     {
+        $this->authorize('delete-blood-group');
+
         $bloodGroup->delete();
 
         // Preserve current state after deletion
@@ -135,6 +148,8 @@ class BloodGroupController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-blood-group');
+
         $bloodGroup = BloodGroup::onlyTrashed()->findOrFail($id);
         $bloodGroup->restore();
 

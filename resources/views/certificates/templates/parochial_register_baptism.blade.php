@@ -64,7 +64,7 @@
 
         .headframecontent {
             height: 100%;
-            width: 143.5mm;
+            width: 243.5mm;
             padding: 0 11mm;
             display: flex;
             flex-direction: column;

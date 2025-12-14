@@ -17,6 +17,7 @@
         "laravel/tinker": "^2.10.1",
         "phpoffice/phpspreadsheet": "^5.1",
         "simplesoftwareio/simple-qrcode": "^4.2",
+        "spatie/laravel-pdf": "^1.8",
         "spatie/laravel-permission": "^6.20",
         "tightenco/ziggy": "^2.4"
     },

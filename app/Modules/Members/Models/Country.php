@@ -12,6 +12,8 @@ class Country extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'countries';
+
     protected $fillable = ['name'];
 
     protected $casts = [

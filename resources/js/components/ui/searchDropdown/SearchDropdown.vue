@@ -103,7 +103,7 @@ const dropdownStyle = computed(() => {
   }
   const rect = triggerRef.value.getBoundingClientRect()
   return {
-    position: 'fixed',
+    position: 'fixed' as const,
     left: `${rect.left}px`,
     top: `${rect.bottom + 4}px`,
     width: `${rect.width}px`,

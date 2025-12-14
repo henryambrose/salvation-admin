@@ -9,6 +9,7 @@ use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class DeathRecordController extends Controller
 {
@@ -171,6 +172,14 @@ Log::info($validated);
         // Load relationships
         $deathRecord->load(['member', 'burialParish']);
 
+        // Get deceased name - use member data if available, otherwise use manually entered data
+        $deceasedName = $deathRecord->member_id && $deathRecord->member
+            ? $deathRecord->member->first_name
+            : $deathRecord->deceased_name;
+        $deceasedSurname = $deathRecord->member_id && $deathRecord->member
+            ? $deathRecord->member->last_name
+            : $deathRecord->deceased_surname;
+
         // Prepare data for the template
         $data = [
             // Death/Burial data
@@ -180,8 +189,8 @@ Log::info($validated);
             'burial_year' => $deathRecord->burial_date ? \Carbon\Carbon::parse($deathRecord->burial_date)->year : null,
 
             // Deceased data
-            'deceased_name' => $deathRecord->deceased_name,
-            'deceased_surname' => $deathRecord->deceased_surname,
+            'deceased_name' => $deceasedName,
+            'deceased_surname' => $deceasedSurname,
             'relationship' => $deathRecord->relationship,
             'residence' => $deathRecord->residence,
             'age' => $deathRecord->age,
@@ -207,10 +216,6 @@ Log::info($validated);
             ],
         ];
 
-        // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.templates.parochial_register_burial', $data);
-        $pdf->setPaper('A4', 'portrait');
-
         // Generate filename
         $filename = sprintf(
             'Burial_Certificate_%s_%s_%s.pdf',
@@ -219,8 +224,11 @@ Log::info($validated);
             now()->format('Y-m-d')
         );
 
-        // Return PDF for download/viewing in new tab
-        return $pdf->stream($filename);
+        // Generate PDF with Spatie (Chromium-based - supports modern CSS)
+        return Pdf::view('certificates.templates.parochial_register_burial', $data)
+            ->format('a4')
+            ->name($filename)
+            ->inline();
     }
 
     /**

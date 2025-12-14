@@ -17,7 +17,7 @@ return new class extends Migration
             // Marriage Details
             $table->date('marriage_date')->nullable();
             $table->string('marriage_reg_no')->nullable();
-            $table->string('parish_of_marraige')->nullable();
+            $table->string('parish_of_marriage')->nullable();
 
             // $table->foreignId('marriage_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
 

@@ -12,6 +12,8 @@ class Parish extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $table = 'parishes';
+
     protected $fillable = ['deanery', 'name', 'code', 'address', 'town'];
 
     protected $casts = [

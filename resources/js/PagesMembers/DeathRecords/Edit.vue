@@ -34,8 +34,8 @@ const formatDateForDatabase = (dateString: string): string => {
 
 const form = useForm({
   member_id: props.deathRecord.member_id,
-  death_date: formatDateForDisplay(props.deathRecord.death_date),
-  burial_date: formatDateForDisplay(props.deathRecord.burial_date),
+  death_date: props.deathRecord.death_date || '', // Keep YYYY-MM-DD format for type="date" inputs
+  burial_date: props.deathRecord.burial_date || '', // Keep YYYY-MM-DD format for type="date" inputs
   burial_reg_no: props.deathRecord.burial_reg_no || '',
   burial_parish_id: props.deathRecord.burial_parish_id,
   deceased_name: props.deathRecord.deceased_name || '',
@@ -68,14 +68,8 @@ function handleMemberSelect(member: any) {
 }
 
 function submit() {
-  // Convert dates from DD/MM/YYYY to YYYY-MM-DD for database
-  const dataToSubmit = {
-    ...form.data(),
-    death_date: formatDateForDatabase(form.death_date),
-    burial_date: formatDateForDatabase(form.burial_date),
-  };
-
-  form.transform(() => dataToSubmit).put(`/death-records/${props.deathRecord.id}`, {
+  // Date inputs already provide YYYY-MM-DD format, so no conversion needed
+  form.put(`/death-records/${props.deathRecord.id}`, {
     preserveScroll: true,
     onSuccess: () => router.visit('/death-records'),
   });
@@ -96,7 +90,7 @@ function submit() {
             <SearchDropdown
               v-model="form.member_id"
               :options="[]"
-              fetch-url="/member/search"
+              fetch-url="/member/search?status=deceased"
               placeholder="Search deceased member by name..."
               @select="handleMemberSelect"
             />
@@ -105,18 +99,14 @@ function submit() {
             <Label>Death Date</Label>
             <Input
               v-model="form.death_date"
-              type="text"
-              placeholder="DD/MM/YYYY"
-              pattern="\d{2}/\d{2}/\d{4}"
+              type="date"
             />
           </div>
           <div>
             <Label>Burial Date</Label>
             <Input
               v-model="form.burial_date"
-              type="text"
-              placeholder="DD/MM/YYYY"
-              pattern="\d{2}/\d{2}/\d{4}"
+              type="date"
             />
           </div>
           <div>

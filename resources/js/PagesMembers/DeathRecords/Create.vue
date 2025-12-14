@@ -16,12 +16,12 @@ const form = useForm({
   death_date: '',
   burial_date: '',
   burial_reg_no: '',
-  burial_parish_id: null as number | null,
+  burial_parish_id: undefined as number | undefined,
   deceased_name: '',
   deceased_surname: '',
   relationship: '',
   residence: '',
-  age: null as number | null,
+  age: undefined as number | undefined,
   nationality: '',
   cause_of_death: '',
   place_of_burial: '',
@@ -56,14 +56,8 @@ function handleMemberSelect(member: any) {
 }
 
 function submit() {
-  // Convert dates from DD/MM/YYYY to YYYY-MM-DD for database
-  const dataToSubmit = {
-    ...form.data(),
-    death_date: formatDateForDatabase(form.death_date),
-    burial_date: formatDateForDatabase(form.burial_date),
-  };
-
-  form.transform(() => dataToSubmit).post('/death-records', {
+  // Date inputs already provide YYYY-MM-DD format, so no conversion needed
+  form.post('/death-records', {
     preserveScroll: true,
     onSuccess: () => router.visit('/death-records'),
   });
@@ -84,7 +78,7 @@ function submit() {
             <SearchDropdown
               v-model="form.member_id"
               :options="[]"
-              fetch-url="/member/search"
+              fetch-url="/member/search?status=deceased"
               placeholder="Search deceased member by name..."
               @select="handleMemberSelect"
             />
@@ -93,18 +87,14 @@ function submit() {
             <Label>Death Date</Label>
             <Input
               v-model="form.death_date"
-              type="text"
-              placeholder="DD/MM/YYYY"
-              pattern="\d{2}/\d{2}/\d{4}"
+              type="date"
             />
           </div>
           <div>
             <Label>Burial Date</Label>
             <Input
               v-model="form.burial_date"
-              type="text"
-              placeholder="DD/MM/YYYY"
-              pattern="\d{2}/\d{2}/\d{4}"
+              type="date"
             />
           </div>
           <div>

@@ -71,7 +71,7 @@ const form = useForm({
 function handleBridegroomSelect(member: any) {
   form.bridegroom_name = member.first_name || '';
   form.bridegroom_surname = member.last_name || '';
-  form.bridegroom_dob = formatDateForDisplay(member.date_of_birth);
+  form.bridegroom_dob = member.date_of_birth || ''; // Keep YYYY-MM-DD format for type="date" inputs
   form.bridegroom_nationality = member.nationality || '';
   form.bridegroom_residence = member.address || '';
   form.bridegroom_father_name = member.father_name || '';
@@ -82,7 +82,7 @@ function handleBridegroomSelect(member: any) {
 function handleBrideSelect(member: any) {
   form.bride_name = member.first_name || '';
   form.bride_surname = member.last_name || '';
-  form.bride_dob = formatDateForDisplay(member.date_of_birth);
+  form.bride_dob = member.date_of_birth || ''; // Keep YYYY-MM-DD format for type="date" inputs
   form.bride_nationality = member.nationality || '';
   form.bride_residence = member.address || '';
   form.bride_father_name = member.father_name || '';
@@ -90,15 +90,8 @@ function handleBrideSelect(member: any) {
 }
 
 function submit() {
-  // Convert dates from DD/MM/YYYY to YYYY-MM-DD for database
-  const dataToSubmit = {
-    ...form.data(),
-    marriage_date: formatDateForDatabase(form.marriage_date),
-    bridegroom_dob: formatDateForDatabase(form.bridegroom_dob),
-    bride_dob: formatDateForDatabase(form.bride_dob),
-  };
-
-  form.transform(() => dataToSubmit).post('/marriage-records', {
+  // Date inputs already provide YYYY-MM-DD format, so no conversion needed
+  form.post('/marriage-records', {
     preserveScroll: true,
     onSuccess: () => router.visit('/marriage-records'),
   });
@@ -121,9 +114,8 @@ function submit() {
               <Label>Marriage Date</Label>
               <Input
                 v-model="form.marriage_date"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
+
               />
             </div>
             <div>
@@ -163,9 +155,7 @@ function submit() {
               <Label>Date of Birth</Label>
               <Input
                 v-model="form.bridegroom_dob"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
               />
             </div>
             <div>
@@ -225,9 +215,7 @@ function submit() {
               <Label>Date of Birth</Label>
               <Input
                 v-model="form.bride_dob"
-                type="text"
-                placeholder="DD/MM/YYYY"
-                pattern="\d{2}/\d{2}/\d{4}"
+                type="date"
               />
             </div>
             <div>

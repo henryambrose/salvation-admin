@@ -8,12 +8,14 @@ use Inertia\Inertia;
 use Inertia\Response;
 use Modules\Fund\Models\FundCategory;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Routing\Controller;
+use App\Http\Controllers\Controller;
 
 class FundCategoryController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('list-fund-category');
+
         $query = FundCategory::query();
 
         // Handle search
@@ -51,6 +53,8 @@ class FundCategoryController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create-fund-category');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:fund_categories,name',
             'description' => 'nullable|string|max:1000',
@@ -69,6 +73,8 @@ class FundCategoryController extends Controller
 
     public function show(FundCategory $category): Response
     {
+        $this->authorize('read-fund-category');
+
         return Inertia::render('Fund/Category/Show', [
             'category' => $category->load(['createdBy', 'updatedBy']),
         ]);
@@ -76,6 +82,8 @@ class FundCategoryController extends Controller
 
     public function update(Request $request, FundCategory $category): RedirectResponse
     {
+        $this->authorize('update-fund-category');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:fund_categories,name,' . $category->id,
             'description' => 'nullable|string|max:1000',
@@ -93,6 +101,8 @@ class FundCategoryController extends Controller
 
     public function destroy(FundCategory $category): RedirectResponse
     {
+        $this->authorize('delete-fund-category');
+
         $category->delete();
 
         return redirect()->route('fund.categories.index')

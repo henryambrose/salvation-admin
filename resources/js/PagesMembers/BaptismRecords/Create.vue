@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,12 +12,17 @@ const props = defineProps<{
   parishes: any[];
 }>();
 
+// Track selected member's date of birth and marriage info
+const selectedMemberDateOfBirth = ref<string | null>(null);
+const selectedMemberMarriageDate = ref<string | null>(null);
+const selectedMemberMarriageRegNo = ref<string | null>(null);
+
 const form = useForm({
-  member_id: null as number | null,
+  member_id: undefined as number | undefined,
   baptism_date: '',
   baptism_reg_no: '',
   place_of_baptism: '',
-  baptism_parish_id: null as number | null,
+  baptism_parish_id: undefined as number | undefined,
   place_of_birth: '',
   nationality: '',
   father_name: '',
@@ -47,12 +52,32 @@ const displayBaptismDate = computed(() => {
   return formatDateForDisplay(form.baptism_date);
 });
 
+// Computed property for displaying member's date of birth
+const displayDateOfBirth = computed(() => {
+  if (!selectedMemberDateOfBirth.value) return 'Not set';
+  return formatDateForDisplay(selectedMemberDateOfBirth.value);
+});
+
+// Computed property for displaying member's marriage date
+const displayMarriageDate = computed(() => {
+  if (!selectedMemberMarriageDate.value) return 'Not set';
+  return formatDateForDisplay(selectedMemberMarriageDate.value);
+});
+
+// Computed property for displaying member's marriage reg no
+const displayMarriageRegNo = computed(() => {
+  return selectedMemberMarriageRegNo.value || 'Not set';
+});
+
 // Handle member selection from SearchDropdown
 function handleMemberSelect(member: any) {
   // Auto-populate baptism fields from member data
   form.baptism_date = member.baptism_date || '';
   form.baptism_reg_no = member.baptism_reg_no || '';
-  form.baptism_parish_id = member.baptism_parish_id || null;
+  form.baptism_parish_id = member.baptism_parish_id ?? undefined;
+  selectedMemberDateOfBirth.value = member.date_of_birth ?? null;
+  selectedMemberMarriageDate.value = member.marriage_date ?? null;
+  selectedMemberMarriageRegNo.value = member.marriage_reg_no ?? null;
 }
 
 // Computed property to check if form can be submitted
@@ -91,16 +116,54 @@ function submit() {
             />
           </div>
           <div>
+            <Label>Date of Birth</Label>
+            <input
+              :value="displayDateOfBirth"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+              placeholder="DD/MM/YYYY"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
+            </p>
+          </div>
+          <div>
             <Label>Baptism Date *</Label>
-            <Input
+            <input
               :value="displayBaptismDate"
               type="text"
               readonly
-              class="bg-muted cursor-not-allowed"
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
               placeholder="DD/MM/YYYY"
             />
             <p v-if="!form.baptism_date" class="mt-1 text-sm text-muted-foreground">
               Will be auto-filled from member data
+            </p>
+          </div>
+          <div>
+            <Label>Marriage Date</Label>
+            <input
+              :value="displayMarriageDate"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+              placeholder="DD/MM/YYYY"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
+            </p>
+          </div>
+          <div>
+            <Label>Marriage Reg No</Label>
+            <input
+              :value="displayMarriageRegNo"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
             </p>
           </div>
           <div>

@@ -21,6 +21,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-permanent-grave-booking');
+
         $query = PermanentGraveBooking::with([
             'permanentGrave',
             'validMember.member',
@@ -127,6 +129,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-permanent-grave-booking');
+
         try {
             $request->validate([
                 'permanent_grave_id' => 'required|exists:permanent_graves,id',

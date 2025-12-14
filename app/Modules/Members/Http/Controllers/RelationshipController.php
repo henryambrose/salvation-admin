@@ -19,6 +19,8 @@ class RelationshipController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-relationship');
+
         $query = Relationship::query();
 
         // Handle archived records
@@ -52,6 +54,8 @@ class RelationshipController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-relationship');
+
         return Inertia::render('relationship/Create');
     }
 
@@ -60,6 +64,8 @@ class RelationshipController extends Controller
      */
     public function store(StoreRelationshipRequest $request)
     {
+        $this->authorize('create-relationship');
+
         Relationship::create($request->validated());
 
         return redirect()->route('relationship.index')->with('success', 'Relationship created successfully.');
@@ -70,6 +76,8 @@ class RelationshipController extends Controller
      */
     public function show(Relationship $relationship)
     {
+        $this->authorize('read-relationship');
+
         //
     }
 
@@ -78,6 +86,8 @@ class RelationshipController extends Controller
      */
     public function edit(Relationship $relationship)
     {
+        $this->authorize('update-relationship');
+
         return Inertia::render('relationship/Edit', [
             'relationship' => $relationship,
         ]);
@@ -88,6 +98,8 @@ class RelationshipController extends Controller
      */
     public function update(UpdateRelationshipRequest $request, Relationship $relationship)
     {
+        $this->authorize('update-relationship');
+
         $relationship->update($request->validated());
 
         return redirect()->route('relationship.index')->with('success', 'Relationship updated successfully.');
@@ -98,6 +110,8 @@ class RelationshipController extends Controller
      */
     public function destroy(Request $request, Relationship $relationship)
     {
+        $this->authorize('delete-relationship');
+
         $relationship->delete();
 
         // Preserve current state after deletion
@@ -114,6 +128,8 @@ class RelationshipController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-relationship');
+
         $relationship = Relationship::onlyTrashed()->findOrFail($id);
         $relationship->restore();
 

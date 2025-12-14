@@ -17,6 +17,8 @@ class CountryController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-country');
+
         $query = Country::query();
         if ($request->input('isArchived') === 'true') {
             $query->onlyTrashed();
@@ -51,6 +53,8 @@ class CountryController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create-country');
+
         return Inertia::render('country/Create');
     }
 
@@ -59,6 +63,8 @@ class CountryController extends Controller
      */
     public function store(StoreCountryRequest $request)
     {
+        $this->authorize('create-country');
+
         Country::create($request->validated());
 
         return redirect()->route('country.index')->with('success', 'Country created successfully.');
@@ -69,6 +75,8 @@ class CountryController extends Controller
      */
     public function edit(Country $country): Response
     {
+        $this->authorize('update-country');
+
         return Inertia::render('country/Edit', [
             'country' => $country,
         ]);
@@ -79,6 +87,8 @@ class CountryController extends Controller
      */
     public function update(UpdateCountryRequest $request, Country $country)
     {
+        $this->authorize('update-country');
+
         $country->update($request->validated());
 
         return redirect()->route('country.index')->with('success', 'Country updated successfully.');
@@ -89,6 +99,8 @@ class CountryController extends Controller
      */
     public function destroy(Request $request, Country $country)
     {
+        $this->authorize('delete-country');
+
         $country->delete();
 
         // Preserve current state after deletion
@@ -112,6 +124,8 @@ class CountryController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-country');
+
         $country = Country::onlyTrashed()->findOrFail($id);
         $country->restore();
 
@@ -123,6 +137,8 @@ class CountryController extends Controller
      */
     public function show($id): Response
     {
+        $this->authorize('read-country');
+
         $country = Country::withTrashed()->findOrFail($id);
 
         return Inertia::render('country/Show', [

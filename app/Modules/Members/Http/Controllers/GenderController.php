@@ -17,6 +17,8 @@ class GenderController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-gender');
+
         $query = Gender::query();
 
         // Handle archived records
@@ -50,6 +52,8 @@ class GenderController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-gender');
+
         return Inertia::render('gender/Create');
     }
 
@@ -58,6 +62,8 @@ class GenderController extends Controller
      */
     public function store(StoreGenderRequest $request)
     {
+        $this->authorize('create-gender');
+
         Gender::create($request->validated());
 
         return redirect()->route('gender.index')->with('success', 'Gender created successfully.');
@@ -68,6 +74,8 @@ class GenderController extends Controller
      */
     public function show(Gender $gender)
     {
+        $this->authorize('read-gender');
+
         //
     }
 
@@ -76,6 +84,8 @@ class GenderController extends Controller
      */
     public function edit(Gender $gender)
     {
+        $this->authorize('update-gender');
+
         return Inertia::render('gender/Edit', [
             'gender' => $gender,
         ]);
@@ -86,6 +96,8 @@ class GenderController extends Controller
      */
     public function update(UpdateGenderRequest $request, Gender $gender)
     {
+        $this->authorize('update-gender');
+
         $gender->update($request->validated());
 
         return redirect()->route('gender.index')->with('success', 'Gender updated successfully.');
@@ -96,6 +108,8 @@ class GenderController extends Controller
      */
     public function destroy(Request $request, Gender $gender)
     {
+        $this->authorize('delete-gender');
+
         $gender->delete();
 
         // Preserve current state after deletion
@@ -112,6 +126,8 @@ class GenderController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-gender');
+
         $gender = Gender::onlyTrashed()->findOrFail($id);
         $gender->restore();
 

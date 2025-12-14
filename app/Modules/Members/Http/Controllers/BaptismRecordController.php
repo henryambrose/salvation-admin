@@ -9,6 +9,7 @@ use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class BaptismRecordController extends Controller
 {
@@ -102,7 +103,6 @@ class BaptismRecordController extends Controller
     {
         $baptismRecord->load(['member.community', 'baptismParish']);
         $parishes = Parish::orderBy('name')->get();
-
         return Inertia::render('BaptismRecords/Edit', [
             'baptismRecord' => $baptismRecord,
             'parishes' => $parishes,
@@ -176,11 +176,16 @@ class BaptismRecordController extends Controller
     {
         // Helper to format dates (handles both string and Carbon instances)
         $formatDate = function ($date, $format = 'd/m/Y') {
-            if (!$date) return null;
-            if ($date instanceof \Carbon\Carbon) {
-                return $date->format($format);
+            if (!$date || $date === '' || $date === '0000-00-00') return null;
+            try {
+                if ($date instanceof \Carbon\Carbon) {
+                    return $date->format($format);
+                }
+                return \Carbon\Carbon::parse($date)->format($format);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to format date: {$date}", ['error' => $e->getMessage()]);
+                return null;
             }
-            return \Carbon\Carbon::parse($date)->format($format);
         };
 
         // Load relationships
@@ -193,6 +198,16 @@ class BaptismRecordController extends Controller
         ]);
 
         $member = $baptismRecord->member;
+
+        // Debug: Log if member or date_of_birth is missing
+        if (!$member) {
+            \Log::warning("Baptism record {$baptismRecord->id} has no associated member");
+        } elseif (!$member->date_of_birth) {
+            \Log::warning("Member {$member->id} has no date_of_birth", [
+                'member_name' => "{$member->first_name} {$member->last_name}",
+                'baptism_record_id' => $baptismRecord->id
+            ]);
+        }
 
         // Get confirmation info if exists
         $confirmationInfo = null;
@@ -280,7 +295,7 @@ class BaptismRecordController extends Controller
         );
 
         // Generate PDF with Spatie (Chromium-based - supports modern CSS)
-        return \Spatie\LaravelPdf\Facades\Pdf::view('certificates.templates.parochial_register_baptism', $data)
+        return Pdf::view('certificates.templates.parochial_register_baptism', $data)
             ->format('a4')
             ->name($filename)
             ->inline();

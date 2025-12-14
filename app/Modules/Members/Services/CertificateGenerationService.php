@@ -5,7 +5,7 @@ namespace Modules\Members\Services;
 use Modules\Members\Models\CertificateRecord;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
-use Barryvdh\DomPDF\Facade\Pdf;
+use Spatie\LaravelPdf\Facades\Pdf;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -105,18 +105,50 @@ class CertificateGenerationService
       'html_sample' => substr($html, 0, 500) . '...',
     ]);
 
-    // Generate PDF using DomPDF
-    $pdf = Pdf::loadHTML($html);
+    // Generate PDF using Spatie (Chromium-based - supports modern CSS)
+    $pdfBuilder = Pdf::html($html);
 
     // Apply template configuration if available
     if ($certificate->template && $certificate->template->template_config) {
-      $this->applyTemplateConfig($pdf, $certificate->template->template_config);
+      $config = $certificate->template->template_config;
+
+      // Paper size and orientation
+      $paper = $config['paper'] ?? 'a4';
+      $orientation = $config['orientation'] ?? 'portrait';
+      $pdfBuilder->format($paper);
+
+      if (strtolower($orientation) === 'landscape') {
+        $pdfBuilder->landscape();
+      }
+
+      // Margins if specified
+      if (isset($config['margin'])) {
+        $pdfBuilder->margins(
+          $config['margin']['top'] ?? 0,
+          $config['margin']['right'] ?? 0,
+          $config['margin']['bottom'] ?? 0,
+          $config['margin']['left'] ?? 0
+        );
+      }
     } else {
       // Default configuration
-      $pdf->setPaper('A4', 'portrait');
+      $pdfBuilder->format('a4');
     }
 
-    return $pdf->output();
+    // Generate PDF to temp file and get content
+    $tempPath = storage_path('app/temp/' . uniqid() . '.pdf');
+
+    // Ensure temp directory exists
+    $tempDir = dirname($tempPath);
+    if (!file_exists($tempDir)) {
+      mkdir($tempDir, 0755, true);
+    }
+
+    $pdfBuilder->save($tempPath);
+    $content = file_get_contents($tempPath);
+    unlink($tempPath);
+
+    return $content;
   }
 
   /**
@@ -127,6 +159,21 @@ class CertificateGenerationService
     $member = $certificate->member;
     $additionalData = $certificate->additional_data ?? [];
 
+    // Helper to format dates (handles both string and Carbon instances)
+    $formatDate = function ($date, $format = 'd/m/Y') {
+      if (!$date || $date === '' || $date === '0000-00-00') return null;
+      try {
+        if ($date instanceof \Carbon\Carbon) {
+          return $date->format($format);
+        }
+        // Handle string dates (from DateString cast)
+        return \Carbon\Carbon::parse($date)->format($format);
+      } catch (\Exception $e) {
+        Log::warning("Failed to format date: {$date}", ['error' => $e->getMessage()]);
+        return null;
+      }
+    };
+
     // Base member data
     $data = [
       'certificate' => $certificate,
@@ -135,7 +182,7 @@ class CertificateGenerationService
       'member_first_name' => $member->first_name,
       'member_middle_name' => $member->middle_name ?? '',
       'member_last_name' => $member->last_name,
-      'member_dob' => $member->date_of_birth?->format('d/m/Y'),
+      'member_dob' => $formatDate($member->date_of_birth),
       'member_family_no' => $member->family_no,
       'member_member_no' => $member->member_no,
       'certificate_number' => $certificate->certificate_number,
@@ -170,10 +217,12 @@ class CertificateGenerationService
 
         $data = array_merge($data, [
           // Legacy fields from member table (fallback)
-          'baptism_date' => $baptismRecord?->baptism_date?->format('d F Y') ?? $member->baptism_date?->format('d F Y'),
+          'baptism_date' => $formatDate($baptismRecord?->baptism_date ?? $member->baptism_date, 'd F Y'),
           'baptism_reg_no' => $baptismRecord?->baptism_reg_no ?? $member->baptism_reg_no,
           'baptism_parish' => $baptismRecord?->baptismParish?->name ?? $member->baptism_parish ?? $data['parish_name'],
-          'baptism_year' => $baptismRecord?->baptism_year ?? $member->baptism_date?->year,
+          'baptism_year' => $baptismRecord?->baptism_date
+            ? \Carbon\Carbon::parse($baptismRecord->baptism_date)->year
+            : ($member->baptism_date ? \Carbon\Carbon::parse($member->baptism_date)->year : null),
 
           // Parochial register fields from baptism_records table
           'place_of_birth' => $baptismRecord?->place_of_birth ?? '',
@@ -204,12 +253,12 @@ class CertificateGenerationService
 
           // Cross-reference data
           'confirmation_info' => $confirmationCert ? [
-            'date' => $member->confirmation_date?->format('d F Y'),
+            'date' => $formatDate($member->confirmation_date, 'd F Y'),
             'place' => $member->confirmation_parish ?? $data['parish_name'],
           ] : null,
 
           'marriage_info' => $marriageCert ? [
-            'date' => $member->marriage_date?->format('d F Y'),
+            'date' => $formatDate($member->marriage_date, 'd F Y'),
             'place' => $member->marriage_parish ?? $data['parish_name'],
             'spouse' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : $additionalData['spouse_name'] ?? '',
           ] : null,
@@ -407,26 +456,6 @@ class CertificateGenerationService
     return view('certificates.templates.default', $data)->render();
   }
 
-  /**
-   * Apply template configuration to PDF
-   */
-  protected function applyTemplateConfig($pdf, array $config): void
-  {
-    // Paper size and orientation
-    $paper = $config['paper'] ?? 'A4';
-    $orientation = $config['orientation'] ?? 'portrait';
-    $pdf->setPaper($paper, $orientation);
-
-    // Additional PDF options
-    if (isset($config['margin'])) {
-      $pdf->setOptions([
-        'margin_top' => $config['margin']['top'] ?? 20,
-        'margin_right' => $config['margin']['right'] ?? 20,
-        'margin_bottom' => $config['margin']['bottom'] ?? 20,
-        'margin_left' => $config['margin']['left'] ?? 20,
-      ]);
-    }
-  }
 
   /**
    * Validate certificate data before generation
@@ -514,7 +543,7 @@ class CertificateGenerationService
       return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($full));
     }
 
-    // If it's a full http(s) URL, return as-is (requires DomPDF remote enabled)
+    // If it's a full http(s) URL, return as-is (requires remote enabled)
     if (Str::startsWith($src, ['http://', 'https://'])) {
       $appUrl = rtrim(config('app.url'), '/');
       if ($appUrl && Str::startsWith($src, $appUrl)) {
@@ -527,7 +556,7 @@ class CertificateGenerationService
         }
       }
 
-      // Otherwise it’s a remote URL: only works if Dompdf remote is enabled.
+      // Otherwise it's a remote URL: only works if remote is enabled.
       // Prefer to avoid this (base64 is safest), but return as-is if needed.
       return $src;
     }

@@ -46,9 +46,9 @@ class MarriageRecord extends Model
     ];
 
     protected $casts = [
-        'marriage_date' => 'date',
-        'bridegroom_dob' => 'date',
-        'bride_dob' => 'date',
+        'marriage_date' => 'date:Y-m-d',
+        'bridegroom_dob' => 'date:Y-m-d',
+        'bride_dob' => 'date:Y-m-d',
     ];
 
     /**

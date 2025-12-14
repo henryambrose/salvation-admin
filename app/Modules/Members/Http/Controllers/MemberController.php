@@ -1206,6 +1206,7 @@ class MemberController extends Controller
     public function search(Request $request)
     {
         $query = $request->input('search', '');
+        $status = $request->input('status', 'alive'); // Default to 'alive', can be 'deceased'
 
         if (empty($query)) {
             return response()->json([]);
@@ -1215,8 +1216,16 @@ class MemberController extends Controller
             return response()->json([]);
         }
 
-        $members = Member::with(['community'])
-            ->alive()
+        $membersQuery = Member::with(['community']);
+
+        // Apply status filter conditionally
+        if ($status === 'deceased') {
+            $membersQuery->deceased();
+        } else {
+            $membersQuery->alive();
+        }
+
+        $members = $membersQuery
             ->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
                     ->orWhere('last_name', 'like', "%{$query}%")
@@ -1231,9 +1240,12 @@ class MemberController extends Controller
                 return [
                     'id' => $member->id,
                     'name' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$communityName}",
+                    'date_of_birth' => $member->date_of_birth,
                     'baptism_date' => $member->baptism_date,
                     'baptism_reg_no' => $member->baptism_reg_no,
                     'baptism_parish_id' => $member->baptism_parish_id,
+                    'marriage_date' => $member->marriage_date,
+                    'marriage_reg_no' => $member->marriage_reg_no,
                 ];
             });
 

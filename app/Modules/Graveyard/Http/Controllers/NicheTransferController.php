@@ -20,6 +20,8 @@ class NicheTransferController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-niche-transfer');
+
         $query = NicheTransfer::with([
             'fromTemporaryGrave',
             'fromBooking',
@@ -163,6 +165,8 @@ class NicheTransferController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-niche-transfer');
+
         $request->validate([
             'from_booking_id' => 'required|exists:temporary_grave_bookings,id',
             'to_niche_id' => 'required|exists:niches,id',

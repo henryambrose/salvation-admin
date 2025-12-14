@@ -55,7 +55,12 @@
       "Bash(xargs:*)",
       "Bash(ls:*)",
       "Bash(php -m:*)",
-      "Bash(mysql:*)"
+      "Bash(mysql:*)",
+      "Bash(php audit-permissions.php:*)",
+      "Bash(php generate-permission-test.php:*)",
+      "Bash(npm install:*)",
+      "Bash(php artisan tinker:*)",
+      "Bash(php artisan view:clear:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,337 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Certificate of Burial</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
-        * {
-            box-sizing: border-box;
+        @media print {
+            @page {
+                margin: 0mm;
+                padding: 0mm;
+                margin-top: 10mm;
+
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+            }
         }
 
         body {
-            font-family: 'Times New Roman', serif;
             margin: 0;
             padding: 0;
-            color: #000;
-            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
         }
 
-        .certificate {
-            max-width: 100%;
-            margin: 0;
-            padding: 12px;
+        .masterframe {
+            width: 180mm;
+            min-height: 280mm;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .headframe {
+            width: 100%;
+            min-height: 32mm;
+            display: flex;
             position: relative;
-            box-sizing: border-box;
+            margin-bottom: 5mm;
         }
 
-        .certificate::before {
-            content: '';
+        .logoframe {
+            height: 100%;
+            width: 36.5mm;
+            padding-top: 5mm;
+            display: flex;
+            justify-content: end;
             position: absolute;
-            top: 4px;
-            left: 4px;
-            right: 4px;
-            height: calc(100% - 8px);
-            border: 1px solid #000;
-            pointer-events: none;
-            box-sizing: border-box;
+            left: 10mm;
+            top: 0;
+            z-index: 10;
+
         }
 
-        .header-table {
-            width: 100%;
-            margin-bottom: 5px;
-            border-collapse: collapse;
+        .logoframeimg {
+            height: 24mm;
+            width: 24mm;
         }
 
-        .logo-cell {
-            width: 70px;
-            vertical-align: top;
-            padding-right: 10px;
-        }
-
-        .logo-cell img {
-            max-width: 60px;
-            max-height: 60px;
-            object-fit: contain;
-        }
-
-        .header-content {
-            vertical-align: top;
+        .headframecontent {
+            height: 100%;
+            width: 243.5mm;
+            padding: 0 11mm;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
+            font-weight: 800;
         }
 
-        .title {
+        .cert_nm {
+            font-size: 24px;
+            display: inline-flex width: 100%;
+            height: 28px;
+            justify-content: center;
             text-align: center;
-            font-size: 19px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin: 0;
-            letter-spacing: 0.8px;
+            font-family: 'Times New Roman', Times, serif;
+            line-height: 28px;
         }
 
-        .subtitle {
-            text-align: center;
-            font-size: 11px;
-            margin: 2px 0;
-            line-height: 1.6;
-        }
-
-        .burial-number {
-            text-align: center;
+        .headframe_bylines {
             font-size: 12px;
-            font-weight: bold;
-            margin-top: 4px;
-            margin-bottom: 20px;
-        }
-
-        .details-list {
-            font-size: 12px;
-            line-height: 1.6;
-        }
-
-        .detail-row {
-            display: table;
+            display: inline-flex;
             width: 100%;
-            margin-bottom: 5px;
+            height: 14px;
+            justify-content: center;
+            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
         }
 
-        .detail-number {
-            display: table-cell;
-            width: 35px;
-            vertical-align: top;
-            font-weight: normal;
+        .headframe_parish {
+            font-size: 16px;
+            display: inline-flex;
+            width: 100%;
+            margin: 2.5mm 0;
+            height: 18px;
+            justify-content: center;
+            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
         }
 
-        .detail-label {
-            display: table-cell;
-            width: 160px;
-            vertical-align: top;
-            font-weight: normal;
+        .bodyframe {
+            /* height: 245mm; */
+            width: 100%;
         }
 
-        .detail-colon {
-            display: table-cell;
-            width: 10px;
-            vertical-align: top;
+        .brow {
+            width: 100%;
+            height: 7.5mm;
+            display: flex;
+            font-size: 11pt;
+            font-weight: 600;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-        .detail-value {
-            display: table-cell;
-            vertical-align: top;
-            border-bottom: 1px dotted #000;
-            min-height: 18px;
-            padding-left: 5px;
+        .bcell1 {
+            width: 10mm;
+            padding-right: 2mm;
+            height: 100%;
+            padding-top: 2mm;
+            display: flex;
+            justify-content: start;
+            align-items: center;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
-        .footer {
-            margin-top: 30px;
-            font-size: 11px;
+        .bcell12 {
+            width: 47mm;
+            padding-right: 2mm;
+            height: 100%;
+            padding-top: 2mm;
+            display: flex;
+            justify-content: start;
+            align-items: center;
+        }
+
+        .bcell13 {
+            width: 3mm;
+            height: 100%;
+            padding-top: 2mm;
+            display: flex;
+            justify-content: start;
+            align-items: center;
+        }
+
+        .bcell14 {
+            width: 118.5mm;
+            padding-left: 2mm;
+            height: 100%;
+            padding-top: 2mm;
+            margin-left: 1.5mm;
+            display: flex;
+            justify-content: start;
+            align-items: center;
+            border-bottom: 1px dotted #cccccc;
+        }
+
+        .bottomframe {
+            width: 100%;
+            margin-top: 15mm;
+            display: flex;
+            flex-direction: row;
+            font-family: 'Times New Roman', Times, serif;
+            text-align: center;
         }
 
         .authenticity {
-            text-align: left;
-            margin-bottom: 12px;
-        }
-
-        .date-issued {
-            text-align: right;
-            font-weight: bold;
-        }
-
-        .signatures {
-            display: table;
-            width: 100%;
-            margin-top: 40px;
-        }
-
-        .signature-left, .signature-right {
-            display: table-cell;
+            display: flex;
             width: 50%;
-            text-align: center;
-            vertical-align: bottom;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
         }
 
-        .signature-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            margin-top: 40px;
+        .signature {
+            display: flex;
+            width: 50%;
+            justify-content: center;
+            align-items: center;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            flex-direction: column;
         }
 
-        @page {
-            size: A4;
-            margin: 15mm 15mm;
+        .bottom_width {
+            width: 100%;
         }
 
-        @media print {
-            body {
-                padding: 0;
-                margin: 0;
-            }
-            .certificate {
-                margin: 0;
-                padding: 15px;
-                page-break-after: avoid;
-                page-break-inside: avoid;
-                min-height: 260mm;
-            }
-
-            .certificate::before {
-                top: 4px;
-                left: 4px;
-                right: 4px;
-                height: calc(100% - 8px);
-            }
+        .authenticity_text,
+        .signature_date {
+            margin-bottom: 20mm;
         }
+
+
+        .jrow {}
+
+        .jrowa {}
+
+        .jrowb {}
+
+        .jrowc {}
+
+        .jrowd {}
     </style>
 </head>
+
 <body>
-    <div class="certificate">
-        <table class="header-table">
-            <tr>
-                @if(isset($template_config['show_logo']) && $template_config['show_logo'] && !empty($template_config['logo_url']))
-                    <td class="logo-cell" rowspan="5">
-                        <img src="{{ $template_config['logo_url'] }}" alt="Church Logo">
-                    </td>
+    <div class="masterframe">
+        <div class="headframe">
+            <div class="logoframe">
+                @if (isset($template_config['show_logo']) && $template_config['show_logo'] && !empty($template_config['logo_url']))
+                    <img src="{{ $template_config['logo_url'] }}" alt="Church Logo">
                 @endif
-                <td class="header-content">
-                    <div class="title">Certificate of Burial</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="header-content">
-                    <div class="subtitle">Extracts from the Parochial Register of</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="header-content">
-                    <div class="subtitle" style="font-weight: bold;">{{ strtoupper($parish_name) }}</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="header-content">
-                    <div class="subtitle" style="font-size: 12px; margin-bottom: 0px;">{{ $parish_address ?? 'Dadar (W), Mumbai - 400 028' }}</div>
-                </td>
-            </tr>
-            <tr>
-                <td class="header-content">
-                    <div class="burial-number">
-                        Burial No {{ $burial_reg_no_short ?? ($burial_reg_no ? (int)filter_var($burial_reg_no, FILTER_SANITIZE_NUMBER_INT) : '--') }} of the Year {{ $burial_year ?? '--' }}
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <div class="details-list">
-            <!-- 1. Date of Death -->
-            <div class="detail-row">
-                <span class="detail-number">1.</span>
-                <span class="detail-label">Date of Death</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $death_date ?? '' }}</span>
             </div>
-
-            <!-- 2. Date of Burial -->
-            <div class="detail-row">
-                <span class="detail-number">2.</span>
-                <span class="detail-label">Date of Burial</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $burial_date ?? '' }}</span>
-            </div>
-
-            <!-- 3. Name -->
-            <div class="detail-row">
-                <span class="detail-number">3.</span>
-                <span class="detail-label">Name</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $deceased_name ?? '' }}</span>
-            </div>
-
-            <!-- 4. Surname -->
-            <div class="detail-row">
-                <span class="detail-number">4.</span>
-                <span class="detail-label">Surname</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $deceased_surname ?? '' }}</span>
-            </div>
-
-            <!-- 5. Relationship -->
-            <div class="detail-row">
-                <span class="detail-number">5.</span>
-                <span class="detail-label">Relationship</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $relationship ?? '' }}</span>
-            </div>
-
-            <!-- 6. Residence -->
-            <div class="detail-row">
-                <span class="detail-number">6.</span>
-                <span class="detail-label">Residence</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $residence ?? '' }}</span>
-            </div>
-
-            <!-- 7. Age -->
-            <div class="detail-row">
-                <span class="detail-number">7.</span>
-                <span class="detail-label">Age</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $age ? $age . ' Years' : '' }}</span>
-            </div>
-
-            <!-- 8. Nationality -->
-            <div class="detail-row">
-                <span class="detail-number">8.</span>
-                <span class="detail-label">Nationality</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $nationality ?? '' }}</span>
-            </div>
-
-            <!-- 9. Cause of Death -->
-            <div class="detail-row">
-                <span class="detail-number">9.</span>
-                <span class="detail-label">Cause of Death</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $cause_of_death ?? '' }}</span>
-            </div>
-
-            <!-- 10. Place of Burial -->
-            <div class="detail-row">
-                <span class="detail-number">10.</span>
-                <span class="detail-label">Place of Burial</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $place_of_burial ?? '' }}</span>
-            </div>
-
-            <!-- 11. Minister -->
-            <div class="detail-row">
-                <span class="detail-number">11.</span>
-                <span class="detail-label">Minister</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $minister_name ?? '' }}</span>
-            </div>
-
-            <!-- 12. Remarks -->
-            <div class="detail-row">
-                <span class="detail-number">12.</span>
-                <span class="detail-label">Remarks</span>
-                <span class="detail-colon">:</span>
-                <span class="detail-value">{{ $death_remarks ?? '' }}</span>
-            </div>
-        </div>
-
-        <div class="footer">
-            <div class="authenticity">For Authenticity of Extract:</div>
-            <div class="date-issued">Dated: {{ $issued_date }}</div>
-
-            <div class="signatures">
-                <div class="signature-left">
-                    <div class="signature-label">SEAL</div>
+            <div class="headframecontent">
+                <div class="cert_nm">CERTIFICATE OF BURIAL</div>
+                <div class="headframe_bylines">Extracts from the Parochial Register of</div>
+                <div class="headframe_parish">{{ strtoupper($parish_name) }}
                 </div>
-                <div class="signature-right">
-                    <div class="signature-label">For Parish Priest</div>
+                <div class="headframe_bylines">{{ $parish_address ?? 'Dadar (W), Mumbai - 400 028' }}</div>
+                <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; ">
+                    Burial No {{ $burial_reg_no_short ?? ($burial_reg_no ? (int) filter_var($burial_reg_no, FILTER_SANITIZE_NUMBER_INT) : '--') }} of the Year {{ $burial_year ?? '--' }}
                 </div>
             </div>
         </div>
+
+        <!-- Body -->
+        <div style="width: 100%; padding-left: 10mm; font-size: 11pt; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
+            @php
+                $fields = [
+                    ['num' => '1.', 'label' => 'Date of Death', 'value' => $death_date ?? ''],
+                    ['num' => '2.', 'label' => 'Date of Burial', 'value' => $burial_date ?? ''],
+                    ['num' => '3.', 'label' => 'Name', 'value' => $deceased_name ?? ''],
+                    ['num' => '4.', 'label' => 'Surname', 'value' => $deceased_surname ?? ''],
+                    ['num' => '5.', 'label' => 'Relationship', 'value' => $relationship ?? ''],
+                    ['num' => '6.', 'label' => 'Residence', 'value' => $residence ?? ''],
+                    ['num' => '7.', 'label' => 'Age', 'value' => ($age ? $age . ' Years' : '')],
+                    ['num' => '8.', 'label' => 'Nationality', 'value' => $nationality ?? ''],
+                    ['num' => '9.', 'label' => 'Cause of Death', 'value' => $cause_of_death ?? ''],
+                    ['num' => '10.', 'label' => 'Place of Burial', 'value' => $place_of_burial ?? ''],
+                    ['num' => '11.', 'label' => 'Minister', 'value' => $minister_name ?? ''],
+                    ['num' => '12.', 'label' => 'Remarks', 'value' => $death_remarks ?? ''],
+                ];
+            @endphp
+
+            @foreach($fields as $field)
+                <div style="display: flex; min-height: 7.5mm; align-items: center;">
+                    <div style="width: 10mm; padding-right: 2mm;">{{ $field['num'] }}</div>
+                    <div style="width: 47mm; padding-right: 2mm;">{{ $field['label'] }}</div>
+                    <div style="width: 3mm;">:</div>
+                    <div style="flex: 1; padding-left: 2mm; border-bottom: 1px dotted #cccccc;">{{ $field['value'] }}</div>
+                </div>
+            @endforeach
+        </div>
+
+        <!-- Bottom Section -->
+        <div style="display: flex; width: 100%; margin-top: 15mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
+            <div style="flex: 1; text-align: center;">
+                <div style="margin-bottom: 20mm;">For Authenticity of Extract:</div>
+                <div style="padding-left: 20mm;">SEAL</div>
+            </div>
+            <div style="flex: 1; text-align: right; padding-right: 10mm;">
+                <div style="margin-bottom: 20mm;">Date: {{ $issued_date ?? now()->format('jS F Y') }}</div>
+                <div>For PARISH PRIEST</div>
+            </div>
+        </div>
+
+
+
+
+
     </div>
 </body>
+
 </html>

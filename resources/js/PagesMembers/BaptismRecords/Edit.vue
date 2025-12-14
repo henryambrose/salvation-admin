@@ -13,6 +13,14 @@ const props = defineProps<{
   parishes: any[];
 }>();
 
+// Debug: Log props on mount
+console.log('Edit Baptism Record - Props:', {
+  baptismRecord: props.baptismRecord,
+  member: props.baptismRecord?.member,
+  member_dob: props.baptismRecord?.member?.date_of_birth,
+  baptism_date: props.baptismRecord?.baptism_date,
+});
+
 // Format date to YYYY-MM-DD for date input
 const formatDate = (date: any) => {
   if (!date) return '';
@@ -31,6 +39,7 @@ const formatDateForDisplay = (dateString: string) => {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
+  console.log(day,month,year);
   return `${day}/${month}/${year}`;
 };
 
@@ -70,13 +79,38 @@ const memberOptions = computed(() => {
       baptism_date: member.baptism_date,
       baptism_reg_no: member.baptism_reg_no,
       baptism_parish_id: member.baptism_parish_id,
+      date_of_birth: member.date_of_birth,
     }];
   }
   return [];
 });
 
+// Computed property for displaying member's date of birth
+const displayDateOfBirth = computed(() => {
+  const dob = props.baptismRecord.member?.date_of_birth;
+  console.log('displayDateOfBirth computed:', {
+    raw_dob: dob,
+    formatted: dob ? formatDateForDisplay(dob) : 'Not set'
+  });
+  if (!dob) return 'Not set';
+  return formatDateForDisplay(dob);
+});
+
+// Computed property for displaying member's marriage date
+const displayMarriageDate = computed(() => {
+  const marriageDate = props.baptismRecord.member?.marriage_date;
+  if (!marriageDate) return 'Not set';
+  return formatDateForDisplay(marriageDate);
+});
+
+// Computed property for displaying member's marriage reg no
+const displayMarriageRegNo = computed(() => {
+  return props.baptismRecord.member?.marriage_reg_no || 'Not set';
+});
+
 // Computed property for displaying baptism date
 const displayBaptismDate = computed(() => {
+  console.log(form.baptism_date);
   return formatDateForDisplay(form.baptism_date);
 });
 
@@ -124,16 +158,54 @@ function submit() {
             />
           </div>
           <div>
+            <Label>Date of Birth</Label>
+            <input
+              :value="displayDateOfBirth"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+              placeholder="DD/MM/YYYY"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
+            </p>
+          </div>
+          <div>
             <Label>Baptism Date *</Label>
-            <Input
+            <input
               :value="displayBaptismDate"
               type="text"
               readonly
-              class="bg-muted cursor-not-allowed"
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
               placeholder="DD/MM/YYYY"
             />
             <p v-if="!form.baptism_date" class="mt-1 text-sm text-muted-foreground">
               Will be auto-filled from member data
+            </p>
+          </div>
+          <div>
+            <Label>Marriage Date</Label>
+            <input
+              :value="displayMarriageDate"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+              placeholder="DD/MM/YYYY"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
+            </p>
+          </div>
+          <div>
+            <Label>Marriage Reg No</Label>
+            <input
+              :value="displayMarriageRegNo"
+              type="text"
+              readonly
+              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              From member record
             </p>
           </div>
           <div>

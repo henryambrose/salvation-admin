@@ -8,6 +8,7 @@ use Modules\Members\Models\Member;
 use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class MarriageRecordController extends Controller
 {
@@ -109,7 +110,7 @@ class MarriageRecordController extends Controller
 
     public function edit(MarriageRecord $marriageRecord)
     {
-        $marriageRecord->load(['bridegroom', 'bride', 'marriageParish']);
+        $marriageRecord->load(['bridegroom.community', 'bride.community', 'marriageParish']);
         $parishes = Parish::orderBy('name')->get();
 
         return Inertia::render('MarriageRecords/Edit', [
@@ -214,6 +215,22 @@ class MarriageRecordController extends Controller
 
         ]);
 
+        // Get bridegroom name - use member data if available, otherwise use manually entered data
+        $bridegroomName = $marriageRecord->bridegroom_member_id && $marriageRecord->bridegroom
+            ? $marriageRecord->bridegroom->first_name
+            : $marriageRecord->bridegroom_name;
+        $bridegroomSurname = $marriageRecord->bridegroom_member_id && $marriageRecord->bridegroom
+            ? $marriageRecord->bridegroom->last_name
+            : $marriageRecord->bridegroom_surname;
+
+        // Get bride name - use member data if available, otherwise use manually entered data
+        $brideName = $marriageRecord->bride_member_id && $marriageRecord->bride
+            ? $marriageRecord->bride->first_name
+            : $marriageRecord->bride_name;
+        $brideSurname = $marriageRecord->bride_member_id && $marriageRecord->bride
+            ? $marriageRecord->bride->last_name
+            : $marriageRecord->bride_surname;
+
         // Prepare data for the template
         $data = [
             // Marriage data
@@ -223,8 +240,8 @@ class MarriageRecordController extends Controller
             'parish_of_marriage' => $marriageRecord->parish_of_marriage?? '',
 
             // Bridegroom data
-            'bridegroom_name' => $marriageRecord->bridegroom_name,
-            'bridegroom_surname' => $marriageRecord->bridegroom_surname,
+            'bridegroom_name' => $bridegroomName,
+            'bridegroom_surname' => $bridegroomSurname,
             'bridegroom_dob' => $formatDate($marriageRecord->bridegroom_dob),
             'bridegroom_nationality' => $marriageRecord->bridegroom_nationality,
             'bridegroom_profession' => $marriageRecord->bridegroom_profession,
@@ -235,8 +252,8 @@ class MarriageRecordController extends Controller
             'bridegroom_if_widower_whose' => $marriageRecord->bridegroom_if_widower_whose,
 
             // Bride data
-            'bride_name' => $marriageRecord->bride_name,
-            'bride_surname' => $marriageRecord->bride_surname,
+            'bride_name' => $brideName,
+            'bride_surname' => $brideSurname,
             'bride_dob' => $formatDate($marriageRecord->bride_dob),
             'bride_nationality' => $marriageRecord->bride_nationality,
             'bride_profession' => $marriageRecord->bride_profession,
@@ -270,10 +287,6 @@ class MarriageRecordController extends Controller
             ],
         ];
 
-        // Generate PDF
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('certificates.templates.parochial_register_marriage', $data);
-        $pdf->setPaper('A4', 'portrait');
-
         // Generate filename
         $filename = sprintf(
             'Marriage_Certificate_%s_%s_%s.pdf',
@@ -282,8 +295,11 @@ class MarriageRecordController extends Controller
             now()->format('Y-m-d')
         );
 
-        // Return PDF for download/viewing in new tab
-        return $pdf->stream($filename);
+        // Generate PDF with Spatie (Chromium-based - supports modern CSS)
+        return Pdf::view('certificates.templates.parochial_register_marriage', $data)
+            ->format('a4')
+            ->name($filename)
+            ->inline();
     }
 
     /**
