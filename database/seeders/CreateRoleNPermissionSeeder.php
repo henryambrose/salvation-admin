@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Members\Database\Seeders;
+namespace Database\Seeders;
 
 use Modules\Members\Models\User;
 use Illuminate\Database\Seeder;

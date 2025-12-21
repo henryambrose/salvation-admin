@@ -18,7 +18,7 @@ use Modules\Graveyard\Http\Controllers\AnnualMaintenanceFeeController;
 use Illuminate\Support\Facades\Log;
 
 
-Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->as('graveyard.')->group(function () {
+Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveyard.')->group(function () {
 
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
     Route::prefix('/graves')->name('graves.')->group(function () {

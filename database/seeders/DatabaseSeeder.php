@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
             PermissionGroupSeeder::class,
             PPCHeadPermissionSeeder::class,
             SCCHeadPermissionSeeder::class,
+            SCCHeadPermissionSeeder::class,
+            CreateRoleNPermissionSeeder::class,
+            ModuleSeeder::class,
             
         ]);
 
