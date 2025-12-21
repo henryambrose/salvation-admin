@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DateInput } from '@/components/ui/date-input';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 
 const props = defineProps<{
@@ -47,26 +48,10 @@ const formatDateForDisplay = (dateString: string) => {
   return `${day}/${month}/${year}`;
 };
 
-// Computed property for displaying baptism date
-const displayBaptismDate = computed(() => {
-  return formatDateForDisplay(form.baptism_date);
-});
-
 // Computed property for displaying member's date of birth
 const displayDateOfBirth = computed(() => {
   if (!selectedMemberDateOfBirth.value) return 'Not set';
   return formatDateForDisplay(selectedMemberDateOfBirth.value);
-});
-
-// Computed property for displaying member's marriage date
-const displayMarriageDate = computed(() => {
-  if (!selectedMemberMarriageDate.value) return 'Not set';
-  return formatDateForDisplay(selectedMemberMarriageDate.value);
-});
-
-// Computed property for displaying member's marriage reg no
-const displayMarriageRegNo = computed(() => {
-  return selectedMemberMarriageRegNo.value || 'Not set';
 });
 
 // Handle member selection from SearchDropdown
@@ -130,48 +115,39 @@ function submit() {
           </div>
           <div>
             <Label>Baptism Date *</Label>
-            <input
-              :value="displayBaptismDate"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <DateInput
+              v-model="form.baptism_date"
               placeholder="DD/MM/YYYY"
             />
             <p v-if="!form.baptism_date" class="mt-1 text-sm text-muted-foreground">
-              Will be auto-filled from member data
+              Auto-filled from member data (can be edited)
             </p>
           </div>
           <div>
             <Label>Marriage Date</Label>
-            <input
-              :value="displayMarriageDate"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <DateInput
+              v-model="selectedMemberMarriageDate"
               placeholder="DD/MM/YYYY"
             />
             <p class="mt-1 text-xs text-muted-foreground">
-              From member record
+              From member record (can be edited)
             </p>
           </div>
           <div>
             <Label>Marriage Reg No</Label>
-            <input
-              :value="displayMarriageRegNo"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <Input
+              v-model="selectedMemberMarriageRegNo"
+              placeholder="Enter marriage registration number"
             />
             <p class="mt-1 text-xs text-muted-foreground">
-              From member record
+              From member record (can be edited)
             </p>
           </div>
           <div>
             <Label>Baptism Reg No</Label>
             <Input
               v-model="form.baptism_reg_no"
-              readonly
-              class="bg-muted cursor-not-allowed"
+              placeholder="Enter baptism registration number"
             />
           </div>
           <div>

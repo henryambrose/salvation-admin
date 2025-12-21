@@ -44,6 +44,14 @@ class DeathRecord extends Model
     }
 
     /**
+     * Get the member who has this as their death record (reverse relationship)
+     */
+    public function memberReference()
+    {
+        return $this->hasOne(Member::class, 'deathrecord_id');
+    }
+
+    /**
      * Get the parish where burial occurred
      */
     public function burialParish(): BelongsTo

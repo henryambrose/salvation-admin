@@ -53,18 +53,15 @@ class Member extends Model
         'latest_qualifications',
         'company_name',
         'income_range_id',
-        'baptism_date',
-        'baptism_reg_no',
-        'baptism_parish',
+        'baptismrecord_id',
+        'baptism_parish_id',
         'confirmation_date',
         'confirmation_reg_no',
-        'confirmation_parish',
-        'marriage_date',
-        'marriage_reg_no',
-        'marriage_parish',
-        'death_date',
-        'deaths_reg_no',
-        'death_parish',
+        'confirmation_parish_id',
+        'marriagerecord_id',
+        'marriage_parish_id',
+        'deathrecord_id',
+        'death_parish_id',
         'family_sequence',
         'member_sequence',
         'marital_status',
@@ -81,17 +78,15 @@ class Member extends Model
         'parish_id',
         'designation_id',
         'status_id',
+        'notes',
         'father_source',
         'mother_source',
         'spouse_source',
     ];
 
     protected $casts = [
-        'marriage_date' => \App\Casts\DateString::class,
         'date_of_birth' => \App\Casts\DateString::class,
-        'baptism_date' => \App\Casts\DateString::class,
         'confirmation_date' => \App\Casts\DateString::class,
-        'death_date' => \App\Casts\DateString::class,
     ];
 
     /**
@@ -148,22 +143,17 @@ class Member extends Model
 
     public function baptismRecord()
     {
-        return $this->hasOne(BaptismRecord::class);
+        return $this->belongsTo(BaptismRecord::class, 'baptismrecord_id');
     }
 
-    public function marriageRecordAsBridegroom()
+    public function marriageRecord()
     {
-        return $this->hasOne(MarriageRecord::class, 'bridegroom_member_id');
-    }
-
-    public function marriageRecordAsBride()
-    {
-        return $this->hasOne(MarriageRecord::class, 'bride_member_id');
+        return $this->belongsTo(MarriageRecord::class, 'marriagerecord_id');
     }
 
     public function deathRecord()
     {
-        return $this->hasOne(DeathRecord::class);
+        return $this->belongsTo(DeathRecord::class, 'deathrecord_id');
     }
 
     protected static function boot()
@@ -483,15 +473,15 @@ class Member extends Model
      */
     public function scopeAlive($query)
     {
-        return $query->whereNull('death_date');
+        return $query->whereNull('deathrecord_id');
     }
 
     /**
-     * Scope to get only deceased members (has death_date)
+     * Scope to get only deceased members (has deathRecord relationship)
      */
     public function scopeDeceased($query)
     {
-        return $query->whereNotNull('death_date');
+        return $query->whereNotNull('deathrecord_id');
     }
 
     public function scopeWithValidFamilyNo($query)
@@ -522,8 +512,8 @@ class Member extends Model
     {
         $availableTypes = [];
 
-        // Baptism certificate - available if member has baptism date
-        if ($this->baptism_date) {
+        // Baptism certificate - available if member has baptism record
+        if ($this->baptismrecord_id) {
             $availableTypes[] = 'baptism';
         }
 
@@ -532,16 +522,16 @@ class Member extends Model
             $availableTypes[] = 'confirmation';
         }
 
-        // Marriage certificate - available if member has marriage date
-        if ($this->marriage_date) {
+        // Marriage certificate - available if member has marriage record
+        if ($this->marriagerecord_id) {
             $availableTypes[] = 'marriage';
         }
 
         // Membership certificate - always available for all members
         $availableTypes[] = 'membership';
 
-        // Death certificate - available if member has death date
-        if ($this->death_date) {
+        // Death certificate - available if member has death record
+        if ($this->deathrecord_id) {
             $availableTypes[] = 'death';
         }
 

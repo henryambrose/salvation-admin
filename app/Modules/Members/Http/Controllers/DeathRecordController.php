@@ -83,7 +83,13 @@ class DeathRecordController extends Controller
             'death_remarks' => 'nullable|string',
         ]);
 Log::info($validated);
-        DeathRecord::create($validated);
+        $deathRecord = DeathRecord::create($validated);
+
+        // Update: Set the foreign key in member table
+        if ($deathRecord->member_id) {
+            Member::where('id', $deathRecord->member_id)
+                  ->update(['deathrecord_id' => $deathRecord->id]);
+        }
 
         return redirect()->route('death-records.index')
             ->with('success', 'Death record created successfully.');
@@ -137,6 +143,12 @@ Log::info($validated);
 
     public function destroy(DeathRecord $deathRecord)
     {
+        // Clear the foreign key in member table first
+        if ($deathRecord->member_id) {
+            Member::where('id', $deathRecord->member_id)
+                  ->update(['deathrecord_id' => null]);
+        }
+
         $deathRecord->delete();
 
         return redirect()->route('death-records.index')
@@ -207,6 +219,7 @@ Log::info($validated);
             // Parish info
             'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
             'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
+            'parish_priest_name' => config('app.parish_priest_name', 'Parish Priest'),
             'issued_date' => now()->format('d/m/Y'),
 
             // Template config

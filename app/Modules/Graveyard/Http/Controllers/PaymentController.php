@@ -340,21 +340,34 @@ class PaymentController extends Controller
                 ]);
             }
 
-            // Update member death_date if the deceased person is a member
+            // Update member death record if the deceased person is a member
             $member = null;
             $deathDate = null;
+            $burialDate = null;
 
             if ($request->booking_type === 'permanent' && $booking->validMember && $booking->validMember->member) {
                 $member = $booking->validMember->member;
                 $deathDate = $booking->dead_date ?? now()->toDateString();
+                $burialDate = $booking->dead_date ?? now()->toDateString();
             } elseif ($request->booking_type === 'temporary' && $booking->deceasedMember) {
                 $member = $booking->deceasedMember;
                 $deathDate = $booking->died_on ?? now()->toDateString();
+                $burialDate = $booking->died_on ?? now()->toDateString();
             }
 
-            if ($member && !$member->death_date) {
-                $member->update([
+            if ($member && !$member->deathrecord_id) {
+                // Create death record first
+                $deathRecord = \Modules\Members\Models\DeathRecord::create([
+                    'member_id' => $member->id,
                     'death_date' => $deathDate,
+                    'burial_date' => $burialDate,
+                    'deceased_name' => $member->first_name,
+                    'deceased_surname' => $member->last_name,
+                ]);
+
+                // Then update member with death record ID
+                $member->update([
+                    'deathrecord_id' => $deathRecord->id,
                     'status_id' => 4
                 ]);
             }

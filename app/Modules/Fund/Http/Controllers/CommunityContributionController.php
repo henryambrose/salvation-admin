@@ -251,7 +251,7 @@ class CommunityContributionController extends Controller
             'location' => $contribution->location ?? '',
             'collected_by' => $contribution->collectedBy->name ?? 'N/A',
             'status' => ucfirst($contribution->status),
-            'notes' => $contribution->notes ?? '',
+            'notes' => $contribution->notes ?? '--',
             'created_at' => $contribution->created_at->format('d/m/Y H:i A'),
         ];
 

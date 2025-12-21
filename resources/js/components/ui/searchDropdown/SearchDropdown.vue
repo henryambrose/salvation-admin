@@ -270,6 +270,10 @@ function selectOption(option: Option) {
   modelValue.value = option.id
   emits('select', option)
   closeDropdown()
+
+  nextTick(() => {
+    triggerRef.value?.focus()
+  })
 }
 
 /**
@@ -330,6 +334,15 @@ function handleKeyDown(event: KeyboardEvent) {
     case 'Escape':
       event.preventDefault()
       closeDropdown()
+      break
+
+    case 'Tab':
+      if (open.value) {
+        closeDropdown()
+        nextTick(() => {
+          triggerRef.value?.focus()
+        })
+      }
       break
   }
 }

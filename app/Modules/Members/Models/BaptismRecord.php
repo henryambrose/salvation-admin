@@ -44,6 +44,14 @@ class BaptismRecord extends Model
     }
 
     /**
+     * Get the member who has this as their baptism record (reverse relationship)
+     */
+    public function memberReference()
+    {
+        return $this->hasOne(Member::class, 'baptismrecord_id');
+    }
+
+    /**
      * Get the parish where baptism occurred
      */
     public function baptismParish(): BelongsTo

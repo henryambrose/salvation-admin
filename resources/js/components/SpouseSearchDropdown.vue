@@ -3,6 +3,7 @@
     <!-- Input Field -->
     <div class="relative">
       <input
+        ref="inputRef"
         v-model="searchQuery"
         type="text"
         :placeholder="placeholder"
@@ -13,6 +14,7 @@
         @keydown.enter="selectFirstResult"
         @keydown.down="navigateResults(1)"
         @keydown.up="navigateResults(-1)"
+        @keydown.tab="handleTab"
       />
       
       <!-- Clear Button -->
@@ -117,6 +119,7 @@ const selectedMember = ref<Member | null>(null);
 const showDropdown = ref(false);
 const isLoading = ref(false);
 const highlightedIndex = ref(-1);
+const inputRef = ref<HTMLInputElement | null>(null)
 
 // Debounce timer
 let searchTimeout: number;
@@ -203,6 +206,10 @@ const selectMember = (member: Member) => {
   searchQuery.value = member.full_name;
   emit('update:modelValue', member.id);
   closeDropdown();
+
+  nextTick(() => {
+    inputRef.value?.focus()
+  })
 };
 
 const clearSelection = () => {
@@ -256,4 +263,10 @@ const handleMemberNumberInput = async () => {
     performSearch(searchQuery.value, true);
   }
 };
+
+const handleTab = () => {
+  if (showDropdown.value) {
+    closeDropdown()
+  }
+}
 </script> 

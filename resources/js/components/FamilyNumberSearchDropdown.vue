@@ -3,10 +3,12 @@
     <!-- Search Input -->
     <div class="relative">
       <Input
+        ref="inputRef"
         v-model="searchQuery"
         :placeholder="placeholder"
         @input="handleSearch"
         @focus="showDropdown = true"
+        @keydown="handleKeyDown"
         class="w-full"
       />
       
@@ -52,7 +54,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { Input } from '@/components/ui/input'
 
 const props = defineProps({
@@ -72,6 +74,7 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const showDropdown = ref(false)
 const selectedFamily = ref(null)
+const inputRef = ref(null)
 
 // Debounce search
 let searchTimeout = null
@@ -112,12 +115,32 @@ const selectResult = (result) => {
   emit('update:modelValue', result.family_no)
   searchQuery.value = result.family_no
   showDropdown.value = false
+
+  nextTick(() => {
+    inputRef.value?.$el?.focus()
+  })
 }
 
 const clearSelection = () => {
   selectedFamily.value = null
   emit('update:modelValue', '')
   searchQuery.value = ''
+}
+
+const closeDropdown = () => {
+  showDropdown.value = false
+}
+
+const handleKeyDown = (event) => {
+  if (event.key === 'Tab' && showDropdown.value) {
+    closeDropdown()
+    nextTick(() => {
+      inputRef.value?.$el?.focus()
+    })
+  } else if (event.key === 'Escape' && showDropdown.value) {
+    event.preventDefault()
+    closeDropdown()
+  }
 }
 
 // Watch for external changes to modelValue

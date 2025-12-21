@@ -1,210 +1,201 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Receipt - {{ $receipt_no }}</title>
+    <title>Mass Receipt - {{ $receipt_no }}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            /* padding: 20px; */
             background: #f5f5f5;
+            display: flex;
+            justify-content: center;
+            flex-direction: column;
+
         }
 
         .receipt-container {
-            max-width: 800px;
             margin: 0 auto;
             background: white;
-            padding: 40px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 8.5mm 0;
+            display: flex;
+            height: 130mm;
+            width: 180mm;
+            flex-direction: column;
+            border-bottom: 1px dotted #aaaaaa !important;
+            position: relative;
         }
 
-        .header {
-            text-align: center;
-            border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+        .receipt-container>div {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
         }
 
-        .header h1 {
+        .imagediv {
+            width: 25mm;
+            height: 23.5mm;
+        }
+
+        .headerdiv {
+            width: 155mm;
+            height: 23.5mm;
+        }
+
+        .headerdiv>div:nth-child(1) {
+            font-family: 'Arial Narrow';
             font-size: 28px;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        .header h2 {
-            font-size: 20px;
-            color: #666;
-            font-weight: normal;
-        }
-
-        .receipt-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .receipt-info div {
-            flex: 1;
-        }
-
-        .receipt-info strong {
-            display: block;
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 5px;
-        }
-
-        .receipt-info span {
-            display: block;
-            color: #333;
-            font-size: 16px;
-            font-weight: bold;
-        }
-
-        .receipt-body {
-            margin-bottom: 30px;
-        }
-
-        .row {
-            display: flex;
-            padding: 12px 0;
-            border-bottom: 1px solid #eee;
-        }
-
-        .row:last-child {
-            border-bottom: none;
-        }
-
-        .row .label {
-            flex: 0 0 200px;
-            color: #666;
-            font-weight: bold;
-        }
-
-        .row .value {
-            flex: 1;
-            color: #333;
-        }
-
-        .amount-section {
-            background: #f9f9f9;
-            padding: 20px;
-            margin: 30px 0;
-            border-left: 4px solid #9C27B0;
-        }
-
-        .amount-section .amount {
-            font-size: 32px;
-            font-weight: bold;
-            color: #9C27B0;
-            margin-bottom: 10px;
-        }
-
-        .amount-section .amount-words {
-            font-size: 14px;
-            color: #666;
-            font-style: italic;
-        }
-
-        .intention-box {
-            background: #f0f0f0;
-            padding: 15px;
-            margin: 20px 0;
-            border-radius: 4px;
-            border-left: 4px solid #9C27B0;
-        }
-
-        .intention-box strong {
-            display: block;
-            color: #666;
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-
-        .intention-box p {
-            color: #333;
-            font-size: 16px;
-            line-height: 1.6;
-        }
-
-        .footer {
-            margin-top: 50px;
-            padding-top: 20px;
-            border-top: 2px solid #333;
+            font-weight: 700;
             text-align: center;
-            color: #666;
-            font-size: 12px;
         }
 
-        .signature-section {
+        .headerdiv>div:nth-child(2),
+        .headerdiv>div:nth-child(3) {
+            font-family: 'Arial';
+            font-size: 14px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .receiptdiv {
+            font-family: Arial;
+            font-size: 16px;
+            font-weight: 700;
+            height: 7.5mm;
+            border-bottom: 2px solid #333333;
+            margin-top: 5px;
             display: flex;
-            justify-content: space-between;
-            margin-top: 60px;
-            padding: 0 40px;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .receiptinfodiv {
+            height: 20mm;
+            border-bottom: 1px solid #dddddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: row;
+            font-family: Arial;
+            font-size: 12px;
+            /* line-height: 14px; */
+        }
+
+        .receiptinfodiv p {
+            line-height: 18px;
+            width: 60mm;
+        }
+
+        .amountdiv {
+            height: 19mm;
+            width: 100%;
+            border-left: 4px solid #4CAF50;
+            display: flex;
+            font-family: Arial;
+            margin: 2.5mm 0;
+            background-color: #f9f9f9;
+        }
+
+        .amountdiv>div:nth-child(1) {
+            margin-top: 3mm;
+            padding-left: 3mm;
+            height: 7.5mm;
+            width: 100%;
+            font-size: 24px;
+            font-weight: 700;
+            color: #4CAF50;
+        }
+
+        .amountdiv>div:nth-child(2) {
+            margin-top: 1mm;
+            padding-left: 3mm;
+            font-size: 14px;
+            font-style: italic;
+            color: #666
+        }
+
+        .detaildiv {
+            height: 7.5mm;
+            display: flex;
+            flex-direction: row;
+            font-family: Arial;
+            font-size: 14px;
+            align-items: center;
+            text-align: left;
+        }
+
+        .detaildiv>div:nth-child(1),
+        .detaildiv2>div:nth-child(1) {
+            font-weight: 700;
+            width: 40mm;
+            color: #666666;
+        }
+
+        .detaildiv>div:nth-child(2) {
+            width: 140mm;
+            color: #333333;
+        }
+
+        .detaildiv2 {
+            height: 9.5mm;
+            display: flex;
+            flex-direction: row;
+            font-family: Arial;
+            font-size: 14px;
+            align-items: start;
+            text-align: left;
+            height: 14mm;
+            margin-top: 1.5mm;
+            margin-bottom: 5mm;
+            border-bottom: 2px solid #333333;
+            padding-bottom: 2mm;
+        }
+
+        .detaildiv2>div:nth-child(2) {
+            width: 75mm;
+            color: #333333;
+        }
+
+        .detaildiv2>div:nth-child(3) {
+            width: 65mm;
+            height: 13mm;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .disclaimer {
+            width: 100%;
+            margin: 0 !important;
+            padding: 0 !important;
+            font-size: 11px;
+            color: #777777;
+            text-align: center;
+            display: flex;
+            align-items: start;
+            justify-content: center;
+            position: absolute;
+            bottom: 9.5mm;
         }
 
         .signature {
-            text-align: center;
-        }
-
-        .signature-line {
-            width: 200px;
-            border-top: 1px solid #333;
-            margin: 60px 0 10px 0;
-        }
-
-        .signature-label {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 4px;
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-
-        .status.pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .status.confirmed {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-
-        .status.completed {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status.cancelled {
-            background: #f8d7da;
-            color: #721c24;
+            width: 100%;
+            height: 7.5mm;
+            border-top: 1px solid #cccccc;
+            color: #333333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            text-align: center
         }
 
         @media print {
             body {
                 background: white;
                 padding: 0;
-            }
-
-            .receipt-container {
-                box-shadow: none;
-                padding: 20px;
             }
 
             .no-print {
@@ -216,372 +207,167 @@
             position: fixed;
             top: 20px;
             right: 20px;
-            background: #9C27B0;
+            background: #4CAF50;
             color: white;
             border: none;
             padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
             border-radius: 4px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
         }
 
         .print-button:hover {
-            background: #7B1FA2;
-        }
-
-        .receipt-copy {
-            margin-bottom: 30px;
-            page-break-inside: avoid;
-        }
-
-        .copy-label {
-            text-align: center;
-            font-size: 10px;
-            color: #999;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        @media print {
-            @page {
-                margin: 0.2in;
-                size: A4 portrait;
-            }
-
-            body {
-                padding: 0;
-                margin: 0;
-                transform: scale(0.72);
-                transform-origin: top center;
-            }
-
-            .receipt-container {
-                padding: 10px;
-                margin-bottom: 0;
-                max-width: 700px;
-            }
-
-            .receipt-copy {
-                margin-bottom: 5px;
-            }
-
-            .receipt-copy:last-child {
-                margin-bottom: 0;
-            }
-
-            .copy-label {
-                font-size: 8px;
-                margin-bottom: 3px;
-            }
-
-            .header h1 {
-                font-size: 16px;
-                margin-bottom: 1px;
-            }
-
-            .header h2 {
-                font-size: 12px;
-            }
-
-            .header {
-                padding-bottom: 5px;
-                margin-bottom: 6px;
-            }
-
-            .receipt-info {
-                margin-bottom: 6px;
-                padding-bottom: 5px;
-            }
-
-            .receipt-info strong {
-                font-size: 9px;
-                margin-bottom: 2px;
-            }
-
-            .receipt-info span {
-                font-size: 11px;
-            }
-
-            .amount-section {
-                margin: 6px 0;
-                padding: 6px;
-            }
-
-            .amount-section .amount {
-                font-size: 18px;
-                margin-bottom: 5px;
-            }
-
-            .amount-section .amount-words {
-                font-size: 10px;
-            }
-
-            .receipt-body {
-                margin-bottom: 6px;
-            }
-
-            .row {
-                padding: 3px 0;
-            }
-
-            .row .label {
-                font-size: 11px;
-            }
-
-            .row .value {
-                font-size: 11px;
-            }
-
-            .intention-box {
-                padding: 4px;
-                margin: 4px 0;
-            }
-
-            .intention-box strong {
-                font-size: 9px;
-                margin-bottom: 3px;
-            }
-
-            .intention-box p {
-                font-size: 11px;
-                line-height: 1.3;
-            }
-
-            .signature-section {
-                margin-top: 12px;
-                padding: 0 20px;
-            }
-
-            .signature-line {
-                margin: 20px 0 3px 0;
-                width: 120px;
-            }
-
-            .signature-label {
-                font-size: 10px;
-            }
-
-            .footer {
-                margin-top: 8px;
-                padding-top: 5px;
-                font-size: 9px;
-            }
+            background: #45a049;
         }
     </style>
 </head>
+
 <body>
     <button class="print-button no-print" onclick="window.print()">Print Receipt</button>
 
-    <!-- First Copy - Office Copy -->
-    <div class="receipt-copy">
-        <div class="copy-label">Office Copy</div>
-        <div class="receipt-container">
-        <div class="header">
-            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Mass Intention - Payment Receipt</h2>
-        </div>
-
-        <div class="receipt-info">
-            <div>
-                <strong>Receipt No:</strong>
-                <span>{{ $receipt_no }}</span>
-            </div>
-            <div>
-                <strong>Date:</strong>
-                <span>{{ $date }}</span>
-            </div>
-            <div>
-                <strong>Mass Date:</strong>
-                <span>{{ $mass_date }}</span>
+    <div class="receipt-container" style="">
+        <div style="">
+            <div class="imagediv" style=""><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+            <div class="headerdiv" style="">
+                <div style="">CHURCH OF OUR LADY OF SALVATION</div>
+                <div style="">S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                <div style="">A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
             </div>
         </div>
-
-        <div class="amount-section">
-            <div class="amount">₹ {{ $amount }}</div>
-            <div class="amount-words">{{ $amount_words }} Only</div>
-        </div>
-
-        <div class="receipt-body">
-            <div class="row">
-                <div class="label">Received From:</div>
-                <div class="value">{{ $received_from }}</div>
+        <div class="receiptdiv">MASS RECEIPT</div>
+        <div class="receiptinfodiv" style="">
+            <div style="">
+                <p><b>Receipt No:</b><br>{{ $receipt_no }}</p>
             </div>
-
-            @if($phone)
-            <div class="row">
-                <div class="label">Phone:</div>
-                <div class="value">{{ $phone }}</div>
+            <div style="">
+                <p><b>Date:</b><br>{{ $date }}</p>
             </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Mass Type:</div>
-                <div class="value">{{ $mass_type }}</div>
-            </div>
-
-            <div class="row">
-                <div class="label">Intention Type:</div>
-                <div class="value">{{ $intention_type }}</div>
-            </div>
-
-            @if($intention_for)
-            <div class="intention-box">
-                <strong>Mass Intention For:</strong>
-                <p>{{ $intention_for }}</p>
-            </div>
-            @endif
-
-            @if($special_instructions)
-            <div class="intention-box">
-                <strong>Special Instructions:</strong>
-                <p>{{ $special_instructions }}</p>
-            </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Payment Method:</div>
-                <div class="value">{{ $payment_method }}</div>
-            </div>
-
-            <div class="row">
-                <div class="label">Status:</div>
-                <div class="value">
-                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="label">Transaction Date:</div>
-                <div class="value">{{ $created_at }}</div>
+            <div style="">
+                <p><b>Family No:</b><br>{{ $family_no }}</p>
             </div>
         </div>
-
-        <div class="signature-section">
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Received By</div>
-            </div>
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Authorized Signature</div>
+        <div class="amountdiv" style="flex-direction: column;">
+            <div style="">₹ {{ $amount }}</div>
+            <div style="">{{ $amount_words }}</div>
+        </div>
+        <div class="receivedfromdiv detaildiv" style="">
+            <div style="">Received From:</div>
+            <div style="">{{ $received_from }} ({{ $received_from_memberno }})</div>
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Towards:</div>
+            <div style="">{{ $intention_for }}</div> 
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Notes:</div>
+            <div style="">{{ $special_instructions }}</div>
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Payment Method:</div>
+            <div style="">Cheque{{ $payment_method }}</div>
+        </div>
+        <div class="detaildiv2" style="">
+            <div style="">Transaction Info:</div>
+            <div style="">{{ $transaction_info }}</div> 
+            <div style="">
+                <div class="signature"
+                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">
+                    For
+                    Church
+                    of Our Lady of Salvation</div>
             </div>
         </div>
-
-        <div class="footer">
-            <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your mass intention offering.</p>
+        <div class="disclaimer">
+            This document becomes a valid receipt for payment only when the cheque covered by it is realised.
         </div>
     </div>
+    <br>
+    <div class="receipt-container" style="border: none !important">
+        <div style="">
+            <div class="imagediv" style=""><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+            <div class="headerdiv" style="">
+                <div style="">CHURCH OF OUR LADY OF SALVATION</div>
+                <div style="">S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                <div style="">A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
+            </div>
+        </div>
+        <div class="receiptdiv">MASS RECEIPT</div>
+               <div class="receiptinfodiv" style="">
+            <div style="">
+                <p><b>Receipt No:</b><br>{{ $receipt_no }}</p>
+            </div>
+            <div style="">
+                <p><b>Date:</b><br>{{ $date }}</p>
+            </div>
+            <div style="">
+                <p><b>Family No:</b><br>{{ $family_no }}</p>
+            </div>
+        </div>
+        <div class="amountdiv" style="flex-direction: column;">
+            <div style="">₹ {{ $amount }}</div>
+            <div style="">{{ $amount_words }}</div>
+        </div>
+        <div class="receivedfromdiv detaildiv" style="">
+            <div style="">Received From:</div>
+            <div style="">{{ $received_from }} ({{ $received_from_memberno }})</div>
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Towards:</div>
+            <div style="">{{ $intention_for }}</div> 
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Notes:</div>
+            <div style="">{{ $special_instructions }}</div>
+        </div>
+        <div class="detaildiv" style="">
+            <div style="">Payment Method:</div>
+            <div style="">Cheque{{ $payment_method }}</div>
+        </div>
+        <div class="detaildiv2" style="">
+            <div style="">Transaction Info:</div>
+            <div style="">{{ $transaction_info }}</div> 
+            <div style="">
+                <div class="signature"
+                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">
+                    For
+                    Church
+                    of Our Lady of Salvation</div>
+            </div>
+        </div>
+            <div style="">Transaction Info:</div>
+            <div style="">{{ $transaction_info }}</div> {{-- Cheque No: 456789 <br>date: 16/Aug/2025 <br>Bank of Baroda --}}
+            <div style="">
+                <div class="signature"
+                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">
+                    For
+                    Church
+                    of Our Lady of Salvation</div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Second Copy - Customer Copy -->
-    <div class="receipt-copy">
-        <div class="copy-label">Customer Copy</div>
-        <div class="receipt-container">
-        <div class="header">
-            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Mass Intention - Payment Receipt</h2>
-        </div>
 
-        <div class="receipt-info">
-            <div>
-                <strong>Receipt No:</strong>
-                <span>{{ $receipt_no }}</span>
-            </div>
-            <div>
-                <strong>Date:</strong>
-                <span>{{ $date }}</span>
-            </div>
-            <div>
-                <strong>Mass Date:</strong>
-                <span>{{ $mass_date }}</span>
-            </div>
-        </div>
 
-        <div class="amount-section">
-            <div class="amount">₹ {{ $amount }}</div>
-            <div class="amount-words">{{ $amount_words }} Only</div>
-        </div>
 
-        <div class="receipt-body">
-            <div class="row">
-                <div class="label">Received From:</div>
-                <div class="value">{{ $received_from }}</div>
-            </div>
 
-            @if($phone)
-            <div class="row">
-                <div class="label">Phone:</div>
-                <div class="value">{{ $phone }}</div>
-            </div>
-            @endif
 
-            <div class="row">
-                <div class="label">Mass Type:</div>
-                <div class="value">{{ $mass_type }}</div>
-            </div>
 
-            <div class="row">
-                <div class="label">Intention Type:</div>
-                <div class="value">{{ $intention_type }}</div>
-            </div>
 
-            @if($intention_for)
-            <div class="intention-box">
-                <strong>Mass Intention For:</strong>
-                <p>{{ $intention_for }}</p>
-            </div>
-            @endif
 
-            @if($special_instructions)
-            <div class="intention-box">
-                <strong>Special Instructions:</strong>
-                <p>{{ $special_instructions }}</p>
-            </div>
-            @endif
 
-            <div class="row">
-                <div class="label">Payment Method:</div>
-                <div class="value">{{ $payment_method }}</div>
-            </div>
 
-            <div class="row">
-                <div class="label">Status:</div>
-                <div class="value">
-                    <span class="status {{ strtolower($status) }}">{{ $status }}</span>
-                </div>
-            </div>
 
-            <div class="row">
-                <div class="label">Transaction Date:</div>
-                <div class="value">{{ $created_at }}</div>
-            </div>
-        </div>
 
-        <div class="signature-section">
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Received By</div>
-            </div>
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Authorized Signature</div>
-            </div>
-        </div>
 
-        <div class="footer">
-            <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your mass intention offering.</p>
-        </div>
-    </div>
-    </div>
+
+
 
     <script>
         // Auto-print option (uncomment if needed)
         // window.onload = function() { window.print(); }
     </script>
 </body>
+
 </html>

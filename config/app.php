@@ -149,6 +149,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Parish Information
+    |--------------------------------------------------------------------------
+    |
+    | Parish details used in certificates and documents.
+    |
+    */
+
+    'parish_name' => env('CHURCH_NAME', 'Church of Our Lady of Salvation'),
+    'parish_address' => env('PARISH_ADDRESS', 'Dadar (W), Mumbai - 400 028'),
+    'parish_priest_name' => env('PARISH_PRIEST_NAME', 'Parish Priest'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Certificate Configuration
     |--------------------------------------------------------------------------
     |

@@ -275,11 +275,11 @@
         <div style="display: flex; width: 100%; margin-top: 15mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
             <div style="flex: 1; text-align: center;">
                 <div style="margin-bottom: 20mm;">For Authenticity of Extract:</div>
-                <div style="padding-left: 20mm;">SEAL</div>
             </div>
             <div style="flex: 1; text-align: right; padding-right: 10mm;">
                 <div style="margin-bottom: 20mm;">Date: {{ now()->format('jS F Y') }}</div>
-                <div>For PARISH PRIEST</div>
+                <div style="margin-bottom: 3mm;">{{ $parish_priest_name ?? 'Parish Priest' }}</div>
+                <div style="font-size: 14px;">PARISH PRIEST</div>
             </div>
         </div>
 

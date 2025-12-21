@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { DateInput } from '@/components/ui/date-input';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 
 const props = defineProps<{
@@ -42,6 +43,14 @@ const formatDateForDisplay = (dateString: string) => {
   console.log(day,month,year);
   return `${day}/${month}/${year}`;
 };
+
+// Track selected member's marriage info for cross-reference display
+const selectedMemberMarriageDate = ref<string | null>(
+  formatDate(props.baptismRecord.member?.marriage_date) || null
+);
+const selectedMemberMarriageRegNo = ref<string | null>(
+  props.baptismRecord.member?.marriage_reg_no || null
+);
 
 // Initialize form with baptism_date from the record OR from member data
 const initialBaptismDate = formatDate(props.baptismRecord.baptism_date)
@@ -94,24 +103,6 @@ const displayDateOfBirth = computed(() => {
   });
   if (!dob) return 'Not set';
   return formatDateForDisplay(dob);
-});
-
-// Computed property for displaying member's marriage date
-const displayMarriageDate = computed(() => {
-  const marriageDate = props.baptismRecord.member?.marriage_date;
-  if (!marriageDate) return 'Not set';
-  return formatDateForDisplay(marriageDate);
-});
-
-// Computed property for displaying member's marriage reg no
-const displayMarriageRegNo = computed(() => {
-  return props.baptismRecord.member?.marriage_reg_no || 'Not set';
-});
-
-// Computed property for displaying baptism date
-const displayBaptismDate = computed(() => {
-  console.log(form.baptism_date);
-  return formatDateForDisplay(form.baptism_date);
 });
 
 // Handle member selection from SearchDropdown
@@ -172,48 +163,39 @@ function submit() {
           </div>
           <div>
             <Label>Baptism Date *</Label>
-            <input
-              :value="displayBaptismDate"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <DateInput
+              v-model="form.baptism_date"
               placeholder="DD/MM/YYYY"
             />
             <p v-if="!form.baptism_date" class="mt-1 text-sm text-muted-foreground">
-              Will be auto-filled from member data
+              Auto-filled from member data (can be edited)
             </p>
           </div>
           <div>
             <Label>Marriage Date</Label>
-            <input
-              :value="displayMarriageDate"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <DateInput
+              v-model="selectedMemberMarriageDate"
               placeholder="DD/MM/YYYY"
             />
             <p class="mt-1 text-xs text-muted-foreground">
-              From member record
+              From member record (can be edited)
             </p>
           </div>
           <div>
             <Label>Marriage Reg No</Label>
-            <input
-              :value="displayMarriageRegNo"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <Input
+              v-model="selectedMemberMarriageRegNo"
+              placeholder="Enter marriage registration number"
             />
             <p class="mt-1 text-xs text-muted-foreground">
-              From member record
+              From member record (can be edited)
             </p>
           </div>
           <div>
             <Label>Baptism Reg No</Label>
             <Input
               v-model="form.baptism_reg_no"
-              readonly
-              class="bg-muted cursor-not-allowed"
+              placeholder="Enter baptism registration number"
             />
           </div>
           <div>

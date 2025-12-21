@@ -216,13 +216,13 @@ class CertificateGenerationService
           ->first();
 
         $data = array_merge($data, [
-          // Legacy fields from member table (fallback)
-          'baptism_date' => $formatDate($baptismRecord?->baptism_date ?? $member->baptism_date, 'd F Y'),
-          'baptism_reg_no' => $baptismRecord?->baptism_reg_no ?? $member->baptism_reg_no,
+          // Baptism record fields
+          'baptism_date' => $formatDate($baptismRecord?->baptism_date, 'd F Y'),
+          'baptism_reg_no' => $baptismRecord?->baptism_reg_no ?? '',
           'baptism_parish' => $baptismRecord?->baptismParish?->name ?? $member->baptism_parish ?? $data['parish_name'],
           'baptism_year' => $baptismRecord?->baptism_date
             ? \Carbon\Carbon::parse($baptismRecord->baptism_date)->year
-            : ($member->baptism_date ? \Carbon\Carbon::parse($member->baptism_date)->year : null),
+            : null,
 
           // Parochial register fields from baptism_records table
           'place_of_birth' => $baptismRecord?->place_of_birth ?? '',
@@ -258,7 +258,7 @@ class CertificateGenerationService
           ] : null,
 
           'marriage_info' => $marriageCert ? [
-            'date' => $formatDate($member->marriage_date, 'd F Y'),
+            'date' => $formatDate($member->marriageRecord?->marriage_date, 'd F Y'),
             'place' => $member->marriage_parish ?? $data['parish_name'],
             'spouse' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : $additionalData['spouse_name'] ?? '',
           ] : null,
@@ -278,19 +278,19 @@ class CertificateGenerationService
         break;
 
       case 'marriage':
-        // Get marriage record (check both as bridegroom and bride)
-        $marriageRecord = $member->marriageRecordAsBridegroom ?? $member->marriageRecordAsBride;
+        // Get marriage record
+        $marriageRecord = $member->marriageRecord;
 
         // Determine member's role and get spouse info
         $spouse = $member->spouse;
         $isBridegroom = $marriageRecord && $marriageRecord->bridegroom_member_id === $member->id;
 
         $data = array_merge($data, [
-          // Legacy fields from member table (fallback)
-          'marriage_date' => $marriageRecord?->marriage_date?->format('d F Y') ?? $member->marriage_date?->format('d F Y'),
-          'marriage_reg_no' => $marriageRecord?->marriage_reg_no ?? $member->marriage_reg_no,
+          // Marriage record fields
+          'marriage_date' => $marriageRecord?->marriage_date?->format('d F Y') ?? '',
+          'marriage_reg_no' => $marriageRecord?->marriage_reg_no ?? '',
           'marriage_parish' => $marriageRecord?->marriageParish?->name ?? $member->marriage_parish ?? $data['parish_name'],
-          'marriage_year' => $marriageRecord?->marriage_year ?? $member->marriage_date?->year,
+          'marriage_year' => $marriageRecord?->marriage_year ?? null,
 
           // Bridegroom Information
           'bridegroom_name' => $marriageRecord?->bridegroom_name ?? ($isBridegroom ? $member->first_name . ($member->middle_name ? ' ' . $member->middle_name : '') : ($spouse?->first_name ?? '')),
@@ -350,12 +350,12 @@ class CertificateGenerationService
         $deathRecord = $member->deathRecord;
 
         $data = array_merge($data, [
-          // Legacy fields from member table (fallback)
-          'death_date' => $deathRecord?->death_date?->format('d F Y') ?? $member->death_date?->format('d F Y'),
+          // Death record fields
+          'death_date' => $deathRecord?->death_date?->format('d F Y') ?? '',
           'burial_date' => $deathRecord?->burial_date?->format('d F Y') ?? $additionalData['burial_date'] ?? '',
-          'burial_reg_no' => $deathRecord?->burial_reg_no ?? $member->deaths_reg_no,
+          'burial_reg_no' => $deathRecord?->burial_reg_no ?? '',
           'death_parish' => $deathRecord?->burialParish?->name ?? $member->death_parish ?? $data['parish_name'],
-          'burial_year' => $deathRecord?->burial_year ?? $member->death_date?->year,
+          'burial_year' => $deathRecord?->burial_year ?? null,
 
           // Parochial register fields from death_records table
           'deceased_name' => $deathRecord?->deceased_name ?? $member->first_name . ($member->middle_name ? ' ' . $member->middle_name : ''),

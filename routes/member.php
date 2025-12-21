@@ -50,6 +50,10 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('member/family-photo-statistics', [MemberController::class, 'getFamilyPhotoStatistics'])
         ->name('member.family-photo.statistics');
 
+    // PDF download route
+    Route::get('member/{member}/download-pdf', [MemberController::class, 'downloadPdf'])
+        ->name('member.download-pdf');
+
     Route::resource('member', MemberController::class)->except(['index']);
     Route::post('/member/{id}/restore', [MemberController::class, 'restore'])->name('member.restore');
     Route::get('/member/{id}/details', [MemberController::class, 'getMemberDetails'])->name('member.details');

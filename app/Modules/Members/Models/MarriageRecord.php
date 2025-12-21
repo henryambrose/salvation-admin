@@ -68,6 +68,14 @@ class MarriageRecord extends Model
     }
 
     /**
+     * Get the member who has this as their marriage record (reverse relationship)
+     */
+    public function memberReference()
+    {
+        return $this->hasOne(Member::class, 'marriagerecord_id');
+    }
+
+    /**
      * Get the parish where marriage occurred
      */
     public function marriageParish(): BelongsTo

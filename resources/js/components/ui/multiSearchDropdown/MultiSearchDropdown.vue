@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch, computed, nextTick } from 'vue'
 import { onClickOutside, useClickOutside } from '@vueuse/core'
 import type { HTMLAttributes } from 'vue'
 import { cn } from '@/lib/utils'
@@ -30,6 +30,8 @@ const loading = ref(false)
 const fetchedOptions = ref<Array<{ id: string | number, name: string }>>([])
 const open = ref(false)
 const dropdownRef = ref(null)
+const triggerRef = ref<HTMLElement | null>(null)
+const searchInputRef = ref<HTMLInputElement | null>(null)
 
 const displayOptions = computed(() => {
   const source = props.fetchUrl ? fetchedOptions.value : props.options
@@ -62,19 +64,43 @@ function toggleSelect(id: string | number) {
     arr.splice(idx, 1)
   }
   emits('update:modelValue', arr)
+
+  nextTick(() => {
+    triggerRef.value?.focus()
+  })
 }
 
 function removeSelected(id: string | number) {
   const arr = Array.isArray(modelValue.value) ? [...modelValue.value] : []
   emits('update:modelValue', arr.filter(i => i !== id))
 }
+
+function closeDropdown() {
+  open.value = false
+  search.value = ''
+}
+
+function handleKeyDown(event: KeyboardEvent) {
+  if (event.key === 'Tab' && open.value) {
+    closeDropdown()
+    nextTick(() => {
+      triggerRef.value?.focus()
+    })
+  } else if (event.key === 'Escape' && open.value) {
+    event.preventDefault()
+    closeDropdown()
+  }
+}
 </script>
 
 <template>
   <div class="relative w-full" ref="dropdownRef">
     <div
+      ref="triggerRef"
+      tabindex="0"
       class="border rounded px-3 py-1 bg-[#ffffff] cursor-pointer flex flex-wrap items-center justify-between text-black min-h-[40px]"
       @click="open = !open"
+      @keydown="handleKeyDown"
     >
       <template v-if="modelValue && modelValue.length">
         <span
@@ -100,10 +126,12 @@ function removeSelected(id: string | number) {
       class="absolute left-0 right-0 z-50 bg-[#ffffff] border rounded shadow mt-1 max-h-60 overflow-auto"
     >
       <input
+        ref="searchInputRef"
         type="text"
         v-model="search"
         class="w-full border-b px-3 py-2 outline-none focus:border-blue-500 text-black"
         placeholder="Search..."
+        @keydown="handleKeyDown"
         @keydown.stop
       />
       <div v-if="loading" class="px-3 py-2 text-xs text-gray-400 text-black">Loading...</div>

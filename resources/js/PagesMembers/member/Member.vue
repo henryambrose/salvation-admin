@@ -4,10 +4,14 @@ import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';
 import ParishSelection from '@/components/ParishSelection.vue';
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
+import BaptismRecordModal from '@/components/modals/BaptismRecordModal.vue';
+import MarriageRecordModal from '@/components/modals/MarriageRecordModal.vue';
+import DeathRecordModal from '@/components/modals/DeathRecordModal.vue';
 import { Button } from '@/components/ui/button';
 import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
 import { SelectInput } from '@/components/ui/select';
 import { useToast } from '@/composables/useToast';
@@ -482,25 +486,23 @@ const form = useForm({
   company_name: member?.company_name ? member.company_name : '',
   designation_id: member?.designation_id ? member.designation_id : '',
   income_range_id: member?.income_range_id ? member.income_range_id : '',
-  baptism_date: formatDateForInput(member?.baptism_date),
-  baptism_reg_no: member?.baptism_reg_no ? member.baptism_reg_no : '',
+  baptismrecord_id: member?.baptismrecord_id ? member.baptismrecord_id : null,
   baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
   baptism_parish_id: member?.baptism_parish_id ? member.baptism_parish_id : '',
   confirmation_date: formatDateForInput(member?.confirmation_date),
   confirmation_reg_no: member?.confirmation_reg_no ? member.confirmation_reg_no : '',
   confirmation_parish: member?.confirmation_parish ? member.confirmation_parish : '',
   confirmation_parish_id: member?.confirmation_parish_id ? member.confirmation_parish_id : '',
-  marriage_date: formatDateForInput(member?.marriage_date),
-  marriage_reg_no: member?.marriage_reg_no ? member.marriage_reg_no : '',
+  marriagerecord_id: member?.marriagerecord_id ? member.marriagerecord_id : null,
   marriage_parish: member?.marriage_parish ? member.marriage_parish : '',
   marriage_parish_id: member?.marriage_parish_id ? member.marriage_parish_id : '',
-  death_date: formatDateForInput(member?.death_date),
-  deaths_reg_no: member?.deaths_reg_no ? member.deaths_reg_no : '',
+  deathrecord_id: member?.deathrecord_id ? member.deathrecord_id : null,
   death_parish: member?.death_parish ? member.death_parish : '',
   death_parish_id: member?.death_parish_id ? member.death_parish_id : '',
   spouse_source: props.member?.spouse_source || 'Member',
   father_source: props.member?.father_source || 'Member',
   mother_source: props.member?.mother_source || 'Member',
+  notes: member?.notes ? member.notes : '',
 });
 
 // Loading state for family details fetch
@@ -517,6 +519,11 @@ const externalFamilyMembers = ref<Array<{ id: number; name: string; family_no?: 
 
 // Add parish-wide members for spouse search
 const parishMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string }>>([]);
+
+// Modal state for sacramental records
+const showBaptismModal = ref(false);
+const showMarriageModal = ref(false);
+const showDeathModal = ref(false);
 
 // Function to load current spouse data for editing
 const loadCurrentSpouse = async () => {
@@ -824,6 +831,31 @@ watch(
     }
   },
 );
+
+// Sacramental Records Modal Handlers
+const openBaptismModal = () => {
+  showBaptismModal.value = true;
+};
+
+const openMarriageModal = () => {
+  showMarriageModal.value = true;
+};
+
+const openDeathModal = () => {
+  showDeathModal.value = true;
+};
+
+const createBaptismRecord = () => {
+  window.location.href = `/baptism-records/create?member_id=${member.id}`;
+};
+
+const createMarriageRecord = () => {
+  window.location.href = `/marriage-records/create?member_id=${member.id}`;
+};
+
+const createDeathRecord = () => {
+  window.location.href = `/death-records/create?member_id=${member.id}`;
+};
 
 // Modify the submit function to include debugging:
 const submit = () => {
@@ -1291,6 +1323,12 @@ onMounted(async () => {
 
 function cancel() {
   window.location.href = '/member/index';
+}
+
+function downloadPdf() {
+  if (member?.id) {
+    window.open(route('member.download-pdf', member.id), '_blank');
+  }
 }
 
 const selectedDesignations = ref([]); // For v-model
@@ -2221,42 +2259,6 @@ const fetchParishMembers = async (searchQuery: string = '') => {
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Sacrament Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
-              <Label for="baptism_date">Baptism Date</Label>
-              <DateInput
-                id="baptism_date"
-                :class="[
-                  !showValidationModal &&
-                  form.baptism_date &&
-                  (!validateNotFutureDate(form.baptism_date) || validateChronologicalDates('baptism_date', form.baptism_date))
-                    ? '!border-red-300'
-                    : '',
-                ]"
-                v-model="form.baptism_date"
-                placeholder="DD/MM/YYYY"
-              />
-              <div v-if="!showValidationModal && form.baptism_date && !validateNotFutureDate(form.baptism_date)" class="mt-1 text-sm text-red-500">
-                Date cannot be in the future.
-              </div>
-              <div
-                v-if="!showValidationModal && form.baptism_date && validateChronologicalDates('baptism_date', form.baptism_date)"
-                class="mt-1 text-sm text-red-500"
-              >
-                {{ validateChronologicalDates('baptism_date', form.baptism_date) }}
-              </div>
-              <InputError class="mt-2" :message="form.errors.baptism_date" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="baptism_reg_no">Baptism Registration No</Label>
-              <Input
-                id="baptism_reg_no"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.baptism_reg_no"
-                autocomplete="baptism_reg_no"
-                placeholder="Baptism registration no"
-              />
-              <InputError class="mt-2" :message="form.errors.baptism_reg_no" />
-            </div>
-            <div class="grid gap-2">
               <ParishSelection id="baptism_parish" label="Baptism Parish" v-model="baptismParishSelection" :parishes="props.parishes" :original-value="props.member?.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish_id" />
@@ -2312,86 +2314,143 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="marriage_date">Marriage Date</Label>
-              <DateInput
-                id="marriage_date"
-                :class="[
-                  !showValidationModal &&
-                  form.marriage_date &&
-                  (!validateNotFutureDate(form.marriage_date) || validateChronologicalDates('marriage_date', form.marriage_date))
-                    ? '!border-red-300'
-                    : '',
-                ]"
-                v-model="form.marriage_date"
-                placeholder="DD/MM/YYYY"
-              />
-              <div v-if="!showValidationModal && form.marriage_date && !validateNotFutureDate(form.marriage_date)" class="mt-1 text-sm text-red-500">
-                Date cannot be in the future.
-              </div>
-              <div
-                v-if="!showValidationModal && form.marriage_date && validateChronologicalDates('marriage_date', form.marriage_date)"
-                class="mt-1 text-sm text-red-500"
-              >
-                {{ validateChronologicalDates('marriage_date', form.marriage_date) }}
-              </div>
-              <InputError class="mt-2" :message="form.errors.marriage_date" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="marriage_reg_no">Marriage Registration No</Label>
-              <Input
-                id="marriage_reg_no"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.marriage_reg_no"
-                autocomplete="marriage_reg_no"
-                placeholder="Marriage registration no"
-              />
-              <InputError class="mt-2" :message="form.errors.marriage_reg_no" />
-            </div>
-            <div class="grid gap-2">
               <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" :original-value="props.member?.marriage_parish" />
               <InputError class="mt-2" :message="form.errors.marriage_parish" />
               <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="death_date">Death Date</Label>
-              <DateInput
-                id="death_date"
-                :class="[
-                  !showValidationModal &&
-                  form.death_date &&
-                  (!validateNotFutureDate(form.death_date) || validateChronologicalDates('death_date', form.death_date))
-                    ? '!border-red-300'
-                    : '',
-                ]"
-                v-model="form.death_date"
-                placeholder="DD/MM/YYYY"
-              />
-              <div v-if="!showValidationModal && form.death_date && !validateNotFutureDate(form.death_date)" class="mt-1 text-sm text-red-500">
-                Date cannot be in the future.
-              </div>
-              <div
-                v-if="!showValidationModal && form.death_date && validateChronologicalDates('death_date', form.death_date)"
-                class="mt-1 text-sm text-red-500"
-              >
-                {{ validateChronologicalDates('death_date', form.death_date) }}
-              </div>
-              <InputError class="mt-2" :message="form.errors.death_date" />
-            </div>
-            <div class="grid gap-2">
-              <Label for="deaths_reg_no">Death Registration No</Label>
-              <Input
-                id="deaths_reg_no"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.deaths_reg_no"
-                autocomplete="deaths_reg_no"
-                placeholder="Death registration no"
-              />
-              <InputError class="mt-2" :message="form.errors.deaths_reg_no" />
-            </div>
-            <div class="grid gap-2">
               <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" :original-value="props.member?.death_parish" />
               <InputError class="mt-2" :message="form.errors.death_parish" />
               <InputError class="mt-2" :message="form.errors.death_parish_id" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Sacramental Records Management -->
+        <div v-if="member?.id" class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
+          <h3 class="mb-4 rounded border-l-4 border-purple-500 bg-purple-50 py-2 pl-3 text-lg font-bold text-purple-700">Sacramental Records</h3>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Baptism Record -->
+            <div class="rounded-lg border border-gray-200 p-4 transition hover:border-blue-300 hover:shadow-md">
+              <div class="mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <h4 class="font-semibold text-gray-700">Baptism</h4>
+              </div>
+              <div v-if="member.baptismrecord_id" class="space-y-2">
+                <p class="text-sm text-gray-600">Record exists</p>
+                <button
+                  type="button"
+                  @click="openBaptismModal"
+                  class="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm text-white transition hover:bg-blue-700"
+                >
+                  View Details
+                </button>
+              </div>
+              <div v-else class="space-y-2">
+                <p class="text-sm text-gray-500">No record found</p>
+                <button
+                  type="button"
+                  @click="createBaptismRecord"
+                  class="w-full rounded-lg border border-green-600 bg-white px-3 py-2 text-sm text-green-600 transition hover:bg-green-50"
+                >
+                  Create Record
+                </button>
+              </div>
+            </div>
+
+            <!-- Marriage Record -->
+            <div class="rounded-lg border border-gray-200 p-4 transition hover:border-pink-300 hover:shadow-md">
+              <div class="mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <h4 class="font-semibold text-gray-700">Marriage</h4>
+              </div>
+              <div v-if="member.marriagerecord_id" class="space-y-2">
+                <p class="text-sm text-gray-600">Record exists</p>
+                <button
+                  type="button"
+                  @click="openMarriageModal"
+                  class="w-full rounded-lg bg-pink-600 px-3 py-2 text-sm text-white transition hover:bg-pink-700"
+                >
+                  View Details
+                </button>
+              </div>
+              <div v-else class="space-y-2">
+                <p class="text-sm text-gray-500">No record found</p>
+                <button
+                  type="button"
+                  @click="createMarriageRecord"
+                  class="w-full rounded-lg border border-green-600 bg-white px-3 py-2 text-sm text-green-600 transition hover:bg-green-50"
+                >
+                  Create Record
+                </button>
+              </div>
+            </div>
+
+            <!-- Death Record -->
+            <div class="rounded-lg border border-gray-200 p-4 transition hover:border-gray-400 hover:shadow-md">
+              <div class="mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <h4 class="font-semibold text-gray-700">Death</h4>
+              </div>
+              <div v-if="member.deathrecord_id" class="space-y-2">
+                <p class="text-sm text-gray-600">Record exists</p>
+                <button
+                  type="button"
+                  @click="openDeathModal"
+                  class="w-full rounded-lg bg-gray-600 px-3 py-2 text-sm text-white transition hover:bg-gray-700"
+                >
+                  View Details
+                </button>
+              </div>
+              <div v-else class="space-y-2">
+                <p class="text-sm text-gray-500">No record found</p>
+                <button
+                  type="button"
+                  @click="createDeathRecord"
+                  class="w-full rounded-lg border border-green-600 bg-white px-3 py-2 text-sm text-green-600 transition hover:bg-green-50"
+                >
+                  Create Record
+                </button>
+              </div>
+            </div>
+
+            <!-- Confirmation (No record model yet) -->
+            <div class="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div class="mb-2 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                <h4 class="font-semibold text-gray-700">Confirmation</h4>
+              </div>
+              <p class="text-xs text-gray-500 mb-2">
+                {{ form.confirmation_date ? 'Date: ' + form.confirmation_date : 'Not recorded' }}
+              </p>
+              <p class="text-xs text-gray-500">Managed in form above</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notes Section -->
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
+          <h3 class="mb-4 rounded border-l-4 border-green-500 bg-green-50 py-2 pl-3 text-lg font-bold text-green-700">Notes</h3>
+          <div class="grid gap-4">
+            <div class="grid gap-2">
+              <Label for="notes">Additional Notes</Label>
+              <Textarea
+                id="notes"
+                v-model="form.notes"
+                rows="5"
+                placeholder="Enter any additional notes or comments about this member..."
+                class="resize-none"
+              />
+              <p class="text-xs text-gray-500">Maximum 5000 characters</p>
+              <InputError class="mt-2" :message="form.errors.notes" />
             </div>
           </div>
         </div>
@@ -2415,6 +2474,19 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             </svg>
             Cancel
           </Button>
+          <Button
+            v-if="member?.id"
+            type="button"
+            @click="downloadPdf"
+            variant="outline"
+            class="flex items-center gap-2 rounded-full border-green-600 px-6 py-2 text-green-600 hover:bg-green-50"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6" />
+            </svg>
+            Download PDF
+          </Button>
           <Transition
             enter-active-class="transition ease-in-out"
             enter-from-class="opacity-0"
@@ -2434,6 +2506,25 @@ const fetchParishMembers = async (searchQuery: string = '') => {
     :errors="validationErrors"
     @focus-field="handleFocusField"
     @submit-anyway="handleSubmitAnyway"
+  />
+
+  <!-- Sacramental Record Modals -->
+  <BaptismRecordModal
+    :open="showBaptismModal"
+    :record-id="member?.baptismrecord_id"
+    @close="showBaptismModal = false"
+  />
+
+  <MarriageRecordModal
+    :open="showMarriageModal"
+    :record-id="member?.marriagerecord_id"
+    @close="showMarriageModal = false"
+  />
+
+  <DeathRecordModal
+    :open="showDeathModal"
+    :record-id="member?.deathrecord_id"
+    @close="showDeathModal = false"
   />
 </template>
 

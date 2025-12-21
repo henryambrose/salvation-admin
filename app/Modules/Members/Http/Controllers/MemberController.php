@@ -35,6 +35,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Spatie\LaravelPdf\Facades\Pdf;
 
 class MemberController extends Controller
 {
@@ -72,6 +73,9 @@ class MemberController extends Controller
             'incomeRange',
             'status',
             'gender',
+            'baptismRecord',
+            'marriageRecord',
+            'deathRecord',
             'baptismParish',
             'confirmationParish',
             'marriageParish',
@@ -226,7 +230,7 @@ class MemberController extends Controller
 
         // Exclude deceased members filter
         if ($request->boolean('excludeDeceased')) {
-            $query->whereNull('death_date');
+            $query->whereNull('deathrecord_id');
         }
 
         // Legacy filter support (unchanged)
@@ -445,6 +449,9 @@ class MemberController extends Controller
     public function edit(Member $member)
     {
         $this->authorize('update', $member);
+
+        // Eager load sacrament records
+        $member->load(['baptismRecord', 'marriageRecord', 'deathRecord']);
 
         $incomeRanges = IncomeRange::select('id', 'name')->get()->map(function ($item) {
             return ['id' => $item->id, 'name' => $item->name];
@@ -2054,5 +2061,176 @@ class MemberController extends Controller
                 'message' => 'Failed to record marriage: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Generate and download member details PDF
+     */
+    public function downloadPdf(Member $member)
+    {
+        // Helper to format dates
+        $formatDate = function ($date, $format = 'd/m/Y') {
+            if (!$date || $date === '' || $date === '0000-00-00') return null;
+            try {
+                if ($date instanceof \Carbon\Carbon) {
+                    return $date->format($format);
+                }
+                return \Carbon\Carbon::parse($date)->format($format);
+            } catch (\Exception $e) {
+                \Log::warning("Failed to format date: {$date}", ['error' => $e->getMessage()]);
+                return null;
+            }
+        };
+
+        // Load all relationships
+        $member->load([
+            'community',
+            'communityCluster.cluster',
+            'status',
+            'gender',
+            'bloodGroup',
+            'relationship',
+            'parish',
+            'designation',
+            'incomeRange',
+            'father',
+            'mother',
+            'spouse',
+            'baptismRecord',
+            'marriageRecord',
+            'deathRecord',
+            'baptismParish',
+            'confirmationParish',
+            'marriageParish',
+            'deathParish',
+            'permanentTown',
+            'permanentCity',
+            'permanentState',
+            'permanentCountry',
+            'currentTown',
+            'currentCity',
+            'currentState',
+            'currentCountry',
+        ]);
+
+        // Prepare data for the template
+        $data = [
+            // Basic Information
+            'member_no' => $member->member_no,
+            'family_no' => $member->family_no,
+            'full_name' => trim("{$member->first_name} {$member->middle_name} {$member->last_name}"),
+            'first_name' => $member->first_name,
+            'middle_name' => $member->middle_name ?? '',
+            'last_name' => $member->last_name ?? '',
+            'date_of_birth' => $formatDate($member->date_of_birth),
+            'gender' => $member->gender?->name ?? '',
+            'marital_status' => $member->marital_status ?? '',
+            'blood_group' => $member->bloodGroup?->name ?? '',
+            'relationship' => $member->relationship?->name ?? '',
+
+            // Contact Information
+            'contact_no_1' => $member->contact_no_1 ?? '',
+            'contact_no_2' => $member->contact_no_2 ?? '',
+            'email' => $member->email ?? '',
+            'aadhar' => $member->aadhar ?? '',
+
+            // Permanent Address
+            'permanent_add1' => $member->permanent_add1 ?? '',
+            'permanent_add2' => $member->permanent_add2 ?? '',
+            'permanent_add3' => $member->permanent_add3 ?? '',
+            'permanent_town' => $member->permanentTown?->name ?? '',
+            'permanent_city' => $member->permanentCity?->name ?? $member->permanent_city ?? '',
+            'permanent_state' => $member->permanentState?->name ?? '',
+            'permanent_country' => $member->permanentCountry?->name ?? '',
+            'permanent_pincode' => $member->permanent_pincode ?? '',
+
+            // Current Address
+            'current_add1' => $member->current_add1 ?? '',
+            'current_add2' => $member->current_add2 ?? '',
+            'current_add3' => $member->current_add3 ?? '',
+            'current_town' => $member->currentTown?->name ?? '',
+            'current_city' => $member->currentCity?->name ?? $member->current_city ?? '',
+            'current_state' => $member->currentState?->name ?? '',
+            'current_country' => $member->currentCountry?->name ?? '',
+            'current_pincode' => $member->current_pincode ?? '',
+
+            // Community Information
+            'community' => $member->community?->name ?? '',
+            'community_cluster' => $member->communityCluster?->cluster?->name ?? '',
+            'parish' => $member->parish?->name ?? '',
+            'status' => $member->status?->name ?? '',
+
+            // Educational and Professional
+            'school_name' => $member->school_name ?? '',
+            'college_name' => $member->college_name ?? '',
+            'latest_qualifications' => $member->latest_qualifications ?? '',
+            'company_name' => $member->company_name ?? '',
+            'designation' => $member->designation?->name ?? '',
+            'income_range' => $member->incomeRange?->name ?? '',
+
+            // Family Relations
+            'father_name' => $member->father ? trim("{$member->father->first_name} {$member->father->middle_name} {$member->father->last_name}") : '',
+            'mother_name' => $member->mother ? trim("{$member->mother->first_name} {$member->mother->middle_name} {$member->mother->last_name}") : '',
+            'spouse_name' => $member->spouse ? trim("{$member->spouse->first_name} {$member->spouse->middle_name} {$member->spouse->last_name}") : '',
+
+            // Sacramental Information
+            'baptism_date' => $member->baptismRecord ? $formatDate($member->baptismRecord->baptism_date) : '',
+            'baptism_reg_no' => $member->baptismRecord?->baptism_reg_no ?? '',
+            'baptism_parish' => $member->baptismParish?->name ?? '',
+
+            'confirmation_date' => $formatDate($member->confirmation_date),
+            'confirmation_reg_no' => $member->confirmation_reg_no ?? '',
+            'confirmation_parish' => $member->confirmationParish?->name ?? '',
+
+            'marriage_date' => $member->marriageRecord ? $formatDate($member->marriageRecord->marriage_date) : '',
+            'marriage_reg_no' => $member->marriageRecord?->marriage_reg_no ?? '',
+            'marriage_parish' => $member->marriageParish?->name ?? '',
+
+            'death_date' => $member->deathRecord ? $formatDate($member->deathRecord->death_date) : '',
+            'death_reg_no' => $member->deathRecord?->burial_reg_no ?? '',
+            'death_parish' => $member->deathParish?->name ?? '',
+
+            // Notes
+            'notes' => $member->notes ?? '',
+
+            // Parish info
+            'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
+            'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
+            'parish_priest_name' => config('app.parish_priest_name', 'Parish Priest'),
+            'issued_date' => now()->format('d/m/Y'),
+
+            // Template config
+            'template_config' => [
+                'show_logo' => config('app.certificate_show_logo', true),
+                'logo_url' => $this->makeLogoDataUrl(config('app.certificate_logo_path', 'images/logo.png')),
+            ],
+        ];
+
+        // Generate filename
+        $filename = sprintf(
+            'Member_Details_%s_%s.pdf',
+            str_replace(' ', '_', $member->first_name . '_' . $member->last_name),
+            now()->format('Y-m-d')
+        );
+
+        // Generate PDF with Spatie
+        return Pdf::view('members.member_details_pdf', $data)
+            ->format('a4')
+            ->name($filename)
+            ->inline();
+    }
+
+    /**
+     * Helper function to convert logo to data URL for PDF
+     */
+    private function makeLogoDataUrl($path)
+    {
+        $fullPath = public_path($path);
+        if (file_exists($fullPath)) {
+            $imageData = base64_encode(file_get_contents($fullPath));
+            $mimeType = mime_content_type($fullPath);
+            return "data:{$mimeType};base64,{$imageData}";
+        }
+        return null;
     }
 }

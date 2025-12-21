@@ -39,26 +39,26 @@ class DashboardController extends Controller
             ->mapWithKeys(fn($row) => [$genders[$row->gender_id] ?? 'Unknown' => $row->total])
             ->toArray();
 
-        $ageSql = 'SELECT
-                    t1.gender_id,
-                    COUNT(*) AS total,
-                    ag.name AS age_group
-                FROM (
-                    SELECT
-                        id,
-                        gender_id,
-                        CASE
-                            WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
-                            ELSE NULL
-                        END AS age
-                    FROM members WHERE death_date IS NULL
-                ) AS t1
-                JOIN age_groups ag
-                ON t1.age IS NOT NULL AND t1.age BETWEEN ag.min_age AND ag.max_age
-                GROUP BY t1.gender_id, ag.name
-                ORDER BY ag.min_age, t1.gender_id;
-        ';
-        $ageWiseDataResult = DB::select($ageSql);
+        // Refactored to use Eloquent query builder with subquery
+        $ageWiseDataResult = DB::table(DB::raw('(
+                SELECT
+                    id,
+                    gender_id,
+                    CASE
+                        WHEN date_of_birth IS NOT NULL THEN TIMESTAMPDIFF(YEAR, date_of_birth, NOW())
+                        ELSE NULL
+                    END AS age
+                FROM members
+                WHERE deathrecord_id IS NULL
+            ) AS t1'))
+            ->join('age_groups AS ag', function ($join) {
+                $join->whereRaw('t1.age IS NOT NULL')
+                     ->whereRaw('t1.age BETWEEN ag.min_age AND ag.max_age');
+            })
+            ->select('t1.gender_id', DB::raw('COUNT(*) AS total'), 'ag.name AS age_group')
+            ->groupBy('t1.gender_id', 'ag.name')
+            ->orderByRaw('ag.min_age, t1.gender_id')
+            ->get();
         $ageWiseData = [];
         foreach ($ageWiseDataResult as $row) {
             $ageGroup = $row->age_group;
@@ -115,7 +115,7 @@ class DashboardController extends Controller
             ->addSelect([
                 'families_count' => Member::selectRaw('COUNT(DISTINCT TRIM(family_no))')
                     ->whereColumn('community_id', 'communities.id')
-                    ->whereNull('death_date')
+                    ->whereNull('deathrecord_id')
                     ->whereNotNull('family_no')
                     ->whereRaw("TRIM(family_no) <> ''"),
             ])

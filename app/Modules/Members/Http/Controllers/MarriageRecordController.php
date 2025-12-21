@@ -93,7 +93,19 @@ class MarriageRecordController extends Controller
             'marriage_remarks' => 'nullable|string',
         ]);
 
-        MarriageRecord::create($validated);
+        $marriageRecord = MarriageRecord::create($validated);
+
+        // Update: Set foreign key for bridegroom
+        if ($marriageRecord->bridegroom_member_id) {
+            Member::where('id', $marriageRecord->bridegroom_member_id)
+                  ->update(['marriagerecord_id' => $marriageRecord->id]);
+        }
+
+        // Update: Set foreign key for bride
+        if ($marriageRecord->bride_member_id) {
+            Member::where('id', $marriageRecord->bride_member_id)
+                  ->update(['marriagerecord_id' => $marriageRecord->id]);
+        }
 
         return redirect()->route('marriage-records.index')
             ->with('success', 'Marriage record created successfully.');
@@ -163,6 +175,17 @@ class MarriageRecordController extends Controller
 
     public function destroy(MarriageRecord $marriageRecord)
     {
+        // Clear foreign keys for both members
+        if ($marriageRecord->bridegroom_member_id) {
+            Member::where('id', $marriageRecord->bridegroom_member_id)
+                  ->update(['marriagerecord_id' => null]);
+        }
+
+        if ($marriageRecord->bride_member_id) {
+            Member::where('id', $marriageRecord->bride_member_id)
+                  ->update(['marriagerecord_id' => null]);
+        }
+
         $marriageRecord->delete();
 
         return redirect()->route('marriage-records.index')
@@ -278,6 +301,7 @@ class MarriageRecordController extends Controller
             // Parish info
             'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
             'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
+            'parish_priest_name' => config('app.parish_priest_name', 'Parish Priest'),
             'issued_date' => now()->format('d/m/Y'),
 
             // Template config

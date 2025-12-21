@@ -84,7 +84,13 @@ class BaptismRecordController extends Controller
             'baptism_remarks' => 'nullable|string',
         ]);
 
-        BaptismRecord::create($validated);
+        $baptismRecord = BaptismRecord::create($validated);
+
+        // Update: Set the foreign key in member table
+        if ($baptismRecord->member_id) {
+            Member::where('id', $baptismRecord->member_id)
+                  ->update(['baptismrecord_id' => $baptismRecord->id]);
+        }
 
         return redirect()->route('baptism-records.index')
             ->with('success', 'Baptism record created successfully.');
@@ -139,6 +145,12 @@ class BaptismRecordController extends Controller
 
     public function destroy(BaptismRecord $baptismRecord)
     {
+        // Clear the foreign key in member table first
+        if ($baptismRecord->member_id) {
+            Member::where('id', $baptismRecord->member_id)
+                  ->update(['baptismrecord_id' => null]);
+        }
+
         $baptismRecord->delete();
 
         return redirect()->route('baptism-records.index')
@@ -278,6 +290,7 @@ class BaptismRecordController extends Controller
             // Parish info
             'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
             'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
+            'parish_priest_name' => config('app.parish_priest_name', 'Parish Priest'),
             'issued_date' => now()->format('d/m/Y'),
 
             // Template config

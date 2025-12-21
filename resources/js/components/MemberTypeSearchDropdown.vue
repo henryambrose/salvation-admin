@@ -28,10 +28,12 @@
     <!-- Search Input -->
     <div class="relative">
       <Input
+        ref="inputRef"
         v-model="searchQuery"
         :placeholder="placeholder"
         @input="handleSearch"
         @focus="showDropdown = true"
+        @keydown="handleKeyDown"
         class="w-full"
       />
       
@@ -87,7 +89,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, nextTick } from 'vue'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
@@ -121,6 +123,7 @@ const searchQuery = ref('')
 const searchResults = ref([])
 const showDropdown = ref(false)
 const selectedMember = ref(null)
+const inputRef = ref(null)
 
 // Debug logging
 onMounted(() => {
@@ -199,6 +202,10 @@ const selectResult = (result) => {
   emit('update:sourceType', result.type)
   searchQuery.value = result.name
   showDropdown.value = false
+
+  nextTick(() => {
+    inputRef.value?.$el?.focus()
+  })
 }
 
 const clearSelection = () => {
@@ -206,6 +213,22 @@ const clearSelection = () => {
   emit('update:modelValue', null)
   emit('update:sourceType', '')
   searchQuery.value = ''
+}
+
+const closeDropdown = () => {
+  showDropdown.value = false
+}
+
+const handleKeyDown = (event) => {
+  if (event.key === 'Tab' && showDropdown.value) {
+    closeDropdown()
+    nextTick(() => {
+      inputRef.value?.$el?.focus()
+    })
+  } else if (event.key === 'Escape' && showDropdown.value) {
+    event.preventDefault()
+    closeDropdown()
+  }
 }
 
 // Watch for external changes to modelValue
