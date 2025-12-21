@@ -26,6 +26,9 @@ class DatabaseSeeder extends Seeder
         if (class_exists(TemporaryGraveSeeder::class)) {
             $seeders[] = TemporaryGraveSeeder::class;
         }
+        if (class_exists(AnnualMaintenanceFeesSeeder::class)) {
+            $seeders[] = AnnualMaintenanceFeesSeeder::class;
+        }
         if (class_exists(NicheSeeder::class)) {
             $seeders[] = NicheSeeder::class;
         }

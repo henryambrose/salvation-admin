@@ -42,6 +42,7 @@ class DatabaseSeeder extends Seeder
             SCCHeadPermissionSeeder::class,
             CertificateTypeSeeder::class,
             CertificateTemplateSeeder::class,
+            PaymentMethodSeeder::class,
 
         ]);
     }

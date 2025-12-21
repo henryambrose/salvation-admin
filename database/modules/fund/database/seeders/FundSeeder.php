@@ -31,20 +31,20 @@ class FundSeeder extends Seeder
         }
 
         // Seed Payment Methods
-        $paymentMethods = [
-            ['name' => 'Cash', 'description' => 'Cash payment', 'sort_order' => 1],
-            ['name' => 'Check', 'description' => 'Check payment', 'sort_order' => 2],
-            ['name' => 'Bank Transfer', 'description' => 'Direct bank transfer', 'sort_order' => 3],
-            ['name' => 'Online Payment', 'description' => 'Online payment gateway', 'sort_order' => 4],
-            ['name' => 'Mobile Money', 'description' => 'Mobile money transfer', 'sort_order' => 5],
-        ];
+        // $paymentMethods = [
+        //     ['name' => 'Cash', 'description' => 'Cash payment', 'sort_order' => 1],
+        //     ['name' => 'Check', 'description' => 'Check payment', 'sort_order' => 2],
+        //     ['name' => 'Bank Transfer', 'description' => 'Direct bank transfer', 'sort_order' => 3],
+        //     ['name' => 'Online Payment', 'description' => 'Online payment gateway', 'sort_order' => 4],
+        //     ['name' => 'Mobile Money', 'description' => 'Mobile money transfer', 'sort_order' => 5],
+        // ];
 
-        foreach ($paymentMethods as $method) {
-            PaymentMethod::updateOrCreate(
-                ['name' => $method['name']],
-                $method
-            );
-        }
+        // foreach ($paymentMethods as $method) {
+        //     PaymentMethod::updateOrCreate(
+        //         ['name' => $method['name']],
+        //         $method
+        //     );
+        // }
 
         // // Seed Intention Types with default amounts
         // $intentionTypes = [
