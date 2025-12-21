@@ -542,9 +542,9 @@ interface Relationship {
 interface Props {
   permanentGraves: Array<{
     id: number;
-    grave_no: string;
-    section: string;
-    row_no: string;
+    block: string;
+    column: string;
+    row: string;
     owner_name?: string;
     contact_no?: string;
     member_id?: number;
@@ -704,17 +704,12 @@ const searchGraves = async () => {
   showDropdown.value = true;
 
   try {
-    const response = await fetch('/graveyard/valid-members/search-graves', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-      },
-      body: JSON.stringify({
-        search_term: graveSearchTerm.value,
-        grave_type: formData.grave_type,
-      }),
+    const params = new URLSearchParams({
+      search_term: graveSearchTerm.value,
+      grave_type: formData.grave_type,
     });
+
+    const response = await fetch(`/graveyard/valid-members/search-graves?${params.toString()}`);
 
     const data = await response.json();
     searchResults.value = data.results;
@@ -944,7 +939,7 @@ const handlePreSelectedGrave = async () => {
         const graveForSelection = {
           id: graveFromProps.id,
           type: 'permanent_grave',
-          display_name: `Grave ${graveFromProps.grave_no} (${graveFromProps.section}, Row ${graveFromProps.row_no})`,
+          display_name: `Grave ${graveFromProps.block} (${graveFromProps.column}, Row ${graveFromProps.row})`,
           details: {
             owner_name: graveFromProps.owner_name || 'Unknown Owner',
             contact_no: graveFromProps.contact_no || null,
@@ -975,7 +970,7 @@ const handlePreSelectedGrave = async () => {
           const graveForSelection = {
             id: graveData.permanentGrave?.id || graveData.id,
             type: 'permanent_grave',
-            display_name: `Grave ${graveData.permanentGrave?.grave_no || graveData.grave_no} (${graveData.permanentGrave?.section || graveData.section}, Row ${graveData.permanentGrave?.row_no || graveData.row_no})`,
+            display_name: `Grave ${graveData.permanentGrave?.grave_no || graveData.grave_no} (${graveData.permanentGrave?.section || graveData.section}, Row ${graveData.permanentGrave?.row || graveData.row})`,
             details: {
               owner_name: graveData.permanentGrave?.owner_name || graveData.owner_name || 'Unknown Owner',
               contact_no: graveData.permanentGrave?.contact_no || graveData.contact_no,

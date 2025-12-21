@@ -79,7 +79,7 @@ Route::middleware(['web', 'auth', 'verified', 'nocache'])->prefix('graveyard')->
         Route::get('/create', [ValidMemberController::class, 'create'])->name('create');
         Route::post('/', [ValidMemberController::class, 'store'])->name('store');
         Route::get('/search-members', [ValidMemberController::class, 'searchMembers'])->name('search-members');
-        Route::post('/search-graves', [ValidMemberController::class, 'searchGraves'])->name('search-graves');
+        Route::get('/search-graves', [ValidMemberController::class, 'searchGraves'])->name('search-graves');
         Route::get('/{validMember}', [ValidMemberController::class, 'show'])->name('show');
         Route::get('/{validMember}/edit', [ValidMemberController::class, 'edit'])->name('edit');
         Route::put('/{validMember}', [ValidMemberController::class, 'update'])->name('update');
