@@ -111,6 +111,8 @@
 import axios from 'axios';
 import { AlertTriangle, Camera, CheckCircle, X } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   familyNo: {
@@ -243,38 +245,49 @@ const uploadPhoto = async (file) => {
   }
 };
 
+const { confirm: showConfirm } = useConfirm();
+const { success: showSuccess, error: showError } = useToast();
+
 const deletePhoto = async () => {
-  if (!confirm('Are you sure you want to delete this family photo?')) {
-    return;
-  }
+  showConfirm({
+    title: 'Delete Family Photo',
+    message: 'Are you sure you want to delete this family photo?',
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    type: 'danger',
+    onConfirm: async () => {
+      isDeleting.value = true;
+      errorMessage.value = '';
+      successMessage.value = '';
 
-  isDeleting.value = true;
-  errorMessage.value = '';
-  successMessage.value = '';
+      try {
+        const response = await axios.delete(`/member/family-photo/${props.familyNo}`, {
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+          },
+        });
 
-  try {
-    const response = await axios.delete(`/member/family-photo/${props.familyNo}`, {
-      headers: {
-        'X-Requested-With': 'XMLHttpRequest',
-      },
-    });
+        if (response.data.success) {
+          currentPhoto.value = null;
+          successMessage.value = response.data.message;
+          showSuccess(response.data.message);
+          emit('photoDeleted');
 
-    if (response.data.success) {
-      currentPhoto.value = null;
-      successMessage.value = response.data.message;
-      emit('photoDeleted');
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        successMessage.value = '';
-      }, 3000);
-    }
-  } catch (error) {
-    console.error('Delete error:', error);
-    errorMessage.value = error.response?.data?.message || 'Failed to delete photo';
-  } finally {
-    isDeleting.value = false;
-  }
+          // Clear success message after 3 seconds
+          setTimeout(() => {
+            successMessage.value = '';
+          }, 3000);
+        }
+      } catch (error) {
+        console.error('Delete error:', error);
+        const errorMsg = error.response?.data?.message || 'Failed to delete photo';
+        errorMessage.value = errorMsg;
+        showError(errorMsg);
+      } finally {
+        isDeleting.value = false;
+      }
+    },
+  });
 };
 
 const cancelReplace = () => {

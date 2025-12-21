@@ -10,6 +10,8 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import { Edit, Eye, FileText, Plus, Settings, Trash } from 'lucide-vue-next';
 import { ref } from 'vue';
+import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 interface TemplateConfig {
   paper: string;
@@ -135,16 +137,26 @@ function updateTemplate() {
 }
 
 function deleteTemplate(template: CertificateTemplate) {
+  const { error } = useToast();
+  const { confirm: showConfirm } = useConfirm();
+
   if (template.is_default) {
-    alert('Cannot delete default template');
+    error('Cannot delete default template');
     return;
   }
 
-  if (confirm(`Are you sure you want to delete the template "${template.name}"?`)) {
-    router.delete(`/certificates/templates/${template.id}`, {
-      preserveState: true,
-    });
-  }
+  showConfirm({
+    title: 'Delete Template',
+    message: `Are you sure you want to delete the template "${template.name}"?`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    type: 'danger',
+    onConfirm: () => {
+      router.delete(`/certificates/templates/${template.id}`, {
+        preserveState: true,
+      });
+    },
+  });
 }
 
 function toggleTemplateStatus(template: CertificateTemplate) {

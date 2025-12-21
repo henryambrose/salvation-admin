@@ -132,6 +132,9 @@ const goToPayment = () => {
 const cancelBooking = () => {
   if (!cancelReason.value.trim()) return;
 
+  // Prevent duplicate submissions
+  if (isProcessing.value) return;
+
   isProcessing.value = true;
   router.post(
     route('graveyard.permanent-grave-bookings.cancel', props.booking.id),

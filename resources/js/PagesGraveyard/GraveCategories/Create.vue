@@ -79,6 +79,8 @@ const form = useForm({
 });
 
 const submitForm = () => {
+  // Prevent duplicate submissions
+  if (submitting.value) return;
   submitting.value = true;
 
   form.post(route('graveyard.grave-categories.store'), {

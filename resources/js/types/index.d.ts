@@ -93,20 +93,17 @@ export interface Member {
   company_name?: string | null;
   designation_id?: number | null;
   income_range_id?: number | null;
-  baptism_date?: string | null;
-  baptism_reg_no?: string | null;
+  baptismrecord_id?: number | null;
   baptism_parish?: string | null;
   baptism_parish_id?: number | null;
   confirmation_date?: string | null;
   confirmation_reg_no?: string | null;
   confirmation_parish?: string | null;
   confirmation_parish_id?: number | null;
-  marriage_date?: string | null;
-  marriage_reg_no?: string | null;
+  marriagerecord_id?: number | null;
   marriage_parish?: string | null;
   marriage_parish_id?: number | null;
-  death_date?: string | null;
-  deaths_reg_no?: string | null;
+  deathrecord_id?: number | null;
   death_parish?: string | null;
   death_parish_id?: number | null;
   cellsAndAssociations?: Array<{ id: number; name: string }> | null;
@@ -119,6 +116,7 @@ export interface Member {
   spouse_source?: string;
   father_source?: string;
   mother_source?: string;
+  notes?: string | null;
 }
 
 export interface ExternalMember {

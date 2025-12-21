@@ -374,6 +374,8 @@ const initializeForm = () => {
 };
 
 const submitForm = () => {
+  // Prevent duplicate submissions
+  if (submitting.value) return;
   submitting.value = true;
 
   form.put(route('graveyard.niches.update', props.niche.id), {

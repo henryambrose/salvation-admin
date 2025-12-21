@@ -48,8 +48,6 @@ const tabs = [
       { key: 'marriage_date', label: 'Marriage Date' },
       { key: 'marriage_reg_no', label: 'Marriage Reg. No.' },
       { key: 'marriage_parish', label: 'Marriage Parish' },
-      { key: 'death_date', label: 'Death Date' },
-      { key: 'deaths_reg_no', label: 'Death Reg. No.' },
       { key: 'death_parish', label: 'Death Parish' },
     ],
   },

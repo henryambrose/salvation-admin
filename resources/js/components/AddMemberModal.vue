@@ -1,7 +1,9 @@
 <template>
   <transition name="fade-scale">
     <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeModal">
-      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#ffffff] rounded-2xl shadow-2xl">
+      <div class="w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-[#ffffff] rounded-2xl shadow-2xl" @keydown="handleModalFocusTrap">
+        <!-- Focus trap start -->
+        <div ref="modalFirstFocusRef" tabindex="0" class="sr-only"></div>
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 class="text-2xl font-bold text-gray-900">Add New Member</h2>
@@ -261,6 +263,9 @@
               </button>
             </div>
           </form>
+
+          <!-- Focus trap end -->
+          <div ref="modalLastFocusRef" tabindex="0" class="sr-only"></div>
         </div>
       </div>
     </div>
@@ -297,6 +302,29 @@ const existingFamilyNo = ref('');
 const isSubmitting = ref(false);
 const errors = ref<string[]>([]);
 
+// Focus management refs
+const modalFirstFocusRef = ref<HTMLElement | null>(null);
+const modalLastFocusRef = ref<HTMLElement | null>(null);
+
+// Focus trap handler
+const handleModalFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === modalFirstFocusRef.value) {
+      event.preventDefault();
+      modalLastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === modalLastFocusRef.value) {
+      event.preventDefault();
+      modalFirstFocusRef.value?.focus();
+    }
+  }
+};
+
 // Family search
 const showFamilySearch = ref(false);
 const familySearchQuery = ref('');
@@ -332,10 +360,20 @@ const filteredClusters = computed(() => {
   );
 });
 
-// Watch for community changes to reset cluster selection
+// Watch for community changes to reset and auto-select first cluster
 watch(() => form.value.community_id, (newCommunityId) => {
   // Reset cluster selection when community changes
   form.value.community_cluster_id = '';
+
+  // Auto-select first cluster from filtered clusters
+  if (newCommunityId) {
+    nextTick(() => {
+      const filtered = filteredClusters.value;
+      if (filtered.length > 0) {
+        form.value.community_cluster_id = filtered[0].id.toString();
+      }
+    });
+  }
 });
 
 // Watch for existing family number changes with debounce
@@ -601,38 +639,40 @@ const validateForm = () => {
 };
 
 // Submit form
-const submitForm = async () => {
+const submitForm = () => {
   if (!validateForm()) {
     return;
   }
-  
+
+  // Prevent duplicate submissions
+  if (isSubmitting.value) {
+    return;
+  }
+
   isSubmitting.value = true;
   errors.value = [];
-  
-  try {
-    const formData = {
-      ...form.value,
-      existing_family_no: familyType.value === 'existing' ? existingFamilyNo.value : null
-    };
-    
-    await router.post(route('member.store'), formData, {
-      onSuccess: () => {
-        closeModal();
-        // Reset form
-        resetForm();
-      },
-      onError: (backendErrors) => {
-        // Handle validation errors from backend
-        const errorMessages = Object.values(backendErrors).flat() as string[];
-        errors.value = errorMessages;
-      }
-    });
-  } catch (error) {
-    console.error('Error creating member:', error);
-    errors.value.push('An error occurred while creating the member. Please try again.');
-  } finally {
-    isSubmitting.value = false;
-  }
+
+  const formData = {
+    ...form.value,
+    existing_family_no: familyType.value === 'existing' ? existingFamilyNo.value : null
+  };
+
+  router.post(route('member.store'), formData, {
+    onSuccess: () => {
+      closeModal();
+      // Reset form
+      resetForm();
+    },
+    onError: (backendErrors) => {
+      // Handle validation errors from backend
+      const errorMessages = Object.values(backendErrors).flat() as string[];
+      errors.value = errorMessages;
+    },
+    onFinish: () => {
+      // Always reset isSubmitting after request completes (success or error)
+      isSubmitting.value = false;
+    }
+  });
 };
 
 // Reset form
@@ -650,6 +690,7 @@ const resetForm = () => {
   familyType.value = 'new';
   existingFamilyNo.value = '';
   errors.value = [];
+  isSubmitting.value = false; // Reset submission state
   showFamilySearch.value = false;
   familySearchQuery.value = '';
   familySearchResults.value = [];
@@ -665,10 +706,21 @@ const closeModal = () => {
   resetForm();
 };
 
+// Auto-select first community and relationship when modal opens
+const autoSelectFirstOptions = () => {
+  if (props.communities && props.communities.length > 0 && !form.value.community_id) {
+    form.value.community_id = props.communities[0].id.toString();
+  }
+  if (props.relationships && props.relationships.length > 0 && !form.value.relationship_id) {
+    form.value.relationship_id = props.relationships[0].id.toString();
+  }
+};
+
 // Watch for modal state changes
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    // Modal opened - fetch next numbers
+    // Modal opened - fetch next numbers and auto-select first options
+    autoSelectFirstOptions();
     fetchNextNumbers();
   } else {
     resetForm();

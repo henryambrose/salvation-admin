@@ -33,9 +33,11 @@ import {
   type CommunityCluster,
   type SharedData,
 } from '@/types';
-import { Head, useForm, usePage } from '@inertiajs/vue3';
+import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { List } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
+import { useConfirm } from '@/composables/useConfirm';
+
 
 interface Props {
   member?: Member;
@@ -216,38 +218,12 @@ const validateChronologicalDates = (currentField: string, currentDate: string): 
   if (!current) return null;
 
   const birthDate = parseDate(form.date_of_birth);
-  const baptismDate = parseDate(form.baptism_date);
   const confirmationDate = parseDate(form.confirmation_date);
-  const marriageDate = parseDate(form.marriage_date);
 
   switch (currentField) {
-    case 'baptism_date':
-      if (birthDate && current < birthDate) {
-        return 'Baptism date cannot be earlier than birth date';
-      }
-      break;
-
     case 'confirmation_date':
-      if (baptismDate && current < baptismDate) {
-        return 'Confirmation date cannot be earlier than baptism date';
-      }
-      break;
-
-    case 'marriage_date':
-      if (confirmationDate && current < confirmationDate) {
-        return 'Marriage date cannot be earlier than confirmation date';
-      }
-      if (!confirmationDate && baptismDate && current < baptismDate) {
-        return 'Marriage date cannot be earlier than baptism date';
-      }
-      break;
-
-    case 'death_date':
       if (birthDate && current < birthDate) {
-        return 'Death date cannot be earlier than birth date';
-      }
-      if (marriageDate && current < marriageDate) {
-        return 'Death date cannot be earlier than marriage date';
+        return 'Confirmation date cannot be earlier than birth date';
       }
       break;
   }
@@ -306,20 +282,8 @@ const collectValidationErrors = () => {
     errors.push({ field: 'date_of_birth', message: 'Date of birth cannot be in the future' });
   }
 
-  if (form.baptism_date && !validateNotFutureDate(form.baptism_date)) {
-    errors.push({ field: 'baptism_date', message: 'Baptism date cannot be in the future' });
-  }
-
   if (form.confirmation_date && !validateNotFutureDate(form.confirmation_date)) {
     errors.push({ field: 'confirmation_date', message: 'Confirmation date cannot be in the future' });
-  }
-
-  if (form.marriage_date && !validateNotFutureDate(form.marriage_date)) {
-    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be in the future' });
-  }
-
-  if (form.death_date && !validateNotFutureDate(form.death_date)) {
-    errors.push({ field: 'death_date', message: 'Death date cannot be in the future' });
   }
 
   // Chronological date validation for sacraments
@@ -331,39 +295,11 @@ const collectValidationErrors = () => {
   };
 
   const birthDate = parseDate(form.date_of_birth);
-  const baptismDate = parseDate(form.baptism_date);
   const confirmationDate = parseDate(form.confirmation_date);
-  const marriageDate = parseDate(form.marriage_date);
-  const deathDate = parseDate(form.death_date);
 
-  // Baptism date cannot be earlier than birth date
-  if (birthDate && baptismDate && baptismDate < birthDate) {
-    errors.push({ field: 'baptism_date', message: 'Baptism date cannot be earlier than birth date' });
-  }
-
-  // Confirmation date cannot be earlier than baptism date
-  if (baptismDate && confirmationDate && confirmationDate < baptismDate) {
-    errors.push({ field: 'confirmation_date', message: 'Confirmation date cannot be earlier than baptism date' });
-  }
-
-  // Marriage date cannot be earlier than confirmation date (if confirmation exists)
-  if (confirmationDate && marriageDate && marriageDate < confirmationDate) {
-    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be earlier than confirmation date' });
-  }
-
-  // Marriage date cannot be earlier than baptism date (if no confirmation but baptism exists)
-  if (!confirmationDate && baptismDate && marriageDate && marriageDate < baptismDate) {
-    errors.push({ field: 'marriage_date', message: 'Marriage date cannot be earlier than baptism date' });
-  }
-
-  // Death date cannot be earlier than birth date
-  if (birthDate && deathDate && deathDate < birthDate) {
-    errors.push({ field: 'death_date', message: 'Death date cannot be earlier than birth date' });
-  }
-
-  // Death date cannot be earlier than marriage date (if marriage exists)
-  if (marriageDate && deathDate && deathDate < marriageDate) {
-    errors.push({ field: 'death_date', message: 'Death date cannot be earlier than marriage date' });
+  // Confirmation date cannot be earlier than birth date
+  if (birthDate && confirmationDate && confirmationDate < birthDate) {
+    errors.push({ field: 'confirmation_date', message: 'Confirmation date cannot be earlier than birth date' });
   }
 
   // Check parish validation - only validate if both parish name and ID are provided but don't match
@@ -550,7 +486,7 @@ const loadCurrentSpouse = async () => {
             const spouse = spouseArray[0]; // Get first (and should be only) result
             const spouseData = {
               id: Number(spouse.id),
-              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})`,
+              name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no || 'N/A'})${spouse.gender ? ' - ' + spouse.gender : ''}`,
               family_no: spouse.family_no || '',
               full_name: `${spouse.first_name} ${spouse.last_name}`,
               community: spouse.community || '',
@@ -584,7 +520,7 @@ const loadCurrentSpouse = async () => {
               const spouse = data[0];
               const spouseData = {
                 id: Number(spouse.id),
-                name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})`,
+                name: `${spouse.first_name} ${spouse.last_name} (${spouse.family_no})${spouse.gender ? ' - ' + spouse.gender : ''}`,
                 family_no: spouse.family_no,
                 full_name: `${spouse.first_name} ${spouse.last_name}`,
                 community: spouse.community || '',
@@ -658,7 +594,7 @@ const loadCurrentFather = async () => {
             const father = fatherArray[0];
             const fatherData = {
               id: Number(father.id),
-              name: `${father.first_name} ${father.last_name}`,
+              name: `${father.first_name} ${father.last_name}${father.gender ? ' - ' + father.gender : ''}`,
               family_no: father.family_no || '',
               full_name: `${father.first_name} ${father.last_name}`,
               community: father.community || '',
@@ -733,7 +669,7 @@ const loadCurrentMother = async () => {
             const mother = motherArray[0];
             const motherData = {
               id: Number(mother.id),
-              name: `${mother.first_name} ${mother.last_name}`,
+              name: `${mother.first_name} ${mother.last_name}${mother.gender ? ' - ' + mother.gender : ''}`,
               family_no: mother.family_no || '',
               full_name: `${mother.first_name} ${mother.last_name}`,
               community: mother.community || '',
@@ -845,16 +781,57 @@ const openDeathModal = () => {
   showDeathModal.value = true;
 };
 
+const { confirm: showConfirm } = useConfirm();
+
 const createBaptismRecord = () => {
-  window.location.href = `/baptism-records/create?member_id=${member.id}`;
+  if (form.isDirty) {
+    showConfirm({
+      title: 'Unsaved Changes',
+      message: 'You have unsaved changes to this member. Do you want to discard them and create a new baptism record?',
+      confirmText: 'Discard & Create',
+      cancelText: 'Keep Editing',
+      type: 'warning',
+      onConfirm: () => {
+        router.get(`/baptism-records/create?member_id=${member.id}`);
+      },
+    });
+  } else {
+    router.get(`/baptism-records/create?member_id=${member.id}`);
+  }
 };
 
 const createMarriageRecord = () => {
-  window.location.href = `/marriage-records/create?member_id=${member.id}`;
+  if (form.isDirty) {
+    showConfirm({
+      title: 'Unsaved Changes',
+      message: 'You have unsaved changes to this member. Do you want to discard them and create a new marriage record?',
+      confirmText: 'Discard & Create',
+      cancelText: 'Keep Editing',
+      type: 'warning',
+      onConfirm: () => {
+        router.get(`/marriage-records/create?member_id=${member.id}`);
+      },
+    });
+  } else {
+    router.get(`/marriage-records/create?member_id=${member.id}`);
+  }
 };
 
 const createDeathRecord = () => {
-  window.location.href = `/death-records/create?member_id=${member.id}`;
+  if (form.isDirty) {
+    showConfirm({
+      title: 'Unsaved Changes',
+      message: 'You have unsaved changes to this member. Do you want to discard them and create a new death record?',
+      confirmText: 'Discard & Create',
+      cancelText: 'Keep Editing',
+      type: 'warning',
+      onConfirm: () => {
+        router.get(`/death-records/create?member_id=${member.id}`);
+      },
+    });
+  } else {
+    router.get(`/death-records/create?member_id=${member.id}`);
+  }
 };
 
 // Modify the submit function to include debugging:
@@ -1148,20 +1125,14 @@ watch(
       form.company_name = props.member.company_name || '';
       form.designation_id = props.member.designation_id || '';
       form.income_range_id = props.member.income_range_id || '';
-      form.baptism_date = formatDateForInput(props.member.baptism_date);
-      form.baptism_reg_no = props.member.baptism_reg_no || '';
       form.baptism_parish = props.member.baptism_parish || '';
       form.baptism_parish_id = props.member.baptism_parish_id || '';
       form.confirmation_date = formatDateForInput(props.member.confirmation_date);
       form.confirmation_reg_no = props.member.confirmation_reg_no || '';
       form.confirmation_parish = props.member.confirmation_parish || '';
       form.confirmation_parish_id = props.member.confirmation_parish_id || '';
-      form.marriage_date = formatDateForInput(props.member.marriage_date);
-      form.marriage_reg_no = props.member.marriage_reg_no || '';
       form.marriage_parish = props.member.marriage_parish || '';
       form.marriage_parish_id = props.member.marriage_parish_id || '';
-      form.death_date = formatDateForInput(props.member.death_date);
-      form.deaths_reg_no = props.member.deaths_reg_no || '';
       form.death_parish = props.member.death_parish || '';
       form.death_parish_id = props.member.death_parish_id || '';
       form.spouse_source = props.member.spouse_source || 'Member';
@@ -1483,22 +1454,29 @@ const fetchParishMembers = async (searchQuery: string = '') => {
       const data = await response.json();
       const parishmember = data.map((member: any) => ({
         id: Number(member.id),
-        name: `${member.first_name} ${member.last_name} (${member.family_no})`,
+        name: `${member.first_name} ${member.last_name} (${member.family_no})${member.gender ? ' - ' + member.gender : ''}`,
         family_no: member.family_no,
         full_name: `${member.first_name} ${member.last_name}`,
         community: member.community || '',
         gender:member.gender,
       }));
 
-      const filteredMembers = parishmember.filter((member: any) => member.gender !== '');
+      // Sort members with gender first, then those without
+      const sortedMembers = parishmember.sort((a: any, b: any) => {
+        // Members with gender come first (return 0 for a)
+        // Members without gender come last (return 1 for a)
+        const aHasGender = a.gender && a.gender !== '' ? 0 : 1;
+        const bHasGender = b.gender && b.gender !== '' ? 0 : 1;
+        return aHasGender - bHasGender;
+      });
 
       // Preserve currently selected spouse in the array if it exists
       const currentlySelected = parishMembers.value.find((m: any) => m.id === form.spouse_id);
-      if (currentlySelected && !filteredMembers.find((m: any) => m.id === currentlySelected.id)) {
-        filteredMembers.unshift(currentlySelected); // Add to beginning
+      if (currentlySelected && !sortedMembers.find((m: any) => m.id === currentlySelected.id)) {
+        sortedMembers.unshift(currentlySelected); // Add to beginning
       }
 
-      parishMembers.value = filteredMembers;
+      parishMembers.value = sortedMembers;
       console.log('parishMembers updated:', parishMembers.value);
     } else {
       parishMembers.value = [];
@@ -2445,7 +2423,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <Textarea
                 id="notes"
                 v-model="form.notes"
-                rows="5"
+                :rows="5"
                 placeholder="Enter any additional notes or comments about this member..."
                 class="resize-none"
               />
@@ -2511,19 +2489,19 @@ const fetchParishMembers = async (searchQuery: string = '') => {
   <!-- Sacramental Record Modals -->
   <BaptismRecordModal
     :open="showBaptismModal"
-    :record-id="member?.baptismrecord_id"
+    :record-id="member?.baptismrecord_id ?? null"
     @close="showBaptismModal = false"
   />
 
   <MarriageRecordModal
     :open="showMarriageModal"
-    :record-id="member?.marriagerecord_id"
+    :record-id="member?.marriagerecord_id ?? null"
     @close="showMarriageModal = false"
   />
 
   <DeathRecordModal
     :open="showDeathModal"
-    :record-id="member?.deathrecord_id"
+    :record-id="member?.deathrecord_id ?? null"
     @close="showDeathModal = false"
   />
 </template>

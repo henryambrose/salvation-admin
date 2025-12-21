@@ -30,7 +30,7 @@ class CommunityClusterController extends Controller
         $query->join('clusters', 'community_clusters.cluster_id', '=', 'clusters.id');
         $query->leftJoin('members', function($join) {
             $join->on('community_clusters.member_id', '=', 'members.id')
-                 ->whereNull('members.death_date');
+                 ->whereNull('members.deathrecord_id');
         });
         $query->select('community_clusters.*', 'communities.name as community_name', 'clusters.name as cluster_name', 'members.first_name', 'members.last_name');
         $query->selectRaw('CONCAT(members.first_name, " ", members.last_name) as member_name');

@@ -463,6 +463,8 @@ function submitForm() {
     return;
   }
 
+  // Prevent duplicate submissions
+  if (isSubmitting.value) return;
   isSubmitting.value = true;
 
   // Submit the form

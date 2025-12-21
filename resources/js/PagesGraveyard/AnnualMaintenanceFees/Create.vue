@@ -162,6 +162,7 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { DateInput } from '@/components/ui/date-input';
 import { formatDateForDisplay } from '@/lib/utils';
+import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   suggestedYear: Number,
@@ -184,11 +185,13 @@ const form = useForm({
   notes: '',
 })
 
+const { error } = useToast();
+
 const submit = () => {
   // Client-side validation to ensure at least one amount is provided
   if ((!form.permanent_grave_amount || form.permanent_grave_amount <= 0) &&
       (!form.niche_amount || form.niche_amount <= 0)) {
-    alert('Please provide either permanent grave amount or niche amount (or both).');
+    error('Please provide either permanent grave amount or niche amount (or both).');
     return;
   }
 

@@ -38,6 +38,52 @@ const serverArchived = computed(() => String(props.filters?.isArchived) === 'tru
 // Always start with false, don't inherit from URL
 const highlightedRowId = ref<number>(-1);
 
+// Refs for focus management in modals
+const createModalMemberSearchRef = ref<any>(null);
+const editModalMemberSearchRef = ref<any>(null);
+const createModalFirstFocusRef = ref<HTMLElement | null>(null);
+const createModalLastFocusRef = ref<HTMLElement | null>(null);
+const editModalFirstFocusRef = ref<HTMLElement | null>(null);
+const editModalLastFocusRef = ref<HTMLElement | null>(null);
+
+// Focus trap handler for Create Modal
+const handleCreateModalFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === createModalFirstFocusRef.value) {
+      event.preventDefault();
+      createModalLastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === createModalLastFocusRef.value) {
+      event.preventDefault();
+      createModalFirstFocusRef.value?.focus();
+    }
+  }
+};
+
+// Focus trap handler for Edit Modal
+const handleEditModalFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === editModalFirstFocusRef.value) {
+      event.preventDefault();
+      editModalLastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === editModalLastFocusRef.value) {
+      event.preventDefault();
+      editModalFirstFocusRef.value?.focus();
+    }
+  }
+};
+
 const editForm = useForm<{ id: string | number; cells_and_association_id: any[]; member_id: any }>({
   id: '',
   cells_and_association_id: [],
@@ -131,6 +177,11 @@ function openEditModal(row: any) {
   const cellAssociation = props.cellsAndAssociations.find((ca: any) => ca.id === row.cells_and_association_id);
   editForm.cells_and_association_id = cellAssociation ? [cellAssociation] : [];
 
+  // Auto-select first cell association if none is selected
+  if (editForm.cells_and_association_id.length === 0 && props.cellsAndAssociations && props.cellsAndAssociations.length > 0) {
+    editForm.cells_and_association_id = [props.cellsAndAssociations[0]];
+  }
+
   // For edit, we need to fetch the member details and convert to array format
   if (row.member_id) {
     fetchMemberById(Number(row.member_id)).then((member) => {
@@ -151,6 +202,14 @@ function openEditModal(row: any) {
   // Clear search results when opening modal
   searchResults.value = [];
   showEditModal.value = true;
+
+  // Focus the first input after modal opens
+  nextTick(() => {
+    const modalSearchInput = document.querySelector('[data-edit-modal-search]') as HTMLInputElement;
+    if (modalSearchInput) {
+      modalSearchInput.focus();
+    }
+  });
 }
 
 function closeEditModal() {
@@ -193,7 +252,21 @@ function submitEdit() {
 function openCreateModal() {
   // Clear search results when opening modal
   searchResults.value = [];
+
+  // Auto-select first cell association if available
+  if (props.cellsAndAssociations && props.cellsAndAssociations.length > 0 && !createForm.cells_and_association_id.length) {
+    createForm.cells_and_association_id = [props.cellsAndAssociations[0]];
+  }
+
   showCreateModal.value = true;
+
+  // Focus the first input after modal opens
+  nextTick(() => {
+    const modalSearchInput = document.querySelector('[data-create-modal-search]') as HTMLInputElement;
+    if (modalSearchInput) {
+      modalSearchInput.focus();
+    }
+  });
 }
 
 function submitCreate() {
@@ -594,8 +667,11 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg" @keydown="handleEditModalFocusTrap">
           <div class="rounded-lg bg-[#ffffff] p-6">
+            <!-- Focus trap start -->
+            <div ref="editModalFirstFocusRef" tabindex="0" class="sr-only" @focus="() => { const input = document.querySelector('[data-edit-modal-search]'); (input as HTMLElement)?.focus(); }"></div>
+
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
             <form @submit.prevent="submitEdit">
 
@@ -613,6 +689,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                   :allow-empty="false"
                   :multiple="false"
                   :close-on-select="true"
+                  data-edit-modal-search
                 />
                 <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
                 <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
@@ -657,6 +734,9 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 </Button>
               </div>
             </form>
+
+            <!-- Focus trap end -->
+            <div ref="editModalLastFocusRef" tabindex="0" class="sr-only"></div>
           </div>
         </div>
       </div>
@@ -665,8 +745,11 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showCreateModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg" @keydown="handleCreateModalFocusTrap">
           <div class="rounded-lg bg-[#ffffff] p-6">
+            <!-- Focus trap start -->
+            <div ref="createModalFirstFocusRef" tabindex="0" class="sr-only" @focus="() => { const input = document.querySelector('[data-create-modal-search]'); (input as HTMLElement)?.focus(); }"></div>
+
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
             <form @submit.prevent="submitCreate">
 
@@ -688,6 +771,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                   :filter-results="false"
                   :resolve-on-load="false"
                   :delay="300"
+                  data-create-modal-search
                 />
                 <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ createForm.errors.member_id }}</div>
                 <div v-if="!createForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
@@ -731,6 +815,9 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 </Button>
               </div>
             </form>
+
+            <!-- Focus trap end -->
+            <div ref="createModalLastFocusRef" tabindex="0" class="sr-only"></div>
           </div>
         </div>
       </div>

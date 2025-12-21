@@ -370,7 +370,7 @@ class CertificateGenerationService
           'death_remarks' => $deathRecord?->death_remarks ?? '',
 
           // Legacy fields
-          'deaths_reg_no' => $deathRecord?->burial_reg_no ?? $member->deaths_reg_no,
+          'deaths_reg_no' => $deathRecord?->burial_reg_no ?? '',
           'burial_place' => $deathRecord?->place_of_burial ?? $additionalData['burial_place'] ?? '',
           'priest_name' => $deathRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
           'last_rites_given' => $additionalData['last_rites_given'] ?? 'Yes',
@@ -501,8 +501,8 @@ class CertificateGenerationService
         break;
 
       case 'death':
-        if (!$member->death_date) {
-          $errors[] = 'Death date is required';
+        if (!$member->deathrecord_id) {
+          $errors[] = 'Death record is required';
         }
         break;
     }

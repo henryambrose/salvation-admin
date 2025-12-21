@@ -1223,7 +1223,7 @@ class MemberController extends Controller
             return response()->json([]);
         }
 
-        $membersQuery = Member::with(['community']);
+        $membersQuery = Member::with(['community', 'baptismRecord', 'marriageRecord']);
 
         // Apply status filter conditionally
         if ($status === 'deceased') {
@@ -1248,11 +1248,11 @@ class MemberController extends Controller
                     'id' => $member->id,
                     'name' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$communityName}",
                     'date_of_birth' => $member->date_of_birth,
-                    'baptism_date' => $member->baptism_date,
-                    'baptism_reg_no' => $member->baptism_reg_no,
+                    'baptism_date' => $member->baptismRecord?->baptism_date,
+                    'baptism_reg_no' => $member->baptismRecord?->baptism_reg_no,
                     'baptism_parish_id' => $member->baptism_parish_id,
-                    'marriage_date' => $member->marriage_date,
-                    'marriage_reg_no' => $member->marriage_reg_no,
+                    'marriage_date' => $member->marriageRecord?->marriage_date,
+                    'marriage_reg_no' => $member->marriageRecord?->marriage_reg_no,
                 ];
             });
 

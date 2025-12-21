@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import Flash from '@/components/ui/toastr/Flash.vue';
 import ToastContainer from '@/components/ui/toast/ToastContainer.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import AppLayout from '@/layouts/app/AppSidebarLayout.vue';
 import { useTabScrollIntoView } from '@/composables/useTabScrollIntoView';
 import type { BreadcrumbItemType } from '@/types';
@@ -34,6 +35,7 @@ useTabScrollIntoView({
   <AppLayout :breadcrumbs="breadcrumbs">
     <Flash />
     <ToastContainer />
+    <ConfirmDialog />
     <div class="rounded p-4 shadow">
       <slot />
     </div>

@@ -21,7 +21,7 @@ interface Member {
   baptism_date?: string;
   confirmation_date?: string;
   marriage_date?: string;
-  death_date?: string;
+  deathrecord_id?: number;
   community?: { name: string };
 }
 

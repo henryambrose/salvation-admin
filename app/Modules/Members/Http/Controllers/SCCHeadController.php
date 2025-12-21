@@ -31,7 +31,7 @@ class SCCHeadController extends Controller
         $query->select('s_c_c_heads.*');
         $query->join('members', function($join) {
             $join->on('s_c_c_heads.member_id', '=', 'members.id')
-                 ->whereNull('members.death_date');
+                 ->whereNull('members.deathrecord_id');
         });
         $query->join('communities', 's_c_c_heads.community_id', '=', 'communities.id');
         $query->select(

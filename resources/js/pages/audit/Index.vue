@@ -318,7 +318,7 @@ function formatValue(value) {
   }
 
   // Check if the value is a date (common date field names or ISO date format)
-  const dateFields = ['created_at', 'updated_at', 'date_of_birth', 'marriage_date', 'baptism_date', 'confirmation_date', 'death_date'];
+  const dateFields = ['created_at', 'updated_at', 'date_of_birth', 'marriage_date', 'baptism_date', 'confirmation_date'];
   const isDateField = (key) => dateFields.some((field) => key.toLowerCase().includes(field));
 
   // Check if it's an ISO date string (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)

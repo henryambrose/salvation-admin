@@ -182,6 +182,14 @@ function openEditModal(row: any) {
         if (row.member_id) {
           editForm.member_id = response.data.find((m: any) => m.id === row.member_id) || null;
         }
+
+        // Focus the member input after members are loaded
+        nextTick(() => {
+          const memberInput = document.querySelector('[data-edit-modal-member]') as HTMLElement;
+          if (memberInput) {
+            memberInput.focus();
+          }
+        });
       })
       .catch((error) => {
         console.error('Error fetching members:', error);
@@ -223,6 +231,22 @@ function openCreateModal() {
   showCreateModal.value = true;
   createForm.reset();
   modalMember.value = [];
+
+  // Auto-select first community and cluster when modal opens
+  nextTick(() => {
+    if (props.communities && props.communities.length > 0 && !createForm.community_id) {
+      createForm.community_id = props.communities[0];
+    }
+    if (props.clusters && props.clusters.length > 0 && !createForm.cluster_id) {
+      createForm.cluster_id = props.clusters[0];
+    }
+
+    // Focus the first input (Community Multiselect) after modal opens
+    const communityInput = document.querySelector('[data-create-modal-community]') as HTMLElement;
+    if (communityInput) {
+      communityInput.focus();
+    }
+  });
 }
 function closeCreateModal() {
   showCreateModal.value = false;
@@ -341,6 +365,50 @@ const canExportCommunityCluster = can('read-community-cluster');
 
 const partialOnly = ['communityClusters', 'filters'];
 const searchTimeout = ref<number | null>(null);
+
+// Focus management for modals
+const createModalFirstFocusRef = ref<HTMLElement | null>(null);
+const createModalLastFocusRef = ref<HTMLElement | null>(null);
+const editModalFirstFocusRef = ref<HTMLElement | null>(null);
+const editModalLastFocusRef = ref<HTMLElement | null>(null);
+
+// Focus trap handler for Create Modal
+const handleCreateModalFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === createModalFirstFocusRef.value) {
+      event.preventDefault();
+      createModalLastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === createModalLastFocusRef.value) {
+      event.preventDefault();
+      createModalFirstFocusRef.value?.focus();
+    }
+  }
+};
+
+// Focus trap handler for Edit Modal
+const handleEditModalFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === editModalFirstFocusRef.value) {
+      event.preventDefault();
+      editModalLastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === editModalLastFocusRef.value) {
+      event.preventDefault();
+      editModalFirstFocusRef.value?.focus();
+    }
+  }
+};
 </script>
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
@@ -517,8 +585,11 @@ const searchTimeout = ref<number | null>(null);
     <!-- Enhanced Pagination -->
     <!-- //bg-black bg-opacity-20 -->
     <transition name="fade">
-      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
+      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]" @keydown="handleEditModalFocusTrap">
+          <!-- Focus trap start -->
+          <div ref="editModalFirstFocusRef" tabindex="0" class="sr-only"></div>
+
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit SCC Head</h2>
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
@@ -546,7 +617,14 @@ const searchTimeout = ref<number | null>(null);
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
-              <Multiselect v-model="editForm.member_id" :options="modalMember" label="name" track-by="id" placeholder="Select Member" />
+              <Multiselect
+                v-model="editForm.member_id"
+                :options="modalMember"
+                label="name"
+                track-by="id"
+                placeholder="Select Member"
+                data-edit-modal-member
+              />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
             </div>
             <div class="flex justify-end gap-3">
@@ -566,12 +644,19 @@ const searchTimeout = ref<number | null>(null);
               </button>
             </div>
           </form>
+
+          <!-- Focus trap end -->
+          <div ref="editModalLastFocusRef" tabindex="0" class="sr-only"></div>
         </div>
       </div>
     </transition>
+
     <transition name="fade">
-      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
+      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]" @keydown="handleCreateModalFocusTrap">
+          <!-- Focus trap start -->
+          <div ref="createModalFirstFocusRef" tabindex="0" class="sr-only"></div>
+
           <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Community Cluster</h2>
 
           <!-- Error Alert -->
@@ -600,7 +685,14 @@ const searchTimeout = ref<number | null>(null);
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <Multiselect v-model="createForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" />
+              <Multiselect
+                v-model="createForm.community_id"
+                :options="props.communities"
+                label="name"
+                track-by="id"
+                placeholder="Select Community"
+                data-create-modal-community
+              />
               <div v-if="createForm.errors.community_id || createForm.errors['community_id']" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.community_id || createForm.errors['community_id'] }}
               </div>
@@ -644,9 +736,13 @@ const searchTimeout = ref<number | null>(null);
               <button type="submit" class="rounded-full bg-blue-600 px-6 py-2 font-semibold text-white transition hover:bg-blue-700">Create</button>
             </div>
           </form>
+
+          <!-- Focus trap end -->
+          <div ref="createModalLastFocusRef" tabindex="0" class="sr-only"></div>
         </div>
       </div>
     </transition>
+
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">

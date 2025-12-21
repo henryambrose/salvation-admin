@@ -1,7 +1,9 @@
 <template>
   <transition name="fade-scale">
     <div v-if="modelValue" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" @click.self="closeModal">
-      <div class="w-full max-w-2xl max-h-[80vh] overflow-y-auto bg-[#ffffff] rounded-2xl shadow-2xl">
+      <div class="w-full max-w-2xl max-h-[80vh] overflow-y-auto bg-[#ffffff] rounded-2xl shadow-2xl" @keydown="handleFocusTrap">
+        <!-- Focus trap start -->
+        <div ref="firstFocusRef" tabindex="0" class="sr-only"></div>
         <!-- Header -->
         <div class="flex items-center justify-between p-6 border-b border-gray-200 bg-red-50 rounded-t-2xl">
           <div class="flex items-center gap-3">
@@ -204,13 +206,39 @@
             </button> -->
           </div>
         </div>
+
+        <!-- Focus trap end -->
+        <div ref="lastFocusRef" tabindex="0" class="sr-only"></div>
       </div>
     </div>
   </transition>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
+
+// Focus management refs
+const firstFocusRef = ref<HTMLElement | null>(null);
+const lastFocusRef = ref<HTMLElement | null>(null);
+
+// Focus trap handler
+const handleFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === firstFocusRef.value) {
+      event.preventDefault();
+      lastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === lastFocusRef.value) {
+      event.preventDefault();
+      firstFocusRef.value?.focus();
+    }
+  }
+};
 
 interface ValidationError {
   field: string;
@@ -234,7 +262,7 @@ const personalInfoFields = ['first_name', 'last_name', 'middle_name', 'date_of_b
 const contactFields = ['contact_no_1', 'contact_no_2', 'email'];
 const addressFields = ['permanent_add1', 'permanent_add2', 'permanent_add3', 'permanent_town_id', 'permanent_city', 'permanent_pincode', 'permanent_state_id', 'permanent_country_id', 'current_add1', 'current_add2', 'current_add3', 'current_town_id', 'current_city', 'current_pincode', 'current_state_id', 'current_country_id'];
 const communityFields = ['community_id', 'community_cluster_id', 'relationship_id', 'relation_member_id'];
-const religiousFields = ['baptism_date', 'baptism_reg_no', 'baptism_parish', 'baptism_parish_id', 'confirmation_date', 'confirmation_reg_no', 'confirmation_parish', 'confirmation_parish_id', 'marriage_date', 'marriage_reg_no', 'marriage_parish', 'marriage_parish_id', 'death_date', 'deaths_reg_no', 'death_parish', 'death_parish_id'];
+const religiousFields = ['baptism_date', 'baptism_reg_no', 'baptism_parish', 'baptism_parish_id', 'confirmation_date', 'confirmation_reg_no', 'confirmation_parish', 'confirmation_parish_id', 'marriage_date', 'marriage_reg_no', 'marriage_parish', 'marriage_parish_id', 'death_parish', 'death_parish_id'];
 
 const personalInfoErrors = computed(() => 
   props.errors.filter(error => personalInfoFields.includes(error.field))

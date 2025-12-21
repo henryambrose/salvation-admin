@@ -6,6 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import type { Roles, Modules, Permissions } from '@/types';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 import { useSessionKeepAlive } from '@/composables/useSessionKeepAlive';
 import { useFormPersistence } from '@/composables/useFormPersistence';
 import SessionWarningDialog from '@/components/SessionWarningDialog.vue';
@@ -709,10 +710,19 @@ async function savePermissions() {
 
 // Reset permissions to original state
 function resetPermissions() {
-  if (confirm('Are you sure you want to reset all changes? This will restore the original permission state.')) {
-    // Restore original permissions to local permissions
-    localPermissions.value = JSON.parse(JSON.stringify(originalPermissions.value));
-  }
+  const { confirm: showConfirm } = useConfirm();
+  showConfirm({
+    title: 'Reset Permissions',
+    message: 'Are you sure you want to reset all changes? This will restore the original permission state.',
+    confirmText: 'Reset',
+    cancelText: 'Cancel',
+    type: 'warning',
+    onConfirm: () => {
+      // Restore original permissions to local permissions
+      localPermissions.value = JSON.parse(JSON.stringify(originalPermissions.value));
+      info('Permissions reset to original state');
+    },
+  });
 }
 
 // Add Role Functions

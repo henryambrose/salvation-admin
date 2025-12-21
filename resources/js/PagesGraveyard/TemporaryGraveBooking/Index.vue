@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/vue3';
@@ -163,17 +164,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
     return;
   }
 
-  if (confirm(`Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`)) {
-    router.delete(route('graveyard.temporary-grave-bookings.destroy', booking.id), {
-      onSuccess: () => {
-        success('Temporary grave booking deleted successfully!');
-      },
-      onError: (errors) => {
-        console.error('Failed to delete booking:', errors);
-        error('Failed to delete booking. Please try again.');
-      },
-    });
-  }
+  const { confirm: showConfirm } = useConfirm();
+  showConfirm({
+    title: 'Delete Booking',
+    message: `Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    type: 'danger',
+    onConfirm: () => {
+      router.delete(route('graveyard.temporary-grave-bookings.destroy', booking.id), {
+        onSuccess: () => {
+          success('Temporary grave booking deleted successfully!');
+        },
+        onError: (errors) => {
+          console.error('Failed to delete booking:', errors);
+          error('Failed to delete booking. Please try again.');
+        },
+      });
+    },
+  });
 };
 </script>
 

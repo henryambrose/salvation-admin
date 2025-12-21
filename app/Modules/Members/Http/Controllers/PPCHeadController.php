@@ -31,7 +31,7 @@ class PPCHeadController extends Controller
         $query->select('p_p_c_heads.*');
         $query->join('members', function($join) {
             $join->on('p_p_c_heads.member_id', '=', 'members.id')
-                 ->whereNull('members.death_date');
+                 ->whereNull('members.deathrecord_id');
         });
         $query->join('communities', 'p_p_c_heads.community_id', '=', 'communities.id');
         $query->select(

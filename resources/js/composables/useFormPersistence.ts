@@ -1,5 +1,6 @@
 import { ref, watch, onMounted, type Ref } from 'vue';
 import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 export function useFormPersistence<T extends object>(
   formData: Ref<T>,
@@ -163,21 +164,26 @@ export function useFormPersistence<T extends object>(
 
     const savedInfo = getSavedDataInfo();
     if (savedInfo) {
-      const shouldRestore = confirm(
-        `Found unsaved work from ${savedInfo.age}. Would you like to restore it?`
-      );
-
-      if (shouldRestore) {
-        const restoredData = restore();
-        if (restoredData) {
-          // Merge restored data with current form data
-          Object.assign(formData.value, restoredData);
-          info(`Form data restored from ${savedInfo.age}`);
-          options.onRestore?.(restoredData);
-        }
-      } else {
-        clear();
-      }
+      const { confirm: showConfirm } = useConfirm();
+      showConfirm({
+        title: 'Restore Unsaved Work',
+        message: `Found unsaved work from ${savedInfo.age}. Would you like to restore it?`,
+        confirmText: 'Restore',
+        cancelText: 'Discard',
+        type: 'info',
+        onConfirm: () => {
+          const restoredData = restore();
+          if (restoredData) {
+            // Merge restored data with current form data
+            Object.assign(formData.value, restoredData);
+            info(`Form data restored from ${savedInfo.age}`);
+            options.onRestore?.(restoredData);
+          }
+        },
+        onCancel: () => {
+          clear();
+        },
+      });
     }
   });
 

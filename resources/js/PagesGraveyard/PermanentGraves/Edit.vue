@@ -357,6 +357,8 @@ const initializeForm = () => {
 };
 
 const submitForm = () => {
+  // Prevent duplicate submissions
+  if (submitting.value) return;
   submitting.value = true;
 
   form.put(route('graveyard.permanent-graves.update', props.permanentGrave.id), {

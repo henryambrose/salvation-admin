@@ -36,16 +36,31 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            gap: 30px;
             margin-bottom: 20px;
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-box {
+            flex-shrink: 0;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .logo {
-            width: 60px;
-            height: 60px;
-            margin: 0 auto 10px;
+            width: 100px;
+            height: 100px;
+        }
+
+        .header-content {
+            text-align: center;
         }
 
         .parish-name {
@@ -148,12 +163,19 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            @if($template_config['show_logo'] && $template_config['logo_url'])
-            <img src="{{ $template_config['logo_url'] }}" alt="Parish Logo" class="logo">
-            @endif
-            <div class="parish-name">{{ $parish_name }}</div>
-            <div class="parish-address">{{ $parish_address }}</div>
-            <div class="document-title">MEMBER DETAILS</div>
+            <!-- Logo Box -->
+            <div class="logo-box">
+                @if($template_config['show_logo'] && $template_config['logo_url'])
+                <img src="{{ $template_config['logo_url'] }}" alt="Parish Logo" class="logo">
+                @endif
+            </div>
+
+            <!-- Header Content -->
+            <div class="header-content">
+                <div class="parish-name">{{ $parish_name }}</div>
+                <div class="parish-address">{{ $parish_address }}</div>
+                <div class="document-title">MEMBER DETAILS</div>
+            </div>
         </div>
 
         <!-- Basic Information -->

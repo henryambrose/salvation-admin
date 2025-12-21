@@ -170,6 +170,9 @@ const canCancel = () => {
 const cancelBooking = () => {
   if (!cancelReason.value.trim()) return;
 
+  // Prevent duplicate submissions
+  if (isProcessing.value) return;
+
   isProcessing.value = true;
   router.post(
     route('graveyard.temporary-grave-bookings.cancel', props.booking.id),

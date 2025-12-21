@@ -86,6 +86,8 @@ const initializeForm = () => {
 };
 
 const submitForm = () => {
+  // Prevent duplicate submissions
+  if (submitting.value) return;
   submitting.value = true;
 
   form.put(route('graveyard.grave-categories.update', props.graveCategory.id), {

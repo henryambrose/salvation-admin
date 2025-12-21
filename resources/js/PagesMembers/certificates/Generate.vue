@@ -12,6 +12,7 @@ import { route } from 'ziggy-js';
 import { AlertCircle, FileText, Search, User, Users } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 import { useCertificateState } from '@/composables/useCertificateState';
+import { useToast } from '@/composables/useToast';
 
 interface Member {
   id: number;
@@ -24,11 +25,10 @@ interface Member {
   baptism_date?: string;
   confirmation_date?: string;
   marriage_date?: string;
-  death_date?: string;
+  deathrecord_id?: number;
   baptism_reg_no?: string;
   confirmation_reg_no?: string;
   marriage_reg_no?: string;
-  deaths_reg_no?: string;
   community?: { name: string };
   parish?: { name: string };
 }
@@ -222,8 +222,8 @@ const memberValidation = computed(() => {
   if (type === 'marriage' && !member.marriage_date) {
     return { valid: false, message: 'Member does not have a marriage date recorded.' };
   }
-  if (type === 'death' && !member.death_date) {
-    return { valid: false, message: 'Member does not have a death date recorded.' };
+  if (type === 'death' && !member.deathrecord_id) {
+    return { valid: false, message: 'Member does not have a death record.' };
   }
 
   return { valid: true, message: '' };
@@ -318,7 +318,8 @@ function previewCertificate() {
     })
     .catch((error) => {
       console.error('Preview error:', error);
-      alert('Failed to generate preview: ' + error.message);
+      const { error: showError } = useToast();
+      showError('Failed to generate preview: ' + error.message);
     });
 }
 

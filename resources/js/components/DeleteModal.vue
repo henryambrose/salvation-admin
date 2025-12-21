@@ -1,6 +1,9 @@
 <template>
   <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]">
+    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]" @keydown="handleFocusTrap">
+      <!-- Focus trap start -->
+      <div ref="firstFocusRef" tabindex="0" class="sr-only"></div>
+
       <div class="mt-3 text-center">
         <!-- Warning Icon -->
         <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
@@ -31,13 +34,40 @@
             Delete
           </Button>
         </div>
+
+        <!-- Focus trap end -->
+        <div ref="lastFocusRef" tabindex="0" class="sr-only"></div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
+
+// Focus management refs
+const firstFocusRef = ref<HTMLElement | null>(null);
+const lastFocusRef = ref<HTMLElement | null>(null);
+
+// Focus trap handler
+const handleFocusTrap = (event: KeyboardEvent) => {
+  if (event.key !== 'Tab') return;
+
+  if (event.shiftKey) {
+    // Shift+Tab on first element - move to last
+    if (document.activeElement === firstFocusRef.value) {
+      event.preventDefault();
+      lastFocusRef.value?.focus();
+    }
+  } else {
+    // Tab on last element - move to first
+    if (document.activeElement === lastFocusRef.value) {
+      event.preventDefault();
+      firstFocusRef.value?.focus();
+    }
+  }
+};
 
 // Props
 const props = defineProps({

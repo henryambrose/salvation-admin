@@ -11,6 +11,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { Calendar, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useToast } from '@/composables/useToast';
+import { useConfirm } from '@/composables/useConfirm';
 
 interface PermanentGraveBooking {
   id: number;
@@ -140,17 +141,25 @@ const deleteBooking = (booking: PermanentGraveBooking) => {
     return;
   }
 
-  if (confirm(`Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`)) {
-    router.delete(route('graveyard.permanent-grave-bookings.destroy', booking.id), {
-      onSuccess: () => {
-        success('Permanent grave booking deleted successfully!');
-      },
-      onError: (errors) => {
-        console.error('Failed to delete booking:', errors);
-        error('Failed to delete booking. Please try again.');
-      },
-    });
-  }
+  const { confirm: showConfirm } = useConfirm();
+  showConfirm({
+    title: 'Delete Booking',
+    message: `Are you sure you want to delete booking #${booking.booking_reference}? This action cannot be undone.`,
+    confirmText: 'Delete',
+    cancelText: 'Cancel',
+    type: 'danger',
+    onConfirm: () => {
+      router.delete(route('graveyard.permanent-grave-bookings.destroy', booking.id), {
+        onSuccess: () => {
+          success('Permanent grave booking deleted successfully!');
+        },
+        onError: (errors) => {
+          console.error('Failed to delete booking:', errors);
+          error('Failed to delete booking. Please try again.');
+        },
+      });
+    },
+  });
 };
 
 const getBookingWarning = (booking: PermanentGraveBooking) => {

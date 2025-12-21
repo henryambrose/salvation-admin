@@ -282,6 +282,8 @@ function selectOption(option: Option) {
 function clearSelection(event: Event) {
   event.stopPropagation()
   modelValue.value = undefined
+  // Open dropdown after clearing
+  openDropdown()
 }
 
 /**
@@ -382,7 +384,7 @@ async function scrollToHighlighted() {
       :aria-label="placeholder"
       :tabindex="tabindex"
       :class="cn(
-        'flex h-9 w-full items-center justify-between rounded-md border px-3 py-1 text-sm text-left shadow-xs transition-colors outline-none',
+        'relative flex h-9 w-full items-center rounded-md border px-3 py-1 text-sm text-left shadow-xs transition-colors outline-none',
         'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px]',
         open && 'border-ring ring-ring/50 ring-[3px]',
         disabled
@@ -397,20 +399,27 @@ async function scrollToHighlighted() {
     >
       <span class="flex-1 truncate text-left">{{ displayValue }}</span>
 
-      <!-- Clear button -->
-      <X
-        v-if="clearable && selectedOption && !disabled"
-        class="h-4 w-4 shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-        @click="clearSelection"
-      />
+      <!-- Right side icons container (absolute positioned) -->
+      <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+        <!-- Clear button - Prominent -->
+        <button
+          v-if="clearable && selectedOption && !disabled"
+          type="button"
+          class="flex items-center justify-center rounded-md bg-destructive/10 text-destructive hover:bg-destructive/20 p-1 transition-colors"
+          title="Clear selection"
+          @click="clearSelection"
+        >
+          <X class="h-4 w-4" />
+        </button>
 
-      <!-- Chevron icon -->
-      <ChevronDown
-        :class="cn(
-          'h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200',
-          open && 'rotate-180'
-        )"
-      />
+        <!-- Chevron icon -->
+        <ChevronDown
+          :class="cn(
+            'h-4 w-4 text-muted-foreground transition-transform duration-200',
+            open && 'rotate-180'
+          )"
+        />
+      </div>
     </button>
 
     <!-- Dropdown Content -->

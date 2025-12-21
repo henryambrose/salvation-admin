@@ -23,11 +23,9 @@ interface Certificate {
     baptism_date?: string;
     confirmation_date?: string;
     marriage_date?: string;
-    death_date?: string;
     baptism_reg_no?: string;
     confirmation_reg_no?: string;
     marriage_reg_no?: string;
-    deaths_reg_no?: string;
     community?: { name: string };
     parish?: { name: string };
   };
@@ -97,8 +95,8 @@ const relevantMemberData = computed(() => {
       };
     case 'death':
       return {
-        date: member.death_date,
-        regNo: member.deaths_reg_no,
+        date: props.certificate.additional_data?.death_date,
+        regNo: props.certificate.additional_data?.burial_reg_no,
         label: 'Death',
       };
     default:
