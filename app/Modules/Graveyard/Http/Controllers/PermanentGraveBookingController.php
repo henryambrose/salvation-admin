@@ -67,6 +67,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function create()
     {
+        $this->authorize('read-permanent-grave-booking');
+
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Create', [
             'serviceTypes' => ServiceType::active()->byCategory('grave')->get()
         ]);
@@ -242,6 +244,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function show(PermanentGraveBooking $permanentGraveBooking)
     {
+        $this->authorize('read-permanent-grave-booking');
+
         $permanentGraveBooking->load([
             'permanentGrave',
             'validMember.member',
@@ -263,6 +267,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function cancel(Request $request, PermanentGraveBooking $permanentGraveBooking)
     {
+        $this->authorize('update-permanent-grave-booking');
+
         $request->validate([
             'cancellation_reason' => 'required|string|max:500'
         ]);
@@ -294,6 +300,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function addValidMember(Request $request)
     {
+        $this->authorize('update-permanent-grave-booking');
+
         try {
             $request->validate([
                 'permanent_grave_id' => 'required|exists:permanent_graves,id',
@@ -387,6 +395,8 @@ class PermanentGraveBookingController extends Controller
      */
     public function destroy(PermanentGraveBooking $permanentGraveBooking)
     {
+        $this->authorize('delete-permanent-grave-booking');
+
         // Only allow deletion of pending bookings
         if ($permanentGraveBooking->status !== 'pending') {
             return back()->with('error', 'Only pending bookings can be deleted.');

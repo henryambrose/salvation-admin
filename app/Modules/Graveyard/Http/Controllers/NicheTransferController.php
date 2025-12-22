@@ -62,6 +62,8 @@ class NicheTransferController extends Controller
      */
     public function create(Request $request)
     {
+        $this->authorize('read-niche-transfer');
+
         $bookingId = $request->get('booking_id');
         $selectedBooking = null;
 
@@ -238,6 +240,8 @@ class NicheTransferController extends Controller
      */
     public function show(NicheTransfer $nicheTransfer)
     {
+        $this->authorize('read-niche-transfer');
+
         $nicheTransfer->load([
             'fromTemporaryGrave',
             'fromBooking.temporaryGrave',
@@ -260,6 +264,8 @@ class NicheTransferController extends Controller
      */
     public function approve(Request $request, NicheTransfer $nicheTransfer)
     {
+        $this->authorize('update-niche-transfer');
+
         $request->validate([
             'admin_notes' => 'nullable|string|max:1000'
         ]);
@@ -282,6 +288,8 @@ class NicheTransferController extends Controller
      */
     public function reject(Request $request, NicheTransfer $nicheTransfer)
     {
+        $this->authorize('update-niche-transfer');
+
         $request->validate([
             'rejection_reason' => 'required|string|max:500'
         ]);
@@ -317,6 +325,8 @@ class NicheTransferController extends Controller
      */
     public function complete(NicheTransfer $nicheTransfer)
     {
+        $this->authorize('update-niche-transfer');
+
         if (!$nicheTransfer->canBeCompleted()) {
             return back()->with('error', 'This transfer cannot be completed yet. Check status, payment, and date requirements.');
         }
@@ -333,6 +343,8 @@ class NicheTransferController extends Controller
      */
     public function cancel(Request $request, NicheTransfer $nicheTransfer)
     {
+        $this->authorize('update-niche-transfer');
+
         $request->validate([
             'cancellation_reason' => 'required|string|max:500'
         ]);
@@ -363,6 +375,8 @@ class NicheTransferController extends Controller
      */
     public function statistics()
     {
+        $this->authorize('read-niche-transfer');
+
         $stats = [
             'pending' => NicheTransfer::pending()->count(),
             'approved' => NicheTransfer::approved()->count(),

@@ -141,6 +141,8 @@ class MassIntentionController extends Controller
      */
     public function create()
     {
+        $this->authorize('read-mass-intention');
+
         try {
             $massTypes = MassType::where('is_active', true)
                 ->orderBy('sort_order', 'asc')
@@ -259,6 +261,8 @@ class MassIntentionController extends Controller
      */
     public function edit(MassIntention $massIntention)
     {
+        $this->authorize('read-mass-intention');
+
         $massIntention->load(['member', 'massIntentionType']);
 
         // Add members for the dropdown
@@ -291,6 +295,8 @@ class MassIntentionController extends Controller
      */
     public function update(Request $request, MassIntention $massIntention)
     {
+        $this->authorize('update-mass-intention');
+
         $request->validate([
             'member_id' => 'nullable|exists:members,id',
             'external_name' => 'nullable|string|max:255',
@@ -327,6 +333,8 @@ class MassIntentionController extends Controller
      */
     public function destroy(MassIntention $massIntention)
     {
+        $this->authorize('delete-mass-intention');
+
         $massIntention->delete();
 
         return back()->with('success', 'Mass intention deleted successfully.');
@@ -337,6 +345,8 @@ class MassIntentionController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-mass-intention');
+
         $massIntention = MassIntention::onlyTrashed()->findOrFail($id);
         $massIntention->restore();
 
@@ -348,6 +358,8 @@ class MassIntentionController extends Controller
      */
     public function updateStatus(Request $request, MassIntention $massIntention)
     {
+        $this->authorize('update-mass-intention');
+
         $request->validate([
             'status' => 'required|in:pending,confirmed,completed,cancelled',
         ]);
@@ -365,6 +377,8 @@ class MassIntentionController extends Controller
      */
     public function searchMembers(Request $request)
     {
+        $this->authorize('read-mass-intention');
+
         $query = $request->get('query', '');
 
         $members = Member::with('community')->alive()->where(function ($q) use ($query) {
@@ -402,6 +416,8 @@ class MassIntentionController extends Controller
      */
     public function downloadReceipt($id)
     {
+        $this->authorize('list-mass-intention');
+
         $intention = MassIntention::with(['member', 'massIntentionType', 'massType', 'paymentMethod'])
             ->findOrFail($id);
 
@@ -480,6 +496,8 @@ class MassIntentionController extends Controller
      */
     public function export(Request $request)
     {
+        $this->authorize('list-mass-intention');
+
         $query = MassIntention::with(['member', 'massIntentionType', 'paymentMethod', 'massType']);
 
         // Archive logic
