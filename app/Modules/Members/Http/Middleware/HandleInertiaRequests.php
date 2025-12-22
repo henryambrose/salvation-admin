@@ -49,11 +49,11 @@ class HandleInertiaRequests extends Middleware
                     'id' => $request->user()->id,
                     'name' => $request->user()->name,
                     'email' => $request->user()->email,
-                    'is_superadmin' => property_exists($request->user(), 'is_superadmin') ? $request->user()->is_superadmin : false,
+                    'is_superadmin' => (bool) ($request->user()->is_superadmin ?? false),
                 ] : null,
                 'roles' => $request->user() && method_exists($request->user(), 'roles') && $request->user()->roles ? $request->user()->roles->pluck('name') : [],
                 'permissions' => $request->user() && method_exists($request->user(), 'getAllPermissionsAttribute') ? ($request->user()->getAllPermissionsAttribute() ?? []) : [],
-                'is_superadmin' => $request->user() && property_exists($request->user(), 'is_superadmin') ? $request->user()->is_superadmin : false,
+                'is_superadmin' => $request->user() ? (bool) ($request->user()->is_superadmin ?? false) : false,
             ],
             'modules' => Module::where('is_active', true)
                 ->orderBy('sort_order')
