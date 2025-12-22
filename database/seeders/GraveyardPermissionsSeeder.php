@@ -60,8 +60,6 @@ class GraveyardPermissionsSeeder extends Seeder
             'delete-permanent-grave-booking',
             'list-permanent-grave-booking',
             'restore-permanent-grave-booking',
-            // 'confirm-permanent-grave-booking',
-            // 'cancel-permanent-grave-booking',
 
             // Temporary Grave Bookings
             'create-temporary-grave-booking',
@@ -70,8 +68,6 @@ class GraveyardPermissionsSeeder extends Seeder
             'delete-temporary-grave-booking',
             'list-temporary-grave-booking',
             'restore-temporary-grave-booking',
-            // 'confirm-temporary-grave-booking',
-            // 'cancel-temporary-grave-booking',
 
             // Service Types
             'create-service-type',
@@ -81,15 +77,12 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-service-type',
             'restore-service-type',
 
-            
-
             // Payments
             'create-graveyard-payment',
             'read-graveyard-payment',
             'update-graveyard-payment',
             'delete-graveyard-payment',
             'list-graveyard-payment',
-            
 
             // Niche Transfers
             'create-niche-transfer',

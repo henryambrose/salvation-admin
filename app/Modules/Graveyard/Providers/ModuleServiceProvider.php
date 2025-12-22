@@ -32,11 +32,7 @@ class ModuleServiceProvider extends ServiceProvider
 
     protected function loadPolicies(): void
     {
-        $policies = [
-            \Modules\Graveyard\Models\ValidMember::class => \Modules\Graveyard\Policies\ValidMemberPolicy::class,
-            \Modules\Graveyard\Models\PermanentGrave::class => \Modules\Graveyard\Policies\PermanentGravePolicy::class,
-            \Modules\Graveyard\Models\ServiceType::class => \Modules\Graveyard\Policies\ServiceTypePolicy::class,
-        ];
+        $policies = [];
 
         foreach ($policies as $key => $value) {
             Gate::policy($key, $value);

@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(php artisan:*)",
-      "mcp__ide__getDiagnostics"
+      "mcp__ide__getDiagnostics",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Members\\\\Policies\"\" 2>&1 || echo \"Directory may not exist \")",
+      "Bash(php -l:*)",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard\\\\Policies\"\" | grep -E \"PermanentGrave)",
+      "Bash(ServiceType)",
+      "Bash(ValidMember \")",
+      "Bash(ls:*)"
     ]
   }
 }
