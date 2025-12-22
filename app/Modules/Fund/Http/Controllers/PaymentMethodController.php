@@ -17,6 +17,8 @@ class PaymentMethodController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-payment-method');
+
         $query = PaymentMethod::query();
 
         // Apply search filter
@@ -63,6 +65,8 @@ class PaymentMethodController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create-payment-method');
+
         return Inertia::render('Fund/PaymentMethods/Create');
     }
 
@@ -71,6 +75,8 @@ class PaymentMethodController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create-payment-method');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:payment_methods,name',
             'description' => 'nullable|string|max:1000',
@@ -92,6 +98,8 @@ class PaymentMethodController extends Controller
      */
     public function show(PaymentMethod $paymentMethod): Response
     {
+        $this->authorize('read-payment-method');
+
         $paymentMethod->load(['createdBy', 'updatedBy']);
 
         return Inertia::render('Fund/PaymentMethods/Show', [
@@ -104,6 +112,8 @@ class PaymentMethodController extends Controller
      */
     public function edit(PaymentMethod $paymentMethod): Response
     {
+        $this->authorize('update-payment-method');
+
         return Inertia::render('Fund/PaymentMethods/Edit', [
             'paymentMethod' => $paymentMethod,
         ]);
@@ -114,6 +124,8 @@ class PaymentMethodController extends Controller
      */
     public function update(Request $request, PaymentMethod $paymentMethod): RedirectResponse
     {
+        $this->authorize('update-payment-method');
+
         $validated = $request->validate([
             'name' => 'required|string|max:255|unique:payment_methods,name,' . $paymentMethod->id,
             'description' => 'nullable|string|max:1000',
@@ -134,6 +146,8 @@ class PaymentMethodController extends Controller
      */
     public function destroy(PaymentMethod $paymentMethod): RedirectResponse
     {
+        $this->authorize('delete-payment-method');
+
         // Check if payment method is being used
         if ($paymentMethod->familyContributions()->count() > 0) {
             return redirect()->route('fund.payment-methods.index')
@@ -151,6 +165,8 @@ class PaymentMethodController extends Controller
      */
     public function restore(int $id): RedirectResponse
     {
+        $this->authorize('restore-payment-method');
+
         $paymentMethod = PaymentMethod::onlyTrashed()->findOrFail($id);
         $paymentMethod->restore();
 
@@ -163,8 +179,10 @@ class PaymentMethodController extends Controller
      */
     public function forceDelete(int $id): RedirectResponse
     {
+        $this->authorize('delete-payment-method');
+
         $paymentMethod = PaymentMethod::onlyTrashed()->findOrFail($id);
-        
+
         // Check if payment method is being used
         if ($paymentMethod->familyContributions()->count() > 0) {
             return redirect()->route('fund.payment-methods.index')
@@ -182,6 +200,8 @@ class PaymentMethodController extends Controller
      */
     public function toggleStatus(PaymentMethod $paymentMethod): RedirectResponse
     {
+        $this->authorize('update-payment-method');
+
         $paymentMethod->update([
             'is_active' => !$paymentMethod->is_active,
             'updated_by' => Auth::id(),

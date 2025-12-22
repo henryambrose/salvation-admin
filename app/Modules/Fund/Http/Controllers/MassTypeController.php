@@ -16,6 +16,8 @@ class MassTypeController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-mass-type');
+
         $query = MassType::query();
 
         // Apply search filter
@@ -55,6 +57,8 @@ class MassTypeController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-mass-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:mass_types,name',
             'description' => 'nullable|string|max:1000',
@@ -81,6 +85,8 @@ class MassTypeController extends Controller
      */
     public function show(MassType $massType)
     {
+        $this->authorize('read-mass-type');
+
         return Inertia::render('MassTypes/Show', [
             'massType' => $massType,
         ]);
@@ -91,6 +97,8 @@ class MassTypeController extends Controller
      */
     public function update(Request $request, MassType $massType)
     {
+        $this->authorize('update-mass-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:mass_types,name,' . $massType->id,
             'description' => 'nullable|string|max:1000',
@@ -116,6 +124,8 @@ class MassTypeController extends Controller
      */
     public function destroy(MassType $massType)
     {
+        $this->authorize('delete-mass-type');
+
         try {
             $massType->delete();
             return back()->with('success', 'Mass type deleted successfully.');
@@ -134,6 +144,8 @@ class MassTypeController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-mass-type');
+
         $massType = MassType::onlyTrashed()->findOrFail($id);
         $massType->restore();
 
@@ -145,6 +157,8 @@ class MassTypeController extends Controller
      */
     public function forceDelete($id)
     {
+        $this->authorize('delete-mass-type');
+
         $massType = MassType::withTrashed()->findOrFail($id);
         $massType->forceDelete();
 

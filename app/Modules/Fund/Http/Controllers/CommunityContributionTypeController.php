@@ -16,6 +16,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-community-contribution-type');
+
         $query = CommunityContributionType::query();
 
         // Apply search filter
@@ -55,6 +57,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-community-contribution-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:community_contribution_types,name',
             'description' => 'nullable|string|max:1000',
@@ -79,6 +83,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function show(CommunityContributionType $contributionType)
     {
+        $this->authorize('read-community-contribution-type');
+
         return Inertia::render('CommunityContributionTypes/Show', [
             'contributionType' => $contributionType,
         ]);
@@ -89,6 +95,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function update(Request $request, CommunityContributionType $contributionType)
     {
+        $this->authorize('update-community-contribution-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:community_contribution_types,name,' . $contributionType->id,
             'description' => 'nullable|string|max:1000',
@@ -112,6 +120,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function destroy(CommunityContributionType $contributionType)
     {
+        $this->authorize('delete-community-contribution-type');
+
         try {
             $contributionType->delete();
             return back()->with('success', 'Community contribution type deleted successfully.');
@@ -129,6 +139,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-community-contribution-type');
+
         $contributionType = CommunityContributionType::onlyTrashed()->findOrFail($id);
         $contributionType->restore();
 
@@ -140,6 +152,8 @@ class CommunityContributionTypeController extends Controller
      */
     public function forceDelete($id)
     {
+        $this->authorize('delete-community-contribution-type');
+
         $contributionType = CommunityContributionType::withTrashed()->findOrFail($id);
         $contributionType->forceDelete();
 

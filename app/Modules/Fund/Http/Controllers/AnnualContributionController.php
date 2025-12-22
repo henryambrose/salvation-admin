@@ -15,6 +15,8 @@ class AnnualContributionController extends Controller
 {
     public function index(Request $request)
     {
+        $this->authorize('list-annual-contribution');
+
         $query = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod']);
 
         // Apply search filter
@@ -153,6 +155,8 @@ class AnnualContributionController extends Controller
 
     public function create()
     {
+        $this->authorize('create-annual-contribution');
+
         $filterOptions = $this->getFilterOptions();
 
         return Inertia::render('AnnualContributions/Create', [
@@ -162,6 +166,8 @@ class AnnualContributionController extends Controller
 
     public function store(Request $request)
     {
+        $this->authorize('create-annual-contribution');
+
         $validated = $request->validate([
             'family_no' => 'required|string|max:50',
             'amount' => 'required|numeric|min:0.01',
@@ -202,6 +208,8 @@ class AnnualContributionController extends Controller
 
     public function show($id)
     {
+        $this->authorize('read-annual-contribution');
+
         $contribution = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
             ->findOrFail($id);
 
@@ -212,6 +220,8 @@ class AnnualContributionController extends Controller
 
     public function edit($id)
     {
+        $this->authorize('update-annual-contribution');
+
         $contribution = FamilyContribution::findOrFail($id);
         $filterOptions = $this->getFilterOptions();
 
@@ -229,6 +239,8 @@ class AnnualContributionController extends Controller
 
     public function update(Request $request, $id)
     {
+        $this->authorize('update-annual-contribution');
+
         $contribution = FamilyContribution::findOrFail($id);
 
         $validated = $request->validate([
@@ -269,6 +281,8 @@ class AnnualContributionController extends Controller
 
     public function destroy($id)
     {
+        $this->authorize('delete-annual-contribution');
+
         $contribution = FamilyContribution::findOrFail($id);
         $contribution->delete();
 
@@ -277,6 +291,8 @@ class AnnualContributionController extends Controller
 
     public function restore($id)
     {
+        $this->authorize('restore-annual-contribution');
+
         $contribution = FamilyContribution::onlyTrashed()->findOrFail($id);
         $contribution->restore();
 
@@ -285,6 +301,8 @@ class AnnualContributionController extends Controller
 
     public function bulkUpdate(Request $request)
     {
+        $this->authorize('update-annual-contribution');
+
         $validated = $request->validate([
             'ids' => 'required|array',
             'ids.*' => 'exists:family_contributions,id',
@@ -302,6 +320,8 @@ class AnnualContributionController extends Controller
 
     public function downloadReceipt($id)
     {
+        $this->authorize('read-annual-contribution');
+
         $contribution = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
             ->findOrFail($id);
 
@@ -368,6 +388,8 @@ class AnnualContributionController extends Controller
 
     public function export(Request $request)
     {
+        $this->authorize('list-annual-contribution');
+
         $query = FamilyContribution::with(['member', 'fundCategory', 'paymentMethod'])
             ->orderBy('created_at', 'desc');
 

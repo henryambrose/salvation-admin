@@ -16,6 +16,8 @@ class MassIntentionTypeController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-mass-intention-type');
+
         $query = MassIntentionType::query();
 
         // Apply search filter
@@ -55,6 +57,8 @@ class MassIntentionTypeController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-mass-intention-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:mass_intention_types,name',
             'description' => 'nullable|string|max:1000',
@@ -81,6 +85,8 @@ class MassIntentionTypeController extends Controller
      */
     public function show(MassIntentionType $massIntentionType)
     {
+        $this->authorize('read-mass-intention-type');
+
         return Inertia::render('MassIntentionTypes/Show', [
             'massIntentionType' => $massIntentionType,
         ]);
@@ -91,6 +97,8 @@ class MassIntentionTypeController extends Controller
      */
     public function update(Request $request, MassIntentionType $massIntentionType)
     {
+        $this->authorize('update-mass-intention-type');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:mass_intention_types,name,' . $massIntentionType->id,
             'description' => 'nullable|string|max:1000',
@@ -116,6 +124,7 @@ class MassIntentionTypeController extends Controller
      */
     public function destroy(MassIntentionType $massIntentionType)
     {
+        $this->authorize('delete-mass-intention-type');
 
         try {
             $massIntentionType->delete();
@@ -134,6 +143,8 @@ class MassIntentionTypeController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-mass-intention-type');
+
         $massIntentionType = MassIntentionType::onlyTrashed()->findOrFail($id);
         $massIntentionType->restore();
 
@@ -145,6 +156,8 @@ class MassIntentionTypeController extends Controller
      */
     public function forceDelete($id)
     {
+        $this->authorize('delete-mass-intention-type');
+
         $massIntentionType = MassIntentionType::withTrashed()->findOrFail($id);
         $massIntentionType->forceDelete();
 
