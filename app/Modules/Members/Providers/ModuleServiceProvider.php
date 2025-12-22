@@ -58,17 +58,6 @@ class ModuleServiceProvider extends ServiceProvider
         $policies = [
             \Modules\Members\Models\Member::class => \Modules\Members\Policies\MemberPolicy::class,
             \Modules\Members\Models\ExternalMember::class => \Modules\Members\Policies\ExternalMemberPolicy::class,
-            \Modules\Members\Models\CellsAndAssociation::class => \Modules\Members\Policies\CellsAndAssociationPolicy::class,
-            \Modules\Members\Models\CellsAndAssociationMember::class => \Modules\Members\Policies\CellsAndAssociationMemberPolicy::class,
-            \Modules\Members\Models\City::class => \Modules\Members\Policies\CityPolicy::class,
-            \Modules\Members\Models\Community::class => \Modules\Members\Policies\CommunityPolicy::class,
-            \Modules\Members\Models\CommunityCluster::class => \Modules\Members\Policies\CommunityClusterPolicy::class,
-            \Modules\Members\Models\Designation::class => \Modules\Members\Policies\DesignationPolicy::class,
-            \Modules\Members\Models\Parish::class => \Modules\Members\Policies\ParishPolicy::class,
-            \Modules\Members\Models\PPCHead::class => \Modules\Members\Policies\PPCHeadPolicy::class,
-            \Modules\Members\Models\Relationship::class => \Modules\Members\Policies\RelationshipPolicy::class,
-            \Modules\Members\Models\SCCHead::class => \Modules\Members\Policies\SCCHeadPolicy::class,
-            \Modules\Members\Models\User::class => \Modules\Members\Policies\UserPolicy::class,
             \Spatie\Permission\Models\Role::class => \Modules\Members\Policies\RolePolicy::class,
         ];
 
