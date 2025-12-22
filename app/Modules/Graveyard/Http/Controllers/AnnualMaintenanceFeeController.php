@@ -13,21 +13,14 @@ use Inertia\Response;
 
 class AnnualMaintenanceFeeController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['permission:access-graveyard']);
-        $this->middleware(['permission:list-annual-maintenance-fees'])->only(['index']);
-        $this->middleware(['permission:read-annual-maintenance-fees'])->only(['show']);
-        $this->middleware(['permission:create-annual-maintenance-fees'])->only(['create', 'store']);
-        $this->middleware(['permission:update-annual-maintenance-fees'])->only(['edit', 'update']);
-        $this->middleware(['permission:delete-annual-maintenance-fees'])->only(['destroy']);
-    }
-
     /**
      * Display a listing of the resource
      */
     public function index(Request $request): Response
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('list-annual-maintenance-fees');
+
         $perPage = $request->get('perPage', 25);
         $search = $request->get('search');
         $year = $request->get('year');
@@ -84,6 +77,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('create-annual-maintenance-fees');
+
         // Get the next year that doesn't have a fee set
         $currentYear = now()->year;
         $existingYears = AnnualMaintenanceFee::pluck('year')->toArray();
@@ -109,6 +105,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function store(AnnualMaintenanceFeeRequest $request)
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('create-annual-maintenance-fees');
+
         $fee = AnnualMaintenanceFee::create([
             ...$request->validated(),
             'created_by' => Auth::id(),
@@ -125,6 +124,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function show(AnnualMaintenanceFee $annualMaintenanceFee): Response
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('read-annual-maintenance-fees');
+
         $annualMaintenanceFee->load(['creator', 'updater']);
 
         return Inertia::render('PagesGraveyard/AnnualMaintenanceFees/Show', [
@@ -137,6 +139,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function edit(AnnualMaintenanceFee $annualMaintenanceFee): Response|RedirectResponse
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('update-annual-maintenance-fees');
+
         if (!$annualMaintenanceFee->canBeEdited()) {
             return redirect()
                 ->route('graveyard.annual-maintenance-fees.index')
@@ -153,6 +158,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function update(AnnualMaintenanceFeeRequest $request, AnnualMaintenanceFee $annualMaintenanceFee)
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('update-annual-maintenance-fees');
+
         if (!$annualMaintenanceFee->canBeEdited()) {
             return redirect()
                 ->route('graveyard.annual-maintenance-fees.index')
@@ -174,6 +182,9 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function destroy(AnnualMaintenanceFee $annualMaintenanceFee)
     {
+        $this->authorize('access-graveyard');
+        $this->authorize('delete-annual-maintenance-fees');
+
         if (!$annualMaintenanceFee->canBeDeleted()) {
             return redirect()
                 ->route('graveyard.annual-maintenance-fees.index')

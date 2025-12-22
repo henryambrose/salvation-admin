@@ -165,7 +165,7 @@ class CityController extends Controller
     public function export(Request $request)
     {
         try {
-            $this->authorize('viewAny', City::class);
+            $this->authorize('list-city');
 
             $query = City::with(['state']);
 
