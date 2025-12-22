@@ -18,7 +18,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function index(Request $request): Response
     {
-        $this->authorize('access-graveyard');
         $this->authorize('list-annual-maintenance-fees');
 
         $perPage = $request->get('perPage', 25);
@@ -77,7 +76,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function create(): Response
     {
-        $this->authorize('access-graveyard');
         $this->authorize('create-annual-maintenance-fees');
 
         // Get the next year that doesn't have a fee set
@@ -105,7 +103,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function store(AnnualMaintenanceFeeRequest $request)
     {
-        $this->authorize('access-graveyard');
         $this->authorize('create-annual-maintenance-fees');
 
         $fee = AnnualMaintenanceFee::create([
@@ -124,7 +121,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function show(AnnualMaintenanceFee $annualMaintenanceFee): Response
     {
-        $this->authorize('access-graveyard');
         $this->authorize('read-annual-maintenance-fees');
 
         $annualMaintenanceFee->load(['creator', 'updater']);
@@ -139,7 +135,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function edit(AnnualMaintenanceFee $annualMaintenanceFee): Response|RedirectResponse
     {
-        $this->authorize('access-graveyard');
         $this->authorize('update-annual-maintenance-fees');
 
         if (!$annualMaintenanceFee->canBeEdited()) {
@@ -158,7 +153,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function update(AnnualMaintenanceFeeRequest $request, AnnualMaintenanceFee $annualMaintenanceFee)
     {
-        $this->authorize('access-graveyard');
         $this->authorize('update-annual-maintenance-fees');
 
         if (!$annualMaintenanceFee->canBeEdited()) {
@@ -182,7 +176,6 @@ class AnnualMaintenanceFeeController extends Controller
      */
     public function destroy(AnnualMaintenanceFee $annualMaintenanceFee)
     {
-        $this->authorize('access-graveyard');
         $this->authorize('delete-annual-maintenance-fees');
 
         if (!$annualMaintenanceFee->canBeDeleted()) {

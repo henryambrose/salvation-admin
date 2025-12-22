@@ -331,17 +331,6 @@ class PermissionCategorySeeder extends Seeder
                 ]
             ],
             [
-                'name' => 'Module Access',
-                'slug' => 'module-access',
-                'description' => 'Module-level access control permissions',
-                'app' => 'Core',
-                'color' => '#6B7280',
-                'sort_order' => 28,
-                'rules' => [
-                    ['rule_type' => 'starts_with', 'rule_value' => 'access-', 'priority' => 20],
-                ]
-            ],
-            [
                 'name' => 'System Audit & Logs',
                 'slug' => 'system-audit',
                 'description' => 'Audit logging and system administration permissions',
