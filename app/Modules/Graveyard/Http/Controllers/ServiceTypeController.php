@@ -19,6 +19,8 @@ class ServiceTypeController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-service-type');
+
         $query = ServiceType::query();
 
         // Archive logic
@@ -88,6 +90,8 @@ class ServiceTypeController extends Controller
      */
     public function create(): Response
     {
+        $this->authorize('create-service-type');
+
         return Inertia::render('PagesGraveyard/ServiceType/Create');
     }
 
@@ -96,6 +100,8 @@ class ServiceTypeController extends Controller
      */
     public function store(StoreServiceTypeRequest $request)
     {
+        $this->authorize('create-service-type');
+
         $validatedData = $request->validated();
         $validatedData['created_by'] = Auth::id();
         $validatedData['updated_by'] = aUTH::id();
@@ -112,6 +118,8 @@ class ServiceTypeController extends Controller
      */
     public function show(ServiceType $serviceType): Response
     {
+        $this->authorize('read-service-type');
+
         $serviceType->load(['creator', 'updater']);
 
         return Inertia::render('PagesGraveyard/ServiceType/Show', [
@@ -124,6 +132,8 @@ class ServiceTypeController extends Controller
      */
     public function edit(ServiceType $serviceType): Response
     {
+        $this->authorize('update-service-type');
+
         return Inertia::render('PagesGraveyard/ServiceType/Edit', [
             'serviceType' => $serviceType
         ]);
@@ -134,6 +144,8 @@ class ServiceTypeController extends Controller
      */
     public function update(UpdateServiceTypeRequest $request, ServiceType $serviceType)
     {
+        $this->authorize('update-service-type');
+
         $validatedData = $request->validated();
         $validatedData['updated_by'] = Auth::id();
 
@@ -148,6 +160,8 @@ class ServiceTypeController extends Controller
      */
     public function destroy(Request $request, ServiceType $serviceType)
     {
+        $this->authorize('delete-service-type');
+
         $serviceType->delete();
 
         $page = $request->input('page', 1);
@@ -167,6 +181,8 @@ class ServiceTypeController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-service-type');
+
         $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
         $serviceType->restore();
 
@@ -179,6 +195,8 @@ class ServiceTypeController extends Controller
      */
     public function toggleActive(Request $request, ServiceType $serviceType)
     {
+        $this->authorize('update-service-type');
+
         $serviceType->update([
             'is_active' => !$serviceType->is_active,
             'updated_by' => Auth::id(),
@@ -195,6 +213,8 @@ class ServiceTypeController extends Controller
      */
     public function forceDelete($id)
     {
+        $this->authorize('delete-service-type');
+
         try {
             $serviceType = ServiceType::onlyTrashed()->findOrFail($id);
 
@@ -217,6 +237,8 @@ class ServiceTypeController extends Controller
      */
     public function getServiceTypes(Request $request)
     {
+        $this->authorize('list-service-type');
+
         $query = ServiceType::active()->ordered();
 
         if ($request->filled('category')) {

@@ -16,6 +16,8 @@ class GraveCategoryController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-grave-category');
+
         $query = GraveCategories::query();
 
         // Archive logic
@@ -52,6 +54,8 @@ class GraveCategoryController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-grave-category');
+
         return Inertia::render('PagesGraveyard/GraveCategories/Create');
     }
 
@@ -60,6 +64,8 @@ class GraveCategoryController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-grave-category');
+
         $request->validate([
             'name' => 'required|string|max:255|unique:grave_categories,name',
         ]);
@@ -86,6 +92,8 @@ class GraveCategoryController extends Controller
      */
     public function show($id)
     {
+        $this->authorize('read-grave-category');
+
         $graveCategory = GraveCategories::with(['temporaryGraves'])->findOrFail($id);
 
         return Inertia::render('PagesGraveyard/GraveCategories/Show', [
@@ -98,6 +106,8 @@ class GraveCategoryController extends Controller
      */
     public function edit($id)
     {
+        $this->authorize('update-grave-category');
+
         $graveCategory = GraveCategories::findOrFail($id);
 
         return Inertia::render('PagesGraveyard/GraveCategories/Edit', [
@@ -110,6 +120,8 @@ class GraveCategoryController extends Controller
      */
     public function update(Request $request, $id)
     {
+        $this->authorize('update-grave-category');
+
         $graveCategory = GraveCategories::findOrFail($id);
         $request->validate([
             'name' => 'required|string|max:255|unique:grave_categories,name,' . $graveCategory->id,
@@ -138,6 +150,8 @@ class GraveCategoryController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorize('delete-grave-category');
+
         try {
             $graveCategory = GraveCategories::findOrFail($id);
 
@@ -163,6 +177,8 @@ class GraveCategoryController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-grave-category');
+
         try {
             $graveCategory = GraveCategories::onlyTrashed()->findOrFail($id);
             $graveCategory->restore();
