@@ -343,20 +343,6 @@ class PermissionCategorySeeder extends Seeder
                 ]
             ],
             [
-                'name' => 'Data Operations',
-                'slug' => 'data-operations',
-                'description' => 'Data management, import, export, and backup permissions',
-                'app' => 'Core',
-                'color' => '#F59E0B',
-                'sort_order' => 30,
-                'rules' => [
-                    ['rule_type' => 'contains', 'rule_value' => 'import', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'export', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'backup', 'priority' => 10],
-                    ['rule_type' => 'contains', 'rule_value' => 'data-verification', 'priority' => 10],
-                ]
-            ],
-            [
                 'name' => 'System Configuration',
                 'slug' => 'system-configuration',
                 'description' => 'Configuration, cache, queue, and system settings permissions',
