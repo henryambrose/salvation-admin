@@ -169,6 +169,8 @@ class ValidMemberController extends Controller
      */
     public function store(StoreValidMemberRequest $request)
     {
+        $this->authorize('create-valid-member');
+
         $validatedData = $request->validated();
         // Check if the grave already has 5 members
 

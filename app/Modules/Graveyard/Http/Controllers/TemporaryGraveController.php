@@ -182,6 +182,8 @@ class TemporaryGraveController extends Controller
      */
     public function show(TemporaryGrave $temporaryGrave)
     {
+        $this->authorize('read-temporary-grave');
+
         $temporaryGrave->load(['bookings.member', 'creator', 'updater']);
 
         return Inertia::render('PagesGraveyard/TemporaryGraves/Show', [
@@ -194,6 +196,7 @@ class TemporaryGraveController extends Controller
      */
     public function edit(TemporaryGrave $temporaryGrave)
     {
+        $this->authorize('update-temporary-grave');
 
         $temporaryGrave->load(['member', 'member.community', 'graveCategory']);
 
@@ -214,6 +217,8 @@ class TemporaryGraveController extends Controller
      */
     public function update(Request $request, TemporaryGrave $temporaryGrave)
     {
+        $this->authorize('update-temporary-grave');
+
         $request->validate([
             'section' => 'required|string|max:100',
             'row_no' => 'required|integer|min:1',
@@ -293,6 +298,8 @@ class TemporaryGraveController extends Controller
      */
     public function destroy($id)
     {
+        $this->authorize('delete-temporary-grave');
+
         try {
             $temporaryGrave = TemporaryGrave::findOrFail($id);
 
@@ -318,6 +325,8 @@ class TemporaryGraveController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-temporary-grave');
+
         try {
             $temporaryGrave = TemporaryGrave::onlyTrashed()->findOrFail($id);
             $temporaryGrave->restore();
@@ -338,6 +347,8 @@ class TemporaryGraveController extends Controller
      */
     public function searchMembers(Request $request)
     {
+        $this->authorize('read-temporary-grave');
+
         $query = $request->get('query');
 
         if (strlen($query) < 2) {
