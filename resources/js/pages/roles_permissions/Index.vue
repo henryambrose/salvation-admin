@@ -51,6 +51,7 @@ const expandedCategories = ref<Set<string>>(new Set(['Core Management', 'Fund Ca
 const isApplyingGroup = ref(false);
 const showSuccessMessage = ref(false);
 const successMessage = ref('');
+const searchQuery = ref('');
 
 // Store original permissions for reset functionality
 const originalPermissions = ref<Permissions>({});
@@ -429,6 +430,32 @@ const allActions = computed(() => {
   }
 
   return Array.from(actions).sort();
+});
+
+// Filter permissions by search query
+const filteredPermissionsByCategory = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return props.permissionsByCategory || {};
+  }
+
+  const query = searchQuery.value.toLowerCase().trim();
+  const filtered: Record<string, any[]> = {};
+
+  if (!props.permissionsByCategory) return filtered;
+
+  Object.entries(props.permissionsByCategory).forEach(([category, permissions]) => {
+    const matchedPermissions = (permissions as any[]).filter((permission) => {
+      const name = (permission.name || permission.slug || '').toLowerCase();
+      const desc = (permission.description || '').toLowerCase();
+      return name.includes(query) || desc.includes(query);
+    });
+
+    if (matchedPermissions.length > 0) {
+      filtered[category] = matchedPermissions;
+    }
+  });
+
+  return filtered;
 });
 
 // Check if a role has a specific permission
@@ -957,8 +984,31 @@ function formatSpecialPermissionName(permissionSlug: string): string {
 
         <!-- Permission Matrix -->
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-[#ffffff] shadow-sm">
-          <!-- App Legend and Controls -->
-          <div class="border-b border-gray-200 bg-gray-50 p-4">
+          <!-- Search and Controls -->
+          <div class="border-b border-gray-200 bg-gray-50 p-4 space-y-4">
+            <!-- Search Box -->
+            <div class="flex items-center gap-3">
+              <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Search permissions by name or description (e.g., 'member', 'niche', 'payment')..."
+                class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              />
+              <button
+                v-if="searchQuery"
+                @click="searchQuery = ''"
+                class="text-gray-400 hover:text-gray-600"
+              >
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- App Legend and Controls -->
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-6 text-sm">
                 <span class="font-medium text-gray-700">Application Groups:</span>
@@ -999,8 +1049,17 @@ function formatSpecialPermissionName(permissionSlug: string): string {
             </div>
           </div>
 
+          <!-- No Results Message -->
+          <div v-if="searchQuery && Object.keys(filteredPermissionsByCategory).length === 0" class="p-8 text-center">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No permissions found</h3>
+            <p class="mt-1 text-sm text-gray-500">Try a different search term</p>
+          </div>
+
           <!-- Permission Categories -->
-          <div class="divide-y divide-gray-100">
+          <div v-else class="divide-y divide-gray-100">
             <div v-for="(categoryGroup, appName) in getCategoriesByApp" :key="appName" class="bg-[#ffffff]">
               <!-- App Header -->
               <div
@@ -1042,8 +1101,8 @@ function formatSpecialPermissionName(permissionSlug: string): string {
                     </div>
                     <span class="text-sm text-gray-500">
                       ({{
-                        props.permissionsByCategory && props.permissionsByCategory[category.name]
-                          ? props.permissionsByCategory[category.name].length
+                        filteredPermissionsByCategory && filteredPermissionsByCategory[category.name]
+                          ? filteredPermissionsByCategory[category.name].length
                           : 0
                       }}
                       permissions)
