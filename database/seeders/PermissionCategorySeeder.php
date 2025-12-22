@@ -103,24 +103,26 @@ class PermissionCategorySeeder extends Seeder
             [
                 'name' => 'System Management',
                 'slug' => 'system-management',
-                'description' => 'User, role, and system management permissions',
+                'description' => 'User, role, permission, and system management permissions',
                 'app' => 'Members',
                 'color' => '#EF4444',
                 'sort_order' => 6,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'user', 'priority' => 10],
                     ['rule_type' => 'contains', 'rule_value' => 'role', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'permission', 'priority' => 10],
                 ]
             ],
             [
-                'name' => 'Dashboard',
+                'name' => 'Dashboard & Settings',
                 'slug' => 'dashboard',
-                'description' => 'Dashboard and overview permissions',
+                'description' => 'Dashboard, overview and application settings permissions',
                 'app' => 'Members',
                 'color' => '#6366F1',
                 'sort_order' => 7,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'dashboard', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'setting', 'priority' => 10],
                 ]
             ],
             [
@@ -239,10 +241,7 @@ class PermissionCategorySeeder extends Seeder
                 'sort_order' => 19,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'graveyard-dashboard', 'priority' => 15],
-                    // ['rule_type' => 'contains', 'rule_value' => 'graveyard-settings', 'priority' => 15],
-                    // ['rule_type' => 'contains', 'rule_value' => 'graveyard-analytics', 'priority' => 15],
-                    // ['rule_type' => 'contains', 'rule_value' => 'graveyard-reports', 'priority' => 15],
-                    // ['rule_type' => 'contains', 'rule_value' => 'graveyard-data', 'priority' => 15],
+                    ['rule_type' => 'contains', 'rule_value' => 'view-graveyard-reports', 'priority' => 15],
                 ]
             ],
             [
@@ -329,6 +328,78 @@ class PermissionCategorySeeder extends Seeder
                 'sort_order' => 27,
                 'rules' => [
                     ['rule_type' => 'contains', 'rule_value' => 'annual-maintenance-fee', 'priority' => 15],
+                ]
+            ],
+            [
+                'name' => 'Module Access',
+                'slug' => 'module-access',
+                'description' => 'Module-level access control permissions',
+                'app' => 'Core',
+                'color' => '#6B7280',
+                'sort_order' => 28,
+                'rules' => [
+                    ['rule_type' => 'starts_with', 'rule_value' => 'access-', 'priority' => 20],
+                ]
+            ],
+            [
+                'name' => 'System Audit & Logs',
+                'slug' => 'system-audit',
+                'description' => 'Audit logging and system administration permissions',
+                'app' => 'Core',
+                'color' => '#8B5CF6',
+                'sort_order' => 29,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'audit', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'log', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Data Operations',
+                'slug' => 'data-operations',
+                'description' => 'Data management, import, export, and backup permissions',
+                'app' => 'Core',
+                'color' => '#F59E0B',
+                'sort_order' => 30,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'import', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'export', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'backup', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'data-verification', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'System Configuration',
+                'slug' => 'system-configuration',
+                'description' => 'Configuration, cache, queue, and system settings permissions',
+                'app' => 'Core',
+                'color' => '#06B6D4',
+                'sort_order' => 31,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'config', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'cache', 'priority' => 10],
+                    ['rule_type' => 'contains', 'rule_value' => 'queue', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Reports & Analytics',
+                'slug' => 'reports-analytics',
+                'description' => 'Report generation and analytics permissions',
+                'app' => 'Core',
+                'color' => '#EC4899',
+                'sort_order' => 32,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'report', 'priority' => 10],
+                ]
+            ],
+            [
+                'name' => 'Graveyard Special Operations',
+                'slug' => 'graveyard-special-operations',
+                'description' => 'Special graveyard operations like transfers',
+                'app' => 'Graveyard',
+                'color' => '#7C2D12',
+                'sort_order' => 28,
+                'rules' => [
+                    ['rule_type' => 'starts_with', 'rule_value' => 'transfer-', 'priority' => 15],
                 ]
             ],
         ];
