@@ -27,6 +27,7 @@ class TemporaryGraveBookingController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-temporary-grave-booking');
         $query = TemporaryGraveBooking::with([
             'temporaryGrave',
             'gender',
@@ -67,6 +68,7 @@ class TemporaryGraveBookingController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-temporary-grave-booking');
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Create', [
             'availableGraves' => TemporaryGrave::available()->with('graveCategory')->get(),
             'graveCategories' => GraveCategories::orderBy('name')->get(),
@@ -137,6 +139,7 @@ class TemporaryGraveBookingController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-temporary-grave-booking');
 
         $request->validate([
             'grave_category_id' => 'required|exists:grave_categories,id',
@@ -295,6 +298,7 @@ class TemporaryGraveBookingController extends Controller
      */
     public function show(TemporaryGraveBooking $temporaryGraveBooking)
     {
+        $this->authorize('read-temporary-grave-booking');
         $temporaryGraveBooking->load([
             'temporaryGrave',
             'gender',
@@ -337,6 +341,7 @@ class TemporaryGraveBookingController extends Controller
      */
     public function cancel(Request $request, TemporaryGraveBooking $temporaryGraveBooking)
     {
+        $this->authorize('update-temporary-grave-booking');
         $request->validate([
             'cancellation_reason' => 'required|string|max:500'
         ]);

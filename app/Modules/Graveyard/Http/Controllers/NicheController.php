@@ -18,6 +18,7 @@ class NicheController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-niche');
         $query = Niche::query()->with('member');
 
         // Archive logic
@@ -77,6 +78,7 @@ class NicheController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-niche');
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
@@ -91,6 +93,7 @@ class NicheController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-niche');
         $request->validate([
             'niche_no' => 'required|integer|min:1',
             'sr_no' => 'required|integer|min:1',
@@ -169,6 +172,7 @@ class NicheController extends Controller
      */
     public function show(Niche $niche)
     {
+        $this->authorize('read-niche');
         $niche->load(['member', 'creator', 'updater']);
 
         return Inertia::render('PagesGraveyard/Niches/Show', [
@@ -181,6 +185,7 @@ class NicheController extends Controller
      */
     public function edit(Niche $niche)
     {
+        $this->authorize('update-niche');
         $niche->load(['member', 'member.community']);
 
         $locations = Niche::distinct()->pluck('location')->filter()->sort()->values();
@@ -198,6 +203,7 @@ class NicheController extends Controller
      */
     public function update(Request $request, Niche $niche)
     {
+        $this->authorize('update-niche');
         $request->validate([
             'niche_no' => 'required|integer|min:1',
             'sr_no' => 'required|integer|min:1',
@@ -277,6 +283,7 @@ class NicheController extends Controller
      */
     public function destroy(Niche $niche)
     {
+        $this->authorize('delete-niche');
         try {
             // Check if niche is occupied
             if ($niche->status === 'occupied') {
@@ -301,6 +308,7 @@ class NicheController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-niche');
         try {
             $niche = Niche::onlyTrashed()->findOrFail($id);
             $niche->restore();
@@ -321,6 +329,7 @@ class NicheController extends Controller
      */
     public function downloadValidMembersPdf(Niche $niche)
     {
+        $this->authorize('read-niche');
         $niche->load([
             'validMembers.member',
             'validMembers.relationship',
@@ -371,6 +380,7 @@ class NicheController extends Controller
      */
     public function searchMembers(Request $request)
     {
+        $this->authorize('read-niche');
         $query = $request->get('query');
 
         if (strlen($query) < 2) {

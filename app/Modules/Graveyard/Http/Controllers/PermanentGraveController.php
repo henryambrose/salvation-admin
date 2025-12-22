@@ -18,6 +18,7 @@ class PermanentGraveController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-permanent-grave');
         $query = PermanentGrave::query()->with(['member', 'maintenancePayments' => function($query) {
             $query->latest()->limit(1);
         }]);
@@ -132,6 +133,7 @@ class PermanentGraveController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-permanent-grave');
         $blocks = PermanentGrave::distinct()->pluck('block')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
 
@@ -146,6 +148,7 @@ class PermanentGraveController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-permanent-grave');
         $request->validate([
             'block' => 'required|string|max:100',
             'row' => 'required|integer|min:1',
@@ -222,6 +225,7 @@ class PermanentGraveController extends Controller
      */
     public function show(PermanentGrave $permanentGrave)
     {
+        $this->authorize('read-permanent-grave');
         $permanentGrave->load([
             'bookings.validMember.member',
             'creator',
@@ -239,6 +243,7 @@ class PermanentGraveController extends Controller
      */
     public function edit(PermanentGrave $permanentGrave)
     {
+        $this->authorize('update-permanent-grave');
         $permanentGrave->load(['member', 'member.community']);
 
         $blocks = PermanentGrave::distinct()->pluck('block')->filter()->sort()->values();
@@ -256,6 +261,7 @@ class PermanentGraveController extends Controller
      */
     public function update(Request $request, PermanentGrave $permanentGrave)
     {
+        $this->authorize('update-permanent-grave');
         $request->validate([
             'block' => 'required|string|max:100',
             'row' => 'required|integer|min:1',
@@ -334,6 +340,7 @@ class PermanentGraveController extends Controller
      */
     public function destroy(PermanentGrave $permanentGrave)
     {
+        $this->authorize('delete-permanent-grave');
         try {
             // Check if grave has any bookings
             if ($permanentGrave->bookings()->exists()) {
@@ -358,6 +365,7 @@ class PermanentGraveController extends Controller
      */
     public function restore($id)
     {
+        $this->authorize('restore-permanent-grave');
         try {
             $permanentGrave = PermanentGrave::onlyTrashed()->findOrFail($id);
             $permanentGrave->restore();
@@ -378,6 +386,7 @@ class PermanentGraveController extends Controller
      */
     public function downloadValidMembersPdf(PermanentGrave $permanentGrave)
     {
+        $this->authorize('read-permanent-grave');
         $permanentGrave->load([
             'validMembers.member',
             'validMembers.relationship',
@@ -427,6 +436,7 @@ class PermanentGraveController extends Controller
      */
     public function searchMembers(Request $request)
     {
+        $this->authorize('read-permanent-grave');
         $query = $request->get('query');
 
         if (strlen($query) < 2) {
