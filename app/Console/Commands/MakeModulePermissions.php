@@ -313,4 +313,3 @@ PHP;
         return lcfirst($str);
     }
 }
-PHP;
