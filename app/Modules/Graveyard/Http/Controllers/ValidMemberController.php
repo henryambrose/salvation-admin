@@ -18,6 +18,8 @@ class ValidMemberController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('list-valid-member');
+
         $query = ValidMember::with(['member', 'permanentGrave', 'niche']);
 
         if ($request->boolean('isArchived')) {
@@ -61,6 +63,8 @@ class ValidMemberController extends Controller
      */
     public function create(Request $request): Response
     {
+        $this->authorize('create-valid-member');
+
         return Inertia::render('PagesGraveyard/ValidMember/Create', [
             'permanentGraves' => \Modules\Graveyard\Models\PermanentGrave::select('id', 'row', 'column', 'owner_name', 'contact_no', 'member_id')->with('member:id,full_name,family_no')->get(),
             'niches' => \Modules\Graveyard\Models\Niche::select('id', 'niche_no', 'location')->get(),
@@ -76,6 +80,8 @@ class ValidMemberController extends Controller
      */
     public function searchGraves(Request $request)
     {
+        $this->authorize('read-valid-member');
+
         $request->validate([
             'search_term' => 'required|string|min:2',
             'grave_type' => 'required|in:permanent_grave,niche'

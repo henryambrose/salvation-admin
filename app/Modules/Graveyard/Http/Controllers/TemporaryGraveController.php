@@ -18,6 +18,8 @@ class TemporaryGraveController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('list-temporary-grave');
+
         $query = TemporaryGrave::query()->with(['member', 'graveCategory']);
 
         // Archive logic
@@ -83,6 +85,8 @@ class TemporaryGraveController extends Controller
      */
     public function create()
     {
+        $this->authorize('create-temporary-grave');
+
         $sections = TemporaryGrave::distinct()->pluck('section')->filter()->sort()->values();
         $statuses = ['available', 'unavailable'];
         $graveCategories = GraveCategories::orderBy('name')->get(['id', 'name']);
@@ -99,6 +103,8 @@ class TemporaryGraveController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create-temporary-grave');
+
         $request->validate([
             'section' => 'required|string|max:100',
             'row_no' => 'required|integer|min:1',

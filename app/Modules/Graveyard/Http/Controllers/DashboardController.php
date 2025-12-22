@@ -10,16 +10,13 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:read-graveyard-dashboard');
-    }
-
     /**
      * Display the graveyard dashboard
      */
     public function index(): Response
     {
+        $this->authorize('read-graveyard-dashboard');
+
         // TODO: Add dashboard statistics and data
         $stats = [
             'total_cemeteries' => 0,
