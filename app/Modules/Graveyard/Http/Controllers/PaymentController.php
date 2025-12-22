@@ -24,7 +24,7 @@ class PaymentController extends Controller
      */
     public function index(Request $request)
     {
-        $this->authorize('list-payment');
+        $this->authorize('list-graveyard-payment');
         $query = Payment::with(['payable', 'paymentMethod', 'creator'])
             ->latest();
 
@@ -130,7 +130,7 @@ class PaymentController extends Controller
      */
     public function create(Request $request, string $bookingType, int $bookingId)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         // Validate booking type
         $allowedTypes = ['permanent', 'temporary', 'niche', 'niche-transfer'];
         if (!in_array($bookingType, $allowedTypes)) {
@@ -192,7 +192,7 @@ class PaymentController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         // Check if any selected services are free
         $hasFreeServices = false;
         if (!empty($request->selected_services)) {
@@ -398,7 +398,7 @@ class PaymentController extends Controller
      */
     public function show(Payment $payment)
     {
-        $this->authorize('read-payment');
+        $this->authorize('read-graveyard-payment');
         $payment->load($this->getPaymentRelationships($payment));
 
         return Inertia::render('PagesGraveyard/Payment/Show', [
@@ -411,7 +411,7 @@ class PaymentController extends Controller
      */
     public function balancePaymentForm(Payment $payment)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         // Check if payment is eligible for balance payment
         if ($payment->payment_status !== 'partial' || $payment->balance_amount <= 0) {
             return redirect()->back()->with('error', 'This payment is not eligible for balance payment.');
@@ -433,7 +433,7 @@ class PaymentController extends Controller
      */
     public function storeBalancePayment(Request $request, Payment $payment)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         // Refresh payment data to get latest status
         $payment->refresh();
         // Check if original payment is eligible for balance payment
@@ -521,7 +521,7 @@ class PaymentController extends Controller
      */
     public function generateReceipt(Payment $payment)
     {
-        $this->authorize('read-payment');
+        $this->authorize('read-graveyard-payment');
         if (!$payment->receipt_number) {
             $payment->generateReceipt();
         }
@@ -635,7 +635,7 @@ class PaymentController extends Controller
      */
     public function createMaintenancePayment(Request $request, int $graveId)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         $grave = \Modules\Graveyard\Models\PermanentGrave::with(['member', 'maintenancePayments'])
             ->findOrFail($graveId);
 
@@ -691,7 +691,7 @@ class PaymentController extends Controller
      */
     public function storeMaintenancePayment(Request $request)
     {
-        $this->authorize('create-payment');
+        $this->authorize('create-graveyard-payment');
         $request->validate([
             'payable_type' => 'required|string|in:permanent_grave,niche',
             'payable_id' => 'required|integer',

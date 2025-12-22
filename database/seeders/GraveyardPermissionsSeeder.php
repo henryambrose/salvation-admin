@@ -83,6 +83,7 @@ class GraveyardPermissionsSeeder extends Seeder
             'update-graveyard-payment',
             'delete-graveyard-payment',
             'list-graveyard-payment',
+            'restore-graveyard-payment',
 
             // Niche Transfers
             'create-niche-transfer',
@@ -90,6 +91,7 @@ class GraveyardPermissionsSeeder extends Seeder
             'update-niche-transfer',
             'delete-niche-transfer',
             'list-niche-transfer',
+            'restore-niche-transfer',
 
             // Valid Members Management
             'create-valid-member',
@@ -107,46 +109,12 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-annual-maintenance-fees',
             'restore-annual-maintenance-fees',
 
-            // Niche Valid Members
-            // 'create-niche-valid-member',
-            // 'read-niche-valid-member',
-            // 'update-niche-valid-member',
-            // 'delete-niche-valid-member',
-            // 'list-niche-valid-member',
-
-            // Permanent Valid Members
-            // 'create-permanent-valid-member',
-            // 'read-permanent-valid-member',
-            // 'update-permanent-valid-member',
-            // 'delete-permanent-valid-member',
-            // 'list-permanent-valid-member',
-
             // Reports
             'view-graveyard-reports',
-            // 'export-graveyard-data',
-            // 'view-graveyard-analytics',
-            // 'generate-graveyard-certificates',
 
             // Transfer Operations
             'transfer-temporary-to-niche',
             'transfer-temporary-to-permanent',
-            // 'transfer-niche-to-permanent',
-
-            // Administrative
-            // 'manage-graveyard-settings',
-            // 'manage-graveyard-expiration',
-            // 'bulk-import-graveyard-data',
-            // 'bulk-export-graveyard-data',
-
-            // Legacy compatibility - keep existing generic grave booking permissions
-            // 'create-grave-booking',
-            // 'read-grave-booking',
-            // 'update-grave-booking',
-            // 'delete-grave-booking',
-            // 'list-grave-booking',
-            // 'restore-grave-booking',
-            // 'confirm-grave-booking',
-            // 'cancel-grave-booking',
         ];
 
         // Create permissions

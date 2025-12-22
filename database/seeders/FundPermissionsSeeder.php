@@ -82,6 +82,14 @@ class FundPermissionsSeeder extends Seeder
             'delete-payment-method',
             'list-payment-method',
             'restore-payment-method',
+
+            // Mass Schedules
+            'create-mass-schedule',
+            'read-mass-schedule',
+            'update-mass-schedule',
+            'delete-mass-schedule',
+            'list-mass-schedule',
+            'restore-mass-schedule',
         ];
 
         // Create permissions

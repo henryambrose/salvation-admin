@@ -10,7 +10,10 @@
       "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard\\\\Policies\"\" | grep -E \"PermanentGrave)",
       "Bash(ServiceType)",
       "Bash(ValidMember \")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(echo:*)",
+      "Bash(grep:*)",
+      "Bash(xargs:*)"
     ]
   }
 }

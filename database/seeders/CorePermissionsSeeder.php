@@ -52,64 +52,6 @@ class CorePermissionsSeeder extends Seeder
             'list-setting',
             'restore-setting',
 
-            // Data Management
-            'create-data-verification',
-            'read-data-verification',
-            'update-data-verification',
-            'delete-data-verification',
-            'list-data-verification',
-            'restore-data-verification',
-
-            'create-import',
-            'read-import',
-            'update-import',
-            'delete-import',
-            'list-import',
-            'restore-import',
-
-            'create-export',
-            'read-export',
-            'update-export',
-            'delete-export',
-            'list-export',
-            'restore-export',
-
-            'create-backup',
-            'read-backup',
-            'update-backup',
-            'delete-backup',
-            'list-backup',
-            'restore-backup',
-
-            'create-report',
-            'read-report',
-            'update-report',
-            'delete-report',
-            'list-report',
-            'restore-report',
-
-            // AI Assistance
-            'create-chat',
-            'read-chat',
-            'update-chat',
-            'delete-chat',
-            'list-chat',
-            'restore-chat',
-
-            'create-ai',
-            'read-ai',
-            'update-ai',
-            'delete-ai',
-            'list-ai',
-            'restore-ai',
-
-            'create-assistant',
-            'read-assistant',
-            'update-assistant',
-            'delete-assistant',
-            'list-assistant',
-            'restore-assistant',
-
             // Dashboard
             'create-dashboard',
             'read-dashboard',
@@ -117,35 +59,6 @@ class CorePermissionsSeeder extends Seeder
             'delete-dashboard',
             'list-dashboard',
             'restore-dashboard',
-
-            // Additional Core permissions
-            'create-log',
-            'read-log',
-            'update-log',
-            'delete-log',
-            'list-log',
-            'restore-log',
-
-            'create-config',
-            'read-config',
-            'update-config',
-            'delete-config',
-            'list-config',
-            'restore-config',
-
-            'create-cache',
-            'read-cache',
-            'update-cache',
-            'delete-cache',
-            'list-cache',
-            'restore-cache',
-
-            'create-queue',
-            'read-queue',
-            'update-queue',
-            'delete-queue',
-            'list-queue',
-            'restore-queue',
         ];
 
         // Create permissions
