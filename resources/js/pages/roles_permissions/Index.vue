@@ -108,7 +108,11 @@ const { clear: clearSavedForm, hasRestoredData } = useFormPersistence(
     enabled: true,
     debounceMs: 2000, // Save 2 seconds after last change
     onRestore: (data) => {
-      info('Restored your unsaved permission changes');
+      // Only show restore message if data was actually restored (not on initial load after save)
+      if (!sessionStorage.getItem('__permissions_just_saved')) {
+        info('Restored your unsaved permission changes');
+      }
+      sessionStorage.removeItem('__permissions_just_saved');
     },
   }
 );
@@ -703,6 +707,9 @@ async function savePermissions() {
 
       // Clear saved form data from localStorage since we successfully saved
       clearSavedForm();
+
+      // Set flag to prevent restore dialog on reload
+      sessionStorage.setItem('__permissions_just_saved', 'true');
 
       // Reload the page to get the latest data
       router.reload();
