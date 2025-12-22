@@ -33,18 +33,20 @@ Route::middleware(['auth', 'verified', 'nocache'])->group(function () {
     // Dashboard
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Super Admin routes
-    Route::middleware(['role:super admin'])->group(function () {
-        Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
-            ->name('roles.permissions.index');
-        Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
-            ->name('roles.permissions.update');
+    // Super Admin routes - check is_superadmin flag instead of role for compatibility
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::middleware(\Modules\Members\Http\Middleware\SuperAdminMiddleware::class)->group(function () {
+            Route::get('/roles-permissions', [RolePermissionController::class, 'index'])
+                ->name('roles.permissions.index');
+            Route::post('/roles-permissions/update', [RolePermissionController::class, 'update'])
+                ->name('roles.permissions.update');
 
-        // Chat routes
-        Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
-        Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
-        Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
-        Route::get('/chat/answer/{uniqueID}', [ChatController::class, 'getSpecificAnswer'])->name('chat.answer');
+            // Chat routes
+            Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+            Route::post('/chat/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+            Route::get('/chat/history', [ChatController::class, 'getHistory'])->name('chat.history');
+            Route::get('/chat/answer/{uniqueID}', [ChatController::class, 'getSpecificAnswer'])->name('chat.answer');
+        });
     });
 
     // Role management routes
