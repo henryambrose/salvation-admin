@@ -186,72 +186,9 @@ class MembersPermissionsSeeder extends Seeder
             'list-role',
             'restore-role',
 
-
-            // Data Management
-            // 'create-data-verification',
-            // 'read-data-verification',
-            // 'update-data-verification',
-            // 'delete-data-verification',
-            // 'list-data-verification',
-            // 'restore-data-verification',
-
-            // 'create-import',
-            // 'read-import',
-            // 'update-import',
-            // 'delete-import',
-            // 'list-import',
-            // 'restore-import',
-
-            // 'create-export',
-            // 'read-export',
-            // 'update-export',
-            // 'delete-export',
-            // 'list-export',
-            // 'restore-export',
-
-            // 'create-backup',
-            // 'read-backup',
-            // 'update-backup',
-            // 'delete-backup',
-            // 'list-backup',
-            // 'restore-backup',
-
-            // 'create-report',
-            // 'read-report',
-            // 'update-report',
-            // 'delete-report',
-            // 'list-report',
-            // 'restore-report',
-
-            // AI Assistance
-            'create-chat',
-            'read-chat',
-            'update-chat',
-            'delete-chat',
-            'list-chat',
-            'restore-chat',
-
-            'create-ai',
-            'read-ai',
-            'update-ai',
-            'delete-ai',
-            'list-ai',
-            'restore-ai',
-
-            'create-assistant',
-            'read-assistant',
-            'update-assistant',
-            'delete-assistant',
-            'list-assistant',
-            'restore-assistant',
-
             // Dashboard
-            // 'create-dashboard',
             'read-dashboard',
-            // 'update-dashboard',
-            // 'delete-dashboard',
             'list-dashboard',
-            // 'restore-dashboard',
 
             // Certificate Management
             'create-certificate',
