@@ -20,7 +20,14 @@
       "Bash(php artisan migrate:status:*)",
       "Bash(php artisan db:seed:*)",
       "Bash(git commit -m \"$\\(cat <<''EOF''\nAdd comprehensive category rules for all permissions\n\nAdded new categories to ensure 100% permission coverage:\n\n1. Module Access \\(Core\\)\n   - Rule: starts_with ''access-''\n   - Covers: access-fund, access-graveyard, etc.\n\n2. System Audit & Logs \\(Core\\)\n   - Rules: contains ''audit'', contains ''log''\n   - Covers: audit and logging permissions\n\n3. Data Operations \\(Core\\)\n   - Rules: contains ''import'', ''export'', ''backup'', ''data-verification''\n   - Covers: data management and import/export operations\n\n4. System Configuration \\(Core\\)\n   - Rules: contains ''config'', ''cache'', ''queue''\n   - Covers: configuration and system-level settings\n\n5. Reports & Analytics \\(Core\\)\n   - Rule: contains ''report''\n   - Covers: report generation permissions\n\n6. Graveyard Special Operations \\(Graveyard\\)\n   - Rule: starts_with ''transfer-''\n   - Covers: graveyard transfer operations\n\nUpdated existing categories:\n- System Management: Added ''permission'' rule to catch permission-* permissions\n- Dashboard & Settings: Renamed and added ''setting'' rule\n- Graveyard Management: Added ''view-graveyard-reports'' rule\n\nResult: All permissions now properly categorized across 33 categories\n- Members: 9 categories\n- Fund: 9 categories  \n- Graveyard: 8 categories\n- Core: 6 categories\n\n🤖 Generated with Claude Code\n\nCo-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git -C \"D:\\\\Projects\\\\salvation-admin\" status --short)",
+      "Bash(git -C \"D:\\\\Projects\\\\salvation-admin\" diff database/seeders/PermissionCategorySeeder.php)",
+      "Bash(git -C \"D:\\\\Projects\\\\salvation-admin\" diff resources/js/pages/roles_permissions/Index.vue)",
+      "Bash(git -C \"D:\\\\Projects\\\\salvation-admin\" log --oneline -5)",
+      "Bash(php artisan make:module-permissions:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ]
   }
 }

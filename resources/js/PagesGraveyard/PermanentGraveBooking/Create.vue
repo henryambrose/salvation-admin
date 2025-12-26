@@ -88,16 +88,34 @@ const searchGraves = async () => {
 
   isSearching.value = true;
   try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    if (!csrfToken) {
+      console.error('CSRF token not found');
+      error('Session expired. Please refresh the page.');
+      return;
+    }
+
     const response = await fetch(route('graveyard.permanent-grave-bookings.search-permanent-grave'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+        'X-CSRF-TOKEN': csrfToken,
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         search_term: graveSearchTerm.value,
       }),
     });
+
+    if (!response.ok) {
+      if (response.status === 419) {
+        error('Your session has expired. Please refresh the page and try again.');
+      } else {
+        error(`Server error: ${response.status}. Please try again.`);
+      }
+      return;
+    }
 
     const data = await response.json();
     searchResults.value = data.graves;
