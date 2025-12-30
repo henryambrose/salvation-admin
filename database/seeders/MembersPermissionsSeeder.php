@@ -222,6 +222,33 @@ class MembersPermissionsSeeder extends Seeder
             'manage-certificate-templates',
             'set-template-default',
             'preview-certificate-template',
+
+            // Birth Archive Certificates
+            'create-birth-archive',
+            'read-birth-archive',
+            'list-birth-archive',
+            'update-birth-archive',
+            'delete-birth-archive',
+            'restore-birth-archive',
+            'download-birth-archive',
+
+            // Marriage Archive Certificates
+            'create-marriage-archive',
+            'read-marriage-archive',
+            'list-marriage-archive',
+            'update-marriage-archive',
+            'delete-marriage-archive',
+            'restore-marriage-archive',
+            'download-marriage-archive',
+
+            // Death Archive Certificates
+            'create-death-archive',
+            'read-death-archive',
+            'list-death-archive',
+            'update-death-archive',
+            'delete-death-archive',
+            'restore-death-archive',
+            'download-death-archive',
         ];
 
         // Create permissions

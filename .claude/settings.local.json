@@ -27,7 +27,10 @@
       "Bash(git -C \"D:\\\\Projects\\\\salvation-admin\" log --oneline -5)",
       "Bash(php artisan make:module-permissions:*)",
       "Bash(dir:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)",
+      "Bash(php artisan migrate:*)"
     ]
   }
 }

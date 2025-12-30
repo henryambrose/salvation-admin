@@ -155,6 +155,29 @@ const navigationGroups = [
     ],
   },
   {
+    label: 'Archive Certificates',
+    items: [
+      {
+        title: 'Birth Certificates',
+        href: '/archive/birth',
+        icon: Baby,
+        show: can('list-birth-archive'),
+      },
+      {
+        title: 'Marriage Certificates',
+        href: '/archive/marriage',
+        icon: UsersRound,
+        show: can('list-marriage-archive'),
+      },
+      {
+        title: 'Death Certificates',
+        href: '/archive/death',
+        icon: Skull,
+        show: can('list-death-archive'),
+      },
+    ],
+  },
+  {
     label: 'Leadership',
     items: [
       {

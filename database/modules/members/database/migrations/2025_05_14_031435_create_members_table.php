@@ -76,6 +76,7 @@ return new class extends Migration
             $table->foreignId('designation_id')->nullable()->constrained('designations');
             $table->foreignId('gender_id')->nullable()->constrained('genders');
             $table->foreignId('status_id')->nullable()->constrained('statuses');
+            $table->text('notes')->nullable();
             $table->foreignId('relationship_id')->nullable()->constrained('relationships');
             $table->foreignId('baptism_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
             $table->foreignId('confirmation_parish_id')->nullable()->constrained('parishes')->onDelete('set null');
