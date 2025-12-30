@@ -4,7 +4,6 @@ import { useForm, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Props {
   type: 'birth' | 'marriage' | 'death';
@@ -59,16 +58,14 @@ certificate2.pdf,2020,002,1992,8,20,Jane,Marie,Smith,`;
       <p class="mt-1 text-gray-600">Upload multiple certificates with a CSV metadata file</p>
     </div>
 
-    <Alert class="mb-6">
-      <AlertDescription>
-        <p class="mb-2 font-semibold">CSV Format:</p>
-        <pre class="overflow-x-auto rounded bg-gray-100 p-2 text-xs">{{ csvFormat }}</pre>
-        <p class="mt-2 text-sm">
-          <strong>Important:</strong> The <code>file_name</code> in CSV must exactly match the
-          uploaded certificate filenames.
-        </p>
-      </AlertDescription>
-    </Alert>
+    <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+      <p class="mb-2 font-semibold text-blue-900">CSV Format:</p>
+      <pre class="overflow-x-auto rounded bg-gray-100 p-2 text-xs">{{ csvFormat }}</pre>
+      <p class="mt-2 text-sm text-blue-800">
+        <strong>Important:</strong> The <code class="rounded bg-blue-100 px-1">file_name</code> in CSV must exactly match the
+        uploaded certificate filenames.
+      </p>
+    </div>
 
     <form @submit.prevent="submit">
       <Card>
