@@ -20,7 +20,7 @@ class ArchiveCertificateBulkImportController extends Controller
     {
         $this->authorize("create-{$type}-archive");
 
-        return Inertia::render('PagesMembers/archive/BulkImport', [
+        return Inertia::render('archive/BulkImport', [
             'type' => $type,
         ]);
     }

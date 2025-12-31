@@ -56,7 +56,7 @@ class DeathArchiveCertificateController extends Controller
         $perPage = $request->input('perPage', 10);
         $certificates = $query->paginate($perPage)->appends($request->query());
 
-        return Inertia::render('PagesMembers/archive/death/Index', [
+        return Inertia::render('archive/death/Index', [
             'fetchUrl' => route('archive.death.index'),
             'certificates' => $certificates,
             'filters' => $request->only([
@@ -73,7 +73,7 @@ class DeathArchiveCertificateController extends Controller
     {
         $this->authorize('create', DeathArchiveCertificate::class);
 
-        return Inertia::render('PagesMembers/archive/death/Create');
+        return Inertia::render('archive/death/Create');
     }
 
     /**
@@ -126,7 +126,7 @@ class DeathArchiveCertificateController extends Controller
     {
         $this->authorize('view', $deathArchive);
 
-        return Inertia::render('PagesMembers/archive/death/Show', [
+        return Inertia::render('archive/death/Show', [
             'certificate' => $deathArchive->load(['creator', 'updater']),
         ]);
     }
@@ -138,7 +138,7 @@ class DeathArchiveCertificateController extends Controller
     {
         $this->authorize('update', $deathArchive);
 
-        return Inertia::render('PagesMembers/archive/death/Edit', [
+        return Inertia::render('archive/death/Edit', [
             'certificate' => $deathArchive,
         ]);
     }

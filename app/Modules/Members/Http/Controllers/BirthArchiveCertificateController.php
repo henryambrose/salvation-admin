@@ -56,7 +56,7 @@ class BirthArchiveCertificateController extends Controller
         $perPage = $request->input('perPage', 10);
         $certificates = $query->paginate($perPage)->appends($request->query());
 
-        return Inertia::render('PagesMembers/archive/birth/Index', [
+        return Inertia::render('archive/birth/Index', [
             'fetchUrl' => route('archive.birth.index'),
             'certificates' => $certificates,
             'filters' => $request->only([
@@ -73,7 +73,7 @@ class BirthArchiveCertificateController extends Controller
     {
         $this->authorize('create', BirthArchiveCertificate::class);
 
-        return Inertia::render('PagesMembers/archive/birth/Create');
+        return Inertia::render('archive/birth/Create');
     }
 
     /**
@@ -126,7 +126,7 @@ class BirthArchiveCertificateController extends Controller
     {
         $this->authorize('view', $birthArchive);
 
-        return Inertia::render('PagesMembers/archive/birth/Show', [
+        return Inertia::render('archive/birth/Show', [
             'certificate' => $birthArchive->load(['creator', 'updater']),
         ]);
     }
@@ -138,7 +138,7 @@ class BirthArchiveCertificateController extends Controller
     {
         $this->authorize('update', $birthArchive);
 
-        return Inertia::render('PagesMembers/archive/birth/Edit', [
+        return Inertia::render('archive/birth/Edit', [
             'certificate' => $birthArchive,
         ]);
     }
