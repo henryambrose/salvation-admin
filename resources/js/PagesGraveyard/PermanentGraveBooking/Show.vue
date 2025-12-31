@@ -25,7 +25,10 @@ interface PermanentGraveBooking {
     id: number;
     first_name: string;
     last_name: string;
-    relationship: string;
+    relationship: {
+      id: number;
+      name: string;
+    };
     member?: {
       first_name: string;
       last_name: string;
@@ -281,7 +284,7 @@ const canCancel = () => {
 
                     <div>
                       <Label class="text-sm font-medium text-gray-500">Relationship</Label>
-                      <p class="text-base">{{ booking.valid_member.relationship }}</p>
+                      <p class="text-base">{{ booking.valid_member.relationship.name }}</p>
                     </div>
 
                     <Separator />

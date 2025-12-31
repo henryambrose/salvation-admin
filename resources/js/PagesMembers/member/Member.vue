@@ -2241,7 +2241,18 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish_id" />
             </div>
+
             <div class="grid gap-2">
+              <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" :original-value="props.member?.marriage_parish" />
+              <InputError class="mt-2" :message="form.errors.marriage_parish" />
+              <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
+            </div>
+            <div class="grid gap-2">
+              <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" :original-value="props.member?.death_parish" />
+              <InputError class="mt-2" :message="form.errors.death_parish" />
+              <InputError class="mt-2" :message="form.errors.death_parish_id" />
+            </div>
+                        <div class="grid gap-2">
               <Label for="confirmation_date">Confirmation Date</Label>
               <DateInput
                 id="confirmation_date"
@@ -2269,17 +2280,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               </div>
               <InputError class="mt-2" :message="form.errors.confirmation_date" />
             </div>
-            <div class="grid gap-2">
-              <Label for="confirmation_reg_no">Confirmation Registration No</Label>
-              <Input
-                id="confirmation_reg_no"
-                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.confirmation_reg_no"
-                autocomplete="confirmation_reg_no"
-                placeholder="Confirmation registration no"
-              />
-              <InputError class="mt-2" :message="form.errors.confirmation_reg_no" />
-            </div>
+            
             <div class="grid gap-2">
               <ParishSelection
                 id="confirmation_parish"
@@ -2292,14 +2293,15 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
             </div>
             <div class="grid gap-2">
-              <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" :original-value="props.member?.marriage_parish" />
-              <InputError class="mt-2" :message="form.errors.marriage_parish" />
-              <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
-            </div>
-            <div class="grid gap-2">
-              <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" :original-value="props.member?.death_parish" />
-              <InputError class="mt-2" :message="form.errors.death_parish" />
-              <InputError class="mt-2" :message="form.errors.death_parish_id" />
+              <Label for="confirmation_reg_no">Confirmation Minister</Label>
+              <Input
+                id="confirmation_reg_no"
+                class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
+                v-model="form.confirmation_reg_no"
+                autocomplete="confirmation_reg_no"
+                placeholder="Confirmation registration no"
+              />
+              <InputError class="mt-2" :message="form.errors.confirmation_reg_no" />
             </div>
           </div>
         </div>

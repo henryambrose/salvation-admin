@@ -75,7 +75,17 @@ class TemporaryGraveBookingController extends Controller
             'permanentGraves' => PermanentGrave::where('status', 'unavailable')
                 ->with(['validMembers' => function ($query) {
                     $query->where('is_active', true)
-                        ->whereNull('deathrecord_id') // Only living members
+                        ->where(function ($q) {
+                            // For parish members, check if member has death record
+                            $q->whereHas('member', function ($memberQuery) {
+                                $memberQuery->whereNull('deathrecord_id');
+                            })
+                            // For external members, check if death_date is null
+                            ->orWhere(function ($externalQuery) {
+                                $externalQuery->whereNull('member_id')
+                                    ->whereNull('death_date');
+                            });
+                        })
                         ->with(['member', 'gender', 'parish', 'relationship']);
                 }])
                 ->orderBy('column')->orderBy('row')->get(),
