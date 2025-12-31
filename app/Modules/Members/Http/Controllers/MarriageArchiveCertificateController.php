@@ -56,7 +56,7 @@ class MarriageArchiveCertificateController extends Controller
         $perPage = $request->input('perPage', 10);
         $certificates = $query->paginate($perPage)->appends($request->query());
 
-        return Inertia::render('archive/marriage/Index', [
+        return Inertia::render('PagesMembers/archive/marriage/Index', [
             'fetchUrl' => route('archive.marriage.index'),
             'certificates' => $certificates,
             'filters' => $request->only([
@@ -73,7 +73,7 @@ class MarriageArchiveCertificateController extends Controller
     {
         $this->authorize('create', MarriageArchiveCertificate::class);
 
-        return Inertia::render('archive/marriage/Create');
+        return Inertia::render('PagesMembers/archive/marriage/Create');
     }
 
     /**
@@ -126,7 +126,7 @@ class MarriageArchiveCertificateController extends Controller
     {
         $this->authorize('view', $marriageArchive);
 
-        return Inertia::render('archive/marriage/Show', [
+        return Inertia::render('PagesMembers/archive/marriage/Show', [
             'certificate' => $marriageArchive->load(['creator', 'updater']),
         ]);
     }
@@ -138,7 +138,7 @@ class MarriageArchiveCertificateController extends Controller
     {
         $this->authorize('update', $marriageArchive);
 
-        return Inertia::render('archive/marriage/Edit', [
+        return Inertia::render('PagesMembers/archive/marriage/Edit', [
             'certificate' => $marriageArchive,
         ]);
     }

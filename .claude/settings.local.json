@@ -30,7 +30,9 @@
       "Bash(findstr:*)",
       "Bash(cat:*)",
       "Bash(curl:*)",
-      "Bash(php artisan migrate:*)"
+      "Bash(php artisan migrate:*)",
+      "Bash(mv:*)",
+      "Bash(powershell:*)"
     ]
   }
 }

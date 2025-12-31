@@ -114,27 +114,13 @@ class TemporaryGraveController extends Controller
             'last_burial_date' => 'nullable|date',
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
-            'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
             'grave_category_id' => 'nullable|exists:grave_categories,id',
             'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
         ]);
 
-        // Validate mutually exclusive fields
-        if ($request->member_type === 'member') {
-            if (empty($request->member_id)) {
-                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
-            }
-            // Clear owner_name if member is selected
-            $request->merge(['owner_name' => null]);
-        } else {
-            if (empty($request->owner_name)) {
-                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
-            }
-            // Clear member_id if non-member is selected
-            $request->merge(['member_id' => null]);
-        }
+        // No member validation needed for temporary graves as they don't have owners
 
         // Check for duplicate grave in same section
         $existingGrave = TemporaryGrave::where('section', $request->section)
@@ -156,7 +142,6 @@ class TemporaryGraveController extends Controller
                 'last_burial_date' => $request->last_burial_date,
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
-                'owner_name' => $request->owner_name,
                 'member_id' => $request->member_id,
                 'grave_category_id' => $request->grave_category_id,
                 'contact_no' => $request->contact_no,
@@ -228,28 +213,13 @@ class TemporaryGraveController extends Controller
             'last_burial_date' => 'nullable|date',
             'remarks' => 'nullable|string|max:1000',
             'plot_size' => 'nullable|numeric|min:0',
-            'owner_name' => 'nullable|string|max:255',
             'member_id' => 'nullable|exists:members,id',
             'grave_category_id' => 'nullable|exists:grave_categories,id',
             'contact_no' => 'nullable|string|max:20',
             'is_active' => 'boolean',
-            'member_type' => 'required|in:member,external',
         ]);
 
-        // Validate mutually exclusive fields
-        if ($request->member_type === 'member') {
-            if (empty($request->member_id)) {
-                return back()->withErrors(['member_id' => 'Member must be selected when member type is Parish Member.']);
-            }
-            // Clear owner_name if member is selected
-            $request->merge(['owner_name' => null]);
-        } else {
-            if (empty($request->owner_name)) {
-                return back()->withErrors(['owner_name' => 'Name is required when member type is Non-Member.']);
-            }
-            // Clear member_id if non-member is selected
-            $request->merge(['member_id' => null]);
-        }
+        // No member validation needed for temporary graves as they don't have owners
 
         // Check for duplicate grave in same section (excluding current grave)
         $existingGrave = TemporaryGrave::where('section', $request->section)
@@ -272,7 +242,6 @@ class TemporaryGraveController extends Controller
                 'last_burial_date' => $request->last_burial_date,
                 'remarks' => $request->remarks,
                 'plot_size' => $request->plot_size,
-                'owner_name' => $request->owner_name,
                 'member_id' => $request->member_id,
                 'grave_category_id' => $request->grave_category_id,
                 'contact_no' => $request->contact_no,

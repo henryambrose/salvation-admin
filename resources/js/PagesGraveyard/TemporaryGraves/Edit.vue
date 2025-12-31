@@ -106,10 +106,9 @@
               </div>
 
               <!-- Member Information Section -->
-              <div class="rounded-lg bg-gray-50 p-6">
+              <!-- <div class="rounded-lg bg-gray-50 p-6">
                 <h3 class="mb-4 text-lg font-medium text-gray-900">Member Information</h3>
 
-                <!-- Member Type Selection -->
                 <div class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Member Type</label>
                   <div class="flex space-x-4">
@@ -136,7 +135,6 @@
                   </div>
                 </div>
 
-                <!-- Member Search (for parish members) -->
                 <div v-if="form.member_type === 'member'" class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Search Member</label>
                   <div class="relative">
@@ -148,7 +146,6 @@
                       @input="searchMembers"
                     />
 
-                    <!-- Search Results Dropdown -->
                     <div
                       v-if="memberSearchResults.length > 0 && memberSearchQuery"
                       class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-white shadow-lg"
@@ -168,7 +165,6 @@
                     </div>
                   </div>
 
-                  <!-- Selected Member Display -->
                   <div v-if="selectedMember" class="mt-3 rounded-md bg-blue-50 p-3">
                     <div class="flex items-start justify-between">
                       <div>
@@ -188,7 +184,6 @@
                   </div>
                 </div>
 
-                <!-- Non-Member Input -->
                 <div v-if="form.member_type === 'external'" class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Name</label>
                   <input
@@ -200,7 +195,6 @@
                   <p v-if="errors.owner_name" class="mt-1 text-sm text-red-600">{{ errors.owner_name }}</p>
                 </div>
 
-                <!-- Phone Number -->
                 <div class="mb-4">
                   <label class="mb-2 block text-sm font-medium text-gray-700">Phone Number</label>
                   <input
@@ -211,7 +205,7 @@
                   />
                   <p v-if="errors.contact_no" class="mt-1 text-sm text-red-600">{{ errors.contact_no }}</p>
                 </div>
-              </div>
+              </div> -->
 
               <!-- Details Section -->
               <div class="rounded-lg bg-gray-50 p-6">
