@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Members\Http\Requests\StoreBirthArchiveCertificateRequest;
 use Modules\Members\Http\Requests\UpdateBirthArchiveCertificateRequest;
 use Modules\Members\Models\BirthArchiveCertificate;
+use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -51,6 +52,9 @@ class BirthArchiveCertificateController extends Controller
         $sortField = $request->input('sort', 'created_at');
         $sortDirection = $request->input('direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
+
+        // Eager load baptism record relationship for status indicators
+        $query->with('baptismRecord:id,birth_archive_certificate_id');
 
         // Pagination
         $perPage = $request->input('perPage', 10);
@@ -129,6 +133,36 @@ class BirthArchiveCertificateController extends Controller
         return Inertia::render('archive/birth/Show', [
             'certificate' => $birthArchive->load(['creator', 'updater']),
         ]);
+    }
+
+    /**
+     * View archive certificate with baptism record integration
+     * Shows create form if no baptism record exists, otherwise shows baptism details
+     */
+    public function viewWithBaptism(BirthArchiveCertificate $birthArchive)
+    {
+        $this->authorize('view', $birthArchive);
+
+        // Load the baptism record relationship
+        $birthArchive->load(['baptismRecord', 'creator', 'updater']);
+
+        // Determine mode based on whether baptism record exists
+        $mode = $birthArchive->baptismRecord ? 'view' : 'create';
+
+        // Prepare data based on mode
+        $data = [
+            'certificate' => $birthArchive,
+            'baptismRecord' => $birthArchive->baptismRecord,
+            'mode' => $mode,
+        ];
+
+        // If in create mode, load parishes for the dropdown
+        if ($mode === 'create') {
+            $data['parishes'] = Parish::orderBy('name')
+                ->get(['id', 'name']);
+        }
+
+        return Inertia::render('archive/birth/BaptismView', $data);
     }
 
     /**

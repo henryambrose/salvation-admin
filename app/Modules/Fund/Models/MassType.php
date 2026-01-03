@@ -45,7 +45,7 @@ class MassType extends Model
      */
     public function creator()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(\Modules\Members\Models\User::class, 'created_by');
     }
 
     /**
@@ -53,7 +53,7 @@ class MassType extends Model
      */
     public function updater()
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $this->belongsTo(\Modules\Members\Models\User::class, 'updated_by');
     }
 
     /**

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Members\Http\Requests\StoreDeathArchiveCertificateRequest;
 use Modules\Members\Http\Requests\UpdateDeathArchiveCertificateRequest;
 use Modules\Members\Models\DeathArchiveCertificate;
+use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -46,6 +47,9 @@ class DeathArchiveCertificateController extends Controller
         if ($day = $request->input('day')) {
             $query->byDay((int) $day);
         }
+
+        // Eager load death record for status indicators
+        $query->with('deathRecord:id,death_archive_certificate_id');
 
         // Sorting
         $sortField = $request->input('sort', 'created_at');
@@ -129,6 +133,36 @@ class DeathArchiveCertificateController extends Controller
         return Inertia::render('archive/death/Show', [
             'certificate' => $deathArchive->load(['creator', 'updater']),
         ]);
+    }
+
+    /**
+     * View death archive certificate with death record creation/view
+     * Shows create form if no death record exists, otherwise shows death details
+     */
+    public function viewWithDeath(DeathArchiveCertificate $deathArchive)
+    {
+        $this->authorize('view', $deathArchive);
+
+        // Load the death record relationship
+        $deathArchive->load(['deathRecord', 'creator', 'updater']);
+
+        // Determine mode based on whether death record exists
+        $mode = $deathArchive->deathRecord ? 'view' : 'create';
+
+        // Prepare data based on mode
+        $data = [
+            'certificate' => $deathArchive,
+            'deathRecord' => $deathArchive->deathRecord,
+            'mode' => $mode,
+        ];
+
+        // If in create mode, load parishes for the dropdown
+        if ($mode === 'create') {
+            $data['parishes'] = Parish::orderBy('name')
+                ->get(['id', 'name']);
+        }
+
+        return Inertia::render('archive/death/DeathView', $data);
     }
 
     /**

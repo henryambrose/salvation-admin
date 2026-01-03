@@ -2,11 +2,11 @@
 
 namespace Modules\Members\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class MarriageArchiveCertificate extends Model
@@ -54,6 +54,14 @@ class MarriageArchiveCertificate extends Model
     public function updater(): BelongsTo
     {
         return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    /**
+     * Get the marriage record created from this archive certificate
+     */
+    public function marriageRecord(): HasOne
+    {
+        return $this->hasOne(MarriageRecord::class, 'marriage_archive_certificate_id');
     }
 
     /**

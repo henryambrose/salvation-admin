@@ -12,6 +12,7 @@ class DeathRecord extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'death_archive_certificate_id',
         'member_id',
         'death_date',
         'burial_date',
@@ -81,5 +82,13 @@ class DeathRecord extends Model
     public function getBurialYearAttribute(): ?int
     {
         return $this->burial_date?->year;
+    }
+
+    /**
+     * Get the death archive certificate this record was created from
+     */
+    public function deathArchiveCertificate(): BelongsTo
+    {
+        return $this->belongsTo(DeathArchiveCertificate::class, 'death_archive_certificate_id');
     }
 }

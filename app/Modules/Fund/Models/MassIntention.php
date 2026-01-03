@@ -11,7 +11,7 @@ use Modules\Fund\Models\MassType;
 use Modules\Fund\Models\MassIntentionType;
 use Modules\Fund\Models\PaymentMethod;
 use Modules\Fund\Models\MassSchedule;
-use App\Models\User;
+use Modules\Members\Models\User;
 
 class MassIntention extends Model
 {

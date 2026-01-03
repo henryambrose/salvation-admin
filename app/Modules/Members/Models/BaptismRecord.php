@@ -13,6 +13,9 @@ class BaptismRecord extends Model
 
     protected $fillable = [
         'member_id',
+        'birth_archive_certificate_id',
+        'baptized_name',
+        'baptized_surname',
         'baptism_date',
         'baptism_reg_no',
         'place_of_baptism',
@@ -57,6 +60,14 @@ class BaptismRecord extends Model
     public function baptismParish(): BelongsTo
     {
         return $this->belongsTo(Parish::class, 'baptism_parish_id');
+    }
+
+    /**
+     * Get the birth archive certificate this baptism record was created from
+     */
+    public function birthArchiveCertificate(): BelongsTo
+    {
+        return $this->belongsTo(BirthArchiveCertificate::class, 'birth_archive_certificate_id');
     }
 
     /**

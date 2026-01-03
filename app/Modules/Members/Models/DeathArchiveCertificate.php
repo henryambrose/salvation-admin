@@ -2,11 +2,11 @@
 
 namespace Modules\Members\Models;
 
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Storage;
 
 class DeathArchiveCertificate extends Model
@@ -171,5 +171,13 @@ class DeathArchiveCertificate extends Model
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Get the death record created from this archive certificate
+     */
+    public function deathRecord(): HasOne
+    {
+        return $this->hasOne(DeathRecord::class, 'death_archive_certificate_id');
     }
 }

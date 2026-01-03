@@ -65,7 +65,10 @@ class BaptismRecordController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'member_id' => 'required|exists:members,id',
+            'member_id' => 'nullable|exists:members,id',
+            'birth_archive_certificate_id' => 'nullable|exists:birth_archive_certificates,id',
+            'baptized_name' => 'nullable|string|max:255',
+            'baptized_surname' => 'nullable|string|max:255',
             'baptism_date' => 'nullable|date',
             'baptism_reg_no' => 'nullable|string|max:255',
             'place_of_baptism' => 'nullable|string|max:255',
@@ -90,6 +93,12 @@ class BaptismRecordController extends Controller
         if ($baptismRecord->member_id) {
             Member::where('id', $baptismRecord->member_id)
                   ->update(['baptismrecord_id' => $baptismRecord->id]);
+        }
+
+        // If created from archive certificate, redirect to the unified view
+        if ($validated['birth_archive_certificate_id'] ?? null) {
+            return redirect()->route('archive.birth.certificates.baptism', $validated['birth_archive_certificate_id'])
+                ->with('success', 'Baptism record created successfully from archive certificate.');
         }
 
         return redirect()->route('baptism-records.index')

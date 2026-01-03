@@ -66,6 +66,7 @@ class DeathRecordController extends Controller
     {
         Log::info($request);
         $validated = $request->validate([
+            'death_archive_certificate_id' => 'nullable|exists:death_archive_certificates,id',
             'member_id' => 'nullable|exists:members,id',
             'death_date' => 'nullable|date',
             'burial_date' => 'nullable|date',
@@ -89,6 +90,12 @@ Log::info($validated);
         if ($deathRecord->member_id) {
             Member::where('id', $deathRecord->member_id)
                   ->update(['deathrecord_id' => $deathRecord->id]);
+        }
+
+        // If created from archive certificate, redirect back to archive view
+        if ($validated['death_archive_certificate_id'] ?? null) {
+            return redirect()->route('archive.death.certificates.death', $validated['death_archive_certificate_id'])
+                ->with('success', 'Death record created successfully from archive certificate.');
         }
 
         return redirect()->route('death-records.index')

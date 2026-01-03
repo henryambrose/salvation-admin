@@ -39,12 +39,12 @@ class MassSchedule extends Model
 
     public function createdBy()
     {
-        return $this->belongsTo(\App\Models\User::class, 'created_by');
+        return $this->belongsTo(\Modules\Members\Models\User::class, 'created_by');
     }
 
     public function updatedBy()
     {
-        return $this->belongsTo(\App\Models\User::class, 'updated_by');
+        return $this->belongsTo(\Modules\Members\Models\User::class, 'updated_by');
     }
 
     // Helper methods

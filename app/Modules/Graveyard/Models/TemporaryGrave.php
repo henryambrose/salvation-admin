@@ -7,7 +7,7 @@ use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\User;
+use Modules\Members\Models\User;
 use Modules\Members\Models\Member;
 use Modules\Graveyard\Models\GraveCategories;
 use Carbon\Carbon;

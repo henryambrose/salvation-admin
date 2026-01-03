@@ -19,6 +19,7 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Read
         Route::get('certificates/{birthArchive}', [BirthArchiveCertificateController::class, 'show'])->name('certificates.show');
+        Route::get('certificates/{birthArchive}/baptism', [BirthArchiveCertificateController::class, 'viewWithBaptism'])->name('certificates.baptism');
 
         // Update
         Route::get('certificates/{birthArchive}/edit', [BirthArchiveCertificateController::class, 'edit'])->name('certificates.edit');
@@ -54,6 +55,7 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Read
         Route::get('certificates/{marriageArchive}', [MarriageArchiveCertificateController::class, 'show'])->name('certificates.show');
+        Route::get('certificates/{marriageArchive}/marriage', [MarriageArchiveCertificateController::class, 'viewWithMarriage'])->name('certificates.marriage');
 
         // Update
         Route::get('certificates/{marriageArchive}/edit', [MarriageArchiveCertificateController::class, 'edit'])->name('certificates.edit');
@@ -89,6 +91,7 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Read
         Route::get('certificates/{deathArchive}', [DeathArchiveCertificateController::class, 'show'])->name('certificates.show');
+        Route::get('certificates/{deathArchive}/death', [DeathArchiveCertificateController::class, 'viewWithDeath'])->name('certificates.death');
 
         // Update
         Route::get('certificates/{deathArchive}/edit', [DeathArchiveCertificateController::class, 'edit'])->name('certificates.edit');

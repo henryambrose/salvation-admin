@@ -2,7 +2,7 @@
 
 namespace Modules\Members\Policies;
 
-use App\Models\User;
+use Modules\Members\Models\User;
 use Modules\Members\Models\CertificateType;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Members\Http\Requests\StoreMarriageArchiveCertificateRequest;
 use Modules\Members\Http\Requests\UpdateMarriageArchiveCertificateRequest;
 use Modules\Members\Models\MarriageArchiveCertificate;
+use Modules\Members\Models\Parish;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -51,6 +52,9 @@ class MarriageArchiveCertificateController extends Controller
         $sortField = $request->input('sort', 'created_at');
         $sortDirection = $request->input('direction', 'desc');
         $query->orderBy($sortField, $sortDirection);
+
+        // Eager load marriage record relationship for status indicators
+        $query->with('marriageRecord:id,marriage_archive_certificate_id');
 
         // Pagination
         $perPage = $request->input('perPage', 10);
@@ -129,6 +133,36 @@ class MarriageArchiveCertificateController extends Controller
         return Inertia::render('archive/marriage/Show', [
             'certificate' => $marriageArchive->load(['creator', 'updater']),
         ]);
+    }
+
+    /**
+     * View archive certificate with marriage record integration
+     * Shows create form if no marriage record exists, otherwise shows marriage details
+     */
+    public function viewWithMarriage(MarriageArchiveCertificate $marriageArchive)
+    {
+        $this->authorize('view', $marriageArchive);
+
+        // Load the marriage record relationship
+        $marriageArchive->load(['marriageRecord', 'creator', 'updater']);
+
+        // Determine mode based on whether marriage record exists
+        $mode = $marriageArchive->marriageRecord ? 'view' : 'create';
+
+        // Prepare data based on mode
+        $data = [
+            'certificate' => $marriageArchive,
+            'marriageRecord' => $marriageArchive->marriageRecord,
+            'mode' => $mode,
+        ];
+
+        // If in create mode, load parishes for the dropdown
+        if ($mode === 'create') {
+            $data['parishes'] = Parish::orderBy('name')
+                ->get(['id', 'name']);
+        }
+
+        return Inertia::render('archive/marriage/MarriageView', $data);
     }
 
     /**

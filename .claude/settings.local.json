@@ -32,7 +32,8 @@
       "Bash(curl:*)",
       "Bash(php artisan migrate:*)",
       "Bash(mv:*)",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resourcesjsPagesarchivedeath)"
     ]
   }
 }

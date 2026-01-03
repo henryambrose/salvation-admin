@@ -12,6 +12,7 @@ class MarriageRecord extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'marriage_archive_certificate_id',
         'marriage_date',
         'marriage_reg_no',
         'parish_of_marriage',
@@ -81,6 +82,14 @@ class MarriageRecord extends Model
     public function marriageParish(): BelongsTo
     {
         return $this->belongsTo(Parish::class, 'marriage_parish_id');
+    }
+
+    /**
+     * Get the marriage archive certificate this marriage record was created from
+     */
+    public function marriageArchiveCertificate(): BelongsTo
+    {
+        return $this->belongsTo(MarriageArchiveCertificate::class, 'marriage_archive_certificate_id');
     }
 
     /**

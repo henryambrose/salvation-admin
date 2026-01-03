@@ -60,6 +60,7 @@ class MarriageRecordController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'marriage_archive_certificate_id' => 'nullable|exists:marriage_archive_certificates,id',
             'marriage_date' => 'nullable|date',
             'marriage_reg_no' => 'nullable|string|max:255',
             'parish_of_marriage' => 'nullable|string',
@@ -105,6 +106,12 @@ class MarriageRecordController extends Controller
         if ($marriageRecord->bride_member_id) {
             Member::where('id', $marriageRecord->bride_member_id)
                   ->update(['marriagerecord_id' => $marriageRecord->id]);
+        }
+
+        // If created from archive certificate, redirect to the unified view
+        if ($validated['marriage_archive_certificate_id'] ?? null) {
+            return redirect()->route('archive.marriage.certificates.marriage', $validated['marriage_archive_certificate_id'])
+                ->with('success', 'Marriage record created successfully from archive certificate.');
         }
 
         return redirect()->route('marriage-records.index')
