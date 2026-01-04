@@ -70,7 +70,7 @@ interface Certificate {
   birth_month: number
   birth_day: number
   formatted_date?: string
-  file_url: string
+  file_url: string | null
   notes?: string
   created_at: string
   creator?: User
@@ -209,12 +209,16 @@ function togglePdf() {
         </div>
 
         <div v-if="mode === 'view'" class="flex gap-2">
-          <a :href="certificate.file_url" target="_blank">
+          <a v-if="certificate.file_url" :href="certificate.file_url" target="_blank">
             <Button variant="outline">
               <Download class="mr-2 size-4" />
               Download Archive PDF
             </Button>
           </a>
+          <Button v-else variant="outline" disabled>
+            <Download class="mr-2 size-4" />
+            No PDF Available
+          </Button>
           <a v-if="baptismRecord" :href="route('baptism-records.download-pdf', baptismRecord.id)" target="_blank">
             <Button>
               <Download class="mr-2 size-4" />
@@ -240,12 +244,20 @@ function togglePdf() {
               <CardDescription>Reference document - {{ certificate.full_name }}</CardDescription>
             </CardHeader>
             <CardContent class="h-[calc(100%-5rem)]">
-              <div class="h-full w-full overflow-hidden rounded-lg border bg-muted">
+              <div v-if="certificate.file_url" class="h-full w-full overflow-hidden rounded-lg border bg-muted">
                 <iframe
                   :src="certificate.file_url"
                   class="h-full w-full"
                   title="Certificate PDF Viewer"
                 />
+              </div>
+              <div v-else class="h-full w-full flex items-center justify-center rounded-lg border bg-muted">
+                <div class="text-center p-8">
+                  <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
+                  <p class="text-sm text-muted-foreground">
+                    The certificate PDF has not been uploaded yet.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -547,9 +559,12 @@ function togglePdf() {
               </div>
               <div>
                 <div class="text-sm font-medium text-muted-foreground">PDF Document</div>
-                <a :href="certificate.file_url" target="_blank" class="text-base text-primary hover:underline">
+                <a v-if="certificate.file_url" :href="certificate.file_url" target="_blank" class="text-base text-primary hover:underline">
                   View Original PDF
                 </a>
+                <span v-else class="text-base text-muted-foreground">
+                  Not available
+                </span>
               </div>
             </div>
           </CardContent>

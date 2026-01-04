@@ -146,6 +146,11 @@ class DeathArchiveCertificateController extends Controller
         // Load the death record relationship
         $deathArchive->load(['deathRecord', 'creator', 'updater']);
 
+        // Check if PDF file exists and show warning if not
+        if (!$deathArchive->fileExists()) {
+            session()->flash('warning', 'Certificate PDF file has not been uploaded yet.');
+        }
+
         // Determine mode based on whether death record exists
         $mode = $deathArchive->deathRecord ? 'view' : 'create';
 

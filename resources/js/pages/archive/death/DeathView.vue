@@ -68,7 +68,7 @@ interface Certificate {
   death_month: number
   death_day: number
   formatted_date?: string
-  file_url: string
+  file_url: string | null
   notes?: string
   created_at: string
   creator?: User
@@ -222,10 +222,19 @@ function submitForm() {
             </CardHeader>
             <CardContent v-if="showPdf" class="flex-1 p-0 min-h-0">
               <iframe
+                v-if="certificate.file_url"
                 :src="certificate.file_url"
                 class="w-full h-full"
                 frameborder="0"
               />
+              <div v-else class="h-full w-full flex items-center justify-center">
+                <div class="text-center p-8">
+                  <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
+                  <p class="text-sm text-muted-foreground">
+                    The certificate PDF has not been uploaded yet.
+                  </p>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -433,12 +442,16 @@ function submitForm() {
                 <CardDescription>{{ certificate.full_name }}</CardDescription>
               </div>
               <div class="flex gap-2">
-                <a :href="certificate.file_url" target="_blank">
+                <a v-if="certificate.file_url" :href="certificate.file_url" target="_blank">
                   <Button variant="outline" size="sm">
                     <Download class="mr-2 size-4" />
                     Download PDF
                   </Button>
                 </a>
+                <Button v-else variant="outline" size="sm" disabled>
+                  <Download class="mr-2 size-4" />
+                  No PDF Available
+                </Button>
               </div>
             </div>
           </CardHeader>

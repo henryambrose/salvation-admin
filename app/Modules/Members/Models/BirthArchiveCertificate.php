@@ -38,7 +38,7 @@ class BirthArchiveCertificate extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['full_name', 'file_url', 'formatted_date'];
+    protected $appends = ['full_name', 'file_url', 'formatted_date', 'has_file'];
 
     /**
      * Get the user who created this record
@@ -102,9 +102,21 @@ class BirthArchiveCertificate extends Model
     /**
      * Get download route URL
      */
-    public function getFileUrlAttribute(): string
+    public function getFileUrlAttribute(): ?string
     {
+        // Only return URL if file exists
+        if (!$this->fileExists()) {
+            return null;
+        }
         return route('archive.birth.download', $this->id);
+    }
+
+    /**
+     * Check if file has been uploaded
+     */
+    public function getHasFileAttribute(): bool
+    {
+        return $this->fileExists();
     }
 
     /**

@@ -33,7 +33,8 @@
       "Bash(php artisan migrate:*)",
       "Bash(mv:*)",
       "Bash(powershell:*)",
-      "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resourcesjsPagesarchivedeath)"
+      "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resourcesjsPagesarchivedeath)",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\"\" 2>&1 || echo \"Directory does not exist \")"
     ]
   }
 }

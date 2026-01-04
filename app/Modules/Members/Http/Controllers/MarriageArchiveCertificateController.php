@@ -146,6 +146,11 @@ class MarriageArchiveCertificateController extends Controller
         // Load the marriage record relationship
         $marriageArchive->load(['marriageRecord', 'creator', 'updater']);
 
+        // Check if PDF file exists and show warning if not
+        if (!$marriageArchive->fileExists()) {
+            session()->flash('warning', 'Certificate PDF file has not been uploaded yet.');
+        }
+
         // Determine mode based on whether marriage record exists
         $mode = $marriageArchive->marriageRecord ? 'view' : 'create';
 

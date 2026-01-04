@@ -146,6 +146,11 @@ class BirthArchiveCertificateController extends Controller
         // Load the baptism record relationship
         $birthArchive->load(['baptismRecord', 'creator', 'updater']);
 
+        // Check if PDF file exists and show warning if not
+        if (!$birthArchive->fileExists()) {
+            session()->flash('warning', 'Certificate PDF file has not been uploaded yet.');
+        }
+
         // Determine mode based on whether baptism record exists
         $mode = $birthArchive->baptismRecord ? 'view' : 'create';
 

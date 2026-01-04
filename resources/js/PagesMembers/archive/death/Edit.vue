@@ -28,6 +28,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const form = useForm({
+  _method: 'PUT',
   file: null as File | null,
   reg_year: props.certificate.reg_year,
   reg_no: props.certificate.reg_no,
@@ -52,8 +53,10 @@ function handleFileChange(event: Event) {
 }
 
 function submit() {
-  form.put(route('archive.death.certificates.update', props.certificate.id), {
+  // Use POST with _method spoofing for file upload compatibility
+  form.post(route('archive.death.certificates.update', props.certificate.id), {
     preserveScroll: true,
+    forceFormData: true,
   });
 }
 </script>
@@ -74,7 +77,7 @@ function submit() {
           <CardContent class="space-y-6">
             <!-- File Upload (Optional on Edit) -->
             <div class="space-y-2">
-              <Label for="file">Certificate File (Optional)</Label>
+              <Label for="file">Certificate File</Label>
               <div class="flex gap-2">
                 <input
                   ref="fileInput"

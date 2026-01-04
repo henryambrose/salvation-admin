@@ -135,45 +135,34 @@ function changePage(page: number) {
 
     <!-- Filters -->
     <div class="mb-6 rounded-lg border bg-white p-4 shadow-sm">
-      <div class="grid grid-cols-1 gap-4 md:grid-cols-5">
-        <div class="md:col-span-2">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Filters</h3>
+      <div class="grid grid-cols-1 gap-3 md:grid-cols-12 items-end">
+        <div class="md:col-span-3">
           <Input
             v-model="search"
-            placeholder="Search by name, reg no, notes..."
+            placeholder="Name, reg no, notes..."
             class="w-full"
           />
         </div>
-        <div>
+        <div class="md:col-span-2">
           <Input
             v-model="year"
             type="number"
-            placeholder="Year"
+            placeholder="Marriage Year"
             min="1800"
             :max="new Date().getFullYear() + 1"
           />
         </div>
-        <div>
-          <select
-            v-model="month"
-            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value="">All Months</option>
-            <option v-for="m in 12" :key="m" :value="m">
-              {{ new Date(2000, m - 1).toLocaleString('default', { month: 'long' }) }}
-            </option>
-          </select>
+        <div class="md:col-span-2">
+          <Input v-model="month" type="number" placeholder="Month (1-12)" min="1" max="12" />
         </div>
-        <div>
+        <div class="md:col-span-1">
           <Input v-model="day" type="number" placeholder="Day" min="1" max="31" />
         </div>
-      </div>
-
-      <div class="mt-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-gray-700">Per Page:</label>
+        <div class="md:col-span-1">
           <select
             v-model="perPage"
-            class="rounded-md border border-input bg-background px-3 py-1 text-sm"
+            class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
           >
             <option :value="10">10</option>
             <option :value="25">25</option>
@@ -181,11 +170,20 @@ function changePage(page: number) {
             <option :value="100">100</option>
           </select>
         </div>
-        <div class="flex items-center gap-4">
-          <label class="flex cursor-pointer items-center gap-2 select-none">
-            <Checkbox v-model:checked="isArchived" class="switch-checkbox" />
+        <div class="md:col-span-2">
+          <label class="flex cursor-pointer items-center gap-2 select-none h-10 px-3 py-2 border rounded-md hover:bg-gray-50">
+            <Checkbox v-model:checked="isArchived" />
             <span class="text-sm font-medium">Show Archived</span>
           </label>
+        </div>
+        <div class="md:col-span-1">
+          <Button
+            variant="outline"
+            class="w-full h-10"
+            @click="search = ''; year = ''; month = ''; day = ''; perPage = 10; isArchived = false"
+          >
+            Clear
+          </Button>
         </div>
       </div>
     </div>
@@ -342,44 +340,3 @@ function changePage(page: number) {
   </AppLayout>
 </template>
 
-<style scoped>
-.switch-checkbox {
-  width: 2.5rem;
-  height: 1.25rem;
-  border-radius: 9999px;
-  background: #ef4444; /* Tailwind red-500 */
-  box-shadow:
-    0 2px 8px 0 rgba(239, 68, 68, 0.25),
-    0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
-  position: relative;
-  transition:
-    background 0.2s,
-    box-shadow 0.2s;
-}
-.switch-checkbox[data-state='checked'] {
-  background: #2563eb;
-}
-.switch-checkbox input[type='checkbox'] {
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  position: absolute;
-  left: 0;
-  top: 0;
-  margin: 0;
-  cursor: pointer;
-}
-.switch-checkbox [data-slot='checkbox-indicator'] {
-  position: absolute;
-  left: 0.125rem;
-  top: 0.125rem;
-  width: 1rem;
-  height: 1rem;
-  border-radius: 9999px;
-  background: #fff;
-  transition: left 0.2s;
-}
-.switch-checkbox[data-state='checked'] [data-slot='checkbox-indicator'] {
-  left: 1.375rem;
-}
-</style>

@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Eye, Plus, Search, CheckCircle2, Clock } from 'lucide-vue-next'
+import { Eye, Plus, Search, CheckCircle2, Clock, Edit } from 'lucide-vue-next'
 
 interface BaptismRecord {
   id: number
@@ -159,91 +159,80 @@ function clearFilters() {
       <!-- Filters Card -->
       <Card class="mb-6">
         <CardHeader>
-          <CardTitle>Filters</CardTitle>
-          <CardDescription>Search and filter birth archive certificates</CardDescription>
+          <CardTitle class="text-base">Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <!-- Search -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Search</label>
-              <div class="relative">
-                <Search class="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div class="flex gap-3 items-center justify-between">
+            <div class="flex gap-3 items-center flex-1">
+              <!-- Search -->
+              <div class="w-64">
                 <Input
                   v-model="search"
                   placeholder="Name, reg no, notes..."
-                  class="pl-9"
+                />
+              </div>
+
+              <!-- Year -->
+              <div class="w-32">
+                <Input
+                  v-model="year"
+                  type="number"
+                  placeholder="Birth Year"
+                />
+              </div>
+
+              <!-- Month -->
+              <div class="w-32">
+                <Input
+                  v-model="month"
+                  type="number"
+                  placeholder="Month (1-12)"
+                  min="1"
+                  max="12"
+                />
+              </div>
+
+              <!-- Day -->
+              <div class="w-24">
+                <Input
+                  v-model="day"
+                  type="number"
+                  placeholder="Day"
+                  min="1"
+                  max="31"
                 />
               </div>
             </div>
 
-            <!-- Year -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Birth Year</label>
-              <Input
-                v-model="year"
-                type="number"
-                placeholder="e.g., 1990"
-              />
-            </div>
-
-            <!-- Month -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Birth Month</label>
-              <Input
-                v-model="month"
-                type="number"
-                placeholder="1-12"
-                min="1"
-                max="12"
-              />
-            </div>
-
-            <!-- Day -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Birth Day</label>
-              <Input
-                v-model="day"
-                type="number"
-                placeholder="1-31"
-                min="1"
-                max="31"
-              />
-            </div>
-
-            <!-- Per Page -->
-            <div class="space-y-2">
-              <label class="text-sm font-medium">Per Page</label>
-              <Select v-model="perPage">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="10">10</SelectItem>
-                  <SelectItem value="25">25</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <!-- Show Archived -->
-            <div class="flex items-end space-x-2">
-              <label class="flex cursor-pointer items-center space-x-2">
-                <input
-                  v-model="isArchived"
-                  type="checkbox"
-                  class="size-4 rounded border-gray-300"
-                />
+            <div class="flex gap-3 items-center">
+              <!-- Show Archived -->
+              <div>
+              <label class="flex cursor-pointer items-center gap-2 h-10">
+                <button
+                  type="button"
+                  @click="isArchived = !isArchived"
+                  :class="[
+                    'relative inline-flex h-6 w-11 items-center rounded-full transition-colors',
+                    isArchived ? 'bg-blue-600' : 'bg-red-500'
+                  ]"
+                >
+                  <span
+                    :class="[
+                      'inline-block h-4 w-4 transform rounded-full bg-white transition-transform',
+                      isArchived ? 'translate-x-6' : 'translate-x-1'
+                    ]"
+                  />
+                </button>
                 <span class="text-sm font-medium">Show Archived</span>
               </label>
-            </div>
+              </div>
 
-            <!-- Clear Filters -->
-            <div class="flex items-end">
-              <Button variant="outline" @click="clearFilters" class="w-full">
-                Clear Filters
-              </Button>
+              <!-- Clear Filters -->
+              <div>
+                <Button variant="outline" @click="clearFilters">
+                  Clear
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -301,12 +290,19 @@ function clearFilters() {
                     </Badge>
                   </TableCell>
                   <TableCell class="text-right">
-                    <Link :href="route('archive.birth.certificates.baptism', cert.id)">
-                      <Button variant="outline" size="sm">
-                        <Eye class="mr-2 size-4" />
-                        View
-                      </Button>
-                    </Link>
+                    <div class="flex justify-end gap-2">
+                      <Link :href="route('archive.birth.certificates.edit', cert.id)">
+                        <Button variant="ghost" size="sm" title="Edit Certificate">
+                          <Edit class="size-4" />
+                        </Button>
+                      </Link>
+                      <Link :href="route('archive.birth.certificates.baptism', cert.id)">
+                        <Button variant="outline" size="sm">
+                          <Eye class="mr-2 size-4" />
+                          View
+                        </Button>
+                      </Link>
+                    </div>
                   </TableCell>
                 </TableRow>
               </TableBody>
@@ -314,22 +310,46 @@ function clearFilters() {
           </div>
 
           <!-- Pagination -->
-          <div v-if="certificates.last_page > 1" class="mt-4 flex items-center justify-between">
-            <div class="text-sm text-muted-foreground">
-              Showing {{ ((certificates.current_page - 1) * certificates.per_page) + 1 }}
-              to {{ Math.min(certificates.current_page * certificates.per_page, certificates.total) }}
-              of {{ certificates.total }} results
+          <div v-if="certificates.total > 0" class="mt-4 flex items-center justify-between px-4 py-3 border-t">
+            <div class="text-sm text-gray-700">
+              Showing {{ certificates.total }} total certificate{{ certificates.total !== 1 ? 's' : '' }}
             </div>
-            <div class="flex gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-700">Page</span>
+              <select
+                :value="certificates.current_page"
+                @change="router.get(props.fetchUrl, {
+                  search: search,
+                  year,
+                  month,
+                  day,
+                  perPage,
+                  isArchived: isArchived ? 'true' : undefined,
+                  page: ($event.target as HTMLSelectElement).value
+                }, { preserveState: true, preserveScroll: true })"
+                class="rounded-md border border-gray-300 px-2 py-1 text-sm"
+              >
+                <option v-for="page in certificates.last_page" :key="page" :value="page">
+                  {{ page }}
+                </option>
+              </select>
+              <span class="text-sm text-gray-700">of {{ certificates.last_page }}</span>
               <Button
-                v-for="link in certificates.links"
-                :key="link.label"
-                :variant="link.active ? 'default' : 'outline'"
+                variant="outline"
                 size="sm"
-                :disabled="!link.url"
-                @click="link.url && router.visit(link.url)"
-                v-html="link.label"
-              />
+                :disabled="certificates.current_page === certificates.last_page"
+                @click="router.get(props.fetchUrl, {
+                  search,
+                  year,
+                  month,
+                  day,
+                  perPage,
+                  isArchived: isArchived ? 'true' : undefined,
+                  page: certificates.current_page + 1
+                }, { preserveState: true, preserveScroll: true })"
+              >
+                Next →
+              </Button>
             </div>
           </div>
         </CardContent>

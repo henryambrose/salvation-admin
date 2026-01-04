@@ -4,22 +4,36 @@ import { ref, watch } from 'vue';
 
 const page = usePage();
 
-const flashMessage = ref(page.props.flash?.success || page.props.flash?.error || null);
+const flashMessage = ref(
+  page.props.flash?.success ||
+  page.props.flash?.error ||
+  page.props.flash?.warning ||
+  page.props.flash?.info ||
+  null
+);
 const receiptUrl = ref(page.props.flash?.receipt_url || null);
 
-// Optional: determine message type
+// Determine message type
 const flashType = ref(
-  page.props.flash?.success ? 'success' : page.props.flash?.error ? 'error' : null
+  page.props.flash?.success ? 'success' :
+  page.props.flash?.error ? 'error' :
+  page.props.flash?.warning ? 'warning' :
+  page.props.flash?.info ? 'info' :
+  null
 );
 
 // Watch for flash updates
 watch(
   () => page.props.flash,
   () => {
-    if (page.props.flash?.success || page.props.flash?.error) {
-      flashType.value = page.props.flash.success ? 'success' : 'error';
-      flashMessage.value = page.props.flash.success || page.props.flash.error;
-      receiptUrl.value = page.props.flash.receipt_url || null;
+    const flash = page.props.flash;
+    if (flash?.success || flash?.error || flash?.warning || flash?.info) {
+      flashType.value = flash.success ? 'success' :
+                       flash.error ? 'error' :
+                       flash.warning ? 'warning' :
+                       flash.info ? 'info' : null;
+      flashMessage.value = flash.success || flash.error || flash.warning || flash.info;
+      receiptUrl.value = flash.receipt_url || null;
 
       // Only auto-dismiss if there's no receipt URL
       if (!receiptUrl.value) {
@@ -59,7 +73,11 @@ const downloadReceipt = () => {
             v-if="flashMessage"
             :class="[
                 'fixed top-20 left-1/2 transform -translate-x-1/2 px-4 py-3 rounded-lg shadow-lg z-[9999] min-w-[300px] max-w-[600px]',
-                flashType === 'success' ? 'bg-green-500 text-white border border-green-600' : 'bg-red-500 text-white border border-red-600'
+                flashType === 'success' ? 'bg-green-500 text-white border border-green-600' :
+                flashType === 'error' ? 'bg-red-500 text-white border border-red-600' :
+                flashType === 'warning' ? 'bg-yellow-500 text-white border border-yellow-600' :
+                flashType === 'info' ? 'bg-blue-500 text-white border border-blue-600' :
+                'bg-gray-500 text-white border border-gray-600'
             ]"
             >
             <div class="flex items-center space-x-2">
