@@ -5,7 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Download, Upload, Eye, Edit, Trash2, RotateCcw } from 'lucide-vue-next';
+import { Download, Eye, Edit, Trash2, RotateCcw } from 'lucide-vue-next';
 
 interface Certificate {
   id: number;
@@ -122,11 +122,7 @@ function changePage(page: number) {
         <h1 class="text-2xl font-bold text-gray-900">Birth Archive Certificates</h1>
         <p class="mt-1 text-gray-600">Manage scanned historical birth certificates</p>
       </div>
-      <div class="flex gap-2">
-        <Button variant="outline" @click="router.visit(route('archive.birth.bulk-import'))">
-          <Upload class="mr-2 h-4 w-4" />
-          Bulk Import
-        </Button>
+      <div>
         <Button @click="router.visit(route('archive.birth.certificates.create'))">
           Add Certificate
         </Button>

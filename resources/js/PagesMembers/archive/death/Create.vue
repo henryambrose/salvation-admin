@@ -12,9 +12,9 @@ const form = useForm({
   file: null as File | null,
   reg_year: new Date().getFullYear().toString(),
   reg_no: '',
-  birth_year: new Date().getFullYear(),
-  birth_month: 1,
-  birth_day: 1,
+  death_year: new Date().getFullYear(),
+  death_month: 1,
+  death_day: 1,
   first_name: '',
   middle_name: '',
   last_name: '',
@@ -104,45 +104,45 @@ function submit() {
           <!-- Death Date -->
           <div class="grid grid-cols-3 gap-4">
             <div class="space-y-2">
-              <Label for="birth_year">Death Year *</Label>
+              <Label for="death_year">Death Year *</Label>
               <Input
-                id="birth_year"
-                v-model.number="form.birth_year"
+                id="death_year"
+                v-model.number="form.death_year"
                 type="number"
                 min="1800"
                 :max="new Date().getFullYear() + 1"
                 required
               />
-              <p v-if="form.errors.birth_year" class="text-sm text-red-600">
-                {{ form.errors.birth_year }}
+              <p v-if="form.errors.death_year" class="text-sm text-red-600">
+                {{ form.errors.death_year }}
               </p>
             </div>
             <div class="space-y-2">
-              <Label for="birth_month">Month *</Label>
+              <Label for="death_month">Month *</Label>
               <Input
-                id="birth_month"
-                v-model.number="form.birth_month"
+                id="death_month"
+                v-model.number="form.death_month"
                 type="number"
                 min="1"
                 max="12"
                 required
               />
-              <p v-if="form.errors.birth_month" class="text-sm text-red-600">
-                {{ form.errors.birth_month }}
+              <p v-if="form.errors.death_month" class="text-sm text-red-600">
+                {{ form.errors.death_month }}
               </p>
             </div>
             <div class="space-y-2">
-              <Label for="birth_day">Day *</Label>
+              <Label for="death_day">Day *</Label>
               <Input
-                id="birth_day"
-                v-model.number="form.birth_day"
+                id="death_day"
+                v-model.number="form.death_day"
                 type="number"
                 min="1"
                 max="31"
                 required
               />
-              <p v-if="form.errors.birth_day" class="text-sm text-red-600">
-                {{ form.errors.birth_day }}
+              <p v-if="form.errors.death_day" class="text-sm text-red-600">
+                {{ form.errors.death_day }}
               </p>
             </div>
           </div>

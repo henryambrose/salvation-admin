@@ -3,7 +3,6 @@
 use Modules\Members\Http\Controllers\BirthArchiveCertificateController;
 use Modules\Members\Http\Controllers\MarriageArchiveCertificateController;
 use Modules\Members\Http\Controllers\DeathArchiveCertificateController;
-use Modules\Members\Http\Controllers\ArchiveCertificateBulkImportController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->prefix('archive')->name('archive.')->group(function () {
@@ -34,14 +33,6 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Download
         Route::get('{birthArchive}/download', [BirthArchiveCertificateController::class, 'download'])->name('download');
-
-        // Bulk import
-        Route::get('bulk-import', [ArchiveCertificateBulkImportController::class, 'create'])
-            ->defaults('type', 'birth')
-            ->name('bulk-import');
-        Route::post('bulk-import', [ArchiveCertificateBulkImportController::class, 'store'])
-            ->defaults('type', 'birth')
-            ->name('bulk-import.store');
     });
 
     // Marriage Archive Certificates
@@ -70,14 +61,6 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Download
         Route::get('{marriageArchive}/download', [MarriageArchiveCertificateController::class, 'download'])->name('download');
-
-        // Bulk import
-        Route::get('bulk-import', [ArchiveCertificateBulkImportController::class, 'create'])
-            ->defaults('type', 'marriage')
-            ->name('bulk-import');
-        Route::post('bulk-import', [ArchiveCertificateBulkImportController::class, 'store'])
-            ->defaults('type', 'marriage')
-            ->name('bulk-import.store');
     });
 
     // Death Archive Certificates
@@ -106,13 +89,5 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Download
         Route::get('{deathArchive}/download', [DeathArchiveCertificateController::class, 'download'])->name('download');
-
-        // Bulk import
-        Route::get('bulk-import', [ArchiveCertificateBulkImportController::class, 'create'])
-            ->defaults('type', 'death')
-            ->name('bulk-import');
-        Route::post('bulk-import', [ArchiveCertificateBulkImportController::class, 'store'])
-            ->defaults('type', 'death')
-            ->name('bulk-import.store');
     });
 });

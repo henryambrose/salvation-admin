@@ -12,9 +12,9 @@ const form = useForm({
   file: null as File | null,
   reg_year: new Date().getFullYear().toString(),
   reg_no: '',
-  birth_year: new Date().getFullYear(),
-  birth_month: 1,
-  birth_day: 1,
+  marriage_year: new Date().getFullYear(),
+  marriage_month: 1,
+  marriage_day: 1,
   first_name: '',
   middle_name: '',
   last_name: '',
@@ -104,45 +104,45 @@ function submit() {
           <!-- Marriage Date -->
           <div class="grid grid-cols-3 gap-4">
             <div class="space-y-2">
-              <Label for="birth_year">Marriage Year *</Label>
+              <Label for="marriage_year">Marriage Year *</Label>
               <Input
-                id="birth_year"
-                v-model.number="form.birth_year"
+                id="marriage_year"
+                v-model.number="form.marriage_year"
                 type="number"
                 min="1800"
                 :max="new Date().getFullYear() + 1"
                 required
               />
-              <p v-if="form.errors.birth_year" class="text-sm text-red-600">
-                {{ form.errors.birth_year }}
+              <p v-if="form.errors.marriage_year" class="text-sm text-red-600">
+                {{ form.errors.marriage_year }}
               </p>
             </div>
             <div class="space-y-2">
-              <Label for="birth_month">Month *</Label>
+              <Label for="marriage_month">Month *</Label>
               <Input
-                id="birth_month"
-                v-model.number="form.birth_month"
+                id="marriage_month"
+                v-model.number="form.marriage_month"
                 type="number"
                 min="1"
                 max="12"
                 required
               />
-              <p v-if="form.errors.birth_month" class="text-sm text-red-600">
-                {{ form.errors.birth_month }}
+              <p v-if="form.errors.marriage_month" class="text-sm text-red-600">
+                {{ form.errors.marriage_month }}
               </p>
             </div>
             <div class="space-y-2">
-              <Label for="birth_day">Day *</Label>
+              <Label for="marriage_day">Day *</Label>
               <Input
-                id="birth_day"
-                v-model.number="form.birth_day"
+                id="marriage_day"
+                v-model.number="form.marriage_day"
                 type="number"
                 min="1"
                 max="31"
                 required
               />
-              <p v-if="form.errors.birth_day" class="text-sm text-red-600">
-                {{ form.errors.birth_day }}
+              <p v-if="form.errors.marriage_day" class="text-sm text-red-600">
+                {{ form.errors.marriage_day }}
               </p>
             </div>
           </div>

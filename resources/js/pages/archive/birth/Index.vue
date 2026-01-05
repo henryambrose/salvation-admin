@@ -256,11 +256,11 @@ function clearFilters() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Full Name</TableHead>
-                  <TableHead>Birth Date</TableHead>
-                  <TableHead>Reg Year/No</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead class="text-right">Actions</TableHead>
+                  <TableHead style="font-weight: bold; color: #000;">Full Name</TableHead>
+                  <TableHead style="font-weight: bold; color: #000;">Birth Date</TableHead>
+                  <TableHead style="font-weight: bold; color: #000;">Reg Year/No</TableHead>
+                  <TableHead style="font-weight: bold; color: #000;">Status</TableHead>
+                  <TableHead class="text-right" style="font-weight: bold; color: #000;">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
