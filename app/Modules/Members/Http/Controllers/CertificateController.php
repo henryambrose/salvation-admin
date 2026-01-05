@@ -711,9 +711,9 @@ class CertificateController extends Controller
         return redirect()->back()->with('error', 'Certificate not found.');
       }
 
-      $originalCertificate->load(['member', 'template', 'certificateType']);
+      $originalCertificate->load(['member', 'template']);
 
-      if (!$originalCertificate->certificate_type_id || !$originalCertificate->certificateType) {
+      if (!$originalCertificate->certificate_type_id) {
         return redirect()->back()->with('error', 'Cannot reprint certificate: original certificate type is missing.');
       }
 
@@ -721,8 +721,14 @@ class CertificateController extends Controller
         return redirect()->back()->with('error', 'Cannot reprint certificate: original certificate member is missing.');
       }
 
+      // Load certificate type separately to avoid accessor conflict
+      $certificateType = \Modules\Members\Models\CertificateType::find($originalCertificate->certificate_type_id);
+      if (!$certificateType) {
+        return redirect()->back()->with('error', 'Certificate type not found.');
+      }
+
       $certificateNumber = CertificateRecord::generateCertificateNumber(
-        $originalCertificate->certificateType->code,
+        $certificateType->code,
         $originalCertificate->member_id
       );
 
