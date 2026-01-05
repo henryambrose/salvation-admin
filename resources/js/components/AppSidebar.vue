@@ -129,12 +129,6 @@ const navigationGroups = [
         show: can('create-certificate'),
       },
       {
-        title: 'Templates',
-        href: '/certificates/templates',
-        icon: FileText,
-        show: can('read-certificate-template'),
-      },
-      {
         title: 'Baptism Records',
         href: '/baptism-records',
         icon: Baby,

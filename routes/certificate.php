@@ -21,15 +21,6 @@ Route::middleware(['auth'])->prefix('certificates')->name('certificates.')->grou
   Route::post('/', [CertificateController::class, 'store'])->name('store');
   Route::post('/preview', [CertificateController::class, 'preview'])->name('preview');
 
-  // Template management routes
-  Route::get('/templates', [CertificateController::class, 'templateIndex'])->name('templates.index');
-  Route::post('/templates', [CertificateController::class, 'templateStore'])->name('templates.store');
-  Route::get('/templates/{template}', [CertificateController::class, 'templateShow'])->whereNumber('template')->name('templates.show');
-  Route::put('/templates/{template}', [CertificateController::class, 'templateUpdate'])->whereNumber('template')->name('templates.update');
-  Route::delete('/templates/{template}', [CertificateController::class, 'templateDestroy'])->whereNumber('template')->name('templates.destroy');
-  Route::post('/templates/{template}/set-default', [CertificateController::class, 'setTemplateAsDefault'])->whereNumber('template')->name('templates.set-default');
-  Route::get('/templates/{template}/preview', [CertificateController::class, 'templatePreview'])->whereNumber('template')->name('templates.preview');
-
   // IMPORTANT: keep these last, and constrain the param to avoid conflicts:
   Route::get('/{certificate}', [CertificateController::class, 'show'])->whereNumber('certificate')->name('show');
   Route::get('/{certificate}/download', [CertificateController::class, 'download'])->whereNumber('certificate')->name('download');

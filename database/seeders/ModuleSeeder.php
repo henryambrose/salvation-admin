@@ -323,12 +323,6 @@ class ModuleSeeder extends Seeder
                 'icon' => 'Tags',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],
-            [
-                'name' => 'Certificate Templates',
-                'slug' => 'certificate-template',
-                'icon' => 'FileTemplate',
-                'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
-            ],
 
             // Special Pages
             [
@@ -369,7 +363,6 @@ class ModuleSeeder extends Seeder
         // Create additional certificate-specific permissions
         $additionalCertificatePermissions = [
             'view-certificate-history',
-            'manage-certificate-templates',
         ];
 
         foreach ($additionalCertificatePermissions as $permission) {

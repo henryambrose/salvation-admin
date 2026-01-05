@@ -211,18 +211,6 @@ class MembersPermissionsSeeder extends Seeder
             'list-certificate-type',
             'restore-certificate-type',
 
-            // Certificate Templates
-            'create-certificate-template',
-            'read-certificate-template',
-            'update-certificate-template',
-            'delete-certificate-template',
-            'list-certificate-template',
-            'restore-certificate-template',
-
-            'manage-certificate-templates',
-            'set-template-default',
-            'preview-certificate-template',
-
             // Birth Archive Certificates
             'create-birth-archive',
             'read-birth-archive',
