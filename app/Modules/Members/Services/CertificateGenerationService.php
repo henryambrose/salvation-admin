@@ -108,6 +108,22 @@ class CertificateGenerationService
     // Generate PDF using Spatie (Chromium-based - supports modern CSS)
     $pdfBuilder = Pdf::html($html);
 
+    // Set Chrome path if configured (for production servers)
+    $chromePath = config('app.chrome_path');
+    if ($chromePath && file_exists($chromePath)) {
+      $pdfBuilder->setChromePath($chromePath);
+    }
+
+    // Add Chrome arguments for server environments
+    if (config('app.chrome_no_sandbox', false)) {
+      $pdfBuilder->addChromiumArguments([
+        'no-sandbox',
+        'disable-setuid-sandbox',
+        'disable-dev-shm-usage',
+        'disable-gpu',
+      ]);
+    }
+
     // Apply template configuration if available
     if ($certificate->template && $certificate->template->template_config) {
       $config = $certificate->template->template_config;
