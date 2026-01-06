@@ -26,6 +26,11 @@ use Modules\Fund\Http\Controllers\PaymentMethodController;
 Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     // Dashboard
     Route::get('/', function () {
+        // Check permission
+        if (!Auth::user()->can('read-fund-dashboard')) {
+            abort(403, 'You do not have permission to access the Fund dashboard.');
+        }
+
         Log::info('=== FUND ROUTE HIT ===');
         Log::info('User ID: ' . Auth::id());
         Log::info('Is authenticated: ' . (Auth::check() ? 'YES' : 'NO'));

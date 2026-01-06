@@ -16,6 +16,9 @@ class FundPermissionsSeeder extends Seeder
 
         // Define all Fund module permissions
         $fundPermissions = [
+            // Fund Dashboard
+            'read-fund-dashboard',
+
             // Fund Categories
             'create-fund-category',
             'read-fund-category',
