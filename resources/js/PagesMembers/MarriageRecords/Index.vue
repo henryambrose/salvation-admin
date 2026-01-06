@@ -250,20 +250,24 @@ function downloadPdf(id: number) {
                 {{ formatDate(record.marriage_date) }}
               </td>
               <td class="px-4 py-3 text-sm">
-                <template v-if="record.bridegroom_member_id && record.bridegroom">
+                <span v-if="record.bridegroom_member_id && record.bridegroom">
                   {{ record.bridegroom.first_name }} {{ record.bridegroom.last_name }}
-                </template>
-                <template v-else>
+                </span>
+                <span v-else-if="record.bridegroom_name || record.bridegroom_surname" class="italic text-gray-600">
                   {{ record.bridegroom_name }} {{ record.bridegroom_surname }}
-                </template>
+                  <span class="text-xs">(Non-member)</span>
+                </span>
+                <span v-else class="text-gray-400">-</span>
               </td>
               <td class="px-4 py-3 text-sm">
-                <template v-if="record.bride_member_id && record.bride">
+                <span v-if="record.bride_member_id && record.bride">
                   {{ record.bride.first_name }} {{ record.bride.last_name }}
-                </template>
-                <template v-else>
+                </span>
+                <span v-else-if="record.bride_name || record.bride_surname" class="italic text-gray-600">
                   {{ record.bride_name }} {{ record.bride_surname }}
-                </template>
+                  <span class="text-xs">(Non-member)</span>
+                </span>
+                <span v-else class="text-gray-400">-</span>
               </td>
               <td class="px-4 py-3 text-sm">
                 {{ record.first_witness_name || '' }}{{ record.first_witness_name && record.second_witness_name ? ', ' : '' }}{{ record.second_witness_name || '' }}

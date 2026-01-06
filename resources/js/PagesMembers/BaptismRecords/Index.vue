@@ -246,7 +246,14 @@ function downloadPdf(id: number) {
                 </div>
               </td>
               <td class="px-4 py-3 text-sm">
-                {{ record.member?.first_name }} {{ record.member?.last_name }}
+                <span v-if="record.member">
+                  {{ record.member.first_name }} {{ record.member.last_name }}
+                </span>
+                <span v-else-if="record.baptized_name || record.baptized_surname" class="italic text-gray-600">
+                  {{ record.baptized_name }} {{ record.baptized_surname }}
+                  <span class="text-xs">(Non-member)</span>
+                </span>
+                <span v-else class="text-gray-400">-</span>
               </td>
               <td class="px-4 py-3 text-sm">
                 {{ formatDate(record.baptism_date) }}

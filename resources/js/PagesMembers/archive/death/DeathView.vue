@@ -88,17 +88,17 @@ const memberOptions = ref<Array<{id: number, name: string}>>([])
 const selectedMember = ref<any>(null)
 
 const form = useForm({
-  member_id: null as number | null,
+  member_id: undefined as number | undefined,
   death_archive_certificate_id: props.certificate.id,
   death_date: '',
   burial_date: '',
   burial_reg_no: '',
-  burial_parish_id: null as number | null,
+  burial_parish_id: undefined as number | undefined,
   deceased_name: props.certificate.first_name + (props.certificate.middle_name ? ' ' + props.certificate.middle_name : ''),
   deceased_surname: props.certificate.last_name,
   relationship: '',
   residence: '',
-  age: null as number | null,
+  age: undefined as number | undefined,
   nationality: '',
   cause_of_death: '',
   place_of_burial: '',
@@ -138,7 +138,7 @@ async function searchMembers(query: string) {
       ...member
     }))
 
-    if (selectedMember.value && !transformedOptions.find(m => m.id === selectedMember.value.id)) {
+    if (selectedMember.value && !transformedOptions.find((m: {id: number, name: string}) => m.id === selectedMember.value.id)) {
       memberOptions.value = [selectedMember.value, ...transformedOptions]
     } else {
       memberOptions.value = transformedOptions
@@ -411,7 +411,7 @@ function submitForm() {
                   <Textarea
                     id="death_remarks"
                     v-model="form.death_remarks"
-                    rows="3"
+                    :rows="3"
                   />
                 </div>
 

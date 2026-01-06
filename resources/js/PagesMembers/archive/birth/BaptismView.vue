@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import { ref, computed, watch } from 'vue'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue'
-import { ArrowLeft, Download, Edit, Eye, EyeOff, Save, Link as LinkIcon } from 'lucide-vue-next'
+import { ArrowLeft, Download, Edit, Save, Link as LinkIcon } from 'lucide-vue-next'
 
 interface User {
   id: number
@@ -85,19 +85,18 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const showPdf = ref(true)
 const memberOptions = ref<Array<{id: number, name: string}>>([])
 const selectedMember = ref<any>(null)
 
 const form = useForm({
-  member_id: null as number | null,
+  member_id: undefined as number | undefined,
   birth_archive_certificate_id: props.certificate.id,
   baptized_name: props.certificate.first_name + (props.certificate.middle_name ? ' ' + props.certificate.middle_name : ''),
   baptized_surname: props.certificate.last_name,
   baptism_date: '',
   baptism_reg_no: '',
   place_of_baptism: '',
-  baptism_parish_id: null as number | null,
+  baptism_parish_id: undefined as string | undefined,
   place_of_birth: '',
   nationality: '',
   father_name: '',
@@ -148,7 +147,7 @@ async function searchMembers(query: string) {
     }))
 
     // Always include the currently selected member if not in the list
-    if (selectedMember.value && !transformedOptions.find(m => m.id === selectedMember.value.id)) {
+    if (selectedMember.value && !transformedOptions.find((m: {id: number, name: string}) => m.id === selectedMember.value.id)) {
       memberOptions.value = [selectedMember.value, ...transformedOptions]
     } else {
       memberOptions.value = transformedOptions
@@ -178,10 +177,6 @@ function submitForm() {
   form.post(route('baptism-records.store'), {
     preserveScroll: true,
   })
-}
-
-function togglePdf() {
-  showPdf.value = !showPdf.value
 }
 </script>
 
@@ -440,7 +435,7 @@ function togglePdf() {
                       id="father_residence"
                       v-model="form.father_residence"
                       placeholder="Full address"
-                      rows="2"
+                      :rows="2"
                     />
                   </div>
                 </div>
@@ -475,7 +470,7 @@ function togglePdf() {
                       id="godfather_residence"
                       v-model="form.godfather_residence"
                       placeholder="Full address"
-                      rows="2"
+                      :rows="2"
                     />
                   </div>
 
@@ -485,7 +480,7 @@ function togglePdf() {
                       id="godmother_residence"
                       v-model="form.godmother_residence"
                       placeholder="Full address"
-                      rows="2"
+                      :rows="2"
                     />
                   </div>
                 </div>
@@ -511,7 +506,7 @@ function togglePdf() {
                       id="baptism_remarks"
                       v-model="form.baptism_remarks"
                       placeholder="Any additional notes..."
-                      rows="2"
+                      :rows="2"
                     />
                   </div>
                 </div>

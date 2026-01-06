@@ -70,6 +70,7 @@ class BaptismRecordController extends Controller
             'baptized_name' => 'nullable|string|max:255',
             'baptized_surname' => 'nullable|string|max:255',
             'baptism_date' => 'nullable|date',
+            'confirmation_date' => 'nullable|date',
             'baptism_reg_no' => 'nullable|string|max:255',
             'place_of_baptism' => 'nullable|string|max:255',
             'baptism_parish_id' => 'nullable|exists:parishes,id',
@@ -127,8 +128,11 @@ class BaptismRecordController extends Controller
     public function update(Request $request, BaptismRecord $baptismRecord)
     {
         $validated = $request->validate([
-            'member_id' => 'required|exists:members,id',
+            'member_id' => 'nullable|exists:members,id',
+            'baptized_name' => 'nullable|string|max:255',
+            'baptized_surname' => 'nullable|string|max:255',
             'baptism_date' => 'nullable|date',
+            'confirmation_date' => 'nullable|date',
             'baptism_reg_no' => 'nullable|string|max:255',
             'place_of_baptism' => 'nullable|string|max:255',
             'baptism_parish_id' => 'nullable|exists:parishes,id',

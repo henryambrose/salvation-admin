@@ -17,6 +17,7 @@ class BaptismRecord extends Model
         'baptized_name',
         'baptized_surname',
         'baptism_date',
+        'confirmation_date',
         'baptism_reg_no',
         'place_of_baptism',
         'baptism_parish_id',
@@ -36,6 +37,7 @@ class BaptismRecord extends Model
 
     protected $casts = [
         'baptism_date' => 'date',
+        'confirmation_date' => 'date',
     ];
 
     /**

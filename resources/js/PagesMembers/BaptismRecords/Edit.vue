@@ -59,6 +59,8 @@ const initialBaptismDate = formatDate(props.baptismRecord.baptism_date)
 
 const form = useForm({
   member_id: props.baptismRecord.member_id,
+  baptized_name: props.baptismRecord.baptized_name || '',
+  baptized_surname: props.baptismRecord.baptized_surname || '',
   baptism_date: initialBaptismDate,
   baptism_reg_no: props.baptismRecord.baptism_reg_no || props.baptismRecord.member?.baptism_reg_no || '',
   place_of_baptism: props.baptismRecord.place_of_baptism || '',
@@ -159,6 +161,26 @@ function submit() {
             />
             <p class="mt-1 text-xs text-muted-foreground">
               From member record
+            </p>
+          </div>
+          <div>
+            <Label>Baptized Name</Label>
+            <Input
+              v-model="form.baptized_name"
+              placeholder="Enter baptized name"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              Optional - for non-members or different from legal name
+            </p>
+          </div>
+          <div>
+            <Label>Baptized Surname</Label>
+            <Input
+              v-model="form.baptized_surname"
+              placeholder="Enter baptized surname"
+            />
+            <p class="mt-1 text-xs text-muted-foreground">
+              Optional - for non-members or different from legal name
             </p>
           </div>
           <div>

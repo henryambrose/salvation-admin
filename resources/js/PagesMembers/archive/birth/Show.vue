@@ -177,12 +177,12 @@ const togglePdfViewer = () => {
           <CardContent class="space-y-4">
             <div>
               <div class="text-sm font-medium text-muted-foreground">Folder Path</div>
-              <div class="text-base font-mono text-sm">{{ certificate.folder_path }}</div>
+              <div class="font-mono text-sm">{{ certificate.folder_path }}</div>
             </div>
 
             <div>
               <div class="text-sm font-medium text-muted-foreground">File Name</div>
-              <div class="text-base font-mono text-sm">{{ certificate.file_name }}</div>
+              <div class="font-mono text-sm">{{ certificate.file_name }}</div>
             </div>
           </CardContent>
         </Card>
