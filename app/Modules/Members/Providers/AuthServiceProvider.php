@@ -2,6 +2,7 @@
 
 namespace Modules\Members\Providers;
 
+use Modules\Members\Models\Community;
 use Modules\Members\Models\CommunityFund;
 use Modules\Members\Models\ExternalMember;
 use Modules\Members\Models\Member;
@@ -11,6 +12,7 @@ use Modules\Members\Models\CertificateTemplate;
 use Modules\Members\Models\BirthArchiveCertificate;
 use Modules\Members\Models\MarriageArchiveCertificate;
 use Modules\Members\Models\DeathArchiveCertificate;
+use Modules\Members\Policies\CommunityPolicy;
 use Modules\Members\Policies\CommunityFundPolicy;
 use Modules\Members\Policies\ExternalMemberPolicy;
 use Modules\Members\Policies\MemberPolicy;
@@ -31,6 +33,7 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
+        Community::class => CommunityPolicy::class,
         ExternalMember::class => ExternalMemberPolicy::class,
         Member::class => MemberPolicy::class,
         \Spatie\Permission\Models\Role::class => RolePolicy::class,

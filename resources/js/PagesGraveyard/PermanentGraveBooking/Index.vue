@@ -125,6 +125,9 @@ const formatDate = (date: string) => {
 
 const getDeceasedName = (booking: PermanentGraveBooking) => {
   const validMember = booking.valid_member;
+  if (!validMember) {
+    return 'N/A';
+  }
   if (validMember.member) {
     return `${validMember.member.first_name} ${validMember.member.last_name}`;
   }

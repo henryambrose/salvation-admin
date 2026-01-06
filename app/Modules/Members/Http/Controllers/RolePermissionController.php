@@ -111,6 +111,14 @@ class RolePermissionController extends Controller
                 }
             }
 
+            // Initialize ALL Spatie-only permissions with 0
+            foreach ($allPermissions as $permission) {
+                if (!in_array($permission->name, $modulePermissionSlugs)) {
+                    $permissions[$roleId]['spatie'][$permission->id] = 0;
+                }
+            }
+
+            // Then set to 1 the permissions this role actually has
             foreach ($rolePermissions as $rolePermission) {
                 // If this permission is not in modules, it's a Spatie-only permission
                 if (!in_array($rolePermission->name, $modulePermissionSlugs)) {
