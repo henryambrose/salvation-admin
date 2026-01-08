@@ -125,7 +125,17 @@ class CertificateGenerationService
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
             '--disable-gpu',
-            '--no-sandbox'
+            '--no-sandbox',
+            '--disable-crash-reporter',
+            '--disable-breakpad',
+            '--disable-extensions',
+            '--disable-sync',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process',
+            '--disable-background-networking',
+            '--disable-default-apps',
+            '--mute-audio'
           ]);
       }
     });

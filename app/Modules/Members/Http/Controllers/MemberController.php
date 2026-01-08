@@ -2224,7 +2224,22 @@ class MemberController extends Controller
             $pdf->withBrowsershot(function ($browsershot) use ($chromePath) {
                 $browsershot->setChromePath($chromePath)
                     ->noSandbox()
-                    ->setOption('args', ['--disable-dev-shm-usage', '--no-sandbox']);
+                    ->setOption('args', [
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage',
+                        '--disable-gpu',
+                        '--no-sandbox',
+                        '--disable-crash-reporter',
+                        '--disable-breakpad',
+                        '--disable-extensions',
+                        '--disable-sync',
+                        '--no-first-run',
+                        '--no-zygote',
+                        '--single-process',
+                        '--disable-background-networking',
+                        '--disable-default-apps',
+                        '--mute-audio'
+                    ]);
             });
         }
 
