@@ -64,6 +64,9 @@ class FamilyNumberingService
 
     /**
      * Generate independent member number: YYYY-SAL-MNNNNN
+     * Note: The YYYY prefix reflects registration year, but the sequence
+     * (NNNNN) continues incrementing across all years for the church.
+     * This ensures globally unique member IDs while preserving year context.
      */
     public function generateMemberNumber($year = null, $churchCode = null)
     {
@@ -72,9 +75,8 @@ class FamilyNumberingService
             $churchCode = $churchCode ?? $this->churchCode;
             $churchCode = strtoupper($churchCode);
 
-            // Find the highest member sequence for this year and church
+            // Find the highest member sequence across all years for this church
             $highestMember = DB::table('members')
-                ->where('registration_year', $year)
                 ->where('member_no', 'like', '%' . $churchCode . '-M%')
                 ->whereNotNull('member_no')
                 ->orderByRaw('CAST(REPLACE(SUBSTRING_INDEX(member_no, "-", -1), "M", "") AS UNSIGNED) DESC')
@@ -85,7 +87,7 @@ class FamilyNumberingService
                 $parsed = $this->parseMemberNumber($highestMember->member_no);
                 $nextSequence = $parsed['member_sequence'] + 1;
             } else {
-                // No existing members for this year/church, start with 1
+                // No existing members for this church, start with 1
                 $nextSequence = 1;
             }
 

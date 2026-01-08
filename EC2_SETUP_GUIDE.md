@@ -914,44 +914,212 @@ Consider installing:
 
 ### 4. Configure Backups
 
-#### Database Backup Script
+#### Prerequisites: Install and Configure AWS CLI
+
+**Install AWS CLI:**
+
+```bash
+# Download and install AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt-get update && sudo apt-get install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+rm -rf aws awscliv2.zip
+```
+
+**Configure IAM Role (Recommended for EC2):**
+
+1. **Create IAM Role in AWS Console:**
+   - Go to **IAM** → **Roles** → **Create role**
+   - Select **AWS service** → **EC2**
+   - Add permission: **AmazonS3FullAccess** (or custom policy below)
+   - Role name: `salvation-ec2-s3-backup-role`
+   - Create role
+
+2. **Custom Policy (More Secure) - Optional:**
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Effect": "Allow",
+         "Action": [
+           "s3:PutObject",
+           "s3:GetObject",
+           "s3:ListBucket",
+           "s3:DeleteObject"
+         ],
+         "Resource": [
+           "arn:aws:s3:::salvation-files",
+           "arn:aws:s3:::salvation-files/*"
+         ]
+       }
+     ]
+   }
+   ```
+
+3. **Attach Role to EC2 Instance:**
+   - Go to **EC2** → **Instances** → Select your instance
+   - **Actions** → **Security** → **Modify IAM role**
+   - Select `salvation-ec2-s3-backup-role`
+   - Click **Update IAM role**
+
+4. **Verify:**
+   ```bash
+   aws sts get-caller-identity
+   aws s3 ls s3://salvation-files/
+   ```
+
+#### Database Backup Script with S3 Upload
+
+**Get Database Credentials:**
+
+Check your `.env` file for the correct database credentials:
+
+```bash
+grep DB_ /var/www/html/salvation-admin/.env
+```
+
+**Create Backup Script:**
 
 ```bash
 sudo nano /usr/local/bin/backup-db.sh
 ```
 
-Add:
+Add the following script (update DB credentials from your .env):
 
 ```bash
 #!/bin/bash
-BACKUP_DIR="/var/backups/mysql"
-DATE=$(date +%Y%m%d_%H%M%S)
 
+# Configuration
+BACKUP_DIR="/var/backups/mysql"
+S3_BUCKET="salvation-files"
+S3_FOLDER="mysql-backup"
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_FILE="salvation_admin_$DATE.sql.gz"
+LOCAL_BACKUP="$BACKUP_DIR/$BACKUP_FILE"
+
+# Database credentials (get from .env file)
+DB_USER="root"
+DB_PASSWORD=""  # Empty if no password, or add your password
+DB_NAME="salvation_admin"
+
+# Create backup directory
 mkdir -p $BACKUP_DIR
 
-mysqldump -u salvation_user -p'your_password' salvation_admin | \
-    gzip > $BACKUP_DIR/salvation_admin_$DATE.sql.gz
+# Create MySQL backup
+echo "Creating MySQL backup..."
+if [ -z "$DB_PASSWORD" ]; then
+    mysqldump -u $DB_USER $DB_NAME | gzip > $LOCAL_BACKUP
+else
+    mysqldump -u $DB_USER -p"$DB_PASSWORD" $DB_NAME | gzip > $LOCAL_BACKUP
+fi
 
-# Keep only last 7 days
+# Check if backup was successful
+if [ $? -eq 0 ] && [ -f $LOCAL_BACKUP ]; then
+    BACKUP_SIZE=$(du -h $LOCAL_BACKUP | cut -f1)
+    echo "✓ Backup created: $LOCAL_BACKUP ($BACKUP_SIZE)"
+
+    # Upload to S3
+    echo "Uploading to S3..."
+    aws s3 cp $LOCAL_BACKUP s3://$S3_BUCKET/$S3_FOLDER/$BACKUP_FILE
+
+    if [ $? -eq 0 ]; then
+        echo "✓ Uploaded to s3://$S3_BUCKET/$S3_FOLDER/$BACKUP_FILE"
+    else
+        echo "✗ ERROR: Failed to upload to S3"
+        exit 1
+    fi
+else
+    echo "✗ ERROR: Failed to create MySQL backup"
+    exit 1
+fi
+
+# Clean up local backups older than 7 days
+echo "Cleaning up old local backups..."
 find $BACKUP_DIR -name "*.sql.gz" -mtime +7 -delete
+
+# Clean up S3 backups older than 30 days
+echo "Cleaning up old S3 backups..."
+CUTOFF_DATE=$(date -d "30 days ago" +%Y%m%d)
+aws s3 ls s3://$S3_BUCKET/$S3_FOLDER/ | while read -r line; do
+    FILE_DATE=$(echo $line | awk '{print $4}' | grep -oP '\d{8}' | head -1)
+    FILE_NAME=$(echo $line | awk '{print $4}')
+
+    if [ ! -z "$FILE_DATE" ] && [ "$FILE_DATE" -lt "$CUTOFF_DATE" ]; then
+        echo "Deleting old backup: $FILE_NAME"
+        aws s3 rm s3://$S3_BUCKET/$S3_FOLDER/$FILE_NAME
+    fi
+done
+
+echo "✓ Backup process completed successfully!"
 ```
 
-Make executable:
+**Make Script Executable:**
 
 ```bash
 sudo chmod +x /usr/local/bin/backup-db.sh
 ```
 
-Add to crontab:
+**Test the Backup Script:**
+
+```bash
+sudo bash /usr/local/bin/backup-db.sh
+```
+
+**Add to Crontab for Daily Backups:**
 
 ```bash
 sudo crontab -e
 ```
 
-Add:
+Add this line (runs daily at 2 AM):
 
 ```cron
-0 2 * * * /usr/local/bin/backup-db.sh
+0 2 * * * /usr/local/bin/backup-db.sh >> /var/log/mysql-backup.log 2>&1
+```
+
+**Monitor Backup Logs:**
+
+```bash
+# View real-time logs
+tail -f /var/log/mysql-backup.log
+
+# View backup history
+ls -lh /var/backups/mysql/
+
+# View S3 backups
+aws s3 ls s3://salvation-files/mysql-backup/
+```
+
+#### Optional: S3 Lifecycle Policy
+
+Instead of script-based cleanup, use S3 lifecycle policy:
+
+```bash
+# Create lifecycle policy file
+cat > s3-lifecycle-policy.json <<'EOF'
+{
+  "Rules": [
+    {
+      "Id": "DeleteOldBackups",
+      "Status": "Enabled",
+      "Filter": {
+        "Prefix": "mysql-backup/"
+      },
+      "Expiration": {
+        "Days": 30
+      }
+    }
+  ]
+}
+EOF
+
+# Apply lifecycle policy
+aws s3api put-bucket-lifecycle-configuration \
+    --bucket salvation-files \
+    --lifecycle-configuration file://s3-lifecycle-policy.json
 ```
 
 ---

@@ -5,11 +5,11 @@
       "mcp__ide__getDiagnostics",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Members\\\\Policies\"\" 2>&1 || echo \"Directory may not exist \")",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Members\\\\Policies\" 2>&1 || echo \"Directory may not exist\")",
       "Bash(php -l:*)",
-      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard\\\\Policies\"\" | grep -E \"PermanentGrave)",
-      "Bash(ServiceType)",
-      "Bash(ValidMember \")",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard\\\\Policies\" | grep -E \"PermanentGrave\")",
+      "Bash(ServiceType:*)",
+      "Bash(ValidMember:*)",
       "Bash(ls:*)",
       "Bash(echo:*)",
       "Bash(grep:*)",
@@ -33,8 +33,8 @@
       "Bash(php artisan migrate:*)",
       "Bash(mv:*)",
       "Bash(powershell:*)",
-      "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resourcesjsPagesarchivedeath)",
-      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\"\" 2>&1 || echo \"Directory does not exist \")"
+      "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resources\\\\js\\\\Pages\\\\archive\\\\death)",
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\" 2>&1 || echo \"Directory does not exist\")"
     ]
   }
 }
