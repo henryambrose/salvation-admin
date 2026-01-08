@@ -2214,10 +2214,21 @@ class MemberController extends Controller
         );
 
         // Generate PDF with Spatie
-        return Pdf::view('members.member_details_pdf', $data)
+        $pdf = Pdf::view('members.member_details_pdf', $data)
             ->format('a4')
-            ->name($filename)
-            ->inline();
+            ->name($filename);
+
+        // Configure Browsershot to use Puppeteer's Chrome
+        $chromePath = env('PUPPETEER_EXECUTABLE_PATH', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
+        if (file_exists($chromePath)) {
+            $pdf->withBrowsershot(function ($browsershot) use ($chromePath) {
+                $browsershot->setChromePath($chromePath)
+                    ->noSandbox()
+                    ->setOption('args', ['--disable-dev-shm-usage', '--no-sandbox']);
+            });
+        }
+
+        return $pdf->inline();
     }
 
     /**

@@ -327,10 +327,21 @@ class MarriageRecordController extends Controller
         );
 
         // Generate PDF with Spatie (Chromium-based - supports modern CSS)
-        return Pdf::view('certificates.templates.parochial_register_marriage', $data)
+        $pdf = Pdf::view('certificates.templates.parochial_register_marriage', $data)
             ->format('a4')
-            ->name($filename)
-            ->inline();
+            ->name($filename);
+
+        // Configure Browsershot to use Puppeteer's Chrome
+        $chromePath = env('PUPPETEER_EXECUTABLE_PATH', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
+        if (file_exists($chromePath)) {
+            $pdf->withBrowsershot(function ($browsershot) use ($chromePath) {
+                $browsershot->setChromePath($chromePath)
+                    ->noSandbox()
+                    ->setOption('args', ['--disable-dev-shm-usage', '--no-sandbox']);
+            });
+        }
+
+        return $pdf->inline();
     }
 
     /**

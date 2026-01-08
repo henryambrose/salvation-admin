@@ -108,21 +108,27 @@ class CertificateGenerationService
     // Generate PDF using Spatie (Chromium-based - supports modern CSS)
     $pdfBuilder = Pdf::html($html);
 
-    // Set Chrome path if configured (for production servers)
-    $chromePath = config('app.chrome_path');
-    if ($chromePath && file_exists($chromePath)) {
-      $pdfBuilder->setChromePath($chromePath);
-    }
+    // Configure Browsershot to use Puppeteer's Chrome
+    $chromePath = env('PUPPETEER_EXECUTABLE_PATH', config('app.chrome_path', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome'));
+    $noSandbox = config('app.chrome_no_sandbox', true);
 
-    // Add Chrome arguments for server environments
-    if (config('app.chrome_no_sandbox', false)) {
-      $pdfBuilder->addChromiumArguments([
-        'no-sandbox',
-        'disable-setuid-sandbox',
-        'disable-dev-shm-usage',
-        'disable-gpu',
-      ]);
-    }
+    $pdfBuilder->withBrowsershot(function ($browsershot) use ($chromePath, $noSandbox) {
+      // Set Chrome path if file exists
+      if ($chromePath && file_exists($chromePath)) {
+        $browsershot->setChromePath($chromePath);
+      }
+
+      // Add Chrome arguments for server environments
+      if ($noSandbox) {
+        $browsershot->noSandbox()
+          ->setOption('args', [
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--no-sandbox'
+          ]);
+      }
+    });
 
     // Apply template configuration if available
     if ($certificate->template && $certificate->template->template_config) {
