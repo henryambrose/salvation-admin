@@ -270,6 +270,7 @@ class BaptismRecordController extends Controller
             // Baptism data
             'baptism_date' => $formatDate($baptismRecord->baptism_date),
             'baptism_reg_no' => $baptismRecord->baptism_reg_no,
+            'baptism_reg_no_short' => $baptismRecord->baptism_reg_no ? (int) filter_var($baptismRecord->baptism_reg_no, FILTER_SANITIZE_NUMBER_INT) : null,
             'baptism_year' => $baptismRecord->baptism_date ? \Carbon\Carbon::parse($baptismRecord->baptism_date)->year : null,
             'place_of_baptism' => $baptismRecord->place_of_baptism ?: ($baptismRecord->baptismParish?->name ?? ''),
             'baptism_parish' => $baptismRecord->baptismParish?->name ?? '',

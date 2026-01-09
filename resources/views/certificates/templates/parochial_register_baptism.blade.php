@@ -253,9 +253,9 @@
                     ['num' => '15.', 'label' => 'Place of Baptism', 'value' => $place_of_baptism ?? ($baptism_parish ?? '')],
                     ['num' => '16.', 'label' => 'Minister', 'value' => $minister_name ?? ''],
                     ['num' => '17.', 'label' => 'Confirmation', 'value' => ($confirmation_info ? 'On: ' . ($confirmation_info['date'] ?? '') : '')],
-                    ['num' => '18.', 'label' => 'Marriage On', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['date'] ?? 'NA') : '')],
-                    ['num' => '', 'label' => 'Marriage At', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['place'] ?? 'NA') : '')],
-                    ['num' => '', 'label' => 'Marriage To', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['spouse'] ?? 'NA') : '')],
+                    ['num' => '18.', 'label' => 'Marriage On', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['date'] ?? '') : '')],
+                    ['num' => '', 'label' => 'Marriage At', 'value' => ($marriage_info ? 'At: ' . ($marriage_info['place'] ?? '') : '')],
+                    ['num' => '', 'label' => 'Marriage To', 'value' => ($marriage_info ? 'To: ' . ($marriage_info['spouse'] ?? '') : '')],
                     ['num' => '19.', 'label' => 'Remarks', 'value' => $baptism_remarks ?? ''],
                 ];
             @endphp
