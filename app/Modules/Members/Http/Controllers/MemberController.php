@@ -2238,7 +2238,9 @@ class MemberController extends Controller
                         '--single-process',
                         '--disable-background-networking',
                         '--disable-default-apps',
-                        '--mute-audio'
+                        '--mute-audio',
+                        '--user-data-dir=/tmp/chrome-user-data',
+                        '--crash-dumps-dir=/tmp/chrome-user-data'
                     ]);
             });
         }
