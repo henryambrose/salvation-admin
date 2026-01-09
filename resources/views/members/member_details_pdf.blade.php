@@ -510,12 +510,12 @@
         @endif
 
         <!-- Footer -->
-        <div class="footer">
+        <!-- <div class="footer">
             <p>Document generated on {{ $issued_date }}</p>
             <p>{{ $parish_name }} - {{ $parish_address }}</p>
             <p style="margin-top: 10px; font-weight: bold;">{{ $parish_priest_name ?? 'Parish Priest' }}</p>
             <p style="font-size: 9px;">Parish Priest</p>
-        </div>
+        </div> -->
     </div>
 </body>
 
