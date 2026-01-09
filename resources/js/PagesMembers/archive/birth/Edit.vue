@@ -46,7 +46,7 @@ function handleFileChange(event: Event) {
 }
 
 function submit() {
-  form.post(route('archive.birth.certificates.update', props.certificate.id), {
+  form.put(route('archive.birth.certificates.update', props.certificate.id), {
     preserveScroll: true,
     forceFormData: true,
   })
