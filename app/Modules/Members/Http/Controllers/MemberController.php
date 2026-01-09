@@ -204,6 +204,8 @@ class MemberController extends Controller
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%$search%")
                     ->orWhere('last_name', 'like', "%$search%")
+                    ->orWhere('old_sal_id', 'like', "%$search%")
+                    ->orWhere('old_family_no', 'like', "%$search%")
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
                     ->orWhere('family_no', 'like', "%$search%")
                     ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
