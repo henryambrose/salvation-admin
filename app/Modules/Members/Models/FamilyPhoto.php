@@ -64,7 +64,7 @@ class FamilyPhoto extends Model
             return null;
         }
 
-        return Storage::disk('public')->url($this->file_path);
+        return Storage::disk(config('filesystems.storage'))->url($this->file_path);
     }
 
     /**
@@ -93,7 +93,7 @@ class FamilyPhoto extends Model
      */
     public function fileExists(): bool
     {
-        return $this->file_path && Storage::disk('public')->exists($this->file_path);
+        return $this->file_path && Storage::disk(config('filesystems.storage'))->exists($this->file_path);
     }
 
     /**
@@ -101,8 +101,8 @@ class FamilyPhoto extends Model
      */
     public function deleteFile(): bool
     {
-        if ($this->file_path && Storage::disk('public')->exists($this->file_path)) {
-            return Storage::disk('public')->delete($this->file_path);
+        if ($this->file_path && Storage::disk(config('filesystems.storage'))->exists($this->file_path)) {
+            return Storage::disk(config('filesystems.storage'))->delete($this->file_path);
         }
 
         return true;

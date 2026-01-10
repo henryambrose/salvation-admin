@@ -17,6 +17,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Dynamic Storage Disk (Public Files)
+    |--------------------------------------------------------------------------
+    |
+    | This disk automatically switches between local and cloud storage based
+    | on the environment for PUBLIC files (photos, etc.).
+    | Use 'public' for local development and 's3' for production.
+    | Set FILESYSTEM_STORAGE_DISK in .env to override.
+    |
+    */
+
+    'storage' => env('FILESYSTEM_STORAGE_DISK', env('APP_ENV') === 'production' ? 's3' : 'public'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Dynamic Storage Disk (Private Files)
+    |--------------------------------------------------------------------------
+    |
+    | This disk automatically switches between local and cloud storage based
+    | on the environment for PRIVATE files (certificates, documents, etc.).
+    | Use 'local' for local development and 's3' for production.
+    | Set FILESYSTEM_PRIVATE_STORAGE_DISK in .env to override.
+    |
+    */
+
+    'private_storage' => env('FILESYSTEM_PRIVATE_STORAGE_DISK', env('APP_ENV') === 'production' ? 's3' : 'local'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
     |

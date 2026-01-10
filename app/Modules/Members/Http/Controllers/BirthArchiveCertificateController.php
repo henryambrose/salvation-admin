@@ -194,8 +194,8 @@ class BirthArchiveCertificateController extends Controller
             if ($request->hasFile('file')) {
                 // Delete old file from S3
                 $oldPath = trim($birthArchive->folder_path, '/') . '/' . $birthArchive->file_name;
-                if (Storage::disk('s3')->exists($oldPath)) {
-                    Storage::disk('s3')->delete($oldPath);
+                if (Storage::disk(config('filesystems.private_storage'))->exists($oldPath)) {
+                    Storage::disk(config('filesystems.private_storage'))->delete($oldPath);
                 }
 
                 // Upload new file
@@ -270,7 +270,7 @@ class BirthArchiveCertificateController extends Controller
 
         try {
             // Generate temporary signed URL (valid for 5 minutes)
-            $url = Storage::disk('s3')->temporaryUrl($path, now()->addMinutes(5));
+            $url = Storage::disk(config('filesystems.private_storage'))->temporaryUrl($path, now()->addMinutes(5));
 
             return redirect($url);
         } catch (\Exception $e) {

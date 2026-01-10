@@ -15,7 +15,6 @@ Route::middleware(['auth'])->prefix('certificates')->name('certificates.')->grou
   Route::get('/api/members/{member}', [CertificateController::class, 'getMember'])->whereNumber('member')->name('api.member');
   Route::get('/api/members/{member}/available-types', [CertificateController::class, 'getMemberAvailableTypes'])->whereNumber('member')->name('api.member.available-types');
   Route::get('/api/members/{member}/certificates', [CertificateController::class, 'getMemberCertificates'])->whereNumber('member')->name('api.member.certificates');
-  Route::get('/api/templates', [CertificateController::class, 'getTemplatesByType'])->name('api.templates');
 
   // Certificate actions
   Route::post('/', [CertificateController::class, 'store'])->name('store');

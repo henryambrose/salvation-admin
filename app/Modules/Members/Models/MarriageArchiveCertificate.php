@@ -89,8 +89,8 @@ class MarriageArchiveCertificate extends Model
         $path = trim($this->folder_path, '/') . '/' . $this->file_name;
 
         try {
-            if (Storage::disk('s3')->exists($path)) {
-                return Storage::disk('s3')->url($path);
+            if (Storage::disk(config('filesystems.private_storage'))->exists($path)) {
+                return Storage::disk(config('filesystems.private_storage'))->url($path);
             }
         } catch (\Exception $e) {
             return null;
@@ -187,7 +187,7 @@ class MarriageArchiveCertificate extends Model
         $path = trim($this->folder_path, '/') . '/' . $this->file_name;
 
         try {
-            return Storage::disk('s3')->exists($path);
+            return Storage::disk(config('filesystems.private_storage'))->exists($path);
         } catch (\Exception $e) {
             return false;
         }

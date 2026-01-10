@@ -33,21 +33,8 @@ interface Member {
   parish?: { name: string };
 }
 
-interface CertificateTemplate {
-  id: number;
-  name: string;
-  description?: string;
-  certificate_type_id: number;
-  certificate_type?: {
-    id: number;
-    name: string;
-    code: string;
-  };
-}
-
 const props = defineProps<{
   member?: Member;
-  templates: CertificateTemplate[];
   certificateTypes: Array<{ value: number; label: string; code: string }>;
   canGenerateCertificates: boolean;
   availableTypes?: string[];
@@ -79,7 +66,6 @@ const { getState } = useCertificateState();
 const form = useForm({
   member_id: props.member?.id || '',
   certificate_type_id: props.selectedType || '',
-  template_id: '',
   issued_date: new Date().toISOString().split('T')[0],
   additional_data: {} as Record<string, any>,
   force_duplicate: false,
@@ -144,10 +130,21 @@ watch(
     // Initialize fields based on certificate type
     if (newType === 'baptism') {
       additionalFields.value = {
+        baptism_date: selectedMember.value?.baptism_date || '',
+        date_of_birth: selectedMember.value?.date_of_birth || '',
+        place_of_birth: '',
+        father_name: '',
+        mother_name: '',
+        father_residence: '',
+        father_profession: '',
+        nationality: '',
         godfather_name: '',
+        godfather_residence: '',
         godmother_name: '',
-        priest_name: '',
-        witnesses: '',
+        godmother_residence: '',
+        place_of_baptism: '',
+        minister_name: '',
+        baptism_remarks: '',
       };
     } else if (newType === 'confirmation') {
       additionalFields.value = {
@@ -158,11 +155,32 @@ watch(
       };
     } else if (newType === 'marriage') {
       additionalFields.value = {
-        spouse_name: '',
-        witness1_name: '',
-        witness2_name: '',
-        priest_name: '',
-        marriage_type: 'Catholic Marriage',
+        bridegroom_name: '',
+        bridegroom_surname: '',
+        bridegroom_dob: '',
+        bridegroom_nationality: '',
+        bridegroom_profession: '',
+        bridegroom_residence: '',
+        bridegroom_father_name: '',
+        bridegroom_mother_name: '',
+        bridegroom_status: 'Bachelor',
+        bridegroom_if_widower_whose: '',
+        bride_name: '',
+        bride_surname: '',
+        bride_dob: '',
+        bride_nationality: '',
+        bride_profession: '',
+        bride_residence: '',
+        bride_father_name: '',
+        bride_mother_name: '',
+        bride_status: 'Spinster',
+        bride_if_widow_whose: '',
+        first_witness_name: '',
+        first_witness_residence: '',
+        second_witness_name: '',
+        second_witness_residence: '',
+        minister_name: '',
+        marriage_remarks: '',
       };
     } else if (newType === 'membership') {
       additionalFields.value = {
@@ -172,10 +190,18 @@ watch(
       };
     } else if (newType === 'death') {
       additionalFields.value = {
+        death_date: '',
         burial_date: '',
-        burial_place: '',
-        priest_name: '',
-        last_rites_given: 'Yes',
+        deceased_name: '',
+        deceased_surname: '',
+        relationship: '',
+        residence: '',
+        age: '',
+        nationality: '',
+        cause_of_death: '',
+        place_of_burial: '',
+        minister_name: '',
+        death_remarks: '',
       };
     }
 
@@ -188,19 +214,6 @@ const currentCertificateTypeCode = computed(() => {
   if (!form.certificate_type_id) return null;
   const selectedType = props.certificateTypes.find(type => type.value === form.certificate_type_id);
   return selectedType?.code || null;
-});
-
-// Available templates for selected certificate type
-const availableTemplates = computed(() => {
-  if (!form.certificate_type_id) return [];
-
-  // Keep console logs for debugging
-  console.log('Debug - Selected certificate type ID:', form.certificate_type_id);
-  console.log('Debug - All templates:', props.templates);
-
-  const filtered = props.templates.filter((template) => template.certificate_type_id === form.certificate_type_id);
-  console.log('Debug - Filtered templates:', filtered);
-  return filtered;
 });
 
 // Check if member has required data for certificate type
@@ -243,7 +256,6 @@ async function selectMember(member: Member) {
 
   // Reset certificate type when member changes
   form.certificate_type_id = '';
-  form.template_id = '';
 
   // Fetch existing certificates for the selected member
   try {
@@ -263,7 +275,6 @@ function clearMemberSelection() {
   memberSearchResults.value = [];
   showMemberSearch.value = true;
   form.certificate_type_id = '';
-  form.template_id = '';
   existingCertificates.value = [];
 }
 
@@ -448,66 +459,49 @@ function generateCertificate() {
           </CardHeader>
           <CardContent class="space-y-4">
             <!-- Certificate Type -->
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <Label for="certificate_type">Certificate Type *</Label>
-                <select
-                  v-model="form.certificate_type_id"
-                  id="certificate_type"
-                  required
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="">Select certificate type</option>
-                  <option v-for="type in props.certificateTypes" :key="type.value" :value="type.value">
-                    {{ type.label }}
-                  </option>
-                </select>
-                <p v-if="form.errors.certificate_type_id" class="mt-1 text-sm text-red-600">{{ form.errors.certificate_type_id }}</p>
+            <div>
+              <Label for="certificate_type">Certificate Type *</Label>
+              <select
+                v-model="form.certificate_type_id"
+                id="certificate_type"
+                required
+                class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              >
+                <option value="">Select certificate type</option>
+                <option v-for="type in props.certificateTypes" :key="type.value" :value="type.value">
+                  {{ type.label }}
+                </option>
+              </select>
+              <p v-if="form.errors.certificate_type_id" class="mt-1 text-sm text-red-600">{{ form.errors.certificate_type_id }}</p>
 
-                <!-- Duplicate Certificate Warning -->
-                <div v-if="showDuplicateWarning" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
-                  <div class="flex items-start gap-2">
-                    <AlertCircle class="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <p class="text-sm font-medium text-amber-800">Certificate Already Exists</p>
-                      <p class="text-sm text-amber-700 mt-1">
-                        This member already has a {{ props.certificateTypes.find(type => type.code === existingCertificateOfType?.certificate_type)?.label || existingCertificateOfType?.certificate_type }} certificate
-                        ({{ existingCertificateOfType?.certificate_number }})
-                        issued on {{ new Date(existingCertificateOfType?.issued_date || '').toLocaleDateString() }}.
-                      </p>
-                      <p class="text-sm text-amber-600 mt-1">
-                        Generating a new certificate will create a duplicate. Are you sure you want to proceed?
-                      </p>
-                      <div class="mt-3">
-                        <label class="flex items-center gap-2">
-                          <input
-                            v-model="form.force_duplicate"
-                            type="checkbox"
-                            class="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
-                          />
-                          <span class="text-sm text-amber-800 font-medium">
-                            Yes, force generate duplicate certificate
-                          </span>
-                        </label>
-                      </div>
+              <!-- Duplicate Certificate Warning -->
+              <div v-if="showDuplicateWarning" class="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md">
+                <div class="flex items-start gap-2">
+                  <AlertCircle class="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p class="text-sm font-medium text-amber-800">Certificate Already Exists</p>
+                    <p class="text-sm text-amber-700 mt-1">
+                      This member already has a {{ props.certificateTypes.find(type => type.code === existingCertificateOfType?.certificate_type)?.label || existingCertificateOfType?.certificate_type }} certificate
+                      ({{ existingCertificateOfType?.certificate_number }})
+                      issued on {{ new Date(existingCertificateOfType?.issued_date || '').toLocaleDateString() }}.
+                    </p>
+                    <p class="text-sm text-amber-600 mt-1">
+                      Generating a new certificate will create a duplicate. Are you sure you want to proceed?
+                    </p>
+                    <div class="mt-3">
+                      <label class="flex items-center gap-2">
+                        <input
+                          v-model="form.force_duplicate"
+                          type="checkbox"
+                          class="rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+                        />
+                        <span class="text-sm text-amber-800 font-medium">
+                          Yes, force generate duplicate certificate
+                        </span>
+                      </label>
                     </div>
                   </div>
                 </div>
-              </div>
-
-              <!-- Template Selection -->
-              <div v-if="form.certificate_type_id">
-                <Label for="template_id">Template</Label>
-                <select
-                  v-model="form.template_id"
-                  id="template_id"
-                  class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                >
-                  <option value="">Default Template</option>
-                  <option v-for="template in availableTemplates" :key="template.id" :value="template.id.toString()">
-                    {{ template.name }}
-                  </option>
-                </select>
               </div>
             </div>
 
@@ -546,20 +540,64 @@ function generateCertificate() {
               <!-- Baptism Fields -->
               <template v-if="currentCertificateTypeCode === 'baptism'">
                 <div>
-                  <Label for="godfather_name">Godfather Name</Label>
+                  <Label for="baptism_date">Date of Baptism</Label>
+                  <DateInput v-model="additionalFields.baptism_date" id="baptism_date" class="w-full" />
+                </div>
+                <div>
+                  <Label for="date_of_birth">Date of Birth</Label>
+                  <DateInput v-model="additionalFields.date_of_birth" id="date_of_birth" class="w-full" />
+                </div>
+                <div>
+                  <Label for="place_of_birth">Place of Birth</Label>
+                  <Input v-model="additionalFields.place_of_birth" type="text" id="place_of_birth" />
+                </div>
+                <div>
+                  <Label for="father_name">Father's Name</Label>
+                  <Input v-model="additionalFields.father_name" type="text" id="father_name" />
+                </div>
+                <div>
+                  <Label for="mother_name">Mother's Name</Label>
+                  <Input v-model="additionalFields.mother_name" type="text" id="mother_name" />
+                </div>
+                <div>
+                  <Label for="father_residence">Father's Residence</Label>
+                  <Input v-model="additionalFields.father_residence" type="text" id="father_residence" />
+                </div>
+                <div>
+                  <Label for="father_profession">Father's Profession</Label>
+                  <Input v-model="additionalFields.father_profession" type="text" id="father_profession" />
+                </div>
+                <div>
+                  <Label for="nationality">Nationality</Label>
+                  <Input v-model="additionalFields.nationality" type="text" id="nationality" />
+                </div>
+                <div>
+                  <Label for="godfather_name">Godfather's Name</Label>
                   <Input v-model="additionalFields.godfather_name" type="text" id="godfather_name" />
                 </div>
                 <div>
-                  <Label for="godmother_name">Godmother Name</Label>
+                  <Label for="godfather_residence">Godfather's Residence</Label>
+                  <Input v-model="additionalFields.godfather_residence" type="text" id="godfather_residence" />
+                </div>
+                <div>
+                  <Label for="godmother_name">Godmother's Name</Label>
                   <Input v-model="additionalFields.godmother_name" type="text" id="godmother_name" />
                 </div>
                 <div>
-                  <Label for="priest_name">Priest Name</Label>
-                  <Input v-model="additionalFields.priest_name" type="text" id="priest_name" />
+                  <Label for="godmother_residence">Godmother's Residence</Label>
+                  <Input v-model="additionalFields.godmother_residence" type="text" id="godmother_residence" />
                 </div>
                 <div>
-                  <Label for="witnesses">Witnesses</Label>
-                  <Textarea v-model="additionalFields.witnesses" id="witnesses" :rows="2" />
+                  <Label for="place_of_baptism">Place of Baptism</Label>
+                  <Input v-model="additionalFields.place_of_baptism" type="text" id="place_of_baptism" />
+                </div>
+                <div>
+                  <Label for="minister_name">Minister/Priest Name</Label>
+                  <Input v-model="additionalFields.minister_name" type="text" id="minister_name" />
+                </div>
+                <div class="md:col-span-2">
+                  <Label for="baptism_remarks">Remarks</Label>
+                  <Textarea v-model="additionalFields.baptism_remarks" id="baptism_remarks" :rows="2" />
                 </div>
               </template>
 
@@ -585,61 +623,189 @@ function generateCertificate() {
 
               <!-- Marriage Fields -->
               <template v-if="currentCertificateTypeCode === 'marriage'">
-                <div>
-                  <Label for="spouse_name">Spouse Name *</Label>
-                  <Input v-model="additionalFields.spouse_name" type="text" id="spouse_name" required />
-                </div>
-                <div>
-                  <Label for="witness1_name">First Witness</Label>
-                  <Input v-model="additionalFields.witness1_name" type="text" id="witness1_name" />
-                </div>
-                <div>
-                  <Label for="witness2_name">Second Witness</Label>
-                  <Input v-model="additionalFields.witness2_name" type="text" id="witness2_name" />
-                </div>
-                <div>
-                  <Label for="priest_name">Priest Name</Label>
-                  <Input v-model="additionalFields.priest_name" type="text" id="priest_name" />
-                </div>
+                <!-- Bridegroom Details -->
                 <div class="md:col-span-2">
-                  <Label for="marriage_type">Marriage Type</Label>
+                  <h4 class="font-semibold text-gray-900 mb-3">Bridegroom Details</h4>
+                </div>
+                <div>
+                  <Label for="bridegroom_name">Bridegroom's Name</Label>
+                  <Input v-model="additionalFields.bridegroom_name" type="text" id="bridegroom_name" />
+                </div>
+                <div>
+                  <Label for="bridegroom_surname">Surname</Label>
+                  <Input v-model="additionalFields.bridegroom_surname" type="text" id="bridegroom_surname" />
+                </div>
+                <div>
+                  <Label for="bridegroom_dob">Date of Birth</Label>
+                  <DateInput v-model="additionalFields.bridegroom_dob" id="bridegroom_dob" class="w-full" />
+                </div>
+                <div>
+                  <Label for="bridegroom_nationality">Nationality</Label>
+                  <Input v-model="additionalFields.bridegroom_nationality" type="text" id="bridegroom_nationality" />
+                </div>
+                <div>
+                  <Label for="bridegroom_profession">Profession</Label>
+                  <Input v-model="additionalFields.bridegroom_profession" type="text" id="bridegroom_profession" />
+                </div>
+                <div>
+                  <Label for="bridegroom_residence">Residence</Label>
+                  <Input v-model="additionalFields.bridegroom_residence" type="text" id="bridegroom_residence" />
+                </div>
+                <div>
+                  <Label for="bridegroom_father_name">Father's Name</Label>
+                  <Input v-model="additionalFields.bridegroom_father_name" type="text" id="bridegroom_father_name" />
+                </div>
+                <div>
+                  <Label for="bridegroom_mother_name">Mother's Name</Label>
+                  <Input v-model="additionalFields.bridegroom_mother_name" type="text" id="bridegroom_mother_name" />
+                </div>
+                <div>
+                  <Label for="bridegroom_status">Status</Label>
                   <select
-                    v-model="additionalFields.marriage_type"
-                    id="marriage_type"
+                    v-model="additionalFields.bridegroom_status"
+                    id="bridegroom_status"
                     class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                   >
-                    <option value="Catholic Marriage">Catholic Marriage</option>
-                    <option value="Mixed Marriage">Mixed Marriage</option>
-                    <option value="Convalidation">Convalidation</option>
+                    <option value="Bachelor">Bachelor</option>
+                    <option value="Widower">Widower</option>
                   </select>
+                </div>
+                <div>
+                  <Label for="bridegroom_if_widower_whose">If Widower, Whose</Label>
+                  <Input v-model="additionalFields.bridegroom_if_widower_whose" type="text" id="bridegroom_if_widower_whose" />
+                </div>
+
+                <!-- Bride Details -->
+                <div class="md:col-span-2">
+                  <h4 class="font-semibold text-gray-900 mb-3 mt-4">Bride Details</h4>
+                </div>
+                <div>
+                  <Label for="bride_name">Bride's Name</Label>
+                  <Input v-model="additionalFields.bride_name" type="text" id="bride_name" />
+                </div>
+                <div>
+                  <Label for="bride_surname">Surname</Label>
+                  <Input v-model="additionalFields.bride_surname" type="text" id="bride_surname" />
+                </div>
+                <div>
+                  <Label for="bride_dob">Date of Birth</Label>
+                  <DateInput v-model="additionalFields.bride_dob" id="bride_dob" class="w-full" />
+                </div>
+                <div>
+                  <Label for="bride_nationality">Nationality</Label>
+                  <Input v-model="additionalFields.bride_nationality" type="text" id="bride_nationality" />
+                </div>
+                <div>
+                  <Label for="bride_profession">Profession</Label>
+                  <Input v-model="additionalFields.bride_profession" type="text" id="bride_profession" />
+                </div>
+                <div>
+                  <Label for="bride_residence">Residence</Label>
+                  <Input v-model="additionalFields.bride_residence" type="text" id="bride_residence" />
+                </div>
+                <div>
+                  <Label for="bride_father_name">Father's Name</Label>
+                  <Input v-model="additionalFields.bride_father_name" type="text" id="bride_father_name" />
+                </div>
+                <div>
+                  <Label for="bride_mother_name">Mother's Name</Label>
+                  <Input v-model="additionalFields.bride_mother_name" type="text" id="bride_mother_name" />
+                </div>
+                <div>
+                  <Label for="bride_status">Status</Label>
+                  <select
+                    v-model="additionalFields.bride_status"
+                    id="bride_status"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="Spinster">Spinster</option>
+                    <option value="Widow">Widow</option>
+                  </select>
+                </div>
+                <div>
+                  <Label for="bride_if_widow_whose">If Widow, Whose</Label>
+                  <Input v-model="additionalFields.bride_if_widow_whose" type="text" id="bride_if_widow_whose" />
+                </div>
+
+                <!-- Witnesses and Minister -->
+                <div class="md:col-span-2">
+                  <h4 class="font-semibold text-gray-900 mb-3 mt-4">Witnesses & Minister</h4>
+                </div>
+                <div>
+                  <Label for="first_witness_name">First Witness' Name</Label>
+                  <Input v-model="additionalFields.first_witness_name" type="text" id="first_witness_name" />
+                </div>
+                <div>
+                  <Label for="first_witness_residence">First Witness' Residence</Label>
+                  <Input v-model="additionalFields.first_witness_residence" type="text" id="first_witness_residence" />
+                </div>
+                <div>
+                  <Label for="second_witness_name">Second Witness' Name</Label>
+                  <Input v-model="additionalFields.second_witness_name" type="text" id="second_witness_name" />
+                </div>
+                <div>
+                  <Label for="second_witness_residence">Second Witness' Residence</Label>
+                  <Input v-model="additionalFields.second_witness_residence" type="text" id="second_witness_residence" />
+                </div>
+                <div>
+                  <Label for="minister_name">Minister/Priest Name</Label>
+                  <Input v-model="additionalFields.minister_name" type="text" id="minister_name" />
+                </div>
+                <div class="md:col-span-2">
+                  <Label for="marriage_remarks">Remarks</Label>
+                  <Textarea v-model="additionalFields.marriage_remarks" id="marriage_remarks" :rows="2" />
                 </div>
               </template>
 
               <!-- Death Fields -->
               <template v-if="currentCertificateTypeCode === 'death'">
                 <div>
-                  <Label for="burial_date">Burial Date</Label>
+                  <Label for="death_date">Date of Death</Label>
+                  <DateInput v-model="additionalFields.death_date" id="death_date" class="w-full" />
+                </div>
+                <div>
+                  <Label for="burial_date">Date of Burial</Label>
                   <DateInput v-model="additionalFields.burial_date" id="burial_date" class="w-full" />
                 </div>
                 <div>
-                  <Label for="burial_place">Burial Place</Label>
-                  <Input v-model="additionalFields.burial_place" type="text" id="burial_place" />
+                  <Label for="deceased_name">Deceased Name</Label>
+                  <Input v-model="additionalFields.deceased_name" type="text" id="deceased_name" />
                 </div>
                 <div>
-                  <Label for="priest_name">Priest Name</Label>
-                  <Input v-model="additionalFields.priest_name" type="text" id="priest_name" />
+                  <Label for="deceased_surname">Deceased Surname</Label>
+                  <Input v-model="additionalFields.deceased_surname" type="text" id="deceased_surname" />
                 </div>
                 <div>
-                  <Label for="last_rites_given">Last Rites Given</Label>
-                  <select
-                    v-model="additionalFields.last_rites_given"
-                    id="last_rites_given"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  >
-                    <option value="Yes">Yes</option>
-                    <option value="No">No</option>
-                    <option value="Unknown">Unknown</option>
-                  </select>
+                  <Label for="relationship">Relationship</Label>
+                  <Input v-model="additionalFields.relationship" type="text" id="relationship" placeholder="e.g., Husband of, Wife of, Son of" />
+                </div>
+                <div>
+                  <Label for="residence">Residence</Label>
+                  <Input v-model="additionalFields.residence" type="text" id="residence" />
+                </div>
+                <div>
+                  <Label for="age">Age (Years)</Label>
+                  <Input v-model="additionalFields.age" type="number" id="age" />
+                </div>
+                <div>
+                  <Label for="nationality">Nationality</Label>
+                  <Input v-model="additionalFields.nationality" type="text" id="nationality" />
+                </div>
+                <div>
+                  <Label for="cause_of_death">Cause of Death</Label>
+                  <Input v-model="additionalFields.cause_of_death" type="text" id="cause_of_death" />
+                </div>
+                <div>
+                  <Label for="place_of_burial">Place of Burial</Label>
+                  <Input v-model="additionalFields.place_of_burial" type="text" id="place_of_burial" />
+                </div>
+                <div>
+                  <Label for="minister_name">Minister/Priest Name</Label>
+                  <Input v-model="additionalFields.minister_name" type="text" id="minister_name" />
+                </div>
+                <div class="md:col-span-2">
+                  <Label for="death_remarks">Remarks</Label>
+                  <Textarea v-model="additionalFields.death_remarks" id="death_remarks" :rows="2" />
                 </div>
               </template>
 

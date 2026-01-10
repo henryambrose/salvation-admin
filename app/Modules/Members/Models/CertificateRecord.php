@@ -220,7 +220,7 @@ class CertificateRecord extends Model
    */
   public function getFileUrlAttribute(): ?string
   {
-    if ($this->file_path && Storage::disk('local')->exists($this->file_path)) {
+    if ($this->file_path && Storage::disk(config('filesystems.private_storage'))->exists($this->file_path)) {
       return route('certificates.download', $this->id);
     }
     return null;
@@ -231,7 +231,7 @@ class CertificateRecord extends Model
    */
   public function fileExists(): bool
   {
-    return $this->file_path && Storage::disk('local')->exists($this->file_path);
+    return $this->file_path && Storage::disk(config('filesystems.private_storage'))->exists($this->file_path);
   }
 
   /**

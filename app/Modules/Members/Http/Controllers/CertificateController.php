@@ -140,33 +140,11 @@ class CertificateController extends Controller
   }
 
   /**
-   * Get templates by type (AJAX endpoint)
-   */
-  public function getTemplatesByType(Request $request)
-  {
-    $type = $request->get('type');
-
-    $query = CertificateTemplate::active()->with('certificateType');
-
-    if ($type) {
-      $query->byCertificateType($type);
-    }
-
-    $templates = $query->orderBy('is_default', 'desc')
-      ->orderBy('name')
-      ->get();
-
-    return response()->json($templates);
-  }
-
-  /**
    * Show member selection page for certificate generation
    */
   public function generateMemberSelection(Request $request)
   {
     $this->authorize('generate-certificate');
-
-    $templates = CertificateTemplate::active()->with('certificateType')->get();
 
     $certificateTypes = CertificateType::active()
       ->ordered()
@@ -180,7 +158,6 @@ class CertificateController extends Controller
       });
 
     return Inertia::render('certificates/Generate', [
-      'templates' => $templates,
       'certificateTypes' => $certificateTypes,
       'canGenerateCertificates' => Gate::allows('generate-certificate'),
     ]);
@@ -199,11 +176,6 @@ class CertificateController extends Controller
     if ($type && !in_array($type, $availableTypes)) {
       return redirect()->back()->with('error', 'This certificate type is not available for this member.');
     }
-
-    $templates = CertificateTemplate::active()
-      ->with('certificateType')
-      ->when($type, fn($q) => $q->byCertificateType($type))
-      ->get();
 
     $existingCertificates = $member->certificates()
       ->when($type, function ($q) use ($type) {
@@ -229,7 +201,6 @@ class CertificateController extends Controller
       'member' => $member->load(['community']),
       'availableTypes' => $availableTypes,
       'selectedType' => $type,
-      'templates' => $templates,
       'existingCertificates' => $existingCertificates,
       'certificateTypes' => $certificateTypes,
       'requiredAdditionalData' => $type ? CertificateRecord::getRequiredAdditionalData($type) : [],
@@ -253,7 +224,6 @@ class CertificateController extends Controller
     $validated = $request->validate([
       'member_id' => 'required|exists:members,id',
       'certificate_type_id' => 'required|exists:certificate_types,id',
-      'template_id' => 'nullable|exists:certificate_templates,id',
       'notes' => 'nullable|string|max:1000',
     ]);
 
@@ -262,28 +232,16 @@ class CertificateController extends Controller
     $member = Member::findOrFail($validated['member_id']);
     $certificateType = CertificateType::findOrFail($validated['certificate_type_id']);
 
-    if (!empty($validated['template_id'])) {
-      $template = CertificateTemplate::findOrFail($validated['template_id']);
-    } else {
-      $template = CertificateTemplate::where('certificate_type_id', $validated['certificate_type_id'])
-        ->where('is_default', true)
-        ->where('is_active', true)
-        ->first();
+    // Automatically select default template for certificate type
+    $template = CertificateTemplate::where('certificate_type_id', $validated['certificate_type_id'])
+      ->where('is_default', true)
+      ->where('is_active', true)
+      ->first();
 
-      if (!$template) {
-        $template = CertificateTemplate::where('certificate_type_id', $validated['certificate_type_id'])
-          ->where('is_active', true)
-          ->first();
-      }
-
-      if (!$template) {
-        $template = new CertificateTemplate([
-          'name' => 'Default ' . ucfirst($certificateType->code),
-          'certificate_type_id' => $certificateType->id,
-          'template_content' => null,
-          'is_active' => true,
-        ]);
-      }
+    if (!$template) {
+      return back()->withErrors([
+        'certificate_type' => 'No template configured for this certificate type. Please contact administrator.'
+      ]);
     }
 
     if ($template->template_content && !str_contains($template->template_content, 'template_config["logo_url"]')) {
@@ -339,7 +297,7 @@ class CertificateController extends Controller
 
       $certificate->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk('local')->path($filePath)),
+        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
       ]);
 
       return redirect()->route('certificates.show', $certificate)
@@ -387,7 +345,7 @@ class CertificateController extends Controller
     $certificateTypeCode = is_object($certificate->certificateType) ? $certificate->certificateType->code : $certificate->certificateType;
     $fileName = "certificate_{$certificateTypeCode}_{$certificate->member->first_name}_{$certificate->member->last_name}_{$certificate->issued_date->format('Y-m-d')}.pdf";
 
-    return response()->download(Storage::disk('local')->path($certificate->file_path), $fileName);
+    return response()->download(Storage::disk(config('filesystems.private_storage'))->path($certificate->file_path), $fileName);
   }
 
   /**
@@ -549,7 +507,7 @@ class CertificateController extends Controller
 
       $reprint->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk('local')->path($filePath)),
+        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
       ]);
 
       return redirect()->route('certificates.show', $reprint)
@@ -577,7 +535,7 @@ class CertificateController extends Controller
 
       $certificate->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk('local')->path($filePath)),
+        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
       ]);
 
       return redirect()->back()

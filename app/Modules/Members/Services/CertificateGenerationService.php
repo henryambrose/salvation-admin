@@ -36,7 +36,7 @@ class CertificateGenerationService
     $directory = "certificates/{$year}/{$month}";
 
     // Ensure directory exists
-    Storage::disk('local')->makeDirectory($directory);
+    Storage::disk(config('filesystems.private_storage'))->makeDirectory($directory);
 
     // Generate filename
     $filename = sprintf(
@@ -49,7 +49,7 @@ class CertificateGenerationService
     $filePath = "{$directory}/{$filename}";
 
     // Save PDF to storage
-    Storage::disk('local')->put($filePath, $pdfContent);
+    Storage::disk(config('filesystems.private_storage'))->put($filePath, $pdfContent);
 
     return $filePath;
   }

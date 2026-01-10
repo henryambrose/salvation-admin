@@ -68,8 +68,8 @@ class FamilyPhotoService
             // Generate file path
             $filePath = $this->generateFilePath($familyNo, $file);
 
-            // Store the file on the public disk so it's accessible via URL
-            $storedPath = Storage::disk('public')->putFileAs(
+            // Store the file on the configured storage disk (public for local, s3 for production)
+            $storedPath = Storage::disk(config('filesystems.storage'))->putFileAs(
                 dirname($filePath),
                 $file,
                 basename($filePath)

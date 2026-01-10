@@ -253,11 +253,6 @@ function openCreateModal() {
   // Clear search results when opening modal
   searchResults.value = [];
 
-  // Auto-select first cell association if available
-  if (props.cellsAndAssociations && props.cellsAndAssociations.length > 0 && !createForm.cells_and_association_id.length) {
-    createForm.cells_and_association_id = [props.cellsAndAssociations[0]];
-  }
-
   showCreateModal.value = true;
 
   // Focus the first input after modal opens
