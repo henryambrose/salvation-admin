@@ -116,18 +116,19 @@ const navigationGroups = [
   {
     label: 'Certificates',
     items: [
-      {
-        title: 'View Certificates',
-        href: '/certificates',
-        icon: FileText,
-        show: can('read-certificate'),
-      },
-      {
-        title: 'Generate Certificate',
-        href: '/certificates/generate',
-        icon: Award,
-        show: can('create-certificate'),
-      },
+      // View Certificates and Generate Certificate disabled - redundant with Sacramental Records
+      // {
+      //   title: 'View Certificates',
+      //   href: '/certificates',
+      //   icon: FileText,
+      //   show: can('read-certificate'),
+      // },
+      // {
+      //   title: 'Generate Certificate',
+      //   href: '/certificates/generate',
+      //   icon: Award,
+      //   show: can('create-certificate'),
+      // },
       {
         title: 'Baptism Records',
         href: '/baptism-records',
