@@ -358,7 +358,7 @@ class MarriageRecordController extends Controller
             });
         }
 
-        return $pdf->inline();
+        return $pdf->download();
     }
 
     /**

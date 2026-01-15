@@ -276,7 +276,7 @@ Log::info($validated);
             });
         }
 
-        return $pdf->inline();
+        return $pdf->download();
     }
 
     /**

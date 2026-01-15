@@ -2114,6 +2114,7 @@ class MemberController extends Controller
             'currentCity',
             'currentState',
             'currentCountry',
+            'cellsAndAssociations',
         ]);
 
         // Prepare data for the template
@@ -2196,6 +2197,9 @@ class MemberController extends Controller
             // Notes
             'notes' => $member->notes ?? '',
 
+            // Cells and Associations
+            'cells_and_associations' => $member->cellsAndAssociations->pluck('name')->toArray(),
+
             // Parish info
             'parish_name' => config('app.parish_name', 'Church of Our Lady of Salvation'),
             'parish_address' => config('app.parish_address', 'Dadar (W), Mumbai - 400 028'),
@@ -2248,7 +2252,7 @@ class MemberController extends Controller
             });
         }
 
-        return $pdf->inline();
+        return $pdf->download();
     }
 
     /**

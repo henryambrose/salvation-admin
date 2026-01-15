@@ -418,6 +418,17 @@
         </div>
         @endif
 
+        <!-- Member Associations -->
+        @if(count($cells_and_associations) > 0)
+        <div class="section">
+            <div class="section-title">Member Associations</div>
+            <div class="field-row">
+                <div class="field-label">Associations:</div>
+                <div class="field-value">{{ implode(', ', $cells_and_associations) }}</div>
+            </div>
+        </div>
+        @endif
+
         <!-- Sacramental Information -->
         @if($baptism_date || $confirmation_date || $marriage_date || $death_date)
         <div class="section">

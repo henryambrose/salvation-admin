@@ -353,7 +353,7 @@ class BaptismRecordController extends Controller
             });
         }
 
-        return $pdf->inline();
+        return $pdf->download();
     }
 
     /**
