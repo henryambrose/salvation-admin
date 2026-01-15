@@ -295,9 +295,11 @@ class CertificateController extends Controller
     try {
       $filePath = $this->certificateService->generateCertificate($certificate);
 
+      // Use hash() with get() for S3 compatibility (hash_file() only works with local paths)
+      $disk = Storage::disk(config('filesystems.private_storage'));
       $certificate->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
+        'file_hash' => hash('sha256', $disk->get($filePath)),
       ]);
 
       return redirect()->route('certificates.show', $certificate)
@@ -505,9 +507,11 @@ class CertificateController extends Controller
 
       $filePath = $this->certificateService->generateCertificate($reprint);
 
+      // Use hash() with get() for S3 compatibility (hash_file() only works with local paths)
+      $disk = Storage::disk(config('filesystems.private_storage'));
       $reprint->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
+        'file_hash' => hash('sha256', $disk->get($filePath)),
       ]);
 
       return redirect()->route('certificates.show', $reprint)
@@ -533,9 +537,11 @@ class CertificateController extends Controller
     try {
       $filePath = $this->certificateService->generateCertificate($certificate);
 
+      // Use hash() with get() for S3 compatibility (hash_file() only works with local paths)
+      $disk = Storage::disk(config('filesystems.private_storage'));
       $certificate->update([
         'file_path' => $filePath,
-        'file_hash' => hash_file('sha256', Storage::disk(config('filesystems.private_storage'))->path($filePath)),
+        'file_hash' => hash('sha256', $disk->get($filePath)),
       ]);
 
       return redirect()->back()
