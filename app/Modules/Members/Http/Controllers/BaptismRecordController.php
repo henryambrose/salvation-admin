@@ -199,6 +199,7 @@ class BaptismRecordController extends Controller
      */
     public function downloadPdf(BaptismRecord $baptismRecord)
     {
+        try {
         // Helper to format dates (handles both string and Carbon instances)
         $formatDate = function ($date, $format = 'd/m/Y') {
             if (!$date || $date === '' || $date === '0000-00-00') return null;
@@ -327,8 +328,9 @@ class BaptismRecordController extends Controller
             ->name($filename);
 
         // Configure Browsershot to use Puppeteer's Chrome
-        $chromePath = env('PUPPETEER_EXECUTABLE_PATH', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
-        if (file_exists($chromePath)) {
+        // IMPORTANT: Use config() not env() - env() doesn't work when config is cached
+        $chromePath = config('app.chrome_path', '/usr/bin/google-chrome');
+        if ($chromePath && file_exists($chromePath)) {
             $pdf->withBrowsershot(function ($browsershot) use ($chromePath) {
                 $browsershot->setChromePath($chromePath)
                     ->noSandbox()
@@ -354,6 +356,18 @@ class BaptismRecordController extends Controller
         }
 
         return $pdf->download();
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate baptism certificate PDF', [
+                'baptism_record_id' => $baptismRecord->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'error' => 'Failed to generate certificate PDF',
+                'message' => config('app.debug') ? $e->getMessage() : 'Please contact administrator'
+            ], 500);
+        }
     }
 
     /**

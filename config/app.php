@@ -183,4 +183,16 @@ return [
 
     'graveyard_min_months_before_niche_transfer' => env('GRAVEYARD_MIN_MONTHS_BEFORE_NICHE_TRANSFER', 6),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Chrome/Puppeteer Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configuration for Browsershot/Puppeteer PDF generation.
+    |
+    */
+
+    'chrome_path' => env('PUPPETEER_EXECUTABLE_PATH', '/usr/bin/google-chrome'),
+    'chrome_no_sandbox' => env('CHROME_NO_SANDBOX', true),
+
 ];

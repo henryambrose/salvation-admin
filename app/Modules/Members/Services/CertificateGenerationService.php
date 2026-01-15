@@ -109,7 +109,8 @@ class CertificateGenerationService
     $pdfBuilder = Pdf::html($html);
 
     // Configure Browsershot to use Puppeteer's Chrome
-    $chromePath = env('PUPPETEER_EXECUTABLE_PATH', config('app.chrome_path', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome'));
+    // IMPORTANT: Use config() not env() - env() doesn't work when config is cached
+    $chromePath = config('app.chrome_path', '/usr/bin/google-chrome');
     $noSandbox = config('app.chrome_no_sandbox', true);
 
     $pdfBuilder->withBrowsershot(function ($browsershot) use ($chromePath, $noSandbox) {

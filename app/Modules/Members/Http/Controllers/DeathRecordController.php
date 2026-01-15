@@ -250,8 +250,9 @@ Log::info($validated);
             ->name($filename);
 
         // Configure Browsershot to use Puppeteer's Chrome
-        $chromePath = env('PUPPETEER_EXECUTABLE_PATH', '/var/www/.cache/puppeteer/chrome/linux-143.0.7499.169/chrome-linux64/chrome');
-        if (file_exists($chromePath)) {
+        // IMPORTANT: Use config() not env() - env() doesn't work when config is cached
+        $chromePath = config('app.chrome_path', '/usr/bin/google-chrome');
+        if ($chromePath && file_exists($chromePath)) {
             $pdf->withBrowsershot(function ($browsershot) use ($chromePath) {
                 $browsershot->setChromePath($chromePath)
                     ->noSandbox()
