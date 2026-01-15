@@ -35,8 +35,11 @@ class CertificateGenerationService
     $month = $certificate->issued_date->format('m');
     $directory = "certificates/{$year}/{$month}";
 
-    // Ensure directory exists
-    Storage::disk(config('filesystems.private_storage'))->makeDirectory($directory);
+    // Ensure directory exists (only needed for local storage, S3 handles this automatically)
+    $disk = Storage::disk(config('filesystems.private_storage'));
+    if (config('filesystems.private_storage') === 'local') {
+      $disk->makeDirectory($directory);
+    }
 
     // Generate filename
     $filename = sprintf(
@@ -60,7 +63,7 @@ class CertificateGenerationService
     ]);
 
     // Save PDF to storage
-    Storage::disk(config('filesystems.private_storage'))->put($filePath, $pdfContent);
+    $disk->put($filePath, $pdfContent);
 
     return $filePath;
   }
