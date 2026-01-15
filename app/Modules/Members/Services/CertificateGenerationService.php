@@ -48,6 +48,17 @@ class CertificateGenerationService
 
     $filePath = "{$directory}/{$filename}";
 
+    // Debug logging
+    Log::info('Certificate file generation', [
+      'directory' => $directory,
+      'filename' => $filename,
+      'filePath' => $filePath,
+      'certificate_type_code' => $certificateType->code,
+      'member_id' => $certificate->member_id,
+      'issued_date' => $certificate->issued_date->format('Y-m-d_H-i-s'),
+      'pdf_content_length' => strlen($pdfContent),
+    ]);
+
     // Save PDF to storage
     Storage::disk(config('filesystems.private_storage'))->put($filePath, $pdfContent);
 
