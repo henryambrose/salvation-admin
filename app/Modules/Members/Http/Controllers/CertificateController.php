@@ -347,7 +347,8 @@ class CertificateController extends Controller
     $certificateTypeCode = is_object($certificate->certificateType) ? $certificate->certificateType->code : $certificate->certificateType;
     $fileName = "certificate_{$certificateTypeCode}_{$certificate->member->first_name}_{$certificate->member->last_name}_{$certificate->issued_date->format('Y-m-d')}.pdf";
 
-    return response()->download(Storage::disk(config('filesystems.private_storage'))->path($certificate->file_path), $fileName);
+    // Use Storage::download() for S3 compatibility instead of response()->download()
+    return Storage::disk(config('filesystems.private_storage'))->download($certificate->file_path, $fileName);
   }
 
   /**
