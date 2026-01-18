@@ -40,7 +40,7 @@
             min-height: 32mm;
             display: flex;
             position: relative;
-            margin-bottom: 5mm;
+            margin-bottom: 2mm;
         }
 
         .logoframe {
@@ -226,7 +226,7 @@
                 <div class="headframe_parish">{{ strtoupper($parish_name) }}
                 </div>
                 <div class="headframe_bylines">{{ $parish_address ?? 'Dadar (W), Mumbai - 400 028' }}</div>
-                <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; ">
+                <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; margin-top: 5mm;">
                     Marriage No {{ $marriage_reg_no_short ?? ($marriage_reg_no ? (int) filter_var($marriage_reg_no, FILTER_SANITIZE_NUMBER_INT) : '--') }} of the Year {{ $marriage_year ?? '--' }}
                 </div>
             </div>
@@ -235,6 +235,12 @@
         <!-- Body -->
         <div style="width: 100%; padding-left: 10mm; font-size: 11pt; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
             @php
+                // Determine remark value based on pdf_options
+                $remarkValue = '---';
+                if (isset($pdf_options['include_remark']) && $pdf_options['include_remark']) {
+                    $remarkValue = $marriage_remarks ?? '';
+                }
+
                 $fields = [
                     ['num' => '1.', 'label' => 'Date of Marriage', 'value' => $marriage_date ?? ''],
                     ['num' => '2.', 'label' => "Bridegroom's Name", 'value' => $bridegroom_name ?? ''],
@@ -262,12 +268,12 @@
                     ['num' => '24.', 'label' => "Second Witness' Name", 'value' => $second_witness_name ?? ''],
                     ['num' => '25.', 'label' => 'Residence', 'value' => $second_witness_residence ?? ''],
                     ['num' => '26.', 'label' => 'Minister', 'value' => $minister_name ?? ''],
-                    ['num' => '27.', 'label' => 'Remarks', 'value' => $marriage_remarks ?? ''],
+                    ['num' => '27.', 'label' => 'Remarks', 'value' => $remarkValue],
                 ];
             @endphp
 
             @foreach($fields as $field)
-                <div style="display: flex; min-height: 7.5mm; align-items: center;">
+                <div style="display: flex; min-height: 6mm; align-items: center;">
                     <div style="width: 10mm; padding-right: 2mm;">{{ $field['num'] }}</div>
                     <div style="width: 47mm; padding-right: 2mm;">{{ $field['label'] }}</div>
                     <div style="width: 3mm;">:</div>
@@ -277,14 +283,22 @@
         </div>
 
         <!-- Bottom Section -->
-        <div style="display: flex; width: 100%; margin-top: 5mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
+        @php
+            // Get PDF options with defaults
+            $printDate = $pdf_options['print_date'] ?? now()->format('d/m/Y');
+            $signByLabel = $pdf_options['sign_by_label'] ?? 'Parish Priest';
+            $signeeName = $pdf_options['signee_name'] ?? ($parish_priest_name ?? '');
+        @endphp
+        <div style="display: flex; width: 100%; margin-top: 3mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
             <div style="flex: 1; text-align: center;">
-                <div style="margin-bottom: 20mm;">For Authenticity of Extract:</div>
+                <div style="margin-bottom: 10mm;">For Authenticity of Extract:</div>
             </div>
-            <div style="flex: 1; text-align: right; padding-right: 10mm;">
-                <div style="margin-bottom: 20mm;">Date: {{ $issued_date ?? now()->format('jS F Y') }}</div>
-                <div style="margin-bottom: 3mm;">{{ $parish_priest_name ?? 'Parish Priest' }}</div>
-                <div style="font-size: 14px;">PARISH PRIEST</div>
+            <div style="flex: 1; text-align: center;">
+                <div style="margin-bottom: 10mm;">Date: {{ $printDate }}</div>
+                @if($signeeName)
+                    <div style="margin-bottom: 2mm;">{{ $signeeName }}</div>
+                @endif
+                <div style="font-size: 14px;">{{ strtoupper($signByLabel) }}</div>
             </div>
         </div>
 

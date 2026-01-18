@@ -227,8 +227,17 @@ class MarriageRecordController extends Controller
     /**
      * Generate and download marriage certificate PDF
      */
-    public function downloadPdf(MarriageRecord $marriageRecord)
+    public function downloadPdf(Request $request, MarriageRecord $marriageRecord)
     {
+        // Get PDF options from query parameters
+        $includeRemark = $request->query('include_remark', '1') === '1';
+        $signBy = $request->query('sign_by', 'parish_priest');
+        $signeeName = $request->query('signee_name', '');
+        $printDate = $request->query('print_date', now()->format('Y-m-d'));
+
+        // Format print date
+        $formattedPrintDate = $printDate ? \Carbon\Carbon::parse($printDate)->format('d/m/Y') : now()->format('d/m/Y');
+
         // Helper to format dates (handles both string and Carbon instances)
         $formatDate = function ($date, $format = 'd/m/Y') {
             if (!$date) return null;
@@ -315,6 +324,15 @@ class MarriageRecordController extends Controller
             'template_config' => [
                 'show_logo' => config('app.certificate_show_logo', true),
                 'logo_url' => $this->makeLogoDataUrl(config('app.certificate_logo_path', 'images/logo.png')),
+            ],
+
+            // PDF print options (passed from modal, not saved)
+            'pdf_options' => [
+                'include_remark' => $includeRemark,
+                'sign_by' => $signBy,
+                'signee_name' => $signeeName,
+                'print_date' => $formattedPrintDate,
+                'sign_by_label' => $signBy === 'parish_priest' ? 'Parish Priest' : 'For Parish Priest',
             ],
         ];
 

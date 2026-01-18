@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Search, Pencil, RotateCcw, Archive, Download } from 'lucide-vue-next';
 import { useToast } from '@/composables/useToast';
+import PdfOptionsModal, { type PdfOptions } from '@/components/PdfOptionsModal.vue';
 
 const props = defineProps<{
   baptismRecords: any;
@@ -42,6 +43,10 @@ const formatDate = (dateString: string | null) => {
 const showDeleteDialog = ref(false);
 const showRestoreDialog = ref(false);
 const selectedRecordId = ref<number | null>(null);
+
+// PDF options modal state
+const showPdfOptionsModal = ref(false);
+const pdfRecordId = ref<number | null>(null);
 
 // Watch for flash messages
 watch(
@@ -113,7 +118,25 @@ function restoreRecord() {
 }
 
 function downloadPdf(id: number) {
-  window.open(route('baptism-records.download-pdf', id), '_blank');
+  pdfRecordId.value = id;
+  showPdfOptionsModal.value = true;
+}
+
+function handlePdfOptionsConfirm(options: PdfOptions) {
+  if (pdfRecordId.value) {
+    const params = new URLSearchParams({
+      include_remark: options.includeRemark ? '1' : '0',
+      sign_by: options.signBy,
+      signee_name: options.signeeName,
+      print_date: options.printDate,
+    });
+    window.open(
+      route('baptism-records.download-pdf', pdfRecordId.value) + '?' + params.toString(),
+      '_blank'
+    );
+  }
+  showPdfOptionsModal.value = false;
+  pdfRecordId.value = null;
 }
 </script>
 
@@ -336,5 +359,13 @@ function downloadPdf(id: number) {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- PDF Options Modal -->
+    <PdfOptionsModal
+      v-model:open="showPdfOptionsModal"
+      title="Baptism Certificate PDF Options"
+      @confirm="handlePdfOptionsConfirm"
+      @cancel="showPdfOptionsModal = false"
+    />
   </AppLayout>
 </template>

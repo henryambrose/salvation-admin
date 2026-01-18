@@ -197,9 +197,18 @@ class BaptismRecordController extends Controller
     /**
      * Generate and download baptism certificate PDF
      */
-    public function downloadPdf(BaptismRecord $baptismRecord)
+    public function downloadPdf(Request $request, BaptismRecord $baptismRecord)
     {
         try {
+        // Get PDF options from query parameters
+        $includeRemark = $request->query('include_remark', '1') === '1';
+        $signBy = $request->query('sign_by', 'parish_priest');
+        $signeeName = $request->query('signee_name', '');
+        $printDate = $request->query('print_date', now()->format('Y-m-d'));
+
+        // Format print date
+        $formattedPrintDate = $printDate ? \Carbon\Carbon::parse($printDate)->format('d/m/Y') : now()->format('d/m/Y');
+
         // Helper to format dates (handles both string and Carbon instances)
         $formatDate = function ($date, $format = 'd/m/Y') {
             if (!$date || $date === '' || $date === '0000-00-00') return null;
@@ -220,6 +229,9 @@ class BaptismRecordController extends Controller
             'member.father',
             'member.mother',
             'member.spouse',
+            'member.confirmationParish',
+            'member.marriageRecord.bridegroom',
+            'member.marriageRecord.bride',
             'baptismParish'
         ]);
 
@@ -235,23 +247,46 @@ class BaptismRecordController extends Controller
             ]);
         }
 
-        // Get confirmation info if exists
+        // Get confirmation info if exists (from Member table)
         $confirmationInfo = null;
         if ($member->confirmation_date) {
             $confirmationInfo = [
                 'date' => $formatDate($member->confirmation_date),
-                'place' => $member->confirmation_parish ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
+                'place' => $member->confirmationParish?->name ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
             ];
         }
 
-        // Get marriage info if exists
+        // Get marriage info if exists (from MarriageRecord table via relationship)
         $marriageInfo = null;
-        if ($member->marriage_date) {
-            $spouse = $member->spouse;
+        $marriageRecord = $member->marriageRecord;
+        if ($marriageRecord && $marriageRecord->marriage_date) {
+            // Determine spouse: if member is bridegroom, spouse is bride and vice versa
+            $spouse = null;
+            if ($marriageRecord->bridegroom_member_id === $member->id) {
+                // Member is bridegroom, get bride as spouse
+                $spouse = $marriageRecord->bride;
+                if (!$spouse && ($marriageRecord->bride_name || $marriageRecord->bride_surname)) {
+                    // Use manually entered bride name
+                    $spouseName = trim(($marriageRecord->bride_name ?? '') . ' ' . ($marriageRecord->bride_surname ?? ''));
+                }
+            } else {
+                // Member is bride, get bridegroom as spouse
+                $spouse = $marriageRecord->bridegroom;
+                if (!$spouse && ($marriageRecord->bridegroom_name || $marriageRecord->bridegroom_surname)) {
+                    // Use manually entered bridegroom name
+                    $spouseName = trim(($marriageRecord->bridegroom_name ?? '') . ' ' . ($marriageRecord->bridegroom_surname ?? ''));
+                }
+            }
+
+            // Build spouse name from member record if available
+            if ($spouse) {
+                $spouseName = trim("{$spouse->first_name} " . ($spouse->middle_name ? "{$spouse->middle_name} " : '') . "{$spouse->last_name}");
+            }
+
             $marriageInfo = [
-                'date' => $formatDate($member->marriage_date),
-                'place' => $member->marriage_parish ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
-                'spouse' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : '',
+                'date' => $formatDate($marriageRecord->marriage_date),
+                'place' => $marriageRecord->parish_of_marriage ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
+                'spouse' => $spouseName ?? '',
             ];
         }
 
@@ -312,6 +347,15 @@ class BaptismRecordController extends Controller
             'template_config' => [
                 'show_logo' => config('app.certificate_show_logo', true),
                 'logo_url' => $this->makeLogoDataUrl(config('app.certificate_logo_path', 'images/logo.png')),
+            ],
+
+            // PDF print options (passed from modal, not saved)
+            'pdf_options' => [
+                'include_remark' => $includeRemark,
+                'sign_by' => $signBy,
+                'signee_name' => $signeeName,
+                'print_date' => $formattedPrintDate,
+                'sign_by_label' => $signBy === 'parish_priest' ? 'Parish Priest' : 'For Parish Priest',
             ],
         ];
 

@@ -226,7 +226,7 @@
                 <div class="headframe_parish">{{ strtoupper($parish_name) }}
                 </div>
                 <div class="headframe_bylines">{{ $parish_address ?? 'Dadar (W), Mumbai - 400 028' }}</div>
-                <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; ">
+                <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; margin-top: 10mm;">
                     Baptism No {{ $baptism_reg_no_short ?? ($baptism_reg_no ? (int) filter_var($baptism_reg_no, FILTER_SANITIZE_NUMBER_INT) : '--') }} of the Year {{ $baptism_year ?? '--' }}
                 </div>
             </div>
@@ -235,6 +235,12 @@
         <!-- Body -->
         <div style="width: 100%; padding-left: 10mm; font-size: 11pt; font-weight: 600; font-family: Arial, Helvetica, sans-serif;">
             @php
+                // Determine remark value based on pdf_options
+                $remarkValue = '---';
+                if (isset($pdf_options['include_remark']) && $pdf_options['include_remark']) {
+                    $remarkValue = $baptism_remarks ?? '';
+                }
+
                 $fields = [
                     ['num' => '1.', 'label' => 'Date of Baptism', 'value' => $baptism_date ?? ''],
                     ['num' => '2.', 'label' => 'Date of Birth', 'value' => $member_dob ?? ''],
@@ -256,7 +262,7 @@
                     ['num' => '18.', 'label' => 'Marriage On', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['date'] ?? '') : '')],
                     ['num' => '', 'label' => 'Marriage At', 'value' => ($marriage_info ? 'At: ' . ($marriage_info['place'] ?? '') : '')],
                     ['num' => '', 'label' => 'Marriage To', 'value' => ($marriage_info ? 'To: ' . ($marriage_info['spouse'] ?? '') : '')],
-                    ['num' => '19.', 'label' => 'Remarks', 'value' => $baptism_remarks ?? ''],
+                    ['num' => '19.', 'label' => 'Remarks', 'value' => $remarkValue],
                 ];
             @endphp
 
@@ -271,14 +277,22 @@
         </div>
 
         <!-- Bottom Section -->
+        @php
+            // Get PDF options with defaults
+            $printDate = $pdf_options['print_date'] ?? now()->format('d/m/Y');
+            $signByLabel = $pdf_options['sign_by_label'] ?? 'Parish Priest';
+            $signeeName = $pdf_options['signee_name'] ?? ($parish_priest_name ?? '');
+        @endphp
         <div style="display: flex; width: 100%; margin-top: 15mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
             <div style="flex: 1; text-align: center;">
                 <div style="margin-bottom: 20mm;">For Authenticity of Extract:</div>
             </div>
-            <div style="flex: 1; text-align: right; padding-right: 10mm;">
-                <div style="margin-bottom: 20mm;">Date: {{ now()->format('jS F Y') }}</div>
-                <div style="margin-bottom: 3mm;">{{ $parish_priest_name ?? 'Parish Priest' }}</div>
-                <div style="font-size: 14px;">PARISH PRIEST</div>
+            <div style="flex: 1; text-align: center;">
+                <div style="margin-bottom: 20mm;">Date: {{ $printDate }}</div>
+                @if($signeeName)
+                    <div style="margin-bottom: 3mm;">{{ $signeeName }}</div>
+                @endif
+                <div style="font-size: 14px;">{{ strtoupper($signByLabel) }}</div>
             </div>
         </div>
 
