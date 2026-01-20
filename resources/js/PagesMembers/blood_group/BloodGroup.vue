@@ -240,6 +240,27 @@ function handlePageChange(event: Event) {
     fetch(Number(target.value));
   }
 }
+
+// Focus first input when create modal opens
+watch(showModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-create-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
+
+// Focus first input when edit modal opens
+watch(showEditModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-edit-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
+
 const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
 </script>
 
@@ -408,7 +429,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
-                <Input v-model="form.name" type="text" />
+                <Input v-model="form.name" type="text" data-create-input />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
               </div>
               <div class="flex justify-end space-x-2">
@@ -443,7 +464,7 @@ const breadcrumbs = [{ title: 'Blood Group', href: '/blood-group' }];
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
-                <Input v-model="editForm.name" type="text" />
+                <Input v-model="editForm.name" type="text" data-edit-input />
                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
               </div>
               <div class="flex justify-end space-x-2">

@@ -89,7 +89,12 @@ class MembersPermissionsSeeder extends Seeder
             'list-ppc-head',
             'restore-ppc-head',
 
-
+            'create-cells-and-association-leader',
+            'read-cells-and-association-leader',
+            'update-cells-and-association-leader',
+            'delete-cells-and-association-leader',
+            'list-cells-and-association-leader',
+            'restore-cells-and-association-leader',
 
             // Member Attributes
             'create-relationship',

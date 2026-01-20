@@ -11,43 +11,57 @@ import Multiselect from 'vue-multiselect';
 import 'vue-multiselect/dist/vue-multiselect.min.css';
 
 const props = defineProps({
-  ppcHeads: {
+  cells_and_association_leaders: {
     type: Object,
     default: () => ({ data: [] }),
   },
-  communities: {
-    type: Array as () => { id: string | number; name: string }[],
+  cellsAndAssociations: {
+    type: Array as () => Array<{ id: string | number; name: string }>,
     default: () => [],
   },
   filters: Object,
   fetchUrl: String,
 });
+
 const columns = [
-  { key: 'community_name', label: 'Community Name', sortable: true },
-  { key: 'member_full_name', label: 'Member Name', sortable: true },
+  { key: 'cells_and_association_name', label: 'Cell/Association', sortable: true },
+  { key: 'leader_full_name', label: 'Leader', sortable: true },
+  { key: 'assistant_leader_full_name', label: 'Assistant Leader', sortable: true },
 ];
 
-const partialOnly = ['ppcHeads', 'filters'];
+const partialOnly = ['cells_and_association_leaders', 'filters'];
 const searchTimeout = ref<number | null>(null);
-const breadcrumbs = [{ title: 'PPC Heads', href: '/ppc-head/index' }];
+const breadcrumbs = [{ title: 'Cells & Association Leaders', href: '/cells-and-association-leaders/index' }];
 const showEditModal = ref(false);
 const showDeleteModal = ref(false);
 const showCreateModal = ref(false);
-const editingPPCHead = ref<any>(null);
+const editingLeader = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
-const modalMembers = ref<any[]>([]);
+const allMembers = ref<any[]>([]);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
-const editForm = useForm<{ id: string | number; member_id: any; community_id: any }>({
+const editForm = useForm<{
+  id: string | number;
+  cells_and_association_id: any;
+  leader_member_id: any;
+  assistant_leader_member_id: any;
+}>({
   id: '',
-  member_id: null,
-  community_id: null,
+  cells_and_association_id: null,
+  leader_member_id: null,
+  assistant_leader_member_id: null,
 });
-const createForm = useForm<{ member_id: any; community_id: any }>({
-  member_id: null,
-  community_id: null,
+
+const createForm = useForm<{
+  cells_and_association_id: any;
+  leader_member_id: any;
+  assistant_leader_member_id: any;
+}>({
+  cells_and_association_id: null,
+  leader_member_id: null,
+  assistant_leader_member_id: null,
 });
 
 const search = ref(props.filters?.search || '');
@@ -76,8 +90,8 @@ function clearSearch() {
   }
 }
 
-const enhancedPPCHeads = computed(() => {
-  const c = props.ppcHeads || {};
+const enhancedLeaders = computed(() => {
+  const c = props.cells_and_association_leaders || {};
   return {
     data: c.data || [],
     prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
@@ -103,7 +117,7 @@ watch(
 
 function scrollToRow(rowId: number) {
   nextTick(() => {
-    const el = document.getElementById(`ppc-head-row-${rowId}`);
+    const el = document.getElementById(`leader-row-${rowId}`);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       el.classList.add('highlight-row');
@@ -121,7 +135,7 @@ function fetch(page = 1) {
       sort: sort.value,
       direction: direction.value,
       perPage: perPage.value,
-      isArchived: isArchived.value,
+      isArchived: isArchived.value ? 'true' : 'false',
       page,
     },
     {
@@ -131,36 +145,19 @@ function fetch(page = 1) {
     },
   );
 }
-watch(
-  () => editForm.community_id,
-  async (newVal: any, oldVal) => {
-    if (newVal) {
-      const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
-      modalMembers.value = data;
-      editForm.member_id = null;
-    } else {
-      modalMembers.value = [];
-      editForm.member_id = null;
-    }
-  },
-);
+
+async function fetchAllMembers() {
+  try {
+    const { data } = await axios.get('/api/members/alive');
+    allMembers.value = data;
+  } catch (error) {
+    console.error('Failed to fetch members:', error);
+    allMembers.value = [];
+  }
+}
 
 watch(
-  () => createForm.community_id,
-  async (newVal: any) => {
-    if (newVal) {
-      const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
-      modalMembers.value = data;
-      createForm.member_id = null;
-    } else {
-      modalMembers.value = [];
-      createForm.member_id = null;
-    }
-  },
-);
-
-watch(
-  () => enhancedPPCHeads.value.data,
+  () => enhancedLeaders.value.data,
   (rows) => {
     if (highlightedRowId.value) {
       let rowId = highlightedRowId.value;
@@ -173,55 +170,51 @@ watch(
   },
 );
 
-function openEditModal(row: any) {
-  editingPPCHead.value = row;
-  // Set the full community object
-  editForm.community_id = props.communities.find((c) => c.id === row.community_id) || null;
+async function openEditModal(row: any) {
+  editingLeader.value = row;
+  await fetchAllMembers();
+
+  editForm.cells_and_association_id = props.cellsAndAssociations.find((c) => c.id === row.cells_and_association_id) || null;
+  editForm.leader_member_id = allMembers.value.find((m) => m.id === row.leader_member_id) || null;
+  editForm.assistant_leader_member_id = row.assistant_leader_member_id
+    ? allMembers.value.find((m) => m.id === row.assistant_leader_member_id) || null
+    : null;
+
   showEditModal.value = true;
-  nextTick(async () => {
-    if (editForm.community_id) {
-      const { data } = await axios.get(`/api/ppc-community/${editForm.community_id.id}/members`);
-      modalMembers.value = data;
-      // Set the full member object
-      editForm.member_id = modalMembers.value.find((m) => m.id === row.member_id) || null;
-    } else {
-      modalMembers.value = [];
-      editForm.member_id = null;
-    }
-  });
 }
 
 function submitEdit() {
-  if (!editForm.member_id || !editForm.community_id) return;
-  const editedId = editingPPCHead.value?.id;
+  if (!editForm.leader_member_id || !editForm.cells_and_association_id) return;
+  const editedId = editingLeader.value?.id;
   editForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
-    page: enhancedPPCHeads.value.current_page,
+    page: enhancedLeaders.value.current_page,
     search: search.value,
     sort: sort.value,
     direction: direction.value,
     isArchived: isArchived.value ? 'true' : 'false',
-    community_id: editForm.community_id ? editForm.community_id.id : null,
-    member_id: editForm.member_id ? editForm.member_id.id : null,
+    cells_and_association_id: editForm.cells_and_association_id ? editForm.cells_and_association_id.id : null,
+    leader_member_id: editForm.leader_member_id ? editForm.leader_member_id.id : null,
+    assistant_leader_member_id: editForm.assistant_leader_member_id ? editForm.assistant_leader_member_id.id : null,
   }));
-  editForm.put(`/ppc-head/${editedId || ''}`, {
+  editForm.put(`/cells-and-association-leaders/${editedId || ''}`, {
     preserveScroll: true,
     onSuccess: () => {
       showEditModal.value = false;
-      editingPPCHead.value = undefined;
+      editingLeader.value = undefined;
       nextTick(() => {
-        fetch(enhancedPPCHeads.value.current_page);
+        fetch(enhancedLeaders.value.current_page);
         highlightedRowId.value = editedId;
       });
     },
   });
 }
 
-function openCreateModal() {
+async function openCreateModal() {
+  await fetchAllMembers();
   showCreateModal.value = true;
   createForm.reset();
-  modalMembers.value = [];
 }
 
 function closeCreateModal() {
@@ -229,32 +222,35 @@ function closeCreateModal() {
 }
 
 function submitCreate() {
-  // Check for duplicate community
-  const existingCommunity = enhancedPPCHeads.value.data.find((head: any) => head.community_id === createForm.community_id?.id);
+  // Check for duplicate cell/association
+  const existingLeader = enhancedLeaders.value.data.find(
+    (leader: any) => leader.cells_and_association_id === createForm.cells_and_association_id?.id,
+  );
 
-  if (existingCommunity) {
-    createForm.setError('community_id', 'This community already has a PPC Head assigned.');
+  if (existingLeader) {
+    createForm.setError('cells_and_association_id', 'This Cell/Association already has leaders assigned.');
     return;
   }
 
   createForm.transform((data) => ({
     ...data,
     perPage: perPage.value,
-    page: enhancedPPCHeads.value.last_page,
+    page: enhancedLeaders.value.last_page,
     search: search.value,
     sort: sort.value,
     direction: direction.value,
     isArchived: isArchived.value ? 'true' : 'false',
-    community_id: createForm.community_id ? createForm.community_id.id : null,
-    member_id: createForm.member_id ? createForm.member_id.id : null,
+    cells_and_association_id: createForm.cells_and_association_id ? createForm.cells_and_association_id.id : null,
+    leader_member_id: createForm.leader_member_id ? createForm.leader_member_id.id : null,
+    assistant_leader_member_id: createForm.assistant_leader_member_id ? createForm.assistant_leader_member_id.id : null,
   }));
-  createForm.post('/ppc-head', {
+  createForm.post('/cells-and-association-leaders', {
     preserveScroll: true,
     onSuccess: () => {
       showCreateModal.value = false;
       createForm.reset();
       nextTick(() => {
-        fetch(enhancedPPCHeads.value.last_page);
+        fetch(enhancedLeaders.value.last_page);
         highlightedRowId.value = -1;
       });
     },
@@ -269,10 +265,10 @@ function openDeleteModal(row: any) {
 function confirmDelete() {
   if (!deletingItem.value) return;
   const deletedId = deletingItem.value?.id;
-  router.delete(`/ppc-head/${deletedId || ''}`, {
+  router.delete(`/cells-and-association-leaders/${deletedId || ''}`, {
     data: {
       perPage: perPage.value,
-      page: enhancedPPCHeads.value.current_page,
+      page: enhancedLeaders.value.current_page,
       search: search.value,
       sort: sort.value,
       direction: direction.value,
@@ -289,9 +285,9 @@ function confirmDelete() {
   });
 }
 
-function restorePPCHead(id: number) {
+function restoreLeader(id: number) {
   router.post(
-    `/ppc-head/${id}/restore`,
+    `/cells-and-association-leaders/${id}/restore`,
     {},
     {
       preserveScroll: true,
@@ -301,6 +297,7 @@ function restorePPCHead(id: number) {
       },
     },
   );
+  isArchived.value = false;
 }
 
 function downloadCsv() {
@@ -312,24 +309,17 @@ function downloadCsv() {
     isArchived: isArchived.value ? 'true' : 'false',
   });
 
-  // Use window.location.href for direct download
-  window.location.href = `${window.location.origin}/ppc-head/export?${params.toString()}`;
+  window.location.href = `${window.location.origin}/cells-and-association-leaders/export?${params.toString()}`;
 }
 
 import { permissionHelpers } from '@/composables/permissionHelpers';
 const { can } = permissionHelpers();
 
-const canCreatePPCHead = can('create-ppc-head');
-const canReadAnyPPCHead = can('read-ppc-head');
-const canUpdateAnyPPCHead = can('update-ppc-head');
-const canDeleteAnyPPCHead = can('delete-ppc-head');
-const canExportPPCHead = can('read-ppc-head');
-
-function onPageChange(e: Event) {
-  const target = e.target as HTMLSelectElement | null;
-  if (!target) return;
-  fetch(Number(target.value));
-}
+const canCreateLeader = can('create-cells-and-association-leader');
+const canReadAnyLeader = can('read-cells-and-association-leader');
+const canUpdateAnyLeader = can('update-cells-and-association-leader');
+const canDeleteAnyLeader = can('delete-cells-and-association-leader');
+const canExportLeader = can('read-cells-and-association-leader');
 
 // Focus first input when create modal opens
 watch(showCreateModal, (isOpen) => {
@@ -354,13 +344,13 @@ watch(showEditModal, (isOpen) => {
 
 <template>
   <AppLayout :breadcrumbs="breadcrumbs">
-    <Head title="PPC Heads" />
+    <Head title="Cells & Association Leaders" />
     <DatatableHeader>
       <div class="mb-4 flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-blue-700">PPC Heads</h2>
+        <h2 class="text-2xl font-bold">Cells & Association Leaders</h2>
         <div class="btn-group flex space-x-2">
           <Button
-            v-if="canExportPPCHead"
+            v-if="canExportLeader"
             @click="downloadCsv"
             class="flex items-center gap-2 rounded-full bg-green-600 px-4 py-2 text-white shadow transition hover:bg-green-700"
           >
@@ -368,12 +358,12 @@ watch(showEditModal, (isOpen) => {
             <span>Export CSV</span>
           </Button>
           <Button
-            v-if="canCreatePPCHead"
+            v-if="canCreateLeader"
             @click="openCreateModal"
             class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
           >
             <component :is="Plus" />
-            <span>Add PPC Head</span>
+            <span>Add Leader</span>
           </Button>
         </div>
       </div>
@@ -408,20 +398,20 @@ watch(showEditModal, (isOpen) => {
       </div>
     </DatatableHeader>
 
-    <div v-if="canReadAnyPPCHead">
+    <div v-if="canReadAnyLeader">
       <!-- Compact pagination with inline stats above the table -->
       <div class="mb-2 flex items-center justify-between gap-3 rounded border border-gray-100 bg-gray-50 px-3 py-1.5 text-xs">
         <!-- Left side: Total records info -->
         <div class="text-gray-600">
-          Showing <span class="font-semibold">{{ enhancedPPCHeads.total || 0 }}</span> total PPC heads
+          Showing <span class="font-semibold">{{ enhancedLeaders.total || 0 }}</span> total leaders
           <span v-if="search" class="text-blue-600">for "{{ search }}"</span>
         </div>
 
         <!-- Center: Pagination controls -->
         <div class="flex items-center gap-2">
           <button
-            v-if="enhancedPPCHeads.prev_page_url"
-            @click="fetch(enhancedPPCHeads.current_page - 1)"
+            v-if="enhancedLeaders.prev_page_url"
+            @click="fetch(enhancedLeaders.current_page - 1)"
             class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             ← Prev
@@ -430,21 +420,21 @@ watch(showEditModal, (isOpen) => {
           <div class="flex items-center gap-1 text-gray-600">
             <span>Page</span>
             <select
-              v-if="enhancedPPCHeads.last_page && enhancedPPCHeads.last_page > 1"
-              :value="enhancedPPCHeads.current_page"
-              @change="onPageChange"
+              v-if="enhancedLeaders.last_page && enhancedLeaders.last_page > 1"
+              :value="enhancedLeaders.current_page"
+              @change="(event) => fetch(Number((event.target as HTMLSelectElement).value))"
               class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50 focus:border-blue-500 focus:ring-1 focus:ring-[#3b82f6]"
             >
-              <option v-for="page in enhancedPPCHeads.last_page" :key="page" :value="page">
+              <option v-for="page in enhancedLeaders.last_page" :key="page" :value="page">
                 {{ page }}
               </option>
             </select>
-            <span>of {{ enhancedPPCHeads.last_page }}</span>
+            <span>of {{ enhancedLeaders.last_page }}</span>
           </div>
 
           <button
-            v-if="enhancedPPCHeads.next_page_url"
-            @click="fetch(enhancedPPCHeads.current_page + 1)"
+            v-if="enhancedLeaders.next_page_url"
+            @click="fetch(enhancedLeaders.current_page + 1)"
             class="rounded border border-gray-300 bg-[#ffffff] px-2 py-1 text-gray-700 transition hover:bg-blue-50"
           >
             Next →
@@ -453,12 +443,11 @@ watch(showEditModal, (isOpen) => {
 
         <!-- Right side: Additional info -->
         <div class="text-gray-500">
-          <span class="rounded-full bg-pink-100 px-2 py-1 text-xs font-medium text-pink-800"> PPC Heads </span>
+          <span class="rounded-full bg-violet-100 px-2 py-1 text-xs font-medium text-violet-800"> Cell/Association Leaders </span>
         </div>
       </div>
 
       <div class="mt-4 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow-xl">
-        <!-- Table content remains the same -->
         <div class="overflow-x-auto rounded-xl border border-gray-100">
           <table class="w-full border-collapse text-left">
             <thead>
@@ -472,9 +461,9 @@ watch(showEditModal, (isOpen) => {
             </thead>
             <tbody>
               <tr
-                v-for="row in enhancedPPCHeads.data"
+                v-for="row in enhancedLeaders.data"
                 :key="row.id"
-                :id="`ppc-head-row-${row.id}`"
+                :id="`leader-row-${row.id}`"
                 :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"
               >
                 <td class="p-2">
@@ -484,21 +473,17 @@ watch(showEditModal, (isOpen) => {
                     </Button>
                   </template>
                   <template v-else>
-                    <Button @click="restorePPCHead(row.id)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
+                    <Button @click="restoreLeader(row.id)" class="rounded-full bg-green-100 text-green-700 transition hover:bg-green-200">
                       Restore
                     </Button>
                   </template>
                 </td>
                 <td v-for="col in columns" :key="col.key" class="p-2">
-                  {{ row[col.key] }}
+                  <span>{{ row[col.key] || '-' }}</span>
                 </td>
-                <td v-if="!serverArchived" class="p-2">
+                <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button
-                      @click="openDeleteModal(row)"
-                      variant="destructive"
-                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
-                    >
+                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200">
                       Delete
                     </Button>
                   </template>
@@ -510,29 +495,47 @@ watch(showEditModal, (isOpen) => {
       </div>
     </div>
 
-    <!-- Remove the old pagination section -->
-    <!-- <div class="mt-6 flex items-center justify-between gap-4"> ... </div> -->
-    <!-- bg-black bg-opacity-20 -->
+    <!-- Edit Modal -->
     <transition name="fade">
-      <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
-          <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit PPC Head</h2>
+      <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="absolute inset-0 bg-black/50" @click="showEditModal = false"></div>
+        <div class="relative z-10 w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[500px]">
+          <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Leader</h2>
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
-              <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <Multiselect v-model="editForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" data-edit-input />
-            </div>
-            <div class="mb-6">
-              <label class="mb-2 block font-medium text-gray-700">Member</label>
+              <label class="mb-2 block font-medium text-gray-700">Cell/Association</label>
               <Multiselect
-                v-model="editForm.member_id"
-                :options="modalMembers"
+                v-model="editForm.cells_and_association_id"
+                :options="props.cellsAndAssociations"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
-                :disabled="!editForm.community_id"
+                placeholder="Select Cell/Association"
+                data-edit-input
               />
-              <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
+            </div>
+            <div class="mb-6">
+              <label class="mb-2 block font-medium text-gray-700">Leader</label>
+              <Multiselect
+                v-model="editForm.leader_member_id"
+                :options="allMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Leader"
+                :searchable="true"
+              />
+              <div v-if="!editForm.leader_member_id" class="mt-1 text-sm text-red-500">Please select a leader.</div>
+            </div>
+            <div class="mb-6">
+              <label class="mb-2 block font-medium text-gray-700">Assistant Leader (Optional)</label>
+              <Multiselect
+                v-model="editForm.assistant_leader_member_id"
+                :options="allMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Assistant Leader"
+                :searchable="true"
+                :allow-empty="true"
+              />
             </div>
             <div class="flex justify-end gap-3">
               <button
@@ -554,30 +557,55 @@ watch(showEditModal, (isOpen) => {
         </div>
       </div>
     </transition>
+
+    <!-- Create Modal -->
     <transition name="fade">
-      <div v-if="showCreateModal" class="fixed inset-0 z-50 flex items-center justify-center">
-        <div class="w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[420px]">
-          <h2 class="mb-6 text-2xl font-bold text-gray-900">Create PPC Head</h2>
+      <div v-if="showCreateModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="absolute inset-0 bg-black/50" @click="closeCreateModal"></div>
+        <div class="relative z-10 w-full max-w-full min-w-[400px] rounded-2xl bg-[#ffffff] p-8 shadow-2xl sm:w-[500px]">
+          <h2 class="mb-6 text-2xl font-bold text-gray-900">Add Leader</h2>
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
-              <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <Multiselect v-model="createForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" data-create-input />
-              <div v-if="createForm.errors.community_id || createForm.errors['community_id']" class="mt-1 text-sm text-red-500">
-                {{ createForm.errors.community_id || createForm.errors['community_id'] }}
+              <label class="mb-2 block font-medium text-gray-700">Cell/Association</label>
+              <Multiselect
+                v-model="createForm.cells_and_association_id"
+                :options="props.cellsAndAssociations"
+                label="name"
+                track-by="id"
+                placeholder="Select Cell/Association"
+                data-create-input
+              />
+              <div v-if="createForm.errors.cells_and_association_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.cells_and_association_id }}
               </div>
             </div>
             <div class="mb-6">
-              <label class="mb-2 block font-medium text-gray-700">Member</label>
+              <label class="mb-2 block font-medium text-gray-700">Leader</label>
               <Multiselect
-                v-model="createForm.member_id"
-                :options="modalMembers"
+                v-model="createForm.leader_member_id"
+                :options="allMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
-                :disabled="!createForm.community_id"
+                placeholder="Select Leader"
+                :searchable="true"
               />
-              <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
-                {{ createForm.errors.member_id }}
+              <div v-if="createForm.errors.leader_member_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.leader_member_id }}
+              </div>
+            </div>
+            <div class="mb-6">
+              <label class="mb-2 block font-medium text-gray-700">Assistant Leader (Optional)</label>
+              <Multiselect
+                v-model="createForm.assistant_leader_member_id"
+                :options="allMembers"
+                label="name"
+                track-by="id"
+                placeholder="Select Assistant Leader"
+                :searchable="true"
+                :allow-empty="true"
+              />
+              <div v-if="createForm.errors.assistant_leader_member_id" class="mt-1 text-sm text-red-500">
+                {{ createForm.errors.assistant_leader_member_id }}
               </div>
             </div>
             <div class="flex justify-end gap-3">
@@ -594,12 +622,15 @@ watch(showEditModal, (isOpen) => {
         </div>
       </div>
     </transition>
+
+    <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="absolute inset-0 bg-black/50" @click="showDeleteModal = false"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
-            <h3 class="mb-4 text-xl font-semibold">Delete PPC Head</h3>
-            <p>Are you sure you want to delete this PPC Head?</p>
+            <h3 class="mb-4 text-xl font-semibold">Delete Leader</h3>
+            <p>Are you sure you want to delete this leader record?</p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
                 variant="secondary"
@@ -630,7 +661,7 @@ watch(showEditModal, (isOpen) => {
   width: 2.5rem;
   height: 1.25rem;
   border-radius: 9999px;
-  background: #ef4444; /* Tailwind red-500 */
+  background: #ef4444;
   box-shadow:
     0 2px 8px 0 rgba(239, 68, 68, 0.25),
     0 1.5px 4px 0 rgba(0, 0, 0, 0.1);
@@ -667,14 +698,14 @@ watch(showEditModal, (isOpen) => {
 }
 .highlight-row {
   animation: highlight-fade 2s;
-  background-color: #fef08a !important; /* Tailwind yellow-200 */
+  background-color: #fef08a !important;
 }
-@keyframes highlight-fade {
-  0% {
-    background-color: #fde047;
-  }
-  100% {
-    background-color: inherit;
-  }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

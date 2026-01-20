@@ -187,6 +187,12 @@ const navigationGroups = [
         icon: Shield,
         show: can('read-p-p-c-head'),
       },
+      {
+        title: 'Cells & Association Leaders',
+        href: '/cells-and-association-leaders',
+        icon: Heart,
+        show: can('read-cells-and-association-leader'),
+      },
     ],
   },
   {

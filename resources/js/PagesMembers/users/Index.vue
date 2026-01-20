@@ -337,6 +337,26 @@ function closeRoleModal() {
   selectedUser.value = null;
   selectedRoles.value = 0;
 }
+
+// Focus first input when create modal opens
+watch(showModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-create-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
+
+// Focus first input when edit modal opens
+watch(showEditModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-edit-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
 </script>
 
 <template>
@@ -555,7 +575,7 @@ function closeRoleModal() {
             <form @submit.prevent="submitCreate">
               <div class="mb-3">
                 <Label for="name">Name</Label>
-                <Input id="name" v-model="form.name" type="text" required />
+                <Input id="name" v-model="form.name" type="text" required data-create-input />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
               </div>
               <div class="mb-3">
@@ -598,7 +618,7 @@ function closeRoleModal() {
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <Label for="edit-name">Name</Label>
-                <Input id="edit-name" v-model="editForm.name" type="text" required />
+                <Input id="edit-name" v-model="editForm.name" type="text" required data-edit-input />
                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
               </div>
               <div class="mb-3">

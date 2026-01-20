@@ -322,3 +322,89 @@ This codebase runs on Windows (detected from paths). Common Windows-specific con
 - Path separators handled by Laravel automatically
 - Queue workers may need manual restart after code changes
 - Symlinks for storage may require admin privileges: `php artisan storage:link`
+
+## Adding New CRUD Features (Pattern Reference)
+
+When adding new CRUD features to the Members module, follow the established pattern from existing features like SCC Head or Cells & Association Leaders.
+
+### Required Files
+
+1. **Migration** - `database/modules/members/database/migrations/YYYY_MM_DD_HHMMSS_create_{feature}_table.php`
+   - Use foreign key constraints with `constrained()` and `nullOnDelete()` where appropriate
+   - Include `softDeletes()` for archive functionality
+   - **Note:** MySQL has a 64-character limit on index names. Use short custom names for compound indexes:
+     ```php
+     $table->index(['column1', 'column2'], 'short_custom_idx_name');
+     ```
+
+2. **Model** - `app/Modules/Members/Models/{FeatureName}.php`
+   - Use `HasFactory`, `SoftDeletes` traits
+   - Define `$fillable` array and relationships
+
+3. **Form Requests** - `app/Modules/Members/Http/Requests/`
+   - `Store{FeatureName}Request.php`
+   - `Update{FeatureName}Request.php`
+   - Include unique constraints with soft delete awareness:
+     ```php
+     'field' => 'required|unique:table,field,NULL,id,deleted_at,NULL'
+     ```
+
+4. **Controller** - `app/Modules/Members/Http/Controllers/{FeatureName}Controller.php`
+   - Methods: `index`, `create`, `store`, `edit`, `update`, `destroy`, `restore`, `export`
+   - Use joins for displaying related names in index listing
+   - Include API endpoint for member dropdowns if needed
+
+5. **Routes** - `routes/{feature_name}.php`
+   - Register in `routes/web.php` with `require __DIR__ . '/{feature_name}.php';`
+   - Include redirect, index, export, resource routes, and restore route
+
+6. **Vue Component** - `resources/js/PagesMembers/{feature_name}/Index.vue`
+   - Use vue-multiselect for searchable dropdowns
+   - Include modal forms for create/edit with proper focus management
+   - Add archive toggle, pagination, and CSV export
+
+7. **Sidebar Navigation** - `resources/js/components/AppSidebar.vue`
+   - Add entry in appropriate navigation group with permission check
+
+8. **Permissions** - `database/seeders/MembersPermissionsSeeder.php`
+   - Add CRUD permissions: `create-`, `read-`, `update-`, `delete-`, `list-`, `restore-`
+
+### Modal Focus Management Pattern
+
+For modal dialogs, use this pattern to focus the first input when opening:
+
+```typescript
+const openCreateModal = () => {
+  showCreateModal.value = true;
+  nextTick(() => {
+    const firstInput = document.querySelector('[data-focus-first]') as HTMLElement;
+    firstInput?.focus();
+  });
+};
+```
+
+Add `data-focus-first` attribute to the first input element in the modal.
+
+### Tailwind CSS 4 Notes
+
+- Use `bg-black/50` for modal backdrop opacity (not `bg-opacity-50 bg-black`)
+- The old opacity utility classes have been replaced with the slash notation
+
+## Leadership Features
+
+The Members module includes leadership management:
+- **SCC Head** - Small Christian Community heads (`/scc-head`)
+- **PPC Head** - Parish Pastoral Council heads (`/ppc-head`)
+- **Cells & Association Leaders** - Cell/Association leadership (`/cells-and-association-leaders`)
+
+Each uses member dropdowns filtered to show only alive members via API endpoints.
+
+## Recent Development Notes
+
+### Cells & Association Leaders (January 2026)
+New CRUD feature added with:
+- Table: `cells_and_association_leaders` with foreign keys to `cells_and_associations` and `members`
+- Member selection dropdowns for Leader and Assistant Leader (fetches alive members via `/api/members/alive`)
+- Full archive/restore functionality
+- CSV export capability
+- Permissions: `create-cells-and-association-leader`, `read-cells-and-association-leader`, etc.

@@ -149,12 +149,28 @@ watch(
   { immediate: false, deep: false },
 );
 
-// Watch for modal state changes to reset form when closed
+// Watch for modal state changes to reset form when closed and focus input when opened
 watch(showModal, (newValue) => {
   if (!newValue) {
     // Modal closed - reset form
     form.reset();
     form.clearErrors();
+  } else {
+    // Modal opened - focus first input
+    nextTick(() => {
+      const input = document.querySelector('[data-create-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
+
+// Focus first input when edit modal opens
+watch(showEditModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-edit-input]') as HTMLElement;
+      if (input) input.focus();
+    });
   }
 });
 
@@ -457,7 +473,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
     <transition name="fade">
       <div v-if="showModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
         <div
-          class="bg-opacity-50 absolute inset-0 bg-black"
+          class="absolute inset-0 bg-black/50"
           @click="
             () => {
               showModal = false;
@@ -472,7 +488,7 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
             <form @submit.prevent="submit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
-                <Input v-model="form.name" type="text" />
+                <Input v-model="form.name" type="text" data-create-input />
                 <div v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</div>
               </div>
               <div class="flex justify-end space-x-2">
@@ -506,13 +522,14 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
 
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="absolute inset-0 bg-black/50" @click="showEditModal = false"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Edit Cluster</h3>
             <form @submit.prevent="submitEdit">
               <div class="mb-3">
                 <label class="mb-1 block text-sm font-medium">Name</label>
-                <Input v-model="editForm.name" type="text" />
+                <Input v-model="editForm.name" type="text" data-edit-input />
                 <div v-if="editForm.errors.name" class="mt-1 text-sm text-red-500">{{ editForm.errors.name }}</div>
               </div>
               <div class="flex justify-end space-x-2">
@@ -541,7 +558,8 @@ const breadcrumbs = [{ title: 'Clusters', href: '/clusters' }];
     <!-- Delete Modal -->
     <transition name="fade">
       <div v-if="showDeleteModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+        <div class="absolute inset-0 bg-black/50" @click="showDeleteModal = false"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
           <div class="rounded-lg bg-[#ffffff] p-6">
             <h3 class="mb-4 text-xl font-semibold">Delete Cluster</h3>
             <p>

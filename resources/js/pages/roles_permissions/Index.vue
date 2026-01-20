@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, watch, computed, nextTick } from 'vue';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { Roles, Modules, Permissions } from '@/types';
@@ -805,6 +805,17 @@ function createRole() {
     },
   );
 }
+
+// Focus first input when add role modal opens
+watch(showAddRoleModal, (isOpen) => {
+  if (isOpen) {
+    nextTick(() => {
+      const input = document.querySelector('[data-create-input]') as HTMLElement;
+      if (input) input.focus();
+    });
+  }
+});
+
 const standardActions = ['create', 'read', 'update', 'delete', 'list', 'restore'];
 const specialActions = ['publish', 'unpublish', 'approve', 'reject', 'generate', 'download', 'manage', 'preview', 'reprint', 'view']; // special non-CRUD actions
 const knownActions = [...standardActions, ...specialActions];
@@ -1268,35 +1279,41 @@ function formatSpecialPermissionName(permissionSlug: string): string {
     <div v-else class="py-10 text-center text-gray-500">You do not have permission to view role permissions.</div>
 
     <!-- Add Role Modal -->
-    <div v-if="showAddRoleModal" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black p-4">
-      <div class="w-full max-w-[448px] rounded-xl bg-[#ffffff] p-6 shadow-2xl">
-        <div class="mb-4 flex items-center justify-between">
-          <h3 class="text-lg font-semibold text-gray-900">Add New Role</h3>
-          <button @click="closeAddRoleModal" class="text-gray-400 hover:text-gray-600">
-            <svg class="h-[1.5rem] w-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+    <transition name="fade">
+      <div v-if="showAddRoleModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
+        <div class="absolute inset-0 bg-black/50" @click="closeAddRoleModal"></div>
+        <div class="from-grey-900 via-grey-800 to-grey-600 relative z-10 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg">
+          <div class="rounded-lg bg-[#ffffff] p-6">
+            <div class="mb-4 flex items-center justify-between">
+              <h3 class="text-lg font-semibold text-gray-900">Add New Role</h3>
+              <button @click="closeAddRoleModal" class="text-gray-400 hover:text-gray-600">
+                <svg class="h-[1.5rem] w-[1.5rem]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
-        <div class="space-y-4">
-          <div>
-            <label class="mb-1 block text-sm font-medium text-gray-700">Role Name</label>
-            <input
-              v-model="newRoleForm.name"
-              type="text"
-              required
-              placeholder="Enter role name"
-              class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-[#3b82f6]"
-            />
+            <div class="space-y-4">
+              <div>
+                <label class="mb-1 block text-sm font-medium text-gray-700">Role Name</label>
+                <input
+                  v-model="newRoleForm.name"
+                  type="text"
+                  required
+                  placeholder="Enter role name"
+                  data-create-input
+                  class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-[#3b82f6]"
+                />
+              </div>
+            </div>
+
+            <div class="mt-6 flex justify-end space-x-3">
+              <Button @click="closeAddRoleModal" variant="outline">Cancel</Button>
+              <Button @click="createRole" class="bg-green-600 hover:bg-green-700">Create Role</Button>
+            </div>
           </div>
         </div>
-
-        <div class="mt-6 flex justify-end space-x-3">
-          <Button @click="closeAddRoleModal" variant="outline">Cancel</Button>
-          <Button @click="createRole" class="bg-green-600 hover:bg-green-700">Create Role</Button>
-        </div>
       </div>
-    </div>
+    </transition>
   </AppLayout>
 </template>
