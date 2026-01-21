@@ -81,7 +81,6 @@ class PPCHeadController extends Controller
     {
         return Inertia::render('p_p_c_head/PPCHead', [
             'communities' => Community::all(),
-            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -124,7 +123,6 @@ class PPCHeadController extends Controller
         return Inertia::render('p_p_c_head/PPCHead', [
             'PPCHead' => $ppcHead,
             'communities' => Community::all(),
-            'members' => Member::alive()->get(),
         ]);
     }
 
@@ -178,13 +176,41 @@ class PPCHeadController extends Controller
         return redirect()->route('ppc-head.index')->with('success', 'PPC Head restored successfully.');
     }
 
-    // Add API endpoint for fetching members by community
-    public function membersByCommunity($communityId)
+    // Add API endpoint for fetching members by community with optional search
+    public function membersByCommunity(Request $request, $communityId)
     {
         try {
-            $members = Member::where('community_id', $communityId)
+            $query = Member::where('community_id', $communityId)
                 ->alive()
-                ->select('id', 'first_name', 'middle_name', 'last_name')
+                ->select('id', 'first_name', 'middle_name', 'last_name');
+
+            // Apply search if provided
+            if ($search = $request->input('search')) {
+                $searchWords = preg_split('/\s+/', trim($search));
+
+                if (count($searchWords) > 1) {
+                    // Multi-word search: each word must match any name field
+                    $query->where(function ($q) use ($searchWords) {
+                        foreach ($searchWords as $word) {
+                            $q->where(function ($subQ) use ($word) {
+                                $subQ->where('first_name', 'like', "%{$word}%")
+                                    ->orWhere('middle_name', 'like', "%{$word}%")
+                                    ->orWhere('last_name', 'like', "%{$word}%");
+                            });
+                        }
+                    });
+                } else {
+                    // Single word search
+                    $query->where(function ($q) use ($search) {
+                        $q->where('first_name', 'like', "%{$search}%")
+                            ->orWhere('middle_name', 'like', "%{$search}%")
+                            ->orWhere('last_name', 'like', "%{$search}%");
+                    });
+                }
+            }
+
+            $members = $query->orderBy('first_name')
+                ->limit(50)
                 ->get()
                 ->map(function ($m) {
                     return [

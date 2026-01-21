@@ -38,6 +38,7 @@ const showCreateModal = ref(false);
 const editingLeader = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
 const allMembers = ref<any[]>([]);
+const isLoadingMembers = ref(false);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
@@ -146,14 +147,49 @@ function fetch(page = 1) {
   );
 }
 
-async function fetchAllMembers() {
-  try {
-    const { data } = await axios.get('/api/members/alive');
-    allMembers.value = data;
-  } catch (error) {
-    console.error('Failed to fetch members:', error);
-    allMembers.value = [];
+/**
+ * Search members via server-side API.
+ * Supports multi-word search (e.g., "Raymond Menezes" matches "Raymond Joseph Menezes")
+ */
+async function searchMembers(query: string) {
+  if (!query || query.length < 2) {
+    return;
   }
+  isLoadingMembers.value = true;
+  try {
+    const { data } = await axios.get('/member/search-members', {
+      params: { query, limit: 50 },
+    });
+    // Map response to format expected by Multiselect
+    allMembers.value = data.map((m: any) => ({
+      id: m.id,
+      name: m.text || `${m.first_name} ${m.last_name}`,
+    }));
+  } catch (error) {
+    console.error('Failed to search members:', error);
+  } finally {
+    isLoadingMembers.value = false;
+  }
+}
+
+/**
+ * Fetch a specific member by ID (for pre-populating edit form)
+ */
+async function fetchMemberById(memberId: number): Promise<any | null> {
+  try {
+    const { data } = await axios.get('/member/search-members', {
+      params: { query: memberId, limit: 1 },
+    });
+    if (data.length > 0) {
+      return {
+        id: data[0].id,
+        name: data[0].text || `${data[0].first_name} ${data[0].last_name}`,
+      };
+    }
+  } catch (error) {
+    console.error('Failed to fetch member:', error);
+  }
+  return null;
 }
 
 watch(
@@ -172,13 +208,22 @@ watch(
 
 async function openEditModal(row: any) {
   editingLeader.value = row;
-  await fetchAllMembers();
+  allMembers.value = []; // Clear previous search results
 
   editForm.cells_and_association_id = props.cellsAndAssociations.find((c) => c.id === row.cells_and_association_id) || null;
-  editForm.leader_member_id = allMembers.value.find((m) => m.id === row.leader_member_id) || null;
-  editForm.assistant_leader_member_id = row.assistant_leader_member_id
-    ? allMembers.value.find((m) => m.id === row.assistant_leader_member_id) || null
-    : null;
+
+  // Fetch current leader and assistant leader by ID
+  const [leader, assistant] = await Promise.all([
+    fetchMemberById(row.leader_member_id),
+    row.assistant_leader_member_id ? fetchMemberById(row.assistant_leader_member_id) : Promise.resolve(null),
+  ]);
+
+  editForm.leader_member_id = leader;
+  editForm.assistant_leader_member_id = assistant;
+
+  // Pre-populate the options with current values
+  if (leader) allMembers.value.push(leader);
+  if (assistant) allMembers.value.push(assistant);
 
   showEditModal.value = true;
 }
@@ -211,8 +256,8 @@ function submitEdit() {
   });
 }
 
-async function openCreateModal() {
-  await fetchAllMembers();
+function openCreateModal() {
+  allMembers.value = []; // Clear previous search results
   showCreateModal.value = true;
   createForm.reset();
 }
@@ -520,8 +565,11 @@ watch(showEditModal, (isOpen) => {
                 :options="allMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Leader"
+                placeholder="Type to search members..."
                 :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchMembers"
               />
               <div v-if="!editForm.leader_member_id" class="mt-1 text-sm text-red-500">Please select a leader.</div>
             </div>
@@ -532,9 +580,12 @@ watch(showEditModal, (isOpen) => {
                 :options="allMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Assistant Leader"
+                placeholder="Type to search members..."
                 :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
                 :allow-empty="true"
+                @search-change="searchMembers"
               />
             </div>
             <div class="flex justify-end gap-3">
@@ -586,8 +637,11 @@ watch(showEditModal, (isOpen) => {
                 :options="allMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Leader"
+                placeholder="Type to search members..."
                 :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchMembers"
               />
               <div v-if="createForm.errors.leader_member_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.leader_member_id }}
@@ -600,9 +654,12 @@ watch(showEditModal, (isOpen) => {
                 :options="allMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Assistant Leader"
+                placeholder="Type to search members..."
                 :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
                 :allow-empty="true"
+                @search-change="searchMembers"
               />
               <div v-if="createForm.errors.assistant_leader_member_id" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.assistant_leader_member_id }}

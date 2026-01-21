@@ -125,7 +125,7 @@ const enhancedCellsAndAssociationMembers = computed(() => {
 });
 
 watch(
-  [search, sort, direction, perPage, isArchived],
+  [search, sort, direction, perPage, isArchived, selectedCellAssociation],
   () => {
     if (searchTimeout.value) {
       clearTimeout(searchTimeout.value);

@@ -1161,13 +1161,32 @@ class MemberController extends Controller
                 return response()->json([]);
             }
 
-            $members = $members->where(function ($q) use ($query) {
-                $q->where('first_name', 'like', "%{$query}%")
-                    ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
-                    ->orWhere('member_no', 'like', "%{$query}%")
-                    ->orWhere('family_no', 'like', "%{$query}%");
-            });
+            // Split query into words for flexible matching
+            // e.g., "Raymond Menezes" matches "Raymond Joseph Menezes"
+            $searchWords = preg_split('/\s+/', trim($query));
+
+            if (count($searchWords) > 1) {
+                // Multi-word search: each word must match any name field
+                $members = $members->where(function ($q) use ($searchWords) {
+                    foreach ($searchWords as $word) {
+                        $q->where(function ($subQ) use ($word) {
+                            $subQ->where('first_name', 'like', "%{$word}%")
+                                ->orWhere('middle_name', 'like', "%{$word}%")
+                                ->orWhere('last_name', 'like', "%{$word}%");
+                        });
+                    }
+                });
+            } else {
+                // Single word search: match any field including member_no, family_no
+                $members = $members->where(function ($q) use ($query) {
+                    $q->where('first_name', 'like', "%{$query}%")
+                        ->orWhere('middle_name', 'like', "%{$query}%")
+                        ->orWhere('last_name', 'like', "%{$query}%")
+                        ->orWhereRaw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) LIKE ?", ["%{$query}%"])
+                        ->orWhere('member_no', 'like', "%{$query}%")
+                        ->orWhere('family_no', 'like', "%{$query}%");
+                });
+            }
         }
 
         // Apply family number filter if provided
@@ -1235,14 +1254,34 @@ class MemberController extends Controller
             $membersQuery->alive();
         }
 
-        $members = $membersQuery
-            ->where(function ($q) use ($query) {
+        // Split query into words for flexible matching
+        // e.g., "Raymond Menezes" matches "Raymond Joseph Menezes"
+        $searchWords = preg_split('/\s+/', trim($query));
+
+        if (count($searchWords) > 1) {
+            // Multi-word search: each word must match any name field
+            $membersQuery->where(function ($q) use ($searchWords) {
+                foreach ($searchWords as $word) {
+                    $q->where(function ($subQ) use ($word) {
+                        $subQ->where('first_name', 'like', "%{$word}%")
+                            ->orWhere('middle_name', 'like', "%{$word}%")
+                            ->orWhere('last_name', 'like', "%{$word}%");
+                    });
+                }
+            });
+        } else {
+            // Single word search: match any field including member_no, family_no
+            $membersQuery->where(function ($q) use ($query) {
                 $q->where('first_name', 'like', "%{$query}%")
+                    ->orWhere('middle_name', 'like', "%{$query}%")
                     ->orWhere('last_name', 'like', "%{$query}%")
-                    ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%{$query}%"])
+                    ->orWhereRaw("CONCAT(first_name, ' ', COALESCE(middle_name, ''), ' ', last_name) LIKE ?", ["%{$query}%"])
                     ->orWhere('member_no', 'like', "%{$query}%")
                     ->orWhere('family_no', 'like', "%{$query}%");
-            })
+            });
+        }
+
+        $members = $membersQuery
             ->limit(10)
             ->get()
             ->map(function ($member) {

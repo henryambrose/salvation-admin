@@ -20,10 +20,6 @@ const props = defineProps({
     type: Array,
     default: () => [],
   },
-  members: {
-    type: Array,
-    default: () => [],
-  },
   filters: Object,
   fetchUrl: String,
 });
@@ -42,7 +38,6 @@ const showDeleteModal = ref(false);
 const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
 const deletingCluster = ref<Record<string, any> | null>(null);
-const modalMember = ref<any[]>([]);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 const highlightedRowId = ref<number | null>(null);
@@ -83,17 +78,42 @@ const enhancedCommunityClusters = computed(() => {
   };
 });
 
-const filteredMembers = computed(() => {
-  if (!createForm.community_id) return [];
-  const communityId = createForm.community_id.id || createForm.community_id;
-  return props.members.filter((member: any) => Number(member.community_id) === Number(communityId));
-});
+// Members loaded from server for create/edit modals
+const createModalMembers = ref<any[]>([]);
+const editModalMembers = ref<any[]>([]);
+const isLoadingMembers = ref(false);
 
-const filteredEditMembers = computed(() => {
-  if (!editForm.community_id) return [];
+// Fetch members by community with optional search
+async function fetchMembersByCommunity(communityId: number | string, search?: string) {
+  isLoadingMembers.value = true;
+  try {
+    const params: any = {};
+    if (search && search.length >= 2) {
+      params.search = search;
+    }
+    const { data } = await axios.get(`/api/community/${communityId}/members`, { params });
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch members:', error);
+    return [];
+  } finally {
+    isLoadingMembers.value = false;
+  }
+}
+
+// Search members in create modal
+async function searchCreateMembers(query: string) {
+  if (!createForm.community_id) return;
+  const communityId = createForm.community_id.id || createForm.community_id;
+  createModalMembers.value = await fetchMembersByCommunity(communityId, query);
+}
+
+// Search members in edit modal
+async function searchEditMembers(query: string) {
+  if (!editForm.community_id) return;
   const communityId = editForm.community_id.id || editForm.community_id;
-  return props.members.filter((member: any) => Number(member.community_id) === Number(communityId));
-});
+  editModalMembers.value = await fetchMembersByCommunity(communityId, query);
+}
 
 // Filter clusters based on selected community (if needed)
 const filteredClusters = computed(() => {
@@ -107,13 +127,38 @@ watch([search, sort, direction, perPage, isArchived], () => {
   fetch();
 });
 
-// Watch for community changes in create form to reset member selection
+// Watch for community changes in create form to fetch members
 watch(
   () => createForm.community_id,
-  (newCommunity) => {
+  async (newCommunity) => {
     // Reset member and cluster selection when community changes
     createForm.member_id = null;
     createForm.cluster_id = null;
+
+    if (newCommunity) {
+      const communityId = newCommunity.id || newCommunity;
+      createModalMembers.value = await fetchMembersByCommunity(communityId);
+    } else {
+      createModalMembers.value = [];
+    }
+  },
+);
+
+// Watch for community changes in edit form to fetch members
+watch(
+  () => editForm.community_id,
+  async (newCommunity, oldCommunity) => {
+    // Only reset if community actually changed (not on initial load)
+    if (oldCommunity !== undefined) {
+      editForm.member_id = null;
+    }
+
+    if (newCommunity) {
+      const communityId = newCommunity.id || newCommunity;
+      editModalMembers.value = await fetchMembersByCommunity(communityId);
+    } else {
+      editModalMembers.value = [];
+    }
   },
 );
 
@@ -169,31 +214,24 @@ function openEditModal(row: any) {
   editForm.community_id = props.communities.find((c: any) => c.id === row.community_id) || null;
   // Set the full cluster object
   editForm.cluster_id = props.clusters.find((c: any) => c.id === row.cluster_id) || null;
-  // Set the full member object
-  editForm.member_id = props.members.find((m: any) => m.id === row.member_id) || null;
   showEditModal.value = true;
 
   // Fetch members for this specific community
   if (row.community_id) {
-    axios
-      .get(`/api/community/${row.community_id}/members`)
-      .then((response) => {
-        modalMember.value = response.data;
-        if (row.member_id) {
-          editForm.member_id = response.data.find((m: any) => m.id === row.member_id) || null;
-        }
+    fetchMembersByCommunity(row.community_id).then((members) => {
+      editModalMembers.value = members;
+      if (row.member_id) {
+        editForm.member_id = members.find((m: any) => m.id === row.member_id) || null;
+      }
 
-        // Focus the member input after members are loaded
-        nextTick(() => {
-          const memberInput = document.querySelector('[data-edit-modal-member]') as HTMLElement;
-          if (memberInput) {
-            memberInput.focus();
-          }
-        });
-      })
-      .catch((error) => {
-        console.error('Error fetching members:', error);
+      // Focus the member input after members are loaded
+      nextTick(() => {
+        const memberInput = document.querySelector('[data-edit-modal-member]') as HTMLElement;
+        if (memberInput) {
+          memberInput.focus();
+        }
       });
+    });
   }
 }
 
@@ -230,7 +268,7 @@ function submitEdit() {
 function openCreateModal() {
   showCreateModal.value = true;
   createForm.reset();
-  modalMember.value = [];
+  createModalMembers.value = [];
 
   // Auto-select first community and cluster when modal opens
   nextTick(() => {
@@ -619,10 +657,14 @@ const handleEditModalFocusTrap = (event: KeyboardEvent) => {
               <label class="mb-2 block font-medium text-gray-700">Member</label>
               <Multiselect
                 v-model="editForm.member_id"
-                :options="modalMember"
+                :options="editModalMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
+                placeholder="Type to search members..."
+                :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchEditMembers"
                 data-edit-modal-member
               />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
@@ -715,10 +757,14 @@ const handleEditModalFocusTrap = (event: KeyboardEvent) => {
               <label class="mb-2 block font-medium text-gray-700">Member (Optional)</label>
               <Multiselect
                 v-model="createForm.member_id"
-                :options="filteredMembers"
+                :options="createModalMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
+                placeholder="Type to search members..."
+                :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchCreateMembers"
                 :disabled="!createForm.community_id"
               />
               <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">

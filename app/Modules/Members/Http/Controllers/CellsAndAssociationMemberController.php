@@ -31,12 +31,14 @@ class CellsAndAssociationMemberController extends Controller
         }
 
         if ($search = $request->input('search')) {
-            $query->whereHas('member', function ($q) use ($search) {
-                $q->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
-                    ->orWhere('first_name', 'like', "%$search%")
-                    ->orWhere('last_name', 'like', "%$search%");
-            })->orWhereHas('cellsAndAssociation', function ($q) use ($search) {
-                $q->where('name', 'like', "%$search%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('member', function ($subQ) use ($search) {
+                    $subQ->whereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
+                        ->orWhere('first_name', 'like', "%$search%")
+                        ->orWhere('last_name', 'like', "%$search%");
+                })->orWhereHas('cellsAndAssociation', function ($subQ) use ($search) {
+                    $subQ->where('name', 'like', "%$search%");
+                });
             });
         }
 

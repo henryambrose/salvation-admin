@@ -59,16 +59,6 @@ class CommunityClusterController extends Controller
             'communityClusters' => $query->paginate($perPage)->appends($request->query()),
             'communities' => Community::all(),
             'clusters' => Cluster::all(),
-            'members' => Member::alive()
-                ->select('id', 'first_name', 'last_name', 'community_id')
-                ->get()
-                ->map(function ($member) {
-                    return [
-                        'id' => $member->id,
-                        'name' => $member->first_name . ' ' . $member->last_name,
-                        'community_id' => $member->community_id,
-                    ];
-                }),
             'fetchUrl' => route('community-clusters.index'),
             'filters' => request()->only('search', 'sort', 'direction', 'perPage', 'isArchived'),
             'pagination' => [

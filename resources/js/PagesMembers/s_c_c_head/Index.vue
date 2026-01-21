@@ -37,6 +37,7 @@ const showCreateModal = ref(false);
 const editingSCCHead = ref<any>(null);
 const deletingItem = ref<Record<string, any>>();
 const modalMembers = ref<any[]>([]);
+const isLoadingMembers = ref(false);
 const highlightedRowId = ref<number | null>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
@@ -159,6 +160,31 @@ watch(
     }
   },
 );
+
+// Async search function for member dropdowns
+async function searchMembers(query: string) {
+  const communityId = editForm.community_id?.id || createForm.community_id?.id;
+  if (!communityId) return;
+
+  if (!query || query.length < 2) {
+    // Reload default list
+    const { data } = await axios.get(`/api/community/${communityId}/members`);
+    modalMembers.value = data;
+    return;
+  }
+
+  isLoadingMembers.value = true;
+  try {
+    const { data } = await axios.get(`/api/community/${communityId}/members`, {
+      params: { search: query },
+    });
+    modalMembers.value = data;
+  } catch (error) {
+    console.error('Failed to search members:', error);
+  } finally {
+    isLoadingMembers.value = false;
+  }
+}
 
 watch(
   () => enhancedSCCHeads.value.data,
@@ -525,7 +551,11 @@ watch(showEditModal, (isOpen) => {
                 :options="modalMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
+                placeholder="Type to search members..."
+                :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchMembers"
                 :disabled="!editForm.community_id"
               />
               <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
@@ -569,7 +599,11 @@ watch(showEditModal, (isOpen) => {
                 :options="modalMembers"
                 label="name"
                 track-by="id"
-                placeholder="Select Member"
+                placeholder="Type to search members..."
+                :searchable="true"
+                :internal-search="false"
+                :loading="isLoadingMembers"
+                @search-change="searchMembers"
                 :disabled="!createForm.community_id"
               />
               <div v-if="createForm.errors.member_id" class="mt-1 text-sm text-red-500">
