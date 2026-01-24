@@ -391,7 +391,7 @@ class PermanentGraveBookingController extends Controller
     }
 
     /**
-     * Delete a pending booking
+     * Permanently delete a permanent grave booking and reverse all changes
      */
     public function destroy(PermanentGraveBooking $permanentGraveBooking)
     {
@@ -399,20 +399,37 @@ class PermanentGraveBookingController extends Controller
 
         // Only allow deletion of pending bookings
         if ($permanentGraveBooking->status !== 'pending') {
-            return back()->with('error', 'Only pending bookings can be deleted.');
-        }
-
-        // Check if booking has any payments
-        if ($permanentGraveBooking->payments()->exists()) {
-            return back()->with('error', 'Cannot delete booking with payment records.');
+            return back()->with('error', 'Only pending bookings can be deleted. Please cancel confirmed bookings instead.');
         }
 
         try {
-            $permanentGraveBooking->delete();
+            DB::beginTransaction();
+
+            // Check if booking has any payments - if so, prevent deletion
+            if ($permanentGraveBooking->payments()->exists()) {
+                DB::rollBack();
+                return back()->with('error', 'Cannot delete booking with payment records. Please cancel the booking instead.');
+            }
+
+            // For pending bookings, the grave is not marked as unavailable yet,
+            // so no need to reverse grave status changes.
+            // However, if for some reason the booking was confirmed and then reverted,
+            // we should handle it properly.
+
+            // Permanently delete the booking (bypass soft delete)
+            $permanentGraveBooking->forceDelete();
+
+            DB::commit();
+
             return redirect()->route('graveyard.permanent-grave-bookings.index')
-                ->with('success', 'Booking deleted successfully.');
+                ->with('success', 'Permanent grave booking deleted permanently.');
         } catch (\Exception $e) {
-            Log::error('Failed to delete permanent grave booking: ' . $e->getMessage());
+            DB::rollBack();
+            Log::error('Failed to delete permanent grave booking', [
+                'error' => $e->getMessage(),
+                'booking_id' => $permanentGraveBooking->id,
+            ]);
+            
             return back()->with('error', 'Failed to delete booking. Please try again.');
         }
     }

@@ -443,4 +443,51 @@ class TemporaryGraveBookingController extends Controller
         // --- IGNORE ---
         return response()->json($bookings);
     }
+
+    /**
+     * Permanently delete a temporary grave booking and reverse all changes
+     */
+    public function destroy(TemporaryGraveBooking $temporaryGraveBooking)
+    {
+        $this->authorize('delete-temporary-grave-booking');
+
+        // Only allow deletion of pending bookings
+        if ($temporaryGraveBooking->status !== 'pending') {
+            return back()->with('error', 'Only pending bookings can be deleted. Please cancel the booking instead.');
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Get the temporary grave before deletion
+            $temporaryGrave = $temporaryGraveBooking->temporaryGrave;
+
+            // Reverse all changes made to the temporary grave
+            if ($temporaryGrave) {
+                $temporaryGrave->update([
+                    'status' => 'available',
+                    'last_burial_date' => null,
+                    'buried_name' => null,
+                    'contact_no' => null,
+                    'destination_permanent_grave_id' => null,
+                ]);
+            }
+
+            // Permanently delete the booking (bypass soft delete)
+            $temporaryGraveBooking->forceDelete();
+
+            DB::commit();
+
+            return redirect()->route('graveyard.temporary-grave-bookings.index')
+                ->with('success', 'Temporary grave booking deleted permanently and all changes reversed.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete temporary grave booking', [
+                'error' => $e->getMessage(),
+                'booking_id' => $temporaryGraveBooking->id,
+            ]);
+            
+            return back()->with('error', 'Failed to delete booking. Please try again.');
+        }
+    }
 }

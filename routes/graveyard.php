@@ -123,6 +123,7 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::post('/{temporaryGraveBooking}/confirm', [TemporaryGraveBookingController::class, 'confirm'])->name('confirm');
         Route::post('/{temporaryGraveBooking}/cancel', [TemporaryGraveBookingController::class, 'cancel'])->name('cancel');
         Route::post('/{temporaryGraveBooking}/request-transfer', [TemporaryGraveBookingController::class, 'requestTransfer'])->name('request-transfer');
+        Route::delete('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'destroy'])->name('destroy');
     });
 
     // Niche Transfer Management
