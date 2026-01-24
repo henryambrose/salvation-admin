@@ -40,31 +40,32 @@
             min-height: 32mm;
             display: flex;
             position: relative;
-            margin-bottom: 2mm;
+            margin-bottom: 5mm;
         }
 
         .logoframe {
             height: 100%;
-            width: 36.5mm;
-            padding-top: 5mm;
+            width: 30mm;
+            padding-top: 2mm;
             display: flex;
-            justify-content: end;
+            justify-content: center;
+            align-items: flex-start;
             position: absolute;
-            left: 10mm;
+            left: 5mm;
             top: 0;
             z-index: 10;
-
         }
 
-        .logoframeimg {
-            height: 24mm;
-            width: 24mm;
+        .logoframe img {
+            height: 20mm;
+            width: auto;
+            object-fit: contain;
         }
 
         .headframecontent {
             height: 100%;
-            width: 243.5mm;
-            padding: 0 11mm;
+            width: 100%;
+            padding: 0 11mm 0 38mm;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -289,16 +290,16 @@
             $signByLabel = $pdf_options['sign_by_label'] ?? 'Parish Priest';
             $signeeName = $pdf_options['signee_name'] ?? ($parish_priest_name ?? '');
         @endphp
-        <div style="display: flex; width: 100%; margin-top: 3mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
+        <div style="display: flex; width: 100%; margin-top: 15mm; font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 600;">
             <div style="flex: 1; text-align: center;">
-                <div style="margin-bottom: 10mm;">For Authenticity of Extract:</div>
+                <div style="margin-bottom: 20mm;">For Authenticity of Extract:</div>
             </div>
             <div style="flex: 1; text-align: center;">
-                <div style="margin-bottom: 10mm;">Date: {{ $printDate }}</div>
+                <div style="margin-bottom: 20mm;">Date: {{ $printDate }}</div>
+                <div style="font-size: 14px; margin-bottom: 3mm;">{{ strtoupper($signByLabel) }}</div>
                 @if($signeeName)
-                    <div style="margin-bottom: 2mm;">{{ $signeeName }}</div>
+                    <div>{{ $signeeName }}</div>
                 @endif
-                <div style="font-size: 14px;">{{ strtoupper($signByLabel) }}</div>
             </div>
         </div>
 

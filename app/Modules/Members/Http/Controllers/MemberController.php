@@ -1245,7 +1245,15 @@ class MemberController extends Controller
             return response()->json([]);
         }
 
-        $membersQuery = Member::with(['community', 'baptismRecord', 'marriageRecord']);
+        $membersQuery = Member::with([
+            'community',
+            'baptismRecord.baptismParish',
+            'marriageRecord',
+            'father',
+            'mother',
+            'spouse',
+            'gender'
+        ]);
 
         // Apply status filter conditionally
         if ($status === 'deceased') {
@@ -1286,15 +1294,48 @@ class MemberController extends Controller
             ->get()
             ->map(function ($member) {
                 $communityName = $member->community->name ?? '';
+                
+                // Get address
+                $address = collect([
+                    $member->permanent_add1,
+                    $member->permanent_add2,
+                    $member->permanent_add3,
+                ])->filter()->implode(', ');
+                
                 return [
                     'id' => $member->id,
                     'name' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$communityName}",
+                    'first_name' => $member->first_name,
+                    'middle_name' => $member->middle_name,
+                    'last_name' => $member->last_name,
+                    'member_no' => $member->member_no,
+                    'family_no' => $member->family_no,
                     'date_of_birth' => $member->date_of_birth,
+                    'gender_id' => $member->gender_id,
+                    'address' => $address,
+                    'nationality' => $member->nationality ?? 'Indian',
+                    
+                    // Baptism info
                     'baptism_date' => $member->baptismRecord?->baptism_date,
                     'baptism_reg_no' => $member->baptismRecord?->baptism_reg_no,
                     'baptism_parish_id' => $member->baptism_parish_id,
+                    'place_of_baptism' => $member->baptismRecord?->place_of_baptism,
+                    'place_of_birth' => $member->baptismRecord?->place_of_birth,
+                    
+                    // Marriage info
                     'marriage_date' => $member->marriageRecord?->marriage_date,
                     'marriage_reg_no' => $member->marriageRecord?->marriage_reg_no,
+                    'marriage_parish_id' => $member->marriage_parish_id,
+                    
+                    // Father info
+                    'father_name' => $member->father ? trim("{$member->father->first_name} {$member->father->last_name}") : null,
+                    'father_profession' => $member->father?->company_name,
+                    
+                    // Mother info
+                    'mother_name' => $member->mother ? trim("{$member->mother->first_name} {$member->mother->last_name}") : null,
+                    
+                    // Spouse info
+                    'spouse_name' => $member->spouse ? trim("{$member->spouse->first_name} {$member->spouse->last_name}") : null,
                 ];
             });
 

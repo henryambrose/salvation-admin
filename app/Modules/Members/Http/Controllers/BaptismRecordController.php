@@ -53,12 +53,20 @@ class BaptismRecordController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $parishes = Parish::orderBy('name')->get();
+        $member = null;
+
+        // If member_id is provided, fetch member data
+        if ($request->has('member_id')) {
+            $member = Member::with(['community', 'father', 'mother', 'spouse', 'baptismRecord'])
+                ->find($request->member_id);
+        }
 
         return Inertia::render('BaptismRecords/Create', [
             'parishes' => $parishes,
+            'member' => $member,
         ]);
     }
 
@@ -117,7 +125,7 @@ class BaptismRecordController extends Controller
 
     public function edit(BaptismRecord $baptismRecord)
     {
-        $baptismRecord->load(['member.community', 'baptismParish']);
+        $baptismRecord->load(['member.community', 'baptismParish', 'birthArchiveCertificate']);
         $parishes = Parish::orderBy('name')->get();
         return Inertia::render('BaptismRecords/Edit', [
             'baptismRecord' => $baptismRecord,

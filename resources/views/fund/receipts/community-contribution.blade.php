@@ -90,12 +90,12 @@
         }
 
         .amountdiv {
-            height: 19mm;
+            height: 18mm;
             width: 100%;
             border-left: 4px solid #4CAF50;
             display: flex;
             font-family: Arial;
-            margin: 2.5mm 0;
+            margin: 2mm 0;
             background-color: #f9f9f9;
         }
 
@@ -118,7 +118,7 @@
         }
 
         .detaildiv {
-            height: 7.5mm;
+            height: 6.5mm;
             display: flex;
             flex-direction: row;
             font-family: Arial;
@@ -147,11 +147,11 @@
             font-size: 14px;
             align-items: start;
             text-align: left;
-            height: 14mm;
-            margin-top: 1.5mm;
-            margin-bottom: 5mm;
+            height: 9mm;
+            margin-top: 0.5mm;
+            margin-bottom: 2mm;
             border-bottom: 2px solid #333333;
-            padding-bottom: 2mm;
+            padding-bottom: 1.5mm;
         }
 
         .detaildiv2>div:nth-child(2) {
@@ -161,7 +161,7 @@
 
         .detaildiv2>div:nth-child(3) {
             width: 65mm;
-            height: 13mm;
+            height: 8mm;
             display: flex;
             align-items: flex-end;
         }
@@ -177,7 +177,7 @@
             align-items: start;
             justify-content: center;
             position: absolute;
-            bottom: 9.5mm;
+            bottom: 7mm;
         }
 
         .signature {
@@ -256,27 +256,26 @@
             <div style="">Towards:</div>
             <div style="">{{ $received_from }}</div> 
         </div>
-        <div class="detaildiv" style="">
+        <!-- <div class="detaildiv" style="">
             <div style="">Contribution Type:</div>
             <div style="">{{ $contribution_type }}</div> 
-        </div>
-        <div class="detaildiv" style="">
+        </div> -->
+        <!-- <div class="detaildiv" style="">
             <div style="">Notes:</div>
             <div style="">{{ $notes }}</div>
-        </div>
+        </div> -->
         <div class="detaildiv" style="">
             <div style="">Description:</div>
             <div style="">{{ $description }}</div>
         </div>
         <div class="detaildiv2" style="">
-            <div style="">Location :</div>
-            <div style="">{{ $location }}</div> 
-            <div style="">
+            <!-- <div style="">Location :</div>
+            <div style="">{{ $location }}</div>  -->
+            <div style="width: 100%;">
                 <div class="signature"
-                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">
-                    For
-                    Church
-                    of Our Lady of Salvation</div>
+                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: flex-end; font-weight:600; text-align: right; padding-right: 5mm;">
+                    For Church of Our Lady of Salvation
+                </div>
             </div>
         </div>
         <div class="disclaimer">
@@ -314,27 +313,26 @@
             <div style="">Towards:</div>
             <div style="">{{ $received_from }}</div> 
         </div>
-        <div class="detaildiv" style="">
+        <!-- <div class="detaildiv" style="">
             <div style="">Contribution Type:</div>
             <div style="">{{ $contribution_type }}</div> 
-        </div>
-        <div class="detaildiv" style="">
+        </div> -->
+        <!-- <div class="detaildiv" style="">
             <div style="">Notes:</div>
             <div style="">{{ $notes }}</div>
-        </div>
+        </div> -->
         <div class="detaildiv" style="">
             <div style="">Description:</div>
             <div style="">{{ $description }}</div>
         </div>
         <div class="detaildiv2" style="">
-            <div style="">Location :</div>
-            <div style="">{{ $location }}</div> 
-            <div style="">
+            <!-- <div style="">Location :</div>
+            <div style="">{{ $location }}</div>  -->
+            <div style="width: 100%;">
                 <div class="signature"
-                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">
-                    For
-                    Church
-                    of Our Lady of Salvation</div>
+                    style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: flex-end; font-weight:600; text-align: right; padding-right: 5mm;">
+                    For Church of Our Lady of Salvation
+                </div>
             </div>
         </div>
         <div class="disclaimer">

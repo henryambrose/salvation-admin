@@ -48,12 +48,20 @@ class MarriageRecordController extends Controller
         ]);
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $parishes = Parish::orderBy('name')->get();
+        $member = null;
+
+        // If member_id is provided, fetch member data
+        if ($request->has('member_id')) {
+            $member = Member::with(['community', 'father', 'mother', 'spouse'])
+                ->find($request->member_id);
+        }
 
         return Inertia::render('MarriageRecords/Create', [
             'parishes' => $parishes,
+            'member' => $member,
         ]);
     }
 

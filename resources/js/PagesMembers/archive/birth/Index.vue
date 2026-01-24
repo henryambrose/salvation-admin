@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Eye, Plus, Search, CheckCircle2, Clock, Edit } from 'lucide-vue-next'
+import { Eye, Plus, Search, CheckCircle2, Clock, Edit, Download } from 'lucide-vue-next'
 
 interface BaptismRecord {
   id: number
@@ -291,17 +291,29 @@ function clearFilters() {
                   </TableCell>
                   <TableCell class="text-right">
                     <div class="flex justify-end gap-2">
-                      <Link :href="route('archive.birth.certificates.edit', cert.id)">
-                        <Button variant="ghost" size="sm" title="Edit Certificate">
-                          <Edit class="size-4" />
-                        </Button>
-                      </Link>
-                      <Link :href="route('archive.birth.certificates.baptism', cert.id)">
-                        <Button variant="outline" size="sm">
-                          <Eye class="mr-2 size-4" />
-                          View
-                        </Button>
-                      </Link>
+                      <!-- Show Download button if baptism record exists -->
+                      <template v-if="hasBaptismRecord(cert)">
+                        <a :href="route('archive.birth.download', cert.id)" target="_blank">
+                          <Button variant="outline" size="sm">
+                            <Download class="mr-2 size-4" />
+                            Download PDF
+                          </Button>
+                        </a>
+                      </template>
+                      <!-- Show Edit and View buttons if no baptism record -->
+                      <template v-else>
+                        <Link :href="route('archive.birth.certificates.edit', cert.id)">
+                          <Button variant="ghost" size="sm" title="Edit Certificate">
+                            <Edit class="size-4" />
+                          </Button>
+                        </Link>
+                        <Link :href="route('archive.birth.certificates.baptism', cert.id)">
+                          <Button variant="outline" size="sm">
+                            <Eye class="mr-2 size-4" />
+                            View
+                          </Button>
+                        </Link>
+                      </template>
                     </div>
                   </TableCell>
                 </TableRow>

@@ -71,6 +71,7 @@ interface Certificate {
   birth_day: number
   formatted_date?: string
   file_url: string | null
+  view_url: string | null
   notes?: string
   created_at: string
   creator?: User
@@ -239,9 +240,9 @@ function submitForm() {
               <CardDescription>Reference document - {{ certificate.full_name }}</CardDescription>
             </CardHeader>
             <CardContent class="h-[calc(100%-5rem)]">
-              <div v-if="certificate.file_url" class="h-full w-full overflow-hidden rounded-lg border bg-muted">
+              <div v-if="certificate.view_url" class="h-full w-full overflow-hidden rounded-lg border bg-muted">
                 <iframe
-                  :src="certificate.file_url"
+                  :src="certificate.view_url"
                   class="h-full w-full"
                   title="Certificate PDF Viewer"
                 />

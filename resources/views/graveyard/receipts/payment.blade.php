@@ -26,20 +26,45 @@
         }
 
         .header {
-            text-align: center;
+            display: flex;
+            flex-direction: row;
             border-bottom: 2px solid #333;
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
 
-        .header h1 {
-            font-size: 28px;
-            color: #333;
-            margin-bottom: 5px;
+        .imagediv {
+            width: 25mm;
+            height: 23.5mm;
         }
 
-        .header h2 {
+        .headerdiv {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .headerdiv > div:nth-child(1) {
+            font-family: 'Arial Narrow';
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .headerdiv > div:nth-child(2),
+        .headerdiv > div:nth-child(3) {
+            font-family: 'Arial';
+            font-size: 14px;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        .headerdiv > div:nth-child(4) {
+            font-family: 'Arial';
             font-size: 20px;
+            text-align: center;
+            margin-top: 8px;
             color: #666;
             font-weight: normal;
         }
@@ -275,18 +300,29 @@
                 margin-bottom: 3px;
             }
 
-            .header h1 {
-                font-size: 16px;
-                margin-bottom: 1px;
-            }
-
-            .header h2 {
-                font-size: 12px;
-            }
-
             .header {
                 padding-bottom: 5px;
                 margin-bottom: 6px;
+            }
+
+            .imagediv {
+                width: 20mm;
+                height: 19mm;
+            }
+
+            .headerdiv > div:nth-child(1) {
+                font-size: 16px;
+            }
+
+            .headerdiv > div:nth-child(2),
+            .headerdiv > div:nth-child(3) {
+                font-size: 10px;
+                margin-top: 1px;
+            }
+
+            .headerdiv > div:nth-child(4) {
+                font-size: 12px;
+                margin-top: 4px;
             }
 
             .receipt-info {
@@ -378,8 +414,13 @@
         <div class="copy-label">Office Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Graveyard Services - Payment Receipt</h2>
+            <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+            <div class="headerdiv">
+                <div>CHURCH OF OUR LADY OF SALVATION</div>
+                <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
+                <div>Graveyard Services - Payment Receipt</div>
+            </div>
         </div>
 
         <div class="receipt-info">
@@ -543,8 +584,13 @@
         <div class="copy-label">Customer Copy</div>
         <div class="receipt-container">
         <div class="header">
-            <h1>{{ strtoupper(config('app.church_name')) }}</h1>
-            <h2>Graveyard Services - Payment Receipt</h2>
+            <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+            <div class="headerdiv">
+                <div>CHURCH OF OUR LADY OF SALVATION</div>
+                <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
+                <div>Graveyard Services - Payment Receipt</div>
+            </div>
         </div>
 
         <div class="receipt-info">

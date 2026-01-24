@@ -38,7 +38,7 @@ class BirthArchiveCertificate extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['full_name', 'file_url', 'formatted_date', 'has_file'];
+    protected $appends = ['full_name', 'file_url', 'view_url', 'formatted_date', 'has_file'];
 
     /**
      * Get the user who created this record
@@ -109,6 +109,41 @@ class BirthArchiveCertificate extends Model
             return null;
         }
         return route('archive.birth.download', $this->id);
+    }
+
+    /**
+     * Get view route URL (for iframe embedding)
+     * Returns a direct temporary S3 URL for S3 storage, or a route URL for local storage
+     */
+    public function getViewUrlAttribute(): ?string
+    {
+        // Only return URL if file exists
+        if (!$this->fileExists()) {
+            return null;
+        }
+
+        $disk = Storage::disk(config('filesystems.private_storage'));
+        $path = trim($this->folder_path, '/') . '/' . $this->file_name;
+
+        try {
+            // Try to generate temporary URL (works for S3)
+            if (method_exists($disk, 'temporaryUrl')) {
+                try {
+                    return $disk->temporaryUrl($path, now()->addMinutes(30));
+                } catch (\Exception $e) {
+                    // If temporaryUrl fails (e.g., local driver), fall through to route
+                }
+            }
+            
+            // Fallback to view route (for local storage)
+            return route('archive.birth.view', $this->id);
+        } catch (\Exception $e) {
+            \Log::error('Failed to generate view URL for birth certificate: ' . $e->getMessage(), [
+                'id' => $this->id,
+                'path' => $path,
+            ]);
+            return null;
+        }
     }
 
     /**

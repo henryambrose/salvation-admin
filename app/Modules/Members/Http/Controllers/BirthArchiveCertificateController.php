@@ -88,12 +88,12 @@ class BirthArchiveCertificateController extends Controller
         $validated = $request->validated();
 
         try {
-            // Upload file to S3
+            // Upload file to configured private storage (S3 in production, local in development)
             $file = $request->file('file');
             $folderPath = 'archive/birth/' . $validated['reg_year'];
             $fileName = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
 
-            $file->storeAs($folderPath, $fileName, 's3');
+            $file->storeAs($folderPath, $fileName, config('filesystems.private_storage'));
 
             // Create record
             BirthArchiveCertificate::create([
@@ -192,18 +192,18 @@ class BirthArchiveCertificateController extends Controller
         try {
             // If new file uploaded, replace old one
             if ($request->hasFile('file')) {
-                // Delete old file from S3
+                // Delete old file from configured storage
                 $oldPath = trim($birthArchive->folder_path, '/') . '/' . $birthArchive->file_name;
                 if (Storage::disk(config('filesystems.private_storage'))->exists($oldPath)) {
                     Storage::disk(config('filesystems.private_storage'))->delete($oldPath);
                 }
 
-                // Upload new file
+                // Upload new file to configured private storage
                 $file = $request->file('file');
                 $folderPath = 'archive/birth/' . $validated['reg_year'];
                 $fileName = time() . '_' . str_replace(' ', '_', $file->getClientOriginalName());
 
-                $file->storeAs($folderPath, $fileName, 's3');
+                $file->storeAs($folderPath, $fileName, config('filesystems.private_storage'));
 
                 $validated['folder_path'] = $folderPath;
                 $validated['file_name'] = $fileName;
@@ -277,6 +277,40 @@ class BirthArchiveCertificateController extends Controller
             return redirect()
                 ->back()
                 ->with('error', 'Failed to generate download link: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get a temporary URL for viewing the certificate (for iframe embedding)
+     */
+    public function view(BirthArchiveCertificate $birthArchive)
+    {
+        $this->authorize('view', $birthArchive);
+
+        if (!$birthArchive->fileExists()) {
+            abort(404, 'Certificate file not found in storage.');
+        }
+
+        $path = trim($birthArchive->folder_path, '/') . '/' . $birthArchive->file_name;
+        $disk = Storage::disk(config('filesystems.private_storage'));
+
+        try {
+            // Check if this is S3 or local storage
+            if (method_exists($disk, 'temporaryUrl')) {
+                // S3: Redirect to temporary signed URL
+                $url = $disk->temporaryUrl($path, now()->addMinutes(30));
+                return redirect($url);
+            } else {
+                // Local: Serve the file directly with inline disposition for iframe viewing
+                $file = $disk->get($path);
+                $mimeType = $disk->mimeType($path);
+                
+                return response($file, 200)
+                    ->header('Content-Type', $mimeType)
+                    ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"');
+            }
+        } catch (\Exception $e) {
+            abort(500, 'Failed to generate view link: ' . $e->getMessage());
         }
     }
 }

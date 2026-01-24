@@ -45,26 +45,27 @@
 
         .logoframe {
             height: 100%;
-            width: 36.5mm;
-            padding-top: 5mm;
+            width: 30mm;
+            padding-top: 2mm;
             display: flex;
-            justify-content: end;
+            justify-content: center;
+            align-items: flex-start;
             position: absolute;
-            left: 10mm;
+            left: 5mm;
             top: 0;
             z-index: 10;
-
         }
 
-        .logoframeimg {
-            height: 24mm;
-            width: 24mm;
+        .logoframe img {
+            height: 20mm;
+            width: auto;
+            object-fit: contain;
         }
 
         .headframecontent {
             height: 100%;
-            width: 243.5mm;
-            padding: 0 11mm;
+            width: 100%;
+            padding: 0 11mm 0 38mm;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -280,10 +281,10 @@
             </div>
             <div style="flex: 1; text-align: center;">
                 <div style="margin-bottom: 20mm;">Date: {{ $printDate }}</div>
+                <div style="font-size: 14px; margin-bottom: 3mm;">{{ strtoupper($signByLabel) }}</div>
                 @if($signeeName)
-                    <div style="margin-bottom: 3mm;">{{ $signeeName }}</div>
+                    <div>{{ $signeeName }}</div>
                 @endif
-                <div style="font-size: 14px;">{{ strtoupper($signByLabel) }}</div>
             </div>
         </div>
 

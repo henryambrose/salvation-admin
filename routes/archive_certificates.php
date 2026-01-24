@@ -33,6 +33,9 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Download
         Route::get('{birthArchive}/download', [BirthArchiveCertificateController::class, 'download'])->name('download');
+        
+        // View (for iframe embedding)
+        Route::get('{birthArchive}/view', [BirthArchiveCertificateController::class, 'view'])->name('view');
     });
 
     // Marriage Archive Certificates

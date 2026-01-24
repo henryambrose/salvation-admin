@@ -267,7 +267,7 @@
         </div>
         <div class="detaildiv" style="">
             <div style="">Payment Method:</div>
-            <div style="">Cheque{{ $payment_method }}</div>
+            <div style="">{{ $payment_method }}</div>
         </div>
         <div class="detaildiv2" style="">
             <div style="">Transaction Info:</div>
@@ -280,9 +280,11 @@
                     of Our Lady of Salvation</div>
             </div>
         </div>
+        @if(stripos($payment_method, 'cheque') !== false || stripos($payment_method, 'check') !== false)
         <div class="disclaimer">
             This document becomes a valid receipt for payment only when the cheque covered by it is realised.
         </div>
+        @endif
     </div>
 
 
@@ -343,7 +345,7 @@
         <div class="detaildiv" style="">
             {{-- style="height: 7.5mm; display: flex; flex-direction: row; font-family: Arial; font-size: 14px; align-items: center; text-align: left;"> --}}
             <div style="">Payment Method:</div>
-            <div style="">Cheque</div>
+            <div style="">{{ $payment_method }}</div>
         </div>
         <div class="detaildiv2" style="">
             <div style="">Transaction Info:</div>
@@ -356,9 +358,11 @@
                     of Our Lady of Salvation</div>
             </div>
         </div>
+        @if(stripos($payment_method, 'cheque') !== false || stripos($payment_method, 'check') !== false)
         <div class="disclaimer">
             This document becomes a valid receipt for payment only when the cheque covered by it is realised.
         </div>
+        @endif
     </div>
     <script>
         // Auto-print option (uncomment if needed)

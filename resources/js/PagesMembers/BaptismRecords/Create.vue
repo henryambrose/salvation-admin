@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,6 +11,7 @@ import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 
 const props = defineProps<{
   parishes: any[];
+  member?: any | null;
 }>();
 
 // Track selected member's date of birth and marriage info
@@ -18,26 +19,47 @@ const selectedMemberDateOfBirth = ref<string | null>(null);
 const selectedMemberMarriageDate = ref<string | null>(null);
 const selectedMemberMarriageRegNo = ref<string | null>(null);
 
+// Get father's and mother's address
+const getFatherAddress = () => {
+  if (!props.member?.father) return '';
+  const father = props.member.father;
+  const parts = [
+    father.permanent_add1,
+    father.permanent_add2,
+    father.permanent_add3,
+  ].filter(Boolean);
+  return parts.join(', ');
+};
+
 const form = useForm({
-  member_id: undefined as number | undefined,
-  baptized_name: '',
-  baptized_surname: '',
-  baptism_date: '',
-  baptism_reg_no: '',
-  place_of_baptism: '',
-  baptism_parish_id: undefined as number | undefined,
-  place_of_birth: '',
-  nationality: '',
-  father_name: '',
-  father_residence: '',
-  father_profession: '',
-  mother_name: '',
+  member_id: props.member?.id ?? undefined,
+  baptized_name: props.member?.first_name ?? '',
+  baptized_surname: props.member?.last_name ?? '',
+  baptism_date: props.member?.baptismRecord?.baptism_date ?? props.member?.baptism_date ?? '',
+  baptism_reg_no: props.member?.baptismRecord?.baptism_reg_no ?? props.member?.baptism_reg_no ?? '',
+  place_of_baptism: props.member?.baptismRecord?.place_of_baptism ?? '',
+  baptism_parish_id: props.member?.baptism_parish_id ?? undefined,
+  place_of_birth: props.member?.baptismRecord?.place_of_birth ?? '',
+  nationality: props.member?.baptismRecord?.nationality ?? '',
+  father_name: props.member?.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : '',
+  father_residence: getFatherAddress(),
+  father_profession: props.member?.father?.company_name ?? '',
+  mother_name: props.member?.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : '',
   godfather_name: '',
   godfather_residence: '',
   godmother_name: '',
   godmother_residence: '',
   minister_name: '',
   baptism_remarks: '',
+});
+
+// Initialize member data on mount
+onMounted(() => {
+  if (props.member) {
+    selectedMemberDateOfBirth.value = props.member.date_of_birth ?? null;
+    selectedMemberMarriageDate.value = props.member.marriageRecord?.marriage_date ?? props.member.marriage_date ?? null;
+    selectedMemberMarriageRegNo.value = props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no ?? null;
+  }
 });
 
 // Format date to DD/MM/YYYY for display
@@ -56,12 +78,67 @@ const displayDateOfBirth = computed(() => {
   return formatDateForDisplay(selectedMemberDateOfBirth.value);
 });
 
+// Computed property for pre-selected member option
+const memberOptions = computed(() => {
+  if (!props.member) return [];
+  const communityName = props.member.community?.name ?? 'N/A';
+  const memberNo = props.member.member_no ?? 'N/A';
+  
+  // Get address
+  const address = [
+    props.member.permanent_add1,
+    props.member.permanent_add2,
+    props.member.permanent_add3,
+  ].filter(Boolean).join(', ');
+  
+  return [{
+    id: props.member.id,
+    name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
+    first_name: props.member.first_name,
+    middle_name: props.member.middle_name,
+    last_name: props.member.last_name,
+    member_no: props.member.member_no,
+    family_no: props.member.family_no,
+    date_of_birth: props.member.date_of_birth,
+    gender_id: props.member.gender_id,
+    address: address,
+    nationality: 'Indian',
+    baptism_date: props.member.baptismRecord?.baptism_date ?? props.member.baptism_date,
+    baptism_reg_no: props.member.baptismRecord?.baptism_reg_no ?? props.member.baptism_reg_no,
+    baptism_parish_id: props.member.baptism_parish_id,
+    place_of_baptism: props.member.baptismRecord?.place_of_baptism,
+    place_of_birth: props.member.baptismRecord?.place_of_birth,
+    marriage_date: props.member.marriageRecord?.marriage_date ?? props.member.marriage_date,
+    marriage_reg_no: props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no,
+    marriage_parish_id: props.member.marriage_parish_id,
+    father_name: props.member.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : null,
+    father_profession: props.member.father?.company_name,
+    mother_name: props.member.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : null,
+    spouse_name: props.member.spouse ? `${props.member.spouse.first_name ?? ''} ${props.member.spouse.last_name ?? ''}`.trim() : null,
+  }];
+});
+
 // Handle member selection from SearchDropdown
 function handleMemberSelect(member: any) {
   // Auto-populate baptism fields from member data
+  form.baptized_name = member.first_name || '';
+  form.baptized_surname = member.last_name || '';
   form.baptism_date = member.baptism_date || '';
   form.baptism_reg_no = member.baptism_reg_no || '';
   form.baptism_parish_id = member.baptism_parish_id ?? undefined;
+  form.place_of_baptism = member.place_of_baptism || '';
+  form.place_of_birth = member.place_of_birth || '';
+  form.nationality = member.nationality || 'Indian';
+  
+  // Populate father info
+  form.father_name = member.father_name || '';
+  form.father_profession = member.father_profession || '';
+  form.father_residence = member.address || '';
+  
+  // Populate mother info
+  form.mother_name = member.mother_name || '';
+  
+  // Track member's date of birth and marriage info for display
   selectedMemberDateOfBirth.value = member.date_of_birth ?? null;
   selectedMemberMarriageDate.value = member.marriage_date ?? null;
   selectedMemberMarriageRegNo.value = member.marriage_reg_no ?? null;
@@ -92,27 +169,26 @@ function submit() {
       <form @submit.prevent="submit" class="max-w-4xl space-y-6 rounded-lg bg-white p-6 shadow">
         <div class="grid gap-4 md:grid-cols-2">
           <div>
-            <Label>Member *</Label>
+            <Label>Member</Label>
             <SearchDropdown
               v-model="form.member_id"
-              :options="[]"
+              :options="memberOptions"
               fetch-url="/member/search"
               placeholder="Search member by name..."
-              :required="true"
               @select="handleMemberSelect"
             />
+            <p class="mt-1 text-xs text-muted-foreground">
+              Optional - leave empty for non-members
+            </p>
           </div>
           <div>
             <Label>Date of Birth</Label>
-            <input
-              :value="displayDateOfBirth"
-              type="text"
-              readonly
-              class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+            <DateInput
+              v-model="selectedMemberDateOfBirth"
               placeholder="DD/MM/YYYY"
             />
             <p class="mt-1 text-xs text-muted-foreground">
-              From member record
+              From member record (can be edited)
             </p>
           </div>
           <div>
