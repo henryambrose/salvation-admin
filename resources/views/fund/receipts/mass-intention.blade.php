@@ -265,7 +265,7 @@
         </div>
         <div class="detaildiv" style="">
             <div style="">Payment Method:</div>
-            <div style="">Cheque{{ $payment_method }}</div>
+            <div style="">{{ $payment_method }}</div>
         </div>
         <div class="detaildiv2" style="">
             <div style="">Transaction Info:</div>
@@ -322,7 +322,7 @@
         </div>
         <div class="detaildiv" style="">
             <div style="">Payment Method:</div>
-            <div style="">Cheque{{ $payment_method }}</div>
+            <div style="">{{ $payment_method }}</div>
         </div>
         <div class="detaildiv2" style="">
             <div style="">Transaction Info:</div>
@@ -335,8 +335,6 @@
                     of Our Lady of Salvation</div>
             </div>
         </div>
-            <div style="">Transaction Info:</div>
-            <div style="">{{ $transaction_info }}</div> {{-- Cheque No: 456789 <br>date: 16/Aug/2025 <br>Bank of Baroda --}}
             <div style="">
                 <div class="signature"
                     style="width: 100%; height:7.5mm; border-top:1px solid #cccccc; color: #333333; display: flex; align-items:center; justify-content: center; font-weight:600; text-align: center">

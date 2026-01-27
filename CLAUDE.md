@@ -401,6 +401,46 @@ Each uses member dropdowns filtered to show only alive members via API endpoints
 
 ## Recent Development Notes
 
+### Graveyard Receipt Template Updates (January 2026)
+Updated receipt templates to match fund receipt styling:
+- **Graveyard Payment Receipt** (`resources/views/graveyard/receipts/payment.blade.php`)
+  - Added church logo (25mm width) aligned left
+  - Header layout: logo + church info side by side
+  - Includes church name, address, phone, and trust registration number
+  - Subtitle shows "Graveyard Services - Payment Receipt"
+  - Two copies: Office Copy and Customer Copy
+  - Responsive print media queries for proper scaling
+
+### Delete Functionality for Bookings (January 2026)
+Implemented permanent delete with reversal logic for grave bookings:
+
+**Temporary Grave Bookings:**
+- Added `destroy()` method in `TemporaryGraveBookingController`
+- Only pending bookings can be deleted (confirmed/cancelled cannot)
+- Permanently deletes record using `forceDelete()` (bypasses soft delete)
+- Reverses all changes to temporary grave:
+  - Status: `unavailable` → `available`
+  - Clears: `buried_name`, `contact_no`, `last_burial_date`, `destination_permanent_grave_id`
+- Uses database transactions for data integrity
+- Route: `DELETE /graveyard/temporary-grave-bookings/{id}`
+- Permission: `delete-temporary-grave-booking`
+
+**Permanent Grave Bookings:**
+- Updated `destroy()` method in `PermanentGraveBookingController`
+- Only pending bookings can be deleted
+- Prevents deletion if payment records exist
+- Permanently deletes record using `forceDelete()`
+- No grave status reversal needed (pending bookings don't change grave status)
+- Uses database transactions
+- Route: `DELETE /graveyard/permanent-grave-bookings/{id}`
+- Permission: `delete-permanent-grave-booking`
+
+**Frontend (Vue):**
+- Delete button with trash icon in Index.vue pages
+- Confirmation dialog using `useConfirm()` composable
+- Only shows delete button for pending bookings (based on `canDeleteBooking()`)
+- Success/error toast notifications
+
 ### Cells & Association Leaders (January 2026)
 New CRUD feature added with:
 - Table: `cells_and_association_leaders` with foreign keys to `cells_and_associations` and `members`

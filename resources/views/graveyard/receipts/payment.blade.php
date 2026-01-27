@@ -13,7 +13,7 @@
 
         body {
             font-family: Arial, sans-serif;
-            padding: 20px;
+            padding: 10px;
             background: #f5f5f5;
         }
 
@@ -21,16 +21,18 @@
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            padding: 40px;
+            padding: 15px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-bottom: 1px dotted #aaaaaa;
+            page-break-inside: avoid;
         }
 
         .header {
             display: flex;
             flex-direction: row;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 30px;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
         }
 
         .imagediv {
@@ -47,7 +49,7 @@
 
         .headerdiv > div:nth-child(1) {
             font-family: 'Arial Narrow';
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             text-align: center;
         }
@@ -55,16 +57,16 @@
         .headerdiv > div:nth-child(2),
         .headerdiv > div:nth-child(3) {
             font-family: 'Arial';
-            font-size: 14px;
+            font-size: 12px;
             text-align: center;
-            margin-top: 2px;
+            margin-top: 1px;
         }
 
         .headerdiv > div:nth-child(4) {
             font-family: 'Arial';
-            font-size: 20px;
+            font-size: 16px;
             text-align: center;
-            margin-top: 8px;
+            margin-top: 5px;
             color: #666;
             font-weight: normal;
         }
@@ -72,8 +74,8 @@
         .receipt-info {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
             border-bottom: 1px solid #ddd;
         }
 
@@ -84,24 +86,24 @@
         .receipt-info strong {
             display: block;
             color: #666;
-            font-size: 12px;
-            margin-bottom: 5px;
+            font-size: 11px;
+            margin-bottom: 3px;
         }
 
         .receipt-info span {
             display: block;
             color: #333;
-            font-size: 16px;
+            font-size: 13px;
             font-weight: bold;
         }
 
         .receipt-body {
-            margin-bottom: 30px;
+            margin-bottom: 10px;
         }
 
         .row {
             display: flex;
-            padding: 12px 0;
+            padding: 5px 0;
             border-bottom: 1px solid #eee;
         }
 
@@ -122,20 +124,20 @@
 
         .amount-section {
             background: #f9f9f9;
-            padding: 20px;
-            margin: 30px 0;
+            padding: 10px;
+            margin: 10px 0;
             border-left: 4px solid #FF9800;
         }
 
         .amount-section .amount {
-            font-size: 32px;
+            font-size: 20px;
             font-weight: bold;
             color: #FF9800;
-            margin-bottom: 10px;
+            margin-bottom: 4px;
         }
 
         .amount-section .amount-words {
-            font-size: 14px;
+            font-size: 12px;
             color: #666;
             font-style: italic;
         }
@@ -143,21 +145,23 @@
         .service-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 6px 0;
         }
 
         .service-table th {
             background: #f9f9f9;
-            padding: 12px;
+            padding: 6px;
             text-align: left;
             font-weight: bold;
             color: #666;
             border-bottom: 2px solid #ddd;
+            font-size: 12px;
         }
 
         .service-table td {
-            padding: 12px;
+            padding: 6px;
             border-bottom: 1px solid #eee;
+            font-size: 12px;
         }
 
         .service-table tr:last-child td {
@@ -165,19 +169,19 @@
         }
 
         .footer {
-            margin-top: 50px;
-            padding-top: 20px;
+            margin-top: 12px;
+            padding-top: 8px;
             border-top: 2px solid #333;
             text-align: center;
             color: #666;
-            font-size: 12px;
+            font-size: 10px;
         }
 
         .signature-section {
             display: flex;
             justify-content: space-between;
-            margin-top: 60px;
-            padding: 0 40px;
+            margin-top: 15px;
+            padding: 0 30px;
         }
 
         .signature {
@@ -185,37 +189,34 @@
         }
 
         .signature-line {
-            width: 200px;
+            width: 180px;
             border-top: 1px solid #333;
-            margin: 60px 0 10px 0;
+            margin: 20px 0 8px 0;
         }
 
         .signature-label {
             color: #666;
-            font-size: 14px;
+            font-size: 12px;
         }
 
         .status {
             display: inline-block;
-            padding: 5px 15px;
-            border-radius: 4px;
+            padding: 0;
+            border-radius: 0;
             font-size: 14px;
-            font-weight: bold;
+            font-weight: normal;
             text-transform: uppercase;
         }
 
         .status.completed {
-            background: #d4edda;
             color: #155724;
         }
 
         .status.partial {
-            background: #fff3cd;
             color: #856404;
         }
 
         .status.pending {
-            background: #d1ecf1;
             color: #0c5460;
         }
 
@@ -254,15 +255,15 @@
         }
 
         .receipt-copy {
-            margin-bottom: 30px;
+            margin-bottom: 8px;
             page-break-inside: avoid;
         }
 
         .copy-label {
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             color: #999;
-            margin-bottom: 8px;
+            margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 1px;
             font-weight: 600;
@@ -270,21 +271,20 @@
 
         @media print {
             @page {
-                margin: 0.2in;
+                margin: 0.3in;
                 size: A4 portrait;
             }
 
             body {
                 padding: 0;
                 margin: 0;
-                transform: scale(0.75);
-                transform-origin: top center;
+                background: white;
             }
 
             .receipt-container {
-                padding: 10px;
+                padding: 8px;
                 margin-bottom: 0;
-                max-width: 700px;
+                box-shadow: none;
             }
 
             .receipt-copy {
@@ -293,6 +293,7 @@
 
             .receipt-copy:last-child {
                 margin-bottom: 0;
+                border-bottom: none;
             }
 
             .copy-label {
@@ -301,13 +302,13 @@
             }
 
             .header {
-                padding-bottom: 5px;
+                padding-bottom: 4px;
                 margin-bottom: 6px;
             }
 
             .imagediv {
-                width: 20mm;
-                height: 19mm;
+                width: 18mm;
+                height: 17mm;
             }
 
             .headerdiv > div:nth-child(1) {
@@ -322,12 +323,12 @@
 
             .headerdiv > div:nth-child(4) {
                 font-size: 12px;
-                margin-top: 4px;
+                margin-top: 3px;
             }
 
             .receipt-info {
                 margin-bottom: 6px;
-                padding-bottom: 5px;
+                padding-bottom: 4px;
             }
 
             .receipt-info strong {
@@ -336,7 +337,7 @@
             }
 
             .receipt-info span {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .amount-section {
@@ -345,8 +346,8 @@
             }
 
             .amount-section .amount {
-                font-size: 18px;
-                margin-bottom: 5px;
+                font-size: 16px;
+                margin-bottom: 3px;
             }
 
             .amount-section .amount-words {
@@ -362,40 +363,46 @@
             }
 
             .row .label {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .row .value {
-                font-size: 11px;
+                font-size: 10px;
             }
 
             .service-table {
-                margin: 6px 0;
-                font-size: 10px;
+                margin: 4px 0;
+                font-size: 9px;
             }
 
             .service-table th {
-                padding: 4px;
-                font-size: 10px;
+                padding: 3px;
+                font-size: 9px;
             }
 
             .service-table td {
-                padding: 4px;
-                font-size: 10px;
+                padding: 3px;
+                font-size: 9px;
             }
 
             .signature-section {
-                margin-top: 12px;
+                margin-top: 8px;
                 padding: 0 20px;
             }
 
             .signature-line {
-                margin: 20px 0 3px 0;
+                margin: 12px 0 4px 0;
                 width: 120px;
             }
 
             .signature-label {
-                font-size: 10px;
+                font-size: 9px;
+            }
+
+            .footer {
+                margin-top: 6px;
+                padding-top: 4px;
+                font-size: 8px;
             }
 
             .footer {

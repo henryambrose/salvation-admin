@@ -19,7 +19,7 @@
         .receipt-container {
             margin: 0 auto;
             background: white;
-            padding: 8.5mm 0;
+            padding: 6mm 0;
             display: flex;
             height: 130mm;
             width: 180mm;
@@ -90,17 +90,17 @@
         }
 
         .amountdiv {
-            height: 19mm;
+            height: 17mm;
             width: 100%;
             border-left: 4px solid #4CAF50;
             display: flex;
             font-family: Arial;
-            margin: 2.5mm 0;
+            margin: 1.5mm 0;
             background-color: #f9f9f9;
         }
 
         .amountdiv>div:nth-child(1) {
-            margin-top: 3mm;
+            margin-top: 2mm;
             padding-left: 3mm;
             height: 7.5mm;
             width: 100%;
@@ -140,19 +140,17 @@
         }
 
         .detaildiv2 {
-            height: 9.5mm;
+            height: 11mm;
             display: flex;
             flex-direction: row;
             font-family: Arial;
             font-size: 14px;
             align-items: start;
             text-align: left;
-            height: 14mm;
-            margin-top: 1.5mm;
-            margin-bottom: 5mm;
-            display: align-items: start;
+            margin-top: 1mm;
+            margin-bottom: 3mm;
             border-bottom: 2px solid #333333;
-            padding-bottom: 2mm;
+            padding-bottom: 1.5mm;
         }
 
         .detaildiv2>div:nth-child(2) {
@@ -162,7 +160,7 @@
 
         .detaildiv2>div:nth-child(3) {
             width: 65mm;
-            height: 13mm;
+            height: 10mm;
             display: flex;
             align-items: flex-end;
         }
@@ -178,7 +176,7 @@
             align-items: start;
             justify-content: center;
             position: absolute;
-            bottom: 9.5mm;
+            bottom: 7mm;
         }
 
         .signature {
@@ -287,20 +285,9 @@
         @endif
     </div>
 
-
-
-
-
-
-
-
-
-
-
-
     <div class="receipt-container" style="border: none !important">
         <div style="">
-            <div class="imagediv" style=""><img src="{{ asset('/images/olos-logo-gray.svg') }}"></div>
+            <div class="imagediv" style=""><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
             <div class="headerdiv" style="">
                 <div style="">CHURCH OF OUR LADY OF SALVATION</div>
                 <div style="">S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 24224471</div>
@@ -310,13 +297,13 @@
         <div class="receiptdiv">COMMUNITY FUND RECEIPT</div>
         <div class="receiptinfodiv" style="">
             <div style="">
-                <p><b>Receipt No:</b><br>2023</p>
+                <p><b>Receipt No:</b><br>{{ $receipt_no }}</p>
             </div>
             <div style="">
-                <p><b>Date:</b><br>15th August 2023</p>
+                <p><b>Date:</b><br>{{ $date }}</p>
             </div>
             <div style="">
-                <p><b>Family No:</b><br>SAL-165</p>
+                <p><b>Family No:</b><br>{{ $family_no }}</p>
             </div>
         </div>
         <div class="amountdiv" style="flex-direction: column;">
@@ -325,25 +312,18 @@
         </div>
         <div class="receivedfromdiv detaildiv" style="">
             <div style="">Received From:</div>
-            <div style="">John Doe (2025-SAL-400055)</div>
+            <div style="">{{ $received_from }} </div>
+        </div>
+
+        <div class="detaildiv" style="">
+            <div style="">Period:</div>
+            <div style="">{{ $period }}</div>
         </div>
         <div class="detaildiv" style="">
-            {{-- style="height: 7.5mm; display: flex; flex-direction: row; font-family: Arial; font-size: 14px; align-items: center; text-align: left;"> --}}
-            <div style="">For:</div>
-            <div style="">Nuptial Mass</div>
-        </div>
-        <div class="detaildiv" style="">
-            {{-- style="height: 7.5mm; display: flex; flex-direction: row; font-family: Arial; font-size: 14px; align-items: center; text-align: left;"> --}}
-            <div style="">Date/Time:</div>
-            <div style="">2025.10.25 - 4pm Mass</div>
-        </div>
-        <div class="detaildiv" style="">
-            {{-- style="height: 7.5mm; display: flex; flex-direction: row; font-family: Arial; font-size: 14px; align-items: center; text-align: left;"> --}}
             <div style="">Notes:</div>
-            <div style="">NA</div>
+            <div style="">{{ $notes }}</div>
         </div>
         <div class="detaildiv" style="">
-            {{-- style="height: 7.5mm; display: flex; flex-direction: row; font-family: Arial; font-size: 14px; align-items: center; text-align: left;"> --}}
             <div style="">Payment Method:</div>
             <div style="">{{ $payment_method }}</div>
         </div>
@@ -364,6 +344,9 @@
         </div>
         @endif
     </div>
+
+
+
     <script>
         // Auto-print option (uncomment if needed)
         // window.onload = function() { window.print(); }
