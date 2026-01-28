@@ -167,6 +167,26 @@ const canCancel = () => {
   return ['pending', 'confirmed'].includes(props.booking.status);
 };
 
+const canRequestTransfer = () => {
+  // Show transfer action if:
+  // 1. Booking is confirmed
+  // 2. Payment is complete
+  // 3. Enough time has passed (current date >= expected transfer date)
+  const today = new Date();
+  const expectedDate = props.booking.expected_transfer_date ? new Date(props.booking.expected_transfer_date) : null;
+  
+  return (
+    props.booking.status === 'confirmed' &&
+    ['paid', 'completed'].includes(props.booking.payment_status) &&
+    expectedDate !== null &&
+    today >= expectedDate
+  );
+};
+
+const requestTransfer = () => {
+  router.visit(route('graveyard.niche-transfers.create', { booking_id: props.booking.id }));
+};
+
 const cancelBooking = () => {
   if (!cancelReason.value.trim()) return;
 
@@ -222,6 +242,15 @@ const cancelBooking = () => {
                   {{ booking.payment_status === 'paid' ? 'Payment Complete' : booking.payment_status }}
                 </Badge>
                 <div class="flex space-x-2">
+                  <!-- Transfer Action Button -->
+                  <Button 
+                    v-if="canRequestTransfer()" 
+                    @click="requestTransfer" 
+                    :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
+                  >
+                    <ArrowRight class="mr-2 h-4 w-4" />
+                    {{ booking.transfer_requested ? 'View/Manage Transfer' : 'Initiate Transfer' }}
+                  </Button>
 
                   <Button v-if="canMakePayment()" @click="goToPayment" class="bg-blue-600 hover:bg-blue-700">
                     <IndianRupee class="mr-2 h-4 w-4" />

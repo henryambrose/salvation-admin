@@ -11,8 +11,8 @@ import { useConfirm } from '@/composables/useConfirm';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ArrowRight, Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
+import { ref, computed } from 'vue';
 
 interface TemporaryGraveBooking {
   id: number;
@@ -70,6 +70,11 @@ const { success, error, warning } = useToast();
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
 const transferDue = ref(props.filters.transfer_due || 'all');
+
+// Computed property for eligible bookings count
+const eligibleBookingsCount = computed(() => {
+  return props.bookings?.data?.filter((booking) => canRequestTransfer(booking)).length || 0;
+});
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -154,6 +159,40 @@ const isTransferDueSoon = (booking: TemporaryGraveBooking) => {
   return dueDate <= twoMonthsFromNow && dueDate >= new Date();
 };
 
+const canRequestTransfer = (booking: TemporaryGraveBooking) => {
+  // Show eligibility if:
+  // 1. Booking is confirmed
+  // 2. Payment is complete
+  // 3. Enough time has passed (current date >= expected transfer date)
+  const today = new Date();
+  const expectedDate = booking.expected_transfer_date ? new Date(booking.expected_transfer_date) : null;
+  
+  return (
+    booking.status === 'confirmed' &&
+    ['paid', 'completed'].includes(booking.payment_status) &&
+    expectedDate !== null &&
+    today >= expectedDate
+  );
+};
+
+const getRowClass = (booking: TemporaryGraveBooking) => {
+  // Highlight eligible bookings so users can see which need action
+  if (canRequestTransfer(booking)) {
+    if (isTransferOverdue(booking)) {
+      return 'bg-red-50 hover:bg-red-100 border-l-4 border-red-400';
+    }
+    if (isTransferDueSoon(booking)) {
+      return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-yellow-400';
+    }
+    return 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-400';
+  }
+  return 'hover:bg-gray-50';
+};
+
+const requestTransfer = (booking: TemporaryGraveBooking) => {
+  router.visit(route('graveyard.niche-transfers.create', { booking_id: booking.id }));
+};
+
 const canDeleteBooking = (booking: TemporaryGraveBooking) => {
   return booking.status === 'pending';
 };
@@ -198,7 +237,12 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-base leading-6 font-semibold text-gray-900">Temporary Grave Bookings</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage temporary grave bookings and transfers</p>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">
+                  Manage temporary grave bookings and transfers
+                  <Badge v-if="eligibleBookingsCount > 0" class="ml-2 bg-purple-100 text-purple-800">
+                    {{ eligibleBookingsCount }} eligible for transfer
+                  </Badge>
+                </p>
               </div>
               <div class="flex items-center space-x-3">
                 <Button as-child>
@@ -253,8 +297,10 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                   class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All</option>
+                  <option value="eligible">Eligible for Transfer</option>
                   <option value="due_soon">Due Soon</option>
                   <option value="overdue">Overdue</option>
+                  <option value="requested">Transfer Requested</option>
                 </select>
               </div>
 
@@ -281,6 +327,26 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
             </div>
 
             <div v-else class="space-y-6">
+              <!-- Color Legend for Eligible Bookings -->
+              <div v-if="eligibleBookingsCount > 0" class="rounded-lg border border-purple-200 bg-purple-50 p-4">
+                <h4 class="mb-2 text-sm font-medium text-purple-900">Transfer Eligibility Status</h4>
+                <p class="mb-3 text-xs text-purple-800">Bookings eligible for transfer to niche are highlighted. Click the arrow button to initiate transfer.</p>
+                <div class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+                  <div class="flex items-center space-x-2">
+                    <div class="h-4 w-8 rounded bg-red-100 border-l-4 border-red-400"></div>
+                    <span class="text-gray-700">Overdue - Immediate action needed</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <div class="h-4 w-8 rounded bg-yellow-100 border-l-4 border-yellow-400"></div>
+                    <span class="text-gray-700">Due Soon - Plan transfer within 2 months</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <div class="h-4 w-8 rounded bg-blue-100 border-l-4 border-blue-400"></div>
+                    <span class="text-gray-700">Eligible - Ready for transfer</span>
+                  </div>
+                </div>
+              </div>
+
               <!-- Desktop Table -->
               <div class="hidden sm:block">
                 <Table>
@@ -297,7 +363,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow v-for="booking in bookings?.data || []" :key="booking.id">
+                    <TableRow v-for="booking in bookings?.data || []" :key="booking.id" :class="getRowClass(booking)">
                       <TableCell>
                         <div>
                           <div class="font-medium text-gray-900">#{{ booking.booking_reference }}</div>
@@ -370,11 +436,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                       </TableCell>
                       <TableCell class="text-right">
                         <div class="flex items-center justify-end space-x-2">
+                          <!-- Transfer Action - Show for all eligible bookings -->
+                          <Button
+                            v-if="canRequestTransfer(booking)"
+                            size="sm"
+                            @click="requestTransfer(booking)"
+                            :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
+                            :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Transfer to Niche'"
+                          >
+                            <ArrowRight class="h-4 w-4" />
+                          </Button>
+                          
+                          <!-- View Details -->
                           <Button variant="outline" size="sm" as-child>
                             <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                               <Eye class="h-4 w-4" />
                             </Link>
                           </Button>
+                          
+                          <!-- Delete Button -->
                           <Button
                             v-if="canDeleteBooking(booking)"
                             variant="outline"
@@ -393,7 +473,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
 
               <!-- Mobile Cards -->
               <div class="space-y-4 sm:hidden">
-                <Card v-for="booking in bookings?.data || []" :key="booking.id">
+                <Card v-for="booking in bookings?.data || []" :key="booking.id" :class="getRowClass(booking)">
                   <CardHeader class="pb-3">
                     <div class="flex items-center justify-between">
                       <CardTitle class="text-base"> #{{ booking.booking_reference }} </CardTitle>
@@ -439,11 +519,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                         </Badge>
                       </div>
                       <div class="flex items-center space-x-2">
+                        <!-- Transfer Action - Show for all eligible bookings -->
+                        <Button
+                          v-if="canRequestTransfer(booking)"
+                          size="sm"
+                          @click="requestTransfer(booking)"
+                          :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
+                          :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Transfer to Niche'"
+                        >
+                          <ArrowRight class="h-4 w-4" />
+                        </Button>
+                        
+                        <!-- View Details -->
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
                           </Link>
                         </Button>
+                        
+                        <!-- Delete Button -->
                         <Button
                           v-if="canDeleteBooking(booking)"
                           variant="outline"

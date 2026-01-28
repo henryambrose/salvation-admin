@@ -110,6 +110,15 @@ class TemporaryGraveBooking extends Model
                 event(new \App\Events\PaymentCompleted($booking));
             }
         });
+
+        // Recalculate expected_transfer_date when buried_on changes
+        static::updating(function ($booking) {
+            if ($booking->isDirty('buried_on') && $booking->buried_on) {
+                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+                $booking->expected_transfer_date = Carbon::parse($booking->buried_on)
+                    ->addMonths($monthsFromEnv);
+            }
+        });
     }
 
     /**

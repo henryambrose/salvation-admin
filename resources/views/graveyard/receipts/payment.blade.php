@@ -419,343 +419,327 @@
     <!-- First Copy - Office Copy -->
     <div class="receipt-copy">
         <div class="copy-label">Office Copy</div>
-        <div class="receipt-container">
-        <div class="header">
-            <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
-            <div class="headerdiv">
-                <div>CHURCH OF OUR LADY OF SALVATION</div>
-                <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
-                <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
-                <div>Graveyard Services - Payment Receipt</div>
-            </div>
-        </div>
-
-        <div class="receipt-info">
-            <div>
-                <strong>Receipt No:</strong>
-                <span>{{ $receipt_number }}</span>
-            </div>
-            <div>
-                <strong>Payment Ref:</strong>
-                <span>{{ $payment_reference }}</span>
-            </div>
-            <div>
-                <strong>Payment Date:</strong>
-                <span>{{ $payment_date }}</span>
-            </div>
-        </div>
-
-        <div class="amount-section">
-            <div class="amount">₹ {{ $paid_amount }}</div>
-            <div class="amount-words">{{ $amount_words }} Only</div>
-        </div>
-
-        <div class="receipt-body">
-            @if($booking_reference)
-            <div class="row">
-                <div class="label">Booking Reference:</div>
-                <div class="value">{{ $booking_reference }}</div>
-            </div>
-            @endif
-
-            @if($deceased_name)
-            <div class="row">
-                <div class="label">Deceased Person:</div>
-                <div class="value">{{ $deceased_name }}</div>
-            </div>
-            @endif
-
-            @if($grave_number)
-            <div class="row">
-                <div class="label">Grave Number:</div>
-                <div class="value">{{ $grave_number }}</div>
-            </div>
-            @endif
-
-            @if($applicant_name)
-            <div class="row">
-                <div class="label">Applicant:</div>
-                <div class="value">{{ $applicant_name }}</div>
-            </div>
-            @endif
-
-            @if(!empty($service_charges))
-            <div class="row">
-                <div class="label" style="flex: 1;">Service Details:</div>
-            </div>
-            <table class="service-table">
-                <thead>
-                    <tr>
-                        <th>Service</th>
-                        <th style="text-align: center;">Qty</th>
-                        <th style="text-align: right;">Unit Cost</th>
-                        <th style="text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($service_charges as $service)
-                    <tr>
-                        <td>{{ $service['service_name'] }}</td>
-                        <td style="text-align: center;">{{ $service['quantity'] }}</td>
-                        <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
-                        <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @endif
-
-            <div class="row">
-                <div class="label">Total Amount:</div>
-                <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
-            </div>
-
-            <div class="row">
-                <div class="label">Amount Paid:</div>
-                <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
-            </div>
-
-            @if($balance_amount > 0)
-            <div class="row">
-                <div class="label">Balance Amount:</div>
-                <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
-            </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Payment Method:</div>
-                <div class="value">{{ $payment_method }}</div>
-            </div>
-
-            @if($payment_mode)
-            <div class="row">
-                <div class="label">Payment Mode:</div>
-                <div class="value">{{ ucfirst($payment_mode) }}</div>
-            </div>
-            @endif
-
-            @if($transaction_reference)
-            <div class="row">
-                <div class="label">Transaction Reference:</div>
-                <div class="value">{{ $transaction_reference }}</div>
-            </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Status:</div>
-                <div class="value">
-                    <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
+            <div class="receipt-container">
+                <div class="header">
+                    <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+                    <div class="headerdiv">
+                        <div>CHURCH OF OUR LADY OF SALVATION</div>
+                        <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                        <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
+                        <div>Graveyard Services - Payment Receipt</div>
+                    </div>
                 </div>
-            </div>
 
-            @if($payment_notes)
-            <div class="row">
-                <div class="label">Notes:</div>
-                <div class="value">{{ $payment_notes }}</div>
-            </div>
-            @endif
+                <div class="receipt-info">
+                    <div>
+                        <strong>Receipt No:</strong>
+                        <span>{{ $receipt_number }}</span>
+                    </div>
+                    <div>
+                        <strong>Payment Ref:</strong>
+                        <span>{{ $payment_reference }}</span>
+                    </div>
+                    <div>
+                        <strong>Payment Date:</strong>
+                        <span>{{ $payment_date }}</span>
+                    </div>
+                </div>
 
-            @if($recorded_by)
-            <div class="row">
-                <div class="label">Recorded By:</div>
-                <div class="value">{{ $recorded_by }}</div>
-            </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Transaction Date:</div>
-                <div class="value">{{ $created_at }}</div>
-            </div>
+                <div class="amount-section">
+                    <div class="amount">₹ {{ $paid_amount }}</div>
+                    <div class="amount-words">{{ $amount_words }} Only</div>
+                </div>
+                <div class="receipt-body">
+                    @if($booking_reference)
+                    <div class="row">
+                        <div class="label">Booking Reference:</div>
+                        <div class="value">{{ $booking_reference }}</div>
+                    </div>
+                    @endif
+                    @if($deceased_name)
+                    <div class="row">
+                        <div class="label">Deceased Person:</div>
+                        <div class="value">{{ $deceased_name }}</div>
+                    </div>
+                    @endif
+                    @if($grave_number)
+                    <div class="row">
+                        <div class="label">Grave Number:</div>
+                        <div class="value">{{ $grave_number }}</div>
+                    </div>
+                    @endif
+                    @if($applicant_name)
+                    <div class="row">
+                        <div class="label">Applicant:</div>
+                        <div class="value">{{ $applicant_name }}</div>
+                    </div>
+                    @endif
+                    @if(!empty($service_charges))
+                    <div class="row">
+                        <div class="label" style="flex: 1;">Service Details:</div>
+                    </div>
+                    <table class="service-table">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Unit Cost</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($service_charges as $service)
+                            <tr>
+                                <td>{{ $service['service_name'] }}</td>
+                                <td style="text-align: center;">{{ $service['quantity'] }}</td>
+                                <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
+                                <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @endif
+                    <div class="row">
+                        <div class="label">Total Amount:</div>
+                        <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
+                    </div>
+                    <div class="row">
+                        <div class="label">Amount Paid:</div>
+                        <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
+                    </div>
+                    @if($balance_amount > 0)
+                    <div class="row">
+                        <div class="label">Balance Amount:</div>
+                        <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
+                    </div>
+                    @endif
+                    <div class="row">
+                        <div class="label">Payment Method:</div>
+                        <div class="value">{{ $payment_method }}</div>
+                    </div>
+                    @if($payment_mode)
+                    <div class="row">
+                        <div class="label">Payment Mode:</div>
+                        <div class="value">{{ ucfirst($payment_mode) }}</div>
+                    </div>
+                    @endif
+                    @if($transaction_reference)
+                    <div class="row">
+                        <div class="label">Transaction Reference:</div>
+                        <div class="value">{{ $transaction_reference }}</div>
+                    </div>
+                    @endif
+                    <div class="row">
+                        <div class="label">Status:</div>
+                        <div class="value">
+                            <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
+                        </div>
+                    </div>
+                    @if($payment_notes)
+                    <div class="row">
+                        <div class="label">Notes:</div>
+                        <div class="value">{{ $payment_notes }}</div>
+                    </div>
+                    @endif
+                    @if($recorded_by)
+                    <div class="row">
+                        <div class="label">Recorded By:</div>
+                        <div class="value">{{ $recorded_by }}</div>
+                    </div>
+                    @endif
+                    <div class="row">
+                        <div class="label">Transaction Date:</div>
+                        <div class="value">{{ $created_at }}</div>
+                    </div>
+                </div>
+                <div class="signature-section">
+                    <div class="signature">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Received By</div>
+                    </div>
+                    <div class="signature">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Authorized Signature</div>
+                    </div>
+                </div>
+                <div class="footer">
+                    <p>This is a computer-generated receipt.</p>
+                    <p>Thank you for your payment.</p>
+                </div>
+            </div>     
         </div>
-
-        <div class="signature-section">
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Received By</div>
-            </div>
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Authorized Signature</div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your payment.</p>
-        </div>
-    </div>
     </div>
 
     <!-- Second Copy - Customer Copy -->
     <div class="receipt-copy">
         <div class="copy-label">Customer Copy</div>
-        <div class="receipt-container">
-        <div class="header">
-            <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
-            <div class="headerdiv">
-                <div>CHURCH OF OUR LADY OF SALVATION</div>
-                <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
-                <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
-                <div>Graveyard Services - Payment Receipt</div>
-            </div>
-        </div>
+            <div class="receipt-container">
+                <div class="header">
+                    <div class="imagediv"><img src="{{ asset('images/olos-logo-gray.svg') }}"></div>
+                    <div class="headerdiv">
+                        <div>CHURCH OF OUR LADY OF SALVATION</div>
+                        <div>S.K. Bole Road, Dadar (West), Mumbai - 400 028 + Tel.: 7021099816</div>
+                        <div>A Public Trust registered under the Public Trust Act under No D-143(BOM)</div>
+                        <div>Graveyard Services - Payment Receipt</div>
+                    </div>
+                </div>
 
-        <div class="receipt-info">
-            <div>
-                <strong>Receipt No:</strong>
-                <span>{{ $receipt_number }}</span>
-            </div>
-            <div>
-                <strong>Payment Ref:</strong>
-                <span>{{ $payment_reference }}</span>
-            </div>
-            <div>
-                <strong>Payment Date:</strong>
-                <span>{{ $payment_date }}</span>
-            </div>
-        </div>
+                <div class="receipt-info">
+                    <div>
+                        <strong>Receipt No:</strong>
+                        <span>{{ $receipt_number }}</span>
+                    </div>
+                    <div>
+                        <strong>Payment Ref:</strong>
+                        <span>{{ $payment_reference }}</span>
+                    </div>
+                    <div>
+                        <strong>Payment Date:</strong>
+                        <span>{{ $payment_date }}</span>
+                    </div>
+                </div>
 
-        <div class="amount-section">
-            <div class="amount">₹ {{ $paid_amount }}</div>
-            <div class="amount-words">{{ $amount_words }} Only</div>
-        </div>
+                <div class="amount-section">
+                    <div class="amount">₹ {{ $paid_amount }}</div>
+                    <div class="amount-words">{{ $amount_words }} Only</div>
+                </div>
 
-        <div class="receipt-body">
-            @if($booking_reference)
-            <div class="row">
-                <div class="label">Booking Reference:</div>
-                <div class="value">{{ $booking_reference }}</div>
-            </div>
-            @endif
+                <div class="receipt-body">
+                    @if($booking_reference)
+                    <div class="row">
+                        <div class="label">Booking Reference:</div>
+                        <div class="value">{{ $booking_reference }}</div>
+                    </div>
+                    @endif
 
-            @if($deceased_name)
-            <div class="row">
-                <div class="label">Deceased Person:</div>
-                <div class="value">{{ $deceased_name }}</div>
-            </div>
-            @endif
+                    @if($deceased_name)
+                    <div class="row">
+                        <div class="label">Deceased Person:</div>
+                        <div class="value">{{ $deceased_name }}</div>
+                    </div>
+                    @endif
 
-            @if($grave_number)
-            <div class="row">
-                <div class="label">Grave Number:</div>
-                <div class="value">{{ $grave_number }}</div>
-            </div>
-            @endif
+                    @if($grave_number)
+                    <div class="row">
+                        <div class="label">Grave Number:</div>
+                        <div class="value">{{ $grave_number }}</div>
+                    </div>
+                    @endif
 
-            @if($applicant_name)
-            <div class="row">
-                <div class="label">Applicant:</div>
-                <div class="value">{{ $applicant_name }}</div>
-            </div>
-            @endif
+                    @if($applicant_name)
+                    <div class="row">
+                        <div class="label">Applicant:</div>
+                        <div class="value">{{ $applicant_name }}</div>
+                    </div>
+                    @endif
 
-            @if(!empty($service_charges))
-            <div class="row">
-                <div class="label" style="flex: 1;">Service Details:</div>
-            </div>
-            <table class="service-table">
-                <thead>
-                    <tr>
-                        <th>Service</th>
-                        <th style="text-align: center;">Qty</th>
-                        <th style="text-align: right;">Unit Cost</th>
-                        <th style="text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($service_charges as $service)
-                    <tr>
-                        <td>{{ $service['service_name'] }}</td>
-                        <td style="text-align: center;">{{ $service['quantity'] }}</td>
-                        <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
-                        <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
-            @endif
+                    @if(!empty($service_charges))
+                    <div class="row">
+                        <div class="label" style="flex: 1;">Service Details:</div>
+                    </div>
+                    <table class="service-table">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Unit Cost</th>
+                                <th style="text-align: right;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($service_charges as $service)
+                            <tr>
+                                <td>{{ $service['service_name'] }}</td>
+                                <td style="text-align: center;">{{ $service['quantity'] }}</td>
+                                <td style="text-align: right;">₹ {{ number_format($service['unit_cost'], 2) }}</td>
+                                <td style="text-align: right;">₹ {{ number_format($service['total_cost'], 2) }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                    @endif
 
-            <div class="row">
-                <div class="label">Total Amount:</div>
-                <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
-            </div>
+                    <div class="row">
+                        <div class="label">Total Amount:</div>
+                        <div class="value">₹ {{ number_format($total_amount, 2) }}</div>
+                    </div>
 
-            <div class="row">
-                <div class="label">Amount Paid:</div>
-                <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
-            </div>
+                    <div class="row">
+                        <div class="label">Amount Paid:</div>
+                        <div class="value">₹ {{ number_format($paid_amount, 2) }}</div>
+                    </div>
 
-            @if($balance_amount > 0)
-            <div class="row">
-                <div class="label">Balance Amount:</div>
-                <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
-            </div>
-            @endif
+                    @if($balance_amount > 0)
+                    <div class="row">
+                        <div class="label">Balance Amount:</div>
+                        <div class="value">₹ {{ number_format($balance_amount, 2) }}</div>
+                    </div>
+                    @endif
 
-            <div class="row">
-                <div class="label">Payment Method:</div>
-                <div class="value">{{ $payment_method }}</div>
-            </div>
+                    <div class="row">
+                        <div class="label">Payment Method:</div>
+                        <div class="value">{{ $payment_method }}</div>
+                    </div>
 
-            @if($payment_mode)
-            <div class="row">
-                <div class="label">Payment Mode:</div>
-                <div class="value">{{ ucfirst($payment_mode) }}</div>
-            </div>
-            @endif
+                    @if($payment_mode)
+                    <div class="row">
+                        <div class="label">Payment Mode:</div>
+                        <div class="value">{{ ucfirst($payment_mode) }}</div>
+                    </div>
+                    @endif
 
-            @if($transaction_reference)
-            <div class="row">
-                <div class="label">Transaction Reference:</div>
-                <div class="value">{{ $transaction_reference }}</div>
-            </div>
-            @endif
+                    @if($transaction_reference)
+                    <div class="row">
+                        <div class="label">Transaction Reference:</div>
+                        <div class="value">{{ $transaction_reference }}</div>
+                    </div>
+                    @endif
 
-            <div class="row">
-                <div class="label">Status:</div>
-                <div class="value">
-                    <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
+                    <div class="row">
+                        <div class="label">Status:</div>
+                        <div class="value">
+                            <span class="status {{ strtolower($payment_status) }}">{{ ucfirst($payment_status) }}</span>
+                        </div>
+                    </div>
+
+                    @if($payment_notes)
+                    <div class="row">
+                        <div class="label">Notes:</div>
+                        <div class="value">{{ $payment_notes }}</div>
+                    </div>
+                    @endif
+
+                    @if($recorded_by)
+                    <div class="row">
+                        <div class="label">Recorded By:</div>
+                        <div class="value">{{ $recorded_by }}</div>
+                    </div>
+                    @endif
+
+                    <div class="row">
+                        <div class="label">Transaction Date:</div>
+                        <div class="value">{{ $created_at }}</div>
+                    </div>
+                </div>
+
+                <div class="signature-section">
+                    <div class="signature">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Received By</div>
+                    </div>
+                    <div class="signature">
+                        <div class="signature-line"></div>
+                        <div class="signature-label">Authorized Signature</div>
+                    </div>
+                </div>
+
+                <div class="footer">
+                    <p>This is a computer-generated receipt.</p>
+                    <p>Thank you for your payment.</p>
                 </div>
             </div>
-
-            @if($payment_notes)
-            <div class="row">
-                <div class="label">Notes:</div>
-                <div class="value">{{ $payment_notes }}</div>
-            </div>
-            @endif
-
-            @if($recorded_by)
-            <div class="row">
-                <div class="label">Recorded By:</div>
-                <div class="value">{{ $recorded_by }}</div>
-            </div>
-            @endif
-
-            <div class="row">
-                <div class="label">Transaction Date:</div>
-                <div class="value">{{ $created_at }}</div>
-            </div>
-        </div>
-
-        <div class="signature-section">
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Received By</div>
-            </div>
-            <div class="signature">
-                <div class="signature-line"></div>
-                <div class="signature-label">Authorized Signature</div>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>This is a computer-generated receipt.</p>
-            <p>Thank you for your payment.</p>
         </div>
     </div>
-    </div>
-
     <script>
         // Auto-print option (uncomment if needed)
         // window.onload = function() { window.print(); }
