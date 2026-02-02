@@ -254,6 +254,37 @@ class MarriageArchiveCertificateController extends Controller
     }
 
     /**
+     * Get a temporary URL for viewing the certificate (for iframe embedding)
+     */
+    public function view(MarriageArchiveCertificate $marriageArchive)
+    {
+        $this->authorize('view', $marriageArchive);
+
+        if (!$marriageArchive->fileExists()) {
+            abort(404, 'Certificate file not found in storage.');
+        }
+
+        $path = trim($marriageArchive->folder_path, '/') . '/' . $marriageArchive->file_name;
+        $disk = Storage::disk(config('filesystems.private_storage'));
+
+        try {
+            if (method_exists($disk, 'temporaryUrl')) {
+                $url = $disk->temporaryUrl($path, now()->addMinutes(30));
+                return redirect($url);
+            } else {
+                $file = $disk->get($path);
+                $mimeType = $disk->mimeType($path);
+
+                return response($file, 200)
+                    ->header('Content-Type', $mimeType)
+                    ->header('Content-Disposition', 'inline; filename="' . basename($path) . '"');
+            }
+        } catch (\Exception $e) {
+            abort(500, 'Failed to generate view link: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Download the certificate file from S3
      */
     public function download(MarriageArchiveCertificate $marriageArchive)

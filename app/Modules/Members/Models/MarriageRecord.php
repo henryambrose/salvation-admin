@@ -44,6 +44,7 @@ class MarriageRecord extends Model
         'second_witness_residence',
         'minister_name',
         'marriage_remarks',
+        'year_of_marriage',
     ];
 
     protected $casts = [

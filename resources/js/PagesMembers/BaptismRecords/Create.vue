@@ -51,6 +51,10 @@ const form = useForm({
   godmother_residence: '',
   minister_name: '',
   baptism_remarks: '',
+  birth_text: '',
+  reg_year: '',
+  confirmation_date: '',
+  confirmation_text: '',
 });
 
 // Initialize member data on mount
@@ -222,6 +226,20 @@ function submit() {
             </p>
           </div>
           <div>
+            <Label>Birth Text</Label>
+            <Input
+              v-model="form.birth_text"
+              placeholder="Enter birth text"
+            />
+          </div>
+          <div>
+            <Label>Reg Year</Label>
+            <Input
+              v-model="form.reg_year"
+              placeholder="Enter registration year"
+            />
+          </div>
+          <div>
             <Label>Marriage Date</Label>
             <DateInput
               v-model="selectedMemberMarriageDate"
@@ -291,6 +309,20 @@ function submit() {
           <div class="md:col-span-2">
             <Label>Godmother Residence</Label>
             <Textarea v-model="form.godmother_residence" />
+          </div>
+          <div>
+            <Label>Confirmation Date</Label>
+            <DateInput
+              v-model="form.confirmation_date"
+              placeholder="DD/MM/YYYY"
+            />
+          </div>
+          <div>
+            <Label>Confirmation Text</Label>
+            <Input
+              v-model="form.confirmation_text"
+              placeholder="Enter confirmation text"
+            />
           </div>
           <div>
             <Label>Minister Name</Label>

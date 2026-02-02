@@ -94,6 +94,9 @@ class BaptismRecordController extends Controller
             'godmother_residence' => 'nullable|string',
             'minister_name' => 'nullable|string|max:255',
             'baptism_remarks' => 'nullable|string',
+            'birth_text' => 'nullable|string|max:255',
+            'reg_year' => 'nullable|string|max:255',
+            'confirmation_text' => 'nullable|string|max:255',
         ]);
 
         $baptismRecord = BaptismRecord::create($validated);
@@ -156,6 +159,9 @@ class BaptismRecordController extends Controller
             'godmother_residence' => 'nullable|string',
             'minister_name' => 'nullable|string|max:255',
             'baptism_remarks' => 'nullable|string',
+            'birth_text' => 'nullable|string|max:255',
+            'reg_year' => 'nullable|string|max:255',
+            'confirmation_text' => 'nullable|string|max:255',
         ]);
 
         $baptismRecord->update($validated);

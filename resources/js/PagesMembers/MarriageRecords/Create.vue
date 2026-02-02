@@ -80,6 +80,7 @@ const form = useForm({
   second_witness_residence: '',
   minister_name: '',
   marriage_remarks: '',
+  year_of_marriage: '',
 });
 
 // Computed property for pre-selected bridegroom member option
@@ -226,6 +227,10 @@ function submit() {
             <div>
               <Label>Marriage Reg No</Label>
               <Input v-model="form.marriage_reg_no" />
+            </div>
+            <div>
+              <Label>Year of Marriage</Label>
+              <Input v-model="form.year_of_marriage" placeholder="Enter year of marriage" />
             </div>
             <div class="md:col-span-2">
               <Label>Place of Marriage</Label>

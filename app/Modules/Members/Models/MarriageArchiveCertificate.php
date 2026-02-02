@@ -38,7 +38,7 @@ class MarriageArchiveCertificate extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['full_name', 'file_url', 'formatted_date', 'has_file'];
+    protected $appends = ['full_name', 'file_url', 'view_url', 'formatted_date', 'has_file'];
 
     /**
      * Get the user who created this record
@@ -109,6 +109,34 @@ class MarriageArchiveCertificate extends Model
             return null;
         }
         return route('archive.marriage.download', $this->id);
+    }
+
+    /**
+     * Get view route URL (for iframe embedding)
+     * Returns a direct temporary S3 URL for S3 storage, or a route URL for local storage
+     */
+    public function getViewUrlAttribute(): ?string
+    {
+        if (!$this->fileExists()) {
+            return null;
+        }
+
+        $disk = Storage::disk(config('filesystems.private_storage'));
+        $path = trim($this->folder_path, '/') . '/' . $this->file_name;
+
+        try {
+            if (method_exists($disk, 'temporaryUrl')) {
+                try {
+                    return $disk->temporaryUrl($path, now()->addMinutes(30));
+                } catch (\Exception $e) {
+                    // If temporaryUrl fails (e.g., local driver), fall through to route
+                }
+            }
+
+            return route('archive.marriage.view', $this->id);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 
     /**

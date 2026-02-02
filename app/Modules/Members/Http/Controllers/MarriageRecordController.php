@@ -100,6 +100,7 @@ class MarriageRecordController extends Controller
             'second_witness_residence' => 'nullable|string',
             'minister_name' => 'nullable|string|max:255',
             'marriage_remarks' => 'nullable|string',
+            'year_of_marriage' => 'nullable|string|max:100',
         ]);
 
         $marriageRecord = MarriageRecord::create($validated);
@@ -180,6 +181,7 @@ class MarriageRecordController extends Controller
             'second_witness_residence' => 'nullable|string',
             'minister_name' => 'nullable|string|max:255',
             'marriage_remarks' => 'nullable|string',
+            'year_of_marriage' => 'nullable|string|max:100',
         ]);
 
         $marriageRecord->update($validated);

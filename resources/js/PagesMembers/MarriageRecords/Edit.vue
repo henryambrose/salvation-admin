@@ -66,6 +66,7 @@ const form = useForm({
   second_witness_residence: props.marriageRecord.second_witness_residence || '',
   minister_name: props.marriageRecord.minister_name || '',
   marriage_remarks: props.marriageRecord.marriage_remarks || '',
+  year_of_marriage: props.marriageRecord.year_of_marriage || '',
 });
 
 // Pre-populate bridegroom member options for SearchDropdown
@@ -153,6 +154,10 @@ function submit() {
             <div>
               <Label>Marriage Reg No</Label>
               <Input v-model="form.marriage_reg_no" />
+            </div>
+            <div>
+              <Label>Year of Marriage</Label>
+              <Input v-model="form.year_of_marriage" placeholder="Enter year of marriage" />
             </div>
             <div class="md:col-span-2">
               <Label>Place of Marriage</Label>

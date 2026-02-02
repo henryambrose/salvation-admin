@@ -64,6 +64,9 @@ Route::middleware('auth')->prefix('archive')->name('archive.')->group(function (
 
         // Download
         Route::get('{marriageArchive}/download', [MarriageArchiveCertificateController::class, 'download'])->name('download');
+
+        // View (for iframe embedding)
+        Route::get('{marriageArchive}/view', [MarriageArchiveCertificateController::class, 'view'])->name('view');
     });
 
     // Death Archive Certificates

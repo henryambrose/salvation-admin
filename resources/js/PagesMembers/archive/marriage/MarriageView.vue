@@ -73,6 +73,7 @@ interface Certificate {
   marriage_day: number
   formatted_date?: string
   file_url: string | null
+  view_url: string | null
   notes?: string
   created_at: string
   creator?: User
@@ -125,6 +126,7 @@ const form = useForm({
   second_witness_residence: '',
   minister_name: '',
   marriage_remarks: '',
+  year_of_marriage: '',
 })
 
 // Pre-fill marriage date from certificate
@@ -280,7 +282,7 @@ function submitForm() {
               </CardDescription>
             </CardHeader>
             <CardContent v-if="showPdf" class="flex-1 p-0 min-h-0">
-              <iframe v-if="certificate.file_url" :src="certificate.file_url" class="w-full h-full" frameborder="0" />
+              <iframe v-if="certificate.view_url" :src="certificate.view_url" class="w-full h-full" frameborder="0" />
               <div v-else class="h-full w-full flex items-center justify-center">
                 <div class="text-center p-8">
                   <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
@@ -329,6 +331,12 @@ function submitForm() {
                   <div class="space-y-2">
                     <Label for="marriage_reg_no">Marriage Registration No</Label>
                     <Input id="marriage_reg_no" v-model="form.marriage_reg_no" />
+                  </div>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                  <div class="space-y-2">
+                    <Label for="year_of_marriage">Year of Marriage</Label>
+                    <Input id="year_of_marriage" v-model="form.year_of_marriage" placeholder="Enter year of marriage" />
                   </div>
                 </div>
                 <div class="space-y-2">
@@ -529,7 +537,7 @@ function submitForm() {
                 <CardTitle>Remarks</CardTitle>
               </CardHeader>
               <CardContent>
-                <Textarea id="marriage_remarks" v-model="form.marriage_remarks" rows="3" />
+                <Textarea id="marriage_remarks" v-model="form.marriage_remarks" :rows="3" />
               </CardContent>
             </Card>
 
@@ -628,6 +636,10 @@ function submitForm() {
                 <div>
                   <Label class="text-sm font-medium text-muted-foreground">Parish</Label>
                   <p class="font-medium">{{ marriageRecord.parish_of_marriage || 'N/A' }}</p>
+                </div>
+                <div>
+                  <Label class="text-sm font-medium text-muted-foreground">Year of Marriage</Label>
+                  <p class="font-medium">{{ marriageRecord.year_of_marriage || 'N/A' }}</p>
                 </div>
               </div>
             </div>
