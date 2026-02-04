@@ -12,9 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('baptism_records', function (Blueprint $table) {
-            $table->string('birth_text')->nullable()->after('baptism_date');
-            $table->string('reg_year')->nullable()->after('birth_text');
-            $table->string('confirmation_text')->nullable()->after('confirmation_date');
+            $table->string('baptism_date_text')->nullable()->after('baptism_date');
+            $table->date('birth_date')->nullable()->after('baptism_date');
+            $table->string('birth_date_text')->nullable()->after('birth_date');
+            $table->string('baptism_reg_year')->nullable()->after('baptism_date_text');
+            $table->string('confirmation')->nullable()->after('confirmation_date');
+            $table->string('marriage_on')->nullable()->after('baptism_remarks');
+            $table->string('marriage_at')->nullable()->after('marriage_on');
+            $table->string('marriage_to')->nullable()->after('marriage_at');
         });
     }
 
