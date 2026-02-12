@@ -29,7 +29,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('baptism_records', function (Blueprint $table) {
-            $table->dropColumn(['birth_text', 'reg_year', 'confirmation_text']);
+            $table->dropColumn(['baptism_date_text', 'birth_date', 'birth_date_text', 'baptism_reg_year', 'confirmation', 'marriage_on', 'marriage_at', 'marriage_to']);
         });
     }
 };

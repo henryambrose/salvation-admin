@@ -110,9 +110,9 @@ const form = useForm({
   godmother_residence: '',
   minister_name: '',
   baptism_remarks: '',
-  birth_text: '',
-  reg_year: '',
-  confirmation_text: '',
+  birth_date_text: '',
+  baptism_reg_year: '',
+  confirmation: '',
 })
 
 // Pre-fill birth date from certificate
@@ -342,7 +342,7 @@ function submitForm() {
                     <Label for="birth_text">Birth Text</Label>
                     <Input
                       id="birth_text"
-                      v-model="form.birth_text"
+                      v-model="form.birth_date_text"
                       placeholder="Enter birth text"
                     />
                   </div>
@@ -351,7 +351,7 @@ function submitForm() {
                     <Label for="reg_year">Reg Year</Label>
                     <Input
                       id="reg_year"
-                      v-model="form.reg_year"
+                      v-model="form.baptism_reg_year"
                       placeholder="Enter registration year"
                     />
                   </div>
@@ -517,7 +517,7 @@ function submitForm() {
                     <Label for="confirmation_text">Confirmation Text</Label>
                     <Input
                       id="confirmation_text"
-                      v-model="form.confirmation_text"
+                      v-model="form.confirmation"
                       placeholder="Enter confirmation text"
                     />
                   </div>

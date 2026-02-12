@@ -33,9 +33,9 @@ class BaptismRecord extends Model
         'godmother_residence',
         'minister_name',
         'baptism_remarks',
-        'birth_text',
-        'reg_year',
-        'confirmation_text',
+        'birth_date_text',
+        'baptism_reg_year',
+        'confirmation',
     ];
 
     protected $casts = [

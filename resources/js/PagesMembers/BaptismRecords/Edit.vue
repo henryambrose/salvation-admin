@@ -88,10 +88,10 @@ const form = useForm({
   godmother_residence: props.baptismRecord.godmother_residence || '',
   minister_name: props.baptismRecord.minister_name || '',
   baptism_remarks: props.baptismRecord.baptism_remarks || '',
-  birth_text: props.baptismRecord.birth_text || '',
-  reg_year: props.baptismRecord.reg_year || '',
+  birth_date_text: props.baptismRecord.birth_date_text || '',
+  baptism_reg_year: props.baptismRecord.baptism_reg_year || '',
   confirmation_date: props.baptismRecord.confirmation_date ? formatDate(props.baptismRecord.confirmation_date) : '',
-  confirmation_text: props.baptismRecord.confirmation_text || '',
+  confirmation: props.baptismRecord.confirmation || '',
 });
 
 // Format the member data for SearchDropdown
@@ -282,14 +282,14 @@ function submit() {
                   <div>
                     <Label>Birth Text</Label>
                     <Input
-                      v-model="form.birth_text"
+                      v-model="form.birth_date_text"
                       placeholder="Enter birth text"
                     />
                   </div>
                   <div>
                     <Label>Reg Year</Label>
                     <Input
-                      v-model="form.reg_year"
+                      v-model="form.baptism_reg_year"
                       placeholder="Enter registration year"
                     />
                   </div>
@@ -354,7 +354,7 @@ function submit() {
                   <div>
                     <Label>Confirmation Text</Label>
                     <Input
-                      v-model="form.confirmation_text"
+                      v-model="form.confirmation"
                       placeholder="Enter confirmation text"
                     />
                   </div>
@@ -450,14 +450,14 @@ function submit() {
             <div>
               <Label>Birth Text</Label>
               <Input
-                v-model="form.birth_text"
+                v-model="form.birth_date_text"
                 placeholder="Enter birth text"
               />
             </div>
             <div>
               <Label>Reg Year</Label>
               <Input
-                v-model="form.reg_year"
+                v-model="form.baptism_reg_year"
                 placeholder="Enter registration year"
               />
             </div>
@@ -542,7 +542,7 @@ function submit() {
             <div>
               <Label>Confirmation Text</Label>
               <Input
-                v-model="form.confirmation_text"
+                v-model="form.confirmation"
                 placeholder="Enter confirmation text"
               />
             </div>
