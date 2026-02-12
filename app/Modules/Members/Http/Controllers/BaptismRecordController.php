@@ -263,7 +263,7 @@ class BaptismRecordController extends Controller
 
         // Get confirmation info if exists (from Member table)
         $confirmationInfo = null;
-        if ($member->confirmation_date) {
+        if ($member?->confirmation_date) {
             $confirmationInfo = [
                 'date' => $formatDate($member->confirmation_date),
                 'place' => $member->confirmationParish?->name ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
@@ -272,7 +272,7 @@ class BaptismRecordController extends Controller
 
         // Get marriage info if exists (from MarriageRecord table via relationship)
         $marriageInfo = null;
-        $marriageRecord = $member->marriageRecord;
+        $marriageRecord = $member?->marriageRecord;
         if ($marriageRecord && $marriageRecord->marriage_date) {
             // Determine spouse: if member is bridegroom, spouse is bride and vice versa
             $spouse = null;
@@ -305,17 +305,17 @@ class BaptismRecordController extends Controller
         }
 
         // Get parent names
-        $father = $member->father;
-        $mother = $member->mother;
+        $father = $member?->father;
+        $mother = $member?->mother;
 
         // Prepare data for the template
         $data = [
             // Member data
-            'member_full_name' => trim("{$member->first_name} {$member->middle_name} {$member->last_name}"),
-            'member_first_name' => $member->first_name,
-            'member_middle_name' => $member->middle_name ?? '',
-            'member_last_name' => $member->last_name,
-            'member_dob' => $formatDate($member->date_of_birth),
+            'member_full_name' => $member ? trim("{$member->first_name} {$member->middle_name} {$member->last_name}") : trim("{$baptismRecord->baptized_name} {$baptismRecord->baptized_surname}"),
+            'member_first_name' => $member?->first_name ?? $baptismRecord->baptized_name ?? '',
+            'member_middle_name' => $member?->middle_name ?? '',
+            'member_last_name' => $member?->last_name ?? $baptismRecord->baptized_surname ?? '',
+            'member_dob' => $formatDate($member?->date_of_birth),
 
             // Baptism data
             'baptism_date' => $formatDate($baptismRecord->baptism_date),
@@ -376,7 +376,7 @@ class BaptismRecordController extends Controller
         // Generate filename
         $filename = sprintf(
             'Baptism_Certificate_%s_%s.pdf',
-            str_replace(' ', '_', $member->first_name . '_' . $member->last_name),
+            str_replace(' ', '_', ($member?->first_name ?? $baptismRecord->baptized_name ?? 'Unknown') . '_' . ($member?->last_name ?? $baptismRecord->baptized_surname ?? '')),
             now()->format('Y-m-d')
         );
 
