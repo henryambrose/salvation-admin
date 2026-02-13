@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div ref="wrapperRef" class="relative">
     <!-- Search Input -->
     <div class="relative">
       <Input
@@ -7,7 +7,7 @@
         v-model="searchQuery"
         :placeholder="placeholder"
         @input="handleSearch"
-        @focus="showDropdown = true"
+        @focus="handleFocus"
         @keydown="handleKeyDown"
         class="w-full"
       />
@@ -35,26 +35,12 @@
       </div>
     </div>
 
-    <!-- Selected Family Display -->
-    <div v-if="selectedFamily" class="mt-2 p-2 bg-gray-50 rounded border">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="font-medium">{{ selectedFamily.family_no }}</div>
-          <div class="text-sm text-gray-500">{{ selectedFamily.member_count }} member(s)</div>
-        </div>
-        <button
-          @click="clearSelection"
-          class="text-red-600 hover:text-red-800 text-sm"
-        >
-          ×
-        </button>
-      </div>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, watch, onMounted, nextTick } from 'vue'
+import { onClickOutside } from '@vueuse/core'
 import { Input } from '@/components/ui/input'
 
 const props = defineProps({
@@ -75,6 +61,21 @@ const searchResults = ref([])
 const showDropdown = ref(false)
 const selectedFamily = ref(null)
 const inputRef = ref(null)
+const wrapperRef = ref(null)
+
+onClickOutside(wrapperRef, () => {
+  showDropdown.value = false
+})
+
+const justSelected = ref(false)
+
+const handleFocus = () => {
+  if (justSelected.value) {
+    justSelected.value = false
+    return
+  }
+  showDropdown.value = true
+}
 
 // Debounce search
 let searchTimeout = null
@@ -115,10 +116,8 @@ const selectResult = (result) => {
   emit('update:modelValue', result.family_no)
   searchQuery.value = result.family_no
   showDropdown.value = false
-
-  nextTick(() => {
-    inputRef.value?.$el?.focus()
-  })
+  searchResults.value = []
+  justSelected.value = true
 }
 
 const clearSelection = () => {

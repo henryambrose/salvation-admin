@@ -130,8 +130,11 @@ class BirthArchiveCertificateController extends Controller
     {
         $this->authorize('view', $birthArchive);
 
+        $birthArchive->load(['creator', 'updater']);
+        $birthArchive->append(['file_url', 'view_url', 'has_file']);
+
         return Inertia::render('archive/birth/Show', [
-            'certificate' => $birthArchive->load(['creator', 'updater']),
+            'certificate' => $birthArchive,
         ]);
     }
 
@@ -153,6 +156,9 @@ class BirthArchiveCertificateController extends Controller
 
         // Determine mode based on whether baptism record exists
         $mode = $birthArchive->baptismRecord ? 'view' : 'create';
+
+        // Append file attributes for the detail view
+        $birthArchive->append(['file_url', 'view_url', 'has_file']);
 
         // Prepare data based on mode
         $data = [
@@ -176,6 +182,8 @@ class BirthArchiveCertificateController extends Controller
     public function edit(BirthArchiveCertificate $birthArchive)
     {
         $this->authorize('update', $birthArchive);
+
+        $birthArchive->append(['file_url', 'view_url', 'has_file']);
 
         return Inertia::render('archive/birth/Edit', [
             'certificate' => $birthArchive,

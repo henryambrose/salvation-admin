@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { DateInput } from '@/components/ui/date-input';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 import { ArrowLeft, Download } from 'lucide-vue-next';
+import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
 
 const props = defineProps<{
   baptismRecord: any;
@@ -21,17 +22,7 @@ const hasArchiveCertificate = computed(() => {
   return !!(props.baptismRecord.birth_archive_certificate_id && props.baptismRecord.birth_archive_certificate?.view_url);
 });
 
-// Debug: Log props on mount
-console.log('Edit Baptism Record - Props:', {
-  baptismRecord: props.baptismRecord,
-  birth_archive_certificate_id: props.baptismRecord?.birth_archive_certificate_id,
-  birth_archive_certificate: props.baptismRecord?.birth_archive_certificate,
-  view_url: props.baptismRecord?.birth_archive_certificate?.view_url,
-  hasArchiveCertificate: hasArchiveCertificate.value,
-  member: props.baptismRecord?.member,
-  member_dob: props.baptismRecord?.member?.date_of_birth,
-  baptism_date: props.baptismRecord?.baptism_date,
-});
+
 
 // Format date to YYYY-MM-DD for date input
 const formatDate = (date: any) => {
@@ -47,20 +38,15 @@ const formatDate = (date: any) => {
 // Format date to DD/MM/YYYY for display
 const formatDateForDisplay = (dateString: string) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  console.log(day,month,year);
-  return `${day}/${month}/${year}`;
+  return formatDateDisplay(dateString);
 };
 
 // Track selected member's marriage info for cross-reference display
-const selectedMemberMarriageDate = ref<string | null>(
-  formatDate(props.baptismRecord.member?.marriage_date) || null
+const selectedMemberMarriageDate = ref<string>(
+  formatDate(props.baptismRecord.member?.marriage_date) || ''
 );
-const selectedMemberMarriageRegNo = ref<string | null>(
-  props.baptismRecord.member?.marriage_reg_no || null
+const selectedMemberMarriageRegNo = ref<string>(
+  props.baptismRecord.member?.marriage_reg_no || ''
 );
 
 // Initialize form with baptism_date from the record OR from member data
@@ -92,6 +78,7 @@ const form = useForm({
   baptism_reg_year: props.baptismRecord.baptism_reg_year || '',
   confirmation_date: props.baptismRecord.confirmation_date ? formatDate(props.baptismRecord.confirmation_date) : '',
   confirmation: props.baptismRecord.confirmation || '',
+  date_of_birth: props.baptismRecord.member?.date_of_birth || props.baptismRecord.birth_date || '',
 });
 
 // Format the member data for SearchDropdown
@@ -280,10 +267,10 @@ function submit() {
                     />
                   </div>
                   <div>
-                    <Label>Birth Text</Label>
+                    <Label>Birth Date Text</Label>
                     <Input
                       v-model="form.birth_date_text"
-                      placeholder="Enter birth text"
+                      placeholder="Enter birth Date text"
                     />
                   </div>
                   <div>
@@ -406,11 +393,8 @@ function submit() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <input
-                :value="displayDateOfBirth"
-                type="text"
-                readonly
-                class="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 text-sm ring-offset-background cursor-not-allowed"
+              <DateInput
+                v-model="form.date_of_birth"
                 placeholder="DD/MM/YYYY"
               />
               <p class="mt-1 text-xs text-muted-foreground">
@@ -448,10 +432,10 @@ function submit() {
               </p>
             </div>
             <div>
-              <Label>Birth Text</Label>
+              <Label>Birth Date Text</Label>
               <Input
                 v-model="form.birth_date_text"
-                placeholder="Enter birth text"
+                placeholder="Enter birth Date text"
               />
             </div>
             <div>

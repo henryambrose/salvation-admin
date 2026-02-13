@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { DateInput } from '@/components/ui/date-input'
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue'
 import { ArrowLeft, Download, Edit, Save, Link as LinkIcon } from 'lucide-vue-next'
 
@@ -94,6 +95,12 @@ const form = useForm({
   birth_archive_certificate_id: props.certificate.id,
   baptized_name: props.certificate.first_name + (props.certificate.middle_name ? ' ' + props.certificate.middle_name : ''),
   baptized_surname: props.certificate.last_name,
+  date_of_birth: (() => {
+    const y = props.certificate.birth_year
+    const m = String(props.certificate.birth_month).padStart(2, '0')
+    const d = String(props.certificate.birth_day).padStart(2, '0')
+    return `${y}-${m}-${d}`
+  })(),
   baptism_date: '',
   baptism_reg_no: '',
   place_of_baptism: '',
@@ -294,6 +301,18 @@ function submitForm() {
                 </p>
               </div>
 
+              <!-- Date of Birth -->
+              <div class="space-y-2">
+                <Label for="date_of_birth">Date of Birth</Label>
+                <DateInput
+                  v-model="form.date_of_birth"
+                  placeholder="DD/MM/YYYY"
+                />
+                <p class="text-xs text-muted-foreground">
+                  Pre-filled from archive certificate
+                </p>
+              </div>
+
               <!-- Baptized Name Fields -->
               <div class="grid gap-4 md:grid-cols-2">
                 <div class="space-y-2">
@@ -339,11 +358,11 @@ function submitForm() {
                   </div>
 
                   <div class="space-y-2">
-                    <Label for="birth_text">Birth Text</Label>
+                    <Label for="birth_text">Birth Date Text</Label>
                     <Input
                       id="birth_text"
                       v-model="form.birth_date_text"
-                      placeholder="Enter birth text"
+                      placeholder="Enter birth Date text"
                     />
                   </div>
 

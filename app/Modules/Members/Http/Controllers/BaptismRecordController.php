@@ -38,6 +38,11 @@ class BaptismRecordController extends Controller
             });
         }
 
+        // Filter by baptism year
+        if ($request->filled('baptism_year')) {
+            $query->whereYear('baptism_date', $request->baptism_year);
+        }
+
         // Sorting
         $sort = $request->get('sort', 'baptism_date');
         $direction = $request->get('direction', 'desc');
@@ -49,7 +54,7 @@ class BaptismRecordController extends Controller
 
         return Inertia::render('BaptismRecords/Index', [
             'baptismRecords' => $baptismRecords,
-            'filters' => $request->only(['search', 'sort', 'direction', 'per_page', 'isArchived']),
+            'filters' => $request->only(['search', 'sort', 'direction', 'per_page', 'isArchived', 'baptism_year']),
         ]);
     }
 
@@ -97,14 +102,27 @@ class BaptismRecordController extends Controller
             'birth_date_text' => 'nullable|string|max:255',
             'baptism_reg_year' => 'nullable|string|max:255',
             'confirmation' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
         ]);
+
+        $dateOfBirth = $validated['date_of_birth'] ?? null;
+        unset($validated['date_of_birth']);
+
+        if (!isset($validated['member_id'])) {
+            // No member linked - store birth_date on the baptism record
+            $validated['birth_date'] = $dateOfBirth;
+        }
 
         $baptismRecord = BaptismRecord::create($validated);
 
-        // Update: Set the foreign key in member table
+        // Update: Set the foreign key in member table and date_of_birth
         if ($baptismRecord->member_id) {
+            $memberUpdate = ['baptismrecord_id' => $baptismRecord->id];
+            if ($dateOfBirth !== null) {
+                $memberUpdate['date_of_birth'] = $dateOfBirth;
+            }
             Member::where('id', $baptismRecord->member_id)
-                  ->update(['baptismrecord_id' => $baptismRecord->id]);
+                  ->update($memberUpdate);
         }
 
         // If created from archive certificate, redirect to the unified view
@@ -162,7 +180,22 @@ class BaptismRecordController extends Controller
             'birth_date_text' => 'nullable|string|max:255',
             'baptism_reg_year' => 'nullable|string|max:255',
             'confirmation' => 'nullable|string|max:255',
+            'date_of_birth' => 'nullable|date',
         ]);
+
+        $dateOfBirth = $validated['date_of_birth'] ?? null;
+        unset($validated['date_of_birth']);
+
+        if ($baptismRecord->member_id) {
+            // Record is linked to a member - update member's date_of_birth
+            if ($dateOfBirth !== null) {
+                Member::where('id', $baptismRecord->member_id)
+                    ->update(['date_of_birth' => $dateOfBirth]);
+            }
+        } else {
+            // Record is not linked to a member - store on baptism record itself
+            $validated['birth_date'] = $dateOfBirth;
+        }
 
         $baptismRecord->update($validated);
 

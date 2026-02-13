@@ -190,6 +190,7 @@ import { Button } from '@/components/ui/button';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
+import { parseLocalDate } from '@/lib/utils';
 import { Calendar, MapPin, Pencil, User, Users } from 'lucide-vue-next';
 
 const { can } = permissionHelpers();
@@ -306,13 +307,14 @@ const getStatusClass = () => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN', {
+  const date = parseLocalDate(dateString);
+  return date ? date.toLocaleDateString('en-IN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-  });
+  }) : '';
 };
 </script>
 

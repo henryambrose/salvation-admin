@@ -153,6 +153,7 @@ import { computed, ref } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
+import { parseLocalDate } from '@/lib/utils'
 import { Edit, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -169,22 +170,24 @@ const breadcrumbs = computed(() => [
 
 const formatDate = (dateString: string) => {
   if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleDateString('en-US', {
+  const date = parseLocalDate(dateString)
+  return date ? date.toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  })
+  }) : 'N/A'
 }
 
 const formatDateTime = (dateString: string) => {
   if (!dateString) return 'N/A'
-  return new Date(dateString).toLocaleString('en-US', {
+  const date = parseLocalDate(dateString)
+  return date ? date.toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit'
-  })
+  }) : 'N/A'
 }
 
 const deleteFee = () => {

@@ -38,7 +38,7 @@ class MarriageArchiveCertificate extends Model
         'deleted_at' => 'datetime',
     ];
 
-    protected $appends = ['full_name', 'file_url', 'view_url', 'formatted_date', 'has_file'];
+    protected $appends = ['full_name', 'formatted_date'];
 
     /**
      * Get the user who created this record

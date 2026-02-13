@@ -11,6 +11,7 @@ import { Head } from '@inertiajs/vue3';
 import { Cake, Calendar, Church, Gift, Heart, Home, Mail, MapPin, Phone, Users } from 'lucide-vue-next';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import PermissionDenied from './errors/PermissionDenied.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 
 const { can } = permissionHelpers();
 
@@ -48,14 +49,10 @@ const currentDate = new Date();
 const currentHour = currentDate.getHours();
 const greeting = currentHour < 12 ? 'Good Morning' : currentHour < 17 ? 'Good Afternoon' : 'Good Evening';
 
-// Format date to dd-MM-yyyy
+// Format date to dd/MM/yyyy
 const formatDate = (dateString: string) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
+  return formatDateForDisplay(dateString);
 };
 
 // Get appropriate icon for each card

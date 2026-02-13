@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Plus, Search, Download } from 'lucide-vue-next';
 import { useToast } from '@/composables/useToast';
+import { formatDateForDisplay } from '@/lib/utils';
 import PdfOptionsModal, { type PdfOptions } from '@/components/PdfOptionsModal.vue';
 
 const props = defineProps<{
@@ -32,11 +33,7 @@ const serverArchived = computed(() => String(props.filters?.isArchived) === 'tru
 // Format date to DD/MM/YYYY
 const formatDate = (dateString: string | null) => {
   if (!dateString) return '-';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return formatDateForDisplay(dateString) || '-';
 };
 
 // Confirmation dialog state

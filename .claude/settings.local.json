@@ -34,7 +34,8 @@
       "Bash(mv:*)",
       "Bash(powershell:*)",
       "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resources\\\\js\\\\Pages\\\\archive\\\\death)",
-      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\" 2>&1 || echo \"Directory does not exist\")"
+      "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\" 2>&1 || echo \"Directory does not exist\")",
+      "Bash(npx vue-tsc:*)"
     ]
   }
 }

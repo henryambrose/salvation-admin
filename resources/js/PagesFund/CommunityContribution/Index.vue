@@ -8,6 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
+import { parseLocalDate } from '@/lib/utils';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -264,7 +265,8 @@ function getStatusBadgeClass(status: string) {
 
 function formatDate(dateString: string) {
   if (!dateString) return 'N/A';
-  return new Date(dateString).toLocaleDateString('en-IN');
+  const date = parseLocalDate(dateString);
+  return date ? date.toLocaleDateString('en-IN') : 'N/A';
 }
 
 function formatCurrency(amount: number) {

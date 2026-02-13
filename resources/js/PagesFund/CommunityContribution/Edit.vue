@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DateInput } from '@/components/ui/date-input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { formatDateForInput as formatDateInput } from '@/lib/utils';
 import { ArrowLeft, Save } from 'lucide-vue-next';
 
 interface ContributionType {
@@ -44,14 +45,7 @@ const breadcrumbs = [
 
 // Helper function to format date for HTML input
 const formatDateForInput = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return '';
-    return date.toISOString().split('T')[0]; // Returns YYYY-MM-DD format
-  } catch {
-    return '';
-  }
+  return formatDateInput(dateString);
 };
 
 const form = useForm({

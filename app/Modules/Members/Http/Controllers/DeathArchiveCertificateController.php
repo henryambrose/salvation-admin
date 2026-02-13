@@ -130,8 +130,11 @@ class DeathArchiveCertificateController extends Controller
     {
         $this->authorize('view', $deathArchive);
 
+        $deathArchive->load(['creator', 'updater']);
+        $deathArchive->append(['file_url', 'has_file']);
+
         return Inertia::render('archive/death/Show', [
-            'certificate' => $deathArchive->load(['creator', 'updater']),
+            'certificate' => $deathArchive,
         ]);
     }
 
@@ -153,6 +156,9 @@ class DeathArchiveCertificateController extends Controller
 
         // Determine mode based on whether death record exists
         $mode = $deathArchive->deathRecord ? 'view' : 'create';
+
+        // Append file attributes for the detail view
+        $deathArchive->append(['file_url', 'has_file']);
 
         // Prepare data based on mode
         $data = [
@@ -176,6 +182,8 @@ class DeathArchiveCertificateController extends Controller
     public function edit(DeathArchiveCertificate $deathArchive)
     {
         $this->authorize('update', $deathArchive);
+
+        $deathArchive->append(['file_url', 'has_file']);
 
         return Inertia::render('archive/death/Edit', [
             'certificate' => $deathArchive,

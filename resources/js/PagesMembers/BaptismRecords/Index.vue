@@ -12,8 +12,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Plus, Search, Pencil, RotateCcw, Archive, Download } from 'lucide-vue-next';
+import { Plus, Search, Pencil, RotateCcw, Archive, Download, ArrowUpDown } from 'lucide-vue-next';
 import { useToast } from '@/composables/useToast';
+import { formatDateForDisplay } from '@/lib/utils';
 import PdfOptionsModal, { type PdfOptions } from '@/components/PdfOptionsModal.vue';
 
 const props = defineProps<{
@@ -27,16 +28,14 @@ const { success, error: showError } = useToast();
 const search = ref(props.filters?.search || '');
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const perPage = ref(props.filters?.per_page || 15);
+const baptismYear = ref(props.filters?.baptism_year || '');
+const sortDirection = ref(props.filters?.direction || 'desc');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 // Format date to DD/MM/YYYY
 const formatDate = (dateString: string | null) => {
   if (!dateString) return '-';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return formatDateForDisplay(dateString) || '-';
 };
 
 // Confirmation dialog state
@@ -62,9 +61,14 @@ watch(
   { deep: true, immediate: true }
 );
 
-watch([search, isArchived, perPage], () => {
+watch([search, isArchived, perPage, baptismYear], () => {
   fetch(1);
 });
+
+function toggleSort() {
+  sortDirection.value = sortDirection.value === 'desc' ? 'asc' : 'desc';
+  fetch(1);
+}
 
 function fetch(page = 1) {
   router.get(
@@ -74,6 +78,9 @@ function fetch(page = 1) {
       isArchived: isArchived.value ? 'true' : 'false',
       page: page.toString(),
       per_page: perPage.value.toString(),
+      baptism_year: baptismYear.value || undefined,
+      sort: 'baptism_date',
+      direction: sortDirection.value,
     },
     {
       preserveState: true,
@@ -188,6 +195,12 @@ function handlePdfOptionsConfirm(options: PdfOptions) {
             class="pl-10"
           />
         </div>
+        <Input
+          v-model="baptismYear"
+          type="number"
+          placeholder="Baptism Year"
+          class="w-36"
+        />
         <select
           v-model.number="perPage"
           class="h-9 rounded-md border border-input bg-background px-3 py-1 text-sm"
@@ -209,7 +222,7 @@ function handlePdfOptionsConfirm(options: PdfOptions) {
           <span>Page</span>
           <select
             :value="baptismRecords.current_page"
-            @change="fetch($event.target.value)"
+            @change="fetch(Number(($event.target as HTMLSelectElement).value))"
             class="h-8 rounded-md border border-input bg-background px-2 py-1 text-sm"
           >
             <option v-for="page in baptismRecords.last_page" :key="page" :value="page">
@@ -234,7 +247,13 @@ function handlePdfOptionsConfirm(options: PdfOptions) {
             <tr>
               <th class="px-4 py-3 text-left text-sm font-medium">Actions</th>
               <th class="px-4 py-3 text-left text-sm font-medium">Member</th>
-              <th class="px-4 py-3 text-left text-sm font-medium">Baptism Date</th>
+              <th class="px-4 py-3 text-left text-sm font-medium">
+                <button @click="toggleSort" class="inline-flex items-center gap-1 hover:text-blue-600">
+                  Baptism Date
+                  <ArrowUpDown class="h-3.5 w-3.5" />
+                  <span class="text-xs text-gray-400">({{ sortDirection === 'asc' ? '↑' : '↓' }})</span>
+                </button>
+              </th>
               <th class="px-4 py-3 text-left text-sm font-medium">Reg No</th>
               <th class="px-4 py-3 text-left text-sm font-medium">Place</th>
               <th class="px-4 py-3 text-left text-sm font-medium">Godparents</th>

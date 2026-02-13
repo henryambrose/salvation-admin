@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head } from '@inertiajs/vue3';
+import { parseLocalDate } from '@/lib/utils';
 import { ArrowLeft, Edit, Eye, Calendar, MapPin, User, FileText, DollarSign } from 'lucide-vue-next';
 
 interface ContributionType {
@@ -52,11 +53,12 @@ const formatCurrency = (amount: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN', {
+  const date = parseLocalDate(dateString);
+  return date ? date.toLocaleDateString('en-IN', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
-  });
+  }) : '';
 };
 
 const getStatusBadgeClass = (status: string) => {

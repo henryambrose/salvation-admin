@@ -260,6 +260,7 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
+import { parseLocalDate } from '@/lib/utils';
 import { AlertTriangle, Download, FileText } from 'lucide-vue-next';
 import { ref } from 'vue';
 
@@ -298,7 +299,8 @@ const getStatusClass = (status: string) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN');
+  const date = parseLocalDate(dateString);
+  return date ? date.toLocaleDateString('en-IN') : '';
 };
 
 const getTotalVolume = () => {

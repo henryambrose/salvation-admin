@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { DateInput } from '@/components/ui/date-input';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
 
 const props = defineProps<{
   parishes: any[];
@@ -17,7 +18,7 @@ const props = defineProps<{
 // Track selected member's date of birth and marriage info
 const selectedMemberDateOfBirth = ref<string | null>(null);
 const selectedMemberMarriageDate = ref<string | null>(null);
-const selectedMemberMarriageRegNo = ref<string | null>(null);
+const selectedMemberMarriageRegNo = ref<string>('');
 
 // Get father's and mother's address
 const getFatherAddress = () => {
@@ -62,18 +63,14 @@ onMounted(() => {
   if (props.member) {
     selectedMemberDateOfBirth.value = props.member.date_of_birth ?? null;
     selectedMemberMarriageDate.value = props.member.marriageRecord?.marriage_date ?? props.member.marriage_date ?? null;
-    selectedMemberMarriageRegNo.value = props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no ?? null;
+    selectedMemberMarriageRegNo.value = props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no ?? '';
   }
 });
 
 // Format date to DD/MM/YYYY for display
 const formatDateForDisplay = (dateString: string) => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return formatDateDisplay(dateString);
 };
 
 // Computed property for displaying member's date of birth
@@ -145,7 +142,7 @@ function handleMemberSelect(member: any) {
   // Track member's date of birth and marriage info for display
   selectedMemberDateOfBirth.value = member.date_of_birth ?? null;
   selectedMemberMarriageDate.value = member.marriage_date ?? null;
-  selectedMemberMarriageRegNo.value = member.marriage_reg_no ?? null;
+  selectedMemberMarriageRegNo.value = member.marriage_reg_no ?? '';
 }
 
 // Computed property to check if form can be submitted
@@ -226,10 +223,10 @@ function submit() {
             </p>
           </div>
           <div>
-            <Label>Birth Text</Label>
+            <Label>Birth Date Text</Label>
             <Input
               v-model="form.birth_date_text"
-              placeholder="Enter birth text"
+              placeholder="Enter birth date text"
             />
           </div>
           <div>

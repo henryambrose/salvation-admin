@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/layouts/AppLayout.vue'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +24,7 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+const page = usePage()
 
 const form = useForm({
   file: null as File | null,
@@ -59,9 +60,11 @@ function submit() {
 
     <div class="container mx-auto py-8 px-4">
       <div class="mb-6">
-        <Button variant="ghost" @click="$inertia.visit(route('archive.birth.index'))">
-          <ArrowLeft class="mr-2 size-4" />
-          Back to List
+        <Button variant="ghost" as-child>
+          <a :href="route('archive.birth.index')">
+            <ArrowLeft class="mr-2 size-4" />
+            Back to List
+          </a>
         </Button>
       </div>
 
@@ -206,11 +209,12 @@ function submit() {
                 {{ form.processing ? 'Updating...' : 'Update Certificate' }}
               </Button>
               <Button
-                type="button"
                 variant="outline"
-                @click="$inertia.visit(route('archive.birth.index'))"
+                as-child
               >
-                Cancel
+                <a :href="route('archive.birth.index')">
+                  Cancel
+                </a>
               </Button>
             </div>
           </form>

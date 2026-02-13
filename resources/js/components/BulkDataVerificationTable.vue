@@ -328,6 +328,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import axios from 'axios'
 import { permissionHelpers } from '@/composables/permissionHelpers'
 import { useToast } from '@/composables/useToast'
+import { formatDateForDisplay } from '@/lib/utils'
 
 const { can } = permissionHelpers()
 const { success, error } = useToast()
@@ -625,15 +626,7 @@ const convertToCSV = (data: any[]) => {
 
 const formatDate = (dateString: string) => {
   if (!dateString) return '—'
-  try {
-    const date = new Date(dateString)
-    const day = date.getDate().toString().padStart(2, '0')
-    const month = (date.getMonth() + 1).toString().padStart(2, '0')
-    const year = date.getFullYear()
-    return `${day}-${month}-${year}`
-  } catch (error) {
-    return dateString
-  }
+  return formatDateForDisplay(dateString) || dateString
 }
 
 const downloadCSV = (csv: string, filename: string) => {

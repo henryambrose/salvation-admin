@@ -221,6 +221,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { parseLocalDate } from '@/lib/utils';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -331,7 +332,8 @@ const highlightRow = (id: number) => {
 };
 
 const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-IN');
+  const date = parseLocalDate(dateString);
+  return date ? date.toLocaleDateString('en-IN') : '';
 };
 
 const changePage = (page: number) => {

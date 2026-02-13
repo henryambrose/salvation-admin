@@ -130,8 +130,11 @@ class MarriageArchiveCertificateController extends Controller
     {
         $this->authorize('view', $marriageArchive);
 
+        $marriageArchive->load(['creator', 'updater']);
+        $marriageArchive->append(['file_url', 'view_url', 'has_file']);
+
         return Inertia::render('archive/marriage/Show', [
-            'certificate' => $marriageArchive->load(['creator', 'updater']),
+            'certificate' => $marriageArchive,
         ]);
     }
 
@@ -153,6 +156,9 @@ class MarriageArchiveCertificateController extends Controller
 
         // Determine mode based on whether marriage record exists
         $mode = $marriageArchive->marriageRecord ? 'view' : 'create';
+
+        // Append file attributes for the detail view
+        $marriageArchive->append(['file_url', 'view_url', 'has_file']);
 
         // Prepare data based on mode
         $data = [
@@ -176,6 +182,8 @@ class MarriageArchiveCertificateController extends Controller
     public function edit(MarriageArchiveCertificate $marriageArchive)
     {
         $this->authorize('update', $marriageArchive);
+
+        $marriageArchive->append(['file_url', 'view_url', 'has_file']);
 
         return Inertia::render('archive/marriage/Edit', [
             'certificate' => $marriageArchive,

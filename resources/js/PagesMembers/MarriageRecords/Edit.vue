@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
 
 const props = defineProps<{
   marriageRecord: any;
@@ -16,12 +17,7 @@ const props = defineProps<{
 // Format date from YYYY-MM-DD to DD/MM/YYYY for display
 const formatDateForDisplay = (dateString: string | null | undefined): string => {
   if (!dateString) return '';
-  const date = new Date(dateString);
-  if (isNaN(date.getTime())) return '';
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}/${month}/${year}`;
+  return formatDateDisplay(dateString);
 };
 
 // Format date from DD/MM/YYYY to YYYY-MM-DD for database
