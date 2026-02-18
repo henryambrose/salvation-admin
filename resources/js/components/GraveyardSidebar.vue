@@ -43,7 +43,7 @@ const graveyardNavigationGroups = computed(() => [
         icon: Clock,
         show: can('read-temporary-grave-booking') || true,
       },
-      { title: 'Niche Tra. Register', href: '/graveyard/niche-transfers', icon: BookOpen, show: can('read-niche-transfer') || true },
+      { title: 'Remains Transfers', href: '/graveyard/remains-transfers', icon: BookOpen, show: can('read-remains-transfer') || true },
     ],
   },
   {

@@ -11,7 +11,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, Eye, Phone, Plus, Search, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 
-interface NicheTransfer {
+interface RemainsTransfer {
   id: number;
   transfer_reference: string;
   status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
@@ -44,14 +44,13 @@ interface NicheTransfer {
 
 interface Props {
   transfers: {
-    data: NicheTransfer[];
+    data: RemainsTransfer[];
     links: any[];
     meta: any;
   };
   filters: {
     status?: string;
     search?: string;
-    due_soon?: boolean;
   };
 }
 
@@ -59,7 +58,6 @@ const props = defineProps<Props>();
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
-const dueSoon = ref(props.filters.due_soon || false);
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -71,11 +69,10 @@ const statusColors = {
 
 const applyFilters = () => {
   router.get(
-    route('graveyard.niche-transfers.index'),
+    route('graveyard.remains-transfers.index'),
     {
       search: search.value,
       status: status.value === 'all' ? '' : status.value,
-      due_soon: dueSoon.value ? '1' : '',
     },
     {
       preserveState: true,
@@ -87,7 +84,6 @@ const applyFilters = () => {
 const clearFilters = () => {
   search.value = '';
   status.value = 'all';
-  dueSoon.value = false;
   applyFilters();
 };
 
@@ -104,24 +100,15 @@ const formatDate = (date: string) => {
   return new Date(date).toLocaleDateString('en-IN');
 };
 
-const getDeceasedName = (transfer: NicheTransfer) => {
+const getDeceasedName = (transfer: RemainsTransfer) => {
   return `${transfer.from_booking.dead_first_name} ${transfer.from_booking.dead_last_name}`;
 };
 
-const isTransferDue = (transfer: NicheTransfer) => {
-  const transferDate = new Date(transfer.proposed_transfer_date);
-  const today = new Date();
-  const daysUntilTransfer = Math.ceil((transferDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-  return daysUntilTransfer <= 30 && daysUntilTransfer >= 0;
-};
 
-const isOverdue = (transfer: NicheTransfer) => {
-  return new Date(transfer.proposed_transfer_date) < new Date();
-};
 </script>
 
 <template>
-  <Head title="Niche Transfers" />
+  <Head title="Remains Transfers" />
 
   <AppLayout>
     <div class="py-12">
@@ -131,12 +118,12 @@ const isOverdue = (transfer: NicheTransfer) => {
           <div class="border-b border-gray-200 bg-white px-4 py-5 sm:px-6">
             <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-base leading-6 font-semibold text-gray-900">Niche Transfers</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage transfers from temporary graves to niches</p>
+                <h3 class="text-base leading-6 font-semibold text-gray-900">Remains Transfers</h3>
+                <p class="mt-1 max-w-2xl text-sm text-gray-500">Manage remains transfers from temporary graves</p>
               </div>
               <div class="flex items-center space-x-3">
                 <Button as-child>
-                  <Link :href="route('graveyard.niche-transfers.create')">
+                  <Link :href="route('graveyard.remains-transfers.create')">
                     <Plus class="mr-2 h-4 w-4" />
                     Request Transfer
                   </Link>
@@ -147,7 +134,7 @@ const isOverdue = (transfer: NicheTransfer) => {
 
           <!-- Filters -->
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-5">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
               <div class="sm:col-span-2">
                 <Label for="search">Search</Label>
                 <div class="relative mt-1">
@@ -172,14 +159,12 @@ const isOverdue = (transfer: NicheTransfer) => {
                   class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="all">All statuses</option>
-                  <option value="available">Available</option>
-                  <option value="unavailable">Unavailable</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
                 </select>
-              </div>
-
-              <div class="mt-6 flex items-center space-x-2">
-                <input id="due_soon" v-model="dueSoon" type="checkbox" class="rounded border-gray-300" />
-                <Label for="due_soon" class="text-sm">Due Soon</Label>
               </div>
 
               <div class="flex items-end space-x-2">
@@ -194,10 +179,10 @@ const isOverdue = (transfer: NicheTransfer) => {
             <div v-if="transfers.data.length === 0" class="py-12 text-center">
               <ArrowRight class="mx-auto h-12 w-12 text-gray-400" />
               <h3 class="mt-2 text-sm font-medium text-gray-900">No transfers found</h3>
-              <p class="mt-1 text-sm text-gray-500">Get started by creating a new niche transfer request.</p>
+              <p class="mt-1 text-sm text-gray-500">Get started by creating a new remains transfer request.</p>
               <div class="mt-6">
                 <Button as-child>
-                  <Link :href="route('graveyard.niche-transfers.create')">
+                  <Link :href="route('graveyard.remains-transfers.create')">
                     <Plus class="mr-2 h-4 w-4" />
                     Request Transfer
                   </Link>
@@ -261,21 +246,8 @@ const isOverdue = (transfer: NicheTransfer) => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div class="space-y-1">
-                          <div class="text-sm">
-                            {{ formatDate(transfer.proposed_transfer_date) }}
-                          </div>
-                          <div class="flex space-x-1">
-                            <Badge v-if="isOverdue(transfer) && transfer.status === 'approved'" class="bg-red-100 text-xs text-red-800">
-                              Overdue
-                            </Badge>
-                            <Badge
-                              v-else-if="isTransferDue(transfer) && transfer.status === 'approved'"
-                              class="bg-yellow-100 text-xs text-yellow-800"
-                            >
-                              Due Soon
-                            </Badge>
-                          </div>
+                        <div class="text-sm">
+                          {{ formatDate(transfer.proposed_transfer_date) }}
                         </div>
                       </TableCell>
                       <!-- <TableCell>
@@ -295,7 +267,7 @@ const isOverdue = (transfer: NicheTransfer) => {
                       </TableCell>
                       <TableCell class="text-right">
                         <Button variant="outline" size="sm" as-child>
-                          <Link :href="route('graveyard.niche-transfers.show', transfer.id)">
+                          <Link :href="route('graveyard.remains-transfers.show', transfer.id)">
                             <Eye class="h-4 w-4" />
                           </Link>
                         </Button>
@@ -333,7 +305,6 @@ const isOverdue = (transfer: NicheTransfer) => {
                     <div class="flex items-center space-x-2 text-sm">
                       <Calendar class="h-4 w-4 text-gray-400" />
                       <span>Transfer date: {{ formatDate(transfer.proposed_transfer_date) }}</span>
-                      <Badge v-if="isOverdue(transfer) && transfer.status === 'approved'" class="bg-red-100 text-xs text-red-800"> Overdue </Badge>
                     </div>
                     <div class="flex items-center justify-between pt-2">
                       <!-- <div>
@@ -343,7 +314,7 @@ const isOverdue = (transfer: NicheTransfer) => {
                         </div>
                       </div> -->
                       <Button variant="outline" size="sm" as-child>
-                        <Link :href="route('graveyard.niche-transfers.show', transfer.id)">
+                        <Link :href="route('graveyard.remains-transfers.show', transfer.id)">
                           <Eye class="h-4 w-4" />
                         </Link>
                       </Button>

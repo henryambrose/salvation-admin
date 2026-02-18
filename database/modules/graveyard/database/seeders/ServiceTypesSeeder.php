@@ -39,7 +39,7 @@ class ServiceTypesSeeder extends Seeder
                 'cost' => 15000.00,
                 'type' => 'normal',
                 'category' => 'grave',
-                'applicable_to' => 'niche-transfer',
+                'applicable_to' => 'remains-transfer',
                 'sort_order' => 3,
                 'is_active' => true,
             ],

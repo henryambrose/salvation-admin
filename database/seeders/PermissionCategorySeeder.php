@@ -277,7 +277,7 @@ class PermissionCategorySeeder extends Seeder
                 'sort_order' => 22,
                 'rules' => [
                     ['rule_type' => 'starts_with', 'rule_value' => 'niche', 'priority' => 15],
-                    ['rule_type' => 'contains', 'rule_value' => 'niche-transfer', 'priority' => 20],
+                    ['rule_type' => 'contains', 'rule_value' => 'remains-transfer', 'priority' => 20],
                 ]
             ],
             [

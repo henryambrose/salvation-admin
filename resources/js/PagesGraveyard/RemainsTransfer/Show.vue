@@ -8,7 +8,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, Calendar, CreditCard, FileText, IndianRupee, User } from 'lucide-vue-next';
 
-interface NicheTransfer {
+interface RemainsTransfer {
   id: number;
   transfer_reference: string;
   status: 'pending' | 'completed';
@@ -74,7 +74,7 @@ interface NicheTransfer {
 }
 
 interface Props {
-  transfer: NicheTransfer;
+  transfer: RemainsTransfer;
 }
 
 const props = defineProps<Props>();
@@ -151,7 +151,7 @@ const canMakePayment = () => {
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-3">
                 <Button variant="outline" size="sm" as-child>
-                  <Link :href="route('graveyard.niche-transfers.index')">
+                  <Link :href="route('graveyard.remains-transfers.index')">
                     <ArrowLeft class="h-4 w-4" />
                   </Link>
                 </Button>
@@ -168,7 +168,7 @@ const canMakePayment = () => {
                 <div class="flex space-x-2">
                   <!-- Make Payment Button -->
                   <Button v-if="canMakePayment()" as-child class="bg-green-600 hover:bg-green-700">
-                    <Link :href="route('graveyard.payments.create', ['niche-transfer', transfer.id])">
+                    <Link :href="route('graveyard.payments.create', ['remains-transfer', transfer.id])">
                       <CreditCard class="mr-2 h-4 w-4" />
                       Make Payment
                     </Link>

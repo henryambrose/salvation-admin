@@ -7,8 +7,6 @@ use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\ServiceType;
 use Modules\Graveyard\Models\GraveCategories;
-use Modules\Graveyard\Models\PermanentGrave;
-use Modules\Graveyard\Models\ValidMember;
 use Modules\Members\Models\Gender;
 use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
@@ -72,23 +70,6 @@ class TemporaryGraveBookingController extends Controller
         return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Create', [
             'availableGraves' => TemporaryGrave::available()->with('graveCategory')->get(),
             'graveCategories' => GraveCategories::orderBy('name')->get(),
-            'permanentGraves' => PermanentGrave::where('status', 'unavailable')
-                ->with(['validMembers' => function ($query) {
-                    $query->where('is_active', true)
-                        ->where(function ($q) {
-                            // For parish members, check if member has death record
-                            $q->whereHas('member', function ($memberQuery) {
-                                $memberQuery->whereNull('deathrecord_id');
-                            })
-                            // For external members, check if death_date is null
-                            ->orWhere(function ($externalQuery) {
-                                $externalQuery->whereNull('member_id')
-                                    ->whereNull('death_date');
-                            });
-                        })
-                        ->with(['member', 'gender', 'parish', 'relationship']);
-                }])
-                ->orderBy('column')->orderBy('row')->get(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
             'relationships' => Relationship::all()
@@ -199,7 +180,6 @@ class TemporaryGraveBookingController extends Controller
             'contact_email' => 'nullable|email',
             'relationship_id' => 'nullable|exists:relationships,id',
             'permit_no' => 'nullable|string|max:50',
-            'destination_permanent_grave_id' => 'nullable|exists:permanent_graves,id',
             'selected_services' => 'nullable|array',
             'selected_services.*' => 'exists:service_types,id',
         ]);
@@ -271,14 +251,13 @@ class TemporaryGraveBookingController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            // Update the temporary grave with booking details and destination
+            // Update the temporary grave with booking details
             $grave->update([
                 'status' => 'unavailable',
                 'last_burial_date' => $request->buried_on,
                 'buried_name' => $deadFirstName . ' ' . $deadLastName,
                 'contact_no' => $request->contact_no,
                 'member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
-                'destination_permanent_grave_id' => $request->destination_permanent_grave_id,
                 'updated_by' => Auth::id(),
             ]);
 
@@ -330,21 +309,6 @@ class TemporaryGraveBookingController extends Controller
             'booking' => $temporaryGraveBooking,
             'availableGraves' => $availableGraves,
             'graveCategories' => GraveCategories::orderBy('name')->get(),
-            'permanentGraves' => PermanentGrave::where('status', 'unavailable')
-                ->with(['validMembers' => function ($query) {
-                    $query->where('is_active', true)
-                        ->where(function ($q) {
-                            $q->whereHas('member', function ($memberQuery) {
-                                $memberQuery->whereNull('deathrecord_id');
-                            })
-                            ->orWhere(function ($externalQuery) {
-                                $externalQuery->whereNull('member_id')
-                                    ->whereNull('death_date');
-                            });
-                        })
-                        ->with(['member', 'gender', 'parish', 'relationship']);
-                }])
-                ->orderBy('column')->orderBy('row')->get(),
             'genders' => Gender::all(),
             'parishes' => Parish::all(),
             'relationships' => Relationship::all(),
@@ -410,7 +374,6 @@ class TemporaryGraveBookingController extends Controller
             'contact_email' => 'nullable|email',
             'relationship_id' => 'nullable|exists:relationships,id',
             'permit_no' => 'nullable|string|max:50',
-            'destination_permanent_grave_id' => 'nullable|exists:permanent_graves,id',
             'selected_services' => 'nullable|array',
             'selected_services.*' => 'exists:service_types,id',
         ]);
@@ -506,7 +469,6 @@ class TemporaryGraveBookingController extends Controller
                 'buried_name' => $deadFirstName . ' ' . $deadLastName,
                 'contact_no' => $request->contact_no,
                 'member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
-                'destination_permanent_grave_id' => $request->destination_permanent_grave_id,
                 'updated_by' => Auth::id(),
             ]);
 
@@ -545,7 +507,7 @@ class TemporaryGraveBookingController extends Controller
             'applicantMember',
             'creator',
             'updater',
-            'nicheTransfers',
+            'remainsTransfers',
             'payments.paymentMethod',
         ]);
 
@@ -637,7 +599,7 @@ class TemporaryGraveBookingController extends Controller
         }
 
         if ($temporaryGraveBooking->requestTransfer()) {
-            return redirect()->route('graveyard.niche-transfers.create', ['booking_id' => $temporaryGraveBooking->id])
+            return redirect()->route('graveyard.remains-transfers.create', ['booking_id' => $temporaryGraveBooking->id])
                 ->with('success', 'Transfer request initiated. Please complete the transfer form.');
         }
 
@@ -698,7 +660,6 @@ class TemporaryGraveBookingController extends Controller
                     'last_burial_date' => null,
                     'buried_name' => null,
                     'contact_no' => null,
-                    'destination_permanent_grave_id' => null,
                 ]);
             }
 

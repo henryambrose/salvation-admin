@@ -132,7 +132,7 @@ class TemporaryGrave extends Model
      */
     public function scopeNeedingTransfer($query)
     {
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return $query->where('status', 'unavailable')
             ->whereNotNull('last_burial_date')
             ->whereRaw('DATEDIFF(NOW(), last_burial_date) >= ? * 30', [$monthsFromEnv]);
@@ -143,7 +143,7 @@ class TemporaryGrave extends Model
      */
     public function scopeNeedingPermanentTransfer($query)
     {
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return $query->where('status', 'unavailable')
             ->whereNotNull('last_burial_date')
             ->whereNotNull('destination_permanent_grave_id')
@@ -153,9 +153,9 @@ class TemporaryGrave extends Model
     /**
      * Scope to get graves that need transfer to niche (default)
      */
-    public function scopeNeedingNicheTransfer($query)
+    public function scopeNeedingRemainsTransfer($query)
     {
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return $query->where('status', 'unavailable')
             ->whereNotNull('last_burial_date')
             ->whereNull('destination_permanent_grave_id')
@@ -187,7 +187,7 @@ class TemporaryGrave extends Model
             return false;
         }
 
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         $transferDate = Carbon::parse($this->last_burial_date)->addMonths($monthsFromEnv);
         return now()->gte($transferDate);
     }
@@ -201,7 +201,7 @@ class TemporaryGrave extends Model
             return null;
         }
 
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return Carbon::parse($this->last_burial_date)->addMonths($monthsFromEnv);
     }
 

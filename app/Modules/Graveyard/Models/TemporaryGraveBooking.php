@@ -93,7 +93,7 @@ class TemporaryGraveBooking extends Model
 
             // Calculate expected transfer date if not set
             if (!$booking->expected_transfer_date && $booking->buried_on) {
-                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+                $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
                 $booking->expected_transfer_date = Carbon::parse($booking->buried_on)
                     ->addMonths($monthsFromEnv);
             }
@@ -114,7 +114,7 @@ class TemporaryGraveBooking extends Model
         // Recalculate expected_transfer_date when buried_on changes
         static::updating(function ($booking) {
             if ($booking->isDirty('buried_on') && $booking->buried_on) {
-                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+                $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
                 $booking->expected_transfer_date = Carbon::parse($booking->buried_on)
                     ->addMonths($monthsFromEnv);
             }
@@ -200,9 +200,9 @@ class TemporaryGraveBooking extends Model
     /**
      * Get niche transfers from this booking
      */
-    public function nicheTransfers(): HasMany
+    public function remainsTransfers(): HasMany
     {
-        return $this->hasMany(NicheTransfer::class, 'from_booking_id');
+        return $this->hasMany(RemainsTransfer::class, 'from_booking_id');
     }
 
     /**
@@ -226,7 +226,7 @@ class TemporaryGraveBooking extends Model
      */
     public function scopeEligibleForTransfer($query)
     {
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return $query->where('status', 'confirmed')
             ->whereRaw('DATE_ADD(buried_on, INTERVAL ? MONTH) <= CURDATE()', [$monthsFromEnv]);
     }
@@ -332,7 +332,7 @@ class TemporaryGraveBooking extends Model
             return false;
         }
 
-        $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
+        $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
         return $this->expected_transfer_date <= now()->addMonths($monthsFromEnv);
     }
 

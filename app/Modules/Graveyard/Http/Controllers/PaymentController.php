@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use Modules\Graveyard\Models\Payment;
 use Modules\Graveyard\Models\PermanentGraveBooking;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
-use Modules\Graveyard\Models\NicheTransfer;
+use Modules\Graveyard\Models\RemainsTransfer;
 use Modules\Graveyard\Models\ServiceType;
 use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Graveyard\Models\Niche;
@@ -42,8 +42,8 @@ class PaymentController extends Controller
                 case 'temporary':
                     $query->where('payable_type', 'Modules\\Graveyard\\Models\\TemporaryGraveBooking');
                     break;
-                case 'niche-transfer':
-                    $query->where('payable_type', 'Modules\\Graveyard\\Models\\NicheTransfer');
+                case 'remains-transfer':
+                    $query->where('payable_type', 'Modules\\Graveyard\\Models\\RemainsTransfer');
                     break;
             }
         }
@@ -132,7 +132,7 @@ class PaymentController extends Controller
     {
         $this->authorize('create-graveyard-payment');
         // Validate booking type
-        $allowedTypes = ['permanent', 'temporary', 'niche', 'niche-transfer'];
+        $allowedTypes = ['permanent', 'temporary', 'niche', 'remains-transfer'];
         if (!in_array($bookingType, $allowedTypes)) {
             abort(404, 'Invalid booking type');
         }
@@ -144,7 +144,7 @@ class PaymentController extends Controller
         }
 
         // Check if booking is eligible for payment
-        if ($bookingType === 'niche-transfer') {
+        if ($bookingType === 'remains-transfer') {
             if (!in_array($booking->status, ['pending', 'approved'])) {
                 return redirect()->back()->with('error', 'This transfer is not eligible for payment.');
             }
@@ -204,7 +204,7 @@ class PaymentController extends Controller
         }
 
         $validationRules = [
-            'booking_type' => 'required|in:permanent,temporary,niche-transfer',
+            'booking_type' => 'required|in:permanent,temporary,remains-transfer',
             'booking_id' => 'required|integer',
             'selected_services' => 'nullable|array',
             'selected_services.*.service_id' => 'required_with:selected_services|exists:service_types,id',
@@ -579,7 +579,7 @@ class PaymentController extends Controller
         return match ($type) {
             'permanent' => PermanentGraveBooking::find($id),
             'temporary' => TemporaryGraveBooking::find($id),
-            'niche-transfer' => NicheTransfer::find($id),
+            'remains-transfer' => RemainsTransfer::find($id),
             default => null
         };
     }
@@ -593,7 +593,7 @@ class PaymentController extends Controller
             'permanent' => 'Modules\\Graveyard\\Models\\PermanentGraveBooking',
             'temporary' => 'Modules\\Graveyard\\Models\\TemporaryGraveBooking',
             'niche' => 'Modules\\Graveyard\\Models\\NicheBooking',
-            'niche-transfer' => 'Modules\\Graveyard\\Models\\NicheTransfer',
+            'remains-transfer' => 'Modules\\Graveyard\\Models\\RemainsTransfer',
             default => ''
         };
     }
@@ -606,7 +606,7 @@ class PaymentController extends Controller
         return match ($type) {
             'permanent' => 'graveyard.permanent-grave-bookings.show',
             'temporary' => 'graveyard.temporary-grave-bookings.show',
-            'niche-transfer' => 'graveyard.niche-transfers.show', // or appropriate niche route
+            'remains-transfer' => 'graveyard.remains-transfers.show', // or appropriate niche route
             default => 'graveyard.dashboard'
         };
     }

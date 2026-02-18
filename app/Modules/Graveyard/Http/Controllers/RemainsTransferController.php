@@ -3,9 +3,10 @@
 namespace Modules\Graveyard\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use Modules\Graveyard\Models\NicheTransfer;
+use Modules\Graveyard\Models\RemainsTransfer;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\Niche;
+use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Members\Models\Relationship;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,16 +14,16 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
-class NicheTransferController extends Controller
+class RemainsTransferController extends Controller
 {
     /**
      * Display niche transfers
      */
     public function index(Request $request)
     {
-        $this->authorize('list-niche-transfer');
+        $this->authorize('list-remains-transfer');
 
-        $query = NicheTransfer::with([
+        $query = RemainsTransfer::with([
             'fromTemporaryGrave',
             'fromBooking',
             'toNiche',
@@ -51,7 +52,7 @@ class NicheTransferController extends Controller
         // Pagination
         $transfers = $query->orderBy('created_at', 'desc')->paginate(10);
 
-        return Inertia::render('PagesGraveyard/NicheTransfer/Index', [
+        return Inertia::render('PagesGraveyard/RemainsTransfer/Index', [
             'transfers' => $transfers,
             'filters' => $request->only(['status', 'search', 'due_soon'])
         ]);
@@ -62,7 +63,7 @@ class NicheTransferController extends Controller
      */
     public function create(Request $request)
     {
-        $this->authorize('read-niche-transfer');
+        $this->authorize('read-remains-transfer');
 
         $bookingId = $request->get('booking_id');
         $selectedBooking = null;
@@ -154,9 +155,23 @@ class NicheTransferController extends Controller
                 ];
             });
 
-        return Inertia::render('PagesGraveyard/NicheTransfer/Create', [
+        // Get available permanent graves for transfer destination
+        $availablePermanentGraves = PermanentGrave::where('status', 'available')
+            ->get()
+            ->map(function ($grave) {
+                return [
+                    'id' => $grave->id,
+                    'grave_no' => $grave->grave_no,
+                    'section' => $grave->section,
+                    'row_no' => $grave->row_no,
+                    'owner_name' => $grave->owner_name ?? '',
+                ];
+            });
+
+        return Inertia::render('PagesGraveyard/RemainsTransfer/Create', [
             'eligibleBookings' => $eligibleBookings,
             'availableNiches' => $availableNiches,
+            'availablePermanentGraves' => $availablePermanentGraves,
             'relationships' => Relationship::all(),
             'selectedBooking' => $selectedBooking
         ]);
@@ -167,13 +182,15 @@ class NicheTransferController extends Controller
      */
     public function store(Request $request)
     {
-        $this->authorize('create-niche-transfer');
+        $this->authorize('create-remains-transfer');
 
         $request->validate([
             'from_booking_id' => 'required|exists:temporary_grave_bookings,id',
-            'to_niche_id' => 'required|exists:niches,id',
+            'transfer_type' => 'required|in:niche,permanent_grave,removal',
+            'to_niche_id' => 'required_if:transfer_type,niche|nullable|exists:niches,id',
+            'to_permanent_grave_id' => 'required_if:transfer_type,permanent_grave|nullable|exists:permanent_graves,id',
             'proposed_transfer_date' => 'required|date|after:today',
-            'transfer_reason' => 'required|string|max:500',
+            'transfer_reason' => 'nullable|string|max:500',
             'applicant_name' => 'required|string|max:255',
             'contact_no' => 'required|string|max:20',
             'contact_email' => 'nullable|email',
@@ -193,22 +210,26 @@ class NicheTransferController extends Controller
             }
 
             // Check if there's already an existing transfer request for this booking
-            $existingTransfer = NicheTransfer::where('from_booking_id', $request->from_booking_id)->first();
+            $existingTransfer = RemainsTransfer::where('from_booking_id', $request->from_booking_id)->first();
             if ($existingTransfer) {
                 return back()->withErrors(['from_booking_id' => 'A transfer request already exists for this booking.']);
             }
 
-            // Check if niche is still available
-            $niche = Niche::findOrFail($request->to_niche_id);
-            if (!$niche->isAvailable()) {
-                return back()->withErrors(['niche' => 'This niche is no longer available.']);
+            // Validate destination based on transfer type
+            if ($request->transfer_type === 'niche') {
+                $niche = Niche::findOrFail($request->to_niche_id);
+                if (!$niche->isAvailable()) {
+                    return back()->withErrors(['niche' => 'This niche is no longer available.']);
+                }
             }
 
             // Create transfer record (costs will be calculated later when approved/reviewed)
-            $transfer = NicheTransfer::create([
+            $transfer = RemainsTransfer::create([
                 'from_temporary_grave_id' => $booking->temporary_grave_id,
                 'from_booking_id' => $request->from_booking_id,
-                'to_niche_id' => $request->to_niche_id,
+                'transfer_type' => $request->transfer_type,
+                'to_niche_id' => $request->transfer_type === 'niche' ? $request->to_niche_id : null,
+                'to_permanent_grave_id' => $request->transfer_type === 'permanent_grave' ? $request->to_permanent_grave_id : null,
                 'proposed_transfer_date' => $request->proposed_transfer_date,
                 'transfer_reason' => $request->transfer_reason,
                 'applicant_name' => $request->applicant_name,
@@ -226,11 +247,11 @@ class NicheTransferController extends Controller
 
             DB::commit();
 
-            return redirect()->route('graveyard.niche-transfers.show', $transfer->id)
-                ->with('success', 'Niche transfer request created successfully.');
+            return redirect()->route('graveyard.remains-transfers.show', $transfer->id)
+                ->with('success', 'Remains transfer request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error creating niche transfer: ' . $e->getMessage());
+            Log::error('Error creating remains transfer: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Failed to create transfer request.'])->withInput();
         }
     }
@@ -238,11 +259,11 @@ class NicheTransferController extends Controller
     /**
      * Show transfer details
      */
-    public function show(NicheTransfer $nicheTransfer)
+    public function show(RemainsTransfer $remainsTransfer)
     {
-        $this->authorize('read-niche-transfer');
+        $this->authorize('read-remains-transfer');
 
-        $nicheTransfer->load([
+        $remainsTransfer->load([
             'fromTemporaryGrave',
             'fromBooking.temporaryGrave',
             'toNiche',
@@ -254,27 +275,27 @@ class NicheTransferController extends Controller
 
 
 
-        return Inertia::render('PagesGraveyard/NicheTransfer/Show', [
-            'transfer' => $nicheTransfer
+        return Inertia::render('PagesGraveyard/RemainsTransfer/Show', [
+            'transfer' => $remainsTransfer
         ]);
     }
 
     /**
      * Approve transfer
      */
-    public function approve(Request $request, NicheTransfer $nicheTransfer)
+    public function approve(Request $request, RemainsTransfer $remainsTransfer)
     {
-        $this->authorize('update-niche-transfer');
+        $this->authorize('update-remains-transfer');
 
         $request->validate([
             'admin_notes' => 'nullable|string|max:1000'
         ]);
 
-        if ($nicheTransfer->status !== 'pending') {
+        if ($remainsTransfer->status !== 'pending') {
             return back()->with('error', 'Only pending transfers can be approved.');
         }
 
-        $nicheTransfer->update([
+        $remainsTransfer->update([
             'status' => 'approved',
             'admin_notes' => $request->admin_notes,
             'updated_by' => Auth::id()
@@ -286,15 +307,15 @@ class NicheTransferController extends Controller
     /**
      * Reject transfer
      */
-    public function reject(Request $request, NicheTransfer $nicheTransfer)
+    public function reject(Request $request, RemainsTransfer $remainsTransfer)
     {
-        $this->authorize('update-niche-transfer');
+        $this->authorize('update-remains-transfer');
 
         $request->validate([
             'rejection_reason' => 'required|string|max:500'
         ]);
 
-        if ($nicheTransfer->status !== 'pending') {
+        if ($remainsTransfer->status !== 'pending') {
             return back()->with('error', 'Only pending transfers can be rejected.');
         }
 
@@ -302,14 +323,14 @@ class NicheTransferController extends Controller
             DB::beginTransaction();
 
             // Reject the transfer
-            $nicheTransfer->update([
+            $remainsTransfer->update([
                 'status' => 'rejected',
                 'rejection_reason' => $request->rejection_reason,
                 'updated_by' => Auth::id()
             ]);
 
             // Reset transfer requested flag on original booking
-            $nicheTransfer->fromBooking->update(['transfer_requested' => false]);
+            $remainsTransfer->fromBooking->update(['transfer_requested' => false]);
 
             DB::commit();
 
@@ -323,15 +344,15 @@ class NicheTransferController extends Controller
     /**
      * Complete transfer
      */
-    public function complete(NicheTransfer $nicheTransfer)
+    public function complete(RemainsTransfer $remainsTransfer)
     {
-        $this->authorize('update-niche-transfer');
+        $this->authorize('update-remains-transfer');
 
-        if (!$nicheTransfer->canBeCompleted()) {
+        if (!$remainsTransfer->canBeCompleted()) {
             return back()->with('error', 'This transfer cannot be completed yet. Check status, payment, and date requirements.');
         }
 
-        if ($nicheTransfer->complete()) {
+        if ($remainsTransfer->complete()) {
             return back()->with('success', 'Transfer completed successfully. The deceased has been moved to the niche.');
         }
 
@@ -341,9 +362,9 @@ class NicheTransferController extends Controller
     /**
      * Cancel transfer
      */
-    public function cancel(Request $request, NicheTransfer $nicheTransfer)
+    public function cancel(Request $request, RemainsTransfer $remainsTransfer)
     {
-        $this->authorize('update-niche-transfer');
+        $this->authorize('update-remains-transfer');
 
         $request->validate([
             'cancellation_reason' => 'required|string|max:500'
@@ -352,14 +373,14 @@ class NicheTransferController extends Controller
         try {
             DB::beginTransaction();
 
-            $nicheTransfer->update([
+            $remainsTransfer->update([
                 'status' => 'cancelled',
                 'rejection_reason' => $request->cancellation_reason,
                 'updated_by' => Auth::id()
             ]);
 
             // Reset transfer requested flag on original booking
-            $nicheTransfer->fromBooking->update(['transfer_requested' => false]);
+            $remainsTransfer->fromBooking->update(['transfer_requested' => false]);
 
             DB::commit();
 
@@ -375,14 +396,14 @@ class NicheTransferController extends Controller
      */
     public function statistics()
     {
-        $this->authorize('read-niche-transfer');
+        $this->authorize('read-remains-transfer');
 
         $stats = [
-            'pending' => NicheTransfer::pending()->count(),
-            'approved' => NicheTransfer::approved()->count(),
-            'completed' => NicheTransfer::where('status', 'completed')->count(),
-            'due_soon' => NicheTransfer::dueSoon()->count(),
-            'total_transfers' => NicheTransfer::count()
+            'pending' => RemainsTransfer::pending()->count(),
+            'approved' => RemainsTransfer::approved()->count(),
+            'completed' => RemainsTransfer::where('status', 'completed')->count(),
+            'due_soon' => RemainsTransfer::dueSoon()->count(),
+            'total_transfers' => RemainsTransfer::count()
         ];
 
         return response()->json($stats);

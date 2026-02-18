@@ -181,7 +181,7 @@ return [
     |
     */
 
-    'graveyard_min_months_before_niche_transfer' => env('GRAVEYARD_MIN_MONTHS_BEFORE_NICHE_TRANSFER', 6),
+    'graveyard_min_months_before_remains_transfer' => env('GRAVEYARD_MIN_MONTHS_BEFORE_REMAINS_TRANSFER', 6),
 
     /*
     |--------------------------------------------------------------------------

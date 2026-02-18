@@ -11,7 +11,7 @@ use Modules\Graveyard\Http\Controllers\ValidMemberController;
 use Modules\Graveyard\Http\Controllers\ServiceTypeController;
 use Modules\Graveyard\Http\Controllers\PermanentGraveBookingController;
 use Modules\Graveyard\Http\Controllers\TemporaryGraveBookingController;
-use Modules\Graveyard\Http\Controllers\NicheTransferController;
+use Modules\Graveyard\Http\Controllers\RemainsTransferController;
 use Modules\Graveyard\Http\Controllers\PaymentController;
 use Modules\Graveyard\Http\Controllers\GraveCategoryController;
 use Modules\Graveyard\Http\Controllers\AnnualMaintenanceFeeController;
@@ -128,17 +128,17 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::delete('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'destroy'])->name('destroy');
     });
 
-    // Niche Transfer Management
-    Route::prefix('/niche-transfers')->name('niche-transfers.')->group(function () {
-        Route::get('/', [NicheTransferController::class, 'index'])->name('index');
-        Route::get('/create', [NicheTransferController::class, 'create'])->name('create');
-        Route::post('/', [NicheTransferController::class, 'store'])->name('store');
-        Route::get('/statistics', [NicheTransferController::class, 'statistics'])->name('statistics');
-        Route::get('/{nicheTransfer}', [NicheTransferController::class, 'show'])->name('show');
-        Route::post('/{nicheTransfer}/approve', [NicheTransferController::class, 'approve'])->name('approve');
-        Route::post('/{nicheTransfer}/reject', [NicheTransferController::class, 'reject'])->name('reject');
-        Route::post('/{nicheTransfer}/complete', [NicheTransferController::class, 'complete'])->name('complete');
-        Route::post('/{nicheTransfer}/cancel', [NicheTransferController::class, 'cancel'])->name('cancel');
+    // Remains Transfer Management
+    Route::prefix('/remains-transfers')->name('remains-transfers.')->group(function () {
+        Route::get('/', [RemainsTransferController::class, 'index'])->name('index');
+        Route::get('/create', [RemainsTransferController::class, 'create'])->name('create');
+        Route::post('/', [RemainsTransferController::class, 'store'])->name('store');
+        Route::get('/statistics', [RemainsTransferController::class, 'statistics'])->name('statistics');
+        Route::get('/{remainsTransfer}', [RemainsTransferController::class, 'show'])->name('show');
+        Route::post('/{remainsTransfer}/approve', [RemainsTransferController::class, 'approve'])->name('approve');
+        Route::post('/{remainsTransfer}/reject', [RemainsTransferController::class, 'reject'])->name('reject');
+        Route::post('/{remainsTransfer}/complete', [RemainsTransferController::class, 'complete'])->name('complete');
+        Route::post('/{remainsTransfer}/cancel', [RemainsTransferController::class, 'cancel'])->name('cancel');
     });
 
     // Payment Management

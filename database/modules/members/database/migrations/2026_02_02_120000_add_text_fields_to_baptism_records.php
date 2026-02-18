@@ -12,14 +12,30 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('baptism_records', function (Blueprint $table) {
-            $table->string('baptism_date_text')->nullable()->after('baptism_date');
-            $table->date('birth_date')->nullable()->after('baptism_date');
-            $table->string('birth_date_text')->nullable()->after('birth_date');
-            $table->string('baptism_reg_year')->nullable()->after('baptism_date_text');
-            $table->string('confirmation')->nullable()->after('confirmation_date');
-            $table->string('marriage_on')->nullable()->after('baptism_remarks');
-            $table->string('marriage_at')->nullable()->after('marriage_on');
-            $table->string('marriage_to')->nullable()->after('marriage_at');
+            if (!Schema::hasColumn('baptism_records', 'baptism_date_text')) {
+                $table->string('baptism_date_text')->nullable()->after('baptism_date');
+            }
+            if (!Schema::hasColumn('baptism_records', 'birth_date')) {
+                $table->date('birth_date')->nullable()->after('baptism_date');
+            }
+            if (!Schema::hasColumn('baptism_records', 'birth_date_text')) {
+                $table->string('birth_date_text')->nullable()->after('birth_date');
+            }
+            if (!Schema::hasColumn('baptism_records', 'baptism_reg_year')) {
+                $table->string('baptism_reg_year')->nullable()->after('baptism_date_text');
+            }
+            if (!Schema::hasColumn('baptism_records', 'confirmation')) {
+                $table->string('confirmation')->nullable()->after('confirmation_date');
+            }
+            if (!Schema::hasColumn('baptism_records', 'marriage_on')) {
+                $table->string('marriage_on')->nullable()->after('baptism_remarks');
+            }
+            if (!Schema::hasColumn('baptism_records', 'marriage_at')) {
+                $table->string('marriage_at')->nullable()->after('marriage_on');
+            }
+            if (!Schema::hasColumn('baptism_records', 'marriage_to')) {
+                $table->string('marriage_to')->nullable()->after('marriage_at');
+            }
         });
     }
 

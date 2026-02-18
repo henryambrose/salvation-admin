@@ -271,7 +271,7 @@ const bookingShowRoute = computed(() => {
   const routes = {
     permanent: 'graveyard.permanent-grave-bookings.show',
     temporary: 'graveyard.temporary-grave-bookings.show',
-    niche: 'graveyard.niche-transfers.show',
+    'remains-transfer': 'graveyard.remains-transfers.show',
   };
   return routes[props.bookingType as keyof typeof routes] || 'graveyard.dashboard';
 });
@@ -347,7 +347,7 @@ const formatCurrency = (amount: number) => {
 
 
 const getDeceasedName = () => {
-  if (props.bookingType === 'temporary' || props.bookingType === 'niche-transfer') {
+  if (props.bookingType === 'temporary' || props.bookingType === 'remains-transfer') {
     return `${props.booking.dead_first_name} ${props.booking.dead_last_name}`;
   } else if (props.bookingType === 'permanent') {
     return `${props.booking?.valid_member?.first_name} ${props.booking?.valid_member?.last_name}`;

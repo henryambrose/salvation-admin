@@ -280,8 +280,8 @@ class ModuleSeeder extends Seeder
             ],
 
             [
-                'name' => 'Niche Transfers',
-                'slug' => 'niche-transfer',
+                'name' => 'Remains Transfers',
+                'slug' => 'remains-transfer',
                 'icon' => 'ArrowRightLeft',
                 'actions' => ['create', 'read', 'update', 'delete', 'list', 'restore'],
             ],

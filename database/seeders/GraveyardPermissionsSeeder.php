@@ -82,13 +82,13 @@ class GraveyardPermissionsSeeder extends Seeder
             'list-graveyard-payment',
             'restore-graveyard-payment',
 
-            // Niche Transfers
-            'create-niche-transfer',
-            'read-niche-transfer',
-            'update-niche-transfer',
-            'delete-niche-transfer',
-            'list-niche-transfer',
-            'restore-niche-transfer',
+            // Remains Transfers
+            'create-remains-transfer',
+            'read-remains-transfer',
+            'update-remains-transfer',
+            'delete-remains-transfer',
+            'list-remains-transfer',
+            'restore-remains-transfer',
 
             // Valid Members Management
             'create-valid-member',

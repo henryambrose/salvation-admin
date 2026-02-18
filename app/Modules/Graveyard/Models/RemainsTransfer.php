@@ -12,21 +12,24 @@ use Modules\Members\Models\User;
 use Modules\Graveyard\Models\TemporaryGrave;
 use Modules\Graveyard\Models\TemporaryGraveBooking;
 use Modules\Graveyard\Models\Niche;
+use Modules\Graveyard\Models\PermanentGrave;
 use Modules\Graveyard\Models\ServiceType;
 use Modules\Graveyard\Models\Payment;
 use Modules\Members\Models\Relationship;
 use Illuminate\Support\Facades\Auth;
 
-class NicheTransfer extends Model
+class RemainsTransfer extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
         'transfer_reference',
         'status',
+        'transfer_type',
         'from_temporary_grave_id',
         'from_booking_id',
         'to_niche_id',
+        'to_permanent_grave_id',
         'transfer_request_date',
         'proposed_transfer_date',
         'actual_transfer_date',
@@ -96,7 +99,7 @@ class NicheTransfer extends Model
     public static function generateTransferReference(): string
     {
         do {
-            $reference = 'NT' . date('Y') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
+            $reference = 'RT' . date('Y') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
         } while (static::where('transfer_reference', $reference)->exists());
 
         return $reference;
@@ -124,6 +127,14 @@ class NicheTransfer extends Model
     public function toNiche(): BelongsTo
     {
         return $this->belongsTo(Niche::class, 'to_niche_id');
+    }
+
+    /**
+     * Get the destination permanent grave
+     */
+    public function toPermanentGrave(): BelongsTo
+    {
+        return $this->belongsTo(PermanentGrave::class, 'to_permanent_grave_id');
     }
 
     /**
@@ -206,6 +217,10 @@ class NicheTransfer extends Model
      */
     protected function processTransferCompletion(): void
     {
+        if ($this->status !== 'completed') {
+            return;
+        }
+
         // Mark temporary grave as available
         $this->fromTemporaryGrave->update([
             'last_burial_date' => null,
@@ -213,16 +228,27 @@ class NicheTransfer extends Model
             'updated_by' => Auth::id()
         ]);
 
-        // Mark niche as unavailable
-        $this->toNiche->update([
-            'status' => 'unavailable',
-            'last_occupation_date' => $this->actual_transfer_date,
-            'updated_by' => Auth::id()
-        ]);
+        // Handle destination based on transfer type
+        $transferType = $this->transfer_type ?? 'niche';
 
-        // Mark original booking as completed
+        if ($transferType === 'niche' && $this->to_niche_id) {
+            // Mark niche as unavailable
+            $this->toNiche->update([
+                'status' => 'unavailable',
+                'last_occupation_date' => $this->actual_transfer_date,
+                'updated_by' => Auth::id()
+            ]);
+        } elseif ($transferType === 'permanent_grave' && $this->to_permanent_grave_id) {
+            // Mark permanent grave as unavailable
+            $this->toPermanentGrave->update([
+                'status' => 'unavailable',
+                'updated_by' => Auth::id()
+            ]);
+        }
+        // For 'removal' type, no destination to update
+
+        // Mark original booking as updated
         $this->fromBooking->update([
-            // 'status' => 'completed',
             'updated_by' => Auth::id()
         ]);
     }

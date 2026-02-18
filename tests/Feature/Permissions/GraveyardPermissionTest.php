@@ -77,22 +77,22 @@ describe('Permanent Grave Booking Permissions', function () {
     });
 });
 
-describe('Niche Transfer Permissions', function () {
+describe('Remains Transfer Permissions', function () {
 
     beforeEach(function () {
         $this->setupPermissionUsers([
-            'list-niche-transfer',
-            'create-niche-transfer',
-            'approve-niche-transfer',
-            'reject-niche-transfer',
+            'list-remains-transfer',
+            'create-remains-transfer',
+            'approve-remains-transfer',
+            'reject-remains-transfer',
         ]);
     });
 
     test('LIST: requires permission', function () {
-        $this->assertRequiresPermission('GET', 'graveyard.niche-transfers.index');
+        $this->assertRequiresPermission('GET', 'graveyard.remains-transfers.index');
     });
 
     test('CREATE: requires permission', function () {
-        $this->assertRequiresPermission('POST', 'graveyard.niche-transfers.store', [], []);
+        $this->assertRequiresPermission('POST', 'graveyard.remains-transfers.store', [], []);
     });
 });

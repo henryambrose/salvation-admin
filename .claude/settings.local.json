@@ -35,7 +35,24 @@
       "Bash(powershell:*)",
       "Bash(if not exist \"resources\\\\js\\\\Pages\\\\archive\\\\death\" mkdir resources\\\\js\\\\Pages\\\\archive\\\\death)",
       "Bash(ls -la \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\Pages\\\\archive\" 2>&1 || echo \"Directory does not exist\")",
-      "Bash(npx vue-tsc:*)"
+      "Bash(npx vue-tsc:*)",
+      "Bash(Move-Item -Path \"app/Modules/Graveyard/Models/NicheTransfer.php\" -Destination \"app/Modules/Graveyard/Models/RemainsTransfer.php\")",
+      "Bash(git -C \"D:/Projects/salvation-admin\" mv \"app/Modules/Graveyard/Models/NicheTransfer.php\" \"app/Modules/Graveyard/Models/RemainsTransfer.php\")",
+      "Bash(git mv:*)",
+      "Bash(git -C \"D:/Projects/salvation-admin\" status)",
+      "Bash(git -C \"D:/Projects/salvation-admin\" add \"app/Modules/Graveyard/Http/Controllers/NicheTransferController.php\" \"app/Modules/Graveyard/Models/NicheTransfer.php\" \"resources/js/PagesGraveyard/NicheTransfer/Create.vue\" \"resources/js/PagesGraveyard/NicheTransfer/Index.vue\" \"resources/js/PagesGraveyard/NicheTransfer/Show.vue\" \"app/Modules/Graveyard/Http/Controllers/RemainsTransferController.php\" \"app/Modules/Graveyard/Models/RemainsTransfer.php\" \"resources/js/PagesGraveyard/RemainsTransfer/\")",
+      "Bash(powershell.exe -File:*)",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js'' -Recurse -Include ''*.php'',''*.vue'',''*.ts'' | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard'' -Recurse -Include ''*.php'' | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\routes'' -Recurse -Include ''*.php'' | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard\\\\NicheTransfer'' | Select-Object Name, Length, LastWriteTime\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard'' -Recurse | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard'' -Recurse -File | Select-Object FullName\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\app\\\\Modules\\\\Graveyard'' -Recurse -File -Include ''*.php'' | Select-Object FullName\")",
+      "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\components'' -Recurse -File | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
+      "Bash(cmd /c \"dir \"\"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard\"\"\")",
+      "Bash(cmd /c dir \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard\")",
+      "Bash(cmd /c \"dir D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard && echo DONE\")"
     ]
   }
 }

@@ -190,7 +190,7 @@ const getRowClass = (booking: TemporaryGraveBooking) => {
 };
 
 const requestTransfer = (booking: TemporaryGraveBooking) => {
-  router.visit(route('graveyard.niche-transfers.create', { booking_id: booking.id }));
+  router.visit(route('graveyard.remains-transfers.create', { booking_id: booking.id }));
 };
 
 const canEditBooking = (booking: TemporaryGraveBooking) => {
@@ -446,11 +446,11 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                             size="sm"
                             @click="requestTransfer(booking)"
                             :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
-                            :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Transfer to Niche'"
+                            :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Remains Transfer'"
                           >
                             <ArrowRight class="h-4 w-4" />
                           </Button>
-                          
+
                           <!-- Edit Button -->
                           <Button
                             v-if="canEditBooking(booking)"
@@ -541,7 +541,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           size="sm"
                           @click="requestTransfer(booking)"
                           :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
-                          :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Transfer to Niche'"
+                          :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Remains Transfer'"
                         >
                           <ArrowRight class="h-4 w-4" />
                         </Button>

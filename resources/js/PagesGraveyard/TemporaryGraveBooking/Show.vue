@@ -9,7 +9,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, FileText, IndianRupee, MapPin, Phone, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 
-interface NicheTransfer {
+interface RemainsTransfer {
   id: number;
   transfer_reference: string;
   status: string;
@@ -68,7 +68,7 @@ interface TemporaryGraveBooking {
   updater?: {
     name: string;
   };
-  niche_transfers: NicheTransfer[];
+  remains_transfers: RemainsTransfer[];
   payments?: {
     id: number;
     payment_reference: string;
@@ -184,7 +184,7 @@ const canRequestTransfer = () => {
 };
 
 const requestTransfer = () => {
-  router.visit(route('graveyard.niche-transfers.create', { booking_id: props.booking.id }));
+  router.visit(route('graveyard.remains-transfers.create', { booking_id: props.booking.id }));
 };
 
 const cancelBooking = () => {
@@ -581,7 +581,7 @@ const cancelBooking = () => {
                 </Card>
 
                 <!-- Transfer History -->
-                <Card v-if="booking.niche_transfers && booking.niche_transfers.length > 0">
+                <Card v-if="booking.remains_transfers && booking.remains_transfers.length > 0">
                   <CardHeader>
                     <CardTitle class="flex items-center space-x-2">
                       <ArrowRight class="h-5 w-5" />
@@ -591,7 +591,7 @@ const cancelBooking = () => {
                   <CardContent>
                     <div class="space-y-3">
                       <div
-                        v-for="transfer in booking.niche_transfers"
+                        v-for="transfer in booking.remains_transfers"
                         :key="transfer.id"
                         class="flex items-center justify-between rounded-lg border p-3"
                       >
