@@ -304,6 +304,235 @@ class TemporaryGraveBookingController extends Controller
     }
 
     /**
+     * Show edit form for a temporary grave booking
+     */
+    public function edit(TemporaryGraveBooking $temporaryGraveBooking)
+    {
+        $this->authorize('update-temporary-grave-booking');
+
+        if (!in_array($temporaryGraveBooking->status, ['pending', 'confirmed'])) {
+            return back()->with('error', 'Only pending or confirmed bookings can be edited.');
+        }
+
+        $temporaryGraveBooking->load(['temporaryGrave.graveCategory', 'gender', 'parish', 'relationship', 'deceasedMember']);
+
+        // Get available graves for the same category, plus the currently assigned grave
+        $currentGrave = $temporaryGraveBooking->temporaryGrave;
+        $availableGraves = TemporaryGrave::available()->with('graveCategory')->get();
+
+        // Include the current grave in the list if it's not already there (it won't be since it's unavailable)
+        if ($currentGrave && !$availableGraves->contains('id', $currentGrave->id)) {
+            $currentGrave->load('graveCategory');
+            $availableGraves->prepend($currentGrave);
+        }
+
+        return Inertia::render('PagesGraveyard/TemporaryGraveBooking/Edit', [
+            'booking' => $temporaryGraveBooking,
+            'availableGraves' => $availableGraves,
+            'graveCategories' => GraveCategories::orderBy('name')->get(),
+            'permanentGraves' => PermanentGrave::where('status', 'unavailable')
+                ->with(['validMembers' => function ($query) {
+                    $query->where('is_active', true)
+                        ->where(function ($q) {
+                            $q->whereHas('member', function ($memberQuery) {
+                                $memberQuery->whereNull('deathrecord_id');
+                            })
+                            ->orWhere(function ($externalQuery) {
+                                $externalQuery->whereNull('member_id')
+                                    ->whereNull('death_date');
+                            });
+                        })
+                        ->with(['member', 'gender', 'parish', 'relationship']);
+                }])
+                ->orderBy('column')->orderBy('row')->get(),
+            'genders' => Gender::all(),
+            'parishes' => Parish::all(),
+            'relationships' => Relationship::all(),
+        ]);
+    }
+
+    /**
+     * Update a temporary grave booking
+     */
+    public function update(Request $request, TemporaryGraveBooking $temporaryGraveBooking)
+    {
+        $this->authorize('update-temporary-grave-booking');
+
+        if (!in_array($temporaryGraveBooking->status, ['pending', 'confirmed'])) {
+            return back()->with('error', 'Only pending or confirmed bookings can be edited.');
+        }
+
+        $request->validate([
+            'grave_category_id' => 'required|exists:grave_categories,id',
+            'temporary_grave_id' => 'required|exists:temporary_graves,id',
+            'deceased_person_type' => 'required|in:member,external',
+            'deceased_member_id' => [
+                Rule::when(
+                    $request->deceased_person_type === 'member',
+                    ['required', 'exists:members,id'],
+                    ['nullable']
+                )
+            ],
+            'dead_first_name' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'string', 'max:100'],
+                    ['nullable', 'string', 'max:100']
+                )
+            ],
+            'dead_last_name' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'string', 'max:100'],
+                    ['nullable', 'string', 'max:100']
+                )
+            ],
+            'date_of_birth' => 'nullable|date|before:died_on',
+            'age' => 'nullable|integer|min:0|max:150',
+            'months' => 'nullable|integer|min:0|max:11',
+            'days' => 'nullable|integer|min:0|max:30',
+            'died_on' => 'required|date|before_or_equal:today',
+            'buried_on' => 'required|date|after_or_equal:died_on',
+            'gender_id' => [
+                Rule::when(
+                    $request->deceased_person_type === 'external',
+                    ['required', 'exists:genders,id'],
+                    ['nullable', 'exists:genders,id']
+                )
+            ],
+            'cause_of_death' => 'required|string|max:255',
+            'nationality' => 'nullable|string|max:100',
+            'parish_id' => 'nullable|exists:parishes,id',
+            'minister' => 'nullable|string|max:255',
+            'applicant_type' => 'required|in:member,external',
+            'applicant_name' => 'required|string|max:255',
+            'contact_no' => 'required|string|max:20',
+            'contact_email' => 'nullable|email',
+            'relationship_id' => 'nullable|exists:relationships,id',
+            'permit_no' => 'nullable|string|max:50',
+            'destination_permanent_grave_id' => 'nullable|exists:permanent_graves,id',
+            'selected_services' => 'nullable|array',
+            'selected_services.*' => 'exists:service_types,id',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $oldGraveId = $temporaryGraveBooking->temporary_grave_id;
+            $newGraveId = $request->temporary_grave_id;
+
+            // If grave is changing, validate the new grave
+            if ($oldGraveId != $newGraveId) {
+                $newGrave = TemporaryGrave::findOrFail($newGraveId);
+                if ($newGrave->status != 'available') {
+                    return back()->with('error', 'The selected temporary grave is no longer available.')->withInput();
+                }
+
+                // Check for existing active booking on the new grave
+                $existingBooking = TemporaryGraveBooking::where('temporary_grave_id', $newGraveId)
+                    ->whereIn('status', ['pending', 'confirmed'])
+                    ->where('id', '!=', $temporaryGraveBooking->id)
+                    ->first();
+
+                if ($existingBooking) {
+                    return back()->with('error', 'The selected temporary grave already has an active booking.')->withInput();
+                }
+
+                if ($newGrave->grave_category_id != $request->grave_category_id) {
+                    return back()->with('error', 'Selected grave does not belong to the selected category.')->withInput();
+                }
+
+                // Release the old grave
+                $oldGrave = TemporaryGrave::find($oldGraveId);
+                if ($oldGrave) {
+                    $oldGrave->update([
+                        'status' => 'available',
+                        'last_burial_date' => null,
+                        'buried_name' => null,
+                        'contact_no' => null,
+                        'member_id' => null,
+                        'destination_permanent_grave_id' => null,
+                        'updated_by' => Auth::id(),
+                    ]);
+                }
+            }
+
+            // Handle member selection vs manual entry
+            $deadFirstName = $request->dead_first_name;
+            $deadLastName = $request->dead_last_name;
+            $genderId = $request->gender_id;
+
+            if ($request->deceased_person_type === 'member' && $request->deceased_member_id) {
+                $member = Member::findOrFail($request->deceased_member_id);
+                $deadFirstName = $member->first_name;
+                $deadLastName = $member->last_name;
+                $gender = Gender::where('name', $member->gender)->first();
+                $genderId = $gender ? $gender->id : null;
+            }
+
+            // Update the booking
+            $temporaryGraveBooking->update([
+                'temporary_grave_id' => $newGraveId,
+                'deceased_member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
+                'dead_first_name' => $deadFirstName,
+                'dead_last_name' => $deadLastName,
+                'date_of_birth' => $request->date_of_birth,
+                'age' => $request->age,
+                'months' => $request->months,
+                'days' => $request->days,
+                'died_on' => $request->died_on,
+                'buried_on' => $request->buried_on,
+                'gender_id' => $genderId,
+                'cause_of_death' => $request->cause_of_death,
+                'nationality' => $request->nationality,
+                'parish_id' => $request->parish_id,
+                'minister' => $request->minister,
+                'applicant_type' => $request->applicant_type,
+                'applicant_name' => $request->applicant_name,
+                'contact_no' => $request->contact_no,
+                'contact_email' => $request->contact_email,
+                'relationship_id' => $request->relationship_id,
+                'permit_no' => $request->permit_no,
+                'selected_services' => $request->selected_services,
+                'special_requirements' => $request->special_requirements,
+                'updated_by' => Auth::id(),
+            ]);
+
+            // Update the assigned temporary grave with booking details
+            $grave = TemporaryGrave::findOrFail($newGraveId);
+            $grave->update([
+                'status' => 'unavailable',
+                'last_burial_date' => $request->buried_on,
+                'buried_name' => $deadFirstName . ' ' . $deadLastName,
+                'contact_no' => $request->contact_no,
+                'member_id' => $request->deceased_person_type === 'member' ? $request->deceased_member_id : null,
+                'destination_permanent_grave_id' => $request->destination_permanent_grave_id,
+                'updated_by' => Auth::id(),
+            ]);
+
+            // Recalculate total cost from selected services
+            if ($request->selected_services) {
+                $totalCost = ServiceType::whereIn('id', $request->selected_services)->sum('cost');
+                $paidAmount = $temporaryGraveBooking->paid_amount ?? 0;
+                $temporaryGraveBooking->update([
+                    'total_cost' => $totalCost,
+                    'balance_amount' => $totalCost - $paidAmount,
+                ]);
+            }
+
+            DB::commit();
+
+            return redirect()->route('graveyard.temporary-grave-bookings.index')
+                ->with('success', 'Temporary grave booking updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating temporary grave booking', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to update booking. Please try again.')
+                ->withInput();
+        }
+    }
+
+    /**
      * Show booking details
      */
     public function show(TemporaryGraveBooking $temporaryGraveBooking)

@@ -120,6 +120,8 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::post('/', [TemporaryGraveBookingController::class, 'store'])->name('store');
         Route::get('/eligible-for-transfer', [TemporaryGraveBookingController::class, 'eligibleForTransfer'])->name('eligible-for-transfer');
         Route::get('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'show'])->name('show');
+        Route::get('/{temporaryGraveBooking}/edit', [TemporaryGraveBookingController::class, 'edit'])->name('edit');
+        Route::put('/{temporaryGraveBooking}', [TemporaryGraveBookingController::class, 'update'])->name('update');
         Route::post('/{temporaryGraveBooking}/confirm', [TemporaryGraveBookingController::class, 'confirm'])->name('confirm');
         Route::post('/{temporaryGraveBooking}/cancel', [TemporaryGraveBookingController::class, 'cancel'])->name('cancel');
         Route::post('/{temporaryGraveBooking}/request-transfer', [TemporaryGraveBookingController::class, 'requestTransfer'])->name('request-transfer');

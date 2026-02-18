@@ -11,7 +11,7 @@ import { useConfirm } from '@/composables/useConfirm';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, Clock, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
+import { ArrowRight, Calendar, Clock, Eye, MapPin, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref, computed } from 'vue';
 
 interface TemporaryGraveBooking {
@@ -191,6 +191,10 @@ const getRowClass = (booking: TemporaryGraveBooking) => {
 
 const requestTransfer = (booking: TemporaryGraveBooking) => {
   router.visit(route('graveyard.niche-transfers.create', { booking_id: booking.id }));
+};
+
+const canEditBooking = (booking: TemporaryGraveBooking) => {
+  return booking.status === 'pending' || booking.status === 'confirmed';
 };
 
 const canDeleteBooking = (booking: TemporaryGraveBooking) => {
@@ -447,13 +451,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                             <ArrowRight class="h-4 w-4" />
                           </Button>
                           
+                          <!-- Edit Button -->
+                          <Button
+                            v-if="canEditBooking(booking)"
+                            variant="outline"
+                            size="sm"
+                            as-child
+                          >
+                            <Link :href="route('graveyard.temporary-grave-bookings.edit', booking.id)">
+                              <Pencil class="h-4 w-4" />
+                            </Link>
+                          </Button>
+
                           <!-- View Details -->
                           <Button variant="outline" size="sm" as-child>
                             <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                               <Eye class="h-4 w-4" />
                             </Link>
                           </Button>
-                          
+
                           <!-- Delete Button -->
                           <Button
                             v-if="canDeleteBooking(booking)"
@@ -530,13 +546,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           <ArrowRight class="h-4 w-4" />
                         </Button>
                         
+                        <!-- Edit Button -->
+                        <Button
+                          v-if="canEditBooking(booking)"
+                          variant="outline"
+                          size="sm"
+                          as-child
+                        >
+                          <Link :href="route('graveyard.temporary-grave-bookings.edit', booking.id)">
+                            <Pencil class="h-4 w-4" />
+                          </Link>
+                        </Button>
+
                         <!-- View Details -->
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
                           </Link>
                         </Button>
-                        
+
                         <!-- Delete Button -->
                         <Button
                           v-if="canDeleteBooking(booking)"

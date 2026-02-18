@@ -19,6 +19,7 @@ interface TemporaryGrave {
   row_no: string;
   is_available: boolean;
   grave_category_id: number;
+  grave_category?: GraveCategory;
 }
 
 interface GraveCategory {
@@ -91,7 +92,43 @@ interface PermanentGrave {
   valid_members: ValidMember[];
 }
 
+interface Booking {
+  id: number;
+  booking_reference: string;
+  status: string;
+  temporary_grave_id: number;
+  temporary_grave: TemporaryGrave;
+  deceased_member_id: number | null;
+  deceased_member: Member | null;
+  dead_first_name: string;
+  dead_last_name: string;
+  date_of_birth: string | null;
+  age: number | null;
+  months: number | null;
+  days: number | null;
+  died_on: string;
+  buried_on: string;
+  gender_id: number | null;
+  gender: Gender | null;
+  cause_of_death: string;
+  nationality: string | null;
+  parish_id: number | null;
+  parish: Parish | null;
+  minister: string | null;
+  applicant_type: string;
+  applicant_name: string;
+  contact_no: string;
+  contact_email: string | null;
+  relationship_id: number | null;
+  relationship: Relationship | null;
+  permit_no: string | null;
+  selected_services: number[] | null;
+  special_requirements: string | null;
+  destination_permanent_grave_id: number | null;
+}
+
 interface Props {
+  booking: Booking;
   availableGraves: TemporaryGrave[];
   graveCategories: GraveCategory[];
   permanentGraves: PermanentGrave[];
@@ -103,31 +140,31 @@ interface Props {
 const props = defineProps<Props>();
 
 const form = useForm({
-  grave_category_id: null as number | null,
-  temporary_grave_id: null as number | null,
-  destination_permanent_grave_id: null as number | null,
-  deceased_person_type: '' as '' | 'member' | 'external',
-  deceased_member_id: null as number | null,
-  dead_first_name: '' as string | null,
-  dead_last_name: '' as string | null,
-  date_of_birth: '',
-  age: null as number | null,
-  months: null as number | null,
-  days: null as number | null,
-  died_on: '',
-  buried_on: '',
-  gender_id: '',
-  cause_of_death: '',
-  nationality: 'Indian',
-  parish_id: '16',
-  minister: '',
-  applicant_type: '' as '' | 'member' | 'external',
-  applicant_name: '',
-  contact_no: '',
-  contact_email: '',
-  relationship_id: '',
-  permit_no: '',
-  special_requirements: '',
+  grave_category_id: props.booking.temporary_grave?.grave_category_id ?? null as number | null,
+  temporary_grave_id: props.booking.temporary_grave_id as number | null,
+  destination_permanent_grave_id: props.booking.destination_permanent_grave_id ?? null as number | null,
+  deceased_person_type: (props.booking.deceased_member_id ? 'member' : 'external') as '' | 'member' | 'external',
+  deceased_member_id: props.booking.deceased_member_id as number | null,
+  dead_first_name: props.booking.dead_first_name as string | null,
+  dead_last_name: props.booking.dead_last_name as string | null,
+  date_of_birth: props.booking.date_of_birth || '',
+  age: props.booking.age as number | null,
+  months: props.booking.months as number | null,
+  days: props.booking.days as number | null,
+  died_on: props.booking.died_on || '',
+  buried_on: props.booking.buried_on || '',
+  gender_id: props.booking.gender_id?.toString() || '',
+  cause_of_death: props.booking.cause_of_death || '',
+  nationality: props.booking.nationality || 'Indian',
+  parish_id: props.booking.parish_id?.toString() || '16',
+  minister: props.booking.minister || '',
+  applicant_type: props.booking.applicant_type as '' | 'member' | 'external',
+  applicant_name: props.booking.applicant_name || '',
+  contact_no: props.booking.contact_no || '',
+  contact_email: props.booking.contact_email || '',
+  relationship_id: props.booking.relationship_id?.toString() || '',
+  permit_no: props.booking.permit_no || '',
+  special_requirements: props.booking.special_requirements || '',
 });
 
 // Get available graves for selected category
@@ -142,30 +179,24 @@ const selectedGrave = computed(() => {
   return props.availableGraves.find((grave) => grave.id === form.temporary_grave_id);
 });
 
-// Pre-select first available grave when category changes
+// Watch for category changes - only auto-select if the current grave doesn't match the new category
 watch(
   () => form.grave_category_id,
-  () => {
-    const graves = availableGravesForCategory.value;
-    form.temporary_grave_id = graves.length > 0 ? graves[0].id : null;
+  (newCategoryId, oldCategoryId) => {
+    if (oldCategoryId === null) return; // Skip initial setup
+    // If current grave doesn't match the new category, select first available
+    const currentGraveInCategory = availableGravesForCategory.value.find((g) => g.id === form.temporary_grave_id);
+    if (!currentGraveInCategory) {
+      const availableGraves = availableGravesForCategory.value;
+      form.temporary_grave_id = availableGraves.length > 0 ? availableGraves[0].id : null;
+    }
   },
 );
-
-// Initialize with Normal Graves category if available
-const initializeDefaultCategory = () => {
-  const normalGraveCategory = props.graveCategories.find((cat) => cat.name.toLowerCase().includes('normal'));
-  if (normalGraveCategory) {
-    form.grave_category_id = normalGraveCategory.id;
-  } else if (props.graveCategories.length > 0) {
-    // Fallback to first category if Normal Grave not found
-    form.grave_category_id = props.graveCategories[0].id;
-  }
-};
 
 // Member search functionality
 const memberSearchQuery = ref('');
 const memberSearchResults = ref<Member[]>([]);
-const selectedMember = ref<Member | null>(null);
+const selectedMember = ref<Member | null>(props.booking.deceased_member || null);
 const isSearchingMembers = ref(false);
 
 // Permanent grave search functionality
@@ -184,6 +215,17 @@ const filteredParishes = computed(() => {
   return props.parishes.filter((parish) => allowedParishIds.includes(parish.id));
 });
 
+// Initialize destination permanent grave if booking has one
+const initializeDestinationGrave = () => {
+  if (props.booking.destination_permanent_grave_id) {
+    const grave = props.permanentGraves.find((g) => g.id === props.booking.destination_permanent_grave_id);
+    if (grave) {
+      selectedPermanentGrave.value = grave;
+      permanentGraveSearchQuery.value = `${grave.section}-${grave.row_no}-${grave.grave_no} (${grave.owner_name})`;
+    }
+  }
+};
+
 // Calculate age at death (years, months, days) when both DOB and DOD are entered
 const calculateAgeAtDeath = () => {
   if (!form.date_of_birth || !form.died_on) {
@@ -193,9 +235,7 @@ const calculateAgeAtDeath = () => {
   const birthDate = new Date(form.date_of_birth);
   const deathDate = new Date(form.died_on);
 
-  // Validate dates
   if (birthDate >= deathDate) {
-    // Reset age fields if dates are invalid
     form.age = null;
     form.months = null;
     form.days = null;
@@ -206,14 +246,12 @@ const calculateAgeAtDeath = () => {
   let months = deathDate.getMonth() - birthDate.getMonth();
   let days = deathDate.getDate() - birthDate.getDate();
 
-  // Adjust for negative days
   if (days < 0) {
     months--;
     const prevMonth = new Date(deathDate.getFullYear(), deathDate.getMonth(), 0);
     days += prevMonth.getDate();
   }
 
-  // Adjust for negative months
   if (months < 0) {
     years--;
     months += 12;
@@ -257,7 +295,6 @@ const searchMembers = async () => {
 const selectMember = (member: Member) => {
   selectedMember.value = member;
   form.deceased_member_id = member.id;
-  // Populate date of birth if available for age calculation
   if (member.date_of_birth) {
     form.date_of_birth = member.date_of_birth;
   }
@@ -302,8 +339,6 @@ const clearSelectedPermanentGrave = () => {
   permanentGraveSearchQuery.value = '';
   permanentGraveSearchResults.value = [];
   isPermanentGraveSearchOpen.value = false;
-
-  // Also clear valid member selection
   clearSelectedValidMember();
 };
 
@@ -321,16 +356,13 @@ const handlePermanentGraveInput = () => {
 const selectValidMember = (validMember: ValidMember) => {
   selectedValidMember.value = validMember;
 
-  // Auto-populate form fields from valid member
   form.deceased_person_type = validMember.member_id ? 'member' : 'external';
 
   if (validMember.member_id && validMember.member) {
-    // If it's a parish member
     selectedMember.value = validMember.member;
     form.deceased_member_id = validMember.member_id;
     clearManualDeceasePersonFields();
   } else {
-    // If it's an external person
     clearSelectedMember();
     form.deceased_member_id = null;
     form.dead_first_name = validMember.first_name;
@@ -348,7 +380,6 @@ const selectValidMember = (validMember: ValidMember) => {
 // Clear selected valid member
 const clearSelectedValidMember = () => {
   selectedValidMember.value = null;
-  // Don't clear the form fields, just the selection
 };
 
 // Helper function to clear manual deceased person fields
@@ -366,17 +397,14 @@ const clearManualDeceasePersonFields = () => {
 
 // Helper function to get display name for valid member
 const getValidMemberDisplayName = (validMember: ValidMember) => {
-  // Try full_name first (computed attribute)
   if (validMember.full_name) {
     return validMember.full_name;
   }
 
-  // Fallback to member name if it's a parish member
   if (validMember.member_id && validMember.member) {
     return `${validMember.member.first_name || ''} ${validMember.member.last_name || ''}`.trim();
   }
 
-  // Fallback to first_name and last_name from valid_member record
   return `${validMember.first_name || ''} ${validMember.last_name || ''}`.trim() || 'Unnamed Member';
 };
 
@@ -391,7 +419,6 @@ const submit = () => {
         deceased_member_id: data.deceased_member_id || null,
       };
 
-      // Only include external deceased person fields when person type is external
       if (data.deceased_person_type !== 'external') {
         transformedData.dead_first_name = null;
         transformedData.dead_last_name = null;
@@ -399,7 +426,7 @@ const submit = () => {
 
       return transformedData;
     })
-    .post(route('graveyard.temporary-grave-bookings.store'));
+    .put(route('graveyard.temporary-grave-bookings.update', props.booking.id));
 };
 
 // Handle click outside to close permanent grave dropdown
@@ -410,9 +437,8 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
-// Initialize default category on component mount
 onMounted(() => {
-  initializeDefaultCategory();
+  initializeDestinationGrave();
   document.addEventListener('click', handleClickOutside);
 });
 
@@ -422,7 +448,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Head title="Book Temporary Grave" />
+  <Head title="Edit Temporary Grave Booking" />
 
   <AppLayout>
     <div class="py-12">
@@ -439,8 +465,8 @@ onUnmounted(() => {
                     </Link>
                   </Button>
                   <div>
-                    <h3 class="text-base leading-6 font-semibold text-gray-900">Book Temporary Grave</h3>
-                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Create a new temporary grave booking</p>
+                    <h3 class="text-base leading-6 font-semibold text-gray-900">Edit Temporary Grave Booking</h3>
+                    <p class="mt-1 max-w-2xl text-sm text-gray-500">Edit booking #{{ booking.booking_reference }}</p>
                   </div>
                 </div>
               </div>
@@ -491,15 +517,21 @@ onUnmounted(() => {
                       <option :value="null">Select a Grave</option>
                       <option v-for="grave in availableGravesForCategory" :key="grave.id" :value="grave.id">
                         {{ grave.grave_no }} - Section {{ grave.section }}, Row {{ grave.row_no }}
+                        <template v-if="grave.id === booking.temporary_grave_id"> (Current)</template>
                       </option>
                     </select>
+                    <div v-if="form.errors.temporary_grave_id" class="mt-1 text-sm text-red-600">
+                      {{ form.errors.temporary_grave_id }}
+                    </div>
                   </div>
 
                   <!-- Selected Grave Display -->
                   <div v-if="selectedGrave" class="rounded-lg border border-green-200 bg-green-50 p-4">
                     <div class="flex items-center justify-between">
                       <div>
-                        <h4 class="font-medium text-green-900">Selected Grave</h4>
+                        <h4 class="font-medium text-green-900">
+                          {{ selectedGrave.id === booking.temporary_grave_id ? 'Current Grave' : 'Selected Grave' }}
+                        </h4>
                         <p class="text-green-700">
                           <span class="font-semibold">{{ selectedGrave.grave_no }}</span>
                           - Section {{ selectedGrave.section }}, Row {{ selectedGrave.row_no }}
@@ -524,12 +556,7 @@ onUnmounted(() => {
 
                   <!-- Available count info -->
                   <div v-if="form.grave_category_id && availableGravesForCategory.length > 0" class="text-sm text-gray-600">
-                    {{ availableGravesForCategory.length }} available graves in selected category
-                  </div>
-
-                  <!-- Validation Error -->
-                  <div v-if="form.errors.temporary_grave_id" class="text-sm text-red-600">
-                    {{ form.errors.temporary_grave_id }}
+                    {{ availableGravesForCategory.length }} grave(s) available in selected category
                   </div>
                 </div>
               </CardContent>
@@ -1046,7 +1073,7 @@ onUnmounted(() => {
                 <Link :href="route('graveyard.temporary-grave-bookings.index')"> Cancel </Link>
               </Button>
               <Button type="submit" :disabled="form.processing">
-                {{ form.processing ? 'Creating Booking...' : 'Create Booking' }}
+                {{ form.processing ? 'Updating Booking...' : 'Update Booking' }}
               </Button>
             </div>
           </form>
