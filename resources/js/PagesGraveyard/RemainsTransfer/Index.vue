@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ArrowRight, Calendar, Eye, Phone, Plus, Search, User } from 'lucide-vue-next';
+import { ArrowRight, Calendar, Pencil, Phone, Plus, Search, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 interface RemainsTransfer {
   id: number;
   transfer_reference: string;
+  transfer_type: 'niche' | 'permanent_grave' | 'removal';
   status: 'pending' | 'approved' | 'rejected' | 'completed' | 'cancelled';
   from_temporary_grave: {
     grave_no: string;
@@ -27,15 +28,20 @@ interface RemainsTransfer {
     applicant_name: string;
     contact_no: string;
   };
-  to_niche: {
+  to_niche?: {
     niche_no: string;
     section: string;
     row_no: string;
-  };
+  } | null;
+  to_permanent_grave?: {
+    grave_no: string;
+    section: string;
+    row_no: string;
+  } | null;
   proposed_transfer_date: string;
-  transfer_reason: string;
-  applicant_name: string;
-  contact_no: string;
+  transfer_reason?: string | null;
+  applicant_name?: string | null;
+  contact_no?: string | null;
   created_at: string;
   creator: {
     name: string;
@@ -212,7 +218,7 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                         <div>
                           <div class="font-medium text-gray-900">#{{ transfer.transfer_reference }}</div>
                           <div class="text-sm text-gray-500">
-                            {{ transfer.transfer_reason.substring(0, 50) }}{{ transfer.transfer_reason.length > 50 ? '...' : '' }}
+                            {{ transfer.transfer_reason?.substring(0, 50) }}{{ (transfer.transfer_reason?.length ?? 0) > 50 ? '...' : '' }}
                           </div>
                           <div class="text-xs text-gray-400">By {{ transfer.creator.name }}</div>
                         </div>
@@ -222,9 +228,15 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                           <div class="text-sm">
                             <span class="font-medium">{{ transfer.from_temporary_grave.grave_no }}</span>
                             <span class="text-gray-500"> → </span>
-                            <span class="font-medium">{{ transfer.to_niche.niche_no }}</span>
+                            <span v-if="transfer.transfer_type === 'niche' && transfer.to_niche" class="font-medium">{{ transfer.to_niche.niche_no }}</span>
+                            <span v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave" class="font-medium">{{ transfer.to_permanent_grave.grave_no }}</span>
+                            <span v-else class="text-gray-400 italic">Removal</span>
                           </div>
-                          <div class="text-xs text-gray-500">{{ transfer.from_temporary_grave.section }} → {{ transfer.to_niche.section }}</div>
+                          <div class="text-xs text-gray-500">
+                            {{ transfer.from_temporary_grave.section }}
+                            <template v-if="transfer.transfer_type === 'niche' && transfer.to_niche"> → {{ transfer.to_niche.section }}</template>
+                            <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave"> → {{ transfer.to_permanent_grave.section }}</template>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -268,7 +280,7 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                       <TableCell class="text-right">
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.remains-transfers.show', transfer.id)">
-                            <Eye class="h-4 w-4" />
+                            <Pencil class="h-4 w-4" />
                           </Link>
                         </Button>
                       </TableCell>
@@ -292,7 +304,12 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                   <CardContent class="space-y-3">
                     <div class="flex items-center space-x-2 text-sm">
                       <ArrowRight class="h-4 w-4 text-gray-400" />
-                      <span>{{ transfer.from_temporary_grave.grave_no }} → {{ transfer.to_niche.niche_no }}</span>
+                      <span>
+                        {{ transfer.from_temporary_grave.grave_no }} →
+                        <template v-if="transfer.transfer_type === 'niche' && transfer.to_niche">{{ transfer.to_niche.niche_no }}</template>
+                        <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave">{{ transfer.to_permanent_grave.grave_no }}</template>
+                        <template v-else>Removal</template>
+                      </span>
                     </div>
                     <div class="flex items-center space-x-2 text-sm">
                       <User class="h-4 w-4 text-gray-400" />
@@ -315,7 +332,7 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                       </div> -->
                       <Button variant="outline" size="sm" as-child>
                         <Link :href="route('graveyard.remains-transfers.show', transfer.id)">
-                          <Eye class="h-4 w-4" />
+                          <Pencil class="h-4 w-4" />
                         </Link>
                       </Button>
                     </div>

@@ -27,8 +27,8 @@ class RemainsTransferController extends Controller
             'fromTemporaryGrave',
             'fromBooking',
             'toNiche',
+            'toPermanentGrave',
             'creator',
-            // 'approver'
         ]);
 
         // Apply filters
@@ -191,11 +191,11 @@ class RemainsTransferController extends Controller
             'to_permanent_grave_id' => 'required_if:transfer_type,permanent_grave|nullable|exists:permanent_graves,id',
             'proposed_transfer_date' => 'required|date|after:today',
             'transfer_reason' => 'nullable|string|max:500',
-            'applicant_name' => 'required|string|max:255',
-            'contact_no' => 'required|string|max:20',
+            'applicant_name' => 'required_unless:transfer_type,removal|nullable|string|max:255',
+            'contact_no' => 'required_unless:transfer_type,removal|nullable|string|max:20',
             'contact_email' => 'nullable|email',
             'applicant_address' => 'nullable|string|max:500',
-            'relationship_id' => 'required|exists:relationships,id',
+            'relationship_id' => 'required_unless:transfer_type,removal|nullable|exists:relationships,id',
         ]);
 
         try {
@@ -257,7 +257,7 @@ class RemainsTransferController extends Controller
     }
 
     /**
-     * Show transfer details
+     * Show / Edit transfer details
      */
     public function show(RemainsTransfer $remainsTransfer)
     {
@@ -267,17 +267,118 @@ class RemainsTransferController extends Controller
             'fromTemporaryGrave',
             'fromBooking.temporaryGrave',
             'toNiche',
+            'toPermanentGrave',
             'relationship',
             'creator',
             'updater',
             'payments'
         ]);
 
+        // Include the currently selected niche even if its status is not 'available'
+        $availableNiches = Niche::where(function ($q) use ($remainsTransfer) {
+                $q->where('status', 'available')
+                  ->orWhere('id', $remainsTransfer->to_niche_id);
+            })
+            ->where('is_active', true)
+            ->with(['validMembers'])
+            ->get()
+            ->map(function ($niche) {
+                return [
+                    'id' => $niche->id,
+                    'niche_no' => $niche->niche_no,
+                    'section' => $niche->section,
+                    'row_no' => $niche->row_no,
+                    'location' => $niche->location,
+                    'owner_name' => $niche->owner_name,
+                    'last_occupation_date' => $niche->last_occupation_date,
+                    'cost' => $niche->cost,
+                ];
+            });
 
+        // Include the currently selected permanent grave even if unavailable
+        $availablePermanentGraves = PermanentGrave::where(function ($q) use ($remainsTransfer) {
+                $q->where('status', 'available')
+                  ->orWhere('id', $remainsTransfer->to_permanent_grave_id);
+            })
+            ->get()
+            ->map(function ($grave) {
+                return [
+                    'id' => $grave->id,
+                    'grave_no' => $grave->grave_no,
+                    'section' => $grave->section,
+                    'row_no' => $grave->row_no,
+                    'owner_name' => $grave->owner_name ?? '',
+                ];
+            });
 
-        return Inertia::render('PagesGraveyard/RemainsTransfer/Show', [
-            'transfer' => $remainsTransfer
+        return Inertia::render('PagesGraveyard/RemainsTransfer/Edit', [
+            'transfer' => $remainsTransfer,
+            'relationships' => Relationship::all(),
+            'availableNiches' => $availableNiches,
+            'availablePermanentGraves' => $availablePermanentGraves,
         ]);
+    }
+
+    /**
+     * Update transfer details
+     */
+    public function update(Request $request, RemainsTransfer $remainsTransfer)
+    {
+        $this->authorize('update-remains-transfer');
+
+        $rules = [
+            'proposed_transfer_date' => 'required|date',
+            'transfer_reason' => 'nullable|string|max:500',
+            'to_niche_id' => 'nullable|exists:niches,id',
+            'to_permanent_grave_id' => 'nullable|exists:permanent_graves,id',
+            'applicant_name' => 'nullable|string|max:255',
+            'contact_no' => 'nullable|string|max:20',
+            'contact_email' => 'nullable|email',
+            'applicant_address' => 'nullable|string|max:500',
+            'relationship_id' => 'nullable|exists:relationships,id',
+        ];
+
+        if ($remainsTransfer->transfer_type === 'niche') {
+            $rules['to_niche_id'] = 'required|exists:niches,id';
+        }
+
+        if ($remainsTransfer->transfer_type === 'permanent_grave') {
+            $rules['to_permanent_grave_id'] = 'required|exists:permanent_graves,id';
+        }
+
+        if ($remainsTransfer->transfer_type !== 'removal') {
+            $rules['applicant_name'] = 'required|string|max:255';
+            $rules['contact_no'] = 'required|string|max:20';
+            $rules['relationship_id'] = 'required|exists:relationships,id';
+        }
+
+        $request->validate($rules);
+
+        try {
+            DB::beginTransaction();
+
+            $remainsTransfer->update([
+                'proposed_transfer_date' => $request->proposed_transfer_date,
+                'transfer_reason' => $request->transfer_reason,
+                'to_niche_id' => $remainsTransfer->transfer_type === 'niche' ? $request->to_niche_id : $remainsTransfer->to_niche_id,
+                'to_permanent_grave_id' => $remainsTransfer->transfer_type === 'permanent_grave' ? $request->to_permanent_grave_id : $remainsTransfer->to_permanent_grave_id,
+                'applicant_name' => $request->applicant_name,
+                'contact_no' => $request->contact_no,
+                'contact_email' => $request->contact_email,
+                'applicant_address' => $request->applicant_address,
+                'relationship_id' => $request->relationship_id,
+                'updated_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('graveyard.remains-transfers.show', $remainsTransfer->id)
+                ->with('success', 'Transfer updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Error updating remains transfer: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to update transfer request.'])->withInput();
+        }
     }
 
     /**

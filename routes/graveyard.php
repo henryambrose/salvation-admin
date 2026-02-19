@@ -135,6 +135,7 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::post('/', [RemainsTransferController::class, 'store'])->name('store');
         Route::get('/statistics', [RemainsTransferController::class, 'statistics'])->name('statistics');
         Route::get('/{remainsTransfer}', [RemainsTransferController::class, 'show'])->name('show');
+        Route::put('/{remainsTransfer}', [RemainsTransferController::class, 'update'])->name('update');
         Route::post('/{remainsTransfer}/approve', [RemainsTransferController::class, 'approve'])->name('approve');
         Route::post('/{remainsTransfer}/reject', [RemainsTransferController::class, 'reject'])->name('reject');
         Route::post('/{remainsTransfer}/complete', [RemainsTransferController::class, 'complete'])->name('complete');

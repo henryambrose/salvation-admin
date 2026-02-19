@@ -541,7 +541,7 @@ const submit = () => {
                   <CardContent class="space-y-4">
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
-                        <Label for="applicant_name">Applicant Name *</Label>
+                        <Label for="applicant_name">Applicant Name{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
                         <Input
                           id="applicant_name"
                           v-model="form.applicant_name"
@@ -554,7 +554,7 @@ const submit = () => {
                       </div>
 
                       <div>
-                        <Label for="contact_no">Contact Number *</Label>
+                        <Label for="contact_no">Contact Number{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
                         <Input id="contact_no" v-model="form.contact_no" :class="form.errors.contact_no && 'border-red-500'" class="mt-1" />
                         <div v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
                           {{ form.errors.contact_no }}
@@ -567,7 +567,7 @@ const submit = () => {
                       </div>
 
                       <div>
-                        <Label for="relationship_id">Relationship to Deceased *</Label>
+                        <Label for="relationship_id">Relationship to Deceased{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
                         <select
                           id="relationship_id"
                           v-model="form.relationship_id"
