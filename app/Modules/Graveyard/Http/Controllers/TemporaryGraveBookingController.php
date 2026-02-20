@@ -32,6 +32,7 @@ class TemporaryGraveBookingController extends Controller
             'parish',
             'applicantMember',
             'creator',
+            'remainsTransfers' => fn($q) => $q->select('id', 'from_booking_id'),
         ]);
 
         // Apply filters
@@ -44,12 +45,18 @@ class TemporaryGraveBookingController extends Controller
         }
 
         if ($request->filled('transfer_due')) {
-            if ($request->transfer_due === 'due_soon') {
-                $monthsFromEnv = (int) config('app.graveyard_min_months_before_niche_transfer', 6);
-                $query->where('expected_transfer_date', '<=', now()->addMonths($monthsFromEnv));
-            } elseif ($request->transfer_due === 'overdue') {
-                $query->where('expected_transfer_date', '<', now());
-            }
+            $monthsFromEnv = (int) config('app.graveyard_min_months_before_remains_transfer', 6);
+            match ($request->transfer_due) {
+                'eligible'  => $query->where('status', 'confirmed')
+                                     ->whereIn('payment_status', ['paid', 'completed'])
+                                     ->where('transfer_requested', false)
+                                     ->whereRaw('DATE_ADD(buried_on, INTERVAL ? MONTH) <= CURDATE()', [$monthsFromEnv]),
+                'due_soon'  => $query->where('expected_transfer_date', '<=', now()->addMonths(2))
+                                     ->where('expected_transfer_date', '>=', now()),
+                'overdue'   => $query->where('expected_transfer_date', '<', now()),
+                'requested' => $query->where('transfer_requested', true),
+                default     => null,
+            };
         }
 
         // Pagination

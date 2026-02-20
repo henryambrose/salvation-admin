@@ -52,7 +52,11 @@
       "Bash(powershell.exe -Command \"Get-ChildItem -Path ''D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\components'' -Recurse -File | Select-String -Pattern ''NicheTransfer|niche-transfer|Niche Transfer|niche_transfer'' | Select-Object Filename, LineNumber, Line | Format-Table -AutoSize -Wrap\")",
       "Bash(cmd /c \"dir \"\"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard\"\"\")",
       "Bash(cmd /c dir \"D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard\")",
-      "Bash(cmd /c \"dir D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard && echo DONE\")"
+      "Bash(cmd /c \"dir D:\\\\Projects\\\\salvation-admin\\\\resources\\\\js\\\\PagesGraveyard && echo DONE\")",
+      "Bash(Get-Content \"D:\\\\Projects\\\\salvation-admin\\\\storage\\\\logs\\\\laravel.log\" -Tail 60)",
+      "Bash(python3:*)",
+      "Bash(php -r:*)",
+      "Bash(php:*)"
     ]
   }
 }

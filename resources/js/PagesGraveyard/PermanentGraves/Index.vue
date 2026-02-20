@@ -56,6 +56,16 @@
         </div>
         <div class="flex items-center gap-4">
           <Button
+            v-if="canUpdateAnyGrave"
+            @click="releaseEligibleGraves"
+            :disabled="releasing"
+            class="flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-white shadow transition hover:bg-emerald-700 disabled:opacity-60"
+            title="Check all unavailable graves and release those past the 24-month burial period"
+          >
+            <RefreshCw :class="['h-4 w-4', releasing ? 'animate-spin' : '']" />
+            <span class="text-sm">{{ releasing ? 'Checking...' : 'Release Eligible Graves' }}</span>
+          </Button>
+          <Button
             @click="exportToCSV"
             class="flex items-center gap-2 rounded-full bg-blue-600 px-4 py-2 text-white shadow transition hover:bg-blue-700"
           >
@@ -304,7 +314,7 @@ import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { ChevronDown, ChevronsUpDown, ChevronUp, Download, Eye, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Download, Eye, Pencil, Plus, RefreshCw, RotateCcw, Trash2 } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -345,6 +355,7 @@ const highlightedRowId = ref<number | null>(null);
 const showDeleteModal = ref(false);
 const graveToDelete = ref<any>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
+const releasing = ref(false);
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
 
 // Debounced search
@@ -430,6 +441,21 @@ const payMaintenanceFee = (grave: any) => {
 const downloadReceipt = (paymentId: number) => {
   // Open receipt in new window/tab
   window.open(`/graveyard/payments/${paymentId}/receipt`, '_blank');
+};
+
+const releaseEligibleGraves = () => {
+  releasing.value = true;
+  router.post(
+    route('graveyard.permanent-graves.release-eligible'),
+    {},
+    {
+      preserveScroll: true,
+      only: ['data', 'filters'],
+      onFinish: () => {
+        releasing.value = false;
+      },
+    },
+  );
 };
 
 const exportToCSV = () => {

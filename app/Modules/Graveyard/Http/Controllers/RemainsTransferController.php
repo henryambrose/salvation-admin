@@ -32,10 +32,6 @@ class RemainsTransferController extends Controller
         ]);
 
         // Apply filters
-        if ($request->filled('status')) {
-            $query->withStatus($request->status);
-        }
-
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -45,8 +41,8 @@ class RemainsTransferController extends Controller
             });
         }
 
-        if ($request->filled('due_soon')) {
-            $query->dueSoon();
+        if ($request->filled('transfer_type') && in_array($request->transfer_type, ['niche', 'permanent_grave', 'removal'])) {
+            $query->where('transfer_type', $request->transfer_type);
         }
 
         // Pagination
@@ -54,7 +50,7 @@ class RemainsTransferController extends Controller
 
         return Inertia::render('PagesGraveyard/RemainsTransfer/Index', [
             'transfers' => $transfers,
-            'filters' => $request->only(['status', 'search', 'due_soon'])
+            'filters' => $request->only(['search', 'transfer_type'])
         ]);
     }
 
@@ -73,17 +69,11 @@ class RemainsTransferController extends Controller
                 ->findOrFail($bookingId);
         }
 
-        // Get eligible bookings
+        // Get eligible bookings (exclude already transferred ones)
         $eligibleBookings = TemporaryGraveBooking::eligibleForTransfer()
+            ->where('transfer_requested', false)
             ->with(['temporaryGrave'])
             ->get();
-        // If a specific booking was requested, include it even if transfer_requested = true
-        if ($selectedBooking && !$eligibleBookings->contains('id', $selectedBooking->id)) {
-            // Add the selected booking to the list if it's not already there
-            if ($selectedBooking->status === 'confirmed') {
-                $eligibleBookings->prepend($selectedBooking);
-            }
-        }
 
         // Format the bookings for the frontend
         $eligibleBookings = $eligibleBookings->map(function ($booking) {
@@ -157,14 +147,31 @@ class RemainsTransferController extends Controller
 
         // Get available permanent graves for transfer destination
         $availablePermanentGraves = PermanentGrave::where('status', 'available')
+            ->with(['validMembers' => function ($query) {
+                $query->with('relationship')->orderBy('created_at', 'desc');
+            }])
             ->get()
             ->map(function ($grave) {
                 return [
                     'id' => $grave->id,
-                    'grave_no' => $grave->grave_no,
-                    'section' => $grave->section,
-                    'row_no' => $grave->row_no,
+                    'block' => $grave->block,
+                    'row' => $grave->row,
+                    'column' => $grave->column,
                     'owner_name' => $grave->owner_name ?? '',
+                    'valid_members' => $grave->validMembers->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'full_name' => $member->full_name,
+                            'first_name' => $member->first_name,
+                            'last_name' => $member->last_name,
+                            'relationship' => $member->relationship?->name,
+                            'member_type' => $member->member_type,
+                            'is_deceased' => $member->is_deceased,
+                            'death_date' => $member->death_date,
+                            'burial_date' => $member->burial_date,
+                        ];
+                    }),
+                    'has_valid_members' => $grave->validMembers->count() > 0,
                 ];
             });
 
@@ -247,7 +254,7 @@ class RemainsTransferController extends Controller
 
             DB::commit();
 
-            return redirect()->route('graveyard.remains-transfers.show', $transfer->id)
+            return redirect()->route('graveyard.remains-transfers.index')
                 ->with('success', 'Remains transfer request created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -292,6 +299,20 @@ class RemainsTransferController extends Controller
                     'owner_name' => $niche->owner_name,
                     'last_occupation_date' => $niche->last_occupation_date,
                     'cost' => $niche->cost,
+                    'valid_members' => $niche->validMembers->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'full_name' => $member->full_name,
+                            'first_name' => $member->first_name,
+                            'last_name' => $member->last_name,
+                            'relationship' => $member->relationship,
+                            'member_type' => $member->member_type,
+                            'is_deceased' => $member->is_deceased,
+                            'death_date' => $member->death_date,
+                            'burial_date' => $member->burial_date,
+                        ];
+                    }),
+                    'has_valid_members' => $niche->validMembers->count() > 0,
                 ];
             });
 
@@ -300,14 +321,31 @@ class RemainsTransferController extends Controller
                 $q->where('status', 'available')
                   ->orWhere('id', $remainsTransfer->to_permanent_grave_id);
             })
+            ->with(['validMembers' => function ($query) {
+                $query->with('relationship')->orderBy('created_at', 'desc');
+            }])
             ->get()
             ->map(function ($grave) {
                 return [
                     'id' => $grave->id,
-                    'grave_no' => $grave->grave_no,
-                    'section' => $grave->section,
-                    'row_no' => $grave->row_no,
+                    'block' => $grave->block,
+                    'row' => $grave->row,
+                    'column' => $grave->column,
                     'owner_name' => $grave->owner_name ?? '',
+                    'valid_members' => $grave->validMembers->map(function ($member) {
+                        return [
+                            'id' => $member->id,
+                            'full_name' => $member->full_name,
+                            'first_name' => $member->first_name,
+                            'last_name' => $member->last_name,
+                            'relationship' => $member->relationship?->name,
+                            'member_type' => $member->member_type,
+                            'is_deceased' => $member->is_deceased,
+                            'death_date' => $member->death_date,
+                            'burial_date' => $member->burial_date,
+                        ];
+                    }),
+                    'has_valid_members' => $grave->validMembers->count() > 0,
                 ];
             });
 
@@ -327,6 +365,7 @@ class RemainsTransferController extends Controller
         $this->authorize('update-remains-transfer');
 
         $rules = [
+            'transfer_type' => 'required|in:niche,permanent_grave,removal',
             'proposed_transfer_date' => 'required|date',
             'transfer_reason' => 'nullable|string|max:500',
             'to_niche_id' => 'nullable|exists:niches,id',
@@ -338,15 +377,17 @@ class RemainsTransferController extends Controller
             'relationship_id' => 'nullable|exists:relationships,id',
         ];
 
-        if ($remainsTransfer->transfer_type === 'niche') {
+        $transferType = $request->input('transfer_type');
+
+        if ($transferType === 'niche') {
             $rules['to_niche_id'] = 'required|exists:niches,id';
         }
 
-        if ($remainsTransfer->transfer_type === 'permanent_grave') {
+        if ($transferType === 'permanent_grave') {
             $rules['to_permanent_grave_id'] = 'required|exists:permanent_graves,id';
         }
 
-        if ($remainsTransfer->transfer_type !== 'removal') {
+        if ($transferType !== 'removal') {
             $rules['applicant_name'] = 'required|string|max:255';
             $rules['contact_no'] = 'required|string|max:20';
             $rules['relationship_id'] = 'required|exists:relationships,id';
@@ -358,10 +399,11 @@ class RemainsTransferController extends Controller
             DB::beginTransaction();
 
             $remainsTransfer->update([
+                'transfer_type' => $request->transfer_type,
                 'proposed_transfer_date' => $request->proposed_transfer_date,
                 'transfer_reason' => $request->transfer_reason,
-                'to_niche_id' => $remainsTransfer->transfer_type === 'niche' ? $request->to_niche_id : $remainsTransfer->to_niche_id,
-                'to_permanent_grave_id' => $remainsTransfer->transfer_type === 'permanent_grave' ? $request->to_permanent_grave_id : $remainsTransfer->to_permanent_grave_id,
+                'to_niche_id' => $request->transfer_type === 'niche' ? $request->to_niche_id : null,
+                'to_permanent_grave_id' => $request->transfer_type === 'permanent_grave' ? $request->to_permanent_grave_id : null,
                 'applicant_name' => $request->applicant_name,
                 'contact_no' => $request->contact_no,
                 'contact_email' => $request->contact_email,
@@ -372,7 +414,7 @@ class RemainsTransferController extends Controller
 
             DB::commit();
 
-            return redirect()->route('graveyard.remains-transfers.show', $remainsTransfer->id)
+            return redirect()->route('graveyard.remains-transfers.index')
                 ->with('success', 'Transfer updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();

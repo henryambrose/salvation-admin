@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
-import { Calendar, Eye, MapPin, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
+import { Calendar, Eye, MapPin, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
 import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
@@ -332,6 +332,11 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                               <Eye class="h-4 w-4" />
                             </Link>
                           </Button>
+                          <Button variant="outline" size="sm" as-child class="text-blue-600 hover:bg-blue-50 hover:text-blue-800">
+                            <Link :href="route('graveyard.permanent-grave-bookings.edit', booking.id)">
+                              <Pencil class="h-4 w-4" />
+                            </Link>
+                          </Button>
                           <Button
                             v-if="canDeleteBooking(booking)"
                             variant="outline"
@@ -403,6 +408,11 @@ const getBookingWarning = (booking: PermanentGraveBooking) => {
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.permanent-grave-bookings.show', booking.id)">
                             <Eye class="h-4 w-4" />
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" as-child class="text-blue-600 hover:bg-blue-50 hover:text-blue-800">
+                          <Link :href="route('graveyard.permanent-grave-bookings.edit', booking.id)">
+                            <Pencil class="h-4 w-4" />
                           </Link>
                         </Button>
                         <Button

@@ -54,10 +54,12 @@ interface AvailableNiche {
 
 interface AvailablePermanentGrave {
   id: number;
-  grave_no: string;
-  section: string;
-  row_no: string;
+  block: string;
+  row: number;
+  column: number;
   owner_name: string;
+  valid_members?: ValidMember[];
+  has_valid_members?: boolean;
 }
 
 interface Relationship {
@@ -106,9 +108,9 @@ const filteredNiches = computed(() => {
   const search = nicheSearch.value.toLowerCase();
   return props.availableNiches.filter(
     (niche) =>
-      niche.niche_no.toLowerCase().includes(search) ||
-      (niche.owner_name && niche.owner_name.toLowerCase().includes(search)) ||
-      (niche.location && niche.location.toLowerCase().includes(search)),
+      String(niche.niche_no ?? '').toLowerCase().includes(search) ||
+      String(niche.owner_name ?? '').toLowerCase().includes(search) ||
+      String(niche.location ?? '').toLowerCase().includes(search),
   );
 });
 
@@ -152,17 +154,23 @@ const filteredPermanentGraves = computed(() => {
   const search = permanentGraveSearch.value.toLowerCase();
   return props.availablePermanentGraves.filter(
     (grave) =>
-      grave.grave_no.toLowerCase().includes(search) ||
-      grave.section.toLowerCase().includes(search) ||
+      grave.block.toLowerCase().includes(search) ||
+      String(grave.row).includes(search) ||
+      String(grave.column).includes(search) ||
       (grave.owner_name && grave.owner_name.toLowerCase().includes(search)),
   );
 });
 
+const permanentGraveValidMembers = ref<ValidMember[]>([]);
+const selectedPermanentGraveValidMember = ref<ValidMember | null>(null);
+
 const selectPermanentGrave = (grave: AvailablePermanentGrave) => {
   selectedPermanentGrave.value = grave;
   form.to_permanent_grave_id = grave.id;
-  permanentGraveSearch.value = `${grave.grave_no} - ${grave.section}, Row ${grave.row_no}`;
+  permanentGraveSearch.value = `Block ${grave.block}, Row ${grave.row}, Col ${grave.column}`;
   showPermanentGraveDropdown.value = false;
+  permanentGraveValidMembers.value = grave.valid_members || [];
+  selectedPermanentGraveValidMember.value = null;
 };
 
 const clearPermanentGraveSelection = () => {
@@ -170,6 +178,18 @@ const clearPermanentGraveSelection = () => {
   form.to_permanent_grave_id = null;
   permanentGraveSearch.value = '';
   showPermanentGraveDropdown.value = false;
+  permanentGraveValidMembers.value = [];
+  selectedPermanentGraveValidMember.value = null;
+};
+
+const selectPermanentGraveValidMember = (member: ValidMember) => {
+  selectedPermanentGraveValidMember.value = member;
+};
+
+const navigateToAddValidMemberForPermanentGrave = () => {
+  if (selectedPermanentGrave.value) {
+    window.location.href = route('graveyard.valid-members.create') + '?permanent_grave_id=' + selectedPermanentGrave.value.id;
+  }
 };
 
 // Clear destination selections when transfer type changes
@@ -442,8 +462,8 @@ const submit = () => {
                             class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
                             @click.stop="selectPermanentGrave(grave)"
                           >
-                            <div class="font-medium text-gray-900">{{ grave.grave_no }}</div>
-                            <div class="text-sm text-gray-600">{{ grave.section }}, Row {{ grave.row_no }}</div>
+                            <div class="font-medium text-gray-900">Block {{ grave.block }}</div>
+                            <div class="text-sm text-gray-600">Row {{ grave.row }}, Col {{ grave.column }}</div>
                             <div v-if="grave.owner_name" class="text-sm text-gray-500">Owner: {{ grave.owner_name }}</div>
                           </div>
                         </div>
@@ -466,8 +486,8 @@ const submit = () => {
                         <div class="flex items-start space-x-3">
                           <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
                           <div>
-                            <h4 class="font-medium text-green-900">{{ selectedPermanentGrave.grave_no }}</h4>
-                            <p class="text-sm text-green-700">{{ selectedPermanentGrave.section }}, Row {{ selectedPermanentGrave.row_no }}</p>
+                            <h4 class="font-medium text-green-900">Block {{ selectedPermanentGrave.block }}</h4>
+                            <p class="text-sm text-green-700">Row {{ selectedPermanentGrave.row }}, Col {{ selectedPermanentGrave.column }}</p>
                             <p v-if="selectedPermanentGrave.owner_name" class="text-sm text-green-600">Owner: {{ selectedPermanentGrave.owner_name }}</p>
                           </div>
                         </div>
@@ -746,8 +766,136 @@ const submit = () => {
                 </div>
               </template>
 
-              <!-- Sidebar placeholder for non-niche types -->
-              <div v-else-if="!form.transfer_type" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+              <!-- Sidebar for permanent_grave type -->
+              <template v-else-if="form.transfer_type === 'permanent_grave'">
+                <div v-if="!selectedPermanentGrave" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="p-8 text-center">
+                    <MapPin class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                    <h3 class="mb-2 text-lg font-medium text-gray-900">Select a Permanent Grave First</h3>
+                    <p class="text-sm text-gray-500">Choose a permanent grave from the form above to see valid members.</p>
+                  </div>
+                </div>
+
+                <div v-if="selectedPermanentGrave && permanentGraveValidMembers.length > 0" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">{{ permanentGraveValidMembers.length }} members for this grave</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMemberForPermanentGrave" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Grave
+                      </Button>
+                    </div>
+                    <div class="max-h-64 space-y-3 overflow-y-auto">
+                      <div
+                        v-for="member in permanentGraveValidMembers"
+                        :key="member.id"
+                        @click="selectPermanentGraveValidMember(member)"
+                        :class="[
+                          'cursor-pointer rounded-lg border p-3 transition-colors',
+                          selectedPermanentGraveValidMember?.id === member.id
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50',
+                        ]"
+                      >
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                              <h4 class="text-sm font-medium text-gray-900">{{ member.full_name }}</h4>
+                              <Badge v-if="member.is_deceased" variant="destructive" class="text-xs">Deceased</Badge>
+                              <Badge v-else variant="outline" class="border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                            </div>
+                            <div class="mt-1 space-y-1">
+                              <p class="text-xs text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship }}</p>
+                              <p v-if="member.member_type" class="text-xs text-gray-600"><span class="font-medium">Type:</span> {{ member.member_type }}</p>
+                              <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="space-y-1 text-xs text-gray-500">
+                                <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}</p>
+                                <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div v-if="selectedPermanentGraveValidMember?.id === member.id" class="text-blue-600">
+                            <CheckCircle class="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="selectedPermanentGrave" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">This grave has no valid members yet</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMemberForPermanentGrave" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Grave
+                      </Button>
+                    </div>
+                    <div class="py-4 text-center">
+                      <Users class="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                      <p class="text-xs text-gray-500">Click the button above to add the first valid member for this grave.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="selectedPermanentGraveValidMember" class="mt-4 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-green-200 bg-green-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-green-900">
+                      <CheckCircle class="mr-2 h-4 w-4 text-green-600" />
+                      Selected Member
+                    </h3>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-2 text-sm font-medium text-gray-900">{{ selectedPermanentGraveValidMember.full_name }}</div>
+                    <div class="space-y-1 text-xs">
+                      <div class="text-gray-600"><span class="font-medium">Relationship:</span> {{ selectedPermanentGraveValidMember.relationship }}</div>
+                      <div v-if="selectedPermanentGraveValidMember.member_type" class="text-gray-600">
+                        <span class="font-medium">Type:</span> {{ selectedPermanentGraveValidMember.member_type }}
+                      </div>
+                      <div class="text-gray-600">
+                        <span class="font-medium">Status:</span>
+                        <Badge v-if="selectedPermanentGraveValidMember.is_deceased" variant="destructive" class="ml-1 text-xs">Deceased</Badge>
+                        <Badge v-else variant="outline" class="ml-1 border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                      </div>
+                      <div v-if="selectedPermanentGraveValidMember.is_deceased && (selectedPermanentGraveValidMember.death_date || selectedPermanentGraveValidMember.burial_date)" class="space-y-1 text-gray-500">
+                        <div v-if="selectedPermanentGraveValidMember.death_date">
+                          <span class="font-medium">Death Date:</span> {{ formatDateForDisplay(selectedPermanentGraveValidMember.death_date) }}
+                        </div>
+                        <div v-if="selectedPermanentGraveValidMember.burial_date">
+                          <span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(selectedPermanentGraveValidMember.burial_date) }}
+                        </div>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" @click="selectedPermanentGraveValidMember = null" class="mt-3 w-full text-xs">
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </template>
+
+              <!-- Sidebar for removal type -->
+              <div v-else-if="form.transfer_type === 'removal'" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div class="p-8 text-center">
+                  <ArrowRight class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <h3 class="mb-2 text-lg font-medium text-gray-900">No Destination</h3>
+                  <p class="text-sm text-gray-500">Remains will be removed with no on-site destination.</p>
+                </div>
+              </div>
+
+              <!-- Sidebar placeholder for no type selected -->
+              <div v-else class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                 <div class="p-8 text-center">
                   <ArrowRight class="mx-auto mb-4 h-12 w-12 text-gray-400" />
                   <h3 class="mb-2 text-lg font-medium text-gray-900">Select Transfer Type</h3>

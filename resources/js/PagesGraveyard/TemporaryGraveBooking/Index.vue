@@ -44,6 +44,7 @@ interface TemporaryGraveBooking {
   payment_status: 'pending' | 'partial' | 'paid' | 'completed';
   expected_transfer_date: string;
   transfer_requested: boolean;
+  remains_transfers?: Array<{ id: number }>;
   created_at: string;
   creator: {
     name: string;
@@ -160,13 +161,9 @@ const isTransferDueSoon = (booking: TemporaryGraveBooking) => {
 };
 
 const canRequestTransfer = (booking: TemporaryGraveBooking) => {
-  // Show eligibility if:
-  // 1. Booking is confirmed
-  // 2. Payment is complete
-  // 3. Enough time has passed (current date >= expected transfer date)
+  if (booking.transfer_requested) return false;
   const today = new Date();
   const expectedDate = booking.expected_transfer_date ? new Date(booking.expected_transfer_date) : null;
-  
   return (
     booking.status === 'confirmed' &&
     ['paid', 'completed'].includes(booking.payment_status) &&
@@ -176,14 +173,12 @@ const canRequestTransfer = (booking: TemporaryGraveBooking) => {
 };
 
 const getRowClass = (booking: TemporaryGraveBooking) => {
-  // Highlight eligible bookings so users can see which need action
+  if (booking.transfer_requested) {
+    return 'bg-purple-50 hover:bg-purple-100 border-l-4 border-purple-400';
+  }
   if (canRequestTransfer(booking)) {
-    if (isTransferOverdue(booking)) {
-      return 'bg-red-50 hover:bg-red-100 border-l-4 border-red-400';
-    }
-    if (isTransferDueSoon(booking)) {
-      return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-yellow-400';
-    }
+    if (isTransferOverdue(booking)) return 'bg-red-50 hover:bg-red-100 border-l-4 border-red-400';
+    if (isTransferDueSoon(booking)) return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-yellow-400';
     return 'bg-blue-50 hover:bg-blue-100 border-l-4 border-blue-400';
   }
   return 'hover:bg-gray-50';
@@ -191,6 +186,15 @@ const getRowClass = (booking: TemporaryGraveBooking) => {
 
 const requestTransfer = (booking: TemporaryGraveBooking) => {
   router.visit(route('graveyard.remains-transfers.create', { booking_id: booking.id }));
+};
+
+const viewTransfer = (booking: TemporaryGraveBooking) => {
+  const transferId = booking.remains_transfers?.[0]?.id;
+  if (transferId) {
+    router.visit(route('graveyard.remains-transfers.show', transferId));
+  } else {
+    router.visit(route('graveyard.remains-transfers.index'));
+  }
 };
 
 const canEditBooking = (booking: TemporaryGraveBooking) => {
@@ -304,7 +308,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                   <option value="eligible">Eligible for Transfer</option>
                   <option value="due_soon">Due Soon</option>
                   <option value="overdue">Overdue</option>
-                  <option value="requested">Transfer Requested</option>
+                  <option value="requested">Transferred</option>
                 </select>
               </div>
 
@@ -332,21 +336,25 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
 
             <div v-else class="space-y-6">
               <!-- Color Legend for Eligible Bookings -->
-              <div v-if="eligibleBookingsCount > 0" class="rounded-lg border border-purple-200 bg-purple-50 p-4">
+              <div class="rounded-lg border border-purple-200 bg-purple-50 p-4">
                 <h4 class="mb-2 text-sm font-medium text-purple-900">Transfer Eligibility Status</h4>
-                <p class="mb-3 text-xs text-purple-800">Bookings eligible for transfer to niche are highlighted. Click the arrow button to initiate transfer.</p>
-                <div class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-3">
+                <p class="mb-3 text-xs text-purple-800">Bookings eligible for transfer are highlighted. Click the arrow button to initiate or view a transfer.</p>
+                <div class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-4">
                   <div class="flex items-center space-x-2">
                     <div class="h-4 w-8 rounded bg-red-100 border-l-4 border-red-400"></div>
                     <span class="text-gray-700">Overdue - Immediate action needed</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <div class="h-4 w-8 rounded bg-yellow-100 border-l-4 border-yellow-400"></div>
-                    <span class="text-gray-700">Due Soon - Plan transfer within 2 months</span>
+                    <span class="text-gray-700">Due Soon - Within 2 months</span>
                   </div>
                   <div class="flex items-center space-x-2">
                     <div class="h-4 w-8 rounded bg-blue-100 border-l-4 border-blue-400"></div>
                     <span class="text-gray-700">Eligible - Ready for transfer</span>
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <div class="h-4 w-8 rounded bg-purple-100 border-l-4 border-purple-400"></div>
+                    <span class="text-gray-700">Transfer Initiated</span>
                   </div>
                 </div>
               </div>
@@ -414,7 +422,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                             {{ formatDate(booking.expected_transfer_date) }}
                           </div>
                           <div class="flex space-x-1">
-                            <Badge v-if="booking.transfer_requested" class="bg-blue-100 text-xs text-blue-800"> Requested </Badge>
+                            <Badge v-if="booking.transfer_requested" class="bg-purple-100 text-xs text-purple-800"> Transferred </Badge>
                             <Badge v-else-if="isTransferOverdue(booking)" class="bg-red-100 text-xs text-red-800"> Overdue </Badge>
                             <Badge v-else-if="isTransferDueSoon(booking)" class="bg-yellow-100 text-xs text-yellow-800"> Due Soon </Badge>
                           </div>
@@ -440,24 +448,30 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                       </TableCell>
                       <TableCell class="text-right">
                         <div class="flex items-center justify-end space-x-2">
-                          <!-- Transfer Action - Show for all eligible bookings -->
+                          <!-- Initiate Transfer (eligible, not yet requested) -->
                           <Button
                             v-if="canRequestTransfer(booking)"
                             size="sm"
+                            class="bg-purple-600 hover:bg-purple-700"
+                            title="Initiate Remains Transfer"
                             @click="requestTransfer(booking)"
-                            :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
-                            :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Remains Transfer'"
                           >
                             <ArrowRight class="h-4 w-4" />
                           </Button>
 
-                          <!-- Edit Button -->
+                          <!-- View/Edit Existing Transfer (already requested) -->
                           <Button
-                            v-if="canEditBooking(booking)"
-                            variant="outline"
+                            v-if="booking.transfer_requested"
                             size="sm"
-                            as-child
+                            class="bg-blue-600 hover:bg-blue-700"
+                            title="View / Edit Transfer"
+                            @click="viewTransfer(booking)"
                           >
+                            <ArrowRight class="h-4 w-4" />
+                          </Button>
+
+                          <!-- Edit Booking -->
+                          <Button v-if="canEditBooking(booking)" variant="outline" size="sm" as-child>
                             <Link :href="route('graveyard.temporary-grave-bookings.edit', booking.id)">
                               <Pencil class="h-4 w-4" />
                             </Link>
@@ -470,7 +484,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                             </Link>
                           </Button>
 
-                          <!-- Delete Button -->
+                          <!-- Delete -->
                           <Button
                             v-if="canDeleteBooking(booking)"
                             variant="outline"
@@ -497,7 +511,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                         <Badge :class="statusColors[booking.status]">
                           {{ booking.status }}
                         </Badge>
-                        <Badge v-if="booking.transfer_requested" class="bg-blue-100 text-xs text-blue-800"> Transfer Requested </Badge>
+                        <Badge v-if="booking.transfer_requested" class="bg-purple-100 text-xs text-purple-800"> Transferred </Badge>
                       </div>
                     </div>
                     <CardDescription> {{ getDeceasedName(booking) }} • {{ formatDate(booking.buried_on) }} </CardDescription>
@@ -535,24 +549,30 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                         </Badge>
                       </div>
                       <div class="flex items-center space-x-2">
-                        <!-- Transfer Action - Show for all eligible bookings -->
+                        <!-- Initiate Transfer -->
                         <Button
                           v-if="canRequestTransfer(booking)"
                           size="sm"
+                          class="bg-purple-600 hover:bg-purple-700"
+                          title="Initiate Remains Transfer"
                           @click="requestTransfer(booking)"
-                          :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
-                          :title="booking.transfer_requested ? 'View/Create Transfer' : 'Initiate Remains Transfer'"
                         >
                           <ArrowRight class="h-4 w-4" />
                         </Button>
-                        
-                        <!-- Edit Button -->
+
+                        <!-- View/Edit Existing Transfer -->
                         <Button
-                          v-if="canEditBooking(booking)"
-                          variant="outline"
+                          v-if="booking.transfer_requested"
                           size="sm"
-                          as-child
+                          class="bg-blue-600 hover:bg-blue-700"
+                          title="View / Edit Transfer"
+                          @click="viewTransfer(booking)"
                         >
+                          <ArrowRight class="h-4 w-4" />
+                        </Button>
+
+                        <!-- Edit Booking -->
+                        <Button v-if="canEditBooking(booking)" variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.temporary-grave-bookings.edit', booking.id)">
                             <Pencil class="h-4 w-4" />
                           </Link>
@@ -565,7 +585,7 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
                           </Link>
                         </Button>
 
-                        <!-- Delete Button -->
+                        <!-- Delete -->
                         <Button
                           v-if="canDeleteBooking(booking)"
                           variant="outline"

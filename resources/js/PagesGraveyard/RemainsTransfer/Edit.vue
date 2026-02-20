@@ -7,12 +7,24 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, ArrowRight, Calendar, CheckCircle, MapPin, User } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
+import { ArrowLeft, ArrowRight, Calendar, CheckCircle, MapPin, User, Users } from 'lucide-vue-next';
+import { computed, onMounted, ref, watch } from 'vue';
 import { DateInput } from '@/components/ui/date-input';
 import { formatDateForDisplay } from '@/lib/utils';
 
-interface NicheOption {
+interface ValidMember {
+  id: number;
+  full_name: string;
+  first_name: string;
+  last_name: string;
+  relationship: string;
+  member_type: string;
+  is_deceased: boolean;
+  death_date?: string;
+  burial_date?: string;
+}
+
+interface AvailableNiche {
   id: number;
   niche_no: string;
   section: string;
@@ -20,83 +32,66 @@ interface NicheOption {
   location?: string;
   owner_name?: string;
   last_occupation_date?: string;
-  cost?: number;
+  cost: number;
+  valid_members?: ValidMember[];
+  has_valid_members?: boolean;
 }
 
-interface PermanentGraveOption {
+interface AvailablePermanentGrave {
   id: number;
-  grave_no: string;
-  section: string;
-  row_no: string;
-  owner_name?: string;
+  block: string;
+  row: number;
+  column: number;
+  owner_name: string;
+  valid_members?: ValidMember[];
+  has_valid_members?: boolean;
 }
 
 interface Relationship {
   id: number;
   name: string;
-}
-
-interface RemainsTransfer {
-  id: number;
-  transfer_reference: string;
-  status: string;
-  transfer_type: 'niche' | 'permanent_grave' | 'removal';
-  from_temporary_grave: {
-    grave_no: string;
-    section: string;
-    row_no: string;
-  };
-  from_booking: {
-    booking_reference: string;
-    dead_first_name: string;
-    dead_last_name: string;
-    buried_on: string;
-  };
-  to_niche?: {
-    id: number;
-    niche_no: string;
-    section: string;
-    row_no: string;
-    location?: string;
-    owner_name?: string;
-  };
-  to_permanent_grave?: {
-    id: number;
-    grave_no: string;
-    section: string;
-    row_no: string;
-    owner_name?: string;
-  };
-  proposed_transfer_date: string;
-  transfer_reason?: string;
-  applicant_name?: string;
-  contact_no?: string;
-  contact_email?: string;
-  applicant_address?: string;
-  relationship?: {
-    id: number;
-    name: string;
-  };
-  creator: { name: string };
-  updater?: { name: string };
-  created_at: string;
-  updated_at: string;
+  description?: string;
 }
 
 interface Props {
-  transfer: RemainsTransfer;
+  transfer: {
+    id: number;
+    transfer_reference: string;
+    transfer_type: 'niche' | 'permanent_grave' | 'removal';
+    from_temporary_grave: {
+      grave_no: string;
+      section: string;
+      row_no: string;
+    };
+    from_booking: {
+      booking_reference: string;
+      dead_first_name: string;
+      dead_last_name: string;
+      buried_on: string;
+    };
+    to_niche?: { id: number; niche_no: string; section: string; row_no: string; location?: string; owner_name?: string } | null;
+    to_permanent_grave?: { id: number; block: string; row: number; column: number; owner_name?: string } | null;
+    proposed_transfer_date: string;
+    transfer_reason?: string | null;
+    applicant_name?: string | null;
+    contact_no?: string | null;
+    contact_email?: string | null;
+    applicant_address?: string | null;
+    relationship?: { id: number; name: string } | null;
+  };
+  availableNiches: AvailableNiche[];
+  availablePermanentGraves: AvailablePermanentGrave[];
   relationships: Relationship[];
-  availableNiches: NicheOption[];
-  availablePermanentGraves: PermanentGraveOption[];
 }
 
 const props = defineProps<Props>();
 
 const form = useForm({
-  proposed_transfer_date: props.transfer.proposed_transfer_date || '',
-  transfer_reason: props.transfer.transfer_reason || '',
+  transfer_type: props.transfer.transfer_type as 'niche' | 'permanent_grave' | 'removal',
   to_niche_id: props.transfer.to_niche?.id ?? (null as number | null),
   to_permanent_grave_id: props.transfer.to_permanent_grave?.id ?? (null as number | null),
+  proposed_transfer_date: props.transfer.proposed_transfer_date || '',
+  transfer_reason: props.transfer.transfer_reason || '',
   applicant_name: props.transfer.applicant_name || '',
   contact_no: props.transfer.contact_no || '',
   contact_email: props.transfer.contact_email || '',
@@ -105,30 +100,30 @@ const form = useForm({
 });
 
 // Niche search
-const nicheSearch = ref(
-  props.transfer.to_niche
-    ? `${props.transfer.to_niche.niche_no} - ${props.transfer.to_niche.location || 'No location'}`
-    : '',
-);
+const selectedNiche = ref<AvailableNiche | null>(null);
+const availableValidMembers = ref<ValidMember[]>([]);
+const selectedValidMember = ref<ValidMember | null>(null);
+const nicheSearch = ref('');
 const showNicheDropdown = ref(false);
-const selectedNiche = ref<NicheOption | null>(props.transfer.to_niche ?? null);
 
 const filteredNiches = computed(() => {
   if (!nicheSearch.value) return props.availableNiches;
   const search = nicheSearch.value.toLowerCase();
   return props.availableNiches.filter(
     (niche) =>
-      niche.niche_no.toLowerCase().includes(search) ||
-      (niche.owner_name && niche.owner_name.toLowerCase().includes(search)) ||
-      (niche.location && niche.location.toLowerCase().includes(search)),
+      String(niche.niche_no ?? '').toLowerCase().includes(search) ||
+      String(niche.owner_name ?? '').toLowerCase().includes(search) ||
+      String(niche.location ?? '').toLowerCase().includes(search),
   );
 });
 
-const selectNiche = (niche: NicheOption) => {
+const selectNiche = (niche: AvailableNiche) => {
   selectedNiche.value = niche;
   form.to_niche_id = niche.id;
   nicheSearch.value = `${niche.niche_no} - ${niche.location || 'No location'}`;
   showNicheDropdown.value = false;
+  availableValidMembers.value = niche.valid_members || [];
+  selectedValidMember.value = null;
 };
 
 const clearNicheSelection = () => {
@@ -136,33 +131,48 @@ const clearNicheSelection = () => {
   form.to_niche_id = null;
   nicheSearch.value = '';
   showNicheDropdown.value = false;
+  availableValidMembers.value = [];
+  selectedValidMember.value = null;
+};
+
+const selectValidMember = (member: ValidMember) => {
+  selectedValidMember.value = member;
+};
+
+const navigateToAddValidMember = () => {
+  if (selectedNiche.value) {
+    const url = route('graveyard.valid-members.create') + '?niche_id=' + selectedNiche.value.id;
+    window.location.href = url;
+  }
 };
 
 // Permanent grave search
-const permanentGraveSearch = ref(
-  props.transfer.to_permanent_grave
-    ? `${props.transfer.to_permanent_grave.grave_no} - ${props.transfer.to_permanent_grave.section}, Row ${props.transfer.to_permanent_grave.row_no}`
-    : '',
-);
+const permanentGraveSearch = ref('');
 const showPermanentGraveDropdown = ref(false);
-const selectedPermanentGrave = ref<PermanentGraveOption | null>(props.transfer.to_permanent_grave ?? null);
+const selectedPermanentGrave = ref<AvailablePermanentGrave | null>(null);
 
 const filteredPermanentGraves = computed(() => {
   if (!permanentGraveSearch.value) return props.availablePermanentGraves;
   const search = permanentGraveSearch.value.toLowerCase();
   return props.availablePermanentGraves.filter(
     (grave) =>
-      grave.grave_no.toLowerCase().includes(search) ||
-      grave.section.toLowerCase().includes(search) ||
+      grave.block.toLowerCase().includes(search) ||
+      String(grave.row).includes(search) ||
+      String(grave.column).includes(search) ||
       (grave.owner_name && grave.owner_name.toLowerCase().includes(search)),
   );
 });
 
-const selectPermanentGrave = (grave: PermanentGraveOption) => {
+const permanentGraveValidMembers = ref<ValidMember[]>([]);
+const selectedPermanentGraveValidMember = ref<ValidMember | null>(null);
+
+const selectPermanentGrave = (grave: AvailablePermanentGrave) => {
   selectedPermanentGrave.value = grave;
   form.to_permanent_grave_id = grave.id;
-  permanentGraveSearch.value = `${grave.grave_no} - ${grave.section}, Row ${grave.row_no}`;
+  permanentGraveSearch.value = `Block ${grave.block}, Row ${grave.row}, Col ${grave.column}`;
   showPermanentGraveDropdown.value = false;
+  permanentGraveValidMembers.value = grave.valid_members || [];
+  selectedPermanentGraveValidMember.value = null;
 };
 
 const clearPermanentGraveSelection = () => {
@@ -170,23 +180,51 @@ const clearPermanentGraveSelection = () => {
   form.to_permanent_grave_id = null;
   permanentGraveSearch.value = '';
   showPermanentGraveDropdown.value = false;
+  permanentGraveValidMembers.value = [];
+  selectedPermanentGraveValidMember.value = null;
 };
 
-const transferTypeLabel: Record<string, string> = {
-  niche: 'Transfer to Niche',
-  permanent_grave: 'Transfer to Permanent Grave',
-  removal: 'Remove Bones',
+const selectPermanentGraveValidMember = (member: ValidMember) => {
+  selectedPermanentGraveValidMember.value = member;
 };
 
-const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-blue-100 text-blue-800',
-  rejected: 'bg-red-100 text-red-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800',
+const navigateToAddValidMemberForPermanentGrave = () => {
+  if (selectedPermanentGrave.value) {
+    window.location.href = route('graveyard.valid-members.create') + '?permanent_grave_id=' + selectedPermanentGrave.value.id;
+  }
 };
+
+// Clear destination when transfer type changes
+watch(
+  () => form.transfer_type,
+  () => {
+    clearNicheSelection();
+    clearPermanentGraveSelection();
+  },
+);
 
 onMounted(() => {
+  // Pre-populate niche selection
+  if (props.transfer.transfer_type === 'niche' && props.transfer.to_niche) {
+    const existing = props.availableNiches.find((n) => n.id === props.transfer.to_niche!.id);
+    if (existing) {
+      selectedNiche.value = existing;
+      nicheSearch.value = `${existing.niche_no} - ${existing.location || 'No location'}`;
+      availableValidMembers.value = existing.valid_members || [];
+    }
+  }
+
+  // Pre-populate permanent grave selection
+  if (props.transfer.transfer_type === 'permanent_grave' && props.transfer.to_permanent_grave) {
+    const existing = props.availablePermanentGraves.find((g) => g.id === props.transfer.to_permanent_grave!.id);
+    if (existing) {
+      selectedPermanentGrave.value = existing;
+      permanentGraveSearch.value = `Block ${existing.block}, Row ${existing.row}, Col ${existing.column}`;
+      permanentGraveValidMembers.value = existing.valid_members || [];
+    }
+  }
+
+  // Close dropdowns when clicking outside
   document.addEventListener('click', (event) => {
     const target = event.target as HTMLElement;
     if (!target.closest('[data-niche-dropdown]')) showNicheDropdown.value = false;
@@ -207,302 +245,621 @@ const submit = () => {
       <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-              <Button variant="outline" size="sm" as-child>
-                <Link :href="route('graveyard.remains-transfers.index')">
-                  <ArrowLeft class="h-4 w-4" />
-                </Link>
-              </Button>
-              <div>
-                <h3 class="text-2xl font-bold text-blue-700">Edit Transfer #{{ transfer.transfer_reference }}</h3>
-                <p class="mt-1 max-w-2xl text-sm text-gray-500">Update transfer request details</p>
-              </div>
+          <div class="flex items-center space-x-3">
+            <Button variant="outline" size="sm" as-child>
+              <Link :href="route('graveyard.remains-transfers.index')">
+                <ArrowLeft class="h-4 w-4" />
+              </Link>
+            </Button>
+            <div>
+              <h3 class="text-2xl font-bold text-blue-700">Edit Transfer #{{ transfer.transfer_reference }}</h3>
+              <p class="mt-1 max-w-2xl text-sm text-gray-500">Update the transfer request details</p>
             </div>
-            <Badge :class="statusColors[transfer.status]" class="capitalize">{{ transfer.status }}</Badge>
           </div>
         </div>
 
-        <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-          <form @submit.prevent="submit" class="space-y-6 px-4 py-5 sm:p-6">
-            <!-- Booking Info (read-only) -->
-            <Card>
-              <CardHeader>
-                <CardTitle class="flex items-center space-x-2">
-                  <MapPin class="h-5 w-5" />
-                  <span>Temporary Grave Booking</span>
-                </CardTitle>
-                <CardDescription>Source booking details (read-only)</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                  <div class="flex items-start space-x-3">
-                    <CheckCircle class="mt-0.5 h-5 w-5 text-blue-600" />
-                    <div>
-                      <h4 class="font-medium text-blue-900">
-                        {{ transfer.from_booking.dead_first_name }} {{ transfer.from_booking.dead_last_name }}
-                      </h4>
-                      <p class="text-sm text-blue-700">
-                        From: {{ transfer.from_temporary_grave.grave_no }} ({{ transfer.from_temporary_grave.section }}, Row
-                        {{ transfer.from_temporary_grave.row_no }})
-                      </p>
-                      <p class="text-sm text-blue-600">Buried: {{ formatDateForDisplay(transfer.from_booking.buried_on) }}</p>
-                      <p class="mt-1 text-xs text-blue-500">Booking ref: #{{ transfer.from_booking.booking_reference }}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Transfer Destination -->
-            <Card>
-              <CardHeader>
-                <CardTitle class="flex items-center space-x-2">
-                  <ArrowRight class="h-5 w-5" />
-                  <span>Transfer Destination</span>
-                </CardTitle>
-                <CardDescription>Transfer type is fixed; destination can be updated</CardDescription>
-              </CardHeader>
-              <CardContent class="space-y-4">
-                <!-- Transfer type badge (read-only) -->
-                <div>
-                  <Label class="text-sm font-medium text-gray-500">Transfer Type</Label>
-                  <div class="mt-1">
-                    <Badge class="bg-blue-100 text-blue-800">{{ transferTypeLabel[transfer.transfer_type] }}</Badge>
-                  </div>
-                </div>
-
-                <!-- Niche search -->
-                <div v-if="transfer.transfer_type === 'niche'">
-                  <Label for="to_niche_id">Destination Niche *</Label>
-                  <div class="relative mt-1" data-niche-dropdown>
-                    <Input
-                      v-model="nicheSearch"
-                      placeholder="Search by niche number, owner name, or location..."
-                      :class="form.errors.to_niche_id && 'border-red-500'"
-                      @focus="showNicheDropdown = true"
-                      @input="showNicheDropdown = true"
-                    />
-                    <div
-                      v-if="showNicheDropdown && filteredNiches.length > 0"
-                      class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
-                    >
-                      <div
-                        v-for="niche in filteredNiches"
-                        :key="niche.id"
-                        class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
-                        @click.stop="selectNiche(niche)"
-                      >
-                        <div class="font-medium text-gray-900">Niche {{ niche.niche_no }}</div>
-                        <div class="text-sm text-gray-600">Location: {{ niche.location || 'No location specified' }}</div>
-                        <div v-if="niche.owner_name" class="text-sm text-gray-500">Owner: {{ niche.owner_name }}</div>
-                        <div v-if="niche.last_occupation_date" class="text-xs text-gray-400">
-                          Last occupied: {{ formatDateForDisplay(niche.last_occupation_date) }}
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-4">
+          <!-- Main Form Content -->
+          <div class="lg:col-span-3">
+            <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+              <form @submit.prevent="submit" class="space-y-6 px-4 py-5 sm:p-6">
+                <!-- Booking (read-only) -->
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="flex items-center space-x-2">
+                      <MapPin class="h-5 w-5" />
+                      <span>Temporary Grave Booking</span>
+                    </CardTitle>
+                    <CardDescription>Source booking (cannot be changed)</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                      <div class="flex items-start space-x-3">
+                        <CheckCircle class="mt-0.5 h-5 w-5 text-blue-600" />
+                        <div>
+                          <h4 class="font-medium text-blue-900">
+                            {{ transfer.from_booking.dead_first_name }} {{ transfer.from_booking.dead_last_name }}
+                          </h4>
+                          <p class="text-sm text-blue-700">
+                            From: {{ transfer.from_temporary_grave.grave_no }} ({{ transfer.from_temporary_grave.section }}, Row
+                            {{ transfer.from_temporary_grave.row_no }})
+                          </p>
+                          <p class="text-sm text-blue-600">
+                            Buried: {{ formatDateForDisplay(transfer.from_booking.buried_on) }}
+                          </p>
+                          <p class="mt-1 text-xs text-blue-500">Booking ref: #{{ transfer.from_booking.booking_reference }}</p>
                         </div>
                       </div>
                     </div>
-                    <div
-                      v-if="showNicheDropdown && filteredNiches.length === 0 && nicheSearch"
-                      class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 text-center text-gray-500 shadow-lg"
-                    >
-                      No niches found matching your search
-                    </div>
-                  </div>
-                  <div v-if="selectedNiche" class="mt-2">
-                    <Button type="button" variant="outline" size="sm" @click="clearNicheSelection">Clear Selection</Button>
-                  </div>
-                  <div v-if="form.errors.to_niche_id" class="mt-1 text-sm text-red-600">{{ form.errors.to_niche_id }}</div>
+                  </CardContent>
+                </Card>
 
-                  <div v-if="selectedNiche" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                    <div class="flex items-start space-x-3">
-                      <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
-                      <div>
-                        <h4 class="font-medium text-green-900">Niche {{ selectedNiche.niche_no }}</h4>
-                        <p class="text-sm text-green-700">
-                          Location: {{ selectedNiche.location || `${selectedNiche.section}, Row ${selectedNiche.row_no}` }}
-                        </p>
-                        <p v-if="selectedNiche.owner_name" class="text-sm text-green-600">Owner: {{ selectedNiche.owner_name }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Permanent grave search -->
-                <div v-if="transfer.transfer_type === 'permanent_grave'">
-                  <Label for="to_permanent_grave_id">Destination Permanent Grave *</Label>
-                  <div class="relative mt-1" data-permanent-grave-dropdown>
-                    <Input
-                      v-model="permanentGraveSearch"
-                      placeholder="Search by grave number, section, or owner name..."
-                      :class="form.errors.to_permanent_grave_id && 'border-red-500'"
-                      @focus="showPermanentGraveDropdown = true"
-                      @input="showPermanentGraveDropdown = true"
-                    />
-                    <div
-                      v-if="showPermanentGraveDropdown && filteredPermanentGraves.length > 0"
-                      class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
-                    >
-                      <div
-                        v-for="grave in filteredPermanentGraves"
-                        :key="grave.id"
-                        class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
-                        @click.stop="selectPermanentGrave(grave)"
-                      >
-                        <div class="font-medium text-gray-900">{{ grave.grave_no }}</div>
-                        <div class="text-sm text-gray-600">{{ grave.section }}, Row {{ grave.row_no }}</div>
-                        <div v-if="grave.owner_name" class="text-sm text-gray-500">Owner: {{ grave.owner_name }}</div>
-                      </div>
-                    </div>
-                    <div
-                      v-if="showPermanentGraveDropdown && filteredPermanentGraves.length === 0 && permanentGraveSearch"
-                      class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 text-center text-gray-500 shadow-lg"
-                    >
-                      No available permanent graves found matching your search
-                    </div>
-                  </div>
-                  <div v-if="selectedPermanentGrave" class="mt-2">
-                    <Button type="button" variant="outline" size="sm" @click="clearPermanentGraveSelection">Clear Selection</Button>
-                  </div>
-                  <div v-if="form.errors.to_permanent_grave_id" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.to_permanent_grave_id }}
-                  </div>
-
-                  <div v-if="selectedPermanentGrave" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
-                    <div class="flex items-start space-x-3">
-                      <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
-                      <div>
-                        <h4 class="font-medium text-green-900">{{ selectedPermanentGrave.grave_no }}</h4>
-                        <p class="text-sm text-green-700">{{ selectedPermanentGrave.section }}, Row {{ selectedPermanentGrave.row_no }}</p>
-                        <p v-if="selectedPermanentGrave.owner_name" class="text-sm text-green-600">Owner: {{ selectedPermanentGrave.owner_name }}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Removal info banner -->
-                <div v-if="transfer.transfer_type === 'removal'" class="rounded-lg border border-orange-200 bg-orange-50 p-4">
-                  <div class="flex items-start space-x-3">
-                    <MapPin class="mt-0.5 h-5 w-5 text-orange-600" />
+                <!-- Transfer Destination -->
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="flex items-center space-x-2">
+                      <ArrowRight class="h-5 w-5" />
+                      <span>Transfer Destination</span>
+                    </CardTitle>
+                    <CardDescription>Select how and where the remains should be transferred</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <!-- Transfer Type Radio Buttons -->
                     <div>
-                      <h4 class="font-medium text-orange-900">No destination required</h4>
-                      <p class="mt-1 text-sm text-orange-700">
-                        The remains will be removed from the temporary grave with no on-site destination.
-                      </p>
+                      <Label class="text-base font-medium">Transfer Type *</Label>
+                      <div class="mt-3 space-y-3">
+                        <label
+                          class="flex cursor-pointer items-start space-x-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
+                          :class="form.transfer_type === 'niche' ? 'border-blue-400 bg-blue-50' : ''"
+                        >
+                          <input
+                            v-model="form.transfer_type"
+                            type="radio"
+                            value="niche"
+                            class="mt-0.5 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <div>
+                            <div class="text-sm font-medium text-gray-900">Transfer to Niche</div>
+                            <div class="text-xs text-gray-500">Remains will be placed in a permanent niche</div>
+                          </div>
+                        </label>
+
+                        <label
+                          class="flex cursor-pointer items-start space-x-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
+                          :class="form.transfer_type === 'permanent_grave' ? 'border-blue-400 bg-blue-50' : ''"
+                        >
+                          <input
+                            v-model="form.transfer_type"
+                            type="radio"
+                            value="permanent_grave"
+                            class="mt-0.5 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <div>
+                            <div class="text-sm font-medium text-gray-900">Transfer to Permanent Grave</div>
+                            <div class="text-xs text-gray-500">Remains will be transferred to an available permanent grave</div>
+                          </div>
+                        </label>
+
+                        <label
+                          class="flex cursor-pointer items-start space-x-3 rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
+                          :class="form.transfer_type === 'removal' ? 'border-blue-400 bg-blue-50' : ''"
+                        >
+                          <input
+                            v-model="form.transfer_type"
+                            type="radio"
+                            value="removal"
+                            class="mt-0.5 h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500"
+                          />
+                          <div>
+                            <div class="text-sm font-medium text-gray-900">Remove Bones</div>
+                            <div class="text-xs text-gray-500">Remains will be removed with no on-site destination</div>
+                          </div>
+                        </label>
+                      </div>
+                      <div v-if="form.errors.transfer_type" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.transfer_type }}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <!-- Transfer Details -->
-            <Card>
-              <CardHeader>
-                <CardTitle class="flex items-center space-x-2">
-                  <Calendar class="h-5 w-5" />
-                  <span>Transfer Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent class="space-y-4">
-                <div>
-                  <Label for="proposed_transfer_date">Proposed Transfer Date *</Label>
-                  <DateInput id="proposed_transfer_date" v-model="form.proposed_transfer_date" class="mt-1 w-full" />
-                  <div v-if="form.errors.proposed_transfer_date" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.proposed_transfer_date }}
-                  </div>
-                </div>
+                    <!-- Niche Search -->
+                    <div v-if="form.transfer_type === 'niche'" class="mt-5">
+                      <Label for="to_niche_id">Available Niches *</Label>
+                      <div class="relative mt-1" data-niche-dropdown>
+                        <Input
+                          v-model="nicheSearch"
+                          placeholder="Search by niche number, owner name, or location..."
+                          :class="form.errors.to_niche_id && 'border-red-500'"
+                          @focus="showNicheDropdown = true"
+                          @input="showNicheDropdown = true"
+                        />
+                        <div
+                          v-if="showNicheDropdown && filteredNiches.length > 0"
+                          class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                        >
+                          <div
+                            v-for="niche in filteredNiches"
+                            :key="niche.id"
+                            class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
+                            @click.stop="selectNiche(niche)"
+                          >
+                            <div class="font-medium text-gray-900">Niche {{ niche.niche_no }}</div>
+                            <div class="text-sm text-gray-600">Location: {{ niche.location || 'No location specified' }}</div>
+                            <div v-if="niche.owner_name" class="text-sm text-gray-500">Owner: {{ niche.owner_name }}</div>
+                            <div v-if="niche.last_occupation_date" class="text-xs text-gray-400">
+                              Last occupied: {{ formatDateForDisplay(niche.last_occupation_date) }}
+                            </div>
+                          </div>
+                        </div>
+                        <div
+                          v-if="showNicheDropdown && filteredNiches.length === 0 && nicheSearch"
+                          class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 text-center text-gray-500 shadow-lg"
+                        >
+                          No niches found matching your search
+                        </div>
+                      </div>
+                      <div v-if="selectedNiche" class="mt-2">
+                        <Button type="button" variant="outline" size="sm" @click="clearNicheSelection">Clear Selection</Button>
+                      </div>
+                      <div v-if="form.errors.to_niche_id" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.to_niche_id }}
+                      </div>
 
-                <div>
-                  <Label for="transfer_reason">Reason for Transfer</Label>
-                  <Textarea
-                    id="transfer_reason"
-                    v-model="form.transfer_reason"
-                    :rows="3"
-                    placeholder="Optional: Provide the reason for requesting this transfer..."
-                    :class="form.errors.transfer_reason && 'border-red-500'"
-                    class="mt-1"
-                  />
-                  <div v-if="form.errors.transfer_reason" class="mt-1 text-sm text-red-600">
-                    {{ form.errors.transfer_reason }}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <!-- Applicant Details -->
-            <Card>
-              <CardHeader>
-                <CardTitle class="flex items-center space-x-2">
-                  <User class="h-5 w-5" />
-                  <span>Transfer Applicant Details</span>
-                </CardTitle>
-                <CardDescription>Details of the person requesting the transfer</CardDescription>
-              </CardHeader>
-              <CardContent class="space-y-4">
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label for="applicant_name">Applicant Name{{ transfer.transfer_type !== 'removal' ? ' *' : '' }}</Label>
-                    <Input
-                      id="applicant_name"
-                      v-model="form.applicant_name"
-                      :class="form.errors.applicant_name && 'border-red-500'"
-                      class="mt-1"
-                    />
-                    <div v-if="form.errors.applicant_name" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.applicant_name }}
+                      <div v-if="selectedNiche" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                        <div class="flex items-start space-x-3">
+                          <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
+                          <div>
+                            <h4 class="font-medium text-green-900">Niche {{ selectedNiche.niche_no }}</h4>
+                            <p class="text-sm text-green-700">
+                              Location: {{ selectedNiche.location || `${selectedNiche.section}, Row ${selectedNiche.row_no}` }}
+                            </p>
+                            <p v-if="selectedNiche.owner_name" class="text-sm text-green-600">Owner: {{ selectedNiche.owner_name }}</p>
+                            <p v-if="selectedNiche.last_occupation_date" class="text-xs text-green-500">
+                              Last occupied: {{ formatDateForDisplay(selectedNiche.last_occupation_date) }}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <Label for="contact_no">Contact Number{{ transfer.transfer_type !== 'removal' ? ' *' : '' }}</Label>
-                    <Input id="contact_no" v-model="form.contact_no" :class="form.errors.contact_no && 'border-red-500'" class="mt-1" />
-                    <div v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.contact_no }}
+                    <!-- Permanent Grave Search -->
+                    <div v-if="form.transfer_type === 'permanent_grave'" class="mt-5">
+                      <Label for="to_permanent_grave_id">Available Permanent Graves *</Label>
+                      <div class="relative mt-1" data-permanent-grave-dropdown>
+                        <Input
+                          v-model="permanentGraveSearch"
+                          placeholder="Search by grave number, section, or owner name..."
+                          :class="form.errors.to_permanent_grave_id && 'border-red-500'"
+                          @focus="showPermanentGraveDropdown = true"
+                          @input="showPermanentGraveDropdown = true"
+                        />
+                        <div
+                          v-if="showPermanentGraveDropdown && filteredPermanentGraves.length > 0"
+                          class="absolute z-10 mt-1 max-h-60 w-full overflow-y-auto rounded-md border border-gray-300 bg-white shadow-lg"
+                        >
+                          <div
+                            v-for="grave in filteredPermanentGraves"
+                            :key="grave.id"
+                            class="cursor-pointer border-b border-gray-100 px-4 py-2 last:border-b-0 hover:bg-gray-100"
+                            @click.stop="selectPermanentGrave(grave)"
+                          >
+                            <div class="font-medium text-gray-900">Block {{ grave.block }}</div>
+                            <div class="text-sm text-gray-600">Row {{ grave.row }}, Col {{ grave.column }}</div>
+                            <div v-if="grave.owner_name" class="text-sm text-gray-500">Owner: {{ grave.owner_name }}</div>
+                          </div>
+                        </div>
+                        <div
+                          v-if="showPermanentGraveDropdown && filteredPermanentGraves.length === 0 && permanentGraveSearch"
+                          class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-white p-4 text-center text-gray-500 shadow-lg"
+                        >
+                          No available permanent graves found matching your search
+                        </div>
+                      </div>
+                      <div v-if="selectedPermanentGrave" class="mt-2">
+                        <Button type="button" variant="outline" size="sm" @click="clearPermanentGraveSelection">Clear Selection</Button>
+                      </div>
+                      <div v-if="form.errors.to_permanent_grave_id" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.to_permanent_grave_id }}
+                      </div>
+
+                      <div v-if="selectedPermanentGrave" class="mt-3 rounded-lg border border-green-200 bg-green-50 p-3">
+                        <div class="flex items-start space-x-3">
+                          <CheckCircle class="mt-0.5 h-5 w-5 text-green-600" />
+                          <div>
+                            <h4 class="font-medium text-green-900">Block {{ selectedPermanentGrave.block }}</h4>
+                            <p class="text-sm text-green-700">Row {{ selectedPermanentGrave.row }}, Col {{ selectedPermanentGrave.column }}</p>
+                            <p v-if="selectedPermanentGrave.owner_name" class="text-sm text-green-600">Owner: {{ selectedPermanentGrave.owner_name }}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  <div>
-                    <Label for="contact_email">Email</Label>
-                    <Input id="contact_email" v-model="form.contact_email" type="email" class="mt-1" />
-                  </div>
-
-                  <div>
-                    <Label for="relationship_id">Relationship to Deceased{{ transfer.transfer_type !== 'removal' ? ' *' : '' }}</Label>
-                    <select
-                      id="relationship_id"
-                      v-model="form.relationship_id"
-                      :class="[
-                        'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
-                        form.errors.relationship_id && 'border-red-500',
-                      ]"
-                    >
-                      <option value="" disabled>Select relationship</option>
-                      <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id">
-                        {{ relationship.name }}
-                      </option>
-                    </select>
-                    <div v-if="form.errors.relationship_id" class="mt-1 text-sm text-red-600">
-                      {{ form.errors.relationship_id }}
+                    <!-- Removal Info Banner -->
+                    <div v-if="form.transfer_type === 'removal'" class="mt-5 rounded-lg border border-orange-200 bg-orange-50 p-4">
+                      <div class="flex items-start space-x-3">
+                        <MapPin class="mt-0.5 h-5 w-5 text-orange-600" />
+                        <div>
+                          <h4 class="font-medium text-orange-900">No destination required</h4>
+                          <p class="mt-1 text-sm text-orange-700">
+                            The remains will be removed from the temporary grave with no on-site destination. Only the transfer details and applicant
+                            information are needed.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  </CardContent>
+                </Card>
 
-                  <div class="sm:col-span-2">
-                    <Label for="applicant_address">Applicant Address</Label>
-                    <Textarea id="applicant_address" v-model="form.applicant_address" :rows="2" class="mt-1" />
-                  </div>
+                <!-- Transfer Details -->
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="flex items-center space-x-2">
+                      <Calendar class="h-5 w-5" />
+                      <span>Transfer Details</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent class="space-y-4">
+                    <div>
+                      <Label for="proposed_transfer_date">Proposed Transfer Date *</Label>
+                      <DateInput id="proposed_transfer_date" v-model="form.proposed_transfer_date" class="mt-1 w-full" />
+                      <div v-if="form.errors.proposed_transfer_date" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.proposed_transfer_date }}
+                      </div>
+                      <p class="mt-1 text-sm text-gray-500">The date when the transfer should take place</p>
+                    </div>
+
+                    <div>
+                      <Label for="transfer_reason">Reason for Transfer</Label>
+                      <Textarea
+                        id="transfer_reason"
+                        v-model="form.transfer_reason"
+                        :rows="3"
+                        placeholder="Optional: Provide the reason for requesting this transfer..."
+                        :class="form.errors.transfer_reason && 'border-red-500'"
+                        class="mt-1"
+                      />
+                      <div v-if="form.errors.transfer_reason" class="mt-1 text-sm text-red-600">
+                        {{ form.errors.transfer_reason }}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <!-- Applicant Details -->
+                <Card>
+                  <CardHeader>
+                    <CardTitle class="flex items-center space-x-2">
+                      <User class="h-5 w-5" />
+                      <span>Transfer Applicant Details</span>
+                    </CardTitle>
+                    <CardDescription>Details of the person requesting the transfer</CardDescription>
+                  </CardHeader>
+                  <CardContent class="space-y-4">
+                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div>
+                        <Label for="applicant_name">Applicant Name{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
+                        <Input
+                          id="applicant_name"
+                          v-model="form.applicant_name"
+                          :class="form.errors.applicant_name && 'border-red-500'"
+                          class="mt-1"
+                        />
+                        <div v-if="form.errors.applicant_name" class="mt-1 text-sm text-red-600">
+                          {{ form.errors.applicant_name }}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label for="contact_no">Contact Number{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
+                        <Input id="contact_no" v-model="form.contact_no" :class="form.errors.contact_no && 'border-red-500'" class="mt-1" />
+                        <div v-if="form.errors.contact_no" class="mt-1 text-sm text-red-600">
+                          {{ form.errors.contact_no }}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label for="contact_email">Email</Label>
+                        <Input id="contact_email" v-model="form.contact_email" type="email" class="mt-1" />
+                      </div>
+
+                      <div>
+                        <Label for="relationship_id">Relationship to Deceased{{ form.transfer_type !== 'removal' ? ' *' : '' }}</Label>
+                        <select
+                          id="relationship_id"
+                          v-model="form.relationship_id"
+                          :class="[
+                            'mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500',
+                            form.errors.relationship_id && 'border-red-500',
+                          ]"
+                        >
+                          <option value="" disabled>Select relationship</option>
+                          <option v-for="relationship in relationships" :key="relationship.id" :value="relationship.id">
+                            {{ relationship.name }}
+                          </option>
+                        </select>
+                        <div v-if="form.errors.relationship_id" class="mt-1 text-sm text-red-600">
+                          {{ form.errors.relationship_id }}
+                        </div>
+                      </div>
+
+                      <div class="sm:col-span-2">
+                        <Label for="applicant_address">Applicant Address</Label>
+                        <Textarea id="applicant_address" v-model="form.applicant_address" :rows="2" class="mt-1" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <!-- Form Actions -->
+                <div class="flex items-center justify-between pt-5">
+                  <Button variant="outline" as-child>
+                    <Link :href="route('graveyard.remains-transfers.index')">Cancel</Link>
+                  </Button>
+                  <Button type="submit" :disabled="form.processing">
+                    {{ form.processing ? 'Saving...' : 'Save Changes' }}
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-
-            <!-- Form Actions -->
-            <div class="flex items-center justify-between pt-2">
-              <Button variant="outline" as-child>
-                <Link :href="route('graveyard.remains-transfers.index')">Cancel</Link>
-              </Button>
-              <Button type="submit" :disabled="form.processing">
-                {{ form.processing ? 'Saving...' : 'Save Changes' }}
-              </Button>
+              </form>
             </div>
-          </form>
+          </div>
+
+          <!-- Sidebar (valid members for niche type) -->
+          <div class="lg:col-span-1">
+            <div class="sticky top-6">
+              <template v-if="form.transfer_type === 'niche'">
+                <div v-if="!selectedNiche" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="p-8 text-center">
+                    <MapPin class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                    <h3 class="mb-2 text-lg font-medium text-gray-900">Select a Niche First</h3>
+                    <p class="text-sm text-gray-500">Choose a niche from the form above to see valid members.</p>
+                  </div>
+                </div>
+
+                <div v-if="selectedNiche && availableValidMembers.length > 0" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">{{ availableValidMembers.length }} members available for this niche</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMember" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Niche
+                      </Button>
+                    </div>
+                    <div class="max-h-64 space-y-3 overflow-y-auto">
+                      <div
+                        v-for="member in availableValidMembers"
+                        :key="member.id"
+                        @click="selectValidMember(member)"
+                        :class="[
+                          'cursor-pointer rounded-lg border p-3 transition-colors',
+                          selectedValidMember?.id === member.id
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50',
+                        ]"
+                      >
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                              <h4 class="text-sm font-medium text-gray-900">{{ member.full_name }}</h4>
+                              <Badge v-if="member.is_deceased" variant="destructive" class="text-xs">Deceased</Badge>
+                              <Badge v-else variant="outline" class="border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                            </div>
+                            <div class="mt-1 space-y-1">
+                              <p class="text-xs text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship }}</p>
+                              <p v-if="member.member_type" class="text-xs text-gray-600">
+                                <span class="font-medium">Type:</span> {{ member.member_type }}
+                              </p>
+                              <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="space-y-1 text-xs text-gray-500">
+                                <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}</p>
+                                <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div v-if="selectedValidMember?.id === member.id" class="text-blue-600">
+                            <CheckCircle class="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="selectedNiche" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">This niche has no valid members yet</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMember" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Niche
+                      </Button>
+                    </div>
+                    <div class="py-4 text-center">
+                      <Users class="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                      <p class="text-xs text-gray-500">Click the button above to add the first valid member for this niche.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="selectedValidMember" class="mt-4 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-green-200 bg-green-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-green-900">
+                      <CheckCircle class="mr-2 h-4 w-4 text-green-600" />
+                      Selected Member
+                    </h3>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-2 text-sm font-medium text-gray-900">{{ selectedValidMember.full_name }}</div>
+                    <div class="space-y-1 text-xs">
+                      <div class="text-gray-600"><span class="font-medium">Relationship:</span> {{ selectedValidMember.relationship }}</div>
+                      <div v-if="selectedValidMember.member_type" class="text-gray-600">
+                        <span class="font-medium">Type:</span> {{ selectedValidMember.member_type }}
+                      </div>
+                      <div class="text-gray-600">
+                        <span class="font-medium">Status:</span>
+                        <Badge v-if="selectedValidMember.is_deceased" variant="destructive" class="ml-1 text-xs">Deceased</Badge>
+                        <Badge v-else variant="outline" class="ml-1 border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                      </div>
+                      <div v-if="selectedValidMember.is_deceased && (selectedValidMember.death_date || selectedValidMember.burial_date)" class="space-y-1 text-gray-500">
+                        <div v-if="selectedValidMember.death_date">
+                          <span class="font-medium">Death Date:</span> {{ formatDateForDisplay(selectedValidMember.death_date) }}
+                        </div>
+                        <div v-if="selectedValidMember.burial_date">
+                          <span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(selectedValidMember.burial_date) }}
+                        </div>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" @click="selectedValidMember = null" class="mt-3 w-full text-xs">
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </template>
+
+              <template v-else-if="form.transfer_type === 'permanent_grave'">
+                <div v-if="!selectedPermanentGrave" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="p-8 text-center">
+                    <MapPin class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                    <h3 class="mb-2 text-lg font-medium text-gray-900">Select a Permanent Grave First</h3>
+                    <p class="text-sm text-gray-500">Choose a permanent grave from the form above to see valid members.</p>
+                  </div>
+                </div>
+
+                <div v-if="selectedPermanentGrave && permanentGraveValidMembers.length > 0" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">{{ permanentGraveValidMembers.length }} members for this grave</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMemberForPermanentGrave" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Grave
+                      </Button>
+                    </div>
+                    <div class="max-h-64 space-y-3 overflow-y-auto">
+                      <div
+                        v-for="member in permanentGraveValidMembers"
+                        :key="member.id"
+                        @click="selectPermanentGraveValidMember(member)"
+                        :class="[
+                          'cursor-pointer rounded-lg border p-3 transition-colors',
+                          selectedPermanentGraveValidMember?.id === member.id
+                            ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-200'
+                            : 'border-gray-200 hover:border-blue-300 hover:bg-blue-50',
+                        ]"
+                      >
+                        <div class="flex items-start justify-between">
+                          <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                              <h4 class="text-sm font-medium text-gray-900">{{ member.full_name }}</h4>
+                              <Badge v-if="member.is_deceased" variant="destructive" class="text-xs">Deceased</Badge>
+                              <Badge v-else variant="outline" class="border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                            </div>
+                            <div class="mt-1 space-y-1">
+                              <p class="text-xs text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship }}</p>
+                              <p v-if="member.member_type" class="text-xs text-gray-600"><span class="font-medium">Type:</span> {{ member.member_type }}</p>
+                              <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="space-y-1 text-xs text-gray-500">
+                                <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}</p>
+                                <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div v-if="selectedPermanentGraveValidMember?.id === member.id" class="text-blue-600">
+                            <CheckCircle class="h-5 w-5" />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else-if="selectedPermanentGrave" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-gray-200 bg-gray-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-gray-900">
+                      <Users class="mr-2 h-4 w-4 text-blue-600" />
+                      Valid Members
+                    </h3>
+                    <p class="mt-1 text-xs text-gray-500">This grave has no valid members yet</p>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-4">
+                      <Button type="button" @click="navigateToAddValidMemberForPermanentGrave" class="w-full text-xs" variant="outline">
+                        <Users class="mr-2 h-3 w-3" />
+                        Add New Person to This Grave
+                      </Button>
+                    </div>
+                    <div class="py-4 text-center">
+                      <Users class="mx-auto mb-2 h-8 w-8 text-gray-400" />
+                      <p class="text-xs text-gray-500">Click the button above to add the first valid member for this grave.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="selectedPermanentGraveValidMember" class="mt-4 overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                  <div class="border-b border-green-200 bg-green-50 px-4 py-3">
+                    <h3 class="flex items-center text-sm font-medium text-green-900">
+                      <CheckCircle class="mr-2 h-4 w-4 text-green-600" />
+                      Selected Member
+                    </h3>
+                  </div>
+                  <div class="p-4">
+                    <div class="mb-2 text-sm font-medium text-gray-900">{{ selectedPermanentGraveValidMember.full_name }}</div>
+                    <div class="space-y-1 text-xs">
+                      <div class="text-gray-600"><span class="font-medium">Relationship:</span> {{ selectedPermanentGraveValidMember.relationship }}</div>
+                      <div v-if="selectedPermanentGraveValidMember.member_type" class="text-gray-600">
+                        <span class="font-medium">Type:</span> {{ selectedPermanentGraveValidMember.member_type }}
+                      </div>
+                      <div class="text-gray-600">
+                        <span class="font-medium">Status:</span>
+                        <Badge v-if="selectedPermanentGraveValidMember.is_deceased" variant="destructive" class="ml-1 text-xs">Deceased</Badge>
+                        <Badge v-else variant="outline" class="ml-1 border-green-200 bg-green-50 text-xs text-green-700">Living</Badge>
+                      </div>
+                      <div v-if="selectedPermanentGraveValidMember.is_deceased && (selectedPermanentGraveValidMember.death_date || selectedPermanentGraveValidMember.burial_date)" class="space-y-1 text-gray-500">
+                        <div v-if="selectedPermanentGraveValidMember.death_date">
+                          <span class="font-medium">Death Date:</span> {{ formatDateForDisplay(selectedPermanentGraveValidMember.death_date) }}
+                        </div>
+                        <div v-if="selectedPermanentGraveValidMember.burial_date">
+                          <span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(selectedPermanentGraveValidMember.burial_date) }}
+                        </div>
+                      </div>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" @click="selectedPermanentGraveValidMember = null" class="mt-3 w-full text-xs">
+                      Clear Selection
+                    </Button>
+                  </div>
+                </div>
+              </template>
+
+              <div v-else-if="form.transfer_type === 'removal'" class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div class="p-8 text-center">
+                  <ArrowRight class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <h3 class="mb-2 text-lg font-medium text-gray-900">No Destination</h3>
+                  <p class="text-sm text-gray-500">Remains will be removed with no on-site destination.</p>
+                </div>
+              </div>
+
+              <div v-else class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                <div class="p-8 text-center">
+                  <ArrowRight class="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                  <h3 class="mb-2 text-lg font-medium text-gray-900">Select Transfer Type</h3>
+                  <p class="text-sm text-gray-500">Choose a transfer destination type from the form to continue.</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

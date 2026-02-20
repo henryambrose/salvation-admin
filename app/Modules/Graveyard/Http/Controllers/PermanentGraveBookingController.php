@@ -90,6 +90,12 @@ class PermanentGraveBookingController extends Controller
             ->orWhere('contact_no', 'like', '%' . $request->search_term . '%');
 
         $graves = $query->get()->map(function (PermanentGrave $grave) {
+            // Auto-release: if grave is unavailable but has passed the 24-month wait, mark it available
+            if ($grave->status === 'unavailable' && $this->checkGraveEligibility($grave)) {
+                $grave->update(['status' => 'available']);
+                $grave->status = 'available';
+            }
+
             $pendingMaintenanceFee = $grave->calculatePendingAmount();
 
             return [
@@ -112,8 +118,8 @@ class PermanentGraveBookingController extends Controller
                         'relationship' => $member->relationship,
                         'member_type' => $member->member_type,
                         'is_deceased' => $member->is_deceased,
-                        'death_date' => $member->death_date?->format('Y-m-d'),
-                        'burial_date' => $member->burial_date?->format('Y-m-d')
+                        'death_date' => $member->death_date,
+                        'burial_date' => $member->burial_date
                     ];
                 }),
                 'has_valid_members' => $grave->validMembers->count() > 0,
@@ -260,6 +266,117 @@ class PermanentGraveBookingController extends Controller
         return Inertia::render('PagesGraveyard/PermanentGraveBooking/Show', [
             'booking' => $permanentGraveBooking,
         ]);
+    }
+
+    /**
+     * Show edit form for a booking
+     */
+    public function edit(PermanentGraveBooking $permanentGraveBooking)
+    {
+        $this->authorize('update-permanent-grave-booking');
+
+        $permanentGraveBooking->load(['permanentGrave', 'validMember']);
+
+        $grave = $permanentGraveBooking->permanentGrave;
+        $grave->load(['validMembers.relationship']);
+        $pendingMaintenanceFee = $grave->calculatePendingAmount();
+
+        $graveData = [
+            'id' => $grave->id,
+            'block' => $grave->block,
+            'row' => $grave->row,
+            'column' => $grave->column,
+            'owner_name' => $grave->owner_name,
+            'last_burial_date' => $grave->last_burial_date,
+            'is_eligible' => $this->checkGraveEligibility($grave),
+            'eligibility_message' => $this->getEligibilityMessage($grave),
+            'pending_maintenance_fee' => $pendingMaintenanceFee,
+            'has_pending_maintenance' => $pendingMaintenanceFee > 0,
+            'valid_members' => $grave->validMembers->map(function (ValidMember $member) {
+                return [
+                    'id' => $member->id,
+                    'full_name' => $member->full_name,
+                    'first_name' => $member->first_name,
+                    'last_name' => $member->last_name,
+                    'relationship' => $member->relationship ? ['name' => $member->relationship->name] : ['name' => ''],
+                    'member_type' => $member->member_type,
+                    'is_deceased' => $member->is_deceased,
+                    'death_date' => $member->death_date,
+                    'burial_date' => $member->burial_date,
+                ];
+            }),
+            'has_valid_members' => $grave->validMembers->count() > 0,
+        ];
+
+        return Inertia::render('PagesGraveyard/PermanentGraveBooking/Edit', [
+            'booking' => [
+                'id' => $permanentGraveBooking->id,
+                'booking_reference' => $permanentGraveBooking->booking_reference,
+                'status' => $permanentGraveBooking->status,
+                'valid_member_id' => $permanentGraveBooking->valid_member_id,
+                'died_on' => $permanentGraveBooking->died_on,
+                'buried_on' => $permanentGraveBooking->buried_on,
+                'cause_of_death' => $permanentGraveBooking->cause_of_death,
+                'minister' => $permanentGraveBooking->minister,
+                'applicant_type' => $permanentGraveBooking->applicant_type,
+                'applicant_name' => $permanentGraveBooking->applicant_name,
+                'contact_no' => $permanentGraveBooking->contact_no,
+                'contact_email' => $permanentGraveBooking->contact_email,
+                'permit_no' => $permanentGraveBooking->permit_no,
+                'special_requirements' => $permanentGraveBooking->special_requirements,
+            ],
+            'grave' => $graveData,
+        ]);
+    }
+
+    /**
+     * Update a booking
+     */
+    public function update(Request $request, PermanentGraveBooking $permanentGraveBooking)
+    {
+        $this->authorize('update-permanent-grave-booking');
+
+        $request->validate([
+            'valid_member_id' => 'required|exists:valid_members,id',
+            'died_on' => 'required|date',
+            'buried_on' => 'required|date|after_or_equal:died_on',
+            'cause_of_death' => 'required|string|max:255',
+            'minister' => 'nullable|string|max:255',
+            'applicant_type' => 'required|in:member,external',
+            'applicant_name' => 'required|string|max:255',
+            'contact_no' => 'required|string|max:20',
+            'contact_email' => 'nullable|email',
+            'permit_no' => 'nullable|string|max:50',
+            'special_requirements' => 'nullable|string|max:1000',
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $permanentGraveBooking->update([
+                'valid_member_id' => $request->valid_member_id,
+                'died_on' => $request->died_on,
+                'buried_on' => $request->buried_on,
+                'cause_of_death' => $request->cause_of_death,
+                'minister' => $request->minister,
+                'applicant_type' => $request->applicant_type,
+                'applicant_name' => $request->applicant_name,
+                'contact_no' => $request->contact_no,
+                'contact_email' => $request->contact_email,
+                'permit_no' => $request->permit_no,
+                'special_requirements' => $request->special_requirements,
+                'updated_by' => Auth::id(),
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('graveyard.permanent-grave-bookings.index')
+                ->with('success', 'Permanent grave booking updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to update permanent grave booking: ' . $e->getMessage());
+            return back()->withErrors(['error' => 'Failed to update booking. Please try again.'])->withInput();
+        }
     }
 
     /**
@@ -444,7 +561,7 @@ class PermanentGraveBookingController extends Controller
         }
 
         $lastBurial = Carbon::parse($grave->last_burial_date);
-        $monthsSinceLastBurial = $lastBurial->diffInMonths(now());
+        $monthsSinceLastBurial = round($lastBurial->diffInMonths(now()));
 
         if ($monthsSinceLastBurial >= 24) {
             return "This grave is eligible for burial. Last burial was {$monthsSinceLastBurial} months ago.";

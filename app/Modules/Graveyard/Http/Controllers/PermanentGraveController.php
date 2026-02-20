@@ -3,6 +3,7 @@
 namespace Modules\Graveyard\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -50,44 +51,6 @@ class PermanentGraveController extends Controller
         }
 
         // Apply maintenance status filter
-        if ($request->filled('maintenance_status')) {
-            $query->byMaintenanceStatus($request->maintenance_status);
-        }
-
-        // Calculate pending amounts for all graves
-        $graves = $query->get();
-        foreach ($graves as $grave) {
-            $grave->pending_amount = $grave->calculatePendingAmount();
-        }
-
-        // Re-apply the query with updated pending amounts
-        $query = PermanentGrave::query()->with(['member', 'maintenancePayments' => function($query) {
-            $query->latest()->limit(1);
-        }]);
-
-        // Reapply all filters
-        if ($request->input('isArchived') === 'true') {
-            $query->onlyTrashed();
-        } else {
-            $query->withoutTrashed();
-        }
-
-        if ($request->filled('search')) {
-            $query->search($request->search);
-        }
-
-        if ($request->filled('block')) {
-            $query->byBlock($request->block);
-        }
-
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('is_active')) {
-            $query->where('is_active', $request->is_active === 'true');
-        }
-
         if ($request->filled('maintenance_status')) {
             $query->byMaintenanceStatus($request->maintenance_status);
         }
@@ -429,6 +392,33 @@ class PermanentGraveController extends Controller
 
         // Return view for printing (opens print dialog automatically)
         return view('graveyard.documents.valid-members', $data);
+    }
+
+    /**
+     * Release all unavailable graves that have passed the 24-month burial wait period
+     */
+    public function releaseEligible(Request $request)
+    {
+        $this->authorize('update-permanent-grave');
+
+        $graves = PermanentGrave::where('status', 'unavailable')
+            ->whereNotNull('last_burial_date')
+            ->get();
+
+        $released = 0;
+        foreach ($graves as $grave) {
+            $monthsSince = Carbon::parse($grave->last_burial_date)->diffInMonths(now());
+            if ($monthsSince >= 24) {
+                $grave->update(['status' => 'available']);
+                $released++;
+            }
+        }
+
+        $message = $released > 0
+            ? "{$released} grave(s) released to available status."
+            : "No graves were eligible for release at this time.";
+
+        return back()->with('success', $message);
     }
 
     /**

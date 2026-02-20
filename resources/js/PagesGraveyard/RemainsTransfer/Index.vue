@@ -1,15 +1,13 @@
 <script setup lang="ts">
 import Pagination from '@/components/Pagination.vue';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, Pencil, Phone, Plus, Search, User } from 'lucide-vue-next';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 interface RemainsTransfer {
   id: number;
@@ -34,9 +32,11 @@ interface RemainsTransfer {
     row_no: string;
   } | null;
   to_permanent_grave?: {
-    grave_no: string;
-    section: string;
-    row_no: string;
+    id: number;
+    block: string;
+    row: number;
+    column: number;
+    owner_name?: string;
   } | null;
   proposed_transfer_date: string;
   transfer_reason?: string | null;
@@ -55,51 +55,51 @@ interface Props {
     meta: any;
   };
   filters: {
-    status?: string;
     search?: string;
+    transfer_type?: string;
   };
 }
 
 const props = defineProps<Props>();
 
 const search = ref(props.filters.search || '');
-const status = ref(props.filters.status || 'all');
-
-const statusColors = {
-  pending: 'bg-yellow-100 text-yellow-800',
-  approved: 'bg-blue-100 text-blue-800',
-  rejected: 'bg-red-100 text-red-800',
-  completed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-800',
-};
+const transferType = ref(props.filters.transfer_type || '');
 
 const applyFilters = () => {
   router.get(
     route('graveyard.remains-transfers.index'),
-    {
-      search: search.value,
-      status: status.value === 'all' ? '' : status.value,
-    },
-    {
-      preserveState: true,
-      replace: true,
-    },
+    { search: search.value, transfer_type: transferType.value },
+    { preserveState: true, replace: true },
   );
 };
 
 const clearFilters = () => {
   search.value = '';
-  status.value = 'all';
+  transferType.value = '';
   applyFilters();
 };
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-  })
-    .format(amount)
-    .replace('₹', '₹ ');
+let searchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+watch(search, (val) => {
+  if (searchDebounce) clearTimeout(searchDebounce);
+  if (val.length >= 2 || val.length === 0) {
+    searchDebounce = setTimeout(applyFilters, 300);
+  }
+});
+
+const transferTypeLabel = (type: string) => {
+  if (type === 'niche') return 'Niche Transfer';
+  if (type === 'permanent_grave') return 'Permanent Transfer';
+  if (type === 'removal') return 'Remains Removed';
+  return type;
+};
+
+const transferTypeBadgeClass = (type: string) => {
+  if (type === 'niche') return 'bg-blue-100 text-blue-700';
+  if (type === 'permanent_grave') return 'bg-purple-100 text-purple-700';
+  if (type === 'removal') return 'bg-orange-100 text-orange-700';
+  return 'bg-gray-100 text-gray-700';
 };
 
 const formatDate = (date: string) => {
@@ -109,7 +109,6 @@ const formatDate = (date: string) => {
 const getDeceasedName = (transfer: RemainsTransfer) => {
   return `${transfer.from_booking.dead_first_name} ${transfer.from_booking.dead_last_name}`;
 };
-
 
 </script>
 
@@ -140,43 +139,29 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
 
           <!-- Filters -->
           <div class="border-b border-gray-200 bg-gray-50 px-4 py-4 sm:px-6">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-4">
-              <div class="sm:col-span-2">
-                <Label for="search">Search</Label>
-                <div class="relative mt-1">
-                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <Search class="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Input
-                    id="search"
-                    v-model="search"
-                    placeholder="Search by deceased name, reference, or applicant..."
-                    class="pl-10"
-                    @keyup.enter="applyFilters"
-                  />
+            <div class="flex flex-wrap gap-3">
+              <div class="relative min-w-0 flex-1">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <Search class="h-5 w-5 text-gray-400" />
                 </div>
+                <Input
+                  id="search"
+                  v-model="search"
+                  placeholder="Search by deceased name, reference, or applicant..."
+                  class="pl-10"
+                />
               </div>
-
-              <div>
-                <Label for="status">Status</Label>
-                <select
-                  v-model="status"
-                  @change="applyFilters"
-                  class="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="all">All statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="approved">Approved</option>
-                  <option value="rejected">Rejected</option>
-                  <option value="completed">Completed</option>
-                  <option value="cancelled">Cancelled</option>
-                </select>
-              </div>
-
-              <div class="flex items-end space-x-2">
-                <Button @click="applyFilters" class="flex-1"> Apply </Button>
-                <Button variant="outline" @click="clearFilters"> Clear </Button>
-              </div>
+              <select
+                v-model="transferType"
+                class="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                @change="applyFilters"
+              >
+                <option value="">All Types</option>
+                <option value="niche">Niche Transfer</option>
+                <option value="permanent_grave">Permanent Transfer</option>
+                <option value="removal">Remains Removed</option>
+              </select>
+              <Button variant="outline" @click="clearFilters">Clear</Button>
             </div>
           </div>
 
@@ -198,67 +183,64 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
 
             <div v-else class="space-y-6">
               <!-- Desktop Table -->
-              <div class="hidden sm:block">
-                <Table>
+              <div class="hidden sm:block overflow-x-auto">
+                <Table class="min-w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead class="text-gray-700 font-semibold">Transfer Details</TableHead>
-                      <TableHead class="text-gray-700 font-semibold">From → To</TableHead>
-                      <TableHead class="text-gray-700 font-semibold">Deceased</TableHead>
-                      <TableHead class="text-gray-700 font-semibold">Applicant</TableHead>
-                      <TableHead class="text-gray-700 font-semibold">Transfer Date</TableHead>
-                      <!-- <TableHead>Financial</TableHead> -->
-                      <TableHead class="text-gray-700 font-semibold">Status</TableHead>
-                      <TableHead class="text-right text-gray-700 font-semibold">Actions</TableHead>
+                      <TableHead class="min-w-[220px] whitespace-nowrap font-semibold text-gray-700">Transfer Details</TableHead>
+                      <TableHead class="min-w-[220px] whitespace-nowrap font-semibold text-gray-700">From → To</TableHead>
+                      <TableHead class="min-w-[180px] whitespace-nowrap font-semibold text-gray-700">Deceased</TableHead>
+                      <TableHead class="min-w-[180px] whitespace-nowrap font-semibold text-gray-700">Applicant</TableHead>
+                      <TableHead class="min-w-[130px] whitespace-nowrap font-semibold text-gray-700">Transfer Date</TableHead>
+                      <TableHead class="w-16 text-right font-semibold text-gray-700">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     <TableRow v-for="transfer in transfers.data" :key="transfer.id">
-                      <TableCell>
-                        <div>
+                      <TableCell class="align-top">
+                        <div class="whitespace-nowrap">
                           <div class="font-medium text-gray-900">#{{ transfer.transfer_reference }}</div>
-                          <div class="text-sm text-gray-500">
-                            {{ transfer.transfer_reason?.substring(0, 50) }}{{ (transfer.transfer_reason?.length ?? 0) > 50 ? '...' : '' }}
+                          <div class="mt-1">
+                            <span :class="['inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', transferTypeBadgeClass(transfer.transfer_type)]">
+                              {{ transferTypeLabel(transfer.transfer_type) }}
+                            </span>
+                          </div>
+                          <div class="mt-1 max-w-[200px] truncate text-sm text-gray-500">
+                            {{ transfer.transfer_reason }}
                           </div>
                           <div class="text-xs text-gray-400">By {{ transfer.creator.name }}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div class="space-y-1">
+                      <TableCell class="align-top">
+                        <div class="space-y-1 whitespace-nowrap">
                           <div class="text-sm">
                             <span class="font-medium">{{ transfer.from_temporary_grave.grave_no }}</span>
                             <span class="text-gray-500"> → </span>
                             <span v-if="transfer.transfer_type === 'niche' && transfer.to_niche" class="font-medium">{{ transfer.to_niche.niche_no }}</span>
-                            <span v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave" class="font-medium">{{ transfer.to_permanent_grave.grave_no }}</span>
-                            <span v-else class="text-gray-400 italic">Removal</span>
+                            <span v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave" class="font-medium">Block {{ transfer.to_permanent_grave.block }}-{{ transfer.to_permanent_grave.row }}-{{ transfer.to_permanent_grave.column }}</span>
+                            <span v-else class="italic text-gray-400">Removal</span>
                           </div>
                           <div class="text-xs text-gray-500">
                             {{ transfer.from_temporary_grave.section }}
                             <template v-if="transfer.transfer_type === 'niche' && transfer.to_niche"> → {{ transfer.to_niche.section }}</template>
-                            <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave"> → {{ transfer.to_permanent_grave.section }}</template>
+                            <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave"> → Block {{ transfer.to_permanent_grave.block }}</template>
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div class="font-medium text-gray-900">
-                            {{ getDeceasedName(transfer) }}
-                          </div>
+                      <TableCell class="align-top">
+                        <div class="whitespace-nowrap">
+                          <div class="font-medium text-gray-900">{{ getDeceasedName(transfer) }}</div>
                           <div class="text-sm text-gray-500">Buried: {{ formatDate(transfer.from_booking.buried_on) }}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div class="font-medium text-gray-900">
-                            {{ transfer.applicant_name }}
-                          </div>
-                          <div class="text-sm text-gray-500">
-                            {{ transfer.contact_no }}
-                          </div>
+                      <TableCell class="align-top">
+                        <div class="whitespace-nowrap">
+                          <div class="font-medium text-gray-900">{{ transfer.applicant_name }}</div>
+                          <div class="text-sm text-gray-500">{{ transfer.contact_no }}</div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        <div class="text-sm">
+                      <TableCell class="align-top">
+                        <div class="whitespace-nowrap text-sm">
                           {{ formatDate(transfer.proposed_transfer_date) }}
                         </div>
                       </TableCell>
@@ -272,11 +254,6 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                           </div>
                         </div>
                       </TableCell> -->
-                      <TableCell>
-                        <Badge :class="statusColors[transfer.status]">
-                          {{ transfer.status }}
-                        </Badge>
-                      </TableCell>
                       <TableCell class="text-right">
                         <Button variant="outline" size="sm" as-child>
                           <Link :href="route('graveyard.remains-transfers.show', transfer.id)">
@@ -293,11 +270,11 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
               <div class="space-y-4 sm:hidden">
                 <Card v-for="transfer in transfers.data" :key="transfer.id">
                   <CardHeader class="pb-3">
-                    <div class="flex items-center justify-between">
-                      <CardTitle class="text-base"> #{{ transfer.transfer_reference }} </CardTitle>
-                      <Badge :class="statusColors[transfer.status]">
-                        {{ transfer.status }}
-                      </Badge>
+                    <div class="flex items-start justify-between">
+                      <CardTitle class="text-base">#{{ transfer.transfer_reference }}</CardTitle>
+                      <span :class="['inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', transferTypeBadgeClass(transfer.transfer_type)]">
+                        {{ transferTypeLabel(transfer.transfer_type) }}
+                      </span>
                     </div>
                     <CardDescription> {{ getDeceasedName(transfer) }} • {{ formatDate(transfer.proposed_transfer_date) }} </CardDescription>
                   </CardHeader>
@@ -307,7 +284,7 @@ const getDeceasedName = (transfer: RemainsTransfer) => {
                       <span>
                         {{ transfer.from_temporary_grave.grave_no }} →
                         <template v-if="transfer.transfer_type === 'niche' && transfer.to_niche">{{ transfer.to_niche.niche_no }}</template>
-                        <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave">{{ transfer.to_permanent_grave.grave_no }}</template>
+                        <template v-else-if="transfer.transfer_type === 'permanent_grave' && transfer.to_permanent_grave">Block {{ transfer.to_permanent_grave.block }}-{{ transfer.to_permanent_grave.row }}-{{ transfer.to_permanent_grave.column }}</template>
                         <template v-else>Removal</template>
                       </span>
                     </div>

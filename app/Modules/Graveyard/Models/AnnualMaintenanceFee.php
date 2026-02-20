@@ -91,10 +91,17 @@ class AnnualMaintenanceFee extends Model
      */
     public static function getFeeForYear(int $year, string $type = 'permanent_grave'): ?float
     {
+        static $cache = [];
+        $key = "{$type}_{$year}";
+
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
         // Try exact year first
         $fee = static::active()->forYear($year)->first();
         if ($fee) {
-            return $type === 'niche' ? $fee->niche_amount : $fee->permanent_grave_amount;
+            return $cache[$key] = $type === 'niche' ? $fee->niche_amount : $fee->permanent_grave_amount;
         }
 
         // Fall back to most recent fee before or in the requested year that has the requested amount type
@@ -104,7 +111,7 @@ class AnnualMaintenanceFee extends Model
             ->orderBy('year', 'desc')
             ->first();
 
-        return $latestFee ? ($type === 'niche' ? $latestFee->niche_amount : $latestFee->permanent_grave_amount) : null;
+        return $cache[$key] = $latestFee ? ($type === 'niche' ? $latestFee->niche_amount : $latestFee->permanent_grave_amount) : null;
     }
 
     /**

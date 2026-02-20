@@ -52,6 +52,7 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::post('/', [PermanentGraveController::class, 'store'])->name('store');
         Route::get('/search-members', [PermanentGraveController::class, 'searchMembers'])->name('search-members');
         Route::post('/add-valid-member', [PermanentGraveBookingController::class, 'addValidMember'])->name('add-valid-member');
+        Route::post('/release-eligible', [PermanentGraveController::class, 'releaseEligible'])->name('release-eligible');
         Route::get('/{permanentGrave}', [PermanentGraveController::class, 'show'])->name('show');
         Route::get('/{permanentGrave}/edit', [PermanentGraveController::class, 'edit'])->name('edit');
         Route::put('/{permanentGrave}', [PermanentGraveController::class, 'update'])->name('update');
@@ -107,6 +108,8 @@ Route::middleware(['web', 'auth',  'nocache'])->prefix('graveyard')->as('graveya
         Route::get('/create', [PermanentGraveBookingController::class, 'create'])->name('create');
         Route::post('/search-permanent-grave', [PermanentGraveBookingController::class, 'searchPermanentGrave'])->name('search-permanent-grave');
         Route::post('/', [PermanentGraveBookingController::class, 'store'])->name('store');
+        Route::get('/{permanentGraveBooking}/edit', [PermanentGraveBookingController::class, 'edit'])->name('edit');
+        Route::put('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'update'])->name('update');
         Route::get('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'show'])->name('show');
         Route::post('/{permanentGraveBooking}/cancel', [PermanentGraveBookingController::class, 'cancel'])->name('cancel');
         Route::delete('/{permanentGraveBooking}', [PermanentGraveBookingController::class, 'destroy'])->name('destroy');
