@@ -407,7 +407,7 @@ const getCategoriesByApp = computed(() => {
       ) || [],
     Fund:
       props.categories?.filter((cat) =>
-        ['Fund Categories', 'Annual Contributions', 'Mass Intentions', 'Mass Types', 'Mass Intention Types', 'Payment Methods'].includes(cat.name),
+        ['Fund Management', 'Fund Categories', 'Annual Contributions', 'Community Contributions', 'Community Contributions Type', 'Mass Intentions', 'Mass Types', 'Mass Intention Types', 'Payment Methods', 'Mass Schedules'].includes(cat.name),
       ) || [],
     Graveyard: props.categories?.filter((cat) => ['Graveyard Management'].includes(cat.name)) || [],
     Core: props.categories?.filter((cat) => ['System Management', 'Data Management', 'AI Assistance', 'Dashboard'].includes(cat.name)) || [],

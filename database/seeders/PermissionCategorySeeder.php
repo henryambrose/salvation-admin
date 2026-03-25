@@ -126,6 +126,18 @@ class PermissionCategorySeeder extends Seeder
                 ]
             ],
             [
+                'name' => 'Fund Management',
+                'slug' => 'fund-management',
+                'description' => 'Core fund management permissions including dashboard access',
+                'app' => 'Fund',
+                'color' => '#374151',
+                'sort_order' => 9,
+                'rules' => [
+                    ['rule_type' => 'contains', 'rule_value' => 'fund-dashboard', 'priority' => 15],
+                    ['rule_type' => 'contains', 'rule_value' => 'view-fund-reports', 'priority' => 15],
+                ]
+            ],
+            [
                 'name' => 'Fund Categories',
                 'slug' => 'fund-categories',
                 'description' => 'Fund category management permissions',

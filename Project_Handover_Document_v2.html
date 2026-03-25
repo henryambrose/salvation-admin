@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Handover Document – Salvation Admin</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', Calibri, Arial, sans-serif;
+      font-size: 11pt;
+      color: #1a1a1a;
+      background: #fff;
+      line-height: 1.6;
+    }
+    @media print {
+      body { font-size: 10pt; }
+      .page-break { page-break-before: always; }
+      .no-print { display: none; }
+    }
+
+    /* ── Cover Page ── */
+    .cover {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 60px 40px;
+      border-bottom: 4px solid #1d4ed8;
+    }
+    .cover .logo-placeholder {
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: #1d4ed8;
+      display: flex; align-items: center; justify-content: center;
+      color: #fff; font-size: 28pt; font-weight: bold;
+      margin: 0 auto 24px;
+    }
+    .cover h1 { font-size: 28pt; color: #1d4ed8; margin-bottom: 8px; }
+    .cover .subtitle { font-size: 14pt; color: #555; margin-bottom: 40px; }
+    .cover .meta-table { border-collapse: collapse; min-width: 380px; }
+    .cover .meta-table td { padding: 8px 16px; text-align: left; }
+    .cover .meta-table td:first-child { font-weight: 600; color: #1d4ed8; width: 160px; }
+    .cover .meta-table tr { border-bottom: 1px solid #e5e7eb; }
+    .cover .confidential {
+      margin-top: 48px; padding: 10px 24px;
+      border: 1px solid #dc2626; border-radius: 4px;
+      color: #dc2626; font-size: 9pt; letter-spacing: 0.08em; text-transform: uppercase;
+    }
+
+    /* ── TOC ── */
+    .toc { padding: 48px 60px; }
+    .toc h2 { font-size: 18pt; color: #1d4ed8; border-bottom: 2px solid #1d4ed8; padding-bottom: 6px; margin-bottom: 20px; }
+    .toc ol { padding-left: 20px; }
+    .toc li { margin: 6px 0; }
+    .toc a { color: #1d4ed8; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+
+    /* ── Sections ── */
+    .section { padding: 40px 60px; }
+    .section + .section { border-top: 1px solid #e5e7eb; }
+    h2.section-title {
+      font-size: 16pt; color: #1d4ed8;
+      border-bottom: 2px solid #1d4ed8;
+      padding-bottom: 6px; margin-bottom: 20px;
+    }
+    h3 { font-size: 12pt; color: #1e40af; margin: 24px 0 8px; }
+    h4 { font-size: 11pt; color: #374151; margin: 16px 0 6px; font-weight: 600; }
+    p { margin-bottom: 10px; }
+    ul, ol { padding-left: 22px; margin-bottom: 10px; }
+    li { margin: 4px 0; }
+
+    /* ── Tables ── */
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10pt; }
+    th {
+      background: #1d4ed8; color: #fff;
+      padding: 8px 10px; text-align: left;
+    }
+    td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+    tr:nth-child(even) td { background: #f8fafc; }
+
+    /* ── Callout boxes ── */
+    .callout {
+      border-left: 4px solid #1d4ed8;
+      background: #eff6ff;
+      padding: 12px 16px; margin: 16px 0;
+      border-radius: 0 4px 4px 0;
+    }
+    .callout.warning {
+      border-color: #d97706; background: #fffbeb;
+    }
+    .callout.danger {
+      border-color: #dc2626; background: #fef2f2;
+    }
+
+    /* ── Workflow steps ── */
+    .steps { counter-reset: step-counter; padding-left: 0; list-style: none; }
+    .steps li {
+      counter-increment: step-counter;
+      display: flex; gap: 14px;
+      margin: 10px 0;
+    }
+    .steps li::before {
+      content: counter(step-counter);
+      min-width: 28px; height: 28px;
+      background: #1d4ed8; color: #fff;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 10pt; flex-shrink: 0;
+    }
+
+    /* ── Sign-off ── */
+    .signoff-table td { padding: 14px 12px; }
+    .sig-line {
+      border-bottom: 1px solid #374151;
+      min-width: 200px; display: inline-block;
+      margin: 0 8px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px; border-radius: 12px;
+      font-size: 9pt; font-weight: 600;
+    }
+    .badge-blue { background: #dbeafe; color: #1d4ed8; }
+    .badge-green { background: #dcfce7; color: #166534; }
+    .badge-yellow { background: #fef9c3; color: #854d0e; }
+    .badge-red { background: #fee2e2; color: #991b1b; }
+  </style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     COVER PAGE
+══════════════════════════════════════════════════════ -->
+<div class="cover">
+  <div class="logo-placeholder">OLS</div>
+  <h1>Project Handover Document</h1>
+  <p class="subtitle">Our Lady of Salvation Church, Dadar</p>
+  <table class="meta-table">
+    <tr><td>Applications</td><td>Members v.1 &nbsp;|&nbsp; Fund Management v.1 &nbsp;|&nbsp; Graveyard Management v.1</td></tr>
+    <tr><td>Date</td><td>27 February 2026</td></tr>
+    <tr><td>Prepared By</td><td>John D'Souza</td></tr>
+    <tr><td>Client</td><td>Our Lady of Salvation Church, Dadar</td></tr>
+    <tr><td>Document Version</td><td>2.0 (Final)</td></tr>
+  </table>
+  <div class="confidential">Confidential — For Internal Use Only</div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     TABLE OF CONTENTS
+══════════════════════════════════════════════════════ -->
+<div class="toc">
+  <h2>Table of Contents</h2>
+  <ol>
+    <li><a href="#s1">Introduction</a></li>
+    <li><a href="#s2">Project Overview</a></li>
+    <li><a href="#s3">System Access &amp; Login</a></li>
+    <li><a href="#s4">User Roles &amp; Permissions</a></li>
+    <li><a href="#s5">Members Module</a></li>
+    <li><a href="#s6">Fund Management Module</a></li>
+    <li><a href="#s7">Graveyard Management Module</a></li>
+    <li><a href="#s8">Reporting &amp; Exports</a></li>
+    <li><a href="#s9">Data Management &amp; Backups</a></li>
+    <li><a href="#s10">Key Operational Workflows</a></li>
+    <li><a href="#s11">Known Limitations</a></li>
+    <li><a href="#s12">Support &amp; Warranty Terms</a></li>
+    <li><a href="#s13">Handover &amp; Acceptance Sign-Off</a></li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     1. INTRODUCTION
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s1">
+  <h2 class="section-title">1. Introduction</h2>
+  <p>
+    This Handover Document formally transfers operational responsibility for the <strong>Salvation Admin</strong>
+    application suite to the designated administrators and data managers of
+    <strong>Our Lady of Salvation Church, Dadar</strong>.
+  </p>
+  <p>
+    The document covers all three applications delivered under the project:
+    <strong>Members</strong>, <strong>Fund Management</strong>, and <strong>Graveyard Management</strong>.
+    It serves as the primary reference for day-to-day operation, user management, and ongoing administration.
+  </p>
+  <p>
+    The Salvation Admin system is a secure, web-based application accessible through a standard web browser.
+    No software installation is required on user computers beyond a modern browser
+    (Google Chrome or Mozilla Firefox recommended).
+  </p>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     2. PROJECT OVERVIEW
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s2">
+  <h2 class="section-title">2. Project Overview</h2>
+
+  <h3>Members Application</h3>
+  <p>
+    The Members application manages the complete Church Members Database. It provides the ability to
+    add, update, and maintain records for all parishioners and their families. It serves as the master
+    data source for the Fund and Graveyard applications, ensuring consistent member information across
+    all three systems.
+  </p>
+
+  <h3>Fund Management Application</h3>
+  <p>
+    The Fund Management application replaces the previous system that had reached end-of-life.
+    It manages Community Contributions, Annual Family Contributions, and Mass Intentions.
+    The system is directly linked to the Members database to validate payer identities and generate
+    accurate receipts.
+  </p>
+
+  <h3>Graveyard Management Application</h3>
+  <p>
+    The Graveyard Management application replaces the previous system that had reached end-of-life.
+    It manages the full lifecycle of the church cemetery and niches — from grave booking and payment
+    collection to niche transfers and annual maintenance fees. It integrates with the Members
+    database to validate burial eligibilities.
+  </p>
+
+  <h3>Key Benefits</h3>
+  <ul>
+    <li>Centralized, single-source-of-truth for all parish member data</li>
+    <li>Secure access via role-based login — each staff member sees only what they need</li>
+    <li>Complete audit trail — every change is logged with the user and timestamp</li>
+    <li>Digital receipt generation for fund contributions and graveyard payments</li>
+    <li>Export to Excel/CSV for reporting and reconciliation</li>
+    <li>Family tree visualization for member relationships</li>
+    <li>Elimination of duplicate data entry across departments</li>
+    <li>Soft-delete (archive) system — records are never permanently lost unless explicitly confirmed</li>
+  </ul>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     3. SYSTEM ACCESS & LOGIN
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s3">
+  <h2 class="section-title">3. System Access &amp; Login</h2>
+
+  <h3>Application URL</h3>
+  <table>
+    <tr><th>Environment</th><th>URL</th></tr>
+    <tr><td>Production (Live)</td><td><strong>…………………………………………………………</strong></td></tr>
+    <tr><td>Backup / Staging</td><td>…………………………………………………………</td></tr>
+  </table>
+
+  <h3>Logging In</h3>
+  <ol class="steps">
+    <li>Open the application URL in Google Chrome or Mozilla Firefox.</li>
+    <li>Enter your assigned <strong>Email Address</strong> and <strong>Password</strong> on the login screen.</li>
+    <li>Click <strong>Log In</strong>. You will be redirected to the dashboard for your role.</li>
+  </ol>
+
+  <div class="callout warning">
+    <strong>First Login:</strong> Each new user should change their password immediately after first login
+    via <em>Settings → Password</em> in the top-right menu.
+  </div>
+
+  <h3>Forgot Password</h3>
+  <p>
+    Click <strong>"Forgot your password?"</strong> on the login page. Enter your email address.
+    A reset link will be sent to your inbox. Follow the link to set a new password.
+    Contact the Administrator if you do not receive the email within 5 minutes.
+  </p>
+
+  <h3>Session Timeout</h3>
+  <p>
+    The system includes a session-refresh mechanism that prevents automatic logout while you are
+    actively filling in a form. However, extended idle periods (leaving the browser tab open without
+    activity) may require you to log in again.
+  </p>
+
+  <h3>Logging Out</h3>
+  <p>Always log out after finishing your work, especially on shared computers.
+    Click your name/avatar in the top-right corner and select <strong>Log Out</strong>.</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     4. USER ROLES & PERMISSIONS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s4">
+  <h2 class="section-title">4. User Roles &amp; Permissions</h2>
+  <p>
+    Access is controlled by <strong>Roles</strong>. Each role grants specific permissions across the
+    three modules. A user may have one or more roles.
+  </p>
+
+  <table>
+    <tr>
+      <th>Role</th>
+      <th>Typical User</th>
+      <th>Access Level</th>
+    </tr>
+    <tr>
+      <td><strong>Super Admin</strong></td>
+      <td>System Developer / IT Administrator</td>
+      <td>Unrestricted access to all modules, audit logs, system configuration, and user management.</td>
+    </tr>
+    <tr>
+      <td><strong>Administrator</strong></td>
+      <td>Parish Administrator</td>
+      <td>Full access to Members, Fund, and Graveyard modules. Can manage users and roles.</td>
+    </tr>
+    <tr>
+      <td><strong>Data Manager</strong></td>
+      <td>Office Data Entry Staff</td>
+      <td>Add, edit, and view records across assigned modules. Cannot manage user accounts.</td>
+    </tr>
+    <tr>
+      <td><strong>Viewer / Read-Only</strong></td>
+      <td>Clergy / Pastoral Staff</td>
+      <td>View and search records. Cannot add or modify data.</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    Roles and permissions are fully configurable. The Administrator can adjust what each role is
+    allowed to do via <em>Roles &amp; Permissions</em> in the navigation menu.
+  </div>
+
+  <h3>Managing User Accounts</h3>
+  <p>Only users with the <strong>Administrator</strong> role (or above) can manage accounts.</p>
+  <ul>
+    <li><strong>Create a new user:</strong> Go to <em>Members → Users → Add User</em>. Enter the name, email, and assign a role. The user will receive login credentials.</li>
+    <li><strong>Deactivate a user:</strong> Find the user in the Users list and use the deactivate/delete action. Deactivated users cannot log in.</li>
+    <li><strong>Change a user's role:</strong> Edit the user record and reassign the role.</li>
+  </ul>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     5. MEMBERS MODULE
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s5">
+  <h2 class="section-title">5. Members Module</h2>
+  <p>
+    The Members module is the foundation of the system. All data here is shared across the Fund
+    and Graveyard modules. Changes to member records are reflected immediately in the other modules.
+  </p>
+
+  <h3>5.1 Member Records</h3>
+  <p>
+    Each member record holds personal details, contact information, family grouping, and sacramental
+    history. Members are grouped by <strong>Family Number</strong>; all people sharing the same family
+    number are treated as one household.
+  </p>
+  <h4>Adding a New Member</h4>
+  <ol class="steps">
+    <li>Navigate to <em>Members → Members</em> and click <strong>Add Member</strong>.</li>
+    <li>Fill in the required fields: Full Name, Date of Birth, Gender, Status, and Community.</li>
+    <li>Assign a Family Number (enter an existing one to link to a family, or a new one to start a new family).</li>
+    <li>Enter contact details, address, and any other known information.</li>
+    <li>Click <strong>Save</strong>. The member is now active in the system.</li>
+  </ol>
+
+  <h4>Editing a Member</h4>
+  <ol class="steps">
+    <li>Search for the member using the search bar on the Members list page.</li>
+    <li>Click the member's name or the edit icon to open the record.</li>
+    <li>Make changes and click <strong>Update</strong>.</li>
+  </ol>
+
+  <h4>Archiving (Soft Delete) a Member</h4>
+  <p>
+    Archiving hides a member from active lists without permanently deleting the record.
+    Use this for members who have moved away or passed away (use the Death Records for deceased members).
+    Archived members can be restored at any time.
+  </p>
+
+  <h4>Data Verification</h4>
+  <p>
+    The <em>Data Verification</em> screen provides a bulk-review interface to confirm or correct
+    member details imported from the old system. Staff can approve records one by one or in batches.
+  </p>
+
+  <h3>5.2 Organizational Structure</h3>
+  <table>
+    <tr><th>Level</th><th>Description</th><th>Menu Path</th></tr>
+    <tr><td>Zones</td><td>Top-level geographic divisions of the parish</td><td>Members → Zones</td></tr>
+    <tr><td>Communities</td><td>Sub-divisions within a Zone (SCCs)</td><td>Members → Communities</td></tr>
+    <tr><td>Clusters</td><td>Groupings of Communities for pastoral coordination</td><td>Members → Clusters</td></tr>
+    <tr><td>Cells &amp; Associations</td><td>Parish organizations (e.g., Youth, Women, Bible groups)</td><td>Members → Cells &amp; Associations</td></tr>
+  </table>
+
+  <h3>5.3 Leadership Management</h3>
+  <table>
+    <tr><th>Feature</th><th>Purpose</th><th>Menu Path</th></tr>
+    <tr><td>SCC Head</td><td>Assign the head of each Small Christian Community</td><td>Members → SCC Head</td></tr>
+    <tr><td>PPC Head</td><td>Assign Parish Pastoral Council heads per community</td><td>Members → PPC Head</td></tr>
+    <tr><td>Cell &amp; Association Leaders</td><td>Assign Leader and Assistant Leader for each cell/association</td><td>Members → Cell Leaders</td></tr>
+  </table>
+
+  <h3>5.4 Sacramental Records</h3>
+  <p>Track the sacramental history of parishioners. Each record type has its own section:</p>
+  <table>
+    <tr><th>Record Type</th><th>Menu Path</th><th>Export</th></tr>
+    <tr><td>Baptism Records</td><td>Members → Baptism Records</td><td>PDF download per record</td></tr>
+    <tr><td>Marriage Records</td><td>Members → Marriage Records</td><td>PDF download per record</td></tr>
+    <tr><td>Death Records</td><td>Members → Death Records</td><td>PDF download per record</td></tr>
+  </table>
+
+  <h3>5.5 Archive Certificates (Historical)</h3>
+  <p>
+    These are historical sacramental records predating the digital system. They are scanned or
+    manually entered and stored for reference only. Separate from active sacramental records.
+  </p>
+  <ul>
+    <li>Birth Archive Certificates</li>
+    <li>Marriage Archive Certificates</li>
+    <li>Death Archive Certificates</li>
+  </ul>
+
+  <h3>5.6 Family Tree</h3>
+  <p>
+    The <em>Family Tree</em> feature provides a visual diagram of family relationships for any member.
+    Access it from a member's profile page by clicking <strong>View Family Tree</strong>.
+  </p>
+
+  <h3>5.7 External Members</h3>
+  <p>
+    Non-parishioners who require services (e.g., graveyard bookings from outside the parish) are
+    registered as External Members. They use a separate registration system and have limited access.
+    Manage via <em>Members → External Members</em>.
+  </p>
+
+  <h3>5.8 Reference / Configuration Data</h3>
+  <p>
+    The following lookup tables can be configured by the Administrator.
+    Changing these values affects dropdown options across the system:
+  </p>
+  <ul>
+    <li>Age Groups, Blood Groups, Genders, Statuses, Relationships, Designations, Income Ranges</li>
+    <li>Parishes, Countries, States, Cities, Towns</li>
+  </ul>
+  <div class="callout warning">
+    Exercise caution when deleting reference data items that may already be in use by existing records.
+    The system will warn you if a deletion would affect existing records.
+  </div>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     6. FUND MANAGEMENT MODULE
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s6">
+  <h2 class="section-title">6. Fund Management Module</h2>
+  <p>
+    The Fund module manages all financial contributions to the parish — family annual contributions,
+    community group contributions, and mass intention bookings.
+  </p>
+
+  <h3>6.1 Annual Contributions</h3>
+  <p>
+    Tracks each family's annual contribution to the parish. One record is created per family per year.
+  </p>
+  <h4>Recording a New Annual Contribution</h4>
+  <ol class="steps">
+    <li>Go to <em>Fund → Annual Contributions</em> and click <strong>Add</strong>.</li>
+    <li>Search for and select the family (by Family Number or member name).</li>
+    <li>Select the Fund Category, Year, and Payment Method.</li>
+    <li>Enter the amount received and any remarks.</li>
+    <li>Click <strong>Save</strong>. A receipt can be downloaded immediately after saving.</li>
+  </ol>
+
+  <h4>Bulk Update</h4>
+  <p>Multiple contribution records can be updated simultaneously (e.g., marking a batch as paid after
+    receiving a group payment). Use the bulk-update option on the Annual Contributions list.</p>
+
+  <h4>Statuses</h4>
+  <table>
+    <tr><th>Status</th><th>Meaning</th></tr>
+    <tr><td><span class="badge badge-yellow">Pending</span></td><td>Contribution recorded but not yet paid</td></tr>
+    <tr><td><span class="badge badge-blue">Partial</span></td><td>Part-payment received</td></tr>
+    <tr><td><span class="badge badge-green">Paid</span></td><td>Full amount received</td></tr>
+  </table>
+
+  <h3>6.2 Community Contributions</h3>
+  <p>
+    Records contributions collected at the community (SCC) level, typically from a group rather
+    than an individual family.
+  </p>
+  <ol class="steps">
+    <li>Go to <em>Fund → Community Contributions</em> and click <strong>Add</strong>.</li>
+    <li>Select the Community, Contribution Type, and the relevant period.</li>
+    <li>Enter the total amount collected and the payment method.</li>
+    <li>Click <strong>Save</strong>. Update the status as payments progress.</li>
+  </ol>
+  <p>A statistics summary is available on the Community Contributions page to track totals by community.</p>
+
+  <h3>6.3 Mass Intentions</h3>
+  <p>
+    Records mass booking requests from parishioners — specifying the intention, mass type, and date requested.
+  </p>
+  <h4>Recording a Mass Intention</h4>
+  <ol class="steps">
+    <li>Go to <em>Fund → Mass Intentions</em> and click <strong>Add</strong>.</li>
+    <li>Search for and select the member requesting the mass (or enter manually for external requesters).</li>
+    <li>Select the Mass Type, Mass Intention Type, and preferred date.</li>
+    <li>Enter the offering amount and payment method.</li>
+    <li>Click <strong>Save</strong>. A receipt is available for download.</li>
+  </ol>
+
+  <h3>6.4 Fund Configuration</h3>
+  <table>
+    <tr><th>Configuration Item</th><th>Purpose</th><th>Menu Path</th></tr>
+    <tr><td>Fund Categories</td><td>Define the purposes to which contributions are assigned</td><td>Fund → Fund Categories</td></tr>
+    <tr><td>Payment Methods</td><td>Define accepted payment methods (Cash, Cheque, Online, etc.)</td><td>Fund → Payment Methods</td></tr>
+    <tr><td>Mass Types</td><td>Define mass types (e.g., Sunday, Weekday, Novena)</td><td>Fund → Mass Types</td></tr>
+    <tr><td>Mass Intention Types</td><td>Define intention categories (e.g., Thanksgiving, Deceased)</td><td>Fund → Mass Intention Types</td></tr>
+    <tr><td>Community Contribution Types</td><td>Define contribution category names</td><td>Fund → Contribution Types</td></tr>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     7. GRAVEYARD MANAGEMENT MODULE
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s7">
+  <h2 class="section-title">7. Graveyard Management Module</h2>
+  <p>
+    The Graveyard module manages the church cemetery and niches. It tracks grave availability,
+    bookings, payments, and the niche transfer (remains transfer) workflow.
+  </p>
+
+  <h3>7.1 Grave Types</h3>
+  <table>
+    <tr><th>Type</th><th>Description</th><th>Menu Path</th></tr>
+    <tr>
+      <td><strong>Temporary Graves</strong></td>
+      <td>Short-term burial plots. Remains may later be transferred to a permanent grave or niche.</td>
+      <td>Graveyard → Temporary Graves</td>
+    </tr>
+    <tr>
+      <td><strong>Permanent Graves</strong></td>
+      <td>Long-term burial plots allocated to a family or individual.</td>
+      <td>Graveyard → Permanent Graves</td>
+    </tr>
+    <tr>
+      <td><strong>Niches</strong></td>
+      <td>Wall-mounted compartments for cremated remains (ashes).</td>
+      <td>Graveyard → Niches</td>
+    </tr>
+  </table>
+
+  <h3>7.2 Valid Members</h3>
+  <p>
+    Each grave or niche can have a list of <strong>Valid Members</strong> — parishioners who are
+    authorized to use that grave/niche. This ensures only eligible members can be booked into a
+    specific plot.
+  </p>
+  <ul>
+    <li>Manage valid members via <em>Graveyard → Valid Members</em>.</li>
+    <li>Generate a PDF list of valid members for any grave or niche.</li>
+    <li>Member search is linked to the Members database for real-time validation.</li>
+  </ul>
+
+  <h3>7.3 Booking a Grave</h3>
+
+  <h4>Temporary Grave Booking</h4>
+  <ol class="steps">
+    <li>Go to <em>Graveyard → Temporary Grave Bookings → Add</em>.</li>
+    <li>Search and select the available temporary grave.</li>
+    <li>Search and select the deceased person (member or external).</li>
+    <li>Enter burial details: burial date, contact number, and any remarks.</li>
+    <li>Click <strong>Save</strong>. The grave status changes to <em>Unavailable</em>.</li>
+    <li>Confirm the booking once payment is received (status moves to <em>Confirmed</em>).</li>
+  </ol>
+
+  <div class="callout warning">
+    Only <strong>Pending</strong> bookings can be deleted. Once confirmed or cancelled, a booking
+    cannot be deleted — only cancelled through the proper cancellation process.
+  </div>
+
+  <h4>Permanent Grave Booking</h4>
+  <ol class="steps">
+    <li>Go to <em>Graveyard → Permanent Grave Bookings → Add</em>.</li>
+    <li>Select the available permanent grave and the deceased/assignee member.</li>
+    <li>Enter booking details and service type.</li>
+    <li>Click <strong>Save</strong>. Process payment through the Payments section.</li>
+  </ol>
+
+  <h3>7.4 Niche Bookings</h3>
+  <p>
+    Niche bookings follow the same process as permanent grave bookings.
+    Valid members for each niche must be configured before booking.
+    Navigate to <em>Graveyard → Niches</em> to manage niche records and their bookings.
+  </p>
+
+  <h3>7.5 Remains Transfer (Niche Transfer)</h3>
+  <p>
+    When remains from a temporary grave are to be moved to a permanent grave or niche,
+    a formal <strong>Remains Transfer</strong> workflow must be followed.
+  </p>
+  <ol class="steps">
+    <li><strong>Create Transfer Request:</strong> Go to <em>Graveyard → Remains Transfer → Add</em>. Select the source temporary grave booking and the destination grave/niche.</li>
+    <li><strong>Approval:</strong> An authorized user reviews and <em>Approves</em> or <em>Rejects</em> the request.</li>
+    <li><strong>Complete Transfer:</strong> Once the physical transfer is done, mark the transfer as <em>Completed</em>. This updates the statuses of both the source and destination graves automatically.</li>
+    <li><strong>Cancel (if needed):</strong> A transfer can be cancelled before completion if circumstances change.</li>
+  </ol>
+
+  <div class="callout">
+    Transfer statistics (number of completed, pending, and rejected transfers) are visible on the
+    Remains Transfer summary page.
+  </div>
+
+  <h3>7.6 Payments</h3>
+  <p>
+    All graveyard payments (booking fees, service charges, maintenance fees) are managed in
+    <em>Graveyard → Payments</em>.
+  </p>
+  <table>
+    <tr><th>Payment Type</th><th>When Used</th></tr>
+    <tr><td>Booking Payment</td><td>Initial payment when a grave/niche is booked</td></tr>
+    <tr><td>Balance Payment</td><td>Settling the remaining balance on a booking</td></tr>
+    <tr><td>Maintenance Payment</td><td>Recording annual maintenance fee payments</td></tr>
+  </table>
+  <p>A <strong>receipt</strong> can be downloaded as a PDF after each payment is recorded.</p>
+
+  <h3>7.7 Annual Maintenance Fees</h3>
+  <p>
+    Graves and niches may be subject to annual maintenance fees.
+    Define fee structures in <em>Graveyard → Annual Maintenance Fees</em> and record collections
+    via the Payments section (Maintenance Payment type).
+  </p>
+
+  <h3>7.8 Graveyard Configuration</h3>
+  <table>
+    <tr><th>Configuration Item</th><th>Purpose</th><th>Menu Path</th></tr>
+    <tr><td>Grave Categories</td><td>Define types/categories of graves</td><td>Graveyard → Grave Categories</td></tr>
+    <tr><td>Service Types</td><td>Define services offered (e.g., burial, exhumation). Can be enabled/disabled individually.</td><td>Graveyard → Service Types</td></tr>
+    <tr><td>Annual Maintenance Fees</td><td>Define fee schedules per grave/niche type</td><td>Graveyard → Annual Maintenance Fees</td></tr>
+  </table>
+
+  <h3>7.9 Graveyard Dashboard</h3>
+  <p>
+    The <em>Graveyard Dashboard</em> provides a quick overview of:
+    grave availability by type, recent bookings, pending transfers, and outstanding payment balances.
+  </p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     8. REPORTING & EXPORTS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s8">
+  <h2 class="section-title">8. Reporting &amp; Exports</h2>
+
+  <table>
+    <tr>
+      <th>Module</th>
+      <th>Report / Export</th>
+      <th>Format</th>
+      <th>Location</th>
+    </tr>
+    <tr>
+      <td>Members</td>
+      <td>Member data export</td>
+      <td>Excel / CSV</td>
+      <td>Members → Members → Export</td>
+    </tr>
+    <tr>
+      <td>Members</td>
+      <td>Sacramental record certificates (Baptism, Marriage, Death)</td>
+      <td>PDF</td>
+      <td>Members → [Record Type] → Download</td>
+    </tr>
+    <tr>
+      <td>Fund</td>
+      <td>Annual Contributions list</td>
+      <td>Excel</td>
+      <td>Fund → Annual Contributions → Export</td>
+    </tr>
+    <tr>
+      <td>Fund</td>
+      <td>Mass Intentions list</td>
+      <td>Excel</td>
+      <td>Fund → Mass Intentions → Export</td>
+    </tr>
+    <tr>
+      <td>Fund</td>
+      <td>Payment Receipts (per record)</td>
+      <td>PDF</td>
+      <td>Fund → [Record] → Download Receipt</td>
+    </tr>
+    <tr>
+      <td>Graveyard</td>
+      <td>Valid Members list per grave</td>
+      <td>PDF</td>
+      <td>Graveyard → [Grave] → Valid Members PDF</td>
+    </tr>
+    <tr>
+      <td>Graveyard</td>
+      <td>Payment Receipts (per payment)</td>
+      <td>PDF</td>
+      <td>Graveyard → Payments → Download Receipt</td>
+    </tr>
+    <tr>
+      <td>Graveyard</td>
+      <td>Remains Transfer statistics</td>
+      <td>On-screen summary</td>
+      <td>Graveyard → Remains Transfer</td>
+    </tr>
+    <tr>
+      <td>System</td>
+      <td>Audit Log (all user actions)</td>
+      <td>On-screen (Super Admin only)</td>
+      <td>Admin → Audit Log</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    All exported receipts include the church logo, name, address, telephone, and trust registration
+    number. Two copies are printed per page (Office Copy and Customer Copy).
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     9. DATA MANAGEMENT & BACKUPS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s9">
+  <h2 class="section-title">9. Data Management &amp; Backups</h2>
+
+  <h3>Archive vs. Permanent Delete</h3>
+  <p>
+    The system uses a <strong>"soft delete"</strong> (archive) pattern for most records.
+    Archiving a record hides it from the active list but preserves it in the database.
+    Archived records can be restored.
+  </p>
+  <p>
+    <strong>Permanent deletion</strong> removes the record from the database entirely and
+    <em>cannot be undone</em>. It is only available in limited scenarios (e.g., pending bookings).
+    The system will prompt for confirmation before any permanent deletion.
+  </p>
+
+  <div class="callout danger">
+    <strong>Important:</strong> Never permanently delete records unless you are certain they are
+    incorrect entries. Archiving is always the preferred first step.
+  </div>
+
+  <h3>Database Backups</h3>
+  <p>
+    Database backups are the responsibility of the server/hosting administrator.
+    The following backup schedule is recommended:
+  </p>
+  <table>
+    <tr><th>Frequency</th><th>Type</th><th>Retention</th></tr>
+    <tr><td>Daily</td><td>Automated full database backup</td><td>7 days</td></tr>
+    <tr><td>Weekly</td><td>Automated full database backup</td><td>4 weeks</td></tr>
+    <tr><td>Monthly</td><td>Full database + files backup</td><td>12 months</td></tr>
+  </table>
+  <p>
+    Backup storage location and procedure: <strong>…………………………………………………………………………</strong><br>
+    Person responsible for backups: <strong>……………………………………………………</strong>
+  </p>
+
+  <h3>Audit Trail</h3>
+  <p>
+    Every create, update, and delete action is automatically logged in the <strong>Audit Log</strong>
+    with the user's name, the action taken, and the date/time.
+    Super Admins can view the full audit log via <em>Admin → Audit Log</em>.
+  </p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     10. KEY OPERATIONAL WORKFLOWS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s10">
+  <h2 class="section-title">10. Key Operational Workflows</h2>
+
+  <h3>Workflow A: Registering a New Parishioner Family</h3>
+  <ol class="steps">
+    <li>Go to <em>Members → Members → Add Member</em>.</li>
+    <li>Enter the head of household's details. Assign a new unique Family Number.</li>
+    <li>Save the head of household record.</li>
+    <li>Add each additional family member using the <strong>same Family Number</strong> to link them.</li>
+    <li>Set the appropriate relationship for each member (Spouse, Son, Daughter, etc.).</li>
+  </ol>
+
+  <h3>Workflow B: Processing an Annual Fund Contribution</h3>
+  <ol class="steps">
+    <li>Go to <em>Fund → Annual Contributions → Add</em>.</li>
+    <li>Search for the family by Family Number or member name.</li>
+    <li>Select the Fund Category, Year, and payment details.</li>
+    <li>Save the record. Status is set to <em>Pending</em> or <em>Paid</em> depending on amount entered.</li>
+    <li>Download and issue the receipt to the parishioner.</li>
+  </ol>
+
+  <h3>Workflow C: Temporary Grave Burial → Niche Transfer</h3>
+  <ol class="steps">
+    <li><strong>Book Temporary Grave:</strong> Graveyard → Temporary Grave Bookings → Add. Fill burial details. Confirm booking after payment.</li>
+    <li><strong>Process Payment:</strong> Graveyard → Payments → Add Booking Payment. Download receipt.</li>
+    <li><strong>Initiate Transfer:</strong> When family requests transfer to niche, go to Graveyard → Remains Transfer → Add.</li>
+    <li><strong>Select Source &amp; Destination:</strong> Choose the temporary grave booking and the destination niche.</li>
+    <li><strong>Approve Request:</strong> Authorized user approves the transfer request.</li>
+    <li><strong>Complete Transfer:</strong> After physical transfer, mark as Completed. The temporary grave becomes available again and the niche is marked occupied.</li>
+  </ol>
+
+  <h3>Workflow D: Handling a Mass Intention Request</h3>
+  <ol class="steps">
+    <li>Go to <em>Fund → Mass Intentions → Add</em>.</li>
+    <li>Search for the requesting member, or enter name manually if external.</li>
+    <li>Select Mass Type, Intention Type, and preferred date.</li>
+    <li>Enter the offering amount and payment method.</li>
+    <li>Save. Download and provide the receipt. Update status to <em>Scheduled</em> once a date is confirmed.</li>
+  </ol>
+
+  <h3>Workflow E: Reporting an Issue or Bug</h3>
+  <ol class="steps">
+    <li>Note the exact action you were performing and the error message displayed.</li>
+    <li>Take a screenshot if possible.</li>
+    <li>Contact the developer/support contact (see Section 12).</li>
+    <li>Provide your name, date/time of the issue, and the steps to reproduce it.</li>
+  </ol>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     11. KNOWN LIMITATIONS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s11">
+  <h2 class="section-title">11. Known Limitations</h2>
+
+  <table>
+    <tr><th>Limitation</th><th>Notes / Workaround</th></tr>
+    <tr>
+      <td>Certificate generation is currently disabled</td>
+      <td>The certificate module is built but disabled pending final template approval. It will be enabled in a future update.</td>
+    </tr>
+    <tr>
+      <td>Confirmed or cancelled bookings cannot be deleted</td>
+      <td>Only pending bookings can be permanently deleted. For confirmed bookings that need reversal, use the Cancel action.</td>
+    </tr>
+    <tr>
+      <td>Payments with records cannot have their booking deleted</td>
+      <td>To remove a permanent grave booking, all associated payment records must first be removed. Contact the Administrator.</td>
+    </tr>
+    <tr>
+      <td>Audit logs are viewable by Super Admins only</td>
+      <td>Administrators can request an audit log extract from the Super Admin/Developer if needed.</td>
+    </tr>
+    <tr>
+      <td>Internet connection required</td>
+      <td>This is a web-based application. An active internet connection is required at all times.</td>
+    </tr>
+    <tr>
+      <td>Browser compatibility</td>
+      <td>Fully tested on Google Chrome and Mozilla Firefox. Internet Explorer is not supported.</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     12. SUPPORT & WARRANTY TERMS
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s12">
+  <h2 class="section-title">12. Support &amp; Warranty Terms</h2>
+
+  <table>
+    <tr><th>Item</th><th>Details</th></tr>
+    <tr>
+      <td>Support Period</td>
+      <td>……………………………………………………………………………………………</td>
+    </tr>
+    <tr>
+      <td>Support Channels</td>
+      <td>
+        Phone: ……………………………………………<br>
+        Email: ……………………………………………<br>
+        WhatsApp: ……………………………………………
+      </td>
+    </tr>
+    <tr>
+      <td>Response Time (Business Hours)</td>
+      <td>…………………………………………………… (Mon–Fri, 9am–6pm)</td>
+    </tr>
+    <tr>
+      <td>Response Time (After Hours / Weekends)</td>
+      <td>……………………………………………………</td>
+    </tr>
+    <tr>
+      <td>What is covered</td>
+      <td>Bug fixes, operational guidance, user account assistance, and minor configuration changes.</td>
+    </tr>
+    <tr>
+      <td>What is NOT covered</td>
+      <td>New feature development, server/hosting management, hardware issues, or data loss due to user error beyond the archive/restore system.</td>
+    </tr>
+    <tr>
+      <td>After support period</td>
+      <td>Support beyond the warranty period is available on a mutually agreed paid basis.</td>
+    </tr>
+  </table>
+
+  <div class="callout">
+    The developer commits to continued availability for operational and usage guidance even beyond
+    the formal support period, as agreed during project discussions.
+  </div>
+
+  <h3>Developer Contact</h3>
+  <table>
+    <tr><th>Name</th><td>John D'Souza</td></tr>
+    <tr><th>Phone</th><td>……………………………………………………</td></tr>
+    <tr><th>Email</th><td>……………………………………………………</td></tr>
+  </table>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     13. HANDOVER & ACCEPTANCE SIGN-OFF
+══════════════════════════════════════════════════════ -->
+<div class="section" id="s13">
+  <h2 class="section-title">13. Handover &amp; Acceptance Sign-Off</h2>
+
+  <p>
+    Having completed the Version 1 development cycle of the three applications —
+    <strong>Members</strong>, <strong>Fund Management</strong>, and <strong>Graveyard Management</strong> —
+    we hereby formally transfer operational responsibility to
+    <strong>Our Lady of Salvation Church, Dadar</strong>.
+  </p>
+
+  <p>
+    The undersigned confirm that they have received adequate orientation on the system,
+    have been provided access to the application and this documentation, and are satisfied
+    that the deliverables meet the agreed requirements.
+  </p>
+
+  <p>
+    The developer commits to continued support for operation and usage of the programs
+    as per the terms outlined in Section 12.
+  </p>
+
+  <br>
+
+  <table class="signoff-table" style="margin-top:20px;">
+    <tr>
+      <th style="width:30%">Role &amp; Name</th>
+      <th style="width:40%">Signature</th>
+      <th style="width:30%">Date</th>
+    </tr>
+    <tr>
+      <td>
+        <strong>Administrator</strong><br>
+        Victor Fernandes
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Data Manager</strong><br>
+        Alisha Godinho
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Data Manager</strong><br>
+        Francina Fernandes
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+    <tr>
+      <td>
+        <strong>Developer</strong><br>
+        John D'Souza
+      </td>
+      <td>&nbsp;</td>
+      <td>&nbsp;</td>
+    </tr>
+  </table>
+
+  <br><br>
+  <p style="font-size:9pt; color:#6b7280; text-align:center;">
+    Salvation Admin — Project Handover Document v2.0 &nbsp;|&nbsp;
+    Our Lady of Salvation Church, Dadar &nbsp;|&nbsp;
+    Prepared by John D'Souza &nbsp;|&nbsp; 27 February 2026
+  </p>
+</div>
+
+</body>
+</html>
