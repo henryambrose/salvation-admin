@@ -22,6 +22,7 @@ export function useFormPersistence<T extends object>(
   const hasRestoredData = ref(false);
   const lastSavedAt = ref<Date | null>(null);
   let saveTimeout: NodeJS.Timeout | null = null;
+  let isInitializing = true;
 
   /**
    * Save form data to localStorage
@@ -141,11 +142,13 @@ export function useFormPersistence<T extends object>(
     }
   }
 
-  // Watch form data and auto-save with debounce
+  // Watch form data and auto-save with debounce (skip initial load)
   if (enabled) {
     watch(
       formData,
       () => {
+        if (isInitializing) return;
+
         if (saveTimeout) {
           clearTimeout(saveTimeout);
         }
@@ -158,7 +161,7 @@ export function useFormPersistence<T extends object>(
     );
   }
 
-  // On mount, check for saved data
+  // On mount, check for saved data and mark initialization as done
   onMounted(() => {
     if (!enabled) return;
 
@@ -174,6 +177,7 @@ export function useFormPersistence<T extends object>(
         onConfirm: () => {
           const restoredData = restore();
           if (restoredData) {
+            isInitializing = false;
             // Merge restored data with current form data
             Object.assign(formData.value, restoredData);
             info(`Form data restored from ${savedInfo.age}`);
@@ -185,6 +189,11 @@ export function useFormPersistence<T extends object>(
         },
       });
     }
+
+    // Allow saving after mount (user-initiated changes only)
+    setTimeout(() => {
+      isInitializing = false;
+    }, 500);
   });
 
   return {
