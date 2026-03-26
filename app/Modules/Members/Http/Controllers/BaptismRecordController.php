@@ -65,8 +65,10 @@ class BaptismRecordController extends Controller
 
         // If member_id is provided, fetch member data
         if ($request->has('member_id')) {
-            $member = Member::with(['community', 'father', 'mother', 'spouse', 'baptismRecord'])
-                ->find($request->member_id);
+            $member = Member::with([
+                'community', 'mother', 'spouse', 'baptismRecord',
+                'father.permanentTown', 'father.permanentCity', 'father.permanentState', 'father.permanentCountry',
+            ])->find($request->member_id);
         }
 
         return Inertia::render('BaptismRecords/Create', [

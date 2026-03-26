@@ -2,6 +2,7 @@
 
 namespace Modules\Members\Models;
 
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -75,6 +76,15 @@ class BaptismRecord extends Model
     public function birthArchiveCertificate(): BelongsTo
     {
         return $this->belongsTo(BirthArchiveCertificate::class, 'birth_archive_certificate_id');
+    }
+
+    /**
+     * Serialize dates as plain Y-m-d to avoid UTC offset shifting the day
+     * when the app timezone is ahead of UTC (e.g. Asia/Kolkata UTC+5:30).
+     */
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return $date->format('Y-m-d');
     }
 
     /**

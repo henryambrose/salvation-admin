@@ -33,7 +33,7 @@ class CertificateRecord extends Model
 
   protected $casts = [
     'additional_data' => 'array',
-    'issued_date' => 'date',  // Changed from DateString to 'date' for Carbon instance
+    'issued_date' => 'date:Y-m-d',  // date:Y-m-d serializes as plain string, avoiding UTC timezone day-shift
     'last_downloaded_at' => 'datetime',
     'is_reprint' => 'boolean',
   ];

@@ -56,7 +56,11 @@
       "Bash(Get-Content \"D:\\\\Projects\\\\salvation-admin\\\\storage\\\\logs\\\\laravel.log\" -Tail 60)",
       "Bash(python3:*)",
       "Bash(php -r:*)",
-      "Bash(php:*)"
+      "Bash(php:*)",
+      "Bash(for file:*)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(code --list-extensions)"
     ]
   }
 }

@@ -28,6 +28,11 @@ const getFatherAddress = () => {
     father.permanent_add1,
     father.permanent_add2,
     father.permanent_add3,
+    father.permanent_town?.name,
+    father.permanent_city?.name,
+    father.permanent_state?.name,
+    father.permanent_country?.name,
+    father.permanent_pincode,
   ].filter(Boolean);
   return parts.join(', ');
 };
