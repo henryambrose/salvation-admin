@@ -259,10 +259,12 @@
                     ['num' => '14.', 'label' => "Godmother's Resi.", 'value' => $godmother_residence ?? ''],
                     ['num' => '15.', 'label' => 'Place of Baptism', 'value' => $place_of_baptism ?? ($baptism_parish ?? '')],
                     ['num' => '16.', 'label' => 'Minister', 'value' => $minister_name ?? ''],
-                    ['num' => '17.', 'label' => 'Confirmation', 'value' => ($confirmation_info ? 'On: ' . ($confirmation_info['date'] ?? '') : '')],
-                    ['num' => '18.', 'label' => 'Marriage On', 'value' => ($marriage_info ? 'On: ' . ($marriage_info['date'] ?? '') : '')],
-                    ['num' => '', 'label' => 'Marriage At', 'value' => ($marriage_info ? 'At: ' . ($marriage_info['place'] ?? '') : '')],
-                    ['num' => '', 'label' => 'Marriage To', 'value' => ($marriage_info ? 'To: ' . ($marriage_info['spouse'] ?? '') : '')],
+                    ['num' => '17.', 'label' => 'Confirmation On', 'value' => $confirmation_info['date'] ?? '--'],
+                    ['num' => '', 'label' => 'Confirmation At', 'value' => $confirmation_info['place'] ?? '--'],
+                    ['num' => '', 'label' => 'Confirmation By', 'value' => $confirmation_info['by'] ?? '--'],
+                    ['num' => '18.', 'label' => 'Marriage On', 'value' => $marriage_info['date'] ?? '--'],
+                    ['num' => '', 'label' => 'Marriage At', 'value' => $marriage_info['place'] ?? '--'],
+                    ['num' => '', 'label' => 'Marriage To', 'value' => $marriage_info['spouse'] ?? '--'],
                     ['num' => '19.', 'label' => 'Remarks', 'value' => $remarkValue],
                 ];
             @endphp
