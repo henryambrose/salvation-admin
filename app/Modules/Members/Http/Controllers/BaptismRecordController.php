@@ -188,10 +188,12 @@ class BaptismRecordController extends Controller
         $dateOfBirth = $validated['date_of_birth'] ?? null;
         unset($validated['date_of_birth']);
 
-        if ($baptismRecord->member_id) {
+        $oldMemberId = $baptismRecord->member_id;
+
+        if ($oldMemberId) {
             // Record is linked to a member - update member's date_of_birth
             if ($dateOfBirth !== null) {
-                Member::where('id', $baptismRecord->member_id)
+                Member::where('id', $oldMemberId)
                     ->update(['date_of_birth' => $dateOfBirth]);
             }
         } else {
@@ -200,6 +202,19 @@ class BaptismRecordController extends Controller
         }
 
         $baptismRecord->update($validated);
+
+        // Keep members.baptismrecord_id in sync if the linked member changed
+        $newMemberId = $baptismRecord->member_id;
+        if ($oldMemberId !== $newMemberId) {
+            if ($oldMemberId) {
+                Member::where('id', $oldMemberId)
+                    ->where('baptismrecord_id', $baptismRecord->id)
+                    ->update(['baptismrecord_id' => null]);
+            }
+            if ($newMemberId) {
+                Member::where('id', $newMemberId)->update(['baptismrecord_id' => $baptismRecord->id]);
+            }
+        }
 
         return redirect()->route('baptism-records.index')
             ->with('success', 'Baptism record updated successfully.');
@@ -302,6 +317,8 @@ class BaptismRecordController extends Controller
             $confirmationInfo = [
                 'date' => $formatDate($member->confirmation_date),
                 'place' => $member->confirmationParish?->name ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
+                // TODO: temporarily reusing the baptism minister until the client confirms what "Confirmed By" should actually show.
+                'by' => $baptismRecord->minister_name ?? '',
             ];
         }
 
@@ -355,7 +372,6 @@ class BaptismRecordController extends Controller
             // Baptism data
             'baptism_date' => $formatDate($baptismRecord->baptism_date),
             'baptism_reg_no' => $baptismRecord->baptism_reg_no,
-            'baptism_reg_no_short' => $baptismRecord->baptism_reg_no ? (int) filter_var($baptismRecord->baptism_reg_no, FILTER_SANITIZE_NUMBER_INT) : null,
             'baptism_year' => $baptismRecord->baptism_date ? \Carbon\Carbon::parse($baptismRecord->baptism_date)->year : null,
             'place_of_baptism' => $baptismRecord->place_of_baptism ?: ($baptismRecord->baptismParish?->name ?? ''),
             'baptism_parish' => $baptismRecord->baptismParish?->name ?? '',

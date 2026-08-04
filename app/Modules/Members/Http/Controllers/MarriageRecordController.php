@@ -184,7 +184,35 @@ class MarriageRecordController extends Controller
             'year_of_marriage' => 'nullable|string|max:100',
         ]);
 
+        $oldBridegroomId = $marriageRecord->bridegroom_member_id;
+        $oldBrideId = $marriageRecord->bride_member_id;
+
         $marriageRecord->update($validated);
+
+        // Keep members.marriagerecord_id in sync if the linked bridegroom/bride changed
+        $newBridegroomId = $marriageRecord->bridegroom_member_id;
+        if ($oldBridegroomId !== $newBridegroomId) {
+            if ($oldBridegroomId) {
+                Member::where('id', $oldBridegroomId)
+                    ->where('marriagerecord_id', $marriageRecord->id)
+                    ->update(['marriagerecord_id' => null]);
+            }
+            if ($newBridegroomId) {
+                Member::where('id', $newBridegroomId)->update(['marriagerecord_id' => $marriageRecord->id]);
+            }
+        }
+
+        $newBrideId = $marriageRecord->bride_member_id;
+        if ($oldBrideId !== $newBrideId) {
+            if ($oldBrideId) {
+                Member::where('id', $oldBrideId)
+                    ->where('marriagerecord_id', $marriageRecord->id)
+                    ->update(['marriagerecord_id' => null]);
+            }
+            if ($newBrideId) {
+                Member::where('id', $newBrideId)->update(['marriagerecord_id' => $marriageRecord->id]);
+            }
+        }
 
         return redirect()->route('marriage-records.index')
             ->with('success', 'Marriage record updated successfully.');

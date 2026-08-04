@@ -228,7 +228,7 @@
                 </div>
                 <div class="headframe_bylines">{{ $parish_address ?? 'Dadar (W), Mumbai - 400 028' }}</div>
                 <div style="width: 140.5mm; font-style: italic; font-bold; padding-left: 2mm; margin-top: 5mm;">
-                    Marriage No {{ $marriage_reg_no_short ?? ($marriage_reg_no ? (int) filter_var($marriage_reg_no, FILTER_SANITIZE_NUMBER_INT) : '--') }} of the Year {{ $marriage_year ?? '--' }}
+                    Marriage No {{ $marriage_reg_no_short ?? ($marriage_reg_no ?: '--') }} of the Year {{ $marriage_year ?? '--' }}
                 </div>
             </div>
         </div>
@@ -278,7 +278,7 @@
                     <div style="width: 10mm; padding-right: 2mm;">{{ $field['num'] }}</div>
                     <div style="width: 47mm; padding-right: 2mm;">{{ $field['label'] }}</div>
                     <div style="width: 3mm;">:</div>
-                    <div style="flex: 1; padding-left: 2mm; border-bottom: 1px dotted #cccccc;">{{ $field['value'] }}</div>
+                    <div style="flex: 1; padding-left: 2mm; border-bottom: 1px dotted #cccccc;">{{ $field['value'] !== '' && $field['value'] !== null ? $field['value'] : '-' }}</div>
                 </div>
             @endforeach
         </div>

@@ -250,7 +250,6 @@ class CertificateGenerationService
         // Get father/mother names from relationships
         $father = $member->father;
         $mother = $member->mother;
-        $spouse = $member->spouse;
 
         // Get confirmation certificate if exists
         $confirmationCert = CertificateRecord::where('member_id', $member->id)
@@ -258,11 +257,23 @@ class CertificateGenerationService
           ->orderBy('issued_date', 'desc')
           ->first();
 
-        // Get marriage certificate if exists
-        $marriageCert = CertificateRecord::where('member_id', $member->id)
-          ->where('certificate_type_id', 3) // marriage type
-          ->orderBy('issued_date', 'desc')
-          ->first();
+        // Get marriage record from the register, and work out the spouse's name from it
+        $memberMarriageRecord = $member->marriageRecord;
+        $isBridegroomInRecord = $memberMarriageRecord && $memberMarriageRecord->bridegroom_member_id === $member->id;
+        $spouseFullName = '';
+        if ($memberMarriageRecord) {
+          if ($isBridegroomInRecord) {
+            $spouseFullName = trim(($memberMarriageRecord->bride_name ?? '') . ' ' . ($memberMarriageRecord->bride_surname ?? ''));
+            if ($spouseFullName === '' && $memberMarriageRecord->bride) {
+              $spouseFullName = trim("{$memberMarriageRecord->bride->first_name} {$memberMarriageRecord->bride->middle_name} {$memberMarriageRecord->bride->last_name}");
+            }
+          } else {
+            $spouseFullName = trim(($memberMarriageRecord->bridegroom_name ?? '') . ' ' . ($memberMarriageRecord->bridegroom_surname ?? ''));
+            if ($spouseFullName === '' && $memberMarriageRecord->bridegroom) {
+              $spouseFullName = trim("{$memberMarriageRecord->bridegroom->first_name} {$memberMarriageRecord->bridegroom->middle_name} {$memberMarriageRecord->bridegroom->last_name}");
+            }
+          }
+        }
 
         $data = array_merge($data, [
           // Baptism record fields
@@ -304,12 +315,14 @@ class CertificateGenerationService
           'confirmation_info' => $confirmationCert ? [
             'date' => $formatDate($member->confirmation_date, 'd F Y'),
             'place' => $member->confirmation_parish ?? $data['parish_name'],
+            // TODO: temporarily reusing the baptism minister until the client confirms what "Confirmed By" should actually show.
+            'by' => $baptismRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
           ] : null,
 
-          'marriage_info' => $marriageCert ? [
-            'date' => $formatDate($member->marriageRecord?->marriage_date, 'd F Y'),
-            'place' => $member->marriage_parish ?? $data['parish_name'],
-            'spouse' => $spouse ? trim("{$spouse->first_name} {$spouse->middle_name} {$spouse->last_name}") : $additionalData['spouse_name'] ?? '',
+          'marriage_info' => $memberMarriageRecord ? [
+            'date' => $formatDate($memberMarriageRecord->marriage_date, 'd F Y'),
+            'place' => $memberMarriageRecord->marriageParish?->name ?? $member->marriage_parish ?? $data['parish_name'],
+            'spouse' => $spouseFullName ?: ($additionalData['spouse_name'] ?? ''),
           ] : null,
         ]);
         break;
