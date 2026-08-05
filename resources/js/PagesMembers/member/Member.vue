@@ -2293,7 +2293,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="confirmation_reg_no">Confirmation Minister</Label>
+              <Label for="confirmation_reg_no">Confirmation Reg No</Label>
               <Input
                 id="confirmation_reg_no"
                 class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"

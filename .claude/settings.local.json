@@ -60,7 +60,9 @@
       "Bash(for file:*)",
       "Bash(do if:*)",
       "Bash(then echo:*)",
-      "Bash(code --list-extensions)"
+      "Bash(code --list-extensions)",
+      "Bash(npx eslint *)",
+      "Bash(git stash *)"
     ]
   }
 }

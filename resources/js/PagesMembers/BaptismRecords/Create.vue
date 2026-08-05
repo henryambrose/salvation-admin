@@ -312,18 +312,18 @@ function submit() {
             <Label>Godmother Residence</Label>
             <Textarea v-model="form.godmother_residence" />
           </div>
-          <div>
+          <!-- <div>
             <Label>Confirmation Date</Label>
             <DateInput
               v-model="form.confirmation_date"
               placeholder="DD/MM/YYYY"
             />
-          </div>
+          </div> -->
           <div>
-            <Label>Confirmation Text</Label>
+            <Label>Confirmed By</Label>
             <Input
               v-model="form.confirmation"
-              placeholder="Enter confirmation text"
+              placeholder="Enter confirmed by"
             />
           </div>
           <div>

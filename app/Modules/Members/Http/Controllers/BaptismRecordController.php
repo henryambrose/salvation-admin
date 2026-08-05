@@ -203,17 +203,17 @@ class BaptismRecordController extends Controller
 
         $baptismRecord->update($validated);
 
-        // Keep members.baptismrecord_id in sync if the linked member changed
+        // Keep members.baptismrecord_id in sync with the linked member.
+        // Always (re)assert the link on the current member, not just when member_id changes,
+        // so records whose link never got set (e.g. legacy data) get repaired on the next edit.
         $newMemberId = $baptismRecord->member_id;
-        if ($oldMemberId !== $newMemberId) {
-            if ($oldMemberId) {
-                Member::where('id', $oldMemberId)
-                    ->where('baptismrecord_id', $baptismRecord->id)
-                    ->update(['baptismrecord_id' => null]);
-            }
-            if ($newMemberId) {
-                Member::where('id', $newMemberId)->update(['baptismrecord_id' => $baptismRecord->id]);
-            }
+        if ($oldMemberId !== $newMemberId && $oldMemberId) {
+            Member::where('id', $oldMemberId)
+                ->where('baptismrecord_id', $baptismRecord->id)
+                ->update(['baptismrecord_id' => null]);
+        }
+        if ($newMemberId) {
+            Member::where('id', $newMemberId)->update(['baptismrecord_id' => $baptismRecord->id]);
         }
 
         return redirect()->route('baptism-records.index')
@@ -317,8 +317,7 @@ class BaptismRecordController extends Controller
             $confirmationInfo = [
                 'date' => $formatDate($member->confirmation_date),
                 'place' => $member->confirmationParish?->name ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
-                // TODO: temporarily reusing the baptism minister until the client confirms what "Confirmed By" should actually show.
-                'by' => $baptismRecord->minister_name ?? '',
+                'by' => $baptismRecord->confirmation ?? '',
             ];
         }
 

@@ -150,7 +150,22 @@ Log::info($validated);
             'death_remarks' => 'nullable|string',
         ]);
 
+        $oldMemberId = $deathRecord->member_id;
+
         $deathRecord->update($validated);
+
+        // Keep members.deathrecord_id in sync with the linked member.
+        // Always (re)assert the link on the current member, not just when member_id changes,
+        // so records whose link never got set (e.g. legacy data) get repaired on the next edit.
+        $newMemberId = $deathRecord->member_id;
+        if ($oldMemberId !== $newMemberId && $oldMemberId) {
+            Member::where('id', $oldMemberId)
+                ->where('deathrecord_id', $deathRecord->id)
+                ->update(['deathrecord_id' => null]);
+        }
+        if ($newMemberId) {
+            Member::where('id', $newMemberId)->update(['deathrecord_id' => $deathRecord->id]);
+        }
 
         return redirect()->route('death-records.index')
             ->with('success', 'Death record updated successfully.');

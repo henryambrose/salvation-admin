@@ -189,29 +189,27 @@ class MarriageRecordController extends Controller
 
         $marriageRecord->update($validated);
 
-        // Keep members.marriagerecord_id in sync if the linked bridegroom/bride changed
+        // Keep members.marriagerecord_id in sync with the linked bridegroom/bride.
+        // Always (re)assert the link on the current member, not just when the member changes,
+        // so records whose link never got set (e.g. legacy data) get repaired on the next edit.
         $newBridegroomId = $marriageRecord->bridegroom_member_id;
-        if ($oldBridegroomId !== $newBridegroomId) {
-            if ($oldBridegroomId) {
-                Member::where('id', $oldBridegroomId)
-                    ->where('marriagerecord_id', $marriageRecord->id)
-                    ->update(['marriagerecord_id' => null]);
-            }
-            if ($newBridegroomId) {
-                Member::where('id', $newBridegroomId)->update(['marriagerecord_id' => $marriageRecord->id]);
-            }
+        if ($oldBridegroomId !== $newBridegroomId && $oldBridegroomId) {
+            Member::where('id', $oldBridegroomId)
+                ->where('marriagerecord_id', $marriageRecord->id)
+                ->update(['marriagerecord_id' => null]);
+        }
+        if ($newBridegroomId) {
+            Member::where('id', $newBridegroomId)->update(['marriagerecord_id' => $marriageRecord->id]);
         }
 
         $newBrideId = $marriageRecord->bride_member_id;
-        if ($oldBrideId !== $newBrideId) {
-            if ($oldBrideId) {
-                Member::where('id', $oldBrideId)
-                    ->where('marriagerecord_id', $marriageRecord->id)
-                    ->update(['marriagerecord_id' => null]);
-            }
-            if ($newBrideId) {
-                Member::where('id', $newBrideId)->update(['marriagerecord_id' => $marriageRecord->id]);
-            }
+        if ($oldBrideId !== $newBrideId && $oldBrideId) {
+            Member::where('id', $oldBrideId)
+                ->where('marriagerecord_id', $marriageRecord->id)
+                ->update(['marriagerecord_id' => null]);
+        }
+        if ($newBrideId) {
+            Member::where('id', $newBrideId)->update(['marriagerecord_id' => $marriageRecord->id]);
         }
 
         return redirect()->route('marriage-records.index')
