@@ -248,7 +248,7 @@ const defaultTemplateContent = `<!DOCTYPE html>
                 <p>Registration No: {{ $baptism_reg_no }}</p>
             @elseif($certificate_type == 'confirmation')
                 <p>was confirmed on {{ $confirmation_date }}</p>
-                <p>Registration No: {{ $confirmation_reg_no }}</p>
+                <p>Confirmed by: {{ $confirmation_minister }}</p>
             @elseif($certificate_type == 'marriage')
                 <p>was married to {{ $spouse_name }} on {{ $marriage_date }}</p>
                 <p>Registration No: {{ $marriage_reg_no }}</p>

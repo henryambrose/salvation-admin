@@ -24,7 +24,7 @@ interface Certificate {
     confirmation_date?: string;
     marriage_date?: string;
     baptism_reg_no?: string;
-    confirmation_reg_no?: string;
+    confirmation_minister?: string;
     marriage_reg_no?: string;
     community?: { name: string };
     parish?: { name: string };
@@ -79,24 +79,28 @@ const relevantMemberData = computed(() => {
       return {
         date: member.baptism_date,
         regNo: member.baptism_reg_no,
+        regNoLabel: 'Reg. No.',
         label: 'Baptism',
       };
     case 'confirmation':
       return {
         date: member.confirmation_date,
-        regNo: member.confirmation_reg_no,
+        regNo: member.confirmation_minister,
+        regNoLabel: 'Minister',
         label: 'Confirmation',
       };
     case 'marriage':
       return {
         date: member.marriage_date,
         regNo: member.marriage_reg_no,
+        regNoLabel: 'Reg. No.',
         label: 'Marriage',
       };
     case 'death':
       return {
         date: props.certificate.additional_data?.death_date,
         regNo: props.certificate.additional_data?.burial_reg_no,
+        regNoLabel: 'Reg. No.',
         label: 'Death',
       };
     default:
@@ -294,7 +298,7 @@ function formatDate(dateStr: string): string {
                 </div>
 
                 <div v-if="relevantMemberData && relevantMemberData.regNo">
-                  <label class="mb-1 block text-sm font-medium text-gray-700">{{ relevantMemberData.label }} Reg. No.</label>
+                  <label class="mb-1 block text-sm font-medium text-gray-700">{{ relevantMemberData.label }} {{ relevantMemberData.regNoLabel }}</label>
                   <p class="text-gray-900">{{ relevantMemberData.regNo }}</p>
                 </div>
               </div>

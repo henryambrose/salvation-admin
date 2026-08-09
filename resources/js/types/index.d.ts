@@ -97,7 +97,7 @@ export interface Member {
   baptism_parish?: string | null;
   baptism_parish_id?: number | null;
   confirmation_date?: string | null;
-  confirmation_reg_no?: string | null;
+  confirmation_minister?: string | null;
   confirmation_parish?: string | null;
   confirmation_parish_id?: number | null;
   marriagerecord_id?: number | null;

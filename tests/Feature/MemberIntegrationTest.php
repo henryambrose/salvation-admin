@@ -171,7 +171,7 @@ describe('Member with Complete Sacramental Records', function () {
             'confirmation_date' => '2002-05-10',
             'confirmation_parish_id' => $confirmationParish->id,
             'confirmation_parish' => $confirmationParish->name,
-            'confirmation_reg_no' => 'CONF-001',
+            'confirmation_minister' => 'CONF-001',
             'marriage_date' => '2015-06-15',
             'marriage_parish_id' => $marriageParish->id,
             'marriage_parish' => $marriageParish->name,

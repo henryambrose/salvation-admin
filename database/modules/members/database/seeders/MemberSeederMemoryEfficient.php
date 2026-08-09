@@ -147,7 +147,7 @@ class MemberSeederMemoryEfficient extends Seeder
                 'baptism_reg_no' => null,
                 'baptism_parish' => null,
                 'confirmation_date' => null,
-                'confirmation_reg_no' => null,
+                'confirmation_minister' => null,
                 'confirmation_parish' => null,
                 'marriage_date' => null,
                 'marriage_reg_no' => null,

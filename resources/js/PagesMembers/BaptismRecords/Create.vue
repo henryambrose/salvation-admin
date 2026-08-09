@@ -319,13 +319,14 @@ function submit() {
               placeholder="DD/MM/YYYY"
             />
           </div> -->
-          <div>
+          <!-- <div>
             <Label>Confirmed By</Label>
             <Input
               v-model="form.confirmation"
               placeholder="Enter confirmed by"
             />
-          </div>
+          </div> -->
+          <!-- Confirmed By now comes from the member's confirmation_minister field. -->
           <div>
             <Label>Minister Name</Label>
             <Input v-model="form.minister_name" />

@@ -27,7 +27,7 @@ interface Member {
   marriage_date?: string;
   deathrecord_id?: number;
   baptism_reg_no?: string;
-  confirmation_reg_no?: string;
+  confirmation_minister?: string;
   marriage_reg_no?: string;
   community?: { name: string };
   parish?: { name: string };

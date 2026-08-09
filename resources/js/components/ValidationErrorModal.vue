@@ -262,7 +262,7 @@ const personalInfoFields = ['first_name', 'last_name', 'middle_name', 'date_of_b
 const contactFields = ['contact_no_1', 'contact_no_2', 'email'];
 const addressFields = ['permanent_add1', 'permanent_add2', 'permanent_add3', 'permanent_town_id', 'permanent_city', 'permanent_pincode', 'permanent_state_id', 'permanent_country_id', 'current_add1', 'current_add2', 'current_add3', 'current_town_id', 'current_city', 'current_pincode', 'current_state_id', 'current_country_id'];
 const communityFields = ['community_id', 'community_cluster_id', 'relationship_id', 'relation_member_id'];
-const religiousFields = ['baptism_date', 'baptism_reg_no', 'baptism_parish', 'baptism_parish_id', 'confirmation_date', 'confirmation_reg_no', 'confirmation_parish', 'confirmation_parish_id', 'marriage_date', 'marriage_reg_no', 'marriage_parish', 'marriage_parish_id', 'death_parish', 'death_parish_id'];
+const religiousFields = ['baptism_date', 'baptism_reg_no', 'baptism_parish', 'baptism_parish_id', 'confirmation_date', 'confirmation_minister', 'confirmation_parish', 'confirmation_parish_id', 'marriage_date', 'marriage_reg_no', 'marriage_parish', 'marriage_parish_id', 'death_parish', 'death_parish_id'];
 
 const personalInfoErrors = computed(() => 
   props.errors.filter(error => personalInfoFields.includes(error.field))

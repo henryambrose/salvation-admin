@@ -459,10 +459,10 @@
                 <div class="field-value">{{ $confirmation_date }}</div>
             </div>
             @endif
-            @if($confirmation_reg_no)
+            @if($confirmation_minister)
             <div class="field-row">
-                <div class="field-label">Confirmation Reg. No:</div>
-                <div class="field-value">{{ $confirmation_reg_no }}</div>
+                <div class="field-label">Confirmation Minister:</div>
+                <div class="field-value">{{ $confirmation_minister }}</div>
             </div>
             @endif
             @if($confirmation_parish)

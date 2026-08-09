@@ -192,8 +192,8 @@
                     @if($confirmation_date)
                         on <strong>{{ $confirmation_date }}</strong>
                     @endif
-                    @if($confirmation_reg_no)
-                        and recorded in the Confirmation Register as Entry No. <strong>{{ $confirmation_reg_no }}</strong>.
+                    @if($confirmation_minister)
+                        by <strong>{{ $confirmation_minister }}</strong>.
                     @else
                         .
                     @endif

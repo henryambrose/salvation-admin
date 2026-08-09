@@ -85,7 +85,7 @@ class UpdateMemberRequest extends FormRequest
             'baptism_parish' => ['nullable', 'string', 'max:255', new ParishValidation('baptism', $member->baptism_parish ?? null)],
             'baptism_parish_id' => 'nullable|exists:parishes,id',
             'confirmation_date' => ['nullable', 'date', new NotFutureDate],
-            'confirmation_reg_no' => 'nullable|string|max:255',
+            'confirmation_minister' => 'nullable|string|max:255',
             'confirmation_parish' => ['nullable', 'string', 'max:255', new ParishValidation('confirmation', $member->confirmation_parish ?? null)],
             'confirmation_parish_id' => 'nullable|exists:parishes,id',
             'marriagerecord_id' => 'nullable|exists:marriage_records,id',

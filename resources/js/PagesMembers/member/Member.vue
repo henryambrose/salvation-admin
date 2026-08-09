@@ -426,7 +426,7 @@ const form = useForm({
   baptism_parish: member?.baptism_parish ? member.baptism_parish : '',
   baptism_parish_id: member?.baptism_parish_id ? member.baptism_parish_id : '',
   confirmation_date: formatDateForInput(member?.confirmation_date),
-  confirmation_reg_no: member?.confirmation_reg_no ? member.confirmation_reg_no : '',
+  confirmation_minister: member?.confirmation_minister ? member.confirmation_minister : '',
   confirmation_parish: member?.confirmation_parish ? member.confirmation_parish : '',
   confirmation_parish_id: member?.confirmation_parish_id ? member.confirmation_parish_id : '',
   marriagerecord_id: member?.marriagerecord_id ? member.marriagerecord_id : null,
@@ -1128,7 +1128,7 @@ watch(
       form.baptism_parish = props.member.baptism_parish || '';
       form.baptism_parish_id = props.member.baptism_parish_id || '';
       form.confirmation_date = formatDateForInput(props.member.confirmation_date);
-      form.confirmation_reg_no = props.member.confirmation_reg_no || '';
+      form.confirmation_minister = props.member.confirmation_minister || '';
       form.confirmation_parish = props.member.confirmation_parish || '';
       form.confirmation_parish_id = props.member.confirmation_parish_id || '';
       form.marriage_parish = props.member.marriage_parish || '';
@@ -2293,15 +2293,15 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
             </div>
             <div class="grid gap-2">
-              <Label for="confirmation_reg_no">Confirmation Reg No</Label>
+              <Label for="confirmation_minister">Confirmation Minister</Label>
               <Input
-                id="confirmation_reg_no"
+                id="confirmation_minister"
                 class="mt-1 block w-full rounded-full border-gray-300 px-4 py-2 shadow focus:ring-2 focus:ring-blue-200"
-                v-model="form.confirmation_reg_no"
-                autocomplete="confirmation_reg_no"
-                placeholder="Confirmation registration no"
+                v-model="form.confirmation_minister"
+                autocomplete="confirmation_minister"
+                placeholder="Confirmation minister's name"
               />
-              <InputError class="mt-2" :message="form.errors.confirmation_reg_no" />
+              <InputError class="mt-2" :message="form.errors.confirmation_minister" />
             </div>
           </div>
         </div>

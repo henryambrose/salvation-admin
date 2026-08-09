@@ -2263,7 +2263,7 @@ class MemberController extends Controller
             'baptism_parish' => $member->baptismParish?->name ?? '',
 
             'confirmation_date' => $formatDate($member->confirmation_date),
-            'confirmation_reg_no' => $member->confirmation_reg_no ?? '',
+            'confirmation_minister' => $member->confirmation_minister ?? '',
             'confirmation_parish' => $member->confirmationParish?->name ?? '',
 
             'marriage_date' => $member->marriageRecord ? $formatDate($member->marriageRecord->marriage_date) : '',

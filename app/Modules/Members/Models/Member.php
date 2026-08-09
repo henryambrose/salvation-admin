@@ -56,7 +56,7 @@ class Member extends Model
         'baptismrecord_id',
         'baptism_parish_id',
         'confirmation_date',
-        'confirmation_reg_no',
+        'confirmation_minister',
         'confirmation_parish_id',
         'marriagerecord_id',
         'marriage_parish_id',

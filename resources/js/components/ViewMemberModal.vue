@@ -43,7 +43,7 @@ const tabs = [
       { key: 'baptism_reg_no', label: 'Baptism Reg. No.' },
       { key: 'baptism_parish', label: 'Baptism Parish' },
       { key: 'confirmation_date', label: 'Confirmation Date' },
-      { key: 'confirmation_reg_no', label: 'Confirmation Reg. No.' },
+      { key: 'confirmation_minister', label: 'Confirmation Minister' },
       { key: 'confirmation_parish', label: 'Confirmation Parish' },
       { key: 'marriage_date', label: 'Marriage Date' },
       { key: 'marriage_reg_no', label: 'Marriage Reg. No.' },

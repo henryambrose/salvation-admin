@@ -315,8 +315,7 @@ class CertificateGenerationService
           'confirmation_info' => $confirmationCert ? [
             'date' => $formatDate($member->confirmation_date, 'd F Y'),
             'place' => $member->confirmation_parish ?? $data['parish_name'],
-            // TODO: temporarily reusing the baptism minister until the client confirms what "Confirmed By" should actually show.
-            'by' => $baptismRecord?->minister_name ?? $additionalData['priest_name'] ?? '',
+            'by' => $member->confirmation_minister ?? '',
           ] : null,
 
           'marriage_info' => $memberMarriageRecord ? [
@@ -330,7 +329,7 @@ class CertificateGenerationService
       case 'confirmation':
         $data = array_merge($data, [
           'confirmation_date' => $member->confirmation_date?->format('d/m/Y'),
-          'confirmation_reg_no' => $member->confirmation_reg_no,
+          'confirmation_minister' => $member->confirmation_minister,
           'confirmation_parish' => $member->confirmation_parish ?? $data['parish_name'],
           'confirmation_name' => $additionalData['confirmation_name'] ?? '',
           'sponsor_name' => $additionalData['sponsor_name'] ?? '',

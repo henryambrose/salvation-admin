@@ -317,7 +317,7 @@ class BaptismRecordController extends Controller
             $confirmationInfo = [
                 'date' => $formatDate($member->confirmation_date),
                 'place' => $member->confirmationParish?->name ?? config('app.parish_name', 'Church of Our Lady of Salvation'),
-                'by' => $baptismRecord->confirmation ?? '',
+                'by' => $member->confirmation_minister ?? '',
             ];
         }
 
