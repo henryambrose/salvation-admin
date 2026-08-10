@@ -1,0 +1,13 @@
+{
+    "preset": "laravel",
+    "notPath": [
+        "database/modules/members/database/seeders/MemberSeeder.php",
+        "database/modules/members/database/seeders/MemberSeeder1.php",
+        "database/modules/members/database/seeders/MemberSeeder2.php",
+        "database/modules/members/database/seeders/CitySeeder.php",
+        "database/modules/graveyard/database/seeders/NicheValidMemberSeeder.php",
+        "database/modules/graveyard/database/seeders/NicheSeeder.php",
+        "database/modules/graveyard/database/seeders/TemporaryGraveSeeder.php",
+        "database/modules/graveyard/database/seeders/PermanentGraveSeeder.php"
+    ]
+}
