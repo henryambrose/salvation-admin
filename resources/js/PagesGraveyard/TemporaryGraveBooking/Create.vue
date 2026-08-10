@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import axios from 'axios';
 import { ArrowLeft, Calendar, MapPin, Phone, User } from 'lucide-vue-next';
 import { computed, onMounted, ref, watch } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import axios from 'axios';
 
 interface TemporaryGrave {
   id: number;
@@ -55,29 +55,6 @@ interface Member {
   current_add1: string;
   contact_no_1: string;
   gender: string;
-}
-
-interface ValidMember {
-  id: number;
-  member_id?: number;
-  first_name: string;
-  last_name: string;
-  date_of_birth?: string;
-  age?: number;
-  months?: number;
-  days?: number;
-  gender_id?: number;
-  nationality?: string;
-  parish_id?: number;
-  contact_no?: string;
-  member_type: 'member' | 'external';
-  relationship_id?: number;
-  full_name: string;
-  is_parish_member: boolean;
-  member?: Member;
-  gender?: Gender;
-  parish?: Parish;
-  relationship?: Relationship;
 }
 
 interface Props {
@@ -215,12 +192,9 @@ const searchMembers = async () => {
 
   isSearchingMembers.value = true;
   try {
-    const response = await axios.get(
-      route('graveyard.temporary-grave-bookings.search-members'),
-      {
-        params: { query: memberSearchQuery.value }
-      }
-    );
+    const response = await axios.get(route('graveyard.temporary-grave-bookings.search-members'), {
+      params: { query: memberSearchQuery.value },
+    });
     memberSearchResults.value = response.data;
   } catch (error) {
     console.error('Error searching members:', error);
@@ -247,7 +221,6 @@ const clearSelectedMember = () => {
   selectedMember.value = null;
   form.deceased_member_id = null;
 };
-
 
 const submit = () => {
   form
@@ -591,11 +564,7 @@ onMounted(() => {
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <Label for="died_on">Date of Death *</Label>
-                    <DateInput
-                      id="died_on"
-                      v-model="form.died_on"
-                      class="mt-1 w-full"
-                    />
+                    <DateInput id="died_on" v-model="form.died_on" class="mt-1 w-full" />
                     <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.died_on }}
                     </div>
@@ -603,11 +572,7 @@ onMounted(() => {
 
                   <div>
                     <Label for="buried_on">Date of Burial *</Label>
-                    <DateInput
-                      id="buried_on"
-                      v-model="form.buried_on"
-                      class="mt-1 w-full"
-                    />
+                    <DateInput id="buried_on" v-model="form.buried_on" class="mt-1 w-full" />
                     <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
                       {{ form.errors.buried_on }}
                     </div>

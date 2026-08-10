@@ -1,42 +1,22 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed, onMounted } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
-import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps<{
   parishes: any[];
   member?: any | null;
 }>();
 
-// Format date from YYYY-MM-DD to DD/MM/YYYY for display
-const formatDateForDisplay = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  return formatDateDisplay(dateString);
-};
-
-// Format date from DD/MM/YYYY to YYYY-MM-DD for database
-const formatDateForDatabase = (dateString: string): string => {
-  if (!dateString) return '';
-  const parts = dateString.split('/');
-  if (parts.length !== 3) return '';
-  const [day, month, year] = parts;
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-};
-
 // Get member's address
 const getMemberAddress = (member: any) => {
   if (!member) return '';
-  const parts = [
-    member.permanent_add1,
-    member.permanent_add2,
-    member.permanent_add3,
-  ].filter(Boolean);
+  const parts = [member.permanent_add1, member.permanent_add2, member.permanent_add3].filter(Boolean);
   return parts.join(', ');
 };
 
@@ -49,22 +29,24 @@ const form = useForm({
   marriage_parish_id: props.member?.marriage_parish_id ?? undefined,
   parish_of_marriage: props.member?.marriage_parish ?? '',
   bridegroom_member_id: isMale ? props.member?.id : (props.member?.spouse?.id ?? undefined),
-  bridegroom_name: isMale ? props.member?.first_name ?? '' : (props.member?.spouse?.first_name ?? ''),
-  bridegroom_surname: isMale ? props.member?.last_name ?? '' : (props.member?.spouse?.last_name ?? ''),
-  bridegroom_dob: isMale ? props.member?.date_of_birth ?? '' : (props.member?.spouse?.date_of_birth ?? ''),
+  bridegroom_name: isMale ? (props.member?.first_name ?? '') : (props.member?.spouse?.first_name ?? ''),
+  bridegroom_surname: isMale ? (props.member?.last_name ?? '') : (props.member?.spouse?.last_name ?? ''),
+  bridegroom_dob: isMale ? (props.member?.date_of_birth ?? '') : (props.member?.spouse?.date_of_birth ?? ''),
   bridegroom_nationality: '',
-  bridegroom_profession: isMale ? props.member?.company_name ?? '' : (props.member?.spouse?.company_name ?? ''),
+  bridegroom_profession: isMale ? (props.member?.company_name ?? '') : (props.member?.spouse?.company_name ?? ''),
   bridegroom_residence: isMale ? getMemberAddress(props.member) : getMemberAddress(props.member?.spouse),
-  bridegroom_father_name: isMale && props.member?.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : '',
-  bridegroom_mother_name: isMale && props.member?.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : '',
+  bridegroom_father_name:
+    isMale && props.member?.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : '',
+  bridegroom_mother_name:
+    isMale && props.member?.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : '',
   bridegroom_status: '',
   bridegroom_if_widower_whose: '',
   bride_member_id: !isMale ? props.member?.id : (props.member?.spouse?.id ?? undefined),
-  bride_name: !isMale ? props.member?.first_name ?? '' : (props.member?.spouse?.first_name ?? ''),
-  bride_surname: !isMale ? props.member?.last_name ?? '' : (props.member?.spouse?.last_name ?? ''),
-  bride_dob: !isMale ? props.member?.date_of_birth ?? '' : (props.member?.spouse?.date_of_birth ?? ''),
+  bride_name: !isMale ? (props.member?.first_name ?? '') : (props.member?.spouse?.first_name ?? ''),
+  bride_surname: !isMale ? (props.member?.last_name ?? '') : (props.member?.spouse?.last_name ?? ''),
+  bride_dob: !isMale ? (props.member?.date_of_birth ?? '') : (props.member?.spouse?.date_of_birth ?? ''),
   bride_nationality: '',
-  bride_profession: !isMale ? props.member?.company_name ?? '' : (props.member?.spouse?.company_name ?? ''),
+  bride_profession: !isMale ? (props.member?.company_name ?? '') : (props.member?.spouse?.company_name ?? ''),
   bride_residence: !isMale ? getMemberAddress(props.member) : getMemberAddress(props.member?.spouse),
   bride_father_name: !isMale && props.member?.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : '',
   bride_mother_name: !isMale && props.member?.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : '',
@@ -84,32 +66,30 @@ const bridegroomMemberOptions = computed(() => {
   if (!isMale || !props.member) return [];
   const communityName = props.member.community?.name ?? 'N/A';
   const memberNo = props.member.member_no ?? 'N/A';
-  
+
   // Get address
-  const address = [
-    props.member.permanent_add1,
-    props.member.permanent_add2,
-    props.member.permanent_add3,
-  ].filter(Boolean).join(', ');
-  
-  return [{
-    id: props.member.id,
-    name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
-    first_name: props.member.first_name,
-    middle_name: props.member.middle_name,
-    last_name: props.member.last_name,
-    member_no: props.member.member_no,
-    date_of_birth: props.member.date_of_birth,
-    gender_id: props.member.gender_id,
-    address: address,
-    nationality: 'Indian',
-    marriage_date: props.member.marriageRecord?.marriage_date ?? props.member.marriage_date,
-    marriage_reg_no: props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no,
-    marriage_parish_id: props.member.marriage_parish_id,
-    father_name: props.member.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : null,
-    father_profession: props.member.father?.company_name,
-    mother_name: props.member.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : null,
-  }];
+  const address = [props.member.permanent_add1, props.member.permanent_add2, props.member.permanent_add3].filter(Boolean).join(', ');
+
+  return [
+    {
+      id: props.member.id,
+      name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
+      first_name: props.member.first_name,
+      middle_name: props.member.middle_name,
+      last_name: props.member.last_name,
+      member_no: props.member.member_no,
+      date_of_birth: props.member.date_of_birth,
+      gender_id: props.member.gender_id,
+      address: address,
+      nationality: 'Indian',
+      marriage_date: props.member.marriageRecord?.marriage_date ?? props.member.marriage_date,
+      marriage_reg_no: props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no,
+      marriage_parish_id: props.member.marriage_parish_id,
+      father_name: props.member.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : null,
+      father_profession: props.member.father?.company_name,
+      mother_name: props.member.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : null,
+    },
+  ];
 });
 
 // Computed property for pre-selected bride member option
@@ -117,32 +97,30 @@ const brideMemberOptions = computed(() => {
   if (isMale || !props.member) return [];
   const communityName = props.member.community?.name ?? 'N/A';
   const memberNo = props.member.member_no ?? 'N/A';
-  
+
   // Get address
-  const address = [
-    props.member.permanent_add1,
-    props.member.permanent_add2,
-    props.member.permanent_add3,
-  ].filter(Boolean).join(', ');
-  
-  return [{
-    id: props.member.id,
-    name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
-    first_name: props.member.first_name,
-    middle_name: props.member.middle_name,
-    last_name: props.member.last_name,
-    member_no: props.member.member_no,
-    date_of_birth: props.member.date_of_birth,
-    gender_id: props.member.gender_id,
-    address: address,
-    nationality: 'Indian',
-    marriage_date: props.member.marriageRecord?.marriage_date ?? props.member.marriage_date,
-    marriage_reg_no: props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no,
-    marriage_parish_id: props.member.marriage_parish_id,
-    father_name: props.member.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : null,
-    father_profession: props.member.father?.company_name,
-    mother_name: props.member.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : null,
-  }];
+  const address = [props.member.permanent_add1, props.member.permanent_add2, props.member.permanent_add3].filter(Boolean).join(', ');
+
+  return [
+    {
+      id: props.member.id,
+      name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
+      first_name: props.member.first_name,
+      middle_name: props.member.middle_name,
+      last_name: props.member.last_name,
+      member_no: props.member.member_no,
+      date_of_birth: props.member.date_of_birth,
+      gender_id: props.member.gender_id,
+      address: address,
+      nationality: 'Indian',
+      marriage_date: props.member.marriageRecord?.marriage_date ?? props.member.marriage_date,
+      marriage_reg_no: props.member.marriageRecord?.marriage_reg_no ?? props.member.marriage_reg_no,
+      marriage_parish_id: props.member.marriage_parish_id,
+      father_name: props.member.father ? `${props.member.father.first_name ?? ''} ${props.member.father.last_name ?? ''}`.trim() : null,
+      father_profession: props.member.father?.company_name,
+      mother_name: props.member.mother ? `${props.member.mother.first_name ?? ''} ${props.member.mother.last_name ?? ''}`.trim() : null,
+    },
+  ];
 });
 
 // Handle bridegroom member selection
@@ -155,7 +133,7 @@ function handleBridegroomSelect(member: any) {
   form.bridegroom_father_name = member.father_name || '';
   form.bridegroom_mother_name = member.mother_name || '';
   form.bridegroom_profession = member.father_profession || '';
-  
+
   // If member has marriage data, populate marriage details
   if (member.marriage_date) {
     form.marriage_date = member.marriage_date;
@@ -178,7 +156,7 @@ function handleBrideSelect(member: any) {
   form.bride_father_name = member.father_name || '';
   form.bride_mother_name = member.mother_name || '';
   form.bride_profession = member.father_profession || '';
-  
+
   // If member has marriage data, populate marriage details
   if (member.marriage_date) {
     form.marriage_date = member.marriage_date;
@@ -214,11 +192,7 @@ function submit() {
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Marriage Date</Label>
-              <Input
-                v-model="form.marriage_date"
-                type="date"
-
-              />
+              <Input v-model="form.marriage_date" type="date" />
             </div>
             <div>
               <Label>Marriage Reg No</Label>
@@ -248,9 +222,7 @@ function submit() {
                 placeholder="Search bridegroom by name..."
                 @select="handleBridegroomSelect"
               />
-              <p class="mt-1 text-xs text-muted-foreground">
-                Optional - leave empty for non-members
-              </p>
+              <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
             </div>
             <div>
               <Label>Name</Label>
@@ -262,10 +234,7 @@ function submit() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <Input
-                v-model="form.bridegroom_dob"
-                type="date"
-              />
+              <Input v-model="form.bridegroom_dob" type="date" />
             </div>
             <div>
               <Label>Nationality</Label>
@@ -311,9 +280,7 @@ function submit() {
                 placeholder="Search bride by name..."
                 @select="handleBrideSelect"
               />
-              <p class="mt-1 text-xs text-muted-foreground">
-                Optional - leave empty for non-members
-              </p>
+              <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
             </div>
             <div>
               <Label>Name</Label>
@@ -325,10 +292,7 @@ function submit() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <Input
-                v-model="form.bride_dob"
-                type="date"
-              />
+              <Input v-model="form.bride_dob" type="date" />
             </div>
             <div>
               <Label>Nationality</Label>
@@ -403,9 +367,7 @@ function submit() {
           <Button type="submit" :disabled="form.processing">
             {{ form.processing ? 'Saving...' : 'Save Marriage Record' }}
           </Button>
-          <Button type="button" variant="outline" @click="router.visit('/marriage-records')">
-            Cancel
-          </Button>
+          <Button type="button" variant="outline" @click="router.visit('/marriage-records')"> Cancel </Button>
         </div>
       </form>
     </div>

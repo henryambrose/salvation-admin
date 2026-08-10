@@ -2,9 +2,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head } from '@inertiajs/vue3';
 import { parseLocalDate } from '@/lib/utils';
-import { ArrowLeft, Edit, Eye, Calendar, MapPin, User, FileText, DollarSign } from 'lucide-vue-next';
+import { Head } from '@inertiajs/vue3';
+import { ArrowLeft, Calendar, DollarSign, Edit, Eye, FileText, MapPin, User } from 'lucide-vue-next';
 
 interface ContributionType {
   id: number;
@@ -33,50 +33,55 @@ interface CommunityContribution {
   collected_by: User | null;
 }
 
-const props = defineProps<{
+defineProps<{
   communityContribution: CommunityContribution;
 }>();
 
 const breadcrumbs = [
-  { label: 'Fund Management', href: '/fund' },
-  { label: 'Community Contributions', href: '/fund/community-contributions' },
-  { label: 'View Details', href: null },
+  { title: 'Fund Management', href: '/fund' },
+  { title: 'Community Contributions', href: '/fund/community-contributions' },
+  { title: 'View Details' },
 ];
 
 const formatCurrency = (amount: string) => {
   const number = parseFloat(amount);
   if (isNaN(number)) return '₹0.00';
-  return '₹' + number.toLocaleString('en-IN', {
-    maximumFractionDigits: 2,
-    minimumFractionDigits: 2,
-  });
+  return (
+    '₹' +
+    number.toLocaleString('en-IN', {
+      maximumFractionDigits: 2,
+      minimumFractionDigits: 2,
+    })
+  );
 };
 
 const formatDate = (dateString: string) => {
   const date = parseLocalDate(dateString);
-  return date ? date.toLocaleDateString('en-IN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  }) : '';
+  return date
+    ? date.toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+    : '';
 };
 
 const getStatusBadgeClass = (status: string) => {
   const classes = {
-    'recorded': 'bg-blue-100 text-blue-800',
-    'verified': 'bg-green-100 text-green-800',
-    'deposited': 'bg-purple-100 text-purple-800',
-    'cancelled': 'bg-red-100 text-red-800'
+    recorded: 'bg-blue-100 text-blue-800',
+    verified: 'bg-green-100 text-green-800',
+    deposited: 'bg-purple-100 text-purple-800',
+    cancelled: 'bg-red-100 text-red-800',
   };
   return classes[status as keyof typeof classes] || 'bg-gray-100 text-gray-800';
 };
 
 const getStatusLabel = (status: string) => {
   const labels = {
-    'recorded': 'Recorded',
-    'verified': 'Verified',
-    'deposited': 'Deposited',
-    'cancelled': 'Cancelled'
+    recorded: 'Recorded',
+    verified: 'Verified',
+    deposited: 'Deposited',
+    cancelled: 'Cancelled',
   };
   return labels[status as keyof typeof labels] || status;
 };
@@ -86,7 +91,7 @@ const getStatusLabel = (status: string) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Community Contribution Details" />
 
-    <div class="max-w-4xl mx-auto">
+    <div class="mx-auto max-w-4xl">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div>
@@ -94,17 +99,11 @@ const getStatusLabel = (status: string) => {
           <p class="mt-2 text-gray-600">View community collection information</p>
         </div>
         <div class="flex space-x-3">
-          <Button
-            @click="$inertia.visit('/fund/community-contributions')"
-            variant="outline"
-          >
+          <Button @click="$inertia.visit('/fund/community-contributions')" variant="outline">
             <ArrowLeft class="mr-2 h-4 w-4" />
             Back to List
           </Button>
-          <Button
-            @click="$inertia.visit(`/fund/community-contributions/${communityContribution.id}/edit`)"
-            variant="default"
-          >
+          <Button @click="$inertia.visit(`/fund/community-contributions/${communityContribution.id}/edit`)" variant="default">
             <Edit class="mr-2 h-4 w-4" />
             Edit
           </Button>
@@ -122,17 +121,15 @@ const getStatusLabel = (status: string) => {
                   <Eye class="mr-2 h-5 w-5" />
                   Collection Overview
                 </CardTitle>
-                <CardDescription>
-                  Basic information about this community contribution
-                </CardDescription>
+                <CardDescription> Basic information about this community contribution </CardDescription>
               </div>
-              <span :class="['px-3 py-1 rounded-full text-sm font-medium', getStatusBadgeClass(communityContribution.status)]">
+              <span :class="['rounded-full px-3 py-1 text-sm font-medium', getStatusBadgeClass(communityContribution.status)]">
                 {{ getStatusLabel(communityContribution.status) }}
               </span>
             </div>
           </CardHeader>
           <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <!-- Amount -->
               <div class="flex items-center space-x-3">
                 <div class="flex-shrink-0">
@@ -189,21 +186,19 @@ const getStatusLabel = (status: string) => {
         <Card>
           <CardHeader>
             <CardTitle>Additional Information</CardTitle>
-            <CardDescription>
-              Extra details about this collection
-            </CardDescription>
+            <CardDescription> Extra details about this collection </CardDescription>
           </CardHeader>
           <CardContent>
             <div class="space-y-6">
               <!-- Description -->
               <div v-if="communityContribution.description">
-                <h4 class="text-sm font-medium text-gray-500 mb-2">Description</h4>
+                <h4 class="mb-2 text-sm font-medium text-gray-500">Description</h4>
                 <p class="text-gray-900">{{ communityContribution.description }}</p>
               </div>
 
               <!-- Location -->
               <div v-if="communityContribution.location">
-                <h4 class="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                <h4 class="mb-2 flex items-center text-sm font-medium text-gray-500">
                   <MapPin class="mr-1 h-4 w-4" />
                   Location
                 </h4>
@@ -212,9 +207,9 @@ const getStatusLabel = (status: string) => {
 
               <!-- Notes -->
               <div v-if="communityContribution.notes">
-                <h4 class="text-sm font-medium text-gray-500 mb-2">Notes</h4>
-                <div class="bg-gray-50 rounded-lg p-4">
-                  <p class="text-gray-900 whitespace-pre-wrap">{{ communityContribution.notes }}</p>
+                <h4 class="mb-2 text-sm font-medium text-gray-500">Notes</h4>
+                <div class="rounded-lg bg-gray-50 p-4">
+                  <p class="whitespace-pre-wrap text-gray-900">{{ communityContribution.notes }}</p>
                 </div>
               </div>
             </div>
@@ -225,18 +220,16 @@ const getStatusLabel = (status: string) => {
         <Card>
           <CardHeader>
             <CardTitle>System Information</CardTitle>
-            <CardDescription>
-              Record creation and modification details
-            </CardDescription>
+            <CardDescription> Record creation and modification details </CardDescription>
           </CardHeader>
           <CardContent>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
               <div>
-                <h4 class="text-sm font-medium text-gray-500 mb-1">Created At</h4>
+                <h4 class="mb-1 text-sm font-medium text-gray-500">Created At</h4>
                 <p class="text-gray-900">{{ formatDate(communityContribution.created_at) }}</p>
               </div>
               <div>
-                <h4 class="text-sm font-medium text-gray-500 mb-1">Last Updated</h4>
+                <h4 class="mb-1 text-sm font-medium text-gray-500">Last Updated</h4>
                 <p class="text-gray-900">{{ formatDate(communityContribution.updated_at) }}</p>
               </div>
             </div>

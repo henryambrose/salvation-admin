@@ -1,4 +1,4 @@
-import { onMounted, onBeforeUnmount, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 /**
  * Options for configuring tab scroll behavior
@@ -98,7 +98,7 @@ export function useTabScrollIntoView(options: TabScrollOptions = {}) {
     return config.excludeSelectors.some((selector) => {
       try {
         return element.matches(selector) || element.closest(selector) !== null;
-      } catch (error) {
+      } catch {
         console.warn(`Invalid selector in excludeSelectors: ${selector}`);
         return false;
       }
@@ -130,7 +130,7 @@ export function useTabScrollIntoView(options: TabScrollOptions = {}) {
         block: config.block,
         inline: 'nearest',
       });
-    } catch (error) {
+    } catch {
       // Fallback for browsers that don't support scrollIntoView options
       element.scrollIntoView();
     }

@@ -17,16 +17,16 @@ interface User {
   name: string;
 }
 
-const props = defineProps<{
+defineProps<{
   contributionTypes: ContributionType[];
   users: User[];
   statusOptions: Record<string, string>;
 }>();
 
 const breadcrumbs = [
-  { label: 'Fund Management', href: '/fund' },
-  { label: 'Community Contributions', href: '/fund/community-contributions' },
-  { label: 'Create New', href: null },
+  { title: 'Fund Management', href: '/fund' },
+  { title: 'Community Contributions', href: '/fund/community-contributions' },
+  { title: 'Create New' },
 ];
 
 const form = useForm({
@@ -69,17 +69,14 @@ const handleAmountInput = (event: Event) => {
   <AppLayout :breadcrumbs="breadcrumbs">
     <Head title="Create Community Contribution" />
 
-    <div class="max-w-4xl mx-auto">
+    <div class="mx-auto max-w-4xl">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div>
           <h1 class="text-3xl font-bold text-gray-900">Create Community Contribution</h1>
           <p class="mt-2 text-gray-600">Record a new community collection</p>
         </div>
-        <Button
-          @click="$inertia.visit('/fund/community-contributions')"
-          variant="outline"
-        >
+        <Button @click="$inertia.visit('/fund/community-contributions')" variant="outline">
           <ArrowLeft class="mr-2 h-4 w-4" />
           Back to List
         </Button>
@@ -90,16 +87,12 @@ const handleAmountInput = (event: Event) => {
         <Card>
           <CardHeader>
             <CardTitle>Collection Details</CardTitle>
-            <CardDescription>
-              Basic information about the community contribution
-            </CardDescription>
+            <CardDescription> Basic information about the community contribution </CardDescription>
           </CardHeader>
           <CardContent class="grid gap-6 sm:grid-cols-2">
             <!-- Contribution Type -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Contribution Type <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Contribution Type <span class="text-red-500">*</span> </label>
               <select
                 v-model="form.contribution_type_id"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -117,13 +110,8 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Collection Date -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Collection Date <span class="text-red-500">*</span>
-              </label>
-              <DateInput
-                v-model="form.collection_date"
-                class="w-full"
-              />
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Collection Date <span class="text-red-500">*</span> </label>
+              <DateInput v-model="form.collection_date" class="w-full" />
               <div v-if="form.errors.collection_date" class="mt-1 text-sm text-red-600">
                 {{ form.errors.collection_date }}
               </div>
@@ -131,9 +119,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Amount -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Amount (₹) <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Amount (₹) <span class="text-red-500">*</span> </label>
               <input
                 v-model="form.amount"
                 @input="handleAmountInput"
@@ -142,9 +128,7 @@ const handleAmountInput = (event: Event) => {
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                 :class="{ 'border-red-300': form.errors.amount }"
               />
-              <div v-if="form.amount" class="mt-1 text-sm text-gray-500">
-                Formatted: ₹{{ formatCurrency(form.amount) }}
-              </div>
+              <div v-if="form.amount" class="mt-1 text-sm text-gray-500">Formatted: ₹{{ formatCurrency(form.amount) }}</div>
               <div v-if="form.errors.amount" class="mt-1 text-sm text-red-600">
                 {{ form.errors.amount }}
               </div>
@@ -152,9 +136,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Status -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Status <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Status <span class="text-red-500">*</span> </label>
               <select
                 v-model="form.status"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -171,9 +153,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Description -->
             <div class="sm:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Description
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Description </label>
               <input
                 v-model="form.description"
                 type="text"
@@ -188,9 +168,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Location -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Location
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Location </label>
               <input
                 v-model="form.location"
                 type="text"
@@ -205,9 +183,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Collected By -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Collected By
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Collected By </label>
               <select
                 v-model="form.collected_by_user_id"
                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -225,9 +201,7 @@ const handleAmountInput = (event: Event) => {
 
             <!-- Notes -->
             <div class="sm:col-span-2">
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Notes
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Notes </label>
               <textarea
                 v-model="form.notes"
                 rows="3"
@@ -244,18 +218,8 @@ const handleAmountInput = (event: Event) => {
 
         <!-- Form Actions -->
         <div class="flex items-center justify-end space-x-4">
-          <Button
-            @click="$inertia.visit('/fund/community-contributions')"
-            type="button"
-            variant="outline"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            :disabled="form.processing"
-            class="min-w-[120px]"
-          >
+          <Button @click="$inertia.visit('/fund/community-contributions')" type="button" variant="outline"> Cancel </Button>
+          <Button type="submit" :disabled="form.processing" class="min-w-[120px]">
             <Save class="mr-2 h-4 w-4" />
             {{ form.processing ? 'Saving...' : 'Save Contribution' }}
           </Button>
@@ -263,10 +227,8 @@ const handleAmountInput = (event: Event) => {
 
         <!-- Error Summary -->
         <div v-if="Object.keys(form.errors).length > 0" class="rounded-md bg-red-50 p-4">
-          <h3 class="text-sm font-medium text-red-800">
-            Please correct the following errors:
-          </h3>
-          <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+          <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+          <ul class="mt-2 list-inside list-disc text-sm text-red-700">
             <li v-for="(error, field) in form.errors" :key="field">
               {{ error }}
             </li>

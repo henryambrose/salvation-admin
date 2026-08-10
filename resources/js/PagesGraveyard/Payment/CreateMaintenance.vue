@@ -31,7 +31,7 @@
         <div v-if="availableMonths.length > 0" class="mb-6 rounded-lg bg-blue-50 p-4">
           <div class="mb-3 flex items-center justify-between">
             <h4 class="text-lg font-semibold text-blue-800">Select Months for Payment ({{ currentYear }})</h4>
-            <label class="flex items-center space-x-2 cursor-pointer">
+            <label class="flex cursor-pointer items-center space-x-2">
               <input
                 type="checkbox"
                 v-model="selectAllMonths"
@@ -42,8 +42,7 @@
             </label>
           </div>
           <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
-            <label v-for="month in availableMonths" :key="month.value"
-                   class="flex items-center space-x-2 cursor-pointer">
+            <label v-for="month in availableMonths" :key="month.value" class="flex cursor-pointer items-center space-x-2">
               <input
                 type="checkbox"
                 :value="month.value"
@@ -54,8 +53,9 @@
             </label>
           </div>
           <p class="mt-2 text-sm text-blue-600">
-            Selected: {{ form.months_paying_for.length }} months =
-            ₹{{ Number(calculateRoundedAmount(form.months_paying_for.length * monthlyFee)).toLocaleString('en-IN') }}
+            Selected: {{ form.months_paying_for.length }} months = ₹{{
+              Number(calculateRoundedAmount(form.months_paying_for.length * monthlyFee)).toLocaleString('en-IN')
+            }}
           </p>
         </div>
 
@@ -64,7 +64,7 @@
           <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <!-- Payer Name -->
             <div>
-              <label for="payer_name" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="payer_name" class="mb-2 block text-sm font-medium text-gray-700">
                 Name of Person Making Payment <span class="text-red-500">*</span>
               </label>
               <input
@@ -79,9 +79,7 @@
 
             <!-- Payer Phone -->
             <div>
-              <label for="payer_phone" class="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number <span class="text-red-500">*</span>
-              </label>
+              <label for="payer_phone" class="mb-2 block text-sm font-medium text-gray-700"> Phone Number <span class="text-red-500">*</span> </label>
               <input
                 id="payer_phone"
                 v-model="form.payer_phone"
@@ -94,9 +92,7 @@
 
             <!-- Payer Email -->
             <div>
-              <label for="payer_email" class="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label for="payer_email" class="mb-2 block text-sm font-medium text-gray-700"> Email Address </label>
               <input
                 id="payer_email"
                 v-model="form.payer_email"
@@ -108,7 +104,7 @@
 
             <!-- Payment Amount -->
             <div>
-              <label for="payment_amount" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="payment_amount" class="mb-2 block text-sm font-medium text-gray-700">
                 Payment Amount <span class="text-red-500">*</span>
               </label>
               <input
@@ -122,14 +118,13 @@
                 required
               />
               <p class="mt-1 text-sm text-gray-500">
-                Annual Fee: ₹{{ Number(annualFee).toLocaleString('en-IN') }} |
-                Monthly Rate: ₹{{ Number(monthlyFee).toLocaleString('en-IN') }}
+                Annual Fee: ₹{{ Number(annualFee).toLocaleString('en-IN') }} | Monthly Rate: ₹{{ Number(monthlyFee).toLocaleString('en-IN') }}
               </p>
             </div>
 
             <!-- Payment Method -->
             <div>
-              <label for="payment_method_id" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="payment_method_id" class="mb-2 block text-sm font-medium text-gray-700">
                 Payment Method <span class="text-red-500">*</span>
               </label>
               <select
@@ -147,7 +142,7 @@
 
             <!-- Payment Date -->
             <div>
-              <label for="payment_date" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="payment_date" class="mb-2 block text-sm font-medium text-gray-700">
                 Payment Date <span class="text-red-500">*</span>
               </label>
               <DateInput id="payment_date" v-model="form.payment_date" class="w-full" />
@@ -155,9 +150,7 @@
 
             <!-- Transaction Reference -->
             <div>
-              <label for="transaction_reference" class="block text-sm font-medium text-gray-700 mb-2">
-                Transaction Reference
-              </label>
+              <label for="transaction_reference" class="mb-2 block text-sm font-medium text-gray-700"> Transaction Reference </label>
               <input
                 id="transaction_reference"
                 v-model="form.transaction_reference"
@@ -170,9 +163,7 @@
 
           <!-- Payment Notes -->
           <div>
-            <label for="payment_notes" class="block text-sm font-medium text-gray-700 mb-2">
-              Payment Notes
-            </label>
+            <label for="payment_notes" class="mb-2 block text-sm font-medium text-gray-700"> Payment Notes </label>
             <textarea
               id="payment_notes"
               v-model="form.payment_notes"
@@ -220,9 +211,7 @@
             <tbody>
               <tr v-for="payment in paymentHistory" :key="payment.id" class="hover:bg-gray-50">
                 <td class="border-b p-3">{{ formatDateForDisplay(payment.payment_date) }}</td>
-                <td class="border-b p-3 font-semibold text-green-600">
-                  ₹{{ Number(payment.paid_amount).toLocaleString('en-IN') }}
-                </td>
+                <td class="border-b p-3 font-semibold text-green-600">₹{{ Number(payment.paid_amount).toLocaleString('en-IN') }}</td>
                 <td class="border-b p-3">{{ payment.payment_method?.name || 'N/A' }}</td>
                 <td class="border-b p-3">{{ payment.transaction_reference || '-' }}</td>
                 <td class="border-b p-3">{{ payment.creator?.name || 'N/A' }}</td>
@@ -236,12 +225,12 @@
 </template>
 
 <script setup lang="ts">
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { Head, router, useForm } from '@inertiajs/vue3';
-import { computed, watch, ref } from 'vue';
 import { DateInput } from '@/components/ui/date-input';
+import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 
 interface Props {
   grave: any;
@@ -295,32 +284,39 @@ const form = useForm({
 // Toggle all months selection
 const toggleAllMonths = () => {
   if (selectAllMonths.value) {
-    form.months_paying_for = props.availableMonths.map(m => m.value);
+    form.months_paying_for = props.availableMonths.map((m) => m.value);
   } else {
     form.months_paying_for = [];
   }
 };
 
 // Watch months selection and update amount
-watch(() => form.months_paying_for, (newMonths) => {
-  if (newMonths.length > 0) {
-    const rawAmount = newMonths.length * props.monthlyFee;
-    form.payment_amount = calculateRoundedAmount(rawAmount);
-  }
+watch(
+  () => form.months_paying_for,
+  (newMonths) => {
+    if (newMonths.length > 0) {
+      const rawAmount = newMonths.length * props.monthlyFee;
+      form.payment_amount = calculateRoundedAmount(rawAmount);
+    }
 
-  // Update select all checkbox state
-  selectAllMonths.value = newMonths.length === props.availableMonths.length;
-}, { deep: true });
+    // Update select all checkbox state
+    selectAllMonths.value = newMonths.length === props.availableMonths.length;
+  },
+  { deep: true },
+);
 
 // Watch payment amount and suggest months
-watch(() => form.payment_amount, (newAmount) => {
-  if (newAmount && newAmount > 0) {
-    const suggestedMonths = Math.min(Math.floor(newAmount / props.monthlyFee), props.availableMonths.length);
-    if (suggestedMonths !== form.months_paying_for.length) {
-      form.months_paying_for = props.availableMonths.slice(0, suggestedMonths).map(m => m.value);
+watch(
+  () => form.payment_amount,
+  (newAmount) => {
+    if (newAmount && newAmount > 0) {
+      const suggestedMonths = Math.min(Math.floor(newAmount / props.monthlyFee), props.availableMonths.length);
+      if (suggestedMonths !== form.months_paying_for.length) {
+        form.months_paying_for = props.availableMonths.slice(0, suggestedMonths).map((m) => m.value);
+      }
     }
-  }
-});
+  },
+);
 
 // Submit payment
 const submitPayment = () => {
@@ -330,8 +326,7 @@ const submitPayment = () => {
     },
     onError: (errors) => {
       console.error('Payment submission failed:', errors);
-    }
+    },
   });
 };
-
 </script>

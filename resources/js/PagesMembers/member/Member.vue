@@ -5,18 +5,19 @@ import InputError from '@/components/InputError.vue';
 import ParishSelection from '@/components/ParishSelection.vue';
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
 import BaptismRecordModal from '@/components/modals/BaptismRecordModal.vue';
-import MarriageRecordModal from '@/components/modals/MarriageRecordModal.vue';
 import DeathRecordModal from '@/components/modals/DeathRecordModal.vue';
+import MarriageRecordModal from '@/components/modals/MarriageRecordModal.vue';
 import { Button } from '@/components/ui/button';
 import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { SearchDropdown } from '@/components/ui/searchDropdown';
 import { SelectInput } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useConfirm } from '@/composables/useConfirm';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDateForInput, formatDateForDisplay, calculateAge } from '@/lib/utils';
+import { formatDateForInput } from '@/lib/utils';
 import type { City, State, Town } from '@/types';
 import {
   BloodGroups,
@@ -36,11 +37,9 @@ import {
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { List } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-import { useConfirm } from '@/composables/useConfirm';
-
 
 interface Props {
-  member?: Member;
+  memberProp?: Member;
   communities: Communities;
   incomeRanges: IncomeRanges;
   bloodGroups: BloodGroups;
@@ -66,7 +65,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 const page = usePage<SharedData>();
-const member = page.props.member as Member;
+const member = page.props.memberProp as Member;
 
 // Validate Indian phone number (mobile or landline)
 const validateIndianPhone = (phoneNumber: string): boolean => {
@@ -198,12 +197,6 @@ const validateNotFutureDate = (dateStr: string): boolean => {
   return inputDate <= today;
 };
 
-// Get today's date in YYYY-MM-DD format for HTML5 max attribute
-const getTodayDate = (): string => {
-  const today = new Date();
-  return today.toISOString().split('T')[0]; // YYYY-MM-DD format
-};
-
 // Helper function to validate chronological order of sacrament dates
 const validateChronologicalDates = (currentField: string, currentDate: string): string | null => {
   if (!currentDate) return null;
@@ -218,7 +211,6 @@ const validateChronologicalDates = (currentField: string, currentDate: string): 
   if (!current) return null;
 
   const birthDate = parseDate(form.date_of_birth);
-  const confirmationDate = parseDate(form.confirmation_date);
 
   switch (currentField) {
     case 'confirmation_date':
@@ -435,9 +427,9 @@ const form = useForm({
   deathrecord_id: member?.deathrecord_id ? member.deathrecord_id : null,
   death_parish: member?.death_parish ? member.death_parish : '',
   death_parish_id: member?.death_parish_id ? member.death_parish_id : '',
-  spouse_source: props.member?.spouse_source || 'Member',
-  father_source: props.member?.father_source || 'Member',
-  mother_source: props.member?.mother_source || 'Member',
+  spouse_source: props.memberProp?.spouse_source || 'Member',
+  father_source: props.memberProp?.father_source || 'Member',
+  mother_source: props.memberProp?.mother_source || 'Member',
   notes: member?.notes ? member.notes : '',
 });
 
@@ -493,7 +485,7 @@ const loadCurrentSpouse = async () => {
             };
 
             // Add spouse to parishMembers if not already present
-            if (!parishMembers.value.find(m => m.id === spouseData.id)) {
+            if (!parishMembers.value.find((m) => m.id === spouseData.id)) {
               parishMembers.value = [spouseData, ...parishMembers.value];
             }
             console.log('Updated parishMembers with current spouse:', parishMembers.value);
@@ -527,7 +519,7 @@ const loadCurrentSpouse = async () => {
               };
 
               // Add spouse to parishMembers if not already present
-              if (!parishMembers.value.find(m => m.id === spouseData.id)) {
+              if (!parishMembers.value.find((m) => m.id === spouseData.id)) {
                 parishMembers.value = [spouseData, ...parishMembers.value];
               }
             }
@@ -556,7 +548,7 @@ const loadCurrentSpouse = async () => {
             };
 
             // Add spouse to externalFamilyMembers if not already present
-            if (!externalFamilyMembers.value.find(m => m.id === spouseData.id)) {
+            if (!externalFamilyMembers.value.find((m) => m.id === spouseData.id)) {
               externalFamilyMembers.value = [spouseData, ...externalFamilyMembers.value];
             }
             console.log('Updated externalFamilyMembers with current spouse:', externalFamilyMembers.value);
@@ -602,7 +594,7 @@ const loadCurrentFather = async () => {
             };
 
             // Add father to familyMembers if not already present
-            if (!familyMembers.value.find(m => m.id === fatherData.id)) {
+            if (!familyMembers.value.find((m) => m.id === fatherData.id)) {
               familyMembers.value = [fatherData, ...familyMembers.value];
             }
             console.log('Updated familyMembers with current father:', familyMembers.value);
@@ -631,7 +623,7 @@ const loadCurrentFather = async () => {
             };
 
             // Add father to externalFamilyMembers if not already present
-            if (!externalFamilyMembers.value.find(m => m.id === fatherData.id)) {
+            if (!externalFamilyMembers.value.find((m) => m.id === fatherData.id)) {
               externalFamilyMembers.value = [fatherData, ...externalFamilyMembers.value];
             }
             console.log('Updated externalFamilyMembers with current father:', externalFamilyMembers.value);
@@ -677,7 +669,7 @@ const loadCurrentMother = async () => {
             };
 
             // Add mother to familyMembers if not already present
-            if (!familyMembers.value.find(m => m.id === motherData.id)) {
+            if (!familyMembers.value.find((m) => m.id === motherData.id)) {
               familyMembers.value = [motherData, ...familyMembers.value];
             }
             console.log('Updated familyMembers with current mother:', familyMembers.value);
@@ -706,7 +698,7 @@ const loadCurrentMother = async () => {
             };
 
             // Add mother to externalFamilyMembers if not already present
-            if (!externalFamilyMembers.value.find(m => m.id === motherData.id)) {
+            if (!externalFamilyMembers.value.find((m) => m.id === motherData.id)) {
               externalFamilyMembers.value = [motherData, ...externalFamilyMembers.value];
             }
             console.log('Updated externalFamilyMembers with current mother:', externalFamilyMembers.value);
@@ -857,21 +849,23 @@ const submit = () => {
 
   form[method](route(routeName, { id: member?.id }), {
     preserveScroll: true,
-    onError: (errors: any) => {
+    onError: () => {
       // Handle validation errors
     },
   });
 };
 
-const communityClusters = ref<CommunityCluster[]>([]);
+const filteredCommunityClusters = ref<CommunityCluster[]>([]);
 
 // Initial family option for SearchDropdown to display current value
 const initialFamilyOptions = computed(() => {
   if (form.family_no) {
-    return [{
-      id: form.family_no,
-      name: form.family_no,
-    }];
+    return [
+      {
+        id: form.family_no,
+        name: form.family_no,
+      },
+    ];
   }
   return [];
 });
@@ -880,9 +874,9 @@ const fetchCommunityCluster = async () => {
   if (!form.community_id) {
     // If no community is selected but we have a cluster_id, show all clusters
     if (form.community_cluster_id) {
-      communityClusters.value = props.communityClusters;
+      filteredCommunityClusters.value = props.communityClusters;
     } else {
-      communityClusters.value = [];
+      filteredCommunityClusters.value = [];
     }
     return;
   }
@@ -890,7 +884,7 @@ const fetchCommunityCluster = async () => {
   // Filter community clusters based on the selected community
   const filteredClusters = props.communityClusters.filter((cluster: CommunityCluster) => Number(cluster.community_id) === Number(form.community_id));
 
-  communityClusters.value = filteredClusters;
+  filteredCommunityClusters.value = filteredClusters;
 };
 
 /**
@@ -910,7 +904,7 @@ const fetchAndApplyFamilyDetails = async (newFamilyNo: string) => {
   try {
     const response = await fetch(`/member/family-details/${encodeURIComponent(newFamilyNo)}`, {
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
@@ -961,17 +955,17 @@ const fetchAndApplyFamilyDetails = async (newFamilyNo: string) => {
 };
 
 // Watch for family_no changes to auto-update community/cluster
-watch(() => form.family_no, (newFamilyNo) => {
-  if (newFamilyNo) {
-    fetchAndApplyFamilyDetails(newFamilyNo);
-  } else {
-    // Family cleared - update previous value
-    previousFamilyNo.value = '';
-  }
-});
-
-// Debug watcher for communityClusters ref
-watch(communityClusters, (newValue) => {});
+watch(
+  () => form.family_no,
+  (newFamilyNo) => {
+    if (newFamilyNo) {
+      fetchAndApplyFamilyDetails(newFamilyNo);
+    } else {
+      // Family cleared - update previous value
+      previousFamilyNo.value = '';
+    }
+  },
+);
 
 watch(
   () => form.community_id,
@@ -1071,73 +1065,73 @@ const deathParishSelection = computed({
 // Watch for member prop changes and update form data
 // Only update if the member ID actually changes (not on validation errors)
 watch(
-  () => props.member?.id,
+  () => props.memberProp?.id,
   (newMemberId, oldMemberId) => {
     // Only update form data if we're switching to a different member
     // or if this is the initial load (oldMemberId is undefined)
-    if (newMemberId !== oldMemberId && props.member) {
+    if (newMemberId !== oldMemberId && props.memberProp) {
       // Update form with new member data
-      form.id = props.member.id || '';
-      form.first_name = props.member.first_name || '';
-      form.middle_name = props.member.middle_name || '';
-      form.last_name = props.member.last_name || '';
-      form.gender_id = props.member.gender_id || '';
-      form.blood_group_id = props.member.blood_group_id || '';
-      form.status_id = props.member.status_id || '';
-      form.relationship_id = props.member.relationship_id || '';
-      form.parish_id = props.member.parish_id || '';
-      form.date_of_birth = formatDateForInput(props.member.date_of_birth);
-      form.contact_no_1 = props.member.contact_no_1 || '';
-      form.contact_no_2 = props.member.contact_no_2 || '';
-      form.email = props.member.email || '';
-      form.aadhar = props.member.aadhar || '';
-      form.family_no = props.member.family_no || '';
-      form.member_no = props.member.member_no || '';
-      form.registration_year = props.member.registration_year || '';
-      form.church_code = props.member.church_code || page.props.church_code;
-      form.family_sequence = props.member.family_sequence || '';
-      form.member_sequence = props.member.member_sequence || '';
-      form.marital_status = props.member.marital_status || 'Single';
-      form.father_id = props.member.father_id || null;
-      form.mother_id = props.member.mother_id || null;
-      form.spouse_id = props.member.spouse_id || null;
-      form.community_id = props.member.community_id || '';
-      form.community_cluster_id = props.member.community_cluster_id || '';
-      form.permanent_add1 = props.member.permanent_add1 || '';
-      form.permanent_add2 = props.member.permanent_add2 || '';
-      form.permanent_add3 = props.member.permanent_add3 || '';
-      form.permanent_town_id = props.member.permanent_town_id || '';
-      form.permanent_city_id = props.member.permanent_city_id || 2;
-      form.permanent_pincode = props.member.permanent_pincode || '';
-      form.permanent_state_id = props.member.permanent_state_id || 22;
-      form.permanent_country_id = props.member.permanent_country_id || 96;
-      form.current_add1 = props.member.current_add1 || '';
-      form.current_add2 = props.member.current_add2 || '';
-      form.current_add3 = props.member.current_add3 || '';
-      form.current_town_id = props.member.current_town_id || '';
-      form.current_city_id = props.member.current_city_id || 2;
-      form.current_pincode = props.member.current_pincode || '';
-      form.current_state_id = props.member.current_state_id || 22;
-      form.current_country_id = props.member.current_country_id || 96;
-      form.school_name = props.member.school_name || '';
-      form.college_name = props.member.college_name || '';
-      form.latest_qualifications = props.member.latest_qualifications || '';
-      form.company_name = props.member.company_name || '';
-      form.designation_id = props.member.designation_id || '';
-      form.income_range_id = props.member.income_range_id || '';
-      form.baptism_parish = props.member.baptism_parish || '';
-      form.baptism_parish_id = props.member.baptism_parish_id || '';
-      form.confirmation_date = formatDateForInput(props.member.confirmation_date);
-      form.confirmation_minister = props.member.confirmation_minister || '';
-      form.confirmation_parish = props.member.confirmation_parish || '';
-      form.confirmation_parish_id = props.member.confirmation_parish_id || '';
-      form.marriage_parish = props.member.marriage_parish || '';
-      form.marriage_parish_id = props.member.marriage_parish_id || '';
-      form.death_parish = props.member.death_parish || '';
-      form.death_parish_id = props.member.death_parish_id || '';
-      form.spouse_source = props.member.spouse_source || 'Member';
-      form.father_source = props.member.father_source || 'Member';
-      form.mother_source = props.member.mother_source || 'Member';
+      form.id = props.memberProp.id || '';
+      form.first_name = props.memberProp.first_name || '';
+      form.middle_name = props.memberProp.middle_name || '';
+      form.last_name = props.memberProp.last_name || '';
+      form.gender_id = props.memberProp.gender_id || '';
+      form.blood_group_id = props.memberProp.blood_group_id || '';
+      form.status_id = props.memberProp.status_id || '';
+      form.relationship_id = props.memberProp.relationship_id || '';
+      form.parish_id = props.memberProp.parish_id || '';
+      form.date_of_birth = formatDateForInput(props.memberProp.date_of_birth);
+      form.contact_no_1 = props.memberProp.contact_no_1 || '';
+      form.contact_no_2 = props.memberProp.contact_no_2 || '';
+      form.email = props.memberProp.email || '';
+      form.aadhar = props.memberProp.aadhar || '';
+      form.family_no = props.memberProp.family_no || '';
+      form.member_no = props.memberProp.member_no || '';
+      form.registration_year = props.memberProp.registration_year || '';
+      form.church_code = props.memberProp.church_code || page.props.church_code;
+      form.family_sequence = props.memberProp.family_sequence || '';
+      form.member_sequence = props.memberProp.member_sequence || '';
+      form.marital_status = props.memberProp.marital_status || 'Single';
+      form.father_id = props.memberProp.father_id || null;
+      form.mother_id = props.memberProp.mother_id || null;
+      form.spouse_id = props.memberProp.spouse_id || null;
+      form.community_id = props.memberProp.community_id || '';
+      form.community_cluster_id = props.memberProp.community_cluster_id || '';
+      form.permanent_add1 = props.memberProp.permanent_add1 || '';
+      form.permanent_add2 = props.memberProp.permanent_add2 || '';
+      form.permanent_add3 = props.memberProp.permanent_add3 || '';
+      form.permanent_town_id = props.memberProp.permanent_town_id || '';
+      form.permanent_city_id = props.memberProp.permanent_city_id || 2;
+      form.permanent_pincode = props.memberProp.permanent_pincode || '';
+      form.permanent_state_id = props.memberProp.permanent_state_id || 22;
+      form.permanent_country_id = props.memberProp.permanent_country_id || 96;
+      form.current_add1 = props.memberProp.current_add1 || '';
+      form.current_add2 = props.memberProp.current_add2 || '';
+      form.current_add3 = props.memberProp.current_add3 || '';
+      form.current_town_id = props.memberProp.current_town_id || '';
+      form.current_city_id = props.memberProp.current_city_id || 2;
+      form.current_pincode = props.memberProp.current_pincode || '';
+      form.current_state_id = props.memberProp.current_state_id || 22;
+      form.current_country_id = props.memberProp.current_country_id || 96;
+      form.school_name = props.memberProp.school_name || '';
+      form.college_name = props.memberProp.college_name || '';
+      form.latest_qualifications = props.memberProp.latest_qualifications || '';
+      form.company_name = props.memberProp.company_name || '';
+      form.designation_id = props.memberProp.designation_id || '';
+      form.income_range_id = props.memberProp.income_range_id || '';
+      form.baptism_parish = props.memberProp.baptism_parish || '';
+      form.baptism_parish_id = props.memberProp.baptism_parish_id || '';
+      form.confirmation_date = formatDateForInput(props.memberProp.confirmation_date);
+      form.confirmation_minister = props.memberProp.confirmation_minister || '';
+      form.confirmation_parish = props.memberProp.confirmation_parish || '';
+      form.confirmation_parish_id = props.memberProp.confirmation_parish_id || '';
+      form.marriage_parish = props.memberProp.marriage_parish || '';
+      form.marriage_parish_id = props.memberProp.marriage_parish_id || '';
+      form.death_parish = props.memberProp.death_parish || '';
+      form.death_parish_id = props.memberProp.death_parish_id || '';
+      form.spouse_source = props.memberProp.spouse_source || 'Member';
+      form.father_source = props.memberProp.father_source || 'Member';
+      form.mother_source = props.memberProp.mother_source || 'Member';
     }
   },
   { immediate: true },
@@ -1277,19 +1271,12 @@ onMounted(() => {
 onMounted(async () => {
   // Fetch family members first if family_no exists
   if (form.family_no) {
-    await Promise.all([
-      fetchFamilyMembers(),
-      fetchExternalFamilyMembers()
-    ]);
+    await Promise.all([fetchFamilyMembers(), fetchExternalFamilyMembers()]);
   }
 
   // Then load current selections (spouse, father, mother) after family members are fetched
   // This ensures the loaded selections are added to already-populated arrays
-  await Promise.all([
-    loadCurrentSpouse(),
-    loadCurrentFather(),
-    loadCurrentMother()
-  ]);
+  await Promise.all([loadCurrentSpouse(), loadCurrentFather(), loadCurrentMother()]);
 });
 
 function cancel() {
@@ -1301,8 +1288,6 @@ function downloadPdf() {
     window.open(route('member.download-pdf', member.id), '_blank');
   }
 }
-
-const selectedDesignations = ref([]); // For v-model
 
 // Same as permanent address functionality
 const sameAsPermanent = ref(false);
@@ -1328,29 +1313,11 @@ const copyPermanentToCurrent = () => {
   }
 };
 
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  return date.toLocaleDateString('en-GB'); // dd/mm/yyyy
-}
-
 // Add this watcher after the existing watchers (around line 600)
 watch(
   () => form.mother_id,
-  (newValue, oldValue) => {},
+  () => {},
 );
-
-// Function to fetch member details for display
-const fetchMemberDetails = async (memberId: number) => {
-  try {
-    const response = await fetch(`/api/members/search?search=${memberId}`);
-    const data = await response.json();
-    return data.find((member: any) => member.id === memberId);
-  } catch (error) {
-    console.error('Error fetching member details:', error);
-    return null;
-  }
-};
 
 // Reactive variables to store family members
 const familyMembers = ref<Array<{ id: number; name: string; family_no?: string; full_name?: string; community?: string; gender_name?: string }>>([]);
@@ -1458,7 +1425,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
         family_no: member.family_no,
         full_name: `${member.first_name} ${member.last_name}`,
         community: member.community || '',
-        gender:member.gender,
+        gender: member.gender,
       }));
 
       // Sort members with gender first, then those without
@@ -1486,8 +1453,6 @@ const fetchParishMembers = async (searchQuery: string = '') => {
     parishMembers.value = [];
   }
 };
-
-
 </script>
 
 <template>
@@ -1559,11 +1524,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <Label for="date_of_birth">Date of Birth</Label>
               <DateInput
                 id="date_of_birth"
-                :class="[
-                  !showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth)
-                    ? '!border-red-300'
-                    : '',
-                ]"
+                :class="[!showValidationModal && form.date_of_birth && !validateNotFutureDate(form.date_of_birth) ? '!border-red-300' : '']"
                 v-model="form.date_of_birth"
                 placeholder="DD/MM/YYYY"
               />
@@ -1723,12 +1684,8 @@ const fetchParishMembers = async (searchQuery: string = '') => {
                 placeholder="Search and select family number..."
                 :disabled="isFetchingFamilyDetails"
               />
-              <p v-if="isFetchingFamilyDetails" class="text-xs text-blue-600">
-                Updating community and cluster...
-              </p>
-              <p v-else class="text-xs text-gray-500">
-                Select a different family. Community and cluster will update automatically.
-              </p>
+              <p v-if="isFetchingFamilyDetails" class="text-xs text-blue-600">Updating community and cluster...</p>
+              <p v-else class="text-xs text-gray-500">Select a different family. Community and cluster will update automatically.</p>
               <InputError class="mt-2" :message="form.errors.family_no" />
             </div>
           </div>
@@ -1946,7 +1903,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               <SearchDropdown
                 id="community_cluster_id"
                 v-model="form.community_cluster_id"
-                :options="communityClusters"
+                :options="filteredCommunityClusters"
                 class="mt-1 block w-full rounded-full"
                 placeholder="Select Community Cluster"
               />
@@ -2237,22 +2194,40 @@ const fetchParishMembers = async (searchQuery: string = '') => {
           <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Sacrament Details</h3>
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
-              <ParishSelection id="baptism_parish" label="Baptism Parish" v-model="baptismParishSelection" :parishes="props.parishes" :original-value="props.member?.baptism_parish" />
+              <ParishSelection
+                id="baptism_parish"
+                label="Baptism Parish"
+                v-model="baptismParishSelection"
+                :parishes="props.parishes"
+                :original-value="props.memberProp?.baptism_parish"
+              />
               <InputError class="mt-2" :message="form.errors.baptism_parish" />
               <InputError class="mt-2" :message="form.errors.baptism_parish_id" />
             </div>
 
             <div class="grid gap-2">
-              <ParishSelection id="marriage_parish" label="Marriage Parish" v-model="marriageParishSelection" :parishes="props.parishes" :original-value="props.member?.marriage_parish" />
+              <ParishSelection
+                id="marriage_parish"
+                label="Marriage Parish"
+                v-model="marriageParishSelection"
+                :parishes="props.parishes"
+                :original-value="props.memberProp?.marriage_parish"
+              />
               <InputError class="mt-2" :message="form.errors.marriage_parish" />
               <InputError class="mt-2" :message="form.errors.marriage_parish_id" />
             </div>
             <div class="grid gap-2">
-              <ParishSelection id="death_parish" label="Death Parish" v-model="deathParishSelection" :parishes="props.parishes" :original-value="props.member?.death_parish" />
+              <ParishSelection
+                id="death_parish"
+                label="Death Parish"
+                v-model="deathParishSelection"
+                :parishes="props.parishes"
+                :original-value="props.memberProp?.death_parish"
+              />
               <InputError class="mt-2" :message="form.errors.death_parish" />
               <InputError class="mt-2" :message="form.errors.death_parish_id" />
             </div>
-                        <div class="grid gap-2">
+            <div class="grid gap-2">
               <Label for="confirmation_date">Confirmation Date</Label>
               <DateInput
                 id="confirmation_date"
@@ -2280,14 +2255,14 @@ const fetchParishMembers = async (searchQuery: string = '') => {
               </div>
               <InputError class="mt-2" :message="form.errors.confirmation_date" />
             </div>
-            
+
             <div class="grid gap-2">
               <ParishSelection
                 id="confirmation_parish"
                 label="Confirmation Parish"
                 v-model="confirmationParishSelection"
                 :parishes="props.parishes"
-                :original-value="props.member?.confirmation_parish"
+                :original-value="props.memberProp?.confirmation_parish"
               />
               <InputError class="mt-2" :message="form.errors.confirmation_parish" />
               <InputError class="mt-2" :message="form.errors.confirmation_parish_id" />
@@ -2314,7 +2289,12 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             <div class="rounded-lg border border-gray-200 p-4 transition hover:border-blue-300 hover:shadow-md">
               <div class="mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                  />
                 </svg>
                 <h4 class="font-semibold text-gray-700">Baptism</h4>
               </div>
@@ -2344,7 +2324,12 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             <div class="rounded-lg border border-gray-200 p-4 transition hover:border-pink-300 hover:shadow-md">
               <div class="mb-2 flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+                  />
                 </svg>
                 <h4 class="font-semibold text-gray-700">Marriage</h4>
               </div>
@@ -2408,7 +2393,7 @@ const fetchParishMembers = async (searchQuery: string = '') => {
                 </svg>
                 <h4 class="font-semibold text-gray-700">Confirmation</h4>
               </div>
-              <p class="text-xs text-gray-500 mb-2">
+              <p class="mb-2 text-xs text-gray-500">
                 {{ form.confirmation_date ? 'Date: ' + form.confirmation_date : 'Not recorded' }}
               </p>
               <p class="text-xs text-gray-500">Managed in form above</p>
@@ -2462,7 +2447,12 @@ const fetchParishMembers = async (searchQuery: string = '') => {
             class="flex items-center gap-2 rounded-full border-green-600 px-6 py-2 text-green-600 hover:bg-green-50"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+              />
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6" />
             </svg>
             Download PDF
@@ -2489,23 +2479,11 @@ const fetchParishMembers = async (searchQuery: string = '') => {
   />
 
   <!-- Sacramental Record Modals -->
-  <BaptismRecordModal
-    :open="showBaptismModal"
-    :record-id="member?.baptismrecord_id ?? null"
-    @close="showBaptismModal = false"
-  />
+  <BaptismRecordModal :open="showBaptismModal" :record-id="member?.baptismrecord_id ?? null" @close="showBaptismModal = false" />
 
-  <MarriageRecordModal
-    :open="showMarriageModal"
-    :record-id="member?.marriagerecord_id ?? null"
-    @close="showMarriageModal = false"
-  />
+  <MarriageRecordModal :open="showMarriageModal" :record-id="member?.marriagerecord_id ?? null" @close="showMarriageModal = false" />
 
-  <DeathRecordModal
-    :open="showDeathModal"
-    :record-id="member?.deathrecord_id ?? null"
-    @close="showDeathModal = false"
-  />
+  <DeathRecordModal :open="showDeathModal" :record-id="member?.deathrecord_id ?? null" @close="showDeathModal = false" />
 </template>
 
 <style>

@@ -24,7 +24,6 @@ const canCreateIncomeRange = can('create-income-range');
 const canReadAnyIncomeRange = can('read-income-range');
 const canUpdateAnyIncomeRange = can('update-income-range');
 const canDeleteAnyIncomeRange = can('delete-income-range');
-const canExportIncomeRange = can('read-income-range');
 const canRestoreIncomeRange = can('restore-income-range');
 const partialOnly = ['incomeRange', 'filters'];
 const searchTimeout = ref<number | null>(null);
@@ -334,7 +333,12 @@ watch(showEditModal, (isOpen) => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="row in enhancedIncomeRanges.data" :id="`income-range-row-${row.id}`" class="transition even:bg-gray-50 hover:bg-blue-50">
+              <tr
+                v-for="row in enhancedIncomeRanges.data"
+                :key="row.id"
+                :id="`income-range-row-${row.id}`"
+                class="transition even:bg-gray-50 hover:bg-blue-50"
+              >
                 <td class="p-2">
                   <template v-if="!serverArchived">
                     <Button

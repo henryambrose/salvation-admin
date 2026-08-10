@@ -189,7 +189,7 @@ const validateCustomParish = async () => {
       original: props.originalValue || '', // Pass original value for edit validation
     });
 
-    const { valid, exists, similar } = response.data;
+    const { exists, similar } = response.data;
 
     if (exists) {
       validationMessage.value = {

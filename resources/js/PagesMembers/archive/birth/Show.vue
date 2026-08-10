@@ -1,57 +1,57 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
-import { ref } from 'vue'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Download, Edit, Eye, EyeOff } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link } from '@inertiajs/vue3';
+import { ArrowLeft, Download, Edit, Eye, EyeOff } from 'lucide-vue-next';
+import { ref } from 'vue';
 
 interface User {
-  id: number
-  name: string
-  email: string
+  id: number;
+  name: string;
+  email: string;
 }
 
 interface Certificate {
-  id: number
-  folder_path: string
-  file_name: string
-  reg_year: number
-  reg_no: string
-  birth_year: number
-  birth_month: number
-  birth_day: number
-  first_name: string
-  middle_name?: string
-  last_name: string
-  notes?: string
-  full_name: string
-  file_url: string
-  formatted_date?: string
-  created_at: string
-  updated_at: string
-  creator?: User
-  updater?: User
+  id: number;
+  folder_path: string;
+  file_name: string;
+  reg_year: number;
+  reg_no: string;
+  birth_year: number;
+  birth_month: number;
+  birth_day: number;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  notes?: string;
+  full_name: string;
+  file_url: string;
+  formatted_date?: string;
+  created_at: string;
+  updated_at: string;
+  creator?: User;
+  updater?: User;
 }
 
 interface Props {
-  certificate: Certificate
+  certificate: Certificate;
 }
 
-const props = defineProps<Props>()
+defineProps<Props>();
 
-const showPdfViewer = ref(false)
+const showPdfViewer = ref(false);
 
 const togglePdfViewer = () => {
-  showPdfViewer.value = !showPdfViewer.value
-}
+  showPdfViewer.value = !showPdfViewer.value;
+};
 </script>
 
 <template>
   <AppLayout>
     <Head title="Birth Archive Certificate" />
 
-    <div class="container mx-auto py-8 px-4">
+    <div class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -62,9 +62,7 @@ const togglePdfViewer = () => {
           </Link>
           <div>
             <h1 class="text-3xl font-bold">Birth Archive Certificate</h1>
-            <p class="text-muted-foreground">
-              Certificate for {{ certificate.full_name }}
-            </p>
+            <p class="text-muted-foreground">Certificate for {{ certificate.full_name }}</p>
           </div>
         </div>
 
@@ -96,12 +94,8 @@ const togglePdfViewer = () => {
           <CardDescription>PDF document viewer</CardDescription>
         </CardHeader>
         <CardContent>
-          <div class="w-full overflow-hidden rounded-lg border bg-muted">
-            <iframe
-              :src="certificate.file_url"
-              class="h-[800px] w-full"
-              title="Certificate PDF Viewer"
-            />
+          <div class="bg-muted w-full overflow-hidden rounded-lg border">
+            <iframe :src="certificate.file_url" class="h-[800px] w-full" title="Certificate PDF Viewer" />
           </div>
         </CardContent>
       </Card>
@@ -116,27 +110,27 @@ const togglePdfViewer = () => {
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Full Name</div>
+              <div class="text-muted-foreground text-sm font-medium">Full Name</div>
               <div class="text-base">{{ certificate.full_name }}</div>
             </div>
 
             <div class="grid grid-cols-3 gap-4">
               <div>
-                <div class="text-sm font-medium text-muted-foreground">First Name</div>
+                <div class="text-muted-foreground text-sm font-medium">First Name</div>
                 <div class="text-base">{{ certificate.first_name }}</div>
               </div>
               <div>
-                <div class="text-sm font-medium text-muted-foreground">Middle Name</div>
+                <div class="text-muted-foreground text-sm font-medium">Middle Name</div>
                 <div class="text-base">{{ certificate.middle_name || 'N/A' }}</div>
               </div>
               <div>
-                <div class="text-sm font-medium text-muted-foreground">Last Name</div>
+                <div class="text-muted-foreground text-sm font-medium">Last Name</div>
                 <div class="text-base">{{ certificate.last_name }}</div>
               </div>
             </div>
 
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Date of Birth</div>
+              <div class="text-muted-foreground text-sm font-medium">Date of Birth</div>
               <div class="text-base">
                 {{ certificate.formatted_date || `${certificate.birth_day}/${certificate.birth_month}/${certificate.birth_year}` }}
               </div>
@@ -152,17 +146,17 @@ const togglePdfViewer = () => {
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Registration Year</div>
+              <div class="text-muted-foreground text-sm font-medium">Registration Year</div>
               <div class="text-base">{{ certificate.reg_year }}</div>
             </div>
 
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Registration Number</div>
+              <div class="text-muted-foreground text-sm font-medium">Registration Number</div>
               <div class="text-base">{{ certificate.reg_no }}</div>
             </div>
 
             <div v-if="certificate.notes">
-              <div class="text-sm font-medium text-muted-foreground">Notes</div>
+              <div class="text-muted-foreground text-sm font-medium">Notes</div>
               <div class="text-base">{{ certificate.notes }}</div>
             </div>
           </CardContent>
@@ -176,12 +170,12 @@ const togglePdfViewer = () => {
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Folder Path</div>
+              <div class="text-muted-foreground text-sm font-medium">Folder Path</div>
               <div class="font-mono text-sm">{{ certificate.folder_path }}</div>
             </div>
 
             <div>
-              <div class="text-sm font-medium text-muted-foreground">File Name</div>
+              <div class="text-muted-foreground text-sm font-medium">File Name</div>
               <div class="font-mono text-sm">{{ certificate.file_name }}</div>
             </div>
           </CardContent>
@@ -195,22 +189,22 @@ const togglePdfViewer = () => {
           </CardHeader>
           <CardContent class="space-y-4">
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Created At</div>
+              <div class="text-muted-foreground text-sm font-medium">Created At</div>
               <div class="text-base">{{ new Date(certificate.created_at).toLocaleString() }}</div>
             </div>
 
             <div v-if="certificate.creator">
-              <div class="text-sm font-medium text-muted-foreground">Created By</div>
+              <div class="text-muted-foreground text-sm font-medium">Created By</div>
               <div class="text-base">{{ certificate.creator.name }}</div>
             </div>
 
             <div>
-              <div class="text-sm font-medium text-muted-foreground">Updated At</div>
+              <div class="text-muted-foreground text-sm font-medium">Updated At</div>
               <div class="text-base">{{ new Date(certificate.updated_at).toLocaleString() }}</div>
             </div>
 
             <div v-if="certificate.updater">
-              <div class="text-sm font-medium text-muted-foreground">Updated By</div>
+              <div class="text-muted-foreground text-sm font-medium">Updated By</div>
               <div class="text-base">{{ certificate.updater.name }}</div>
             </div>
           </CardContent>

@@ -6,12 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { Calendar, Eye, MapPin, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { useToast } from '@/composables/useToast';
-import { useConfirm } from '@/composables/useConfirm';
 
 interface PermanentGraveBooking {
   id: number;
@@ -59,7 +59,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { success, error, warning } = useToast();
+const { success, error } = useToast();
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
@@ -163,16 +163,6 @@ const deleteBooking = (booking: PermanentGraveBooking) => {
       });
     },
   });
-};
-
-const getBookingWarning = (booking: PermanentGraveBooking) => {
-  if (booking.status === 'pending') {
-    return 'This grave has a pending booking';
-  }
-  if (booking.status === 'confirmed') {
-    return 'This grave has a confirmed booking';
-  }
-  return null;
 };
 </script>
 

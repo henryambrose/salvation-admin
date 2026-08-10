@@ -73,7 +73,10 @@
       "Bash(composer show *)",
       "Bash(vendor/bin/pint --help)",
       "Bash(git checkout *)",
-      "Bash(git check-ignore *)"
+      "Bash(git check-ignore *)",
+      "Bash(git push *)",
+      "Bash(unzip -o /tmp/lint_full_log.zip -d /tmp/lint_log_extracted)",
+      "Read(//tmp/lint_log_extracted/**)"
     ]
   }
 }

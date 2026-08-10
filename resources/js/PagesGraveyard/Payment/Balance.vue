@@ -2,16 +2,16 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator, CreditCard, IndianRupee } from 'lucide-vue-next';
 import { computed } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 interface PaymentMethod {
   id: number;
@@ -100,7 +100,6 @@ const formatCurrency = (amount: number) => {
     .replace('₹', '₹ ');
 };
 
-
 const getDeceasedName = () => {
   const payable = props.originalPayment.payable;
 
@@ -145,7 +144,7 @@ const submit = () => {
     payment_method_id: parseInt(form.payment_method_id) || null,
   };
 
-  form.transform((data) => formData).post(route('graveyard.payments.balance.store', props.originalPayment.id));
+  form.transform(() => formData).post(route('graveyard.payments.balance.store', props.originalPayment.id));
 };
 </script>
 

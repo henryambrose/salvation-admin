@@ -381,18 +381,6 @@ const getGraveIdentifier = (validMember: any) => {
   return '-';
 };
 
-const getGraveLocation = (validMember: any) => {
-  if (validMember.permanent_grave) {
-    return (
-      `Section ${validMember.permanent_grave.section}, Row ${validMember.permanent_grave.row_no}\n Owner Name ${validMember.permanent_grave.owner_name} ` ||
-      '-'
-    );
-  } else if (validMember.niche) {
-    return validMember.niche.location || '-';
-  }
-  return '-';
-};
-
 const changePage = (page: number) => {
   router.get(
     '/graveyard/valid-members',

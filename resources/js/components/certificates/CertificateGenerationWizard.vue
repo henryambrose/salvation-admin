@@ -81,7 +81,6 @@ const availableTemplates = ref<CertificateTemplate[]>([]);
 // Step 4: Generation
 const notes = ref('');
 const isGenerating = ref(false);
-const previewData = ref<any>(null);
 
 // Computed properties
 const canProceedStep1 = computed(() => selectedMember.value !== null);

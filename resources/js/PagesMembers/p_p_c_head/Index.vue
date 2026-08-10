@@ -134,7 +134,7 @@ function fetch(page = 1) {
 }
 watch(
   () => editForm.community_id,
-  async (newVal: any, oldVal) => {
+  async (newVal: any) => {
     if (newVal) {
       const { data } = await axios.get(`/api/ppc-community/${newVal.id}/members`);
       modalMembers.value = data;
@@ -347,8 +347,6 @@ const { can } = permissionHelpers();
 
 const canCreatePPCHead = can('create-ppc-head');
 const canReadAnyPPCHead = can('read-ppc-head');
-const canUpdateAnyPPCHead = can('update-ppc-head');
-const canDeleteAnyPPCHead = can('delete-ppc-head');
 const canExportPPCHead = can('read-ppc-head');
 
 function onPageChange(e: Event) {
@@ -546,7 +544,14 @@ watch(showEditModal, (isOpen) => {
           <form @submit.prevent="submitEdit">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <Multiselect v-model="editForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" data-edit-input />
+              <Multiselect
+                v-model="editForm.community_id"
+                :options="props.communities"
+                label="name"
+                track-by="id"
+                placeholder="Select Community"
+                data-edit-input
+              />
             </div>
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Member</label>
@@ -591,7 +596,14 @@ watch(showEditModal, (isOpen) => {
           <form @submit.prevent="submitCreate">
             <div class="mb-6">
               <label class="mb-2 block font-medium text-gray-700">Community</label>
-              <Multiselect v-model="createForm.community_id" :options="props.communities" label="name" track-by="id" placeholder="Select Community" data-create-input />
+              <Multiselect
+                v-model="createForm.community_id"
+                :options="props.communities"
+                label="name"
+                track-by="id"
+                placeholder="Select Community"
+                data-create-input
+              />
               <div v-if="createForm.errors.community_id || createForm.errors['community_id']" class="mt-1 text-sm text-red-500">
                 {{ createForm.errors.community_id || createForm.errors['community_id'] }}
               </div>

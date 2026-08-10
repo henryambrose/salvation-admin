@@ -1,13 +1,14 @@
 import { onMounted, onUnmounted, ref } from 'vue';
-import { router } from '@inertiajs/vue3';
 
-export function useSessionKeepAlive(options: {
-  enabled?: boolean;
-  intervalMinutes?: number;
-  warningMinutes?: number;
-  onWarning?: () => void;
-  onExpired?: () => void;
-} = {}) {
+export function useSessionKeepAlive(
+  options: {
+    enabled?: boolean;
+    intervalMinutes?: number;
+    warningMinutes?: number;
+    onWarning?: () => void;
+    onExpired?: () => void;
+  } = {},
+) {
   const {
     enabled = true,
     intervalMinutes = 2, // Ping every 2 minutes
@@ -77,10 +78,13 @@ export function useSessionKeepAlive(options: {
     pingServer();
 
     // Set up interval to ping server
-    keepAliveInterval.value = setInterval(() => {
-      pingServer();
-      checkSessionExpiry();
-    }, intervalMinutes * 60 * 1000); // Convert minutes to milliseconds
+    keepAliveInterval.value = setInterval(
+      () => {
+        pingServer();
+        checkSessionExpiry();
+      },
+      intervalMinutes * 60 * 1000,
+    ); // Convert minutes to milliseconds
   }
 
   /**
@@ -112,7 +116,7 @@ export function useSessionKeepAlive(options: {
     if (enabled) {
       // Track user activity
       const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-      events.forEach(event => {
+      events.forEach((event) => {
         window.addEventListener(event, trackActivity, { passive: true });
       });
 
@@ -125,7 +129,7 @@ export function useSessionKeepAlive(options: {
 
     // Clean up activity listeners
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart'];
-    events.forEach(event => {
+    events.forEach((event) => {
       window.removeEventListener(event, trackActivity);
     });
   });

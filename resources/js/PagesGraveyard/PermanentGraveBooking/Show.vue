@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ArrowLeft, CheckCircle, FileText, IndianRupee, MapPin, Phone, User, XCircle } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 
 interface PermanentGraveBooking {
   id: number;
@@ -85,10 +85,6 @@ const props = defineProps<Props>();
 const page = usePage();
 const flashMessage = computed(() => page.props.flash as FlashMessage | undefined);
 
-const showCancelDialog = ref(false);
-const cancelReason = ref('');
-const isProcessing = ref(false);
-
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
@@ -132,28 +128,6 @@ const goToPayment = () => {
   router.visit(route('graveyard.payments.create', { bookingType: 'permanent', bookingId: props.booking.id }));
 };
 
-const cancelBooking = () => {
-  if (!cancelReason.value.trim()) return;
-
-  // Prevent duplicate submissions
-  if (isProcessing.value) return;
-
-  isProcessing.value = true;
-  router.post(
-    route('graveyard.permanent-grave-bookings.cancel', props.booking.id),
-    {
-      cancellation_reason: cancelReason.value,
-    },
-    {
-      onFinish: () => {
-        isProcessing.value = false;
-        showCancelDialog.value = false;
-        cancelReason.value = '';
-      },
-    },
-  );
-};
-
 const canMakePayment = () => {
   // Can only make payment if booking is pending AND no completed payments exist
   const isBookingPending = props.booking.status === 'pending';
@@ -162,11 +136,6 @@ const canMakePayment = () => {
 
   return isBookingPending && !hasCompletedPayment && isPaymentStatusPending;
 };
-
-const canCancel = () => {
-  return ['pending', 'confirmed'].includes(props.booking.status);
-};
-
 </script>
 
 <template>
@@ -443,7 +412,12 @@ const canCancel = () => {
                           variant="outline"
                           class="group h-12 justify-start text-left transition-colors duration-200 hover:border-blue-300 hover:bg-blue-50"
                         >
-                          <a :href="route('graveyard.payments.receipt', payment.id)" target="_blank" rel="noopener noreferrer" class="flex items-center space-x-3 p-3">
+                          <a
+                            :href="route('graveyard.payments.receipt', payment.id)"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="flex items-center space-x-3 p-3"
+                          >
                             <div class="flex-shrink-0 rounded-lg bg-blue-100 p-1.5 transition-colors group-hover:bg-blue-200">
                               <FileText class="h-4 w-4 text-blue-600" />
                             </div>

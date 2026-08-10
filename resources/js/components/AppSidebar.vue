@@ -5,9 +5,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useScrollRestoration } from '@/composables/useScrollRestoration';
 import { Link, usePage } from '@inertiajs/vue3';
-import * as Icons from 'lucide-vue-next';
 import {
-  Award,
   Baby,
   Bot,
   Building,
@@ -40,10 +38,6 @@ const { can } = permissionHelpers();
 
 // Initialize scroll restoration for the sidebar
 useScrollRestoration();
-
-const resolveIcon = (iconName: string) => {
-  return (Icons as any)[iconName] || Icons.HelpCircle; // fallback icon
-};
 
 const page = usePage();
 

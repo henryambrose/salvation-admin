@@ -53,10 +53,7 @@
                 <!-- Mass Date -->
                 <div>
                   <label class="mb-2 block text-sm font-medium text-gray-700">Mass Date</label>
-                  <DateInput
-                    v-model="form.mass_date"
-                    class="w-full"
-                  />
+                  <DateInput v-model="form.mass_date" class="w-full" />
                 </div>
               </div>
 
@@ -151,9 +148,7 @@
                     class="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
                     placeholder="Check No, UPI ID, etc."
                   />
-                  <p class="mt-1 text-sm text-gray-500">
-                    Enter check number, UPI transaction ID, or other payment reference
-                  </p>
+                  <p class="mt-1 text-sm text-gray-500">Enter check number, UPI transaction ID, or other payment reference</p>
                 </div>
               </div>
 
@@ -182,11 +177,10 @@
 </template>
 
 <script setup lang="ts">
+import { DateInput } from '@/components/ui/date-input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, router } from '@inertiajs/vue3';
 import { onMounted, ref, watch } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,
@@ -273,9 +267,8 @@ function initializeForm() {
 function updateIntention() {
   updating.value = true;
 
-
   router.put(route('fund.mass-intentions.update', props.massIntention.id), form.value, {
-    onSuccess: (response) => {
+    onSuccess: () => {
       updating.value = false;
       // Redirect to index page after successful update
       router.visit(route('fund.mass-intentions.index'));
@@ -285,7 +278,7 @@ function updateIntention() {
         window.location.href = route('fund.mass-intentions.index');
       }, 1000);
     },
-    onError: (errors) => {
+    onError: () => {
       updating.value = false;
     },
   });

@@ -60,7 +60,6 @@ const canCreateBloodGroup = can('create-blood-group');
 const canReadAnyBloodGroup = can('read-blood-group');
 const canUpdateAnyBloodGroup = can('update-blood-group');
 const canDeleteAnyBloodGroup = can('delete-blood-group');
-const canExportBloodGroup = can('read-blood-group');
 
 function restoreBloodGroup(id: number) {
   router.post(

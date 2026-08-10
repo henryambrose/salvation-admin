@@ -23,7 +23,6 @@ const canCreateTown = can('create-town');
 const canReadAnyTown = can('read-town');
 const canUpdateAnyTown = can('update-town');
 const canDeleteAnyTown = can('delete-town');
-const canExportTown = can('read-town');
 const canRestoreTown = can('restore-town');
 
 const columns = [

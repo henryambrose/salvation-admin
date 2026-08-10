@@ -60,7 +60,7 @@ const props = defineProps<{
 }>();
 
 // State management
-const { certificateState, saveState, getState } = useCertificateState();
+const { certificateState, saveState } = useCertificateState();
 
 // Filter reactive variables - use stored state if available, otherwise use props
 const search = ref(props.filters?.search || certificateState.search || '');
@@ -68,7 +68,6 @@ const certificateType = ref(props.filters?.type || certificateState.certificateT
 const sort = ref(props.filters?.sort || certificateState.sort || 'created_at');
 const direction = ref(props.filters?.direction || certificateState.direction || 'desc');
 const perPage = ref(props.filters?.per_page || certificateState.perPage || 10);
-const showFilters = ref(false);
 
 // Certificate types for filtering
 const certificateTypes = [

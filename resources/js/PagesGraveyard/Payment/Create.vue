@@ -2,17 +2,17 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calculator } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
+import { computed, ref, watch } from 'vue';
 
 interface ServiceType {
   id: number;
@@ -167,17 +167,17 @@ const availableServices = computed(() => {
 });
 
 const hasFreeServices = computed(() => {
-  const freeServicesSelected = form.selected_services.some((service) => {
+  return form.selected_services.some((service) => {
     const serviceType = props.serviceTypes.find((s) => s.id === service.service_id);
     return serviceType?.type === 'free';
   });
+});
 
-  // Auto-set payment amount to 0 for free services
+// Auto-set payment amount to 0 for free services
+watch(hasFreeServices, (freeServicesSelected) => {
   if (freeServicesSelected && form.paid_amount !== 0) {
     form.paid_amount = 0;
   }
-
-  return freeServicesSelected;
 });
 
 const hasPaidServices = computed(() => {
@@ -263,10 +263,6 @@ const paymentAmountError = computed(() => {
 });
 
 // Computed properties for displaying selected values
-const selectedPaymentMethod = computed(() => {
-  return props.paymentMethods.find((method) => method.id === parseInt(form.payment_method_id));
-});
-
 const bookingShowRoute = computed(() => {
   const routes = {
     permanent: 'graveyard.permanent-grave-bookings.show',
@@ -319,21 +315,8 @@ const removeService = (index: number) => {
   }
 };
 
-const updateServiceCost = (index: number) => {
-  const service = form.selected_services[index];
-  const quantity = Number(service.quantity) || 1;
-  const unitCost = Number(service.unit_cost) || 0;
-  service.total_cost = quantity * unitCost;
-};
-
 const setPaymentToTotal = () => {
   form.paid_amount = totalAmount.value;
-};
-
-const setPaymentToBalance = () => {
-  if (form.selected_services.length === 0 && props.booking.balance_amount > 0) {
-    form.paid_amount = Number(props.booking.balance_amount);
-  }
 };
 
 const formatCurrency = (amount: number) => {
@@ -344,7 +327,6 @@ const formatCurrency = (amount: number) => {
     .format(amount)
     .replace('₹', '₹ ');
 };
-
 
 const getDeceasedName = () => {
   if (props.bookingType === 'temporary' || props.bookingType === 'remains-transfer') {
@@ -364,7 +346,7 @@ const submit = () => {
   };
 
   form
-    .transform((data) => formData)
+    .transform(() => formData)
     .post(route('graveyard.payments.store'), {
       onSuccess: () => {
         if (hasFreeServices.value) {
@@ -737,9 +719,18 @@ const submit = () => {
                         </div>
                       </template>
 
-                      <div class="flex justify-between font-semibold" :class="form.selected_services.length > 0 && booking.balance_amount > 0 ? 'col-span-2 border-t pt-2' : ''">
+                      <div
+                        class="flex justify-between font-semibold"
+                        :class="form.selected_services.length > 0 && booking.balance_amount > 0 ? 'col-span-2 border-t pt-2' : ''"
+                      >
                         <span class="text-gray-700">
-                          {{ form.selected_services.length > 0 && booking.balance_amount > 0 ? 'Total Amount Due:' : form.selected_services.length > 0 ? 'Service Total:' : 'Outstanding Balance:' }}
+                          {{
+                            form.selected_services.length > 0 && booking.balance_amount > 0
+                              ? 'Total Amount Due:'
+                              : form.selected_services.length > 0
+                                ? 'Service Total:'
+                                : 'Outstanding Balance:'
+                          }}
                         </span>
                         <span class="font-bold">{{ formatCurrency(totalAmount) }}</span>
                       </div>

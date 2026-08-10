@@ -3,15 +3,11 @@ import DatatableHeader from '@/components/DatatableHeader.vue';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Column } from '@/types';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { ArchiveIcon, Download, Pencil, Plus, Trash } from 'lucide-vue-next';
 import { computed, nextTick, onMounted, ref, watch } from 'vue';
-
-const { can } = permissionHelpers();
-const page = usePage();
 
 const props = defineProps({
   externalMembers: Object,
@@ -52,7 +48,7 @@ let searchTimeout: number;
 
 watch(
   [search, familySearch, sortField, sortDirection, perPage, relationship, filterColumnKey, filterColumnValue, isArchived],
-  (newValues, oldValues) => {
+  () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       fetch();

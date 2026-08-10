@@ -271,11 +271,11 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { router } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-const props = defineProps({
+defineProps({
   logs: Object,
   filters: Object,
   filterOptions: Object,
@@ -317,10 +317,6 @@ function formatValue(value) {
     return 'N/A';
   }
 
-  // Check if the value is a date (common date field names or ISO date format)
-  const dateFields = ['created_at', 'updated_at', 'date_of_birth', 'marriage_date', 'baptism_date', 'confirmation_date'];
-  const isDateField = (key) => dateFields.some((field) => key.toLowerCase().includes(field));
-
   // Check if it's an ISO date string (YYYY-MM-DD or YYYY-MM-DD HH:MM:SS)
   const isISODate = /^\d{4}-\d{2}-\d{2}/.test(value);
 
@@ -334,7 +330,7 @@ function formatValue(value) {
           year: 'numeric',
         });
       }
-    } catch (e) {
+    } catch {
       // If date parsing fails, return original value
     }
   }

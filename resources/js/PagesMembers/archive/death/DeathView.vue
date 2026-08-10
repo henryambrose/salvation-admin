@@ -1,91 +1,84 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3'
-import { ref, computed, watch } from 'vue'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue'
-import { ArrowLeft, Download, Edit, Eye, EyeOff, Save, Link as LinkIcon } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Download, Edit, Eye, EyeOff, Save } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 interface User {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface Parish {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface Member {
-  id: number
-  first_name: string
-  middle_name?: string
-  last_name: string
-  family_no: string
+  id: number;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  family_no: string;
 }
 
 interface DeathRecord {
-  id: number
-  member_id?: number
-  death_date?: string
-  burial_date?: string
-  burial_reg_no?: string
-  burial_parish_id?: number
-  deceased_name?: string
-  deceased_surname?: string
-  relationship?: string
-  residence?: string
-  age?: number
-  nationality?: string
-  cause_of_death?: string
-  place_of_burial?: string
-  minister_name?: string
-  death_remarks?: string
-  member?: Member
-  burialParish?: Parish
+  id: number;
+  member_id?: number;
+  death_date?: string;
+  burial_date?: string;
+  burial_reg_no?: string;
+  burial_parish_id?: number;
+  deceased_name?: string;
+  deceased_surname?: string;
+  relationship?: string;
+  residence?: string;
+  age?: number;
+  nationality?: string;
+  cause_of_death?: string;
+  place_of_burial?: string;
+  minister_name?: string;
+  death_remarks?: string;
+  member?: Member;
+  burialParish?: Parish;
 }
 
 interface Certificate {
-  id: number
-  full_name: string
-  first_name: string
-  middle_name?: string
-  last_name: string
-  reg_year: number
-  reg_no: string
-  death_year: number
-  death_month: number
-  death_day: number
-  formatted_date?: string
-  file_url: string | null
-  notes?: string
-  created_at: string
-  creator?: User
+  id: number;
+  full_name: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  reg_year: number;
+  reg_no: string;
+  death_year: number;
+  death_month: number;
+  death_day: number;
+  formatted_date?: string;
+  file_url: string | null;
+  notes?: string;
+  created_at: string;
+  creator?: User;
 }
 
 interface Props {
-  certificate: Certificate
-  deathRecord?: DeathRecord
-  parishes?: Parish[]
-  mode: 'create' | 'view'
+  certificate: Certificate;
+  deathRecord?: DeathRecord;
+  parishes?: Parish[];
+  mode: 'create' | 'view';
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const showPdf = ref(true)
-const memberOptions = ref<Array<{id: number, name: string}>>([])
-const selectedMember = ref<any>(null)
+const showPdf = ref(true);
+const memberOptions = ref<Array<{ id: number; name: string }>>([]);
+const selectedMember = ref<any>(null);
 
 const form = useForm({
   member_id: undefined as number | undefined,
@@ -104,75 +97,76 @@ const form = useForm({
   place_of_burial: '',
   minister_name: '',
   death_remarks: '',
-})
+});
 
 // Pre-fill death date from certificate
 const deathDate = computed(() => {
   if (props.certificate.formatted_date) {
-    return props.certificate.formatted_date
+    return props.certificate.formatted_date;
   }
-  const year = props.certificate.death_year
-  const month = String(props.certificate.death_month).padStart(2, '0')
-  const day = String(props.certificate.death_day).padStart(2, '0')
-  return `${year}-${month}-${day}`
-})
+  const year = props.certificate.death_year;
+  const month = String(props.certificate.death_month).padStart(2, '0');
+  const day = String(props.certificate.death_day).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
 
 // Fetch members from API
 async function searchMembers(query: string) {
   if (!query || query.length < 2) {
     if (selectedMember.value) {
-      memberOptions.value = [selectedMember.value]
+      memberOptions.value = [selectedMember.value];
     }
-    return
+    return;
   }
 
   try {
-    const response = await fetch(
-      route('member.search-members', { query, limit: 20 })
-    )
-    const data = await response.json()
+    const response = await fetch(route('member.search-members', { query, limit: 20 }));
+    const data = await response.json();
 
     const transformedOptions = data.map((member: any) => ({
       id: member.id,
       name: member.text,
-      ...member
-    }))
+      ...member,
+    }));
 
-    if (selectedMember.value && !transformedOptions.find((m: {id: number, name: string}) => m.id === selectedMember.value.id)) {
-      memberOptions.value = [selectedMember.value, ...transformedOptions]
+    if (selectedMember.value && !transformedOptions.find((m: { id: number; name: string }) => m.id === selectedMember.value.id)) {
+      memberOptions.value = [selectedMember.value, ...transformedOptions];
     } else {
-      memberOptions.value = transformedOptions
+      memberOptions.value = transformedOptions;
     }
   } catch (error) {
-    console.error('Error searching members:', error)
+    console.error('Error searching members:', error);
     if (selectedMember.value) {
-      memberOptions.value = [selectedMember.value]
+      memberOptions.value = [selectedMember.value];
     }
   }
 }
 
 // Watch for member selection
-watch(() => form.member_id, (newId) => {
-  if (newId) {
-    const member = memberOptions.value.find(m => m.id === newId)
-    if (member) {
-      selectedMember.value = member
+watch(
+  () => form.member_id,
+  (newId) => {
+    if (newId) {
+      const member = memberOptions.value.find((m) => m.id === newId);
+      if (member) {
+        selectedMember.value = member;
+      }
+    } else {
+      selectedMember.value = null;
     }
-  } else {
-    selectedMember.value = null
-  }
-})
+  },
+);
 
 function submitForm() {
   form.post(route('death-records.store'), {
     preserveScroll: true,
     onSuccess: () => {
-      console.log('Death record created successfully')
+      console.log('Death record created successfully');
     },
     onError: (errors) => {
-      console.error('Validation errors:', errors)
-    }
-  })
+      console.error('Validation errors:', errors);
+    },
+  });
 }
 </script>
 
@@ -180,7 +174,7 @@ function submitForm() {
   <AppLayout>
     <Head title="Death Archive Certificate" />
 
-    <div class="container mx-auto py-8 px-4">
+    <div class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -203,36 +197,23 @@ function submitForm() {
       <div v-if="mode === 'create'" class="grid gap-6 lg:grid-cols-2">
         <!-- Left Column: PDF Viewer (Sticky) -->
         <div class="lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
-          <Card class="h-full flex flex-col">
+          <Card class="flex h-full flex-col">
             <CardHeader class="flex-none">
               <div class="flex items-center justify-between">
                 <CardTitle>Certificate PDF</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  @click="showPdf = !showPdf"
-                >
+                <Button variant="ghost" size="sm" @click="showPdf = !showPdf">
                   <Eye v-if="!showPdf" class="size-4" />
                   <EyeOff v-else class="size-4" />
                 </Button>
               </div>
-              <CardDescription>
-                Reg {{ certificate.reg_year }} / {{ certificate.reg_no }}
-              </CardDescription>
+              <CardDescription> Reg {{ certificate.reg_year }} / {{ certificate.reg_no }} </CardDescription>
             </CardHeader>
-            <CardContent v-if="showPdf" class="flex-1 p-0 min-h-0">
-              <iframe
-                v-if="certificate.file_url"
-                :src="certificate.file_url"
-                class="w-full h-full"
-                frameborder="0"
-              />
-              <div v-else class="h-full w-full flex items-center justify-center">
-                <div class="text-center p-8">
-                  <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
-                  <p class="text-sm text-muted-foreground">
-                    The certificate PDF has not been uploaded yet.
-                  </p>
+            <CardContent v-if="showPdf" class="min-h-0 flex-1 p-0">
+              <iframe v-if="certificate.file_url" :src="certificate.file_url" class="h-full w-full" frameborder="0" />
+              <div v-else class="flex h-full w-full items-center justify-center">
+                <div class="p-8 text-center">
+                  <p class="text-muted-foreground mb-2 text-lg font-semibold">PDF Not Available</p>
+                  <p class="text-muted-foreground text-sm">The certificate PDF has not been uploaded yet.</p>
                 </div>
               </div>
             </CardContent>
@@ -240,7 +221,7 @@ function submitForm() {
         </div>
 
         <!-- Right Column: Death Record Form (Scrollable) -->
-        <div class="lg:overflow-y-auto lg:h-[calc(100vh-2rem)]">
+        <div class="lg:h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <form @submit.prevent="submitForm">
             <!-- Certificate Info Card -->
             <Card class="mb-6">
@@ -250,15 +231,15 @@ function submitForm() {
               <CardContent class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <Label class="text-sm font-medium text-muted-foreground">Full Name</Label>
+                    <Label class="text-muted-foreground text-sm font-medium">Full Name</Label>
                     <p class="font-medium">{{ certificate.full_name }}</p>
                   </div>
                   <div>
-                    <Label class="text-sm font-medium text-muted-foreground">Death Date</Label>
+                    <Label class="text-muted-foreground text-sm font-medium">Death Date</Label>
                     <p class="font-medium">{{ deathDate }}</p>
                   </div>
                   <div>
-                    <Label class="text-sm font-medium text-muted-foreground">Registration</Label>
+                    <Label class="text-muted-foreground text-sm font-medium">Registration</Label>
                     <p class="font-medium">{{ certificate.reg_year }} / {{ certificate.reg_no }}</p>
                   </div>
                 </div>
@@ -269,9 +250,7 @@ function submitForm() {
             <Card class="mb-6">
               <CardHeader>
                 <CardTitle>Create Death Record</CardTitle>
-                <CardDescription>
-                  Fill in the details from the archive certificate. Member selection is optional.
-                </CardDescription>
+                <CardDescription> Fill in the details from the archive certificate. Member selection is optional. </CardDescription>
               </CardHeader>
               <CardContent class="space-y-6">
                 <!-- Member Selection (Optional) -->
@@ -283,29 +262,19 @@ function submitForm() {
                     placeholder="Search for member (optional)..."
                     @search="searchMembers"
                   />
-                  <p class="text-xs text-muted-foreground">
-                    Leave empty if deceased was not a parish member
-                  </p>
+                  <p class="text-muted-foreground text-xs">Leave empty if deceased was not a parish member</p>
                 </div>
 
                 <!-- Deceased Information -->
                 <div class="grid gap-4 md:grid-cols-2">
                   <div class="space-y-2">
                     <Label for="deceased_name">Deceased Name *</Label>
-                    <Input
-                      id="deceased_name"
-                      v-model="form.deceased_name"
-                      required
-                    />
+                    <Input id="deceased_name" v-model="form.deceased_name" required />
                   </div>
 
                   <div class="space-y-2">
                     <Label for="deceased_surname">Deceased Surname *</Label>
-                    <Input
-                      id="deceased_surname"
-                      v-model="form.deceased_surname"
-                      required
-                    />
+                    <Input id="deceased_surname" v-model="form.deceased_surname" required />
                   </div>
                 </div>
 
@@ -313,20 +282,12 @@ function submitForm() {
                 <div class="grid gap-4 md:grid-cols-2">
                   <div class="space-y-2">
                     <Label for="death_date">Death Date</Label>
-                    <Input
-                      id="death_date"
-                      v-model="form.death_date"
-                      type="date"
-                    />
+                    <Input id="death_date" v-model="form.death_date" type="date" />
                   </div>
 
                   <div class="space-y-2">
                     <Label for="burial_date">Burial Date</Label>
-                    <Input
-                      id="burial_date"
-                      v-model="form.burial_date"
-                      type="date"
-                    />
+                    <Input id="burial_date" v-model="form.burial_date" type="date" />
                   </div>
                 </div>
 
@@ -334,18 +295,12 @@ function submitForm() {
                 <div class="grid gap-4 md:grid-cols-2">
                   <div class="space-y-2">
                     <Label for="burial_reg_no">Burial Registration No</Label>
-                    <Input
-                      id="burial_reg_no"
-                      v-model="form.burial_reg_no"
-                    />
+                    <Input id="burial_reg_no" v-model="form.burial_reg_no" />
                   </div>
 
                   <div class="space-y-2">
                     <Label for="place_of_burial">Place of Burial</Label>
-                    <Input
-                      id="place_of_burial"
-                      v-model="form.place_of_burial"
-                    />
+                    <Input id="place_of_burial" v-model="form.place_of_burial" />
                   </div>
                 </div>
 
@@ -353,74 +308,45 @@ function submitForm() {
                 <div class="grid gap-4 md:grid-cols-3">
                   <div class="space-y-2">
                     <Label for="age">Age</Label>
-                    <Input
-                      id="age"
-                      v-model.number="form.age"
-                      type="number"
-                      min="0"
-                      max="150"
-                    />
+                    <Input id="age" v-model.number="form.age" type="number" min="0" max="150" />
                   </div>
 
                   <div class="space-y-2">
                     <Label for="nationality">Nationality</Label>
-                    <Input
-                      id="nationality"
-                      v-model="form.nationality"
-                    />
+                    <Input id="nationality" v-model="form.nationality" />
                   </div>
 
                   <div class="space-y-2">
                     <Label for="relationship">Relationship</Label>
-                    <Input
-                      id="relationship"
-                      v-model="form.relationship"
-                      placeholder="e.g., Father, Mother"
-                    />
+                    <Input id="relationship" v-model="form.relationship" placeholder="e.g., Father, Mother" />
                   </div>
                 </div>
 
                 <!-- Additional Information -->
                 <div class="space-y-2">
                   <Label for="residence">Residence</Label>
-                  <Input
-                    id="residence"
-                    v-model="form.residence"
-                  />
+                  <Input id="residence" v-model="form.residence" />
                 </div>
 
                 <div class="space-y-2">
                   <Label for="cause_of_death">Cause of Death</Label>
-                  <Input
-                    id="cause_of_death"
-                    v-model="form.cause_of_death"
-                  />
+                  <Input id="cause_of_death" v-model="form.cause_of_death" />
                 </div>
 
                 <div class="space-y-2">
                   <Label for="minister_name">Minister Name</Label>
-                  <Input
-                    id="minister_name"
-                    v-model="form.minister_name"
-                  />
+                  <Input id="minister_name" v-model="form.minister_name" />
                 </div>
 
                 <!-- Remarks -->
                 <div class="space-y-2">
                   <Label for="death_remarks">Remarks</Label>
-                  <Textarea
-                    id="death_remarks"
-                    v-model="form.death_remarks"
-                    :rows="3"
-                  />
+                  <Textarea id="death_remarks" v-model="form.death_remarks" :rows="3" />
                 </div>
 
                 <!-- Submit Button -->
                 <div class="flex justify-end gap-2">
-                  <Button
-                    type="submit"
-                    :disabled="form.processing"
-                  >
+                  <Button type="submit" :disabled="form.processing">
                     <Save class="mr-2 size-4" />
                     Create Death Record
                   </Button>
@@ -458,15 +384,15 @@ function submitForm() {
           <CardContent>
             <div class="grid gap-4 md:grid-cols-3">
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Death Date</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Death Date</Label>
                 <p class="font-medium">{{ deathDate }}</p>
               </div>
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Registration Year</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Registration Year</Label>
                 <p class="font-medium">{{ certificate.reg_year }}</p>
               </div>
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Registration No</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Registration No</Label>
                 <p class="font-medium">{{ certificate.reg_no }}</p>
               </div>
             </div>
@@ -480,12 +406,8 @@ function submitForm() {
               <div>
                 <CardTitle>Death Record</CardTitle>
                 <CardDescription>
-                  <span v-if="deathRecord.member">
-                    Member: {{ deathRecord.member.first_name }} {{ deathRecord.member.last_name }}
-                  </span>
-                  <span v-else>
-                    Non-member: {{ deathRecord.deceased_name }} {{ deathRecord.deceased_surname }}
-                  </span>
+                  <span v-if="deathRecord.member"> Member: {{ deathRecord.member.first_name }} {{ deathRecord.member.last_name }} </span>
+                  <span v-else> Non-member: {{ deathRecord.deceased_name }} {{ deathRecord.deceased_surname }} </span>
                 </CardDescription>
               </div>
               <div class="flex gap-2">
@@ -507,18 +429,18 @@ function submitForm() {
           <CardContent class="space-y-6">
             <!-- Deceased Information -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Deceased Information</h3>
+              <h3 class="mb-3 text-lg font-semibold">Deceased Information</h3>
               <div class="grid gap-4 md:grid-cols-3">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Name</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Name</Label>
                   <p class="font-medium">{{ deathRecord.deceased_name }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Surname</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Surname</Label>
                   <p class="font-medium">{{ deathRecord.deceased_surname }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Age</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Age</Label>
                   <p class="font-medium">{{ deathRecord.age || 'N/A' }}</p>
                 </div>
               </div>
@@ -526,14 +448,14 @@ function submitForm() {
 
             <!-- Dates -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Important Dates</h3>
+              <h3 class="mb-3 text-lg font-semibold">Important Dates</h3>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Death Date</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Death Date</Label>
                   <p class="font-medium">{{ deathRecord.death_date || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Burial Date</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Burial Date</Label>
                   <p class="font-medium">{{ deathRecord.burial_date || 'N/A' }}</p>
                 </div>
               </div>
@@ -541,14 +463,14 @@ function submitForm() {
 
             <!-- Burial Information -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Burial Information</h3>
+              <h3 class="mb-3 text-lg font-semibold">Burial Information</h3>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Burial Registration No</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Burial Registration No</Label>
                   <p class="font-medium">{{ deathRecord.burial_reg_no || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Place of Burial</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Place of Burial</Label>
                   <p class="font-medium">{{ deathRecord.place_of_burial || 'N/A' }}</p>
                 </div>
               </div>
@@ -556,22 +478,22 @@ function submitForm() {
 
             <!-- Additional Details -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Additional Details</h3>
+              <h3 class="mb-3 text-lg font-semibold">Additional Details</h3>
               <div class="grid gap-4 md:grid-cols-2">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Nationality</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Nationality</Label>
                   <p class="font-medium">{{ deathRecord.nationality || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Residence</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Residence</Label>
                   <p class="font-medium">{{ deathRecord.residence || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Cause of Death</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Cause of Death</Label>
                   <p class="font-medium">{{ deathRecord.cause_of_death || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Minister Name</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Minister Name</Label>
                   <p class="font-medium">{{ deathRecord.minister_name || 'N/A' }}</p>
                 </div>
               </div>
@@ -579,7 +501,7 @@ function submitForm() {
 
             <!-- Remarks -->
             <div v-if="deathRecord.death_remarks">
-              <h3 class="text-lg font-semibold mb-3">Remarks</h3>
+              <h3 class="mb-3 text-lg font-semibold">Remarks</h3>
               <p class="text-sm">{{ deathRecord.death_remarks }}</p>
             </div>
           </CardContent>

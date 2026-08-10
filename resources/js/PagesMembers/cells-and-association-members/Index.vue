@@ -39,8 +39,6 @@ const serverArchived = computed(() => String(props.filters?.isArchived) === 'tru
 const highlightedRowId = ref<number>(-1);
 
 // Refs for focus management in modals
-const createModalMemberSearchRef = ref<any>(null);
-const editModalMemberSearchRef = ref<any>(null);
 const createModalFirstFocusRef = ref<HTMLElement | null>(null);
 const createModalLastFocusRef = ref<HTMLElement | null>(null);
 const editModalFirstFocusRef = ref<HTMLElement | null>(null);
@@ -96,7 +94,6 @@ const createForm = useForm<{ cells_and_association_id: any[]; member_id: any }>(
 });
 
 // Member search functionality
-const searchMembers = ref('');
 const searchResults = ref([]);
 const isSearching = ref(false);
 const searchTimeout = ref<number | null>(null);
@@ -404,7 +401,7 @@ async function fetchMemberById(memberId: number) {
     // First try to get the member directly by ID
     const response = await axios.get(`/api/members/${memberId}`);
     return response.data;
-  } catch (error) {
+  } catch {
     // If direct fetch fails, try search approach
     try {
       const searchResponse = await axios.get('/api/members/search', {
@@ -662,15 +659,27 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Edit Modal -->
     <transition name="fade">
       <div v-if="showEditModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg" @keydown="handleEditModalFocusTrap">
+        <div
+          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg"
+          @keydown="handleEditModalFocusTrap"
+        >
           <div class="rounded-lg bg-[#ffffff] p-6">
             <!-- Focus trap start -->
-            <div ref="editModalFirstFocusRef" tabindex="0" class="sr-only" @focus="() => { const input = document.querySelector('[data-edit-modal-search]'); (input as HTMLElement)?.focus(); }"></div>
+            <div
+              ref="editModalFirstFocusRef"
+              tabindex="0"
+              class="sr-only"
+              @focus="
+                () => {
+                  const input = document.querySelector('[data-edit-modal-search]');
+                  (input as HTMLElement)?.focus();
+                }
+              "
+            ></div>
 
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Edit Cells Association Member</h2>
             <form @submit.prevent="submitEdit">
-
-                            <div class="mb-4">
+              <div class="mb-4">
                 <label class="mb-2 block font-medium text-gray-700">Member</label>
                 <Multiselect
                   v-model="editForm.member_id"
@@ -689,7 +698,7 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 <div v-if="editForm.errors.member_id" class="mt-1 text-sm text-red-500">{{ editForm.errors.member_id }}</div>
                 <div v-if="!editForm.member_id" class="mt-1 text-sm text-red-500">Please select a member.</div>
               </div>
-              
+
               <div class="mb-4">
                 <label class="mb-2 block font-medium text-gray-700">Cell Association</label>
                 <Multiselect
@@ -708,8 +717,6 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 </div>
                 <div v-if="!editForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
               </div>
-
-
 
               <div class="flex justify-end space-x-2">
                 <Button
@@ -740,15 +747,26 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
     <!-- Create Modal -->
     <transition name="fade">
       <div v-if="showCreateModal" class="bg-opacity-20 fixed inset-0 z-50 flex items-center justify-center bg-transparent">
-        <div class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg" @keydown="handleCreateModalFocusTrap">
+        <div
+          class="from-grey-900 via-grey-800 to-grey-600 w-full max-w-[448px] rounded-lg bg-gradient-to-r p-[2px] shadow-lg"
+          @keydown="handleCreateModalFocusTrap"
+        >
           <div class="rounded-lg bg-[#ffffff] p-6">
             <!-- Focus trap start -->
-            <div ref="createModalFirstFocusRef" tabindex="0" class="sr-only" @focus="() => { const input = document.querySelector('[data-create-modal-search]'); (input as HTMLElement)?.focus(); }"></div>
+            <div
+              ref="createModalFirstFocusRef"
+              tabindex="0"
+              class="sr-only"
+              @focus="
+                () => {
+                  const input = document.querySelector('[data-create-modal-search]');
+                  (input as HTMLElement)?.focus();
+                }
+              "
+            ></div>
 
             <h2 class="mb-6 text-2xl font-bold text-gray-900">Create Cells Association Member</h2>
             <form @submit.prevent="submitCreate">
-
-              
               <div class="mb-4">
                 <label class="mb-2 block font-medium text-gray-700">Member</label>
                 <Multiselect
@@ -790,7 +808,6 @@ const canRestoreCellsAndAssociationMember = can('restore-cells-and-association-m
                 </div>
                 <div v-if="!createForm.cells_and_association_id.length" class="mt-1 text-sm text-red-500">Please select a cell association.</div>
               </div>
-
 
               <div class="flex justify-end space-x-2">
                 <Button

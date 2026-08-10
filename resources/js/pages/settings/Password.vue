@@ -5,12 +5,11 @@ import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 
-import HeadingSmall from '@/components/HeadingSmall.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { type BreadcrumbItem } from '@/types';
-import { Lock, Shield, Eye, EyeOff } from 'lucide-vue-next';
+import { Eye, EyeOff, Lock, Shield } from 'lucide-vue-next';
 
 const breadcrumbItems: BreadcrumbItem[] = [
   {
@@ -57,7 +56,9 @@ const updatePassword = () => {
       <div class="space-y-8">
         <!-- Password Header -->
         <div class="text-center">
-          <div class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg">
+          <div
+            class="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-blue-600 text-white shadow-lg"
+          >
             <Lock class="h-10 w-10" />
           </div>
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white">Password Security</h2>
@@ -161,7 +162,7 @@ const updatePassword = () => {
             <!-- Action Buttons -->
             <div class="flex items-center justify-between border-t border-gray-200 pt-6 dark:border-gray-700">
               <div class="flex items-center gap-4">
-                <Button 
+                <Button
                   :disabled="form.processing"
                   class="rounded-lg bg-gradient-to-r from-green-600 to-blue-600 px-6 py-2 font-semibold text-white shadow-lg hover:from-green-700 hover:to-blue-700 focus:ring-4 focus:ring-green-300 dark:focus:ring-green-800"
                 >
@@ -175,9 +176,16 @@ const updatePassword = () => {
                   leave-active-class="transition ease-in-out duration-300"
                   leave-to-class="opacity-0 transform scale-95"
                 >
-                  <div v-show="form.recentlySuccessful" class="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-200">
+                  <div
+                    v-show="form.recentlySuccessful"
+                    class="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-2 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                  >
                     <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                      <path
+                        fill-rule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clip-rule="evenodd"
+                      />
                     </svg>
                     Password updated successfully!
                   </div>

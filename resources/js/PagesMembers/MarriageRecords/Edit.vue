@@ -1,33 +1,17 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
-import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps<{
   marriageRecord: any;
   parishes: any[];
 }>();
-
-// Format date from YYYY-MM-DD to DD/MM/YYYY for display
-const formatDateForDisplay = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  return formatDateDisplay(dateString);
-};
-
-// Format date from DD/MM/YYYY to YYYY-MM-DD for database
-const formatDateForDatabase = (dateString: string): string => {
-  if (!dateString) return '';
-  const parts = dateString.split('/');
-  if (parts.length !== 3) return '';
-  const [day, month, year] = parts;
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-};
 
 const form = useForm({
   marriage_date: props.marriageRecord.marriage_date || '', // Keep YYYY-MM-DD format for type="date" inputs
@@ -70,13 +54,15 @@ const bridegroomMemberOptions = computed(() => {
   if (props.marriageRecord.bridegroom && props.marriageRecord.bridegroom_member_id) {
     const member = props.marriageRecord.bridegroom;
     const communityName = member.community?.name || '';
-    return [{
-      id: member.id,
-      name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
-      first_name: member.first_name,
-      last_name: member.last_name,
-      date_of_birth: member.date_of_birth,
-    }];
+    return [
+      {
+        id: member.id,
+        name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        date_of_birth: member.date_of_birth,
+      },
+    ];
   }
   return [];
 });
@@ -86,13 +72,15 @@ const brideMemberOptions = computed(() => {
   if (props.marriageRecord.bride && props.marriageRecord.bride_member_id) {
     const member = props.marriageRecord.bride;
     const communityName = member.community?.name || '';
-    return [{
-      id: member.id,
-      name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
-      first_name: member.first_name,
-      last_name: member.last_name,
-      date_of_birth: member.date_of_birth,
-    }];
+    return [
+      {
+        id: member.id,
+        name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
+        first_name: member.first_name,
+        last_name: member.last_name,
+        date_of_birth: member.date_of_birth,
+      },
+    ];
   }
   return [];
 });
@@ -142,10 +130,7 @@ function submit() {
           <div class="grid gap-4 md:grid-cols-2">
             <div>
               <Label>Marriage Date</Label>
-              <Input
-                v-model="form.marriage_date"
-                type="date"
-              />
+              <Input v-model="form.marriage_date" type="date" />
             </div>
             <div>
               <Label>Marriage Reg No</Label>
@@ -186,10 +171,7 @@ function submit() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <Input
-                v-model="form.bridegroom_dob"
-                type="date"
-              />
+              <Input v-model="form.bridegroom_dob" type="date" />
             </div>
             <div>
               <Label>Nationality</Label>
@@ -246,10 +228,7 @@ function submit() {
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <Input
-                v-model="form.bride_dob"
-                type="date"
-              />
+              <Input v-model="form.bride_dob" type="date" />
             </div>
             <div>
               <Label>Nationality</Label>
@@ -324,9 +303,7 @@ function submit() {
           <Button type="submit" :disabled="form.processing">
             {{ form.processing ? 'Saving...' : 'Update Marriage Record' }}
           </Button>
-          <Button type="button" variant="outline" @click="router.visit('/marriage-records')">
-            Cancel
-          </Button>
+          <Button type="button" variant="outline" @click="router.visit('/marriage-records')"> Cancel </Button>
         </div>
       </form>
     </div>

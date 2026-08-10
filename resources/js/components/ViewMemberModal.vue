@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, computed } from 'vue';
+import FamilyPhotoUpload from '@/components/FamilyPhotoUpload.vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
-import FamilyPhotoUpload from '@/components/FamilyPhotoUpload.vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   modelValue: boolean;
@@ -126,24 +126,12 @@ const tabs = [
   },
 ];
 
-const enhancedIncomeRanges = computed(() => {
-  const c = props.incomeRange || {};
-  return {
-    data: c.data || [],
-    prev_page_url: c.prev_page_url ?? c.meta?.prev_page_url,
-    next_page_url: c.next_page_url ?? c.meta?.next_page_url,
-    current_page: c.current_page ?? c.meta?.current_page,
-    last_page: c.last_page ?? c.meta?.last_page,
-  };
-});
-
 // Family photo permissions - assuming member edit permissions
 const canEditMember = computed(() => {
   // Check if user has permission to edit members
   // This should match the permission check from the member index page
   const auth = page.props.auth as any;
-  return auth?.permissions?.includes('update-member') ||
-         auth?.user?.roles?.includes('super admin');
+  return auth?.permissions?.includes('update-member') || auth?.user?.roles?.includes('super admin');
 });
 
 function calculateAge(dateStr: string) {
@@ -174,29 +162,29 @@ function formatFieldValue(fieldKey: string, value: any) {
     const age = calculateAge(props.member?.date_of_birth || '');
     return age || '—';
   }
-  
+
   if (value === null || value === undefined) return '—';
-  
+
   // Handle relationship objects
   if (fieldKey === 'relationship_id' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
+
   // Handle designation objects
   if (fieldKey === 'designation' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
+
   // Handle Income Range objects
   if (fieldKey === 'income_range' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
+
   // Handle blood group objects
   if (fieldKey === 'blood_group_id' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
+
   // Handle cells and associations relationship
   if (fieldKey === 'cells_and_associations') {
     if (Array.isArray(value) && value.length > 0) {
@@ -208,37 +196,43 @@ function formatFieldValue(fieldKey: string, value: any) {
   // Handle leadership roles
   if (fieldKey === 'scc_heads') {
     if (memberDetails.value?.scc_heads && Array.isArray(memberDetails.value.scc_heads) && memberDetails.value.scc_heads.length > 0) {
-      return memberDetails.value.scc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
+      return memberDetails.value.scc_heads
+        .map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`)
+        .join('\n');
     }
     return '—';
   }
 
   if (fieldKey === 'ppc_heads') {
     if (memberDetails.value?.ppc_heads && Array.isArray(memberDetails.value.ppc_heads) && memberDetails.value.ppc_heads.length > 0) {
-      return memberDetails.value.ppc_heads.map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`).join('\n');
+      return memberDetails.value.ppc_heads
+        .map((item: any, index: number) => `${index + 1}. ${item.community?.name || 'Unknown Community'}`)
+        .join('\n');
     }
     return '—';
   }
 
   if (fieldKey === 'cluster_heads') {
     if (memberDetails.value?.cluster_heads && Array.isArray(memberDetails.value.cluster_heads) && memberDetails.value.cluster_heads.length > 0) {
-      return memberDetails.value.cluster_heads.map((item: any, index: number) => `${index + 1}. ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`).join('\n');
+      return memberDetails.value.cluster_heads
+        .map(
+          (item: any, index: number) => `${index + 1}. ${item.cluster?.name || 'Unknown Cluster'} - ${item.community?.name || 'Unknown Community'}`,
+        )
+        .join('\n');
     }
     return '—';
   }
-  
+
   // Handle community objects
   if (fieldKey === 'community_id' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
+
   // Handle community cluster objects
   if (fieldKey === 'community_cluster_id' && typeof value === 'object' && value.name) {
     return value.name;
   }
-  
 
-  
   // Handle parish relationships
   if (fieldKey === 'baptism_parish') {
     // First check if string value exists (custom or saved parish name)
@@ -304,7 +298,7 @@ function formatFieldValue(fieldKey: string, value: any) {
     // Fallback
     return '—';
   }
-  
+
   // Handle address fields (town, city, state, country)
   if (fieldKey.includes('_town_id') || fieldKey.includes('_city_id') || fieldKey.includes('_state_id') || fieldKey.includes('_country_id')) {
     // Check if value is a relationship object with name
@@ -331,19 +325,18 @@ function formatFieldValue(fieldKey: string, value: any) {
     // Return fallback
     return '—';
   }
-  
 
   // Handle church code with badge styling
   if (fieldKey === 'church_code') {
-            return value || '—';
+    return value || '—';
   }
-  
+
   // Handle marital status with proper formatting
   if (fieldKey === 'marital_status') {
     if (!value) return '—';
     return value.charAt(0).toUpperCase() + value.slice(1);
   }
-  
+
   // Handle date formatting
   if (fieldKey.includes('date') && value) {
     const date = new Date(value);
@@ -353,24 +346,22 @@ function formatFieldValue(fieldKey: string, value: any) {
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
   }
-  
 
-  
   return value;
 }
 
 async function fetchFamilyMembers() {
   if (!props.member?.family_no) return;
-  
+
   loadingFamilyMembers.value = true;
   try {
     // Pass the current member ID to exclude them from the list
     const response = await axios.get(`/member/family-details/${props.member.family_no}`, {
       params: {
-        exclude_member_id: props.member.id
-      }
+        exclude_member_id: props.member.id,
+      },
     });
-    
+
     if (response.data && response.data.members) {
       familyMembers.value = response.data.members;
     } else {
@@ -386,11 +377,11 @@ async function fetchFamilyMembers() {
 
 async function fetchMemberDetails() {
   if (!props.member?.id) return;
-  
+
   loadingMemberDetails.value = true;
   try {
     const response = await axios.get(`/member/${props.member.id}/details`);
-    
+
     if (response.data) {
       memberDetails.value = response.data;
     }
@@ -448,21 +439,28 @@ onBeforeUnmount(() => {
 
 // Watch for member changes to fetch family members
 import { watch } from 'vue';
-watch(() => props.member, (newMember) => {
-  if (newMember) {
-    fetchMemberDetails();
-    if (currentTab.value === 'community') {
-      fetchFamilyMembers();
+watch(
+  () => props.member,
+  (newMember) => {
+    if (newMember) {
+      fetchMemberDetails();
+      if (currentTab.value === 'community') {
+        fetchFamilyMembers();
+      }
     }
-  }
-}, { immediate: true });
+  },
+  { immediate: true },
+);
 
 // Watch for tab changes to fetch family members when community tab is selected
-watch(() => currentTab.value, (newTab) => {
-  if (newTab === 'community' && props.member) {
-    fetchFamilyMembers();
-  }
-});
+watch(
+  () => currentTab.value,
+  (newTab) => {
+    if (newTab === 'community' && props.member) {
+      fetchFamilyMembers();
+    }
+  },
+);
 </script>
 
 <template>
@@ -470,8 +468,8 @@ watch(() => currentTab.value, (newTab) => {
     <div v-if="modelValue" class="bg-opacity-60 fixed inset-0 z-50 flex items-center justify-center bg-black p-4" role="dialog" aria-modal="true">
       <div
         ref="modalRef"
-        class="w-full max-w-6xl h-[90vh] flex flex-col rounded-2xl border border-gray-200 bg-gray-50 shadow-2xl transition-all duration-200"
-        style="overflow-x:hidden;"
+        class="flex h-[90vh] w-full max-w-6xl flex-col rounded-2xl border border-gray-200 bg-gray-50 shadow-2xl transition-all duration-200"
+        style="overflow-x: hidden"
       >
         <!-- Header -->
         <div class="flex items-center justify-between rounded-t-2xl bg-blue-600 px-6 py-4">
@@ -487,9 +485,7 @@ watch(() => currentTab.value, (newTab) => {
             v-for="tab in tabs"
             :key="tab.key"
             class="rounded-full px-4 py-2 text-sm font-medium transition-all duration-150"
-            :class="currentTab === tab.key
-              ? 'bg-blue-600 text-white shadow'
-              : 'bg-gray-100 text-gray-700 hover:bg-blue-100'"
+            :class="currentTab === tab.key ? 'bg-blue-600 text-white shadow' : 'bg-gray-100 text-gray-700 hover:bg-blue-100'"
             @click="currentTab = tab.key"
           >
             {{ tab.label }}
@@ -504,58 +500,71 @@ watch(() => currentTab.value, (newTab) => {
         </div>
 
         <!-- Tab Content -->
-        <div v-if="member" class="bg-[#ffffff] px-6 py-6 flex-1 overflow-y-auto">
-          <div
-            v-for="tab in tabs"
-            :key="tab.key"
-            v-show="currentTab === tab.key"
-            class="space-y-6"
-          >
+        <div v-if="member" class="flex-1 overflow-y-auto bg-[#ffffff] px-6 py-6">
+          <div v-for="tab in tabs" :key="tab.key" v-show="currentTab === tab.key" class="space-y-6">
             <!-- Regular fields grid -->
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
               <!-- Loading indicator for leadership tab -->
               <div v-if="tab.key === 'leadership' && loadingMemberDetails" class="col-span-full flex justify-center py-8">
                 <div class="text-gray-500">Loading leadership roles...</div>
               </div>
-              
+
               <div
                 v-for="field in tab.fields"
                 :key="field.key"
                 v-show="tab.key !== 'leadership' || !loadingMemberDetails"
-                class="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 shadow-sm min-h-[80px]"
-                :class="{ 
-                  'bg-blue-50 border-blue-200': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
-                  'min-h-[120px]': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key)
+                class="min-h-[80px] rounded-lg border border-gray-100 bg-gray-50 px-4 py-3 shadow-sm"
+                :class="{
+                  'border-blue-200 bg-blue-50': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
+                  'min-h-[120px]': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
                 }"
               >
-                <div class="text-xs font-semibold text-gray-500 mb-2">
+                <div class="mb-2 text-xs font-semibold text-gray-500">
                   {{ field.label }}
-                  <span v-if="['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key) && memberDetails?.[field.key]?.length" 
-                        class="ml-2 px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs">
+                  <span
+                    v-if="
+                      ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key) && memberDetails?.[field.key]?.length
+                    "
+                    class="ml-2 rounded-full bg-blue-100 px-2 py-1 text-xs text-blue-800"
+                  >
                     {{ memberDetails[field.key].length }} {{ memberDetails[field.key].length === 1 ? 'item' : 'items' }}
                   </span>
                 </div>
-                <div 
-                  class="text-base font-medium text-gray-800 break-words"
-                  :class="{ 
+                <div
+                  class="text-base font-medium break-words text-gray-800"
+                  :class="{
                     'line-clamp-3': !['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
-                    'whitespace-pre-line': field.key === 'cells_and_associations' || field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads',
-                    'max-h-32 overflow-y-auto': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key)
+                    'whitespace-pre-line':
+                      field.key === 'cells_and_associations' ||
+                      field.key === 'scc_heads' ||
+                      field.key === 'ppc_heads' ||
+                      field.key === 'cluster_heads',
+                    'max-h-32 overflow-y-auto': ['cells_and_associations', 'scc_heads', 'ppc_heads', 'cluster_heads'].includes(field.key),
                   }"
                 >
                   <template v-if="field.key === 'church_code'">
-                    <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
+                    <span class="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-800">
                       {{ formatFieldValue(field.key, page.props.church_code) }}
                     </span>
                   </template>
                   <template v-else>
-                    {{ formatFieldValue(field.key,
-                      field.key === 'scc_heads' || field.key === 'ppc_heads' || field.key === 'cluster_heads' || field.key === 'cells_and_associations'
-                        ? memberDetails?.[field.key]
-                        : field.key.includes('_parish') || field.key.includes('_town_id') || field.key.includes('_city_id') || field.key.includes('_state_id') || field.key.includes('_country_id')
-                        ? (memberDetails?.[field.key] ?? member[field.key])
-                        : member[field.key]
-                    ) }}
+                    {{
+                      formatFieldValue(
+                        field.key,
+                        field.key === 'scc_heads' ||
+                          field.key === 'ppc_heads' ||
+                          field.key === 'cluster_heads' ||
+                          field.key === 'cells_and_associations'
+                          ? memberDetails?.[field.key]
+                          : field.key.includes('_parish') ||
+                              field.key.includes('_town_id') ||
+                              field.key.includes('_city_id') ||
+                              field.key.includes('_state_id') ||
+                              field.key.includes('_country_id')
+                            ? (memberDetails?.[field.key] ?? member[field.key])
+                            : member[field.key],
+                      )
+                    }}
                   </template>
                 </div>
               </div>
@@ -590,16 +599,16 @@ watch(() => currentTab.value, (newTab) => {
                 </div>
 
                 <h4 class="mb-4 text-lg font-semibold text-gray-800">Family Members</h4>
-                <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
                   <p class="text-sm text-blue-800">
-                    <strong>💡 Family Tree Help:</strong> This table shows family members ordered by generation (oldest first). 
-                    Father, Mother, and Spouse columns help identify missing relationships. 
-                    If the family tree isn't showing correctly, check these columns for missing data.
+                    <strong>💡 Family Tree Help:</strong> This table shows family members ordered by generation (oldest first). Father, Mother, and
+                    Spouse columns help identify missing relationships. If the family tree isn't showing correctly, check these columns for missing
+                    data.
                   </p>
                 </div>
-                
+
                 <!-- Relationship Summary -->
-                <div class="mb-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                <div class="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <div class="grid grid-cols-5 gap-4 text-sm">
                     <div>
                       <span class="font-semibold text-gray-700">Total Members:</span>
@@ -607,11 +616,11 @@ watch(() => currentTab.value, (newTab) => {
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">Internal:</span>
-                      <span class="ml-2 text-blue-600">{{ familyMembers.filter(m => m.source === 'Member').length }}</span>
+                      <span class="ml-2 text-blue-600">{{ familyMembers.filter((m) => m.source === 'Member').length }}</span>
                     </div>
                     <div>
                       <span class="font-semibold text-gray-700">External:</span>
-                      <span class="ml-2 text-orange-600">{{ familyMembers.filter(m => m.source === 'External').length }}</span>
+                      <span class="ml-2 text-orange-600">{{ familyMembers.filter((m) => m.source === 'External').length }}</span>
                     </div>
                     <!-- <div>
                       <span class="font-semibold text-gray-700">With Fathers:</span>
@@ -624,78 +633,77 @@ watch(() => currentTab.value, (newTab) => {
                   </div>
                 </div>
                 <div class="max-h-96 overflow-y-auto">
-                
-                <div v-if="loadingFamilyMembers" class="flex justify-center py-8">
-                  <div class="text-gray-500">Loading family members...</div>
-                </div>
-                
-                <div v-else-if="familyMembers.length === 0" class="text-center py-8 text-gray-500">
-                  No family members found
-                </div>
-                
-                <div v-else class="overflow-x-auto rounded-lg border border-gray-200">
-                  <table class="w-full">
-                    <thead class="bg-gray-50">
-                      <tr>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date of Birth</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Age</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Father</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mother</th>
-                        <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Spouse</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200">
-                      <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-[#ffffff] hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
-                          <div class="flex items-center gap-2 mt-1">
-                            <span class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</span>
-                            <span v-if="familyMember.source === 'External'" 
-                                  class="px-2 py-1 bg-orange-100 text-orange-800 rounded-full text-xs font-medium">
-                              External
-                            </span>
-                          </div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
-                          <span v-else>{{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
-                          <span v-else>{{ calculateAge(familyMember.date_of_birth) || '—' }}</span>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <div v-if="familyMember.father" class="text-blue-600">
-                            {{ familyMember.father.name }}
-                          </div>
-                          <div v-else class="text-gray-400">—</div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <div v-if="familyMember.mother" class="text-green-600">
-                            {{ familyMember.mother.name }}
-                          </div>
-                          <div v-else class="text-gray-400">—</div>
-                        </td>
-                        <td class="px-4 py-3 text-sm text-gray-800">
-                          <div v-if="familyMember.spouse" class="text-purple-600">
-                            {{ familyMember.spouse.name }}
-                          </div>
-                          <div v-else class="text-gray-400">—</div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  <div v-if="loadingFamilyMembers" class="flex justify-center py-8">
+                    <div class="text-gray-500">Loading family members...</div>
+                  </div>
+
+                  <div v-else-if="familyMembers.length === 0" class="py-8 text-center text-gray-500">No family members found</div>
+
+                  <div v-else class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date of Birth</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Age</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Father</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Mother</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Spouse</th>
+                        </tr>
+                      </thead>
+                      <tbody class="divide-y divide-gray-200">
+                        <tr v-for="familyMember in familyMembers" :key="familyMember.id" class="bg-[#ffffff] hover:bg-gray-50">
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <div class="font-medium">{{ familyMember.first_name }} {{ familyMember.last_name }}</div>
+                            <div class="mt-1 flex items-center gap-2">
+                              <span class="text-xs text-gray-500">Gen {{ familyMember.generation || 0 }}</span>
+                              <span
+                                v-if="familyMember.source === 'External'"
+                                class="rounded-full bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800"
+                              >
+                                External
+                              </span>
+                            </div>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                            <span v-else>{{ familyMember.date_of_birth ? formatDate(familyMember.date_of_birth) : '—' }}</span>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <span v-if="familyMember.source === 'External' && !familyMember.date_of_birth" class="text-gray-400">N/A</span>
+                            <span v-else>{{ calculateAge(familyMember.date_of_birth) || '—' }}</span>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <div v-if="familyMember.father" class="text-blue-600">
+                              {{ familyMember.father.name }}
+                            </div>
+                            <div v-else class="text-gray-400">—</div>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <div v-if="familyMember.mother" class="text-green-600">
+                              {{ familyMember.mother.name }}
+                            </div>
+                            <div v-else class="text-gray-400">—</div>
+                          </td>
+                          <td class="px-4 py-3 text-sm text-gray-800">
+                            <div v-if="familyMember.spouse" class="text-purple-600">
+                              {{ familyMember.spouse.name }}
+                            </div>
+                            <div v-else class="text-gray-400">—</div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
         <!-- Footer -->
-        <div class="sticky bottom-0 left-0 right-0 z-10 flex justify-end rounded-b-2xl bg-gray-100 px-6 py-4">
-          <button @click="closeModal" class="rounded bg-blue-600 px-6 py-2 text-lg font-semibold text-white shadow hover:bg-blue-700 transition">
+        <div class="sticky right-0 bottom-0 left-0 z-10 flex justify-end rounded-b-2xl bg-gray-100 px-6 py-4">
+          <button @click="closeModal" class="rounded bg-blue-600 px-6 py-2 text-lg font-semibold text-white shadow transition hover:bg-blue-700">
             Close
           </button>
         </div>

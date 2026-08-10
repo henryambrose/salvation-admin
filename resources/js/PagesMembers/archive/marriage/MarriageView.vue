@@ -1,97 +1,97 @@
 <script setup lang="ts">
-import { Head, Link, useForm, router } from '@inertiajs/vue3'
-import { ref, computed, watch } from 'vue'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue'
-import { ArrowLeft, Download, Edit, Eye, EyeOff, Save } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ArrowLeft, Download, Edit, Eye, EyeOff, Save } from 'lucide-vue-next';
+import { computed, ref, watch } from 'vue';
 
 interface User {
-  id: number
-  name: string
+  id: number;
+  name: string;
 }
 
 interface Member {
-  id: number
-  first_name: string
-  middle_name?: string
-  last_name: string
-  family_no: string
+  id: number;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  family_no: string;
 }
 
 interface MarriageRecord {
-  id: number
-  marriage_date?: string
-  marriage_reg_no?: string
-  parish_of_marriage?: string
-  bridegroom_member_id?: number
-  bridegroom_name?: string
-  bridegroom_surname?: string
-  bridegroom_dob?: string
-  bridegroom_nationality?: string
-  bridegroom_profession?: string
-  bridegroom_residence?: string
-  bridegroom_father_name?: string
-  bridegroom_mother_name?: string
-  bridegroom_status?: string
-  bridegroom_if_widower_whose?: string
-  bride_member_id?: number
-  bride_name?: string
-  bride_surname?: string
-  bride_dob?: string
-  bride_nationality?: string
-  bride_profession?: string
-  bride_residence?: string
-  bride_father_name?: string
-  bride_mother_name?: string
-  bride_status?: string
-  bride_if_widow_whose?: string
-  first_witness_name?: string
-  first_witness_residence?: string
-  second_witness_name?: string
-  second_witness_residence?: string
-  minister_name?: string
-  marriage_remarks?: string
-  bridegroom?: Member
-  bride?: Member
+  id: number;
+  marriage_date?: string;
+  marriage_reg_no?: string;
+  parish_of_marriage?: string;
+  bridegroom_member_id?: number;
+  bridegroom_name?: string;
+  bridegroom_surname?: string;
+  bridegroom_dob?: string;
+  bridegroom_nationality?: string;
+  bridegroom_profession?: string;
+  bridegroom_residence?: string;
+  bridegroom_father_name?: string;
+  bridegroom_mother_name?: string;
+  bridegroom_status?: string;
+  bridegroom_if_widower_whose?: string;
+  bride_member_id?: number;
+  bride_name?: string;
+  bride_surname?: string;
+  bride_dob?: string;
+  bride_nationality?: string;
+  bride_profession?: string;
+  bride_residence?: string;
+  bride_father_name?: string;
+  bride_mother_name?: string;
+  bride_status?: string;
+  bride_if_widow_whose?: string;
+  first_witness_name?: string;
+  first_witness_residence?: string;
+  second_witness_name?: string;
+  second_witness_residence?: string;
+  minister_name?: string;
+  marriage_remarks?: string;
+  bridegroom?: Member;
+  bride?: Member;
 }
 
 interface Certificate {
-  id: number
-  full_name: string
-  first_name: string
-  middle_name?: string
-  last_name: string
-  reg_year: number
-  reg_no: string
-  marriage_year: number
-  marriage_month: number
-  marriage_day: number
-  formatted_date?: string
-  file_url: string | null
-  view_url: string | null
-  notes?: string
-  created_at: string
-  creator?: User
+  id: number;
+  full_name: string;
+  first_name: string;
+  middle_name?: string;
+  last_name: string;
+  reg_year: number;
+  reg_no: string;
+  marriage_year: number;
+  marriage_month: number;
+  marriage_day: number;
+  formatted_date?: string;
+  file_url: string | null;
+  view_url: string | null;
+  notes?: string;
+  created_at: string;
+  creator?: User;
 }
 
 interface Props {
-  certificate: Certificate
-  marriageRecord?: MarriageRecord
-  mode: 'create' | 'view'
+  certificate: Certificate;
+  marriageRecord?: MarriageRecord;
+  mode: 'create' | 'view';
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const showPdf = ref(true)
-const bridegroomMemberOptions = ref<Array<{id: number, name: string}>>([])
-const selectedBridegroomMember = ref<any>(null)
-const brideMemberOptions = ref<Array<{id: number, name: string}>>([])
-const selectedBrideMember = ref<any>(null)
+const showPdf = ref(true);
+const bridegroomMemberOptions = ref<Array<{ id: number; name: string }>>([]);
+const selectedBridegroomMember = ref<any>(null);
+const brideMemberOptions = ref<Array<{ id: number; name: string }>>([]);
+const selectedBrideMember = ref<any>(null);
 
 const form = useForm({
   marriage_archive_certificate_id: props.certificate.id,
@@ -127,47 +127,47 @@ const form = useForm({
   minister_name: '',
   marriage_remarks: '',
   year_of_marriage: '',
-})
+});
 
 // Pre-fill marriage date from certificate
 const marriageDate = computed(() => {
   if (props.certificate.formatted_date) {
-    return props.certificate.formatted_date
+    return props.certificate.formatted_date;
   }
-  const year = props.certificate.marriage_year
-  const month = String(props.certificate.marriage_month).padStart(2, '0')
-  const day = String(props.certificate.marriage_day).padStart(2, '0')
-  return `${year}-${month}-${day}`
-})
+  const year = props.certificate.marriage_year;
+  const month = String(props.certificate.marriage_month).padStart(2, '0');
+  const day = String(props.certificate.marriage_day).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+});
 
 // Fetch members for bridegroom
 async function searchBridegroomMembers(query: string) {
   if (!query || query.length < 2) {
     if (selectedBridegroomMember.value) {
-      bridegroomMemberOptions.value = [selectedBridegroomMember.value]
+      bridegroomMemberOptions.value = [selectedBridegroomMember.value];
     }
-    return
+    return;
   }
 
   try {
-    const response = await fetch(route('member.search-members', { query, limit: 20 }))
-    const data = await response.json()
+    const response = await fetch(route('member.search-members', { query, limit: 20 }));
+    const data = await response.json();
 
     const transformedOptions = data.map((member: any) => ({
       id: member.id,
       name: member.text,
-      ...member
-    }))
+      ...member,
+    }));
 
-    if (selectedBridegroomMember.value && !transformedOptions.find(m => m.id === selectedBridegroomMember.value.id)) {
-      bridegroomMemberOptions.value = [selectedBridegroomMember.value, ...transformedOptions]
+    if (selectedBridegroomMember.value && !transformedOptions.find((m) => m.id === selectedBridegroomMember.value.id)) {
+      bridegroomMemberOptions.value = [selectedBridegroomMember.value, ...transformedOptions];
     } else {
-      bridegroomMemberOptions.value = transformedOptions
+      bridegroomMemberOptions.value = transformedOptions;
     }
   } catch (error) {
-    console.error('Error searching members:', error)
+    console.error('Error searching members:', error);
     if (selectedBridegroomMember.value) {
-      bridegroomMemberOptions.value = [selectedBridegroomMember.value]
+      bridegroomMemberOptions.value = [selectedBridegroomMember.value];
     }
   }
 }
@@ -176,68 +176,74 @@ async function searchBridegroomMembers(query: string) {
 async function searchBrideMembers(query: string) {
   if (!query || query.length < 2) {
     if (selectedBrideMember.value) {
-      brideMemberOptions.value = [selectedBrideMember.value]
+      brideMemberOptions.value = [selectedBrideMember.value];
     }
-    return
+    return;
   }
 
   try {
-    const response = await fetch(route('member.search-members', { query, limit: 20 }))
-    const data = await response.json()
+    const response = await fetch(route('member.search-members', { query, limit: 20 }));
+    const data = await response.json();
 
     const transformedOptions = data.map((member: any) => ({
       id: member.id,
       name: member.text,
-      ...member
-    }))
+      ...member,
+    }));
 
-    if (selectedBrideMember.value && !transformedOptions.find(m => m.id === selectedBrideMember.value.id)) {
-      brideMemberOptions.value = [selectedBrideMember.value, ...transformedOptions]
+    if (selectedBrideMember.value && !transformedOptions.find((m) => m.id === selectedBrideMember.value.id)) {
+      brideMemberOptions.value = [selectedBrideMember.value, ...transformedOptions];
     } else {
-      brideMemberOptions.value = transformedOptions
+      brideMemberOptions.value = transformedOptions;
     }
   } catch (error) {
-    console.error('Error searching members:', error)
+    console.error('Error searching members:', error);
     if (selectedBrideMember.value) {
-      brideMemberOptions.value = [selectedBrideMember.value]
+      brideMemberOptions.value = [selectedBrideMember.value];
     }
   }
 }
 
 // Watch for bridegroom member selection
-watch(() => form.bridegroom_member_id, (newId) => {
-  if (newId) {
-    const member = bridegroomMemberOptions.value.find(m => m.id === newId)
-    if (member) {
-      selectedBridegroomMember.value = member
+watch(
+  () => form.bridegroom_member_id,
+  (newId) => {
+    if (newId) {
+      const member = bridegroomMemberOptions.value.find((m) => m.id === newId);
+      if (member) {
+        selectedBridegroomMember.value = member;
+      }
+    } else {
+      selectedBridegroomMember.value = null;
     }
-  } else {
-    selectedBridegroomMember.value = null
-  }
-})
+  },
+);
 
 // Watch for bride member selection
-watch(() => form.bride_member_id, (newId) => {
-  if (newId) {
-    const member = brideMemberOptions.value.find(m => m.id === newId)
-    if (member) {
-      selectedBrideMember.value = member
+watch(
+  () => form.bride_member_id,
+  (newId) => {
+    if (newId) {
+      const member = brideMemberOptions.value.find((m) => m.id === newId);
+      if (member) {
+        selectedBrideMember.value = member;
+      }
+    } else {
+      selectedBrideMember.value = null;
     }
-  } else {
-    selectedBrideMember.value = null
-  }
-})
+  },
+);
 
 function submitForm() {
   form.post(route('marriage-records.store'), {
     preserveScroll: true,
     onSuccess: () => {
-      console.log('Marriage record created successfully')
+      console.log('Marriage record created successfully');
     },
     onError: (errors) => {
-      console.error('Validation errors:', errors)
-    }
-  })
+      console.error('Validation errors:', errors);
+    },
+  });
 }
 </script>
 
@@ -245,7 +251,7 @@ function submitForm() {
   <AppLayout>
     <Head title="Marriage Archive Certificate" />
 
-    <div class="container mx-auto py-8 px-4">
+    <div class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -268,7 +274,7 @@ function submitForm() {
       <div v-if="mode === 'create'" class="grid gap-6 lg:grid-cols-2">
         <!-- Left Column: PDF Viewer (Sticky) -->
         <div class="lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:overflow-hidden">
-          <Card class="h-full flex flex-col">
+          <Card class="flex h-full flex-col">
             <CardHeader class="flex-none">
               <div class="flex items-center justify-between">
                 <CardTitle>Certificate PDF</CardTitle>
@@ -277,18 +283,14 @@ function submitForm() {
                   <EyeOff v-else class="size-4" />
                 </Button>
               </div>
-              <CardDescription>
-                Reg {{ certificate.reg_year }} / {{ certificate.reg_no }}
-              </CardDescription>
+              <CardDescription> Reg {{ certificate.reg_year }} / {{ certificate.reg_no }} </CardDescription>
             </CardHeader>
-            <CardContent v-if="showPdf" class="flex-1 p-0 min-h-0">
-              <iframe v-if="certificate.view_url" :src="certificate.view_url" class="w-full h-full" frameborder="0" />
-              <div v-else class="h-full w-full flex items-center justify-center">
-                <div class="text-center p-8">
-                  <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
-                  <p class="text-sm text-muted-foreground">
-                    The certificate PDF has not been uploaded yet.
-                  </p>
+            <CardContent v-if="showPdf" class="min-h-0 flex-1 p-0">
+              <iframe v-if="certificate.view_url" :src="certificate.view_url" class="h-full w-full" frameborder="0" />
+              <div v-else class="flex h-full w-full items-center justify-center">
+                <div class="p-8 text-center">
+                  <p class="text-muted-foreground mb-2 text-lg font-semibold">PDF Not Available</p>
+                  <p class="text-muted-foreground text-sm">The certificate PDF has not been uploaded yet.</p>
                 </div>
               </div>
             </CardContent>
@@ -296,7 +298,7 @@ function submitForm() {
         </div>
 
         <!-- Right Column: Marriage Record Form (Scrollable) -->
-        <div class="lg:overflow-y-auto lg:h-[calc(100vh-2rem)]">
+        <div class="lg:h-[calc(100vh-2rem)] lg:overflow-y-auto">
           <form @submit.prevent="submitForm">
             <!-- Certificate Info Card -->
             <Card class="mb-6">
@@ -306,11 +308,11 @@ function submitForm() {
               <CardContent class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                   <div>
-                    <Label class="text-sm font-medium text-muted-foreground">Marriage Date</Label>
+                    <Label class="text-muted-foreground text-sm font-medium">Marriage Date</Label>
                     <p class="font-medium">{{ marriageDate }}</p>
                   </div>
                   <div>
-                    <Label class="text-sm font-medium text-muted-foreground">Registration</Label>
+                    <Label class="text-muted-foreground text-sm font-medium">Registration</Label>
                     <p class="font-medium">{{ certificate.reg_year }} / {{ certificate.reg_no }}</p>
                   </div>
                 </div>
@@ -365,9 +367,7 @@ function submitForm() {
                     placeholder="Search for bridegroom member (optional)..."
                     @search="searchBridegroomMembers"
                   />
-                  <p class="text-xs text-muted-foreground">
-                    Leave empty if bridegroom is not a parish member
-                  </p>
+                  <p class="text-muted-foreground text-xs">Leave empty if bridegroom is not a parish member</p>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
@@ -441,9 +441,7 @@ function submitForm() {
                     placeholder="Search for bride member (optional)..."
                     @search="searchBrideMembers"
                   />
-                  <p class="text-xs text-muted-foreground">
-                    Leave empty if bride is not a parish member
-                  </p>
+                  <p class="text-muted-foreground text-xs">Leave empty if bride is not a parish member</p>
                 </div>
 
                 <div class="grid gap-4 md:grid-cols-2">
@@ -579,15 +577,15 @@ function submitForm() {
           <CardContent>
             <div class="grid gap-4 md:grid-cols-3">
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Marriage Date</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Marriage Date</Label>
                 <p class="font-medium">{{ marriageDate }}</p>
               </div>
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Registration Year</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Registration Year</Label>
                 <p class="font-medium">{{ certificate.reg_year }}</p>
               </div>
               <div>
-                <Label class="text-sm font-medium text-muted-foreground">Registration No</Label>
+                <Label class="text-muted-foreground text-sm font-medium">Registration No</Label>
                 <p class="font-medium">{{ certificate.reg_no }}</p>
               </div>
             </div>
@@ -601,7 +599,8 @@ function submitForm() {
               <div>
                 <CardTitle>Marriage Record</CardTitle>
                 <CardDescription>
-                  {{ marriageRecord.bridegroom_name }} {{ marriageRecord.bridegroom_surname }} &amp; {{ marriageRecord.bride_name }} {{ marriageRecord.bride_surname }}
+                  {{ marriageRecord.bridegroom_name }} {{ marriageRecord.bridegroom_surname }} &amp; {{ marriageRecord.bride_name }}
+                  {{ marriageRecord.bride_surname }}
                 </CardDescription>
               </div>
               <div class="flex gap-2">
@@ -623,22 +622,22 @@ function submitForm() {
           <CardContent class="space-y-6">
             <!-- Marriage Details -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Marriage Details</h3>
+              <h3 class="mb-3 text-lg font-semibold">Marriage Details</h3>
               <div class="grid gap-4 md:grid-cols-3">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Marriage Date</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Marriage Date</Label>
                   <p class="font-medium">{{ marriageRecord.marriage_date || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Registration No</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Registration No</Label>
                   <p class="font-medium">{{ marriageRecord.marriage_reg_no || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Parish</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Parish</Label>
                   <p class="font-medium">{{ marriageRecord.parish_of_marriage || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Year of Marriage</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Year of Marriage</Label>
                   <p class="font-medium">{{ marriageRecord.year_of_marriage || 'N/A' }}</p>
                 </div>
               </div>
@@ -646,18 +645,18 @@ function submitForm() {
 
             <!-- Bridegroom -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Bridegroom</h3>
+              <h3 class="mb-3 text-lg font-semibold">Bridegroom</h3>
               <div class="grid gap-4 md:grid-cols-3">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Name</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Name</Label>
                   <p class="font-medium">{{ marriageRecord.bridegroom_name }} {{ marriageRecord.bridegroom_surname }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Nationality</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Nationality</Label>
                   <p class="font-medium">{{ marriageRecord.bridegroom_nationality || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Profession</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Profession</Label>
                   <p class="font-medium">{{ marriageRecord.bridegroom_profession || 'N/A' }}</p>
                 </div>
               </div>
@@ -665,18 +664,18 @@ function submitForm() {
 
             <!-- Bride -->
             <div>
-              <h3 class="text-lg font-semibold mb-3">Bride</h3>
+              <h3 class="mb-3 text-lg font-semibold">Bride</h3>
               <div class="grid gap-4 md:grid-cols-3">
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Name</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Name</Label>
                   <p class="font-medium">{{ marriageRecord.bride_name }} {{ marriageRecord.bride_surname }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Nationality</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Nationality</Label>
                   <p class="font-medium">{{ marriageRecord.bride_nationality || 'N/A' }}</p>
                 </div>
                 <div>
-                  <Label class="text-sm font-medium text-muted-foreground">Profession</Label>
+                  <Label class="text-muted-foreground text-sm font-medium">Profession</Label>
                   <p class="font-medium">{{ marriageRecord.bride_profession || 'N/A' }}</p>
                 </div>
               </div>
@@ -684,7 +683,7 @@ function submitForm() {
 
             <!-- Remarks -->
             <div v-if="marriageRecord.marriage_remarks">
-              <h3 class="text-lg font-semibold mb-3">Remarks</h3>
+              <h3 class="mb-3 text-lg font-semibold">Remarks</h3>
               <p class="text-sm">{{ marriageRecord.marriage_remarks }}</p>
             </div>
           </CardContent>

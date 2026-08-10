@@ -2,16 +2,15 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, CheckCircle, MapPin, Phone, Users } from 'lucide-vue-next';
-import { ref } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 interface ValidMember {
   id: number;
@@ -92,10 +91,6 @@ const openMaintenancePayment = () => {
   window.open(`/graveyard/payments/create/maintenance/${props.grave.id}`, '_blank');
 };
 
-const formatDate = (date: string) => {
-  return date ? new Date(date).toLocaleDateString('en-IN') : '';
-};
-
 const submit = () => {
   form.put(route('graveyard.permanent-grave-bookings.update', props.booking.id), {
     onSuccess: () => {
@@ -135,7 +130,6 @@ const submit = () => {
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
               <!-- Left Column - Main Form -->
               <div class="space-y-6 lg:col-span-2">
-
                 <!-- Grave (read-only) -->
                 <Card>
                   <CardHeader>
@@ -165,16 +159,30 @@ const submit = () => {
                     <div v-if="grave.has_pending_maintenance" class="mt-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
                       <div class="flex items-start space-x-3">
                         <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                          <path
+                            fill-rule="evenodd"
+                            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                            clip-rule="evenodd"
+                          />
                         </svg>
                         <div class="flex-1">
                           <h4 class="font-medium text-amber-900">Pending Maintenance Fees</h4>
                           <p class="mt-1 text-sm text-amber-800">
                             This grave has pending maintenance fees of
-                            <span class="font-semibold">₹{{ grave.pending_maintenance_fee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) }}</span>.
+                            <span class="font-semibold"
+                              >₹{{
+                                grave.pending_maintenance_fee.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                              }}</span
+                            >.
                           </p>
                           <div class="mt-3">
-                            <Button type="button" variant="outline" size="sm" class="border-amber-400 bg-white text-amber-900 hover:bg-amber-100" @click="openMaintenancePayment">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              class="border-amber-400 bg-white text-amber-900 hover:bg-amber-100"
+                              @click="openMaintenancePayment"
+                            >
                               Pay Pending Maintenance Fees
                             </Button>
                           </div>
@@ -242,7 +250,12 @@ const submit = () => {
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
                         <Label for="applicant_name">Applicant Name *</Label>
-                        <Input id="applicant_name" v-model="form.applicant_name" :class="form.errors.applicant_name && 'border-red-500'" class="mt-1" />
+                        <Input
+                          id="applicant_name"
+                          v-model="form.applicant_name"
+                          :class="form.errors.applicant_name && 'border-red-500'"
+                          class="mt-1"
+                        />
                         <div v-if="form.errors.applicant_name" class="mt-1 text-sm text-red-600">{{ form.errors.applicant_name }}</div>
                       </div>
 
@@ -272,7 +285,13 @@ const submit = () => {
                   </CardHeader>
                   <CardContent>
                     <Label for="special_requirements">Special Requirements</Label>
-                    <Textarea id="special_requirements" v-model="form.special_requirements" :rows="3" placeholder="Any special requirements or notes..." class="mt-1" />
+                    <Textarea
+                      id="special_requirements"
+                      v-model="form.special_requirements"
+                      :rows="3"
+                      placeholder="Any special requirements or notes..."
+                      class="mt-1"
+                    />
                   </CardContent>
                 </Card>
 
@@ -326,10 +345,16 @@ const submit = () => {
                               </div>
                               <div class="mt-1 space-y-1">
                                 <p class="text-sm text-gray-600"><span class="font-medium">Relationship:</span> {{ member.relationship.name }}</p>
-                                <p v-if="member.member_type" class="text-sm text-gray-600"><span class="font-medium">Type:</span> {{ member.member_type }}</p>
+                                <p v-if="member.member_type" class="text-sm text-gray-600">
+                                  <span class="font-medium">Type:</span> {{ member.member_type }}
+                                </p>
                                 <div v-if="member.is_deceased && (member.death_date || member.burial_date)" class="space-y-1 text-xs text-gray-500">
-                                  <p v-if="member.death_date"><span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}</p>
-                                  <p v-if="member.burial_date"><span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}</p>
+                                  <p v-if="member.death_date">
+                                    <span class="font-medium">Death Date:</span> {{ formatDateForDisplay(member.death_date) }}
+                                  </p>
+                                  <p v-if="member.burial_date">
+                                    <span class="font-medium">Burial Date:</span> {{ formatDateForDisplay(member.burial_date) }}
+                                  </p>
                                 </div>
                               </div>
                             </div>

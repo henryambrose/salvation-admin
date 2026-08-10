@@ -50,7 +50,6 @@ const canReadAnyUser = can('read-user');
 const canUpdateAnyUser = can('update-user');
 const canDeleteAnyUser = can('delete-user');
 const canRestoreUser = can('restore-user');
-const canExportUser = can('read-user');
 
 const columns = [
   { key: 'name', label: 'Name', sortable: true },
@@ -236,7 +235,7 @@ function assignRoles() {
   }, 10000); // 10 second timeout
 
   roleForm.put(route('users.update', selectedUser.value.id), {
-    onSuccess: (response) => {
+    onSuccess: () => {
       clearTimeout(modalTimeout);
       // Close the modal
       showRoleModal.value = false;

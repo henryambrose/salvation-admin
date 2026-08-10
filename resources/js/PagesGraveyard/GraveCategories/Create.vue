@@ -70,7 +70,7 @@ interface Props {
   errors?: any;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const submitting = ref(false);
 

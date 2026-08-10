@@ -5,10 +5,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { parseLocalDate } from '@/lib/utils';
 import { Column } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, RotateCcw, Trash } from 'lucide-vue-next';
-import { parseLocalDate } from '@/lib/utils';
 import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -275,10 +275,6 @@ function formatCurrency(amount: number) {
     currency: 'INR',
     minimumFractionDigits: 2,
   }).format(amount);
-}
-
-function viewContribution(contribution: CommunityContribution) {
-  router.visit(`/fund/community-contributions/${contribution.id}`);
 }
 
 function editContribution(contribution: CommunityContribution) {

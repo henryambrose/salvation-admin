@@ -26,7 +26,6 @@ const canReadAnyZone = can('read-zone');
 const canUpdateAnyZone = can('update-zone');
 const canDeleteAnyZone = can('delete-zone');
 const canRestoreZone = props.canRestoreZone || can('restore-zone');
-const canExportZone = can('read-zone');
 
 const columns = [{ key: 'name', label: 'Zone Name', sortable: true }];
 

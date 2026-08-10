@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { useScrollRestoration } from '@/composables/useScrollRestoration';
-import { type NavItem, type SharedData } from '@/types';
-import { router, usePage } from '@inertiajs/vue3';
+import { type NavItem } from '@/types';
+import { router } from '@inertiajs/vue3';
 import { nextTick, onUnmounted, ref } from 'vue';
 
 interface NavigationGroup {
@@ -16,7 +16,6 @@ defineProps<{
   lastPage?: string;
 }>();
 
-const page = usePage<SharedData>();
 const isComponentMounted = ref(true);
 const { saveScrollPosition, restoreScrollPosition } = useScrollRestoration();
 

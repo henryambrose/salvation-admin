@@ -60,11 +60,15 @@
     </DatatableHeader>
 
     <!-- Missing Year Fee Warning -->
-    <div v-if="warning" class="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+    <div v-if="warning" class="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
       <div class="flex items-start">
         <div class="flex-shrink-0">
           <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd" d="M8.485 3.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 3.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z" clip-rule="evenodd" />
+            <path
+              fill-rule="evenodd"
+              d="M8.485 3.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.19-1.458-1.515-2.625L8.485 3.495zM10 6a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 6zm0 9a1 1 0 100-2 1 1 0 000 2z"
+              clip-rule="evenodd"
+            />
           </svg>
         </div>
         <div class="ml-3">
@@ -79,7 +83,7 @@
           <div class="mt-3">
             <Button
               @click="router.visit('/graveyard/annual-maintenance-fees/create')"
-              class="text-yellow-800 bg-yellow-100 hover:bg-yellow-200 border border-yellow-300 rounded px-3 py-1 text-sm"
+              class="rounded border border-yellow-300 bg-yellow-100 px-3 py-1 text-sm text-yellow-800 hover:bg-yellow-200"
             >
               Set {{ warning.current_year }} Fees
             </Button>
@@ -157,12 +161,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="fee in data?.data"
-              :key="fee.id"
-              :id="`fee-row-${fee.id}`"
-              class="transition even:bg-gray-50 hover:bg-blue-50"
-            >
+            <tr v-for="fee in data?.data" :key="fee.id" :id="`fee-row-${fee.id}`" class="transition even:bg-gray-50 hover:bg-blue-50">
               <td class="p-2">
                 <div class="flex items-center gap-2">
                   <Button
@@ -183,16 +182,15 @@
                 <div class="text-sm text-gray-900">{{ fee.formatted_niche_amount }}</div>
               </td>
               <td class="p-3">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
-                      :class="fee.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                <span
+                  class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+                  :class="fee.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                >
                   {{ fee.is_active ? 'Active' : 'Inactive' }}
                 </span>
               </td>
               <td class="p-2">
-                <Button
-                  @click="deleteFee(fee)"
-                  class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200"
-                >
+                <Button @click="deleteFee(fee)" class="rounded-full bg-red-100 p-2 text-red-700 transition hover:bg-red-200">
                   <Trash2 class="h-[1rem] w-[1rem]" />
                 </Button>
               </td>
@@ -211,7 +209,8 @@
             <h3 class="mb-4 text-xl font-semibold">Delete Annual Maintenance Fee</h3>
             <p>
               Are you sure you want to delete the maintenance fee for
-              <span class="font-bold">{{ feeToDelete?.year }}</span>?
+              <span class="font-bold">{{ feeToDelete?.year }}</span
+              >?
             </p>
             <div class="mt-6 flex justify-end space-x-2">
               <Button
@@ -237,49 +236,48 @@
 </template>
 
 <script setup lang="ts">
-import DatatableHeader from '@/components/DatatableHeader.vue'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Head, router } from '@inertiajs/vue3'
-import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-vue-next'
-import { ref, watch, computed } from 'vue'
+import DatatableHeader from '@/components/DatatableHeader.vue';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router } from '@inertiajs/vue3';
+import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, Trash2 } from 'lucide-vue-next';
+import { ref, watch } from 'vue';
 
 interface Props {
-  data: any
-  filters: any
-  years: Array<number>
+  data: any;
+  filters: any;
+  years: Array<number>;
   warning?: {
-    message: string
-    current_year: number
-    fallback_year: number
+    message: string;
+    current_year: number;
+    fallback_year: number;
     rates: {
-      permanent_grave: string
-      niche: string
-    }
-  }
+      permanent_grave: string;
+      niche: string;
+    };
+  };
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 // Breadcrumbs
 const breadcrumbs = [
   { title: 'Dashboard', href: '/dashboard' },
   { title: 'Graveyard', href: '/graveyard' },
   { title: 'Annual Maintenance Fees', href: '/graveyard/annual-maintenance-fees' },
-]
+];
 
 // Reactive state
-const filters = ref({ ...(props.filters || {}) })
-const showDeleteModal = ref(false)
-const feeToDelete = ref<any>(null)
-const isArchived = ref(String(props.filters?.isArchived) === 'true')
-const serverArchived = computed(() => String(props.filters?.isArchived) === 'true')
+const filters = ref({ ...(props.filters || {}) });
+const showDeleteModal = ref(false);
+const feeToDelete = ref<any>(null);
+const isArchived = ref(String(props.filters?.isArchived) === 'true');
 
 const clearSearch = () => {
-  filters.value.search = ''
-  applyFilters()
-}
+  filters.value.search = '';
+  applyFilters();
+};
 
 const applyFilters = () => {
   router.get(
@@ -288,68 +286,72 @@ const applyFilters = () => {
     {
       preserveState: true,
       preserveScroll: true,
-    }
-  )
-}
+    },
+  );
+};
 
 const toggleSort = (column: string) => {
   if (filters.value.sort === column) {
-    filters.value.direction = filters.value.direction === 'asc' ? 'desc' : 'asc'
+    filters.value.direction = filters.value.direction === 'asc' ? 'desc' : 'asc';
   } else {
-    filters.value.sort = column
-    filters.value.direction = 'asc'
+    filters.value.sort = column;
+    filters.value.direction = 'asc';
   }
-  applyFilters()
-}
+  applyFilters();
+};
 
 const changePage = (page: number) => {
-  router.get('/graveyard/annual-maintenance-fees', {
-    ...filters.value,
-    page,
-    isArchived: isArchived.value ? 'true' : 'false',
-  }, {
-    preserveState: true,
-    preserveScroll: true,
-  })
-}
+  router.get(
+    '/graveyard/annual-maintenance-fees',
+    {
+      ...filters.value,
+      page,
+      isArchived: isArchived.value ? 'true' : 'false',
+    },
+    {
+      preserveState: true,
+      preserveScroll: true,
+    },
+  );
+};
 
 const handlePageChange = (event: Event) => {
-  const target = event.target as HTMLSelectElement
+  const target = event.target as HTMLSelectElement;
   if (target) {
-    changePage(Number(target.value))
+    changePage(Number(target.value));
   }
-}
+};
 
 const deleteFee = (fee: any) => {
-  feeToDelete.value = fee
-  showDeleteModal.value = true
-}
+  feeToDelete.value = fee;
+  showDeleteModal.value = true;
+};
 
 const confirmDelete = () => {
   if (feeToDelete.value) {
     router.delete(`/graveyard/annual-maintenance-fees/${feeToDelete.value.id}`, {
       onSuccess: () => {
-        showDeleteModal.value = false
-        feeToDelete.value = null
+        showDeleteModal.value = false;
+        feeToDelete.value = null;
       },
-    })
+    });
   }
-}
+};
 
 // Watch for changes in props
 watch(
   () => props.filters,
   (newFilters) => {
-    filters.value = { ...newFilters }
-    isArchived.value = String(newFilters?.isArchived) === 'true'
+    filters.value = { ...newFilters };
+    isArchived.value = String(newFilters?.isArchived) === 'true';
   },
-  { deep: true }
-)
+  { deep: true },
+);
 
 // Watch for isArchived changes
 watch(isArchived, () => {
-  applyFilters()
-})
+  applyFilters();
+});
 </script>
 
 <style scoped>

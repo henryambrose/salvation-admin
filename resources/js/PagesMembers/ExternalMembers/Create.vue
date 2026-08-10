@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { Head, useForm, usePage, router } from '@inertiajs/vue3';
+import FamilyNumberSearchDropdown from '@/components/FamilyNumberSearchDropdown.vue';
 import FormBody from '@/components/FormBody.vue';
 import FormHeader from '@/components/FormHeader.vue';
 import InputError from '@/components/InputError.vue';
-import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
-import FamilyNumberSearchDropdown from '@/components/FamilyNumberSearchDropdown.vue';
 import ValidationErrorModal from '@/components/ValidationErrorModal.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
 import { SelectInput } from '@/components/ui/select';
 import { TextareaInput } from '@/components/ui/textarea';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Relationships, type BreadcrumbItem, type SharedData, type User } from '@/types';
+import { Relationships, type BreadcrumbItem } from '@/types';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { List } from 'lucide-vue-next';
-import { ref, watch, nextTick, onMounted, computed } from 'vue';
+import { ref, watch } from 'vue';
 
 interface Props {
   relationships: Relationships;
@@ -34,9 +34,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/external-members/create',
   },
 ];
-
-const page = usePage<SharedData>();
-const user = page.props.auth.user as User;
 
 // Update the form initialization to allow null values
 const form = useForm({
@@ -64,20 +61,20 @@ const fetchFamilyMembers = async () => {
     try {
       const response = await fetch(`/member/family-details/${form.family_no}`, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
         },
-        credentials: 'same-origin'
+        credentials: 'same-origin',
       });
-      
+
       const data = await response.json();
       // Filter only internal members from the same family
       familyMembers.value = data.members
         .filter((member: any) => member.source === 'Member')
         .map((member: any) => ({
           id: member.id,
-          name: member.first_name + ' ' + member.last_name
+          name: member.first_name + ' ' + member.last_name,
         }));
     } catch (error) {
       console.error('Error fetching family members:', error);
@@ -94,20 +91,20 @@ const fetchExternalFamilyMembers = async () => {
     try {
       const response = await fetch(`/member/family-details/${form.family_no}`, {
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
           'X-Requested-With': 'XMLHttpRequest',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
         },
-        credentials: 'same-origin'
+        credentials: 'same-origin',
       });
-      
+
       const data = await response.json();
       // Filter only external members from the same family
       externalFamilyMembers.value = data.members
         .filter((member: any) => member.source === 'External')
         .map((member: any) => ({
           id: member.id,
-          name: member.first_name + ' ' + member.last_name
+          name: member.first_name + ' ' + member.last_name,
         }));
     } catch (error) {
       console.error('Error fetching external family members:', error);
@@ -129,7 +126,7 @@ watch(
       familyMembers.value = [];
       externalFamilyMembers.value = [];
     }
-  }
+  },
 );
 // Update the watchers to handle the new logic
 watch(
@@ -144,7 +141,7 @@ watch(
     if (form.father_id) {
       form.father_id = undefined;
     }
-  }
+  },
 );
 
 watch(
@@ -159,7 +156,7 @@ watch(
     if (form.mother_id) {
       form.mother_id = undefined;
     }
-  }
+  },
 );
 
 watch(
@@ -174,10 +171,8 @@ watch(
     if (form.spouse_id) {
       form.spouse_id = undefined;
     }
-  }
+  },
 );
-
-
 
 const submit = () => {
   form.post(route('external-members.store'));
@@ -189,11 +184,15 @@ const cancel = () => {
 
 const showValidationErrors = ref(false);
 
-watch(() => form.errors, (errors) => {
-  if (Object.keys(errors).length > 0) {
-    showValidationErrors.value = true;
-  }
-}, { deep: true });
+watch(
+  () => form.errors,
+  (errors) => {
+    if (Object.keys(errors).length > 0) {
+      showValidationErrors.value = true;
+    }
+  },
+  { deep: true },
+);
 </script>
 
 <template>
@@ -204,7 +203,7 @@ watch(() => form.errors, (errors) => {
       <div class="mb-4 flex items-center justify-between">
         <h2 class="text-2xl font-bold text-blue-700">External Members</h2>
         <div class="btn-group flex space-x-2">
-          <Button as="a" href="/external-members" class="flex items-center gap-2 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition">
+          <Button as="a" href="/external-members" class="flex items-center gap-2 rounded-full bg-blue-100 text-blue-700 transition hover:bg-blue-200">
             <component :is="List" />
             <span>External List</span>
           </Button>
@@ -215,9 +214,9 @@ watch(() => form.errors, (errors) => {
     <FormBody>
       <form @submit.prevent="submit" class="space-y-8">
         <!-- Personal Information Section -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Personal Information</h3>
-          
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
+          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Personal Information</h3>
+
           <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div class="grid gap-2">
               <Label for="first_name">First Name <span class="text-red-500">*</span></Label>
@@ -260,9 +259,7 @@ watch(() => form.errors, (errors) => {
 
           <!-- Address field - increase height -->
           <div class="col-span-2">
-            <Label for="address" class="text-sm font-medium text-gray-700">
-              Address <span class="text-red-500">*</span>
-            </Label>
+            <Label for="address" class="text-sm font-medium text-gray-700"> Address <span class="text-red-500">*</span> </Label>
             <TextareaInput
               id="address"
               name="address"
@@ -278,24 +275,20 @@ watch(() => form.errors, (errors) => {
         </div>
 
         <!-- Family Information Section -->
-        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] shadow p-6">
-          <h3 class="mb-4 text-lg font-bold text-blue-700 border-l-4 border-blue-500 pl-3 bg-blue-50 py-2 rounded">Family Information</h3>
-          
+        <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
+          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Family Information</h3>
+
           <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div class="grid gap-2">
               <Label for="family_no">Family Number <span class="text-red-500">*</span></Label>
-              <FamilyNumberSearchDropdown
-                v-model="form.family_no"
-                placeholder="Search for family number..."
-                class="mt-1"
-              />
+              <FamilyNumberSearchDropdown v-model="form.family_no" placeholder="Search for family number..." class="mt-1" />
               <InputError :message="form.errors.family_no" class="mt-2" />
             </div>
 
             <div class="grid gap-2">
               <Label for="relationship_id">
                 Relationship <span class="text-red-500">*</span>
-                <span class="text-xs text-gray-500 font-normal">(with the head of the family)</span>
+                <span class="text-xs font-normal text-gray-500">(with the head of the family)</span>
               </Label>
               <SelectInput
                 id="relationship_id"
@@ -312,9 +305,7 @@ watch(() => form.errors, (errors) => {
 
         <!-- Family Tree Relationships Section - Updated to match Member.vue -->
         <div class="mb-8 rounded-2xl border border-gray-100 bg-[#ffffff] p-6 shadow">
-          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">
-            Family Tree Relationships
-          </h3>
+          <h3 class="mb-4 rounded border-l-4 border-blue-500 bg-blue-50 py-2 pl-3 text-lg font-bold text-blue-700">Family Tree Relationships</h3>
           <p class="mb-4 text-sm text-gray-600">
             Define family relationships for building the family tree. Select whether each relationship is with a member or external person.
           </p>
@@ -357,12 +348,7 @@ watch(() => form.errors, (errors) => {
                     :options="form.spouse_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.spouse_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.spouse_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -409,12 +395,7 @@ watch(() => form.errors, (errors) => {
                     :options="form.father_source === 'Member' ? familyMembers : externalFamilyMembers"
                     class="mt-1 block w-full rounded-full"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.father_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.father_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -462,12 +443,7 @@ watch(() => form.errors, (errors) => {
                     class="mt-1 block w-full rounded-full"
                     :placeholder="form.mother_source === 'Member' ? 'Search for mother (member)...' : 'Search for mother (external)...'"
                   />
-                  <Button 
-                    type="button" 
-                    @click="form.mother_id = null"
-                    variant="outline" 
-                    class="px-3 py-2 text-sm border-gray-300 hover:bg-gray-50"
-                  >
+                  <Button type="button" @click="form.mother_id = null" variant="outline" class="border-gray-300 px-3 py-2 text-sm hover:bg-gray-50">
                     Clear
                   </Button>
                 </div>
@@ -478,13 +454,20 @@ watch(() => form.errors, (errors) => {
         </div>
 
         <!-- Action Bar -->
-        <div class="sticky bottom-0 left-0 right-0 z-10 flex items-center gap-4 bg-gray-50 p-4 rounded-b-2xl shadow-inner">
-          <Button :disabled="form.processing" class="bg-blue-600 text-white px-6 py-2 rounded-full shadow hover:bg-blue-700 transition flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+        <div class="sticky right-0 bottom-0 left-0 z-10 flex items-center gap-4 rounded-b-2xl bg-gray-50 p-4 shadow-inner">
+          <Button
+            :disabled="form.processing"
+            class="flex items-center gap-2 rounded-full bg-blue-600 px-6 py-2 text-white shadow transition hover:bg-blue-700"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
             Create External Member
           </Button>
-          <Button type="button" @click="cancel" variant="outline" class="rounded-full px-6 py-2 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          <Button type="button" @click="cancel" variant="outline" class="flex items-center gap-2 rounded-full px-6 py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
             Cancel
           </Button>
           <Transition
@@ -500,10 +483,7 @@ watch(() => form.errors, (errors) => {
     </FormBody>
 
     <!-- Validation Error Modal -->
-    <ValidationErrorModal
-      v-model="showValidationErrors"
-      :errors="Object.entries(form.errors).map(([field, message]) => ({ field, message }))"
-    />
+    <ValidationErrorModal v-model="showValidationErrors" :errors="Object.entries(form.errors).map(([field, message]) => ({ field, message }))" />
   </AppLayout>
 </template>
 
@@ -514,11 +494,11 @@ watch(() => form.errors, (errors) => {
   border-color: #f59e0b !important; /* Tailwind amber-500 */
 }
 @keyframes highlight-fade {
-  0% { 
+  0% {
     background-color: #fde047; /* Tailwind yellow-300 */
     border-color: #f59e0b; /* Tailwind amber-500 */
   }
-  100% { 
+  100% {
     background-color: inherit;
     border-color: inherit;
   }

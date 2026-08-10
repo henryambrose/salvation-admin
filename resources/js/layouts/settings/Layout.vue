@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import Heading from '@/components/Heading.vue';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { type NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { User, Lock, Palette } from 'lucide-vue-next';
+import { Lock, Palette, User } from 'lucide-vue-next';
 
 const sidebarNavItems: NavItem[] = [
   {
@@ -55,7 +52,7 @@ const currentPath = (page.props.ziggy as any)?.location ? new URL((page.props.zi
                     'flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200',
                     currentPath === item.href
                       ? 'bg-blue-100 text-blue-700 shadow-sm dark:bg-blue-900 dark:text-blue-300'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white',
                   ]"
                 >
                   <component :is="item.icon" class="h-5 w-5" />

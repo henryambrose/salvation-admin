@@ -5,9 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowLeft, ArrowRight, FileText, IndianRupee, MapPin, Phone, User } from 'lucide-vue-next';
-import { ref } from 'vue';
 
 interface RemainsTransfer {
   id: number;
@@ -80,21 +79,11 @@ interface TemporaryGraveBooking {
   }[];
 }
 
-
-
 interface Props {
   booking: TemporaryGraveBooking;
 }
 
 const props = defineProps<Props>();
-
-// Flash message support
-const page = usePage();
-// const flashMessage = computed(() => page.props.flash as FlashMessage | undefined);
-
-const showCancelDialog = ref(false);
-const cancelReason = ref('');
-const isProcessing = ref(false);
 
 const statusColors = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -163,10 +152,6 @@ const canMakePayment = () => {
   return isBookingActive && isPaymentNotCompleted;
 };
 
-const canCancel = () => {
-  return ['pending', 'confirmed'].includes(props.booking.status);
-};
-
 const canRequestTransfer = () => {
   // Show transfer action if:
   // 1. Booking is confirmed
@@ -174,7 +159,7 @@ const canRequestTransfer = () => {
   // 3. Enough time has passed (current date >= expected transfer date)
   const today = new Date();
   const expectedDate = props.booking.expected_transfer_date ? new Date(props.booking.expected_transfer_date) : null;
-  
+
   return (
     props.booking.status === 'confirmed' &&
     ['paid', 'completed'].includes(props.booking.payment_status) &&
@@ -186,30 +171,6 @@ const canRequestTransfer = () => {
 const requestTransfer = () => {
   router.visit(route('graveyard.remains-transfers.create', { booking_id: props.booking.id }));
 };
-
-const cancelBooking = () => {
-  if (!cancelReason.value.trim()) return;
-
-  // Prevent duplicate submissions
-  if (isProcessing.value) return;
-
-  isProcessing.value = true;
-  router.post(
-    route('graveyard.temporary-grave-bookings.cancel', props.booking.id),
-    {
-      cancellation_reason: cancelReason.value,
-    },
-    {
-      onFinish: () => {
-        isProcessing.value = false;
-        showCancelDialog.value = false;
-        cancelReason.value = '';
-      },
-    },
-  );
-};
-
-
 </script>
 
 <template>
@@ -243,9 +204,9 @@ const cancelBooking = () => {
                 </Badge>
                 <div class="flex space-x-2">
                   <!-- Transfer Action Button -->
-                  <Button 
-                    v-if="canRequestTransfer()" 
-                    @click="requestTransfer" 
+                  <Button
+                    v-if="canRequestTransfer()"
+                    @click="requestTransfer"
                     :class="booking.transfer_requested ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700'"
                   >
                     <ArrowRight class="mr-2 h-4 w-4" />
@@ -305,7 +266,6 @@ const cancelBooking = () => {
             </div>
           </div> -->
 
-          
           <div class="px-4 py-5 sm:p-6">
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
               <!-- Left Column -->

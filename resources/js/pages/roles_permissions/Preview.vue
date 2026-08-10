@@ -40,29 +40,6 @@ const selectedGroup = computed(() => {
   return props.permissionGroups.find((group) => group.id === props.selectedGroupId);
 });
 
-// Calculate permission statistics
-const permissionStats = computed(() => {
-  if (!selectedGroup.value) return null;
-
-  let totalPermissions = 0;
-  let permissionsInGroup = 0;
-
-  Object.values(props.permissionsByCategory || {}).forEach((categoryPermissions) => {
-    categoryPermissions.forEach((permission) => {
-      totalPermissions++;
-      if (isInGroup(permission.slug || permission.name || '')) {
-        permissionsInGroup++;
-      }
-    });
-  });
-
-  return {
-    total: totalPermissions,
-    inGroup: permissionsInGroup,
-    coverage: totalPermissions > 0 ? Math.round((permissionsInGroup / totalPermissions) * 100) : 0,
-  };
-});
-
 // Helper function to get category name safely
 function getCategoryName(category: any): string {
   return typeof category === 'object' ? category.name : category;
@@ -180,24 +157,6 @@ function getCategoryPermissionCount(categoryName: string): number {
   }
 
   return props.permissionsByCategory[categoryName].length;
-}
-
-// Get category coverage percentage
-function getCategoryCoverage(categoryName: string): number {
-  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
-    return 0;
-  }
-
-  const permissions = props.permissionsByCategory[categoryName];
-  let inGroupCount = 0;
-
-  permissions.forEach((permission) => {
-    if (isInGroup(permission.slug || permission.name || '')) {
-      inGroupCount++;
-    }
-  });
-
-  return permissions.length > 0 ? Math.round((inGroupCount / permissions.length) * 100) : 0;
 }
 </script>
 

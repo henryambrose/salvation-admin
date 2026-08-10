@@ -308,7 +308,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useToast } from '@/composables/useToast';
 import { router } from '@inertiajs/vue3';
 import { saveAs } from 'file-saver';
@@ -444,8 +444,6 @@ const props = defineProps({
   type: String,
 });
 
-const personRelationLabel = computed(() => props.personRelation || props.member?.relationship?.name || '');
-
 // Helpers
 const displayName = (m) => m?.full_name || [m?.first_name, m?.last_name].filter(Boolean).join(' ') || m?.name || 'Unknown';
 const initials = (m) => {
@@ -464,9 +462,6 @@ const displayNameWithNo = (m) => {
 };
 
 const person = computed(() => props.person || null);
-function downloadPdf() {
-  window.open(route('family.pdf', { id: props.id, type: props.type }), '_blank');
-}
 // flat list from props.familyTree
 const raw = computed(() => (Array.isArray(props.familyTree) ? props.familyTree : []));
 

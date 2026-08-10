@@ -1,6 +1,6 @@
-<script setup>
-import { router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch } from 'vue';
+<script setup lang="ts">
+import { router } from '@inertiajs/vue3';
+import { ref, watch } from 'vue';
 
 const props = defineProps({
   data: Object,
@@ -48,19 +48,6 @@ function changeSort(field) {
     direction.value = 'asc';
   }
   fetch();
-}
-
-const page = usePage();
-const roles = computed(() => page.props.auth?.roles || []);
-const isSuperAdmin = computed(() => roles.value && roles.value.includes('superadmin'));
-
-// Helper to check permission (uses $can if available, else fallback)
-function can(permission) {
-  if (typeof window !== 'undefined' && window?.app?.config?.globalProperties?.$can) {
-    return window.app.config.globalProperties.$can(permission);
-  }
-  // fallback: allow for superadmin
-  return isSuperAdmin.value;
 }
 </script>
 

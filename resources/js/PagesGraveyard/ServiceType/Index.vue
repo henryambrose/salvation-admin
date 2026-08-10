@@ -384,20 +384,6 @@ const restoreServiceType = (id: number) => {
   );
 };
 
-const toggleActive = (serviceType: any) => {
-  router.post(
-    '/graveyard/service-types/' + serviceType.id + '/toggle-active',
-    {},
-    {
-      preserveScroll: true,
-      only: ['serviceTypes'],
-      onSuccess: () => {
-        highlightRow(serviceType.id);
-      },
-    },
-  );
-};
-
 const highlightRow = (id: number) => {
   highlightedRowId.value = id;
   setTimeout(() => {

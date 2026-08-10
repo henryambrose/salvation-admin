@@ -2,6 +2,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,8 +11,6 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Calendar, CheckCircle, MapPin, Phone, Search, Users } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 interface ValidMember {
   id: number;
@@ -47,12 +46,6 @@ interface PermanentGrave {
     family_no: string;
   };
 }
-
-interface Props {
-  // No props needed for this component
-}
-
-const props = defineProps<Props>();
 
 const { success, error } = useToast();
 
@@ -101,7 +94,7 @@ const searchGraves = async () => {
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-TOKEN': csrfToken,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       body: JSON.stringify({
         search_term: graveSearchTerm.value,
@@ -234,7 +227,7 @@ const submit = () => {
 
   form.post(route('graveyard.permanent-grave-bookings.store'), {
     onStart: () => {},
-    onSuccess: (page) => {
+    onSuccess: () => {
       success('Permanent grave booking created successfully!');
     },
     onError: (errors) => {
@@ -433,11 +426,7 @@ const submit = () => {
                   <CardContent class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
                       <Label for="died_on">Date of Death *</Label>
-                      <DateInput
-                        id="died_on"
-                        v-model="form.died_on"
-                        class="mt-1 w-full"
-                      />
+                      <DateInput id="died_on" v-model="form.died_on" class="mt-1 w-full" />
                       <div v-if="form.errors.died_on" class="mt-1 text-sm text-red-600">
                         {{ form.errors.died_on }}
                       </div>
@@ -445,11 +434,7 @@ const submit = () => {
 
                     <div>
                       <Label for="buried_on">Date of Burial *</Label>
-                      <DateInput
-                        id="buried_on"
-                        v-model="form.buried_on"
-                        class="mt-1 w-full"
-                      />
+                      <DateInput id="buried_on" v-model="form.buried_on" class="mt-1 w-full" />
                       <div v-if="form.errors.buried_on" class="mt-1 text-sm text-red-600">
                         {{ form.errors.buried_on }}
                       </div>

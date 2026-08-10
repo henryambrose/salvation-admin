@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import ViewMemberModal from '@/components/ViewMemberModal.vue';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { formatDateForDisplay, calculateAge as calcAge } from '@/lib/utils';
+import { calculateAge as calcAge, formatDateForDisplay } from '@/lib/utils';
 import { Column, FamilyStats } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { Download, Pencil, Plus, Trash, ZapIcon } from 'lucide-vue-next';
@@ -78,7 +78,7 @@ watch(
     isArchived,
     excludeDeceased,
   ],
-  (newValues, oldValues) => {
+  () => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
       fetch();

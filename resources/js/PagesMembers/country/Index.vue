@@ -24,7 +24,6 @@ const canCreateCountry = can('create-country');
 const canReadAnyCountry = can('read-country');
 const canUpdateAnyCountry = can('update-country');
 const canDeleteAnyCountry = can('delete-country');
-const canExportCountry = can('read-country');
 const canRestoreCountry = can('restore-country');
 
 const columns = [{ key: 'name', label: 'Country Name', sortable: true }];
@@ -375,7 +374,7 @@ watch(showEditModal, (isOpen) => {
             </thead>
             <tbody>
               <tr
-                v-for="(row, index) in enhancedCountries.data"
+                v-for="row in enhancedCountries.data"
                 :key="row.id"
                 :id="`country-row-${row.id}`"
                 :class="['transition even:bg-gray-50 hover:bg-blue-50', highlightedRowId === row.id ? 'highlight-row' : '']"

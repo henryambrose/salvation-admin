@@ -22,7 +22,6 @@ const canCreateCluster = can('create-cluster');
 const canReadAnyCluster = can('read-cluster');
 const canUpdateAnyCluster = can('update-cluster');
 const canDeleteAnyCluster = can('delete-cluster');
-const canExportCluster = can('read-cluster');
 const canRestoreCluster = can('restore-cluster');
 
 const columns: Column[] = [{ key: 'name', label: 'Name', sortable: true }];

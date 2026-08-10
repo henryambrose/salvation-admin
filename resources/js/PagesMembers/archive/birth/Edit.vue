@@ -1,30 +1,29 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { ArrowLeft } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, useForm } from '@inertiajs/vue3';
+import { ArrowLeft } from 'lucide-vue-next';
 
 interface Props {
   certificate: {
-    id: number
-    reg_year: number
-    reg_no: string
-    birth_year: number
-    birth_month: number
-    birth_day: number
-    first_name: string
-    middle_name: string | null
-    last_name: string
-    notes: string | null
-  }
+    id: number;
+    reg_year: number;
+    reg_no: string;
+    birth_year: number;
+    birth_month: number;
+    birth_day: number;
+    first_name: string;
+    middle_name: string | null;
+    last_name: string;
+    notes: string | null;
+  };
 }
 
-const props = defineProps<Props>()
-const page = usePage()
+const props = defineProps<Props>();
 
 const form = useForm({
   file: null as File | null,
@@ -37,12 +36,12 @@ const form = useForm({
   middle_name: props.certificate.middle_name || '',
   last_name: props.certificate.last_name,
   notes: props.certificate.notes || '',
-})
+});
 
 function handleFileChange(event: Event) {
-  const target = event.target as HTMLInputElement
+  const target = event.target as HTMLInputElement;
   if (target.files && target.files[0]) {
-    form.file = target.files[0]
+    form.file = target.files[0];
   }
 }
 
@@ -50,7 +49,7 @@ function submit() {
   form.put(route('archive.birth.certificates.update', props.certificate.id), {
     preserveScroll: true,
     forceFormData: true,
-  })
+  });
 }
 </script>
 
@@ -58,7 +57,7 @@ function submit() {
   <AppLayout>
     <Head title="Edit Birth Archive Certificate" />
 
-    <div class="container mx-auto py-8 px-4">
+    <div class="container mx-auto px-4 py-8">
       <div class="mb-6">
         <Button variant="ghost" as-child>
           <a :href="route('archive.birth.index')">
@@ -78,16 +77,9 @@ function submit() {
             <!-- File Upload (Optional for edit) -->
             <div class="space-y-2">
               <Label for="file">Replace Certificate PDF File (Optional)</Label>
-              <Input
-                id="file"
-                type="file"
-                accept="application/pdf"
-                @change="handleFileChange"
-              />
-              <p class="text-sm text-muted-foreground">
-                Leave empty to keep the existing file
-              </p>
-              <p v-if="form.errors.file" class="text-sm text-destructive">
+              <Input id="file" type="file" accept="application/pdf" @change="handleFileChange" />
+              <p class="text-muted-foreground text-sm">Leave empty to keep the existing file</p>
+              <p v-if="form.errors.file" class="text-destructive text-sm">
                 {{ form.errors.file }}
               </p>
             </div>
@@ -96,25 +88,16 @@ function submit() {
             <div class="grid gap-4 md:grid-cols-2">
               <div class="space-y-2">
                 <Label for="reg_year">Registration Year *</Label>
-                <Input
-                  id="reg_year"
-                  v-model="form.reg_year"
-                  type="number"
-                  required
-                />
-                <p v-if="form.errors.reg_year" class="text-sm text-destructive">
+                <Input id="reg_year" v-model="form.reg_year" type="number" required />
+                <p v-if="form.errors.reg_year" class="text-destructive text-sm">
                   {{ form.errors.reg_year }}
                 </p>
               </div>
 
               <div class="space-y-2">
                 <Label for="reg_no">Registration Number *</Label>
-                <Input
-                  id="reg_no"
-                  v-model="form.reg_no"
-                  required
-                />
-                <p v-if="form.errors.reg_no" class="text-sm text-destructive">
+                <Input id="reg_no" v-model="form.reg_no" required />
+                <p v-if="form.errors.reg_no" class="text-destructive text-sm">
                   {{ form.errors.reg_no }}
                 </p>
               </div>
@@ -124,36 +107,17 @@ function submit() {
             <div class="grid gap-4 md:grid-cols-3">
               <div class="space-y-2">
                 <Label for="birth_year">Birth Year *</Label>
-                <Input
-                  id="birth_year"
-                  v-model.number="form.birth_year"
-                  type="number"
-                  required
-                />
+                <Input id="birth_year" v-model.number="form.birth_year" type="number" required />
               </div>
 
               <div class="space-y-2">
                 <Label for="birth_month">Birth Month *</Label>
-                <Input
-                  id="birth_month"
-                  v-model.number="form.birth_month"
-                  type="number"
-                  min="1"
-                  max="12"
-                  required
-                />
+                <Input id="birth_month" v-model.number="form.birth_month" type="number" min="1" max="12" required />
               </div>
 
               <div class="space-y-2">
                 <Label for="birth_day">Birth Day *</Label>
-                <Input
-                  id="birth_day"
-                  v-model.number="form.birth_day"
-                  type="number"
-                  min="1"
-                  max="31"
-                  required
-                />
+                <Input id="birth_day" v-model.number="form.birth_day" type="number" min="1" max="31" required />
               </div>
             </div>
 
@@ -161,32 +125,21 @@ function submit() {
             <div class="grid gap-4 md:grid-cols-3">
               <div class="space-y-2">
                 <Label for="first_name">First Name *</Label>
-                <Input
-                  id="first_name"
-                  v-model="form.first_name"
-                  required
-                />
-                <p v-if="form.errors.first_name" class="text-sm text-destructive">
+                <Input id="first_name" v-model="form.first_name" required />
+                <p v-if="form.errors.first_name" class="text-destructive text-sm">
                   {{ form.errors.first_name }}
                 </p>
               </div>
 
               <div class="space-y-2">
                 <Label for="middle_name">Middle Name</Label>
-                <Input
-                  id="middle_name"
-                  v-model="form.middle_name"
-                />
+                <Input id="middle_name" v-model="form.middle_name" />
               </div>
 
               <div class="space-y-2">
                 <Label for="last_name">Last Name *</Label>
-                <Input
-                  id="last_name"
-                  v-model="form.last_name"
-                  required
-                />
-                <p v-if="form.errors.last_name" class="text-sm text-destructive">
+                <Input id="last_name" v-model="form.last_name" required />
+                <p v-if="form.errors.last_name" class="text-destructive text-sm">
                   {{ form.errors.last_name }}
                 </p>
               </div>
@@ -195,12 +148,7 @@ function submit() {
             <!-- Notes -->
             <div class="space-y-2">
               <Label for="notes">Notes</Label>
-              <Textarea
-                id="notes"
-                v-model="form.notes"
-                :rows="3"
-                placeholder="Any additional notes..."
-              />
+              <Textarea id="notes" v-model="form.notes" :rows="3" placeholder="Any additional notes..." />
             </div>
 
             <!-- Submit Button -->
@@ -208,13 +156,8 @@ function submit() {
               <Button type="submit" :disabled="form.processing">
                 {{ form.processing ? 'Updating...' : 'Update Certificate' }}
               </Button>
-              <Button
-                variant="outline"
-                as-child
-              >
-                <a :href="route('archive.birth.index')">
-                  Cancel
-                </a>
+              <Button variant="outline" as-child>
+                <a :href="route('archive.birth.index')"> Cancel </a>
               </Button>
             </div>
           </form>

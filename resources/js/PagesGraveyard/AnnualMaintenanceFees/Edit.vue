@@ -5,18 +5,15 @@
     <div class="mx-auto max-w-3xl">
       <div class="mb-6">
         <h1 class="text-2xl font-bold text-blue-700">Edit Annual Maintenance Fee ({{ fee.year }})</h1>
-        <p class="text-gray-600 mt-1">Modify maintenance fee details</p>
+        <p class="mt-1 text-gray-600">Modify maintenance fee details</p>
       </div>
 
-
-      <div class="bg-white rounded-lg shadow p-6">
+      <div class="rounded-lg bg-white p-6 shadow">
         <form @submit.prevent="submit">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
             <!-- Year -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Year <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Year <span class="text-red-500">*</span> </label>
               <input
                 v-model="form.year"
                 type="number"
@@ -30,9 +27,7 @@
 
             <!-- Permanent Grave Amount -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Permanent Grave Amount (₹) <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Permanent Grave Amount (₹) <span class="text-red-500">*</span> </label>
               <input
                 v-model="form.permanent_grave_amount"
                 type="number"
@@ -47,9 +42,7 @@
 
             <!-- Niche Amount -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Niche Amount (₹) <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Niche Amount (₹) <span class="text-red-500">*</span> </label>
               <input
                 v-model="form.niche_amount"
                 type="number"
@@ -64,18 +57,14 @@
 
             <!-- Effective From -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Effective From <span class="text-red-500">*</span>
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Effective From <span class="text-red-500">*</span> </label>
               <DateInput v-model="form.effective_from" class="w-full" />
               <p v-if="form.errors.effective_from" class="mt-1 text-sm text-red-600">{{ form.errors.effective_from }}</p>
             </div>
 
             <!-- Effective Until -->
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">
-                Effective Until
-              </label>
+              <label class="mb-2 block text-sm font-medium text-gray-700"> Effective Until </label>
               <DateInput v-model="form.effective_until" class="w-full" />
               <p v-if="form.errors.effective_until" class="mt-1 text-sm text-red-600">{{ form.errors.effective_until }}</p>
               <p class="mt-1 text-sm text-gray-500">Leave blank for no end date</p>
@@ -85,20 +74,14 @@
           <!-- Active Status -->
           <div class="mt-6">
             <label class="flex items-center">
-              <input
-                v-model="form.is_active"
-                type="checkbox"
-                class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500"
-              />
+              <input v-model="form.is_active" type="checkbox" class="rounded border-gray-300 focus:ring-2 focus:ring-blue-500" />
               <span class="ml-2 text-sm text-gray-700">Active</span>
             </label>
           </div>
 
           <!-- Notes -->
           <div class="mt-6">
-            <label class="block text-sm font-medium text-gray-700 mb-2">
-              Notes
-            </label>
+            <label class="mb-2 block text-sm font-medium text-gray-700"> Notes </label>
             <textarea
               v-model="form.notes"
               rows="3"
@@ -110,19 +93,9 @@
           </div>
 
           <!-- Actions -->
-          <div class="flex justify-end space-x-3 mt-8 pt-6 border-t">
-            <Button
-              type="button"
-              @click="router.visit('/graveyard/annual-maintenance-fees')"
-              variant="outline"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              :disabled="form.processing"
-              class="flex items-center gap-2"
-            >
+          <div class="mt-8 flex justify-end space-x-3 border-t pt-6">
+            <Button type="button" @click="router.visit('/graveyard/annual-maintenance-fees')" variant="outline"> Cancel </Button>
+            <Button type="submit" :disabled="form.processing" class="flex items-center gap-2">
               <span v-if="form.processing">Updating...</span>
               <span v-else>Update Annual Fee</span>
             </Button>
@@ -134,21 +107,20 @@
 </template>
 
 <script setup lang="ts">
-import { Head, router, useForm } from '@inertiajs/vue3'
-import AppLayout from '@/layouts/AppLayout.vue'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
 
 const props = defineProps({
   fee: Object,
-})
+});
 
 const breadcrumbs = [
   { name: 'Graveyard', href: '/graveyard' },
   { name: 'Annual Maintenance Fees', href: '/graveyard/annual-maintenance-fees' },
   { name: `Edit ${props.fee.year}`, href: null },
-]
+];
 
 const form = useForm({
   year: props.fee.year,
@@ -158,10 +130,9 @@ const form = useForm({
   effective_until: props.fee.effective_until || '',
   is_active: props.fee.is_active,
   notes: props.fee.notes || '',
-})
+});
 
 const submit = () => {
-  form.put(`/graveyard/annual-maintenance-fees/${props.fee.id}`)
-}
-
+  form.put(`/graveyard/annual-maintenance-fees/${props.fee.id}`);
+};
 </script>

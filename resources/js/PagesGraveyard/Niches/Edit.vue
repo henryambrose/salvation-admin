@@ -280,12 +280,11 @@
 </template>
 
 <script setup lang="ts">
+import { DateInput } from '@/components/ui/date-input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
 import { X } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,

@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { Head, router } from '@inertiajs/vue3';
-import { ref, watch, computed, nextTick } from 'vue';
-import { Button } from '@/components/ui/button';
-import AppLayout from '@/layouts/AppLayout.vue';
-import type { Roles, Modules, Permissions } from '@/types';
-import { permissionHelpers } from '@/composables/permissionHelpers';
-import { useToast } from '@/composables/useToast';
-import { useConfirm } from '@/composables/useConfirm';
-import { useSessionKeepAlive } from '@/composables/useSessionKeepAlive';
-import { useFormPersistence } from '@/composables/useFormPersistence';
 import SessionWarningDialog from '@/components/SessionWarningDialog.vue';
+import { Button } from '@/components/ui/button';
+import { permissionHelpers } from '@/composables/permissionHelpers';
+import { useConfirm } from '@/composables/useConfirm';
+import { useFormPersistence } from '@/composables/useFormPersistence';
+import { useSessionKeepAlive } from '@/composables/useSessionKeepAlive';
+import { useToast } from '@/composables/useToast';
+import AppLayout from '@/layouts/AppLayout.vue';
+import type { Modules, Permissions, Roles } from '@/types';
+import { Head, router } from '@inertiajs/vue3';
+import { computed, nextTick, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
 const { success, error, info } = useToast();
@@ -89,7 +89,7 @@ const sessionMinutesRemaining = ref(5);
 const { refresh: refreshSession } = useSessionKeepAlive({
   enabled: true,
   intervalMinutes: 2, // Ping every 2 minutes
-  warningMinutes: 5,  // Warn 5 minutes before expiry
+  warningMinutes: 5, // Warn 5 minutes before expiry
   onWarning: () => {
     showSessionWarning.value = true;
     sessionMinutesRemaining.value = 5;
@@ -101,21 +101,17 @@ const { refresh: refreshSession } = useSessionKeepAlive({
 });
 
 // Form persistence to localStorage (auto-saves permission changes)
-const { clear: clearSavedForm, hasRestoredData } = useFormPersistence(
-  localPermissions,
-  'role-permissions-form',
-  {
-    enabled: true,
-    debounceMs: 2000, // Save 2 seconds after last change
-    onRestore: (data) => {
-      // Only show restore message if data was actually restored (not on initial load after save)
-      if (!sessionStorage.getItem('__permissions_just_saved')) {
-        info('Restored your unsaved permission changes');
-      }
-      sessionStorage.removeItem('__permissions_just_saved');
-    },
-  }
-);
+const { clear: clearSavedForm } = useFormPersistence(localPermissions, 'role-permissions-form', {
+  enabled: true,
+  debounceMs: 2000, // Save 2 seconds after last change
+  onRestore: () => {
+    // Only show restore message if data was actually restored (not on initial load after save)
+    if (!sessionStorage.getItem('__permissions_just_saved')) {
+      info('Restored your unsaved permission changes');
+    }
+    sessionStorage.removeItem('__permissions_just_saved');
+  },
+});
 
 // Handle session warning actions
 function handleContinueWorking() {
@@ -126,35 +122,6 @@ function handleContinueWorking() {
 
 function handleCloseWarning() {
   showSessionWarning.value = false;
-}
-
-// Helper function to get category name safely
-function getCategoryName(category: any): string {
-  return typeof category === 'object' ? category.name : category;
-}
-
-// Helper function to get clean permission display name
-function getPermissionDisplayName(permission: any): string {
-  // Extract the base permission name from the slug
-  // e.g., "create-member" -> "member", "read-community" -> "community"
-  const slug = permission.slug || '';
-
-  // Remove action prefixes
-  const actions = ['create-', 'read-', 'update-', 'delete-', 'list-', 'restore-'];
-  let cleanName = slug;
-
-  for (const action of actions) {
-    if (slug.startsWith(action)) {
-      cleanName = slug.replace(action, '');
-      break;
-    }
-  }
-
-  // Convert to title case and replace hyphens with spaces
-  return cleanName
-    .split('-')
-    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
 }
 
 // Helper function to get base permission name without action prefix
@@ -174,174 +141,6 @@ function getUniqueModelsForCategory(categoryName: string): string[] {
   return Array.from(models).sort();
 }
 
-// Helper function to get module for a model
-function getModuleForModel(modelName: string): string {
-  const key = norm(modelName); // hyphens only
-  const modelToModule: Record<string, string> = {
-    // Members
-    member: 'Members',
-    'external-member': 'Members', // add this (hyphen form)
-    user: 'Members',
-    family: 'Members',
-    community: 'Members',
-    parish: 'Members',
-    zone: 'Members',
-    cluster: 'Members',
-    'age-group': 'Members',
-    'blood-group': 'Members',
-    'income-range': 'Members',
-    relationship: 'Members',
-    designation: 'Members',
-    gender: 'Members',
-    status: 'Members',
-    city: 'Members',
-    state: 'Members',
-    country: 'Members',
-    town: 'Members',
-    'cells-and-association': 'Members',
-    'cells-and-association-member': 'Members',
-
-    // Certificate Management
-    certificate: 'Members',
-    'certificate-type': 'Members',
-    'certificate-template': 'Members',
-
-    // Fund
-    'fund-category': 'Fund',
-    'mass-intention': 'Fund',
-    'mass-intention-type': 'Fund',
-    'mass-type': 'Fund',
-    'payment-method': 'Fund',
-    'annual-contribution': 'Fund',
-    'community-contribution': 'Fund',
-    'community-contribution-type': 'Fund',
-
-    // Graveyard
-    grave: 'Graveyard',
-    plot: 'Graveyard',
-    deceased: 'Graveyard',
-    burial: 'Graveyard',
-    niche: 'Graveyard',
-    'permanent-grave': 'Graveyard',
-    'temporary-grave': 'Graveyard',
-  };
-  return modelToModule[key] || 'Core';
-}
-
-// Helper function to get module background color
-function getModuleBackgroundColor(moduleName: string): string {
-  const moduleColors: Record<string, string> = {
-    Members: 'bg-blue-50 border-l-4 border-l-blue-500',
-    Fund: 'bg-green-50 border-l-4 border-l-green-500',
-    Graveyard: 'bg-purple-50 border-l-4 border-l-purple-500',
-    Core: 'bg-gray-50 border-l-4 border-l-gray-500',
-  };
-
-  return moduleColors[moduleName] || 'bg-gray-50 border-l-4 border-l-gray-500';
-}
-
-// Helper function to get module text color
-function getModuleTextColor(moduleName: string): string {
-  const moduleTextColors: Record<string, string> = {
-    Members: 'text-blue-700',
-    Fund: 'text-green-700',
-    Graveyard: 'text-purple-700',
-    Core: 'text-gray-700',
-  };
-
-  return moduleTextColors[moduleName] || 'text-gray-700';
-}
-
-// Helper function to get module dot color
-function getModuleDotColor(moduleName: string): string {
-  const moduleDotColors: Record<string, string> = {
-    Members: 'bg-blue-500',
-    Fund: 'bg-green-500',
-    Graveyard: 'bg-purple-500',
-    Core: 'bg-gray-500',
-  };
-
-  return moduleDotColors[moduleName] || 'bg-gray-500';
-}
-
-// Helper function to get unique modules for a category
-function getUniqueModulesForCategory(categoryName: string): string[] {
-  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
-    return [];
-  }
-
-  const modules = new Set<string>();
-  const permissions = props.permissionsByCategory[categoryName];
-
-  permissions.forEach((permission: any) => {
-    const permissionName = permission.name || permission.slug || '';
-    const modelName = getPermissionBaseName({ slug: permissionName });
-    if (modelName) {
-      const moduleName = getModuleForModel(modelName);
-      modules.add(moduleName);
-    }
-  });
-
-  return Array.from(modules).sort();
-}
-
-// Helper function to get models for a specific module in a category
-function getModelsForModuleInCategory(categoryName: string, moduleName: string): string[] {
-  if (!props.permissionsByCategory || !props.permissionsByCategory[categoryName]) {
-    return [];
-  }
-
-  const models: string[] = [];
-  const permissions = props.permissionsByCategory[categoryName];
-
-  permissions.forEach((permission: any) => {
-    const permissionName = permission.name || permission.slug || '';
-    const modelName = getPermissionBaseName({ slug: permissionName });
-    if (modelName && getModuleForModel(modelName) === moduleName) {
-      models.push(modelName);
-    }
-  });
-
-  return models.sort();
-}
-
-// Helper function to get all Members module models
-function getMembersModels(): string[] {
-  const allModels = getAllModels();
-  return allModels.filter((model) => getModuleForModel(model) === 'Members');
-}
-
-// Helper function to get all Fund module models
-function getFundModels(): string[] {
-  const allModels = getAllModels();
-  return allModels.filter((model) => getModuleForModel(model) === 'Fund');
-}
-
-// Helper function to get all Core module models
-function getCoreModels(): string[] {
-  const allModels = getAllModels();
-  return allModels.filter((model) => getModuleForModel(model) === 'Core');
-}
-
-// Helper function to get all available models from all categories
-function getAllModels(): string[] {
-  const allModels = new Set<string>();
-
-  if (props.permissionsByCategory) {
-    Object.values(props.permissionsByCategory).forEach((permissions: any[]) => {
-      permissions.forEach((permission: any) => {
-        const permissionName = permission.name || permission.slug || '';
-        const modelName = getPermissionBaseName({ slug: permissionName });
-        if (modelName) {
-          allModels.add(modelName);
-        }
-      });
-    });
-  }
-
-  return Array.from(allModels).sort();
-}
-
 // Helper function to format model name for display
 function formatModelName(modelName: string): string {
   return modelName
@@ -354,32 +153,6 @@ function formatModelName(modelName: string): string {
 const selectedRole = computed(() => {
   if (!selectedRoleId.value) return null;
   return props.roles.find((role) => role.id === selectedRoleId.value);
-});
-
-// Get category headers for better organization
-const getCategoryHeaders = computed(() => {
-  if (props.categories && props.categories.length > 0) {
-    return props.categories
-      .filter((category) => {
-        return Object.keys(props.permissionsByCategory || {}).some((key) => key === category.name);
-      })
-      .sort((a, b) => a.sort_order - b.sort_order);
-  }
-
-  // Fallback to hardcoded categories
-  return [
-    'Core Management',
-    'Organizational Structure',
-    'Certificate Management',
-    'Leadership',
-    'Member Attributes',
-    'Geographic Data',
-    'System Management',
-    'Fund App Management',
-    'Data Management',
-    'AI Assistance',
-    'Dashboard',
-  ];
 });
 
 // Get categories grouped by app
@@ -407,33 +180,22 @@ const getCategoriesByApp = computed(() => {
       ) || [],
     Fund:
       props.categories?.filter((cat) =>
-        ['Fund Management', 'Fund Categories', 'Annual Contributions', 'Community Contributions', 'Community Contributions Type', 'Mass Intentions', 'Mass Types', 'Mass Intention Types', 'Payment Methods', 'Mass Schedules'].includes(cat.name),
+        [
+          'Fund Management',
+          'Fund Categories',
+          'Annual Contributions',
+          'Community Contributions',
+          'Community Contributions Type',
+          'Mass Intentions',
+          'Mass Types',
+          'Mass Intention Types',
+          'Payment Methods',
+          'Mass Schedules',
+        ].includes(cat.name),
       ) || [],
     Graveyard: props.categories?.filter((cat) => ['Graveyard Management'].includes(cat.name)) || [],
     Core: props.categories?.filter((cat) => ['System Management', 'Data Management', 'AI Assistance', 'Dashboard'].includes(cat.name)) || [],
   };
-});
-
-// Get all unique actions from permissions
-const allActions = computed(() => {
-  const actions = new Set<string>();
-
-  if (props.permissionsByCategory) {
-    Object.values(props.permissionsByCategory).forEach((categoryPermissions) => {
-      categoryPermissions.forEach((permission) => {
-        if (permission.action) {
-          actions.add(permission.action);
-        }
-      });
-    });
-  }
-
-  // Fallback to common actions
-  if (actions.size === 0) {
-    ['create', 'read', 'update', 'delete', 'list', 'restore'].forEach((action) => actions.add(action));
-  }
-
-  return Array.from(actions).sort();
 });
 
 // Filter permissions by search query
@@ -589,7 +351,7 @@ async function applyPermissionGroup(groupId: string) {
   isApplyingGroup.value = true;
 
   try {
-    const response = await router.post(
+    await router.post(
       '/roles-permissions/apply-group',
       {
         role_id: selectedRoleId.value,
@@ -687,8 +449,6 @@ async function savePermissions() {
     });
 
     if (response.ok) {
-      const result = await response.json();
-
       // Update original permissions to match the new state
       if (selectedRoleId.value) {
         originalPermissions.value[selectedRoleId.value] = JSON.parse(JSON.stringify(localPermissions.value[selectedRoleId.value]));
@@ -923,7 +683,7 @@ function formatSpecialPermissionName(permissionSlug: string): string {
             >
               <option :value="null">Choose a role...</option>
               <option v-for="role in props.roles" :key="role.id" :value="role.id">
-                {{ (role as { id: number; name: string }).name }}
+                {{ role.name }}
               </option>
             </select>
           </div>
@@ -1003,7 +763,7 @@ function formatSpecialPermissionName(permissionSlug: string): string {
         <!-- Permission Matrix -->
         <div class="overflow-hidden rounded-xl border border-gray-200 bg-[#ffffff] shadow-sm">
           <!-- Search and Controls -->
-          <div class="border-b border-gray-200 bg-gray-50 p-4 space-y-4">
+          <div class="space-y-4 border-b border-gray-200 bg-gray-50 p-4">
             <!-- Search Box -->
             <div class="flex items-center gap-3">
               <svg class="h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1015,11 +775,7 @@ function formatSpecialPermissionName(permissionSlug: string): string {
                 placeholder="Search permissions by name or description (e.g., 'member', 'niche', 'payment')..."
                 class="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
               />
-              <button
-                v-if="searchQuery"
-                @click="searchQuery = ''"
-                class="text-gray-400 hover:text-gray-600"
-              >
+              <button v-if="searchQuery" @click="searchQuery = ''" class="text-gray-400 hover:text-gray-600">
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>

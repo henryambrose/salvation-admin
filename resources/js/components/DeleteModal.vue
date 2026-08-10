@@ -1,38 +1,32 @@
 <template>
-  <div class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-[#ffffff]" @keydown="handleFocusTrap">
+  <div class="bg-opacity-50 fixed inset-0 z-50 h-full w-full overflow-y-auto bg-gray-600">
+    <div class="relative top-20 mx-auto w-96 rounded-md border bg-[#ffffff] p-5 shadow-lg" @keydown="handleFocusTrap">
       <!-- Focus trap start -->
       <div ref="firstFocusRef" tabindex="0" class="sr-only"></div>
 
       <div class="mt-3 text-center">
         <!-- Warning Icon -->
-        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
+        <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
           <svg class="h-[1.5rem] w-[1.5rem] text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+            ></path>
           </svg>
         </div>
-        
+
         <!-- Title and Message -->
-        <h3 class="text-lg font-medium text-gray-900 mt-4">{{ title }}</h3>
+        <h3 class="mt-4 text-lg font-medium text-gray-900">{{ title }}</h3>
         <div class="mt-2 px-7">
           <p class="text-sm text-gray-500">{{ message }}</p>
         </div>
-        
+
         <!-- Action Buttons -->
-        <div class="flex justify-center space-x-3 mt-6">
-          <Button
-            variant="outline"
-            @click="$emit('close')"
-            class="px-4 py-2"
-          >
-            Cancel
-          </Button>
-          <Button
-            @click="$emit('confirm')"
-            class="bg-red-600 hover:bg-red-700 px-4 py-2"
-          >
-            Delete
-          </Button>
+        <div class="mt-6 flex justify-center space-x-3">
+          <Button variant="outline" @click="$emit('close')" class="px-4 py-2"> Cancel </Button>
+          <Button @click="$emit('confirm')" class="bg-red-600 px-4 py-2 hover:bg-red-700"> Delete </Button>
         </div>
 
         <!-- Focus trap end -->
@@ -43,8 +37,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
 import { Button } from '@/components/ui/button';
+import { ref } from 'vue';
 
 // Focus management refs
 const firstFocusRef = ref<HTMLElement | null>(null);
@@ -70,21 +64,21 @@ const handleFocusTrap = (event: KeyboardEvent) => {
 };
 
 // Props
-const props = defineProps({
+defineProps({
   item: {
     type: Object,
-    default: null
+    default: null,
   },
   title: {
     type: String,
-    default: 'Confirm Deletion'
+    default: 'Confirm Deletion',
   },
   message: {
     type: String,
-    default: 'Are you sure you want to delete this item? This action cannot be undone.'
-  }
+    default: 'Are you sure you want to delete this item? This action cannot be undone.',
+  },
 });
 
 // Emits
-const emit = defineEmits(['close', 'confirm']);
+defineEmits(['close', 'confirm']);
 </script>

@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import { onMounted, computed } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const props = defineProps<{
   parishes: any[];
@@ -16,11 +16,7 @@ const props = defineProps<{
 // Get member's address
 const getMemberAddress = (member: any) => {
   if (!member) return '';
-  const parts = [
-    member.permanent_add1,
-    member.permanent_add2,
-    member.permanent_add3,
-  ].filter(Boolean);
+  const parts = [member.permanent_add1, member.permanent_add2, member.permanent_add3].filter(Boolean);
   return parts.join(', ');
 };
 
@@ -31,7 +27,7 @@ const calculateAge = (dateOfBirth: string | null | undefined) => {
   const currentDate = new Date();
   const age = currentDate.getFullYear() - birthDate.getFullYear();
   const monthDiff = currentDate.getMonth() - birthDate.getMonth();
-  
+
   if (monthDiff < 0 || (monthDiff === 0 && currentDate.getDate() < birthDate.getDate())) {
     return age - 1;
   }
@@ -41,11 +37,11 @@ const calculateAge = (dateOfBirth: string | null | undefined) => {
 // Get spouse relationship text
 const getSpouseRelationship = () => {
   if (!props.member?.spouse) return '';
-  
+
   // Check gender: if member is male (1), they are husband; if female (2), they are wife
   const isMale = props.member.gender_id === 1;
   const spouseName = `${props.member.spouse.first_name ?? ''} ${props.member.spouse.last_name ?? ''}`.trim();
-  
+
   return isMale ? `h/o ${spouseName}` : `w/o ${spouseName}`;
 };
 
@@ -67,41 +63,30 @@ const form = useForm({
   death_remarks: props.member?.deathRecord?.death_remarks ?? '',
 });
 
-// Format date from DD/MM/YYYY to YYYY-MM-DD for database
-const formatDateForDatabase = (dateString: string): string => {
-  if (!dateString) return '';
-  const parts = dateString.split('/');
-  if (parts.length !== 3) return '';
-  const [day, month, year] = parts;
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-};
-
 // Computed property for pre-selected member option
 const memberOptions = computed(() => {
   if (!props.member) return [];
   const communityName = props.member.community?.name ?? 'N/A';
   const memberNo = props.member.member_no ?? 'N/A';
-  
+
   // Get address
-  const address = [
-    props.member.permanent_add1,
-    props.member.permanent_add2,
-    props.member.permanent_add3,
-  ].filter(Boolean).join(', ');
-  
-  return [{
-    id: props.member.id,
-    name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
-    first_name: props.member.first_name,
-    middle_name: props.member.middle_name,
-    last_name: props.member.last_name,
-    member_no: props.member.member_no,
-    date_of_birth: props.member.date_of_birth,
-    gender_id: props.member.gender_id,
-    address: address,
-    nationality: 'Indian',
-    spouse_name: props.member.spouse ? `${props.member.spouse.first_name ?? ''} ${props.member.spouse.last_name ?? ''}`.trim() : null,
-  }];
+  const address = [props.member.permanent_add1, props.member.permanent_add2, props.member.permanent_add3].filter(Boolean).join(', ');
+
+  return [
+    {
+      id: props.member.id,
+      name: `${props.member.first_name ?? ''} ${props.member.last_name ?? ''} - ${communityName} - ${memberNo}`.trim(),
+      first_name: props.member.first_name,
+      middle_name: props.member.middle_name,
+      last_name: props.member.last_name,
+      member_no: props.member.member_no,
+      date_of_birth: props.member.date_of_birth,
+      gender_id: props.member.gender_id,
+      address: address,
+      nationality: 'Indian',
+      spouse_name: props.member.spouse ? `${props.member.spouse.first_name ?? ''} ${props.member.spouse.last_name ?? ''}`.trim() : null,
+    },
+  ];
 });
 
 // Handle member selection from SearchDropdown
@@ -118,14 +103,14 @@ function handleMemberSelect(member: any) {
     const currentDate = new Date();
     const age = currentDate.getFullYear() - birthDate.getFullYear();
     const monthDiff = currentDate.getMonth() - birthDate.getMonth();
-    
+
     if (monthDiff < 0 || (monthDiff === 0 && currentDate.getDate() < birthDate.getDate())) {
       form.age = age - 1;
     } else {
       form.age = age;
     }
   }
-  
+
   // Auto-populate relationship with spouse if available
   if (member.spouse_name) {
     const isMale = member.gender_id === 1;
@@ -163,17 +148,11 @@ function submit() {
           </div>
           <div>
             <Label>Death Date</Label>
-            <Input
-              v-model="form.death_date"
-              type="date"
-            />
+            <Input v-model="form.death_date" type="date" />
           </div>
           <div>
             <Label>Burial Date</Label>
-            <Input
-              v-model="form.burial_date"
-              type="date"
-            />
+            <Input v-model="form.burial_date" type="date" />
           </div>
           <div>
             <Label>Burial Reg No</Label>
@@ -225,9 +204,7 @@ function submit() {
           <Button type="submit" :disabled="form.processing">
             {{ form.processing ? 'Saving...' : 'Save Death Record' }}
           </Button>
-          <Button type="button" variant="outline" @click="router.visit('/death-records')">
-            Cancel
-          </Button>
+          <Button type="button" variant="outline" @click="router.visit('/death-records')"> Cancel </Button>
         </div>
       </form>
     </div>

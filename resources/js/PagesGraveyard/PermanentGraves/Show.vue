@@ -218,9 +218,9 @@
 
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, router } from '@inertiajs/vue3';
 import { parseLocalDate } from '@/lib/utils';
-import { AlertTriangle, Download, FileText } from 'lucide-vue-next';
+import { Link, router } from '@inertiajs/vue3';
+import { AlertTriangle, FileText } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 defineOptions({
@@ -234,10 +234,6 @@ interface Props {
 const props = defineProps<Props>();
 
 const showDeleteModal = ref(false);
-
-const deleteGrave = () => {
-  showDeleteModal.value = true;
-};
 
 const confirmDelete = () => {
   router.delete(route('graveyard.permanent-graves.destroy', props.permanentGrave.id), {

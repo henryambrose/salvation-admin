@@ -1,16 +1,15 @@
 <script setup lang="ts">
-import { Head, useForm, router, Link } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { DateInput } from '@/components/ui/date-input';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { DateInput } from '@/components/ui/date-input';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, Link, router, useForm } from '@inertiajs/vue3';
 import { ArrowLeft, Download } from 'lucide-vue-next';
-import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   baptismRecord: any;
@@ -21,8 +20,6 @@ const props = defineProps<{
 const hasArchiveCertificate = computed(() => {
   return !!(props.baptismRecord.birth_archive_certificate_id && props.baptismRecord.birth_archive_certificate?.view_url);
 });
-
-
 
 // Format date to YYYY-MM-DD for date input
 const formatDate = (date: any) => {
@@ -35,24 +32,12 @@ const formatDate = (date: any) => {
   return '';
 };
 
-// Format date to DD/MM/YYYY for display
-const formatDateForDisplay = (dateString: string) => {
-  if (!dateString) return '';
-  return formatDateDisplay(dateString);
-};
-
 // Track selected member's marriage info for cross-reference display
-const selectedMemberMarriageDate = ref<string>(
-  formatDate(props.baptismRecord.member?.marriage_date) || ''
-);
-const selectedMemberMarriageRegNo = ref<string>(
-  props.baptismRecord.member?.marriage_reg_no || ''
-);
+const selectedMemberMarriageDate = ref<string>(formatDate(props.baptismRecord.member?.marriage_date) || '');
+const selectedMemberMarriageRegNo = ref<string>(props.baptismRecord.member?.marriage_reg_no || '');
 
 // Initialize form with baptism_date from the record OR from member data
-const initialBaptismDate = formatDate(props.baptismRecord.baptism_date)
-  || formatDate(props.baptismRecord.member?.baptism_date)
-  || '';
+const initialBaptismDate = formatDate(props.baptismRecord.baptism_date) || formatDate(props.baptismRecord.member?.baptism_date) || '';
 
 const form = useForm({
   member_id: props.baptismRecord.member_id,
@@ -86,27 +71,18 @@ const memberOptions = computed(() => {
   if (props.baptismRecord.member) {
     const member = props.baptismRecord.member;
     const communityName = member.community?.name || '';
-    return [{
-      id: member.id,
-      name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
-      baptism_date: member.baptism_date,
-      baptism_reg_no: member.baptism_reg_no,
-      baptism_parish_id: member.baptism_parish_id,
-      date_of_birth: member.date_of_birth,
-    }];
+    return [
+      {
+        id: member.id,
+        name: `${member.first_name} ${member.last_name} (${member.member_no}) - ${communityName}`,
+        baptism_date: member.baptism_date,
+        baptism_reg_no: member.baptism_reg_no,
+        baptism_parish_id: member.baptism_parish_id,
+        date_of_birth: member.date_of_birth,
+      },
+    ];
   }
   return [];
-});
-
-// Computed property for displaying member's date of birth
-const displayDateOfBirth = computed(() => {
-  const dob = props.baptismRecord.member?.date_of_birth;
-  console.log('displayDateOfBirth computed:', {
-    raw_dob: dob,
-    formatted: dob ? formatDateForDisplay(dob) : 'Not set'
-  });
-  if (!dob) return 'Not set';
-  return formatDateForDisplay(dob);
 });
 
 // Handle member selection from SearchDropdown
@@ -136,7 +112,7 @@ function submit() {
   <AppLayout title="Edit Baptism Record">
     <Head title="Edit Baptism Record" />
 
-    <div class="container mx-auto py-8 px-4">
+    <div class="container mx-auto px-4 py-8">
       <!-- Header -->
       <div class="mb-6 flex items-center justify-between">
         <div class="flex items-center gap-4">
@@ -147,9 +123,7 @@ function submit() {
           </Link>
           <div>
             <h1 class="text-2xl font-bold">Edit Baptism Record</h1>
-            <p v-if="hasArchiveCertificate" class="text-muted-foreground">
-              Certificate for {{ baptismRecord.birth_archive_certificate?.full_name }}
-            </p>
+            <p v-if="hasArchiveCertificate" class="text-muted-foreground">Certificate for {{ baptismRecord.birth_archive_certificate?.full_name }}</p>
           </div>
         </div>
         <div v-if="hasArchiveCertificate" class="flex gap-2">
@@ -169,17 +143,26 @@ function submit() {
             <div class="flex items-start gap-3">
               <div class="text-amber-600">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 class="font-semibold text-amber-900">Archive Certificate File Missing</h3>
-                <p class="text-sm text-amber-800 mt-1">
-                  This baptism record is linked to birth certificate #{{ baptismRecord.birth_archive_certificate?.reg_no }}/{{ baptismRecord.birth_archive_certificate?.reg_year }}, 
-                  but the PDF file has not been uploaded to storage yet.
+                <p class="mt-1 text-sm text-amber-800">
+                  This baptism record is linked to birth certificate #{{ baptismRecord.birth_archive_certificate?.reg_no }}/{{
+                    baptismRecord.birth_archive_certificate?.reg_year
+                  }}, but the PDF file has not been uploaded to storage yet.
                 </p>
-                <p class="text-sm text-amber-800 mt-1">
-                  Expected location: <code class="text-xs bg-amber-100 px-1 rounded">{{ baptismRecord.birth_archive_certificate?.folder_path }}/{{ baptismRecord.birth_archive_certificate?.file_name }}</code>
+                <p class="mt-1 text-sm text-amber-800">
+                  Expected location:
+                  <code class="rounded bg-amber-100 px-1 text-xs"
+                    >{{ baptismRecord.birth_archive_certificate?.folder_path }}/{{ baptismRecord.birth_archive_certificate?.file_name }}</code
+                  >
                 </p>
               </div>
             </div>
@@ -197,25 +180,15 @@ function submit() {
               <CardDescription>Reference document - {{ baptismRecord.birth_archive_certificate.full_name }}</CardDescription>
             </CardHeader>
             <CardContent class="h-[calc(100%-5rem)]">
-              <div v-if="baptismRecord.birth_archive_certificate.view_url" class="h-full w-full overflow-hidden rounded-lg border bg-muted">
-                <iframe
-                  :src="baptismRecord.birth_archive_certificate.view_url"
-                  class="h-full w-full"
-                  title="Certificate PDF Viewer"
-                />
+              <div v-if="baptismRecord.birth_archive_certificate.view_url" class="bg-muted h-full w-full overflow-hidden rounded-lg border">
+                <iframe :src="baptismRecord.birth_archive_certificate.view_url" class="h-full w-full" title="Certificate PDF Viewer" />
               </div>
-              <div v-else class="h-full w-full flex items-center justify-center rounded-lg border bg-muted">
-                <div class="text-center p-8">
-                  <p class="text-lg font-semibold text-muted-foreground mb-2">PDF Not Available</p>
-                  <p class="text-sm text-muted-foreground">
-                    The certificate PDF has not been uploaded yet.
-                  </p>
-                  <p class="text-xs text-muted-foreground mt-2">
-                    Debug: view_url = {{ baptismRecord.birth_archive_certificate?.view_url }}
-                  </p>
-                  <p class="text-xs text-muted-foreground">
-                    file_url = {{ baptismRecord.birth_archive_certificate?.file_url }}
-                  </p>
+              <div v-else class="bg-muted flex h-full w-full items-center justify-center rounded-lg border">
+                <div class="p-8 text-center">
+                  <p class="text-muted-foreground mb-2 text-lg font-semibold">PDF Not Available</p>
+                  <p class="text-muted-foreground text-sm">The certificate PDF has not been uploaded yet.</p>
+                  <p class="text-muted-foreground mt-2 text-xs">Debug: view_url = {{ baptismRecord.birth_archive_certificate?.view_url }}</p>
+                  <p class="text-muted-foreground text-xs">file_url = {{ baptismRecord.birth_archive_certificate?.file_url }}</p>
                 </div>
               </div>
             </CardContent>
@@ -241,51 +214,31 @@ function submit() {
                       placeholder="Search member by name..."
                       @select="handleMemberSelect"
                     />
-                    <p class="mt-1 text-xs text-muted-foreground">
-                      Optional - leave empty for non-members
-                    </p>
+                    <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
                   </div>
                   <div>
                     <Label>Baptized Name</Label>
-                    <Input
-                      v-model="form.baptized_name"
-                      placeholder="Enter baptized name"
-                    />
+                    <Input v-model="form.baptized_name" placeholder="Enter baptized name" />
                   </div>
                   <div>
                     <Label>Baptized Surname</Label>
-                    <Input
-                      v-model="form.baptized_surname"
-                      placeholder="Enter baptized surname"
-                    />
+                    <Input v-model="form.baptized_surname" placeholder="Enter baptized surname" />
                   </div>
                   <div>
                     <Label>Baptism Date *</Label>
-                    <DateInput
-                      v-model="form.baptism_date"
-                      placeholder="DD/MM/YYYY"
-                    />
+                    <DateInput v-model="form.baptism_date" placeholder="DD/MM/YYYY" />
                   </div>
                   <div>
                     <Label>Birth Date Text</Label>
-                    <Input
-                      v-model="form.birth_date_text"
-                      placeholder="Enter birth Date text"
-                    />
+                    <Input v-model="form.birth_date_text" placeholder="Enter birth Date text" />
                   </div>
                   <div>
                     <Label>Reg Year</Label>
-                    <Input
-                      v-model="form.baptism_reg_year"
-                      placeholder="Enter registration year"
-                    />
+                    <Input v-model="form.baptism_reg_year" placeholder="Enter registration year" />
                   </div>
                   <div>
                     <Label>Baptism Reg No</Label>
-                    <Input
-                      v-model="form.baptism_reg_no"
-                      placeholder="Enter baptism registration number"
-                    />
+                    <Input v-model="form.baptism_reg_no" placeholder="Enter baptism registration number" />
                   </div>
                   <div>
                     <Label>Place of Baptism</Label>
@@ -357,16 +310,12 @@ function submit() {
                 </div>
 
                 <div class="space-y-2">
-                  <div v-if="!form.baptism_date" class="text-sm text-amber-600">
-                    Please enter a baptism date to save the record
-                  </div>
+                  <div v-if="!form.baptism_date" class="text-sm text-amber-600">Please enter a baptism date to save the record</div>
                   <div class="flex gap-4">
                     <Button type="submit" :disabled="!canSubmit">
                       {{ form.processing ? 'Saving...' : 'Update Baptism Record' }}
                     </Button>
-                    <Button type="button" variant="outline" @click="router.visit('/baptism-records')">
-                      Cancel
-                    </Button>
+                    <Button type="button" variant="outline" @click="router.visit('/baptism-records')"> Cancel </Button>
                   </div>
                 </div>
               </form>
@@ -388,90 +337,49 @@ function submit() {
                 placeholder="Search member by name..."
                 @select="handleMemberSelect"
               />
-              <p class="mt-1 text-xs text-muted-foreground">
-                Optional - leave empty for non-members
-              </p>
+              <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
             </div>
             <div>
               <Label>Date of Birth</Label>
-              <DateInput
-                v-model="form.date_of_birth"
-                placeholder="DD/MM/YYYY"
-              />
-              <p class="mt-1 text-xs text-muted-foreground">
-                From member record
-              </p>
+              <DateInput v-model="form.date_of_birth" placeholder="DD/MM/YYYY" />
+              <p class="text-muted-foreground mt-1 text-xs">From member record</p>
             </div>
             <div>
               <Label>Baptized Name</Label>
-              <Input
-                v-model="form.baptized_name"
-                placeholder="Enter baptized name"
-              />
-              <p class="mt-1 text-xs text-muted-foreground">
-                Optional - for non-members or different from legal name
-              </p>
+              <Input v-model="form.baptized_name" placeholder="Enter baptized name" />
+              <p class="text-muted-foreground mt-1 text-xs">Optional - for non-members or different from legal name</p>
             </div>
             <div>
               <Label>Baptized Surname</Label>
-              <Input
-                v-model="form.baptized_surname"
-                placeholder="Enter baptized surname"
-              />
-              <p class="mt-1 text-xs text-muted-foreground">
-                Optional - for non-members or different from legal name
-              </p>
+              <Input v-model="form.baptized_surname" placeholder="Enter baptized surname" />
+              <p class="text-muted-foreground mt-1 text-xs">Optional - for non-members or different from legal name</p>
             </div>
             <div>
               <Label>Baptism Date *</Label>
-              <DateInput
-                v-model="form.baptism_date"
-                placeholder="DD/MM/YYYY"
-              />
-              <p v-if="!form.baptism_date" class="mt-1 text-sm text-muted-foreground">
-                Auto-filled from member data (can be edited)
-              </p>
+              <DateInput v-model="form.baptism_date" placeholder="DD/MM/YYYY" />
+              <p v-if="!form.baptism_date" class="text-muted-foreground mt-1 text-sm">Auto-filled from member data (can be edited)</p>
             </div>
             <div>
               <Label>Birth Date Text</Label>
-              <Input
-                v-model="form.birth_date_text"
-                placeholder="Enter birth Date text"
-              />
+              <Input v-model="form.birth_date_text" placeholder="Enter birth Date text" />
             </div>
             <div>
               <Label>Reg Year</Label>
-              <Input
-                v-model="form.baptism_reg_year"
-                placeholder="Enter registration year"
-              />
+              <Input v-model="form.baptism_reg_year" placeholder="Enter registration year" />
             </div>
             <div>
               <Label>Marriage Date</Label>
-              <DateInput
-                v-model="selectedMemberMarriageDate"
-                placeholder="DD/MM/YYYY"
-              />
-              <p class="mt-1 text-xs text-muted-foreground">
-                From member record (can be edited)
-              </p>
+              <DateInput v-model="selectedMemberMarriageDate" placeholder="DD/MM/YYYY" />
+              <p class="text-muted-foreground mt-1 text-xs">From member record (can be edited)</p>
             </div>
             <div>
               <Label>Marriage Reg No</Label>
-              <Input
-                v-model="selectedMemberMarriageRegNo"
-                placeholder="Enter marriage registration number"
-              />
-              <p class="mt-1 text-xs text-muted-foreground">
-                From member record (can be edited)
-              </p>
+              <Input v-model="selectedMemberMarriageRegNo" placeholder="Enter marriage registration number" />
+              <p class="text-muted-foreground mt-1 text-xs">From member record (can be edited)</p>
             </div>
             <div>
               <Label>Baptism Reg No</Label>
-              <Input
-                v-model="form.baptism_reg_no"
-                placeholder="Enter baptism registration number"
-              />
+              <Input v-model="form.baptism_reg_no" placeholder="Enter baptism registration number" />
             </div>
             <div>
               <Label>Place of Baptism</Label>
@@ -543,16 +451,12 @@ function submit() {
           </div>
 
           <div class="space-y-2">
-            <div v-if="!form.baptism_date" class="text-sm text-amber-600">
-              Please select a member with a baptism date to save the record
-            </div>
+            <div v-if="!form.baptism_date" class="text-sm text-amber-600">Please select a member with a baptism date to save the record</div>
             <div class="flex gap-4">
               <Button type="submit" :disabled="!canSubmit">
                 {{ form.processing ? 'Saving...' : 'Update Baptism Record' }}
               </Button>
-              <Button type="button" variant="outline" @click="router.visit('/baptism-records')">
-                Cancel
-              </Button>
+              <Button type="button" variant="outline" @click="router.visit('/baptism-records')"> Cancel </Button>
             </div>
           </div>
         </form>

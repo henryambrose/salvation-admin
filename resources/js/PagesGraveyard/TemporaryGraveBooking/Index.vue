@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useToast } from '@/composables/useToast';
 import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { formatDateForDisplay } from '@/lib/utils';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ArrowRight, Calendar, Clock, Eye, MapPin, Pencil, Phone, Plus, Search, Trash2, User } from 'lucide-vue-next';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 
 interface TemporaryGraveBooking {
   id: number;
@@ -66,7 +66,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const { success, error, warning } = useToast();
+const { success, error } = useToast();
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || 'all');
@@ -164,12 +164,7 @@ const canRequestTransfer = (booking: TemporaryGraveBooking) => {
   if (booking.transfer_requested) return false;
   const today = new Date();
   const expectedDate = booking.expected_transfer_date ? new Date(booking.expected_transfer_date) : null;
-  return (
-    booking.status === 'confirmed' &&
-    ['paid', 'completed'].includes(booking.payment_status) &&
-    expectedDate !== null &&
-    today >= expectedDate
-  );
+  return booking.status === 'confirmed' && ['paid', 'completed'].includes(booking.payment_status) && expectedDate !== null && today >= expectedDate;
 };
 
 const getRowClass = (booking: TemporaryGraveBooking) => {
@@ -338,22 +333,24 @@ const deleteBooking = (booking: TemporaryGraveBooking) => {
               <!-- Color Legend for Eligible Bookings -->
               <div class="rounded-lg border border-purple-200 bg-purple-50 p-4">
                 <h4 class="mb-2 text-sm font-medium text-purple-900">Transfer Eligibility Status</h4>
-                <p class="mb-3 text-xs text-purple-800">Bookings eligible for transfer are highlighted. Click the arrow button to initiate or view a transfer.</p>
+                <p class="mb-3 text-xs text-purple-800">
+                  Bookings eligible for transfer are highlighted. Click the arrow button to initiate or view a transfer.
+                </p>
                 <div class="grid grid-cols-1 gap-2 text-xs sm:grid-cols-4">
                   <div class="flex items-center space-x-2">
-                    <div class="h-4 w-8 rounded bg-red-100 border-l-4 border-red-400"></div>
+                    <div class="h-4 w-8 rounded border-l-4 border-red-400 bg-red-100"></div>
                     <span class="text-gray-700">Overdue - Immediate action needed</span>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <div class="h-4 w-8 rounded bg-yellow-100 border-l-4 border-yellow-400"></div>
+                    <div class="h-4 w-8 rounded border-l-4 border-yellow-400 bg-yellow-100"></div>
                     <span class="text-gray-700">Due Soon - Within 2 months</span>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <div class="h-4 w-8 rounded bg-blue-100 border-l-4 border-blue-400"></div>
+                    <div class="h-4 w-8 rounded border-l-4 border-blue-400 bg-blue-100"></div>
                     <span class="text-gray-700">Eligible - Ready for transfer</span>
                   </div>
                   <div class="flex items-center space-x-2">
-                    <div class="h-4 w-8 rounded bg-purple-100 border-l-4 border-purple-400"></div>
+                    <div class="h-4 w-8 rounded border-l-4 border-purple-400 bg-purple-100"></div>
                     <span class="text-gray-700">Transfer Initiated</span>
                   </div>
                 </div>

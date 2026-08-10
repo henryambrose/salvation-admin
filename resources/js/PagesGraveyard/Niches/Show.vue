@@ -259,9 +259,9 @@
 
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { Link, router } from '@inertiajs/vue3';
 import { parseLocalDate } from '@/lib/utils';
-import { AlertTriangle, Download, FileText } from 'lucide-vue-next';
+import { Link, router } from '@inertiajs/vue3';
+import { AlertTriangle, FileText } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 defineOptions({

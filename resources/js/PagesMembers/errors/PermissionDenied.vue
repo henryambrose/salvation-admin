@@ -158,7 +158,7 @@ interface Props {
   user?: any;
 }
 
-const props = withDefaults(defineProps<Props>(), {
+withDefaults(defineProps<Props>(), {
   message: '',
   user: null,
 });
@@ -198,27 +198,6 @@ const switchToApp = (app: string) => {
   } else {
     router.visit('/dashboard');
   }
-};
-
-const goToDashboard = () => {
-  // Smart dashboard routing based on user permissions
-  if (currentApp.value === 'fund') {
-    router.visit('/fund');
-  } else {
-    router.visit('/dashboard');
-  }
-};
-
-const goToUsers = () => {
-  router.visit('/users');
-};
-
-const goToMembers = () => {
-  router.visit('/member');
-};
-
-const goToHome = () => {
-  router.visit('/');
 };
 
 const logout = () => {

@@ -107,12 +107,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { useConfirm } from '@/composables/useConfirm';
+import { useToast } from '@/composables/useToast';
 import axios from 'axios';
 import { AlertTriangle, Camera, CheckCircle, X } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
-import { useConfirm } from '@/composables/useConfirm';
-import { useToast } from '@/composables/useToast';
 
 const props = defineProps({
   familyNo: {

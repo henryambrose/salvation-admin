@@ -1,32 +1,16 @@
 <script setup lang="ts">
-import { Head, useForm, router } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import SearchDropdown from '@/components/ui/searchDropdown/SearchDropdown.vue';
-import { formatDateForDisplay as formatDateDisplay } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router, useForm } from '@inertiajs/vue3';
 
 const props = defineProps<{
   deathRecord: any;
   parishes: any[];
 }>();
-
-// Format date from YYYY-MM-DD to DD/MM/YYYY for display
-const formatDateForDisplay = (dateString: string | null | undefined): string => {
-  if (!dateString) return '';
-  return formatDateDisplay(dateString);
-};
-
-// Format date from DD/MM/YYYY to YYYY-MM-DD for database
-const formatDateForDatabase = (dateString: string): string => {
-  if (!dateString) return '';
-  const parts = dateString.split('/');
-  if (parts.length !== 3) return '';
-  const [day, month, year] = parts;
-  return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-};
 
 const form = useForm({
   member_id: props.deathRecord.member_id,
@@ -93,17 +77,11 @@ function submit() {
           </div>
           <div>
             <Label>Death Date</Label>
-            <Input
-              v-model="form.death_date"
-              type="date"
-            />
+            <Input v-model="form.death_date" type="date" />
           </div>
           <div>
             <Label>Burial Date</Label>
-            <Input
-              v-model="form.burial_date"
-              type="date"
-            />
+            <Input v-model="form.burial_date" type="date" />
           </div>
           <div>
             <Label>Burial Reg No</Label>
@@ -155,9 +133,7 @@ function submit() {
           <Button type="submit" :disabled="form.processing">
             {{ form.processing ? 'Saving...' : 'Update Death Record' }}
           </Button>
-          <Button type="button" variant="outline" @click="router.visit('/death-records')">
-            Cancel
-          </Button>
+          <Button type="button" variant="outline" @click="router.visit('/death-records')"> Cancel </Button>
         </div>
       </form>
     </div>

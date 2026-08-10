@@ -6,12 +6,12 @@ import CardTitle from '@/components/ui/card/CardTitle.vue';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
 import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import { Cake, Calendar, Church, Gift, Heart, Home, Mail, MapPin, Phone, Users } from 'lucide-vue-next';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import PermissionDenied from './errors/PermissionDenied.vue';
-import { formatDateForDisplay } from '@/lib/utils';
 
 const { can } = permissionHelpers();
 
@@ -28,7 +28,7 @@ defineProps({
     default: () => [],
   },
   ageWiseData: {
-    type: Object,
+    type: Array<Record<string, any>>,
     default: () => [],
   },
   birthdays: {

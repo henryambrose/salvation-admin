@@ -22,7 +22,6 @@ const canCreateState = can('create-state');
 const canReadAnyState = can('read-state');
 const canUpdateAnyState = can('update-state');
 const canDeleteAnyState = can('delete-state');
-const canExportState = can('read-state');
 const canRestoreState = can('restore-state');
 
 const columns = [

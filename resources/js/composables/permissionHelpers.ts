@@ -11,7 +11,7 @@ export function permissionHelpers() {
 
     const roles = auth.roles || [];
     const isSuper = auth.is_superadmin === true || roles.includes('superadmin') || roles.includes('super admin');
-    
+
     // Superadmin has all permissions
     if (isSuper) {
       return true;
@@ -19,8 +19,8 @@ export function permissionHelpers() {
 
     // Check for generic "all" permissions
     if (permission.includes('-')) {
-      const [action, resource] = permission.split('-');
-      
+      const [action] = permission.split('-');
+
       // Check if user has generic permission for this action
       if (auth.permissions.includes(`${action} all`)) {
         return true;

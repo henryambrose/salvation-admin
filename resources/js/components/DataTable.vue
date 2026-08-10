@@ -218,7 +218,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import Button from './ui/button/Button.vue';
 // Props
@@ -249,7 +249,6 @@ const sortColumn = ref(props.filters.sort || '');
 const sortDirection = ref(props.filters.direction || 'asc');
 const currentPage = ref(1);
 const perPage = ref(props.filters.perPage || 10);
-
 
 // Sample data for demonstration
 const sampleData = ref([

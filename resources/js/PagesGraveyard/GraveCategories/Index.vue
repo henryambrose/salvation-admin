@@ -219,9 +219,9 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { permissionHelpers } from '@/composables/permissionHelpers';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { parseLocalDate } from '@/lib/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { ChevronDown, ChevronsUpDown, ChevronUp, Pencil, Plus, RotateCcw, Trash2 } from 'lucide-vue-next';
-import { parseLocalDate } from '@/lib/utils';
 import { computed, onMounted, ref, watch } from 'vue';
 
 const { can } = permissionHelpers();
@@ -255,15 +255,6 @@ const showDeleteModal = ref(false);
 const categoryToDelete = ref<any>(null);
 const isArchived = ref(String(props.filters?.isArchived) === 'true');
 const serverArchived = computed(() => String(props.filters?.isArchived) === 'true');
-
-// Debounced search
-let searchTimeout: number;
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout);
-  searchTimeout = setTimeout(() => {
-    applyFilters();
-  }, 300);
-};
 
 const clearSearch = () => {
   filters.value.search = '';

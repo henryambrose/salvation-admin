@@ -275,12 +275,10 @@
 </template>
 
 <script setup lang="ts">
+import { DateInput } from '@/components/ui/date-input';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link, useForm } from '@inertiajs/vue3';
-import { X } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { DateInput } from '@/components/ui/date-input';
-import { formatDateForDisplay } from '@/lib/utils';
 
 defineOptions({
   layout: AppLayout,
@@ -293,14 +291,9 @@ interface Props {
   errors?: any;
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const submitting = ref(false);
-
-// Member search state
-const memberSearchQuery = ref('');
-const memberSearchResults = ref<any[]>([]);
-const selectedMember = ref<any>(null);
 
 const form = useForm({
   section: '',
@@ -330,37 +323,6 @@ const submitForm = () => {
     },
   });
 };
-
-// Member search functions
-async function searchMembers() {
-  if (memberSearchQuery.value.length < 2) {
-    memberSearchResults.value = [];
-    return;
-  }
-
-  try {
-    const response = await fetch('/graveyard/temporary-graves/search-members?query=' + encodeURIComponent(memberSearchQuery.value));
-    const data = await response.json();
-    memberSearchResults.value = data;
-  } catch (error) {
-    console.error('Error searching members:', error);
-    memberSearchResults.value = [];
-  }
-}
-
-function selectMember(member: any) {
-  selectedMember.value = member;
-  // form.member_id = member.id;
-  // form.contact_no = member.contact_no_1 || '';
-  memberSearchQuery.value = '';
-  memberSearchResults.value = [];
-}
-
-function clearSelectedMember() {
-  selectedMember.value = null;
-  // form.member_id = null;
-  // form.contact_no = '';
-}
 
 // function handleMemberTypeChange() {
 //   if (form.member_type === 'member') {

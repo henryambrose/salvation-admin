@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref } from 'vue';
 
 interface Grave {
   id: number;
@@ -29,10 +29,7 @@ const filteredPermanent = computed(() => {
   if (!q) return props.availablePermanentGraves;
   return props.availablePermanentGraves.filter((g) => {
     const idStr = `${g.section}-${g.row_no}-${g.grave_no}`.toLowerCase();
-    return (
-      idStr.includes(q) ||
-      (g.owner_name ? g.owner_name.toLowerCase().includes(q) : false)
-    );
+    return idStr.includes(q) || (g.owner_name ? g.owner_name.toLowerCase().includes(q) : false);
   });
 });
 
@@ -53,30 +50,22 @@ const selectTemporary = (id: number) => {
           v-model="permanentSearch"
           type="text"
           placeholder="Search owner / grave no (e.g., A-1-12)"
-          class="border rounded-full px-3 py-1.5 w-full"
+          class="w-full rounded-full border px-3 py-1.5"
         />
-        <button
-          v-if="permanentSearch"
-          class="text-sm text-gray-600 hover:text-gray-800"
-          @click="permanentSearch = ''"
-        >✕</button>
+        <button v-if="permanentSearch" class="text-sm text-gray-600 hover:text-gray-800" @click="permanentSearch = ''">✕</button>
       </div>
 
-      <div class="max-h-64 overflow-auto border rounded-lg">
+      <div class="max-h-64 overflow-auto rounded-lg border">
         <table class="min-w-full text-sm">
           <thead class="bg-blue-50">
             <tr>
-              <th class="text-left px-3 py-2">Identifier</th>
-              <th class="text-left px-3 py-2">Owner</th>
-              <th class="text-right px-3 py-2">Select</th>
+              <th class="px-3 py-2 text-left">Identifier</th>
+              <th class="px-3 py-2 text-left">Owner</th>
+              <th class="px-3 py-2 text-right">Select</th>
             </tr>
           </thead>
           <tbody>
-            <tr
-              v-for="g in filteredPermanent"
-              :key="g.id"
-              class="even:bg-gray-50 hover:bg-blue-50 transition"
-            >
+            <tr v-for="g in filteredPermanent" :key="g.id" class="transition even:bg-gray-50 hover:bg-blue-50">
               <td class="px-3 py-2">{{ g.section }}-{{ g.row_no }}-{{ g.grave_no }}</td>
               <td class="px-3 py-2">{{ g.owner_name || '-' }}</td>
               <td class="px-3 py-2 text-right">
@@ -98,12 +87,12 @@ const selectTemporary = (id: number) => {
     </div>
 
     <div v-else class="space-y-2">
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 max-h-64 overflow-auto p-1 border rounded-lg">
+      <div class="grid max-h-64 grid-cols-2 gap-2 overflow-auto rounded-lg border p-1 md:grid-cols-3 lg:grid-cols-4">
         <button
           v-for="g in availableTemporaryGraves"
           :key="g.id"
-          class="px-3 py-2 rounded-lg border hover:bg-blue-50 text-left"
-          :class="String(modelValueTemporary || '') === String(g.id) ? 'bg-blue-100 border-blue-300' : 'bg-white'"
+          class="rounded-lg border px-3 py-2 text-left hover:bg-blue-50"
+          :class="String(modelValueTemporary || '') === String(g.id) ? 'border-blue-300 bg-blue-100' : 'bg-white'"
           @click="selectTemporary(g.id)"
         >
           <div class="text-sm font-medium">{{ g.section }}-{{ g.row_no }}-{{ g.grave_no }}</div>
@@ -114,4 +103,3 @@ const selectTemporary = (id: number) => {
     </div>
   </div>
 </template>
-

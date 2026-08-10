@@ -2,15 +2,12 @@
 import UserInfo from '@/components/UserInfo.vue';
 import { DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import type { User } from '@/types';
-import { Link, router } from '@inertiajs/vue3';
-import { LogOut, Settings, Users, Shield } from 'lucide-vue-next';
-import { permissionHelpers } from '@/composables/permissionHelpers';
+import { Link } from '@inertiajs/vue3';
+import { LogOut, Settings } from 'lucide-vue-next';
 
 interface Props {
   user: User;
 }
-
-const { can } = permissionHelpers();
 
 const handleLogout = () => {
   // Simple redirect to logout URL

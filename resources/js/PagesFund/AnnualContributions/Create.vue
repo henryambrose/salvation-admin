@@ -1,76 +1,41 @@
 <template>
   <div class="py-6">
-    <div class="max-w-7xl mx-auto">
-      <div class="bg-[#ffffff] overflow-hidden shadow-sm sm:rounded-lg">
+    <div class="mx-auto max-w-7xl">
+      <div class="overflow-hidden bg-[#ffffff] shadow-sm sm:rounded-lg">
         <div class="p-6 text-gray-900">
           <!-- Header -->
-          <div class="flex items-center mb-6">
-            <Link 
-              href="/fund/annual-contributions"
-              class="mr-4 text-gray-500 hover:text-gray-700"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="mb-6 flex items-center">
+            <Link href="/fund/annual-contributions" class="mr-4 text-gray-500 hover:text-gray-700">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
               </svg>
             </Link>
             <h1 class="text-2xl font-semibold">Add New Contribution</h1>
           </div>
-          
-          <!-- Family Summary Section -->
-          <!-- <div v-if="form.family_no" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <div class="flex items-center justify-between mb-3">
-              <h3 class="text-lg font-semibold text-blue-900">Family: {{ form.family_no }}</h3>
-              <span class="text-sm text-blue-600">{{ selectedFamilyMembers?.length || 0 }} members</span>
-            </div> -->
-            
-            <!-- Quick Stats -->
-            <!-- <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                <div class="text-2xl font-bold text-blue-600">{{ totalContributions || 0 }}</div>
-                <div class="text-sm text-gray-600">Total Contributions</div>
-              </div>
-              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                <div class="text-2xl font-bold text-green-600">₹{{ totalPaid || 0 }}</div>
-                <div class="text-sm text-gray-600">Total Paid</div>
-              </div>
-              <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                <div class="text-2xl font-bold text-orange-600">₹{{ totalPending || 0 }}</div>
-                <div class="text-sm text-gray-600">Total Pending</div>
-              </div>
-                                            <div class="bg-[#ffffff] rounded-lg p-3 border border-blue-100">
-                 <div class="text-2xl font-bold text-purple-600">
-                   {{ form.years.length > 0 ? form.years.join(', ') : 'No years selected' }}
-                 </div>
-                 <div class="text-sm text-gray-600">Selected Years</div>
-               </div>
-             </div>
-           </div>
-          
 
-          
           <!-- Form Layout -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <!-- Main Form (full width when sidebar removed) -->
             <div class="lg:col-span-3">
               <form @submit.prevent="submitForm" class="space-y-6">
                 <!-- Family Information Section -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Family Information</h3>
-                  
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="rounded-lg bg-gray-50 p-6">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900">Family Information</h3>
+
+                  <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <!-- Family Number -->
                     <div>
-                      <label for="family_no" class="block text-sm font-medium text-gray-700 mb-2">
+                      <label for="family_no" class="mb-2 block text-sm font-medium text-gray-700">
                         Family Number <span class="text-red-500">*</span>
                       </label>
                       <div class="relative">
-                        <input 
+                        <input
                           id="family_no"
                           v-model="form.family_no"
                           type="text"
                           :class="[
-                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                            form.errors.family_no ? 'border-red-300' : 'border-gray-300'
+                            'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                            form.errors.family_no ? 'border-red-300' : 'border-gray-300',
                           ]"
                           placeholder="Enter family number or search for member"
                           @input="searchMembersForFamily"
@@ -78,82 +43,85 @@
                           @click.stop="showFamilySearchResults = true"
                           required
                         />
-                        
+
                         <!-- Family Number Search Results -->
-                        <div v-if="familySearchResults.length > 0 && showFamilySearchResults" 
-                             class="absolute z-10 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                          <div v-for="member in familySearchResults" 
-                               :key="member.id"
-                               @click="selectMemberForFamily(member)"
-                               class="px-4 py-2 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0">
+                        <div
+                          v-if="familySearchResults.length > 0 && showFamilySearchResults"
+                          class="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md border border-gray-300 bg-[#ffffff] shadow-lg"
+                        >
+                          <div
+                            v-for="member in familySearchResults"
+                            :key="member.id"
+                            @click="selectMemberForFamily(member)"
+                            class="cursor-pointer border-b border-gray-200 px-4 py-2 last:border-b-0 hover:bg-gray-100"
+                          >
                             <div class="font-medium">{{ member.full_name }}</div>
-                            <div class="text-sm text-gray-500">Community No: {{ member.community.split('-')[0].trim() }} | Family: {{ member.family_no || 'N/A' }}</div>
+                            <div class="text-sm text-gray-500">
+                              Community No: {{ member.community.split('-')[0].trim() }} | Family: {{ member.family_no || 'N/A' }}
+                            </div>
                             <div class="text-sm text-gray-500">Address: {{ member.current_add1 }} | {{ member.contact_no_1 }}</div>
                           </div>
                         </div>
-                        
+
                         <!-- No Results Message for Family Search -->
-                        <div v-if="showFamilySearchResults && familySearchResults.length === 0 && form.family_no.length >= 2" 
-                             class="absolute z-10 w-full mt-1 bg-[#ffffff] border border-gray-300 rounded-md shadow-lg p-3 text-center text-gray-500">
+                        <div
+                          v-if="showFamilySearchResults && familySearchResults.length === 0 && form.family_no.length >= 2"
+                          class="absolute z-10 mt-1 w-full rounded-md border border-gray-300 bg-[#ffffff] p-3 text-center text-gray-500 shadow-lg"
+                        >
                           No members found
                         </div>
                       </div>
                       <p v-if="form.errors.family_no" class="mt-1 text-sm text-red-600">
                         {{ form.errors.family_no }}
                       </p>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Type family number directly or search for a member to auto-fill
-                      </p>
-                      <div v-if="selectedFamilyMember" class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                      <p class="mt-1 text-sm text-gray-500">Type family number directly or search for a member to auto-fill</p>
+                      <div v-if="selectedFamilyMember" class="mt-2 rounded-md border border-blue-200 bg-blue-50 p-3">
                         <div class="font-medium">{{ selectedFamilyMember.full_name }}</div>
-                        <div class="text-sm text-gray-600">Community No: {{ selectedFamilyMember.community.split('-')[0].trim() }} | Family: {{ selectedFamilyMember.family_no || 'N/A' }}</div>
-                        <div class="text-sm text-gray-600">Address: {{ selectedFamilyMember.current_add1 }} | {{ selectedFamilyMember.contact_no_1 }}</div>
+                        <div class="text-sm text-gray-600">
+                          Community No: {{ selectedFamilyMember.community.split('-')[0].trim() }} | Family:
+                          {{ selectedFamilyMember.family_no || 'N/A' }}
+                        </div>
+                        <div class="text-sm text-gray-600">
+                          Address: {{ selectedFamilyMember.current_add1 }} | {{ selectedFamilyMember.contact_no_1 }}
+                        </div>
                       </div>
                     </div>
-
-                    
                   </div>
                 </div>
 
                 <!-- Payment Information Section -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Information</h3>
-                  
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="rounded-lg bg-gray-50 p-6">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900">Payment Information</h3>
+
+                  <div class="grid grid-cols-1 gap-6 md:grid-cols-3">
                     <!-- Amount -->
                     <div>
-                      <label for="amount" class="block text-sm font-medium text-gray-700 mb-2">
+                      <label for="amount" class="mb-2 block text-sm font-medium text-gray-700">
                         Amount (₹) <span class="text-red-500">*</span>
                       </label>
-                      <input 
+                      <input
                         id="amount"
                         v-model="form.amount"
                         type="number"
                         step="0.01"
                         min="0.01"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.amount ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.amount ? 'border-red-300' : 'border-gray-300',
                         ]"
                         placeholder="0.00"
-
                       />
                       <p v-if="form.errors.amount" class="mt-1 text-sm text-red-600">
                         {{ form.errors.amount }}
                       </p>
-                      
-                      
                     </div>
 
                     <!-- Start Date -->
                     <div>
-                      <label for="start_date" class="block text-xs font-medium text-gray-700 mb-3">
+                      <label for="start_date" class="mb-3 block text-xs font-medium text-gray-700">
                         Start Date <span class="text-red-500">*</span>
                       </label>
-                      <DateInput
-                        v-model="form.start_date"
-                        class="w-full"
-                      />
+                      <DateInput v-model="form.start_date" class="w-full" />
                       <p v-if="form.errors.start_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.start_date }}
                       </p>
@@ -161,13 +129,10 @@
 
                     <!-- End Date -->
                     <div>
-                      <label for="end_date" class="block text-xs font-medium text-gray-700 mb-3">
+                      <label for="end_date" class="mb-3 block text-xs font-medium text-gray-700">
                         End Date <span class="text-red-500">*</span>
                       </label>
-                      <DateInput
-                        v-model="form.end_date"
-                        class="w-full"
-                      />
+                      <DateInput v-model="form.end_date" class="w-full" />
                       <p v-if="form.errors.end_date" class="mt-1 text-sm text-red-600">
                         {{ form.errors.end_date }}
                       </p>
@@ -175,15 +140,13 @@
 
                     <!-- Status -->
                     <div>
-                      <label for="status" class="block text-sm font-medium text-gray-700 mb-2">
-                        Status <span class="text-red-500">*</span>
-                      </label>
-                      <select 
+                      <label for="status" class="mb-2 block text-sm font-medium text-gray-700"> Status <span class="text-red-500">*</span> </label>
+                      <select
                         id="status"
                         v-model="form.status"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.status ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.status ? 'border-red-300' : 'border-gray-300',
                         ]"
                         required
                       >
@@ -199,15 +162,13 @@
 
                     <!-- Fund Category -->
                     <div>
-                      <label for="fund_category_id" class="block text-sm font-medium text-gray-700 mb-2">
-                        Fund Category
-                      </label>
-                      <select 
+                      <label for="fund_category_id" class="mb-2 block text-sm font-medium text-gray-700"> Fund Category </label>
+                      <select
                         id="fund_category_id"
                         v-model="form.fund_category_id"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.fund_category_id ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.fund_category_id ? 'border-red-300' : 'border-gray-300',
                         ]"
                       >
                         <option value="">Select Category</option>
@@ -222,15 +183,13 @@
 
                     <!-- Payment Method -->
                     <div>
-                      <label for="payment_method_id" class="block text-sm font-medium text-gray-700 mb-2">
-                        Payment Method
-                      </label>
-                      <select 
+                      <label for="payment_method_id" class="mb-2 block text-sm font-medium text-gray-700"> Payment Method </label>
+                      <select
                         id="payment_method_id"
                         v-model="form.payment_method_id"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.payment_method_id ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.payment_method_id ? 'border-red-300' : 'border-gray-300',
                         ]"
                       >
                         <option value="">Select Method</option>
@@ -245,78 +204,64 @@
 
                     <!-- Transaction Reference -->
                     <div>
-                      <label for="transaction_reference" class="block text-sm font-medium text-gray-700 mb-2">
-                        Transaction Reference
-                      </label>
+                      <label for="transaction_reference" class="mb-2 block text-sm font-medium text-gray-700"> Transaction Reference </label>
                       <input
                         id="transaction_reference"
                         v-model="form.transaction_reference"
                         type="text"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.transaction_reference ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.transaction_reference ? 'border-red-300' : 'border-gray-300',
                         ]"
                         placeholder="Check No, UPI ID, etc."
                       />
                       <p v-if="form.errors.transaction_reference" class="mt-1 text-sm text-red-600">
                         {{ form.errors.transaction_reference }}
                       </p>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Enter check number, UPI transaction ID, or other payment reference
-                      </p>
+                      <p class="mt-1 text-sm text-gray-500">Enter check number, UPI transaction ID, or other payment reference</p>
                     </div>
                   </div>
                 </div>
 
                 <!-- Member Information Section -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Member Information</h3>
-                  
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="rounded-lg bg-gray-50 p-6">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900">Member Information</h3>
+
+                  <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <!-- Member Search -->
                     <div>
-                      <label for="member_search" class="block text-sm font-medium text-gray-700 mb-2">
-                        Select Family Member
-                      </label>
+                      <label for="member_search" class="mb-2 block text-sm font-medium text-gray-700"> Select Family Member </label>
                       <div class="relative">
-                        <select 
+                        <select
                           id="member"
                           v-model="form.member_id"
                           :class="[
-                            'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                            form.errors.member_id ? 'border-red-300' : 'border-gray-300'
+                            'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                            form.errors.member_id ? 'border-red-300' : 'border-gray-300',
                           ]"
                           :disabled="!form.family_no"
                         >
                           <option value="">Select a family member</option>
                           <option v-for="member in familyMembers" :key="member.id" :value="member.id">
-                            {{ member.full_name }} 
+                            {{ member.full_name }}
                           </option>
                         </select>
-                        <p v-if="!form.family_no" class="mt-1 text-sm text-gray-500">
-                          Please select a family number first
-                        </p>
-                        <p v-else-if="familyMembers.length === 0" class="mt-1 text-sm text-gray-500">
-                          No family members found
-                        </p>
+                        <p v-if="!form.family_no" class="mt-1 text-sm text-gray-500">Please select a family number first</p>
+                        <p v-else-if="familyMembers.length === 0" class="mt-1 text-sm text-gray-500">No family members found</p>
                       </div>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Select a family member from the dropdown to link this contribution
-                      </p>
+                      <p class="mt-1 text-sm text-gray-500">Select a family member from the dropdown to link this contribution</p>
                     </div>
 
                     <!-- Paid By Name (fallback) -->
                     <div>
-                      <label for="paid_by_name" class="block text-sm font-medium text-gray-700 mb-2">
-                        Paid By Name
-                      </label>
-                      <input 
+                      <label for="paid_by_name" class="mb-2 block text-sm font-medium text-gray-700"> Paid By Name </label>
+                      <input
                         id="paid_by_name"
                         v-model="form.paid_by_name"
                         type="text"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.paid_by_name ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.paid_by_name ? 'border-red-300' : 'border-gray-300',
                         ]"
                         placeholder="Enter payer's name"
                         :disabled="!!form.member_id"
@@ -331,16 +276,14 @@
 
                     <!-- Contact Number -->
                     <div>
-                      <label for="contact_no" class="block text-sm font-medium text-gray-700 mb-2">
-                        Contact Number
-                      </label>
-                      <input 
+                      <label for="contact_no" class="mb-2 block text-sm font-medium text-gray-700"> Contact Number </label>
+                      <input
                         id="contact_no"
                         v-model="form.contact_no"
                         type="tel"
                         :class="[
-                          'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                          form.errors.contact_no ? 'border-red-300' : 'border-gray-300'
+                          'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                          form.errors.contact_no ? 'border-red-300' : 'border-gray-300',
                         ]"
                         placeholder="Enter contact number"
                       />
@@ -351,18 +294,16 @@
                   </div>
 
                   <!-- Selected Member Display -->
-                  <div v-if="form.member_id && selectedMember" class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+                  <div v-if="form.member_id && selectedMember" class="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4">
                     <div class="flex items-center justify-between">
                       <div>
                         <h4 class="font-medium text-blue-900">Selected Member</h4>
                         <p class="text-sm text-blue-700">{{ selectedMember.full_name }}</p>
-                        <p class="text-sm text-blue-600">Member No: {{ selectedMember.member_no }} | Family: {{ selectedMember.family_no || 'N/A' }}</p>
+                        <p class="text-sm text-blue-600">
+                          Member No: {{ selectedMember.member_no }} | Family: {{ selectedMember.family_no || 'N/A' }}
+                        </p>
                       </div>
-                      <button 
-                        type="button"
-                        @click="clearMemberSelection"
-                        class="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                      >
+                      <button type="button" @click="clearMemberSelection" class="text-sm font-medium text-blue-600 hover:text-blue-800">
                         Remove
                       </button>
                     </div>
@@ -370,20 +311,18 @@
                 </div>
 
                 <!-- Additional Information Section -->
-                <div class="bg-gray-50 p-6 rounded-lg">
-                  <h3 class="text-lg font-medium text-gray-900 mb-4">Additional Information</h3>
-                  
+                <div class="rounded-lg bg-gray-50 p-6">
+                  <h3 class="mb-4 text-lg font-medium text-gray-900">Additional Information</h3>
+
                   <div>
-                    <label for="notes" class="block text-sm font-medium text-gray-700 mb-2">
-                      Notes
-                    </label>
-                    <textarea 
+                    <label for="notes" class="mb-2 block text-sm font-medium text-gray-700"> Notes </label>
+                    <textarea
                       id="notes"
                       v-model="form.notes"
                       rows="3"
                       :class="[
-                        'w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-[#3b82f6]',
-                        form.errors.notes ? 'border-red-300' : 'border-gray-300'
+                        'w-full rounded-md border px-3 py-2 focus:ring-2 focus:ring-[#3b82f6] focus:outline-none',
+                        form.errors.notes ? 'border-red-300' : 'border-gray-300',
                       ]"
                       placeholder="Any additional notes about this contribution..."
                     ></textarea>
@@ -394,58 +333,61 @@
                 </div>
               </form>
             </div>
-            
-            
           </div>
 
-                     <!-- Sticky Form Actions -->
-           <div class="fixed bottom-0 left-0 right-0 bg-[#ffffff] border-t border-gray-200 py-4 z-50">
-             <div class="max-w-7xl mx-auto px-6">
-               <div class="flex justify-start space-x-3" style="margin-left: 200px; margin-right: 0;">
-                 <Link 
-                   href="/fund/annual-contributions"
-                   class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-[#ffffff] hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6]"
-                 >
-                   Cancel
-                 </Link>
-                 <button 
-                   type="submit"
-                   :disabled="form.processing"
-                   @click="submitForm"
-                   class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#3b82f6] disabled:opacity-50 disabled:cursor-not-allowed"
-                 >
-                   <span v-if="form.processing">Creating...</span>
-                   <span v-else>Create Contribution</span>
-                 </button>
-               </div>
-             </div>
-           </div>
+          <!-- Sticky Form Actions -->
+          <div class="fixed right-0 bottom-0 left-0 z-50 border-t border-gray-200 bg-[#ffffff] py-4">
+            <div class="mx-auto max-w-7xl px-6">
+              <div class="flex justify-start space-x-3" style="margin-left: 200px; margin-right: 0">
+                <Link
+                  href="/fund/annual-contributions"
+                  class="rounded-md border border-gray-300 bg-[#ffffff] px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 focus:outline-none"
+                >
+                  Cancel
+                </Link>
+                <button
+                  type="submit"
+                  :disabled="form.processing"
+                  @click="submitForm"
+                  class="rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:ring-2 focus:ring-[#3b82f6] focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <span v-if="form.processing">Creating...</span>
+                  <span v-else>Create Contribution</span>
+                </button>
+              </div>
+            </div>
+          </div>
 
           <!-- Contribution History Section (Moved to bottom) -->
-          <div v-if="form.family_no && contributionHistory.length > 0" class="bg-[#ffffff] border border-gray-200 rounded-lg mt-6">
-            <div class="px-4 py-3 border-b border-gray-200">
+          <div v-if="form.family_no && contributionHistory.length > 0" class="mt-6 rounded-lg border border-gray-200 bg-[#ffffff]">
+            <div class="border-b border-gray-200 px-4 py-3">
               <h4 class="text-lg font-medium text-gray-900">Contribution History</h4>
               <p class="text-sm text-gray-600">Previous contributions for this family</p>
             </div>
-            
+
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Period</th>
-                    <th @click="toggleCategorySort" class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none">
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Period</th>
+                    <th
+                      @click="toggleCategorySort"
+                      class="cursor-pointer px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase select-none"
+                    >
                       Category <span class="ml-1 text-[10px]">{{ categorySortAsc ? '▲' : '▼' }}</span>
                     </th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Paid By</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date of Payment</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Amount</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Status</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Paid By</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Date of Payment</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium tracking-wider text-gray-500 uppercase">Payment Method</th>
                   </tr>
                 </thead>
-                <tbody class="bg-[#ffffff] divide-y divide-gray-200">
+                <tbody class="divide-y divide-gray-200 bg-[#ffffff]">
                   <tr v-for="contribution in sortedContributionHistory" :key="contribution.id" class="hover:bg-gray-50">
-                    <td class="px-4 py-3 text-sm text-gray-900">{{ formatDateForDisplay(contribution.start_date) }} - {{ formatDateForDisplay(contribution.end_date) }}</td>
+                    <td class="px-4 py-3 text-sm text-gray-900">
+                      {{ formatDateForDisplay(contribution.start_date) }} - {{ formatDateForDisplay(contribution.end_date) }}
+                    </td>
                     <td class="px-4 py-3 text-sm text-gray-900">{{ contribution.category_name }}</td>
                     <td class="px-4 py-3 text-sm text-gray-900">₹{{ contribution.amount }}</td>
                     <td class="px-4 py-3">
@@ -471,26 +413,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { Link, router, useForm } from '@inertiajs/vue3';
-import AppLayout from '@/layouts/AppLayout.vue';
 import { DateInput } from '@/components/ui/date-input';
-import { SelectInput } from '@/components/ui/select';
-import { formatDateForDisplay } from '@/lib/utils';
 import { useToast } from '@/composables/useToast';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { formatDateForDisplay } from '@/lib/utils';
+import { Link, useForm } from '@inertiajs/vue3';
+import { computed, onMounted, ref, watch } from 'vue';
 
 defineOptions({
-    layout: AppLayout
+  layout: AppLayout,
 });
 
-const props = withDefaults(defineProps<{
-  filterOptions?: any;
-}>(), {
-  filterOptions: () => ({
-    fund_categories: [],
-    payment_methods: []
-  })
-});
+const props = withDefaults(
+  defineProps<{
+    filterOptions?: any;
+  }>(),
+  {
+    filterOptions: () => ({
+      fund_categories: [],
+      payment_methods: [],
+    }),
+  },
+);
 
 const { success, error } = useToast();
 
@@ -507,7 +451,7 @@ const form = useForm({
   member_id: '',
   paid_by_name: '',
   contact_no: '',
-  notes: ''
+  notes: '',
 });
 
 // Member search
@@ -546,11 +490,7 @@ const totalContributions = ref(0);
 const totalPaid = ref(0);
 const totalPending = ref(0);
 const totalPendingAmount = ref(0);
-const selectedFamilyMembers = ref<any[]>([]);
 const pendingYears = ref<number[]>([]);
-
-// Computed properties
-const currentYear = computed(() => new Date().getFullYear());
 
 // Year selection removed; using date range now
 
@@ -559,13 +499,12 @@ const statusOptions = [
   { value: 'partial', label: 'Partial' },
   { value: 'paid', label: 'Paid' },
   { value: 'cancelled', label: 'Cancelled' },
-  { value: 'refunded', label: 'Refunded' }
+  { value: 'refunded', label: 'Refunded' },
 ];
 
 // Methods
 
 const searchMembersForFamily = async () => {
-  
   if (form.family_no.length < 2) {
     familySearchResults.value = [];
     showFamilySearchResults.value = false;
@@ -574,17 +513,17 @@ const searchMembersForFamily = async () => {
 
   try {
     const url = `/member/search-members?query=${encodeURIComponent(form.family_no)}`;
-    
+
     const response = await fetch(url, {
       method: 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     });
-    
+
     if (response.ok) {
       const data = await response.json();
       familySearchResults.value = data || [];
@@ -614,17 +553,17 @@ const fetchFamilyMembers = async (familyNo: string) => {
       method: 'GET',
       headers: {
         'X-Requested-With': 'XMLHttpRequest',
-        'Accept': 'application/json',
-        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+        Accept: 'application/json',
+        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
       },
-      credentials: 'same-origin'
+      credentials: 'same-origin',
     });
     if (response.ok) {
       const data = await response.json();
       // Map to the format used in the dropdown
       familyMembers.value = (Array.isArray(data) ? data : []).map((m: any) => ({
         id: m.id,
-        full_name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : (m.full_name || ''),
+        full_name: m.first_name && m.last_name ? `${m.first_name} ${m.last_name}` : m.full_name || '',
         member_no: m.member_no,
         family_no: familyNo,
       }));
@@ -637,21 +576,24 @@ const fetchFamilyMembers = async (familyNo: string) => {
     familyMembers.value = [];
   }
 };
-watch(() => showFamilySearchResults, () => {
-  // No-op; don't sync dropdown with search list
-});
+watch(
+  () => showFamilySearchResults,
+  () => {
+    // No-op; don't sync dropdown with search list
+  },
+);
 
 // Fetch family contribution history
 const fetchFamilyContributionHistory = async (familyNo: string) => {
   try {
     const response = await fetch(`/fund/family-contributions/${familyNo}`);
     const data = await response.json();
-    
+
     contributionHistory.value = data.contributions || [];
     totalContributions.value = data.total_contributions || 0;
     totalPaid.value = data.total_paid || 0;
     totalPending.value = data.total_pending || 0;
-    
+
     // Pending years removed with year logic
   } catch (error) {
     console.error('Error fetching contribution history:', error);
@@ -666,33 +608,13 @@ const fetchFamilyContributionHistory = async (familyNo: string) => {
 // Year pending calculation removed
 
 // Fetch pending amounts by category (simplified - just calls calculatePendingYears)
-const fetchPendingAmountsByCategory = async (familyNo: string) => {
+const fetchPendingAmountsByCategory = async () => {
   try {
     // Year-based pending logic removed
     // Don't fetch again if we already have the data
-    
   } catch (error) {
     console.error('Error fetching pending years:', error);
     pendingYears.value = [];
-  }
-};
-
-const selectMember = (member: any) => {
-  selectedMember.value = member;
-  form.member_id = member.id;
-  form.paid_by_name = member.full_name;
-  form.family_no = member.family_no || ''; // Auto-fill family_no
-  memberSearch.value = member.full_name;
-  showMemberResults.value = false;
-  memberSearchResults.value = [];
-  
-  // Fetch family members for the selected family
-  fetchFamilyMembers(member.family_no || '');
-  
-  // Fetch contribution history and pending amounts when member is selected
-  if (member.family_no) {
-    fetchFamilyContributionHistory(member.family_no);
-    fetchPendingAmountsByCategory(member.family_no);
   }
 };
 
@@ -701,16 +623,16 @@ const selectMemberForFamily = (member: any) => {
   familySearchResults.value = []; // Clear results
   showFamilySearchResults.value = false;
   selectedFamilyMember.value = member;
-  
+
   // Fetch family members for the selected family
   fetchFamilyMembers(member.family_no || '');
-  
+
   // Fetch contribution history and pending amounts when family is selected
   if (member.family_no) {
     fetchFamilyContributionHistory(member.family_no);
-    fetchPendingAmountsByCategory(member.family_no);
+    fetchPendingAmountsByCategory();
   }
-  
+
   // Also clear member search if it was previously selected
   if (selectedMember.value && selectedMember.value.family_no === member.family_no) {
     // This is the same family, keep the member selected
@@ -734,14 +656,14 @@ const clearMemberSelection = () => {
   memberSearch.value = '';
   showMemberResults.value = false;
   memberSearchResults.value = [];
-  
+
   // Also clear family search results
   familySearchResults.value = [];
   showFamilySearchResults.value = false;
-  
+
   // Clear family members
   familyMembers.value = [];
-  
+
   // Clear contribution history and pending amounts
   contributionHistory.value = [];
   pendingAmountsByCategory.value = [];
@@ -760,7 +682,7 @@ const submitForm = () => {
 
   // Validate that either member_id or paid_by_name is provided
   if (!form.member_id && !form.paid_by_name) {
-    error('Please either select a member or enter the payer\'s name.');
+    error("Please either select a member or enter the payer's name.");
     return;
   }
 
@@ -783,18 +705,18 @@ const submitForm = () => {
     onError: (errors) => {
       console.error('Form validation errors:', errors);
       error('Please check the form for errors and try again.');
-    }
+    },
   });
 };
 
 // Utility methods
 const getStatusBadgeClass = (status: string) => {
   const classes = {
-    'paid': 'px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full',
-    'pending': 'px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full',
-    'partial': 'px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full',
-    'cancelled': 'px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full',
-    'refunded': 'px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full'
+    paid: 'px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full',
+    pending: 'px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full',
+    partial: 'px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full',
+    cancelled: 'px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full',
+    refunded: 'px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded-full',
   };
   return classes[status as keyof typeof classes] || classes.pending;
 };
@@ -805,7 +727,7 @@ const getStatusBadgeClass = (status: string) => {
 const closeMemberSearch = (event: Event) => {
   const target = event.target as HTMLElement;
   const searchContainer = document.getElementById('member_search')?.closest('.relative');
-  
+
   if (searchContainer && !searchContainer.contains(target)) {
     showMemberResults.value = false;
   }
@@ -815,7 +737,7 @@ const closeMemberSearch = (event: Event) => {
 const closeFamilySearch = (event: Event) => {
   const target = event.target as HTMLElement;
   const searchContainer = document.getElementById('family_no')?.closest('.relative');
-  
+
   if (searchContainer && !searchContainer.contains(target)) {
     showFamilySearchResults.value = false;
   }
@@ -830,51 +752,49 @@ watch(memberSearch, () => {
 });
 
 // Watch for family search changes
-watch(() => form.family_no, (newValue) => {
-  if (!newValue) {
-    familySearchResults.value = [];
-    showFamilySearchResults.value = false;
-    
-    // Clear family members
-    familyMembers.value = [];
-    
-    // Clear contribution history and pending amounts
-    contributionHistory.value = [];
-    pendingAmountsByCategory.value = [];
-    totalContributions.value = 0;
-    totalPaid.value = 0;
-    totalPending.value = 0;
-    totalPendingAmount.value = 0;
-    pendingYears.value = [];
-  } else {
-    // Fetch members for selected family
-    fetchFamilyMembers(newValue);
-  }
-});
+watch(
+  () => form.family_no,
+  (newValue) => {
+    if (!newValue) {
+      familySearchResults.value = [];
+      showFamilySearchResults.value = false;
+
+      // Clear family members
+      familyMembers.value = [];
+
+      // Clear contribution history and pending amounts
+      contributionHistory.value = [];
+      pendingAmountsByCategory.value = [];
+      totalContributions.value = 0;
+      totalPaid.value = 0;
+      totalPending.value = 0;
+      totalPendingAmount.value = 0;
+      pendingYears.value = [];
+    } else {
+      // Fetch members for selected family
+      fetchFamilyMembers(newValue);
+    }
+  },
+);
 
 // Removed year watcher
-
-// Watch for fund category changes to fetch pending amounts
-watch(() => form.fund_category_id, (newCategoryId) => {
-  // No-op: year-based pending logic removed
-});
 
 // Initialize form with current dates
 onMounted(() => {
   const today = new Date().toISOString().split('T')[0];
   form.start_date = today;
   form.end_date = today;
-  
+
   // Set default fund category to "Annual Contributions" if available
   if (props.filterOptions?.fund_categories) {
     const annualContributionsCategory = props.filterOptions.fund_categories.find(
-      (cat: any) => cat.name.toLowerCase().includes('annual') || cat.name.toLowerCase().includes('contributions')
+      (cat: any) => cat.name.toLowerCase().includes('annual') || cat.name.toLowerCase().includes('contributions'),
     );
     if (annualContributionsCategory) {
       form.fund_category_id = annualContributionsCategory.id;
     }
   }
-  
+
   // Add click outside handlers
   document.addEventListener('click', closeMemberSearch);
   document.addEventListener('click', closeFamilySearch);

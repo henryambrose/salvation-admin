@@ -362,8 +362,6 @@ const { can } = permissionHelpers();
 
 const canCreateLeader = can('create-cells-and-association-leader');
 const canReadAnyLeader = can('read-cells-and-association-leader');
-const canUpdateAnyLeader = can('update-cells-and-association-leader');
-const canDeleteAnyLeader = can('delete-cells-and-association-leader');
 const canExportLeader = can('read-cells-and-association-leader');
 
 // Focus first input when create modal opens
@@ -528,7 +526,11 @@ watch(showEditModal, (isOpen) => {
                 </td>
                 <td class="p-2">
                   <template v-if="!serverArchived">
-                    <Button @click="openDeleteModal(row)" variant="destructive" class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200">
+                    <Button
+                      @click="openDeleteModal(row)"
+                      variant="destructive"
+                      class="rounded-full bg-red-100 text-red-700 transition hover:bg-red-200"
+                    >
                       Delete
                     </Button>
                   </template>
