@@ -1,11 +1,11 @@
 <?php
 
-use Modules\Members\Models\Member;
+use Modules\Members\Models\BloodGroup;
 use Modules\Members\Models\Community;
+use Modules\Members\Models\Gender;
+use Modules\Members\Models\Member;
 use Modules\Members\Models\Parish;
 use Modules\Members\Models\Relationship;
-use Modules\Members\Models\Gender;
-use Modules\Members\Models\BloodGroup;
 
 beforeEach(function () {
     $this->member = Member::factory()->create();
@@ -123,11 +123,11 @@ test('member family_no is required', function () {
 test('member dates are cast correctly', function () {
     $member = Member::factory()->create([
         'date_of_birth' => '1990-01-15',
-        'baptism_date' => '1990-02-20',
+        'confirmation_date' => '1990-02-20',
     ]);
 
     expect($member->date_of_birth)->toBeString()
-        ->and($member->baptism_date)->toBeString();
+        ->and($member->confirmation_date)->toBeString();
 });
 
 test('member can filter by community', function () {
