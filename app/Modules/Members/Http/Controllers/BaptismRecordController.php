@@ -141,7 +141,7 @@ class BaptismRecordController extends Controller
     {
         $baptismRecord->load(['member.community', 'baptismParish']);
 
-        return Inertia::render('BaptismRecords/Show', [
+        return response()->json([
             'baptismRecord' => $baptismRecord,
         ]);
     }

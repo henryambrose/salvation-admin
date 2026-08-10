@@ -131,7 +131,7 @@ class MarriageRecordController extends Controller
     {
         $marriageRecord->load(['bridegroom', 'bride', 'marriageParish']);
 
-        return Inertia::render('MarriageRecords/Show', [
+        return response()->json([
             'marriageRecord' => $marriageRecord,
         ]);
     }

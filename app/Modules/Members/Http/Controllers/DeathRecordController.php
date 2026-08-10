@@ -114,7 +114,7 @@ Log::info($validated);
     {
         $deathRecord->load(['member', 'burialParish']);
 
-        return Inertia::render('DeathRecords/Show', [
+        return response()->json([
             'deathRecord' => $deathRecord,
         ]);
     }
