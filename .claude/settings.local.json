@@ -62,7 +62,9 @@
       "Bash(then echo:*)",
       "Bash(code --list-extensions)",
       "Bash(npx eslint *)",
-      "Bash(git stash *)"
+      "Bash(git stash *)",
+      "Bash(npm install *)",
+      "Bash(npx husky *)"
     ]
   }
 }
