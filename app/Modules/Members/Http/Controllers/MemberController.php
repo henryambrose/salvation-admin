@@ -3,6 +3,14 @@
 namespace Modules\Members\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Inertia\Response;
+use Modules\Members\Http\Requests\FamilyPhotoUploadRequest;
 use Modules\Members\Http\Requests\StoreMemberRequest;
 use Modules\Members\Http\Requests\UpdateMemberRequest;
 use Modules\Members\Models\AgeGroup;
@@ -24,22 +32,12 @@ use Modules\Members\Models\Status;
 use Modules\Members\Models\Town;
 use Modules\Members\Models\UnifiedPerson;
 use Modules\Members\Services\FamilyNumberingService;
-use Modules\Members\Services\FamilyTreeService;
 use Modules\Members\Services\FamilyPhotoService;
-use Modules\Members\Models\FamilyPhoto;
-use Modules\Members\Http\Requests\FamilyPhotoUploadRequest;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Inertia\Inertia;
-use Inertia\Response;
+use Modules\Members\Services\FamilyTreeService;
 use Spatie\LaravelPdf\Facades\Pdf;
 
 class MemberController extends Controller
 {
-
     public function index(Request $request): Response
     {
         $this->authorize('viewAny', Member::class);
@@ -106,7 +104,7 @@ class MemberController extends Controller
         $totalCount = (clone $query)->count();
 
         // Single paginate call
-        $perPage   = (int) $request->input('perPage', 10);
+        $perPage = (int) $request->input('perPage', 10);
         $paginator = $query->paginate($perPage)->appends($request->query());
 
         // Enrich rows for dropdown display (kept for UI compatibility)
@@ -177,7 +175,7 @@ class MemberController extends Controller
                 'filterColumnValue',
                 'isArchived',
                 'familySearch',
-                'status'
+                'status',
             ]),
             'canViewAnyMember' => Gate::allows('list-member'),
             'canCreateMember' => Gate::allows('create-member'),
@@ -186,7 +184,7 @@ class MemberController extends Controller
             'canRestoreMember' => Gate::allows('restore-member'),
             'pagination' => [
                 'currentPage' => $paginator->currentPage(),
-                'lastPage'    => $paginator->lastPage(),
+                'lastPage' => $paginator->lastPage(),
             ],
         ]);
     }
@@ -209,17 +207,29 @@ class MemberController extends Controller
                     ->orWhere('member_no', 'like', "%$search%")
                     ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ?", ["%$search%"])
                     ->orWhere('family_no', 'like', "%$search%")
-                    ->orWhereHas('community', fn($q2) => $q2->where('name', 'like', "%$search%"));
+                    ->orWhereHas('community', fn ($q2) => $q2->where('name', 'like', "%$search%"));
             });
         }
 
         // Individual filters
-        if ($v = $request->input('familySearch')) $query->where('family_no', 'like', "%$v%");
-        if ($v = $request->input('communityId'))  $query->where('community_id', $v);
-        if ($v = $request->input('relationship')) $query->where('relationship_id', $v);
-        if ($v = $request->input('status'))       $query->where('status_id', $v);
-        if ($v = $request->input('bloodGroup'))   $query->where('blood_group_id', $v);
-        if ($v = $request->input('gender'))       $query->where('gender_id', $v);
+        if ($v = $request->input('familySearch')) {
+            $query->where('family_no', 'like', "%$v%");
+        }
+        if ($v = $request->input('communityId')) {
+            $query->where('community_id', $v);
+        }
+        if ($v = $request->input('relationship')) {
+            $query->where('relationship_id', $v);
+        }
+        if ($v = $request->input('status')) {
+            $query->where('status_id', $v);
+        }
+        if ($v = $request->input('bloodGroup')) {
+            $query->where('blood_group_id', $v);
+        }
+        if ($v = $request->input('gender')) {
+            $query->where('gender_id', $v);
+        }
 
         // Age group filter
         if ($ageGroup = $request->input('ageGroup')) {
@@ -288,11 +298,9 @@ class MemberController extends Controller
         }
     }
 
-
     public function create(Request $request): Response
     {
         $this->authorize('create', Member::class);
-
 
         return Inertia::render('member/Member', [
             'communities' => Community::all(),
@@ -312,7 +320,7 @@ class MemberController extends Controller
     {
         // replicate the same sort (default id asc)
         $sort = $request->input('sort', 'id');
-        $dir  = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
+        $dir = $request->input('direction', 'asc') === 'desc' ? 'desc' : 'asc';
 
         $base = Member::query();
 
@@ -324,6 +332,7 @@ class MemberController extends Controller
         if ($sort === 'id') {
             $op = $dir === 'asc' ? '<=' : '>=';
             $position = (clone $base)->where('id', $op, $member->id)->count();
+
             return (int) ceil($position / $perPage);
         }
 
@@ -339,6 +348,7 @@ class MemberController extends Controller
 
         return (int) ceil(($rankQuery + 1) / $perPage);
     }
+
     public function store(StoreMemberRequest $request)
     {
         $this->authorize('create', Member::class);
@@ -367,7 +377,7 @@ class MemberController extends Controller
                 // Check if family actually exists in database
                 $existingFamily = Member::where('family_no', $familyNo)->first();
                 if (! $existingFamily) {
-                    throw new \Exception('Family number "' . $familyNo . '" does not exist. Please search for existing families or create a new family.');
+                    throw new \Exception('Family number "'.$familyNo.'" does not exist. Please search for existing families or create a new family.');
                 }
 
                 $familyInfo = $numberingService->parseFamilyNumber($familyNo);
@@ -405,7 +415,7 @@ class MemberController extends Controller
             // Set bidirectional spouse relationship for new member with spouse
             if (isset($member->spouse_id) && $member->spouse_id) {
                 $spouse = Member::find($member->spouse_id);
-                if ($spouse && !$spouse->spouse_id) {
+                if ($spouse && ! $spouse->spouse_id) {
                     $spouse->spouse_id = $member->id;
                     $spouse->spouse_source = 'Member';
                     $spouse->save();
@@ -431,7 +441,7 @@ class MemberController extends Controller
             return redirect()->route('member.index', array_merge(
                 $request->only(['search', 'sort', 'direction', 'isArchived', 'communityId', 'filterColumnKey', 'filterColumnValue']),
                 ['page' => $page, 'perPage' => $perPage, 'highlightId' => $member->id]
-            ))->with('success', 'Member created successfully with Family No: ' . $member->family_no);
+            ))->with('success', 'Member created successfully with Family No: '.$member->family_no);
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -445,7 +455,7 @@ class MemberController extends Controller
         $this->authorize('view', $member);
 
         return Inertia::render('member/Member', [
-            'member' => $member,
+            'memberProp' => $member,
         ]);
     }
 
@@ -460,9 +470,8 @@ class MemberController extends Controller
             return ['id' => $item->id, 'name' => $item->name];
         })->toArray();
 
-
         return Inertia::render('member/Member', [
-            'member' => $member,
+            'memberProp' => $member,
             'members' => Member::select('id', 'first_name', 'last_name', 'family_no')->with('spouse')->get(), // Only select needed columns
             'communities' => Community::select('id', 'name')->get(), // Only select needed columns
             'parishes' => Parish::select('id', 'name', 'code', 'town')->get()->map(function ($item) {
@@ -524,7 +533,7 @@ class MemberController extends Controller
         $shouldCallTransition = isset($validated['spouse_id']) &&
             $validated['spouse_id'] !== null &&
             $validated['spouse_id'] != '' &&
-            (string)$validated['spouse_id'] != (string)$member->spouse_id;
+            (string) $validated['spouse_id'] != (string) $member->spouse_id;
 
         Log::info('Should call transition?', ['shouldCallTransition' => $shouldCallTransition]);
 
@@ -532,7 +541,7 @@ class MemberController extends Controller
         Log::info('Member updated. Spouse ID after update:', ['spouse_id' => $member->fresh()->spouse_id]);
         if ($validated['spouse_source'] == 'External' && $validated['spouse_id'] !== null) {
             $externalSpouse = ExternalMember::find($validated['spouse_id']);
-            if ($externalSpouse && (!$externalSpouse->spouse_id)) {
+            if ($externalSpouse && (! $externalSpouse->spouse_id)) {
                 $externalSpouse->spouse_id = $member->id;
                 $externalSpouse->spouse_source = 'Member';
                 $externalSpouse->marital_status = 'Married';
@@ -595,6 +604,7 @@ class MemberController extends Controller
         // Preserve current state after deletion
         $page = $request->input('page', 1);
         $perPage = $request->input('perPage', 10);
+
         return redirect()->route('member.index', array_merge(
             $request->only(['search', 'familySearch', 'sort', 'direction', 'communityId', 'relationship', 'ageGroup', 'bloodGroup', 'gender', 'filterColumnKey', 'filterColumnValue', 'isArchived']),
             [
@@ -618,10 +628,10 @@ class MemberController extends Controller
     {
         if ($type == 'internal') {
             $member = Member::with(['gender', 'community', 'relationship'])->findOrFail($id);
-            $person = UnifiedPerson::where('uid', '=', 'M-' . $id)->first();
+            $person = UnifiedPerson::where('uid', '=', 'M-'.$id)->first();
         } else {
             $member = ExternalMember::with(['gender', 'relationship'])->findOrFail($id);
-            $person = UnifiedPerson::where('uid', '=', 'E-' . $id)->first();
+            $person = UnifiedPerson::where('uid', '=', 'E-'.$id)->first();
         }
         $service = new FamilyTreeService;
         $allFamilyMembers = UnifiedPerson::where('family_no', $person->family_no)
@@ -635,6 +645,7 @@ class MemberController extends Controller
             $relation = $service->calculateRelationship($person, $familyMember);
             $familyMember->relation = $relation;
         }
+
         return Inertia::render('member/FamilyTree', [
             'member' => $member,
             'person' => $person,
@@ -682,7 +693,7 @@ class MemberController extends Controller
             $allowedCommunityIds = $this->allowedCommunityIdsFor(Auth::user());
 
             $q = Member::query()
-                ->when($request->boolean('isArchived'), fn($qq) => $qq->onlyTrashed(), fn($qq) => $qq->withoutTrashed())
+                ->when($request->boolean('isArchived'), fn ($qq) => $qq->onlyTrashed(), fn ($qq) => $qq->withoutTrashed())
                 ->leftJoin('communities as c', 'c.id', '=', 'members.community_id')
                 ->leftJoin('community_clusters as cc', 'cc.id', '=', 'members.community_cluster_id')
                 ->leftJoin('clusters as cl', 'cl.id', '=', 'cc.cluster_id')
@@ -771,12 +782,11 @@ class MemberController extends Controller
             }
 
             fclose($out);
-        }, 'members_' . now()->format('Y-m-d_H-i-s') . '.csv', [
+        }, 'members_'.now()->format('Y-m-d_H-i-s').'.csv', [
             'Content-Type' => 'text/csv',
             'Cache-Control' => 'no-store, no-cache',
         ]);
     }
-
 
     public function getMembersByCommunity($communityId)
     {
@@ -799,42 +809,51 @@ class MemberController extends Controller
             ->get();
 
         $uByUid = $unified->keyBy('uid');
-        $mById  = $members->keyBy('id');
+        $mById = $members->keyBy('id');
 
         // generation via DFS using the in-memory map
         $gen = [];
         $vis = [];
         $calc = function ($uid) use (&$calc, &$gen, &$vis, $uByUid) {
-            if (isset($gen[$uid])) return $gen[$uid];
-            if (isset($vis[$uid])) return 0;
+            if (isset($gen[$uid])) {
+                return $gen[$uid];
+            }
+            if (isset($vis[$uid])) {
+                return 0;
+            }
             $vis[$uid] = true;
             $p = $uByUid[$uid] ?? null;
-            if (!$p) return $gen[$uid] = 0;
+            if (! $p) {
+                return $gen[$uid] = 0;
+            }
             $best = 0;
             foreach (['father_uid', 'mother_uid'] as $par) {
-                if ($pid = $p->{$par}) $best = max($best, $calc($pid) + 1);
+                if ($pid = $p->{$par}) {
+                    $best = max($best, $calc($pid) + 1);
+                }
             }
+
             return $gen[$uid] = $best;
         };
 
         $enhanced = $members->map(function ($m) use ($uByUid, $mById, &$calc) {
-            $uid = 'M-' . $m->id;
-            $up  = $uByUid->get($uid);
+            $uid = 'M-'.$m->id;
+            $up = $uByUid->get($uid);
 
             $father = $mother = $spouse = null;
             if ($up?->father_uid && ($fu = $uByUid->get($up->father_uid))) {
                 if (str_starts_with($fu->uid, 'M-') && ($fm = $mById->get((int) substr($fu->uid, 2)))) {
-                    $father = ['id' => $fm->id, 'name' => $fm->first_name . ' ' . $fm->last_name, 'member_no' => $fm->member_no];
+                    $father = ['id' => $fm->id, 'name' => $fm->first_name.' '.$fm->last_name, 'member_no' => $fm->member_no];
                 }
             }
             if ($up?->mother_uid && ($mu = $uByUid->get($up->mother_uid))) {
                 if (str_starts_with($mu->uid, 'M-') && ($mm = $mById->get((int) substr($mu->uid, 2)))) {
-                    $mother = ['id' => $mm->id, 'name' => $mm->first_name . ' ' . $mm->last_name, 'member_no' => $mm->member_no];
+                    $mother = ['id' => $mm->id, 'name' => $mm->first_name.' '.$mm->last_name, 'member_no' => $mm->member_no];
                 }
             }
             if ($up?->spouse_uid && ($su = $uByUid->get($up->spouse_uid))) {
                 if (str_starts_with($su->uid, 'M-') && ($sm = $mById->get((int) substr($su->uid, 2)))) {
-                    $spouse = ['id' => $sm->id, 'name' => $sm->first_name . ' ' . $sm->last_name, 'member_no' => $sm->member_no];
+                    $spouse = ['id' => $sm->id, 'name' => $sm->first_name.' '.$sm->last_name, 'member_no' => $sm->member_no];
                 }
             }
 
@@ -855,8 +874,6 @@ class MemberController extends Controller
         return response()->json($enhanced);
     }
 
-
-
     public function getFamilyDetails($familyNo, Request $request)
     {
         try {
@@ -872,7 +889,7 @@ class MemberController extends Controller
                     'father_uid',
                     'mother_uid',
                     'spouse_uid',
-                    'gender_id'
+                    'gender_id',
                 ])
                 ->get();
 
@@ -880,11 +897,9 @@ class MemberController extends Controller
                 return response()->json(['error' => 'Family not found'], 404);
             }
 
-
-
             // Build quick lookup maps
             $uByUid = $family->keyBy('uid');                                          // uid => UnifiedPerson
-            $internalIds = $family->where('source', 'Member')->pluck('original_id')->map(fn($v) => (int)$v)->unique()->values();
+            $internalIds = $family->where('source', 'Member')->pluck('original_id')->map(fn ($v) => (int) $v)->unique()->values();
 
             // Prefetch Members for internal entries (single query)
             $members = Member::whereIn('id', $internalIds)
@@ -895,12 +910,12 @@ class MemberController extends Controller
                     'member_no',
                     'date_of_birth',
                     'community_id',
-                    'community_cluster_id'
+                    'community_cluster_id',
                 ])
                 ->with([
                     'community:id,name',
                     'communityCluster:id,cluster_id,community_id',
-                    'communityCluster.cluster:id,name'
+                    'communityCluster.cluster:id,name',
                 ])
                 ->get()
                 ->keyBy('id');                                                        // id => Member
@@ -909,12 +924,18 @@ class MemberController extends Controller
             $gen = [];
             $vis = [];
             $calcGen = function (string $uid) use (&$calcGen, &$gen, &$vis, $uByUid): int {
-                if (isset($gen[$uid])) return $gen[$uid];
-                if (isset($vis[$uid])) return 0; // cycle guard
+                if (isset($gen[$uid])) {
+                    return $gen[$uid];
+                }
+                if (isset($vis[$uid])) {
+                    return 0;
+                } // cycle guard
                 $vis[$uid] = true;
 
                 $p = $uByUid->get($uid);
-                if (!$p) return $gen[$uid] = 0;
+                if (! $p) {
+                    return $gen[$uid] = 0;
+                }
 
                 $best = 0;
                 foreach (['father_uid', 'mother_uid'] as $k) {
@@ -923,6 +944,7 @@ class MemberController extends Controller
                         $best = max($best, $calcGen($pid) + 1);
                     }
                 }
+
                 return $gen[$uid] = $best;
             };
 
@@ -935,10 +957,10 @@ class MemberController extends Controller
                 // Choose the first internal for community metadata
                 $firstInternal = $members->first();
                 if ($firstInternal) {
-                    $communityId        = $firstInternal->community_id;
+                    $communityId = $firstInternal->community_id;
                     $communityClusterId = $firstInternal->community_cluster_id;
-                    $communityName      = optional($firstInternal->community)->name;
-                    $clusterName        = optional(optional($firstInternal->communityCluster)->cluster)->name;
+                    $communityName = optional($firstInternal->community)->name;
+                    $clusterName = optional(optional($firstInternal->communityCluster)->cluster)->name;
                 }
             }
 
@@ -953,27 +975,31 @@ class MemberController extends Controller
                 }
 
                 $mapRelative = function (?string $relUid) use ($uByUid, $members) {
-                    if (!$relUid) return null;
+                    if (! $relUid) {
+                        return null;
+                    }
                     $rel = $uByUid->get($relUid);
-                    if (!$rel) return null;
+                    if (! $rel) {
+                        return null;
+                    }
 
                     // Prefer internal member details if available
                     if (str_starts_with($rel->uid, 'M-')) {
                         $rid = (int) substr($rel->uid, 2);
                         if ($m = $members->get($rid)) {
                             return [
-                                'id'   => $m->id,
-                                'uid'  => $rel->uid,
-                                'name' => trim(($m->first_name ?? '') . ' ' . ($m->last_name ?? '')),
+                                'id' => $m->id,
+                                'uid' => $rel->uid,
+                                'name' => trim(($m->first_name ?? '').' '.($m->last_name ?? '')),
                             ];
                         }
                     }
 
                     // Fallback to unified names (external or missing internal)
                     return [
-                        'id'   => (int) $rel->original_id,
-                        'uid'  => $rel->uid,
-                        'name' => trim(($rel->first_name ?? '') . ' ' . ($rel->last_name ?? '')),
+                        'id' => (int) $rel->original_id,
+                        'uid' => $rel->uid,
+                        'name' => trim(($rel->first_name ?? '').' '.($rel->last_name ?? '')),
                     ];
                 };
 
@@ -988,43 +1014,43 @@ class MemberController extends Controller
                 }
 
                 return [
-                    'id'          => (int) $p->original_id,
-                    'uid'         => $p->uid,
-                    'first_name'  => $p->first_name,
-                    'last_name'   => $p->last_name,
-                    'member_no'   => $p->member_no,
+                    'id' => (int) $p->original_id,
+                    'uid' => $p->uid,
+                    'first_name' => $p->first_name,
+                    'last_name' => $p->last_name,
+                    'member_no' => $p->member_no,
                     'date_of_birth' => $dateOfBirth,
-                    'generation'  => $calcGen($p->uid),
-                    'source'      => $p->source,
+                    'generation' => $calcGen($p->uid),
+                    'source' => $p->source,
                     'gender_name' => $genderName,
-                    'father'      => $mapRelative($p->father_uid),
-                    'mother'      => $mapRelative($p->mother_uid),
-                    'spouse'      => $mapRelative($p->spouse_uid),
+                    'father' => $mapRelative($p->father_uid),
+                    'mother' => $mapRelative($p->mother_uid),
+                    'spouse' => $mapRelative($p->spouse_uid),
                 ];
             });
 
             // Counts
-            $memberCount   = $family->count();
+            $memberCount = $family->count();
             $internalCount = $family->where('source', 'Member')->count();
             $externalCount = $memberCount - $internalCount;
 
             return response()->json([
-                'family_no'            => $familyNo,
-                'community_id'         => $communityId,
+                'family_no' => $familyNo,
+                'community_id' => $communityId,
                 'community_cluster_id' => $communityClusterId,
-                'community_name'       => $communityName,
-                'cluster_name'         => $clusterName,
-                'member_count'         => $memberCount,
-                'internal_count'       => $internalCount,
-                'external_count'       => $externalCount,
-                'members'              => $membersResp,
+                'community_name' => $communityName,
+                'cluster_name' => $clusterName,
+                'member_count' => $memberCount,
+                'internal_count' => $internalCount,
+                'external_count' => $externalCount,
+                'members' => $membersResp,
             ]);
         } catch (\Throwable $e) {
-            Log::error('Error getting family details: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            Log::error('Error getting family details: '.$e->getMessage(), ['trace' => $e->getTraceAsString()]);
+
             return response()->json(['error' => 'An error occurred while fetching family details'], 500);
         }
     }
-
 
     public function searchFamilies(Request $request)
     {
@@ -1040,8 +1066,8 @@ class MemberController extends Controller
 
             return response()->json($results);
         } catch (\Exception $e) {
-            Log::error('Error in searchFamilies: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error in searchFamilies: '.$e->getMessage());
+            Log::error('Stack trace: '.$e->getTraceAsString());
 
             return response()->json([
                 'error' => 'An error occurred while searching families',
@@ -1066,7 +1092,7 @@ class MemberController extends Controller
             $transformed = collect($results)->map(function ($family) {
                 $memberCount = $family['member_count'] ?? 0;
                 $members = is_array($family['members']) ? implode(', ', array_slice($family['members'], 0, 3)) : '';
-                $displayName = "{$family['family_no']} ({$memberCount} members)" . ($members ? " - {$members}" : '');
+                $displayName = "{$family['family_no']} ({$memberCount} members)".($members ? " - {$members}" : '');
 
                 return [
                     'id' => $family['family_no'],
@@ -1076,8 +1102,8 @@ class MemberController extends Controller
 
             return response()->json($transformed);
         } catch (\Exception $e) {
-            Log::error('Error in searchFamiliesSimple: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error in searchFamiliesSimple: '.$e->getMessage());
+            Log::error('Stack trace: '.$e->getTraceAsString());
 
             return response()->json([
                 'error' => 'An error occurred while searching families',
@@ -1122,12 +1148,12 @@ class MemberController extends Controller
                 ],
             ]);
         } catch (\Exception $e) {
-            Log::error('Error generating next available numbers: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
+            Log::error('Error generating next available numbers: '.$e->getMessage());
+            Log::error('Stack trace: '.$e->getTraceAsString());
 
             return response()->json([
                 'error' => 'Failed to generate next available numbers',
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -1147,7 +1173,7 @@ class MemberController extends Controller
         $members = Member::with(['community', 'relationship', 'gender']);
 
         // Only apply alive() scope if not including deceased members
-        if (!$includeDeceased) {
+        if (! $includeDeceased) {
             $members = $members->alive();
         }
 
@@ -1252,7 +1278,7 @@ class MemberController extends Controller
             'father',
             'mother',
             'spouse',
-            'gender'
+            'gender',
         ]);
 
         // Apply status filter conditionally
@@ -1294,14 +1320,14 @@ class MemberController extends Controller
             ->get()
             ->map(function ($member) {
                 $communityName = $member->community->name ?? '';
-                
+
                 // Get address
                 $address = collect([
                     $member->permanent_add1,
                     $member->permanent_add2,
                     $member->permanent_add3,
                 ])->filter()->implode(', ');
-                
+
                 return [
                     'id' => $member->id,
                     'name' => "{$member->first_name} {$member->last_name} ({$member->member_no}) - {$communityName}",
@@ -1314,26 +1340,26 @@ class MemberController extends Controller
                     'gender_id' => $member->gender_id,
                     'address' => $address,
                     'nationality' => $member->nationality ?? 'Indian',
-                    
+
                     // Baptism info
                     'baptism_date' => $member->baptismRecord?->baptism_date,
                     'baptism_reg_no' => $member->baptismRecord?->baptism_reg_no,
                     'baptism_parish_id' => $member->baptism_parish_id,
                     'place_of_baptism' => $member->baptismRecord?->place_of_baptism,
                     'place_of_birth' => $member->baptismRecord?->place_of_birth,
-                    
+
                     // Marriage info
                     'marriage_date' => $member->marriageRecord?->marriage_date,
                     'marriage_reg_no' => $member->marriageRecord?->marriage_reg_no,
                     'marriage_parish_id' => $member->marriage_parish_id,
-                    
+
                     // Father info
                     'father_name' => $member->father ? trim("{$member->father->first_name} {$member->father->last_name}") : null,
                     'father_profession' => $member->father?->company_name,
-                    
+
                     // Mother info
                     'mother_name' => $member->mother ? trim("{$member->mother->first_name} {$member->mother->last_name}") : null,
-                    
+
                     // Spouse info
                     'spouse_name' => $member->spouse ? trim("{$member->spouse->first_name} {$member->spouse->last_name}") : null,
                 ];
@@ -1342,7 +1368,7 @@ class MemberController extends Controller
         return response()->json($members);
     }
 
-    //for viewmembermodal leadership roles tab
+    // for viewmembermodal leadership roles tab
     public function getMemberDetails($id)
     {
         try {
@@ -1366,9 +1392,8 @@ class MemberController extends Controller
                 'ppcHeads.community:id,name',
                 'clusterHeads.cluster:id,name',
                 'clusterHeads.community:id,name',
-                'cellsAndAssociations:id,name'
+                'cellsAndAssociations:id,name',
             ])->findOrFail($id);
-
 
             // Transform the data to match frontend expectations
             $transformedMember = $member->toArray();
@@ -1379,7 +1404,8 @@ class MemberController extends Controller
 
             return response()->json($transformedMember);
         } catch (\Exception $e) {
-            Log::error('Error getting member details: ' . $e->getMessage());
+            Log::error('Error getting member details: '.$e->getMessage());
+
             return response()->json(['error' => 'Member not found'], 404);
         }
     }
@@ -1387,7 +1413,7 @@ class MemberController extends Controller
     public function dataVerification()
     {
         // Debug authentication
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             Log::error('User not authenticated for data verification page');
             abort(401, 'Unauthenticated');
         }
@@ -1395,11 +1421,11 @@ class MemberController extends Controller
         $user = Auth::user();
 
         // Check permission to access data verification
-        if (!Gate::allows('read-data-verification')) {
+        if (! Gate::allows('read-data-verification')) {
             Log::warning('User denied access to data verification page', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'permissions' => Auth::getAllPermissionsAttribute()
+                'permissions' => Auth::getAllPermissionsAttribute(),
             ]);
             abort(403, 'Access denied. You do not have permission to view data verification.');
         }
@@ -1408,7 +1434,7 @@ class MemberController extends Controller
         $members = Member::with([
             'community:id,name',
             'status:id,name',
-            'relationship:id,name'
+            'relationship:id,name',
         ])
             ->select([
                 'id',
@@ -1421,7 +1447,7 @@ class MemberController extends Controller
                 'status_id',
                 'contact_no_1',
                 'contact_no_2',
-                'relationship_id'
+                'relationship_id',
             ])
             ->orderBy('first_name')
             ->orderBy('last_name')
@@ -1453,33 +1479,34 @@ class MemberController extends Controller
             'members' => $members,
             'communities' => $communities,
             'statuses' => $statuses,
-            'relationships' => $relationships
+            'relationships' => $relationships,
         ]);
     }
 
     public function bulkUpdate(Request $request)
     {
         // Debug authentication
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return response()->json(['error' => 'User not authenticated'], 401);
         }
 
         $user = Auth::user();
 
         // Check permission to update data verification
-        if (!Gate::allows('update-data-verification')) {
+        if (! Gate::allows('update-data-verification')) {
             Log::warning('User denied access to bulk update', [
                 'user_id' => $user->id,
                 'email' => $user->email,
-                'permissions' => Auth::getAllPermissionsAttribute()
+                'permissions' => Auth::getAllPermissionsAttribute(),
             ]);
+
             return response()->json(['error' => 'Access denied. You do not have permission to update data verification.'], 403);
         }
 
         $request->validate([
             'changes' => 'required|array',
             'changes.*.id' => 'required|exists:members,id',
-            'changes.*.data' => 'required|array'
+            'changes.*.data' => 'required|array',
         ]);
 
         $updatedCount = 0;
@@ -1488,8 +1515,9 @@ class MemberController extends Controller
         foreach ($request->changes as $change) {
             try {
                 $member = Member::find($change['id']);
-                if (!$member) {
+                if (! $member) {
                     $errors[] = "Member ID {$change['id']} not found";
+
                     continue;
                 }
 
@@ -1504,17 +1532,17 @@ class MemberController extends Controller
                     'status_id',
                     'contact_no_1',
                     'contact_no_2',
-                    'relationship_id'
+                    'relationship_id',
                 ];
 
                 $updateData = array_intersect_key($change['data'], array_flip($allowedFields));
 
-                if (!empty($updateData)) {
+                if (! empty($updateData)) {
                     $member->update($updateData);
                     $updatedCount++;
                 }
             } catch (\Exception $e) {
-                $errors[] = "Error updating member {$change['id']}: " . $e->getMessage();
+                $errors[] = "Error updating member {$change['id']}: ".$e->getMessage();
             }
         }
 
@@ -1523,7 +1551,7 @@ class MemberController extends Controller
             'updated_count' => $updatedCount,
             'total_changes' => count($request->changes),
             'errors' => $errors,
-            'message' => "Successfully updated {$updatedCount} out of " . count($request->changes) . " records"
+            'message' => "Successfully updated {$updatedCount} out of ".count($request->changes).' records',
         ]);
     }
 
@@ -1532,7 +1560,7 @@ class MemberController extends Controller
      */
     public function uploadFamilyPhoto(FamilyPhotoUploadRequest $request, string $familyNo)
     {
-        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService);
         $result = $familyPhotoService->uploadFamilyPhoto($familyNo, $request->file('photo'));
 
         if ($result['success']) {
@@ -1551,7 +1579,7 @@ class MemberController extends Controller
         $member = Member::where('family_no', $familyNo)->firstOrFail();
         $this->authorize('update', $member);
 
-        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService);
         $result = $familyPhotoService->deleteFamilyPhoto($familyNo);
 
         if ($result['success']) {
@@ -1570,7 +1598,7 @@ class MemberController extends Controller
         $member = Member::where('family_no', $familyNo)->firstOrFail();
         $this->authorize('view', $member);
 
-        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService);
         $photo = $familyPhotoService->getFamilyPhoto($familyNo);
 
         if ($photo) {
@@ -1578,14 +1606,14 @@ class MemberController extends Controller
                 'success' => true,
                 'data' => [
                     'photo' => $photo,
-                    'url' => $photo->photo_url
-                ]
+                    'url' => $photo->photo_url,
+                ],
             ]);
         }
 
         return response()->json([
             'success' => false,
-            'message' => 'No family photo found'
+            'message' => 'No family photo found',
         ], 404);
     }
 
@@ -1596,12 +1624,12 @@ class MemberController extends Controller
     {
         $this->authorize('viewAny', Member::class);
 
-        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService());
+        $familyPhotoService = new FamilyPhotoService(new \App\Services\SecurityService);
         $statistics = $familyPhotoService->getPhotoStatistics();
 
         return response()->json([
             'success' => true,
-            'data' => $statistics
+            'data' => $statistics,
         ]);
     }
 
@@ -1610,14 +1638,14 @@ class MemberController extends Controller
      */
     private function handleMarriageTransitionForNew(array &$data)
     {
-        if (!$data['spouse_id']) {
+        if (! $data['spouse_id']) {
             return;
         }
 
         // Get the spouse with their gender
         $spouse = Member::with('gender')->find($data['spouse_id']);
         Log::info('spouse:', $spouse);
-        if (!$spouse) {
+        if (! $spouse) {
             return;
         }
 
@@ -1677,7 +1705,7 @@ class MemberController extends Controller
         $data['_create_external_member'] = [
             'birth_family_no' => $birthFamilyNo,
             'spouse' => $spouse,
-            'transition_type' => $transitionType
+            'transition_type' => $transitionType,
         ];
     }
 
@@ -1699,7 +1727,7 @@ class MemberController extends Controller
             Log::error('Failed to create external member records', [
                 'member_id' => $personJoining->id,
                 'birth_family_no' => $birthFamilyNo,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -1719,14 +1747,14 @@ class MemberController extends Controller
         $address = collect([
             $personJoining->current_add1,
             $personJoining->current_add2,
-            $personJoining->current_add3
+            $personJoining->current_add3,
         ])->filter()->implode(', ');
 
         // Create external member record (spouse_id will be updated later to point to external member)
         $externalMember = ExternalMember::create([
             'first_name' => $personJoining->first_name,
             'last_name' => $personJoining->last_name,
-            'address' => $address ?: 'Married to ' . $spouse->first_name . ' ' . $spouse->last_name,
+            'address' => $address ?: 'Married to '.$spouse->first_name.' '.$spouse->last_name,
             'family_no' => $birthFamilyNo, // The birth family can see her in their tree
             'community_id' => $personJoining->community_id,
             'relationship_id' => $personJoining->relationship_id, // Keep original relationship in birth family
@@ -1754,8 +1782,9 @@ class MemberController extends Controller
                 'spouse_family_no' => $spouse->family_no,
                 'birth_family_no' => $birthFamilyNo,
                 'spouse_id' => $spouse->id,
-                'person_joining_id' => $personJoining->id
+                'person_joining_id' => $personJoining->id,
             ]);
+
             return null;
         }
         // Check if external member record already exists for the spouse in the birth family
@@ -1768,7 +1797,7 @@ class MemberController extends Controller
         $spouseAddress = collect([
             $spouse->current_add1,
             $spouse->current_add2,
-            $spouse->current_add3
+            $spouse->current_add3,
         ])->filter()->implode(', ');
 
         // Determine spouse relationship in birth family context
@@ -1792,7 +1821,7 @@ class MemberController extends Controller
         $spouseExternalMember = ExternalMember::create([
             'first_name' => $spouse->first_name,
             'last_name' => $spouse->last_name,
-            'address' => $spouseAddress ?: 'Married to ' . $personJoining->first_name . ' ' . $personJoining->last_name,
+            'address' => $spouseAddress ?: 'Married to '.$personJoining->first_name.' '.$personJoining->last_name,
             'family_no' => $birthFamilyNo, // Birth family can see the spouse in their tree
             'community_id' => $spouse->community_id,
             'relationship_id' => $spouseRelationship?->id, // Son-in-law/Daughter-in-law/In-law relationship
@@ -1804,6 +1833,7 @@ class MemberController extends Controller
             'father_source' => null,
             'mother_source' => null,
         ]);
+
         return $spouseExternalMember;
     }
 
@@ -1824,7 +1854,7 @@ class MemberController extends Controller
             Log::error('Failed to update external spouse references', [
                 'person_joining_external_id' => $personJoiningExternal->id,
                 'spouse_external_id' => $spouseExternal->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
         }
     }
@@ -1833,7 +1863,7 @@ class MemberController extends Controller
     {
         // Store spouse's birth family if not already stored
         $birthFamilyNo = $spouse->family_no;
-        if (!$spouse->birth_family_no) {
+        if (! $spouse->birth_family_no) {
             $spouse->birth_family_no = $birthFamilyNo;
         }
 
@@ -1909,7 +1939,7 @@ class MemberController extends Controller
         // Get the spouse with their gender
         $spouse = Member::with('gender')->find($validated['spouse_id']);
 
-        if (!$spouse) {
+        if (! $spouse) {
             return;
         }
 
@@ -1921,7 +1951,7 @@ class MemberController extends Controller
                 'member_family_no' => $member->family_no,
                 'spouse_id' => $spouse->id,
                 'spouse_family_no' => $spouse->family_no,
-                'reason' => 'Bulk uploaded data with correct family relationships'
+                'reason' => 'Bulk uploaded data with correct family relationships',
             ]);
 
             // Just set marital status for both members - no family changes or external members needed
@@ -1948,7 +1978,7 @@ class MemberController extends Controller
             'member_id' => $member->id,
             'member_gender' => $memberGender,
             'spouse_id' => $spouse->id,
-            'spouse_gender' => $spouseGender
+            'spouse_gender' => $spouseGender,
         ]);
 
         // Determine who joins whose family based on gender
@@ -1985,12 +2015,12 @@ class MemberController extends Controller
             'personJoining_family' => $personJoining->family_no,
             'personStaying_id' => $personStaying->id,
             'personStaying_family' => $personStaying->family_no,
-            'transitionType' => $transitionType
+            'transitionType' => $transitionType,
         ]);
 
         // Store birth family if not already stored (only for the person joining)
         $birthFamilyNo = $personJoining->family_no;
-        if (!$personJoining->birth_family_no) {
+        if (! $personJoining->birth_family_no) {
             $personJoining->birth_family_no = $birthFamilyNo;
             $personJoining->save(); // Save immediately to persist birth family
         }
@@ -1999,7 +2029,7 @@ class MemberController extends Controller
         // Create for both 'female_joins_male' and 'default' to ensure family tree is complete
         Log::info('Checking if should create external member', [
             'transitionType' => $transitionType,
-            'willCreate' => in_array($transitionType, ['female_joins_male', 'default'])
+            'willCreate' => in_array($transitionType, ['female_joins_male', 'default']),
         ]);
 
         if (in_array($transitionType, ['female_joins_male', 'default'])) {
@@ -2035,7 +2065,7 @@ class MemberController extends Controller
     {
         // Store spouse's birth family if not already stored
         $birthFamilyNo = $spouse->family_no;
-        if (!$spouse->birth_family_no) {
+        if (! $spouse->birth_family_no) {
             $spouse->birth_family_no = $birthFamilyNo;
         }
 
@@ -2086,7 +2116,7 @@ class MemberController extends Controller
             'old_family_no' => $birthFamilyNo,
             'new_family_no' => $spouse->family_no,
             'member_staying_id' => $memberStaying->id,
-            'member_staying_marital_status' => $memberStaying->marital_status
+            'member_staying_marital_status' => $memberStaying->marital_status,
         ]);
     }
 
@@ -2120,7 +2150,7 @@ class MemberController extends Controller
         $request->validate([
             'bride_id' => 'required|integer|exists:members,id',
             'groom_id' => 'required|integer|exists:members,id',
-            'bride_joins_groom' => 'boolean'
+            'bride_joins_groom' => 'boolean',
         ]);
 
         try {
@@ -2136,12 +2166,12 @@ class MemberController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Marriage recorded successfully',
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record marriage: ' . $e->getMessage()
+                'message' => 'Failed to record marriage: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -2153,14 +2183,18 @@ class MemberController extends Controller
     {
         // Helper to format dates
         $formatDate = function ($date, $format = 'd/m/Y') {
-            if (!$date || $date === '' || $date === '0000-00-00') return null;
+            if (! $date || $date === '' || $date === '0000-00-00') {
+                return null;
+            }
             try {
                 if ($date instanceof \Carbon\Carbon) {
                     return $date->format($format);
                 }
+
                 return \Carbon\Carbon::parse($date)->format($format);
             } catch (\Exception $e) {
                 \Log::warning("Failed to format date: {$date}", ['error' => $e->getMessage()]);
+
                 return null;
             }
         };
@@ -2296,7 +2330,7 @@ class MemberController extends Controller
         // Generate filename
         $filename = sprintf(
             'Member_Details_%s_%s.pdf',
-            str_replace(' ', '_', $member->first_name . '_' . $member->last_name),
+            str_replace(' ', '_', $member->first_name.'_'.$member->last_name),
             now()->format('Y-m-d')
         );
 
@@ -2328,7 +2362,7 @@ class MemberController extends Controller
                         '--disable-default-apps',
                         '--mute-audio',
                         '--user-data-dir=/tmp/chrome-user-data',
-                        '--crash-dumps-dir=/tmp/chrome-user-data'
+                        '--crash-dumps-dir=/tmp/chrome-user-data',
                     ]);
             });
         }
@@ -2345,8 +2379,10 @@ class MemberController extends Controller
         if (file_exists($fullPath)) {
             $imageData = base64_encode(file_get_contents($fullPath));
             $mimeType = mime_content_type($fullPath);
+
             return "data:{$mimeType};base64,{$imageData}";
         }
+
         return null;
     }
 }
