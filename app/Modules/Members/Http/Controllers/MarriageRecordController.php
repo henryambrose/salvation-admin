@@ -3,11 +3,11 @@
 namespace Modules\Members\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Modules\Members\Models\MarriageRecord;
 use Modules\Members\Models\Member;
 use Modules\Members\Models\Parish;
-use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Spatie\LaravelPdf\Facades\Pdf;
 
 class MarriageRecordController extends Controller
@@ -67,6 +67,11 @@ class MarriageRecordController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge([
+            'bridegroom_member_id' => $request->input('bridegroom_member_id') ?: null,
+            'bride_member_id' => $request->input('bride_member_id') ?: null,
+        ]);
+
         $validated = $request->validate([
             'marriage_archive_certificate_id' => 'nullable|exists:marriage_archive_certificates,id',
             'marriage_date' => 'nullable|date',
@@ -108,13 +113,13 @@ class MarriageRecordController extends Controller
         // Update: Set foreign key for bridegroom
         if ($marriageRecord->bridegroom_member_id) {
             Member::where('id', $marriageRecord->bridegroom_member_id)
-                  ->update(['marriagerecord_id' => $marriageRecord->id]);
+                ->update(['marriagerecord_id' => $marriageRecord->id]);
         }
 
         // Update: Set foreign key for bride
         if ($marriageRecord->bride_member_id) {
             Member::where('id', $marriageRecord->bride_member_id)
-                  ->update(['marriagerecord_id' => $marriageRecord->id]);
+                ->update(['marriagerecord_id' => $marriageRecord->id]);
         }
 
         // If created from archive certificate, redirect to the unified view
@@ -149,6 +154,13 @@ class MarriageRecordController extends Controller
 
     public function update(Request $request, MarriageRecord $marriageRecord)
     {
+        // Legacy records store 0 (not null) for an unlinked bride/groom, which fails
+        // the exists:members,id rule below. Normalize so re-saving an unlinked record works.
+        $request->merge([
+            'bridegroom_member_id' => $request->input('bridegroom_member_id') ?: null,
+            'bride_member_id' => $request->input('bride_member_id') ?: null,
+        ]);
+
         $validated = $request->validate([
             'marriage_date' => 'nullable|date',
             'marriage_reg_no' => 'nullable|string|max:255',
@@ -221,12 +233,12 @@ class MarriageRecordController extends Controller
         // Clear foreign keys for both members
         if ($marriageRecord->bridegroom_member_id) {
             Member::where('id', $marriageRecord->bridegroom_member_id)
-                  ->update(['marriagerecord_id' => null]);
+                ->update(['marriagerecord_id' => null]);
         }
 
         if ($marriageRecord->bride_member_id) {
             Member::where('id', $marriageRecord->bride_member_id)
-                  ->update(['marriagerecord_id' => null]);
+                ->update(['marriagerecord_id' => null]);
         }
 
         $marriageRecord->delete();
@@ -276,17 +288,20 @@ class MarriageRecordController extends Controller
 
         // Helper to format dates (handles both string and Carbon instances)
         $formatDate = function ($date, $format = 'd/m/Y') {
-            if (!$date) return null;
+            if (! $date) {
+                return null;
+            }
             if ($date instanceof \Carbon\Carbon) {
                 return $date->format($format);
             }
+
             return \Carbon\Carbon::parse($date)->format($format);
         };
 
         // Load relationships
         $marriageRecord->load([
             'bridegroom',
-            'bride'
+            'bride',
 
         ]);
 
@@ -312,7 +327,7 @@ class MarriageRecordController extends Controller
             'marriage_date' => $formatDate($marriageRecord->marriage_date),
             'marriage_reg_no' => $marriageRecord->marriage_reg_no,
             'marriage_year' => $marriageRecord->marriage_date ? \Carbon\Carbon::parse($marriageRecord->marriage_date)->year : null,
-            'parish_of_marriage' => $marriageRecord->parish_of_marriage?? '',
+            'parish_of_marriage' => $marriageRecord->parish_of_marriage ?? '',
 
             // Bridegroom data
             'bridegroom_name' => $bridegroomName,
@@ -408,7 +423,7 @@ class MarriageRecordController extends Controller
                         '--disable-default-apps',
                         '--mute-audio',
                         '--user-data-dir=/tmp/chrome-user-data',
-                        '--crash-dumps-dir=/tmp/chrome-user-data'
+                        '--crash-dumps-dir=/tmp/chrome-user-data',
                     ]);
             });
         }
@@ -421,7 +436,7 @@ class MarriageRecordController extends Controller
      */
     protected function makeLogoDataUrl(?string $path): ?string
     {
-        if (!$path) {
+        if (! $path) {
             return null;
         }
 
@@ -429,7 +444,8 @@ class MarriageRecordController extends Controller
 
         if (is_file($fullPath) && is_readable($fullPath)) {
             $mime = mime_content_type($fullPath) ?: 'image/png';
-            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
+
+            return 'data:'.$mime.';base64,'.base64_encode(file_get_contents($fullPath));
         }
 
         return null;

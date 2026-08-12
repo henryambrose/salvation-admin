@@ -185,6 +185,16 @@ function submit() {
     <div class="p-6">
       <h1 class="mb-6 text-2xl font-bold">Create Marriage Record</h1>
 
+      <div
+        v-if="Object.keys(form.errors).length > 0"
+        class="border-destructive/50 bg-destructive/10 text-destructive mb-6 max-w-4xl rounded-lg border p-4 text-sm"
+      >
+        <p class="font-semibold">Please fix the following before saving:</p>
+        <ul class="mt-1 list-inside list-disc">
+          <li v-for="(message, field) in form.errors" :key="field">{{ message }}</li>
+        </ul>
+      </div>
+
       <form @submit.prevent="submit" class="max-w-4xl space-y-6 rounded-lg bg-white p-6 shadow">
         <!-- Marriage Details -->
         <div class="border-b pb-4">
@@ -193,18 +203,22 @@ function submit() {
             <div>
               <Label>Marriage Date</Label>
               <Input v-model="form.marriage_date" type="date" />
+              <p v-if="form.errors.marriage_date" class="text-destructive mt-1 text-sm">{{ form.errors.marriage_date }}</p>
             </div>
             <div>
               <Label>Marriage Reg No</Label>
               <Input v-model="form.marriage_reg_no" />
+              <p v-if="form.errors.marriage_reg_no" class="text-destructive mt-1 text-sm">{{ form.errors.marriage_reg_no }}</p>
             </div>
             <div>
               <Label>Year of Marriage</Label>
               <Input v-model="form.year_of_marriage" placeholder="Enter year of marriage" />
+              <p v-if="form.errors.year_of_marriage" class="text-destructive mt-1 text-sm">{{ form.errors.year_of_marriage }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>Place of Marriage</Label>
               <Input v-model="form.parish_of_marriage" />
+              <p v-if="form.errors.parish_of_marriage" class="text-destructive mt-1 text-sm">{{ form.errors.parish_of_marriage }}</p>
             </div>
           </div>
         </div>
@@ -223,46 +237,59 @@ function submit() {
                 @select="handleBridegroomSelect"
               />
               <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
+              <p v-if="form.errors.bridegroom_member_id" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_member_id }}</p>
             </div>
             <div>
               <Label>Name</Label>
               <Input v-model="form.bridegroom_name" />
+              <p v-if="form.errors.bridegroom_name" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_name }}</p>
             </div>
             <div>
               <Label>Surname</Label>
               <Input v-model="form.bridegroom_surname" />
+              <p v-if="form.errors.bridegroom_surname" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_surname }}</p>
             </div>
             <div>
               <Label>Date of Birth</Label>
               <Input v-model="form.bridegroom_dob" type="date" />
+              <p v-if="form.errors.bridegroom_dob" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_dob }}</p>
             </div>
             <div>
               <Label>Nationality</Label>
               <Input v-model="form.bridegroom_nationality" />
+              <p v-if="form.errors.bridegroom_nationality" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_nationality }}</p>
             </div>
             <div>
               <Label>Profession</Label>
               <Input v-model="form.bridegroom_profession" />
+              <p v-if="form.errors.bridegroom_profession" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_profession }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>Residence</Label>
               <Textarea v-model="form.bridegroom_residence" />
+              <p v-if="form.errors.bridegroom_residence" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_residence }}</p>
             </div>
             <div>
               <Label>Father's Name</Label>
               <Input v-model="form.bridegroom_father_name" />
+              <p v-if="form.errors.bridegroom_father_name" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_father_name }}</p>
             </div>
             <div>
               <Label>Mother's Name</Label>
               <Input v-model="form.bridegroom_mother_name" />
+              <p v-if="form.errors.bridegroom_mother_name" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_mother_name }}</p>
             </div>
             <div>
               <Label>Status (Bachelor/Widower)</Label>
               <Input v-model="form.bridegroom_status" placeholder="Bachelor or Widower" />
+              <p v-if="form.errors.bridegroom_status" class="text-destructive mt-1 text-sm">{{ form.errors.bridegroom_status }}</p>
             </div>
             <div>
               <Label>If Widower, Whose?</Label>
               <Input v-model="form.bridegroom_if_widower_whose" />
+              <p v-if="form.errors.bridegroom_if_widower_whose" class="text-destructive mt-1 text-sm">
+                {{ form.errors.bridegroom_if_widower_whose }}
+              </p>
             </div>
           </div>
         </div>
@@ -281,46 +308,57 @@ function submit() {
                 @select="handleBrideSelect"
               />
               <p class="text-muted-foreground mt-1 text-xs">Optional - leave empty for non-members</p>
+              <p v-if="form.errors.bride_member_id" class="text-destructive mt-1 text-sm">{{ form.errors.bride_member_id }}</p>
             </div>
             <div>
               <Label>Name</Label>
               <Input v-model="form.bride_name" />
+              <p v-if="form.errors.bride_name" class="text-destructive mt-1 text-sm">{{ form.errors.bride_name }}</p>
             </div>
             <div>
               <Label>Surname</Label>
               <Input v-model="form.bride_surname" />
+              <p v-if="form.errors.bride_surname" class="text-destructive mt-1 text-sm">{{ form.errors.bride_surname }}</p>
             </div>
             <div>
               <Label>Date of Birth</Label>
               <Input v-model="form.bride_dob" type="date" />
+              <p v-if="form.errors.bride_dob" class="text-destructive mt-1 text-sm">{{ form.errors.bride_dob }}</p>
             </div>
             <div>
               <Label>Nationality</Label>
               <Input v-model="form.bride_nationality" />
+              <p v-if="form.errors.bride_nationality" class="text-destructive mt-1 text-sm">{{ form.errors.bride_nationality }}</p>
             </div>
             <div>
               <Label>Profession</Label>
               <Input v-model="form.bride_profession" />
+              <p v-if="form.errors.bride_profession" class="text-destructive mt-1 text-sm">{{ form.errors.bride_profession }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>Residence</Label>
               <Textarea v-model="form.bride_residence" />
+              <p v-if="form.errors.bride_residence" class="text-destructive mt-1 text-sm">{{ form.errors.bride_residence }}</p>
             </div>
             <div>
               <Label>Father's Name</Label>
               <Input v-model="form.bride_father_name" />
+              <p v-if="form.errors.bride_father_name" class="text-destructive mt-1 text-sm">{{ form.errors.bride_father_name }}</p>
             </div>
             <div>
               <Label>Mother's Name</Label>
               <Input v-model="form.bride_mother_name" />
+              <p v-if="form.errors.bride_mother_name" class="text-destructive mt-1 text-sm">{{ form.errors.bride_mother_name }}</p>
             </div>
             <div>
               <Label>Status (Spinster/Widow)</Label>
               <Input v-model="form.bride_status" placeholder="Spinster or Widow" />
+              <p v-if="form.errors.bride_status" class="text-destructive mt-1 text-sm">{{ form.errors.bride_status }}</p>
             </div>
             <div>
               <Label>If Widow, Whose?</Label>
               <Input v-model="form.bride_if_widow_whose" />
+              <p v-if="form.errors.bride_if_widow_whose" class="text-destructive mt-1 text-sm">{{ form.errors.bride_if_widow_whose }}</p>
             </div>
           </div>
         </div>
@@ -332,18 +370,26 @@ function submit() {
             <div>
               <Label>First Witness Name</Label>
               <Input v-model="form.first_witness_name" />
+              <p v-if="form.errors.first_witness_name" class="text-destructive mt-1 text-sm">{{ form.errors.first_witness_name }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>First Witness Residence</Label>
               <Textarea v-model="form.first_witness_residence" />
+              <p v-if="form.errors.first_witness_residence" class="text-destructive mt-1 text-sm">
+                {{ form.errors.first_witness_residence }}
+              </p>
             </div>
             <div>
               <Label>Second Witness Name</Label>
               <Input v-model="form.second_witness_name" />
+              <p v-if="form.errors.second_witness_name" class="text-destructive mt-1 text-sm">{{ form.errors.second_witness_name }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>Second Witness Residence</Label>
               <Textarea v-model="form.second_witness_residence" />
+              <p v-if="form.errors.second_witness_residence" class="text-destructive mt-1 text-sm">
+                {{ form.errors.second_witness_residence }}
+              </p>
             </div>
           </div>
         </div>
@@ -355,10 +401,12 @@ function submit() {
             <div>
               <Label>Minister Name</Label>
               <Input v-model="form.minister_name" />
+              <p v-if="form.errors.minister_name" class="text-destructive mt-1 text-sm">{{ form.errors.minister_name }}</p>
             </div>
             <div class="md:col-span-2">
               <Label>Remarks</Label>
               <Textarea v-model="form.marriage_remarks" />
+              <p v-if="form.errors.marriage_remarks" class="text-destructive mt-1 text-sm">{{ form.errors.marriage_remarks }}</p>
             </div>
           </div>
         </div>
