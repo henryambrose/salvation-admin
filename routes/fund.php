@@ -1,11 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 use Modules\Fund\Http\Controllers\AnnualContributionController;
 use Modules\Fund\Http\Controllers\CommunityContributionController;
 use Modules\Fund\Http\Controllers\CommunityContributionTypeController;
+use Modules\Fund\Http\Controllers\DashboardController;
 use Modules\Fund\Http\Controllers\FundCategoryController;
 use Modules\Fund\Http\Controllers\MassIntentionController;
 use Modules\Fund\Http\Controllers\MassIntentionTypeController;
@@ -25,25 +24,7 @@ use Modules\Fund\Http\Controllers\PaymentMethodController;
 
 Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
     // Dashboard
-    Route::get('/', function () {
-        // Check permission
-        if (!Auth::user()->can('read-fund-dashboard')) {
-            abort(403, 'You do not have permission to access the Fund dashboard.');
-        }
-
-        Log::info('=== FUND ROUTE HIT ===');
-        Log::info('User ID: ' . Auth::id());
-        Log::info('Is authenticated: ' . (Auth::check() ? 'YES' : 'NO'));
-
-        if (Auth::check()) {
-            Log::info('User Email: ' . Auth::user()->email);
-            Log::info('Is Superadmin: ' . (Auth::user()->is_superadmin ? 'YES' : 'NO'));
-        } else {
-            Log::info('User is not authenticated in Fund route');
-        }
-
-        return inertia('FundDashboard');
-    })->name('dashboard');
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Fund Categories
     Route::get('categories', [FundCategoryController::class, 'index'])->name('categories.index');
@@ -132,8 +113,9 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
             ->get()
             ->map(function ($contribution) {
                 $paidBy = $contribution->member_id && $contribution->member
-                    ? trim(($contribution->member->first_name ?? '') . ' ' . ($contribution->member->last_name ?? ''))
+                    ? trim(($contribution->member->first_name ?? '').' '.($contribution->member->last_name ?? ''))
                     : ($contribution->paid_by_name ?? '');
+
                 return [
                     'id' => $contribution->id,
                     'start_date' => $contribution->start_date,
@@ -144,7 +126,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
                     'payment_method' => $contribution->paymentMethod->name ?? 'N/A',
                     'paid_by' => $paidBy,
                     'date_of_payment' => $contribution->created_at,
-                    'notes' => $contribution->notes
+                    'notes' => $contribution->notes,
                 ];
             });
 
@@ -156,7 +138,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
             'contributions' => $contributions,
             'total_contributions' => $totalContributions,
             'total_paid' => $totalPaid,
-            'total_pending' => $totalPending
+            'total_pending' => $totalPending,
         ]);
     })->name('family-contributions');
 
@@ -183,7 +165,7 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
                 'year' => $year,
                 'paid_amount' => $totalPaid,
                 'pending_amount' => $pendingAmount,
-                'contributions' => $contributions->count()
+                'contributions' => $contributions->count(),
             ];
         })->filter(function ($category) {
             return $category['pending_amount'] > 0 || $category['contributions'] > 0;
@@ -193,14 +175,14 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
 
         return response()->json([
             'pending_amounts' => $pendingAmounts,
-            'total_pending' => $totalPending
+            'total_pending' => $totalPending,
         ]);
     })->name('pending-amounts');
 
     // New route for pending amounts by specific category
     Route::get('pending-amounts/{familyNo}/{year}/{categoryId}', function ($familyNo, $year, $categoryId) {
         $category = \Modules\Fund\Models\FundCategory::find($categoryId);
-        if (!$category) {
+        if (! $category) {
             return response()->json(['pending_amounts' => [], 'total_pending' => 0]);
         }
 
@@ -222,11 +204,12 @@ Route::middleware(['auth'])->prefix('fund')->name('fund.')->group(function () {
                 'year' => $year,
                 'paid_amount' => $totalPaid,
                 'pending_amount' => $pendingAmount,
-                'contributions' => $contributions->count()
-            ]
+                'contributions' => $contributions->count(),
+            ],
         ];
 
         $totalPending = $pendingAmount;
+
         return response()->json(['pending_amounts' => $pendingAmounts, 'total_pending' => $totalPending]);
     })->name('pending-amounts-by-category');
 });

@@ -9,25 +9,25 @@
           <div class="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
             <div class="rounded-lg bg-blue-50 p-6">
               <h3 class="text-lg font-medium text-blue-900">Annual Contributions</h3>
-              <p class="text-3xl font-bold text-blue-600">₹0</p>
-              <p class="text-sm text-blue-700">This Year</p>
+              <p class="text-3xl font-bold text-blue-600">{{ formatCurrency(stats.annualContributionsTotal) }}</p>
+              <p class="text-sm text-blue-700">{{ stats.year }}</p>
             </div>
 
             <div class="rounded-lg bg-green-50 p-6">
               <h3 class="text-lg font-medium text-green-900">Mass Intentions</h3>
-              <p class="text-3xl font-bold text-green-600">0</p>
+              <p class="text-3xl font-bold text-green-600">{{ stats.activeMassIntentions }}</p>
               <p class="text-sm text-green-700">Active Bookings</p>
             </div>
 
             <div class="rounded-lg bg-purple-50 p-6">
               <h3 class="text-lg font-medium text-purple-900">Total Families</h3>
-              <p class="text-3xl font-bold text-purple-600">0</p>
+              <p class="text-3xl font-bold text-purple-600">{{ stats.contributingFamilies }}</p>
               <p class="text-sm text-purple-700">Contributing</p>
             </div>
 
             <div class="rounded-lg bg-orange-50 p-6">
               <h3 class="text-lg font-medium text-orange-900">Fund Categories</h3>
-              <p class="text-3xl font-bold text-orange-600">0</p>
+              <p class="text-3xl font-bold text-orange-600">{{ stats.activeCategories }}</p>
               <p class="text-sm text-orange-700">Active Categories</p>
             </div>
           </div>
@@ -165,6 +165,18 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import { Link } from '@inertiajs/vue3';
 import { Clock, FileText, IndianRupee, Plus } from 'lucide-vue-next';
+
+defineProps<{
+  stats: {
+    annualContributionsTotal: number;
+    activeMassIntentions: number;
+    contributingFamilies: number;
+    activeCategories: number;
+    year: number;
+  };
+}>();
+
+const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 defineOptions({
   layout: AppLayout,
