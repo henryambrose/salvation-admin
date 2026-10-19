@@ -54,7 +54,10 @@ const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleStr
 
     <!-- Statistics Cards -->
     <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <Link
+        :href="route('graveyard.permanent-graves.index')"
+        class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      >
         <div class="flex items-center">
           <MapPin class="h-8 w-8 flex-shrink-0 text-blue-600" />
           <div class="ml-4">
@@ -65,9 +68,12 @@ const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleStr
             </p>
           </div>
         </div>
-      </div>
+      </Link>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <Link
+        :href="route('graveyard.temporary-graves.index')"
+        class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      >
         <div class="flex items-center">
           <Users class="h-8 w-8 flex-shrink-0 text-green-600" />
           <div class="ml-4">
@@ -78,9 +84,12 @@ const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleStr
             </p>
           </div>
         </div>
-      </div>
+      </Link>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <Link
+        :href="route('graveyard.niches.index')"
+        class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      >
         <div class="flex items-center">
           <Calendar class="h-8 w-8 flex-shrink-0 text-red-600" />
           <div class="ml-4">
@@ -89,9 +98,12 @@ const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleStr
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ stats.niches.occupied }} occupied · {{ stats.niches.available }} available</p>
           </div>
         </div>
-      </div>
+      </Link>
 
-      <div class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+      <Link
+        :href="route('graveyard.payments.index')"
+        class="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition hover:shadow-xl dark:border-gray-700 dark:bg-gray-800"
+      >
         <div class="flex items-center">
           <IndianRupee class="h-8 w-8 flex-shrink-0 text-purple-600" />
           <div class="ml-4">
@@ -100,7 +112,7 @@ const formatCurrency = (value: number) => '₹' + Number(value || 0).toLocaleStr
             <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatCurrency(stats.revenue_summary.yearly) }} this year</p>
           </div>
         </div>
-      </div>
+      </Link>
     </div>
 
     <!-- Quick Actions -->
