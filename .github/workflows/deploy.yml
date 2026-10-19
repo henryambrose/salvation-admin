@@ -37,11 +37,14 @@ jobs:
       - name: Build Assets
         run: npm run build
 
+      - name: Archive build output
+        run: tar -czf build.tar.gz -C public build
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: public/build
+          path: build.tar.gz
           retention-days: 1
 
   deploy:
@@ -52,7 +55,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: frontend-build
-          path: public/build
 
       - name: Upload built assets to EC2
         uses: appleboy/scp-action@v0.1.7
@@ -60,8 +62,8 @@ jobs:
           host: salvationchurch.info
           username: ubuntu
           key: ${{ secrets.SALVATION_ADMIN_GIT_SECRET_KEY }}
-          source: 'public/build'
-          target: '/var/www/html/salvation-admin/public'
+          source: 'build.tar.gz'
+          target: '/var/www/html/salvation-admin'
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
@@ -74,6 +76,10 @@ jobs:
             cd /var/www/html/salvation-admin
             git fetch origin main
             git reset --hard origin/main
+            rm -rf public/build
+            mkdir -p public/build
+            tar -xzf build.tar.gz -C public
+            rm -f build.tar.gz
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
             php artisan migrate --force
             php artisan optimize:clear
