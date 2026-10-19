@@ -9,10 +9,51 @@ on:
       - main
 
 jobs:
-  deploy:
+  build-assets:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Node Dependencies
+        run: npm ci
+
+      - name: Build Assets
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build
+          retention-days: 1
+
+  deploy:
+    needs: build-assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: public/build
+
+      - name: Upload built assets to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: salvationchurch.info
+          username: ubuntu
+          key: ${{ secrets.SALVATION_ADMIN_GIT_SECRET_KEY }}
+          source: 'public/build'
+          target: '/var/www/html/salvation-admin/public'
+
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -25,8 +66,6 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
-            npm ci
-            npm run build
             php artisan migrate --force
             php artisan optimize:clear
             php artisan optimize
